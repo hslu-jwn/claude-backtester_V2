@@ -1,0 +1,59 @@
+# Strategy 1: Session Zone Sweep (Forex)
+
+**Pairs:** XAUUSD, GBPJPY, GBPUSD. **Timeframes:** 30m for zones and the reaction, 5m for the BOS and entry, 1h for TP obstacles. Long described, short mirrored. Detection rules are in `confluences.md`.
+
+## Sessions
+- Starts (ET): New York 08:00, London 03:00, Tokyo 20:00. Each session follows its own city's daylight-saving shifts and ends when the next one starts.
+- A chart line is drawn at each session start.
+- Candles before a session start belong to the previous session. Sunday-open candles before Tokyo's start are ignored and form no zones.
+
+## Session zones (30m)
+- For each session, take the single most extreme **confirmed** high and low (swing rule). If the absolute extreme is unconfirmed, use the most extreme confirmed one. A swing confirmed by the first candle of the next session doesn't count.
+- Zone size is as big as possible: the high zone runs from the highest wick to the lowest body top of its swing candles; the low zone is mirrored.
+- Zones are valid only during the next session (London→NY, NY→Tokyo, Tokyo→London). Friday NY zones carry into Monday Tokyo.
+
+## Entry sequence (long)
+1. **Sweep:** a wick into the support zone.
+2. **30m reaction:** a green 30m candle closes above the zone. It need not be the sweep candle; a red close never counts.
+3. **5m BOS up:** a 5m close above the high right beforehand, during that 30m candle or after.
+4. **Confluence:** an FVG, OB, breaker or BPR (FVGs are most promising), usually formed in the BOS move; a breaker comes from the move before. Price taps it, then a green 5m candle closes above it → **enter at that close**. No confluence = no trade.
+
+## Invalidation & reset
+- A 5m close below the confluence invalidates it.
+- A bearish BOS after the bullish BOS cancels the setup; restart from step 1.
+- Untriggered setups die at the next session start.
+- The same zone can produce more trades if the full sequence repeats from a new 30m close.
+- Long and short setups may build in the same session.
+
+## Zone flips
+- A red 30m close below support flips the setup to a short. That close counts directly as the 30m reaction, so go straight to the 5m BOS. Same the other way round.
+- A second break of the same zone kills it for the rest of the session.
+
+## Stop loss
+- Just below the entry confluence's low, plus a buffer ⚙️.
+- If the confluence is small (⚙️ height < 0.5 × ATR): SL goes below the BOS leg's low instead.
+- The SL is fixed, except at the next session start, if the trade is still open:
+  - in profit → SL moves to break-even
+  - in loss → original SL stays
+- The trade runs until SL or TP is hit.
+
+## Take profit
+1. **Target** = the lowest point of the resistance zone, capped at **3R**.
+2. **Price already above the zone** → aim for 1.2–2R at earlier 1h highs/lows or confluences.
+3. **Obstacles:**
+   - A major obstacle is an untouched 1h swing high, or an unmitigated bearish 1h FVG / OB / breaker, that existed before entry.
+   - Obstacles less than ⚙️ 0.2R apart count as one.
+   - TP may pass at most ⚙️ N obstacles and sits just below the next one.
+4. **Final TP < 1.2R → no trade.**
+
+## Backtest options (tunable; review periodically)
+- Strong-move filter: ATR multiplier (default 2×) and lookback
+- Small-confluence threshold (default 0.5 × ATR); SL buffer
+- TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
+- Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
+- Second-break zone kill: currently any second break; later maybe only within a time window
+- Session times following each city's DST; session end = next session start (may revisit)
+- Friday NY → Monday Tokyo carry-over (watch for odd behavior)
+- Possibly skip the Tokyo session (low volume)
+- Possibly add an overall market-bias filter
+- Possibly add equilibrium back as a confluence
