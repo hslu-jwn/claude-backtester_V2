@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Market data is large and often licensed — keep it out of git
+data/raw/*
+!data/raw/.gitkeep
+data/cache/
+
+# Backtest outputs
+results/
+
+# Secrets (broker API keys, MT5 credentials)
+.env
+*.secret
