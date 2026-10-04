@@ -6,8 +6,9 @@ Each layer only imports from the layers above it in this list.
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
-2. **data/**: `DataAdapter` interface. `CsvAdapter` now; an exchange API and MetaTrader 5
-   (FTMO) adapter later. Returns closed candles in UTC, oldest first.
+2. **data/**: `DataAdapter` interface. `Mt5Adapter` downloads from MetaTrader 5 into a local
+   cache; backtests and the chart read the cache (`CsvAdapter` / cache reader). Returns
+   closed candles in UTC, oldest first.
 3. **detectors/**: incremental, timeframe-agnostic pattern detectors. Input: a `SeriesView`.
    Output: events stamped with their confirming candle. Spec: `confluences.md`.
 4. **sessions.py**: maps UTC timestamps to Tokyo / London / New York sessions (DST-aware).
@@ -50,19 +51,30 @@ DataAdapter -> CandleSeries -> engine loop -> detectors -> strategy -> trades (R
 R trade lists are saved (e.g. as CSV/Parquet in `results/`) so `risk/` can be rerun with
 different settings, or fed the manual R log, without repeating detection.
 
+## MetaTrader 5
+
+MT5 is the source for chart data, backtest data and (Phase 7) order execution.
+
+- The `MetaTrader5` Python package only works on **Windows**, with the MT5 terminal
+  installed, running and logged in. Import it only inside `data/adapters/mt5_adapter.py`
+  (and later `execution/`), so everything else, including the tests, runs without it.
+  Tests use a fake module.
+- **Server time is not UTC.** Bar times from MT5 are in the broker's server time (many
+  brokers use UTC+2 in winter / UTC+3 in summer, switching with US DST; verify for the
+  user's FTMO server, don't assume). The adapter converts to UTC with a configurable
+  server time zone, and Phase 0.3 checks it against a known candle.
+- Bar time = candle **open** time (same as `Candle.ts`).
+- The newest bar MT5 returns may still be **forming**. The adapter drops any bar whose
+  close time is after "now". This matters most for live trading.
+- **History depth** is limited by the broker's server and the terminal's "Max bars in chart"
+  setting. Report the first available candle instead of failing silently.
+- Symbol names can differ by broker (suffixes like `.r`); keep a mapping in config.
+- Rates include a per-bar `spread` (in points). Store it in the cache; the engine can use it
+  as an approximate cost.
+- Never put login, password or server in code or git: read them from `.env` (git-ignored).
+
 ## Build order
 
-Each step ends with green tests and a commit.
-
-1. Test helpers (`make_candles` fixture) and tests for the existing core
-2. ATR + strong-move filter
-3. Swing high/low detector
-4. Trend + BOS
-5. Zone validation state machine (tap / confirmed / invalidated), shared by all zones
-6. FVG, then order block, then breaker, then BPR
-7. Session clock (DST-aware) and session zones on 30m
-8. Engine loop with multi-timeframe stepping and trade management in R
-9. Strategy 1 entry sequence, SL, TP with obstacles
-10. Chart page: candles, session lines, zones, confluences, position boxes
-11. Analytics, then `risk/` and the Risk & Prop Firm page
-12. Data adapter for a real data source; later MT5 / live trading
+See `docs/ROADMAP.md`. Phases: 0 data from MT5 → 1 chart with replay → 2 confluences on the
+chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
+6 robustness → 7 live trading via MT5.

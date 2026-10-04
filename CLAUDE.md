@@ -8,7 +8,7 @@ A Python backtester for rule-based price-action trading strategies (session zone
 order blocks, BOS, liquidity sweeps). It replays historical candles one at a time, detects
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
 account results for an **FTMO $100k challenge**. Results are shown in a TradingView-style
-Plotly/Dash web app. Live trading (MetaTrader 5 / FTMO) may come later.
+Plotly/Dash web app. Data comes from MetaTrader 5; live trading via MT5 / FTMO may come later.
 
 ## Specs are the source of truth
 
@@ -19,7 +19,8 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/confluences.md` | Swings, trend, BOS, strong-move filter, zone validation, FVG, OB, breaker, BPR, equilibrium, SMT |
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
-| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time |
+| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, MetaTrader 5 notes |
+| `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
   a trading rule. Quote the spec line you are unsure about.
@@ -70,7 +71,7 @@ Every detector needs a test proving this (see Testing).
 ```
 src/backtester/
   core/        Candle, Timeframe, Direction, CandleSeries/SeriesView, multi-timeframe clock
-  data/        DataAdapter interface + adapters (CSV now; exchange API / MT5 later)
+  data/        DataAdapter interface, MT5 adapter, local cache (data/cache/), downloader
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
   strategy/    Strategy interface + session_zone_sweep/ (strategy 1)
@@ -111,8 +112,12 @@ python -m backtester.ui.app     # start the Dash app (once implemented)
 ## Workflow
 
 - Work in small steps: one detector or component per change, tests green, then commit.
-- Follow the build order in `docs/ARCHITECTURE.md` unless the user says otherwise.
+- The user names steps by their ID in `docs/ROADMAP.md` (e.g. "do 1.2"). Do only that step,
+  then stop and tell the user how to check it (which command, what to look at on the chart).
+  Mark the step ☑ in ROADMAP.md in the same commit once the user has confirmed it.
+- Visual steps (chart, overlays) are only done when the user has looked at them. Start the
+  app for them and say what they should see.
 - Commit messages: short imperative summary (`Add FVG detector with validation tests`).
-- Never commit market data, `.env`, broker credentials or backtest outputs.
+- Never commit market data, `.env`, MT5 login/password/server or backtest outputs.
 - When done with a step, summarize what was built, what is still a stub, and any spec
   questions that came up.

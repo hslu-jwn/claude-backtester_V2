@@ -19,10 +19,12 @@ pip install -e ".[dev,ui]"
 pytest
 ```
 
-Price data goes in `data/raw/<SYMBOL>_<TF>.csv` (e.g. `XAUUSD_M5.csv`) with the header
-`timestamp,open,high,low,close[,volume]`, timestamps in UTC. Data files are not committed.
+Price data comes from MetaTrader 5 (Windows, terminal running and logged in):
+`pip install -e ".[mt5]"`, put the MT5 login in `.env`, then download into the local cache
+(see `docs/ROADMAP.md` › Phase 0). CSV files in `data/raw/<SYMBOL>_<TF>.csv` with the header
+`timestamp,open,high,low,close[,volume]` (UTC) also work. Data files are not committed.
 
 ## Status
 
 Core (candles, lookahead-safe views, multi-timeframe clock, CSV loader) is implemented and
-tested. Everything else is a documented stub; see the build order.
+tested. Everything else is a documented stub; next steps are in `docs/ROADMAP.md`.

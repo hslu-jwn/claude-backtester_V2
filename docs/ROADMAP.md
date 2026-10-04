@@ -1,0 +1,100 @@
+# Roadmap
+
+The order the project is built in. Each step is small enough for one Claude Code session:
+build it, test it, show it to the user, commit. **Don't start the next step until the user
+has checked the current one.** Step IDs (e.g. `1.2`) are how the user will refer to them.
+
+Status: ☐ open · ◐ in progress · ☑ done (update this file when a step is finished)
+
+---
+
+## Phase 0: Data from MetaTrader 5
+
+MT5 is the data source for charts and backtests, and later for executing trades.
+Details and pitfalls: `ARCHITECTURE.md › MetaTrader 5`.
+
+- ☐ **0.1 MT5 adapter.** `data/adapters/mt5_adapter.py` implementing `DataAdapter` with the
+  `MetaTrader5` package. Converts broker server time to UTC, drops the still-forming candle,
+  maps symbol names (config). Unit-tested against a fake `MetaTrader5` module, since MT5
+  only runs on Windows with the terminal open.
+- ☐ **0.2 Local cache.** `data/download.py`: download a symbol + timeframe + date range from
+  MT5 once and save it to `data/cache/` (Parquet or CSV). Backtests and the chart read only
+  the cache, never MT5 directly. Command:
+  `python -m backtester.data.download XAUUSD M5 2024-01-01 2026-10-01`.
+- ☐ **0.3 Data check.** A small report per cached file: first/last candle, gaps (expected:
+  weekends, daily broker break), duplicate timestamps, and the server-time → UTC offset
+  check. **The user verifies that one known candle matches the MT5 chart.**
+
+## Phase 1: Chart (no lookahead)
+
+- ☐ **1.1 Dash chart page.** Candlesticks from the cache. Pick symbol, timeframe and date
+  range. Approximate timestamps on the x-axis, zoom/pan, no gaps for weekends.
+- ☐ **1.2 Replay mode.** A cursor that steps forward candle by candle (buttons + autoplay
+  speed). Only candles up to the cursor are drawn, using `SeriesView`, so the chart shows
+  exactly what the engine sees. Higher timeframes during replay come from
+  `HigherTimeframeClock` only.
+- ☐ **1.3 Session lines.** Implement `sessions.py` (DST-aware, tested around the March and
+  October/November changes) and draw a vertical line at each session start.
+
+## Phase 2: Confluences on the chart (visual check)
+
+Every detector gets: tests (incl. the no-lookahead test) → an overlay layer with an on/off
+toggle → **user checks it on the chart** → commit. Overlays draw a small marker on the
+**confirming candle**, so the user can see when each pattern became known, and a hover
+text with its state (active / tapped / confirmed / invalidated).
+
+- ☐ **2.1** ATR + strong-move filter (no overlay; used by the others)
+- ☐ **2.2** Swing highs / lows
+- ☐ **2.3** Trend label + BOS
+- ☐ **2.4** Zone validation state machine (shared by all zones)
+- ☐ **2.5** FVG
+- ☐ **2.6** Order block
+- ☐ **2.7** Breaker block
+- ☐ **2.8** BPR
+- ☐ **2.9** Session zones (30m), incl. flips and the second-break kill
+- ☐ **2.10** Multi-timeframe view: show 30m zones on the 5m chart
+
+## Phase 3: Strategy 1 + backtest
+
+- ☐ **3.1 Engine.** Backtest loop over 5m with 30m/1h clocks; trade management in R
+  (SL before TP inside one candle, break-even rule at the next session start).
+  Spread from MT5 data applied to entries/exits (setting; can be switched off).
+- ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
+- ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
+- ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
+  and settings used to `results/<run>/`.
+- ☐ **3.5 Trades on the chart.** Position boxes; only the session zone and confluence used
+  for each trade are drawn. Each trade carries a reason trail (which zone, sweep candle,
+  BOS candle, confluence) shown on hover.
+- ☐ **3.6 Results view.** Trade list (click a trade → chart jumps to it), win rate,
+  expectancy, profit factor, max drawdown in R, equity curve in R, split by symbol /
+  session / tag.
+- ☐ **3.7 Cross-check with the manual backtest.** Run the same XAUUSD period as the
+  user's manual R log and compare trade by trade. Every difference is either a code bug or
+  an unclear spec rule. Clarify with the user, don't guess.
+
+## Phase 4: Settings menu
+
+- ☐ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
+  session filters, costs), with defaults from the spec.
+- ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
+  backtest run stores the exact settings it used.
+
+## Phase 5: Risk & FTMO simulation
+
+`docs/risk-management.md`: sizer, account simulator, Monte Carlo, sweep, and the
+Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
+
+## Phase 6: Robustness (before trusting any result)
+
+- ☐ **6.1** Parameter sweeps over the backtest options.
+- ☐ **6.2** In-sample / out-of-sample split: tune settings on one period, judge them only on
+  a later period the tuning never saw. Walk-forward later.
+- ☐ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
+
+## Phase 7: Live trading via MT5 (much later)
+
+Demo account first, then FTMO. Same strategy code, fed by closed candles only.
+`execution/` module with `order_send`, a kill switch, the FTMO limits from `risk/`
+enforced before every order, and a log of every decision. Not before Phases 3–6 show a
+stable edge.
