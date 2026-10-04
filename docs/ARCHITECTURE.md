@@ -93,6 +93,6 @@ comparison (0.4) and for order execution (Phase 7).
 
 ## Build order
 
-See `docs/ROADMAP.md`. Phases: 0 data from MT5 → 1 chart with replay → 2 confluences on the
+See `docs/ROADMAP.md`. Phases: 0 historical data (Dukascopy) → 1 chart with replay → 2 confluences on the
 chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
 6 robustness → 7 live trading via MT5.
