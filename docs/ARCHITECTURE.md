@@ -64,8 +64,15 @@ different settings, or fed the manual R log, without repeating detection.
   files may not be OHLC. **Verify factor and field order against a known candle**, never
   assume. A maintained library (Python, or the `dukascopy-node` CLI) may be used instead
   of a hand-written parser if it is simpler; ask the user if it adds a Node dependency.
-- Empty files for weekends and holidays are normal.
+- Daily M1 files contain **every minute of the day, weekends included**. Minutes without
+  trading are filled with flat candles (O = H = L = C, volume 0): gold's daily break
+  (21:00–21:59 UTC in summer), the weekend (Fri 21:00 → Sun 22:00 UTC in summer, so
+  Saturday is entirely flat) and holidays. Missing or empty files can still occur. The cache keeps them raw. **When resampling, these flat zero-volume minutes
+  are dropped, so the charts and backtests show the break as a gap, like TradingView.**
+  A higher-timeframe candle with no remaining minutes does not exist.
 - Resample M1 → 5m/30m/1h ourselves so every timeframe comes from the same data.
+- The server answers **HTTP 503** when it is busy or throttling; the downloader retries with
+  a growing wait, and a rerun picks up any day that still failed.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
 
 ### MetaTrader 5 (FTMO feed, live trading)

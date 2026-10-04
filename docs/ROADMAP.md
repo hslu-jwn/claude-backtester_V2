@@ -15,7 +15,7 @@ for backtest history (free, years of M1 data, UTC, bid and ask). MT5 is used to 
 recent month against FTMO's own feed, and later for live trading.
 Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
-- ☐ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
+- ☑ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
   `python -m backtester.data.download XAUUSD 2020-01-01 2026-10-01`.
   Downloads M1 **bid and ask** candles day by day, saves them to `data/cache/` (Parquet),
   skips days already downloaded (so an interrupted download can resume), waits briefly
@@ -24,7 +24,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 - ☐ **0.2 Resampling + cache reader.** Build 5m / 30m / 1h candles from the M1 cache
   (UTC-aligned) and a `CacheAdapter` implementing `DataAdapter` that the chart and
   backtests use. Keep bid candles for the chart and the spread (ask − bid) per candle for
-  costs.
+  costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
+  daily break shows as a gap like on TradingView.
 - ☐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
   holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
   (high < low etc.), and a spot check. **The user compares 3 candles at known times with
