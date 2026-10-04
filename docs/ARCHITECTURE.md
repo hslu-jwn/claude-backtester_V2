@@ -6,9 +6,10 @@ Each layer only imports from the layers above it in this list.
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
-2. **data/**: `DataAdapter` interface. `Mt5Adapter` downloads from MetaTrader 5 into a local
-   cache; backtests and the chart read the cache (`CsvAdapter` / cache reader). Returns
-   closed candles in UTC, oldest first.
+2. **data/**: `DataAdapter` interface. Dukascopy M1 history is downloaded into a local
+   cache and resampled; backtests and the chart read the cache (`CacheAdapter`).
+   `Mt5Adapter` for comparing with FTMO's feed and for live trading. Returns closed candles
+   in UTC, oldest first.
 3. **detectors/**: incremental, timeframe-agnostic pattern detectors. Input: a `SeriesView`.
    Output: events stamped with their confirming candle. Spec: `confluences.md`.
 4. **sessions.py**: maps UTC timestamps to Tokyo / London / New York sessions (DST-aware).
@@ -51,9 +52,26 @@ DataAdapter -> CandleSeries -> engine loop -> detectors -> strategy -> trades (R
 R trade lists are saved (e.g. as CSV/Parquet in `results/`) so `risk/` can be rerun with
 different settings, or fed the manual R log, without repeating detection.
 
-## MetaTrader 5
+## Data sources
 
-MT5 is the source for chart data, backtest data and (Phase 7) order execution.
+### Dukascopy (backtest history)
+
+- Free historical data, M1 candles and ticks, many years back, timestamps in **UTC**,
+  separate **bid** and **ask**.
+- Raw files are LZMA-compressed binary (`.bi5`). URL paths use **zero-based months**
+  (January = `00`). Prices are stored as integers and must be divided by a per-symbol
+  point factor (e.g. JPY pairs and gold differ from other FX pairs). Field order in candle
+  files may not be OHLC. **Verify factor and field order against a known candle**, never
+  assume. A maintained library (Python, or the `dukascopy-node` CLI) may be used instead
+  of a hand-written parser if it is simpler; ask the user if it adds a Node dependency.
+- Empty files for weekends and holidays are normal.
+- Resample M1 → 5m/30m/1h ourselves so every timeframe comes from the same data.
+- It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
+
+### MetaTrader 5 (FTMO feed, live trading)
+
+FTMO's server keeps only about one month of 5m history, so MT5 is used for the feed
+comparison (0.4) and for order execution (Phase 7).
 
 - The `MetaTrader5` Python package only works on **Windows**, with the MT5 terminal
   installed, running and logged in. Import it only inside `data/adapters/mt5_adapter.py`

@@ -8,7 +8,7 @@ A Python backtester for rule-based price-action trading strategies (session zone
 order blocks, BOS, liquidity sweeps). It replays historical candles one at a time, detects
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
 account results for an **FTMO $100k challenge**. Results are shown in a TradingView-style
-Plotly/Dash web app. Data comes from MetaTrader 5; live trading via MT5 / FTMO may come later.
+Plotly/Dash web app. History comes from Dukascopy; MetaTrader 5 (FTMO) for feed comparison and later live trading.
 
 ## Specs are the source of truth
 
@@ -19,7 +19,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/confluences.md` | Swings, trend, BOS, strong-move filter, zone validation, FVG, OB, breaker, BPR, equilibrium, SMT |
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
-| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, MetaTrader 5 notes |
+| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (Dukascopy, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
@@ -71,7 +71,7 @@ Every detector needs a test proving this (see Testing).
 ```
 src/backtester/
   core/        Candle, Timeframe, Direction, CandleSeries/SeriesView, multi-timeframe clock
-  data/        DataAdapter interface, MT5 adapter, local cache (data/cache/), downloader
+  data/        DataAdapter interface, Dukascopy downloader, cache (data/cache/), MT5 adapter
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
   strategy/    Strategy interface + session_zone_sweep/ (strategy 1)

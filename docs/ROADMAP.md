@@ -8,22 +8,32 @@ Status: ☐ open · ◐ in progress · ☑ done (update this file when a step is
 
 ---
 
-## Phase 0: Data from MetaTrader 5
+## Phase 0: Historical data
 
-MT5 is the data source for charts and backtests, and later for executing trades.
-Details and pitfalls: `ARCHITECTURE.md › MetaTrader 5`.
+FTMO's MT5 server only keeps about one month of 5m history, so **Dukascopy** is the source
+for backtest history (free, years of M1 data, UTC, bid and ask). MT5 is used to compare the
+recent month against FTMO's own feed, and later for live trading.
+Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
-- ☐ **0.1 MT5 adapter.** `data/adapters/mt5_adapter.py` implementing `DataAdapter` with the
-  `MetaTrader5` package. Converts broker server time to UTC, drops the still-forming candle,
-  maps symbol names (config). Unit-tested against a fake `MetaTrader5` module, since MT5
-  only runs on Windows with the terminal open.
-- ☐ **0.2 Local cache.** `data/download.py`: download a symbol + timeframe + date range from
-  MT5 once and save it to `data/cache/` (Parquet or CSV). Backtests and the chart read only
-  the cache, never MT5 directly. Command:
-  `python -m backtester.data.download XAUUSD M5 2024-01-01 2026-10-01`.
-- ☐ **0.3 Data check.** A small report per cached file: first/last candle, gaps (expected:
-  weekends, daily broker break), duplicate timestamps, and the server-time → UTC offset
-  check. **The user verifies that one known candle matches the MT5 chart.**
+- ☐ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
+  `python -m backtester.data.download XAUUSD 2020-01-01 2026-10-01`.
+  Downloads M1 **bid and ask** candles day by day, saves them to `data/cache/` (Parquet),
+  skips days already downloaded (so an interrupted download can resume), waits briefly
+  between requests. Symbols: XAUUSD, GBPUSD, GBPJPY. Tests use saved sample files, not the
+  network.
+- ☐ **0.2 Resampling + cache reader.** Build 5m / 30m / 1h candles from the M1 cache
+  (UTC-aligned) and a `CacheAdapter` implementing `DataAdapter` that the chart and
+  backtests use. Keep bid candles for the chart and the spread (ask − bid) per candle for
+  costs.
+- ☐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
+  holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
+  (high < low etc.), and a spot check. **The user compares 3 candles at known times with
+  TradingView or MT5** (remember MT5 shows server time, usually UTC+2/+3).
+- ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
+  `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
+  mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of
+  Dukascopy vs FTMO candles: average difference of highs/lows/closes, how often candle color
+  differs. Tells us how far Dukascopy backtests can be trusted for FTMO.
 
 ## Phase 1: Chart (no lookahead)
 

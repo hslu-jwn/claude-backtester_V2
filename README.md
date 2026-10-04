@@ -19,9 +19,9 @@ pip install -e ".[dev,ui]"
 pytest
 ```
 
-Price data comes from MetaTrader 5 (Windows, terminal running and logged in):
-`pip install -e ".[mt5]"`, put the MT5 login in `.env`, then download into the local cache
-(see `docs/ROADMAP.md` › Phase 0). CSV files in `data/raw/<SYMBOL>_<TF>.csv` with the header
+Historical data comes from Dukascopy, downloaded into a local cache
+(`pip install -e ".[data]"`, see `docs/ROADMAP.md` › Phase 0). MetaTrader 5 (FTMO) is used
+for feed comparison and later live trading: `pip install -e ".[mt5]"` and the login in `.env`. CSV files in `data/raw/<SYMBOL>_<TF>.csv` with the header
 `timestamp,open,high,low,close[,volume]` (UTC) also work. Data files are not committed.
 
 ## Status
