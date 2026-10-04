@@ -18,14 +18,13 @@ from pathlib import Path
 import pandas as pd
 
 from backtester.data.dukascopy import (
+    DEFAULT_CACHE_DIR,
     POINT_FACTORS,
     DayStatus,
     DukascopyConfig,
     DukascopyDownloader,
     read_cached_day,
 )
-
-DEFAULT_CACHE_DIR = Path("data/cache/dukascopy")
 
 
 def main(argv: list[str] | None = None) -> int:

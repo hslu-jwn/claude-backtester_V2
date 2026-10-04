@@ -47,6 +47,8 @@ _RECORD = struct.Struct(">5If")  # time, open, close, low, high, volume
 _PRICE_FIELDS = ("open", "high", "low", "close")
 _COLUMNS = ["ts"] + [f"{s}_{f}" for s in ("bid", "ask") for f in (*_PRICE_FIELDS, "volume")]
 
+DEFAULT_CACHE_DIR = Path("data/cache/dukascopy")
+
 # Divisor turning Dukascopy's integer prices into quoted prices.
 # Must be verified against a known candle (ARCHITECTURE.md › Data sources).
 POINT_FACTORS: dict[str, int] = {
@@ -184,7 +186,7 @@ class DukascopyDownloader:
             self.fetcher = http_fetcher(self.config)
 
     def path_for(self, symbol: str, day: date) -> Path:
-        return self.cache_dir / symbol / f"{day.year:04d}" / f"{day.isoformat()}.parquet"
+        return cache_path(self.cache_dir, symbol, day)
 
     def download(
         self, symbol: str, start: date, end: date, today: date | None = None
@@ -225,6 +227,10 @@ class DukascopyDownloader:
         _write_atomic(frame, path)
         status = DayStatus.EMPTY if frame.empty else DayStatus.DOWNLOADED
         return DayResult(day, status, rows=len(frame))
+
+
+def cache_path(cache_dir: Path, symbol: str, day: date) -> Path:
+    return Path(cache_dir) / symbol / f"{day.year:04d}" / f"{day.isoformat()}.parquet"
 
 
 def read_cached_day(path: Path) -> pd.DataFrame:

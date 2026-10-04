@@ -21,11 +21,12 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   skips days already downloaded (so an interrupted download can resume), waits briefly
   between requests. Symbols: XAUUSD, GBPUSD, GBPJPY. Tests use saved sample files, not the
   network.
-- ☐ **0.2 Resampling + cache reader.** Build 5m / 30m / 1h candles from the M1 cache
+- ☑ **0.2 Resampling + cache reader.** Build 5m / 30m / 1h candles from the M1 cache
   (UTC-aligned) and a `CacheAdapter` implementing `DataAdapter` that the chart and
   backtests use. Keep bid candles for the chart and the spread (ask − bid) per candle for
   costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
   daily break shows as a gap like on TradingView.
+  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
 - ☐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
   holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
   (high < low etc.), and a spot check. **The user compares 3 candles at known times with

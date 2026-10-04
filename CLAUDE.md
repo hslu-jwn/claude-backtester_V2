@@ -88,11 +88,12 @@ docs/          Specs (source of truth)
 
 ```bash
 python -m venv .venv            # then activate it (.venv\Scripts\activate on Windows)
-pip install -e ".[dev,ui]"
+pip install -e ".[dev,ui,data]"
 pytest                          # all tests
 pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
 python -m backtester.ui.app     # start the Dash app (once implemented)
+python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 ```
 
 ## Testing

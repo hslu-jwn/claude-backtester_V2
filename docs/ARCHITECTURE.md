@@ -71,6 +71,13 @@ different settings, or fed the manual R log, without repeating detection.
   are dropped, so the charts and backtests show the break as a gap, like TradingView.**
   A higher-timeframe candle with no remaining minutes does not exist.
 - Resample M1 → 5m/30m/1h ourselves so every timeframe comes from the same data.
+  Candles are bucketed by UTC-floored open time and built from **bid** prices. A partly
+  filled bucket (e.g. the hour the break starts) keeps its regular open and close time.
+  Each candle's `spread` is the **mean of the per-minute close spreads** (ask − bid) over
+  its remaining minutes. D1 is not built (a UTC day is not the trading day).
+- `CacheAdapter` (`data/adapters/cache_adapter.py`) raises an error for any requested day
+  that was never downloaded, so gaps in the cache are never silent. A day Dukascopy had no
+  data for is cached as empty and simply has no candles.
 - The server answers **HTTP 503** when it is busy or throttling; the downloader retries with
   a growing wait, and a rerun picks up any day that still failed.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).

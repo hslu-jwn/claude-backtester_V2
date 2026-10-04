@@ -33,6 +33,8 @@ class Candle:
     """One OHLCV bar. `ts` is the candle OPEN time (UTC).
 
     A candle is only knowable once it has closed, i.e. at `ts + timeframe.duration`.
+    `spread` is the average ask − bid over the candle in price units (0 if the source has
+    no ask prices, NaN if unknown for this candle).
     """
 
     ts: datetime
@@ -41,6 +43,7 @@ class Candle:
     low: float
     close: float
     volume: float = 0.0
+    spread: float = 0.0
 
     def __post_init__(self) -> None:
         if self.high < max(self.open, self.close) or self.low > min(self.open, self.close):
