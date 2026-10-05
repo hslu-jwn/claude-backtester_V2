@@ -6,6 +6,7 @@
 - High: green candle followed by red. High = highest wick of the two.
 - Low: red candle followed by green. Low = lowest wick of the two.
 - Doji/thin candles are skipped and don't break the pattern, so a swing can span more than 2 candles.
+- **Doji/thin candle:** body |close − open| ≤ a per-symbol maximum (setting). XAUUSD: 0.065 (user-defined, same on every timeframe). GBPUSD / GBPJPY: not defined yet, ask the user before using those pairs. Bid prices, as on the chart.
 
 ## Trend
 - Uptrend: 2 consecutive HH + HL. Downtrend: 2 consecutive LH + LL. Otherwise sideways.
