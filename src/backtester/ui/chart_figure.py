@@ -7,6 +7,10 @@ step chosen from the visible time span (`time_ticks`). Hover shows the exact ope
 
 During replay (1.2) the figure gets only the candles of a `SeriesView` (`frame_from_candles`),
 drawn at their absolute positions (`first_x`), so the x positions match the full chart.
+
+Session lines (1.3): a dashed vertical line at each session start (`sessions.py`), drawn
+only over the candles in the frame, so during replay no line appears past the cursor.
+One switch shows or hides all session lines; hidden on timeframes above `session_max_timeframe`.
 """
 
 from __future__ import annotations
@@ -21,6 +25,7 @@ import plotly.graph_objects as go
 from backtester.core.models import Candle, Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import CANDLE_COLUMNS
+from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
 
 # Label steps in minutes. All divide a week, so steps are anchored on a Monday 00:00 UTC.
 TICK_STEPS = (5, 15, 30, 60, 120, 240, 360, 720, 1440, 10080)
@@ -42,6 +47,15 @@ class ChartConfig:
     background: str = "#131722"
     grid_color: str = "#2a2e39"
     text_color: str = "#d1d4dc"
+    tokyo_color: str = "#f5c518"
+    london_color: str = "#2962ff"
+    new_york_color: str = "#f23645"
+    session_line_width: int = 1
+    session_line_dash: str = "dash"
+    session_max_timeframe: Timeframe = Timeframe.H4  # more lines than candles above this
+
+    def session_color(self, session: Session) -> str:
+        return getattr(self, f"{session.value}_color")
 
 
 DEFAULT_CONFIG = ChartConfig()
@@ -107,6 +121,86 @@ def y_range(frame: pd.DataFrame, lo: int, hi: int, padding: float) -> list[float
     return [low - pad, high + pad]
 
 
+SESSION_LABELS = {Session.TOKYO: "Tokyo", Session.LONDON: "London", Session.NEW_YORK: "NY"}
+
+
+def session_line_positions(
+    ts: pd.Series,
+    timeframe: Timeframe,
+    first_x: int = 0,
+    sessions: SessionConfig = DEFAULT_SESSIONS,
+) -> list[tuple[float, Session]]:
+    """(x, session) for each session start within the candles `ts` (open times, UTC).
+
+    x is the start's place on the candle axis: the left edge of the candle opening at it
+    (x - 0.5), or a point inside the candle containing it (H4). A start inside a gap (e.g.
+    after a holiday) goes to the next candle's left edge, if that candle is still in the
+    session; sessions without candles get no line.
+    """
+    if ts.empty:
+        return []
+    duration = pd.Timedelta(timeframe.duration)
+    opens = ts.reset_index(drop=True)
+    first, end = opens.iloc[0].to_pydatetime(), (opens.iloc[-1] + duration).to_pydatetime()
+    positions = []
+    for s in session_starts(first, end, sessions):
+        start = pd.Timestamp(s.start)
+        i = int(opens.searchsorted(start, side="right")) - 1
+        if opens.iloc[i] + duration > start:
+            offset = (start - opens.iloc[i]) / duration
+        elif i + 1 < len(opens) and opens.iloc[i + 1] < pd.Timestamp(s.end):
+            i, offset = i + 1, 0.0
+        else:
+            continue
+        positions.append((first_x + i - 0.5 + offset, s.session))
+    return positions
+
+
+def _session_shapes(
+    ts: pd.Series,
+    timeframe: Timeframe,
+    first_x: int,
+    config: ChartConfig,
+) -> tuple[list[dict], list[dict]]:
+    """Layout shapes and labels for the session lines."""
+    if timeframe.value > config.session_max_timeframe.value:
+        return [], []
+    lines = session_line_positions(ts, timeframe, first_x)
+    shapes = [
+        {
+            "type": "line",
+            "xref": "x",
+            "yref": "paper",
+            "x0": x,
+            "x1": x,
+            "y0": 0,
+            "y1": 1,
+            "line": {
+                "color": config.session_color(s),
+                "width": config.session_line_width,
+                "dash": config.session_line_dash,
+            },
+            "layer": "below",
+        }
+        for x, s in lines
+    ]
+    labels = [
+        {
+            "x": x,
+            "y": 1,
+            "xref": "x",
+            "yref": "paper",
+            "text": SESSION_LABELS[s],
+            "showarrow": False,
+            "xanchor": "left",
+            "yanchor": "top",
+            "font": {"color": config.session_color(s), "size": 10},
+        }
+        for x, s in lines
+    ]
+    return shapes, labels
+
+
 def frame_from_candles(candles: Sequence[Candle]) -> pd.DataFrame:
     """Candles (e.g. from a `SeriesView`) as a frame with the cache adapter's columns."""
     frame = pd.DataFrame(
@@ -124,11 +218,13 @@ def build_candle_figure(
     config: ChartConfig = DEFAULT_CONFIG,
     first_x: int = 0,
     x_range: tuple[float, float] | None = None,
+    show_sessions: bool = True,
 ) -> go.Figure:
     """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread).
 
     The first candle is drawn at x = `first_x`. `x_range` is the initially visible x range
     (default: all candles); labels and price range fit the candles inside it.
+    `show_sessions` draws the session start lines.
     """
     digits = price_digits(symbol)
     n = len(frame)
@@ -156,7 +252,12 @@ def build_candle_figure(
         )
     )
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
+    shapes, labels = (
+        _session_shapes(frame["ts"], timeframe, first_x, config) if show_sessions else ([], [])
+    )
     fig.update_layout(
+        shapes=shapes,
+        annotations=labels,
         title={"text": f"{symbol} · {timeframe.name} · bid · UTC", "x": 0.01},
         paper_bgcolor=config.background,
         plot_bgcolor=config.background,

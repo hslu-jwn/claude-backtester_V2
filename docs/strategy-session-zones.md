@@ -4,6 +4,7 @@
 
 ## Sessions
 - Starts (ET): New York 08:00, London 03:00, Tokyo 20:00. Each session follows its own city's daylight-saving shifts and ends when the next one starts.
+- Local start times: Tokyo 09:00 Asia/Tokyo (no DST: 20:00 ET in US summer, 19:00 ET in US winter), London 08:00 Europe/London (04:00 ET in the weeks when US and European DST dates differ), New York 08:00 America/New_York. The ET times above are the US summer values. Sessions run Monday to Friday by their own city's date.
 - A chart line is drawn at each session start.
 - Candles before a session start belong to the previous session. Sunday-open candles before Tokyo's start are ignored and form no zones.
 

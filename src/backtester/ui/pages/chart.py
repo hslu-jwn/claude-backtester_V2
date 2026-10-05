@@ -13,7 +13,10 @@ Replay steps on the shown timeframe (M5: 5 minutes per step, H1: one hour). The 
 state stores `now` (the close time of the cursor candle), so switching timeframe keeps the
 replay time: the chart then shows the candles of that timeframe closed at `now`.
 
-Later steps add: session lines (1.3), zones, confluences and position boxes.
+Session lines (ROADMAP.md › 1.3): the "Sessions" switch shows or hides all session start
+lines (Tokyo, London, NY), in the normal chart and in replay; the choice is kept in the browser.
+
+Later steps add: zones, confluences and position boxes.
 """
 
 from __future__ import annotations
@@ -58,6 +61,7 @@ def load_chart(
     start_date: str | None,
     end_date: str | None,
     config: ChartConfig = DEFAULT_CONFIG,
+    show_sessions: bool = True,
 ):
     """Figure, message and stored candle data for the chosen inputs.
 
@@ -67,7 +71,9 @@ def load_chart(
     frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
     if frame is None:
         return None, message, None
-    figure = build_candle_figure(frame, symbol, Timeframe[timeframe], config)
+    figure = build_candle_figure(
+        frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions
+    )
     return figure, message, _axis_store(frame)
 
 
@@ -180,7 +186,11 @@ def replay_step(action: str, state: dict, replay: Replay | None, clicked_x=None)
     raise ValueError(f"unknown replay action {action!r}")
 
 
-def replay_figure(view: SeriesView, config: ChartConfig = DEFAULT_CONFIG):
+def replay_figure(
+    view: SeriesView,
+    config: ChartConfig = DEFAULT_CONFIG,
+    show_sessions: bool = True,
+):
     """(figure, axis store) drawn only from `view`: its last `replay_window` candles, at
     their absolute positions, with the cursor near the right edge."""
     candles = view.last(config.replay_window)
@@ -190,18 +200,25 @@ def replay_figure(view: SeriesView, config: ChartConfig = DEFAULT_CONFIG):
         view.cursor - config.replay_visible + 0.5,
         view.cursor + config.replay_right_space + 0.5,
     )
-    figure = build_candle_figure(frame, view.symbol, view.timeframe, config, first_x, x_range)
+    figure = build_candle_figure(
+        frame, view.symbol, view.timeframe, config, first_x, x_range, show_sessions
+    )
     return figure, _axis_store(frame, first_x)
 
 
-def replay_chart(replay: Replay, state: dict, config: ChartConfig = DEFAULT_CONFIG):
+def replay_chart(
+    replay: Replay,
+    state: dict,
+    config: ChartConfig = DEFAULT_CONFIG,
+    show_sessions: bool = True,
+):
     """(figure or None, message, axis store or None) at the replay time `state["now"]`."""
     now = datetime.fromisoformat(state["now"])
     cursor = replay.cursor_at(now)
     if cursor is None:
         return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
     view = replay.view(cursor)
-    figure, store = replay_figure(view, config)
+    figure, store = replay_figure(view, config, show_sessions)
     message = (
         f"Replay · candle {cursor + 1:,} of {len(replay):,} · "
         f"{view.current.ts:%Y-%m-%d %H:%M} {replay.timeframe.name} candle, closed at "
@@ -261,6 +278,14 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                     html.Span("Days (UTC)", style=label),
                     dcc.DatePickerRange(
                         id="chart-dates", display_format="YYYY-MM-DD", first_day_of_week=1
+                    ),
+                    dcc.Checklist(
+                        id="chart-sessions",
+                        options=[{"label": "Sessions", "value": "on"}],
+                        value=["on"],
+                        persistence=True,
+                        style={"color": "#d1d4dc"},
+                        inputStyle={"marginRight": "4px"},
                     ),
                     html.Button("Replay", id="chart-replay-toggle", title="Replay on/off"),
                     html.Div(
@@ -341,17 +366,21 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         Input("chart-dates", "start_date"),
         Input("chart-dates", "end_date"),
         Input("chart-replay", "data"),
+        Input("chart-sessions", "value"),
         State("chart-graph", "style"),
     )
-    def _draw(symbol, timeframe, start_date, end_date, replay_state, style):
+    def _draw(symbol, timeframe, start_date, end_date, replay_state, sessions_switch, style):
         args = (cache_dir, symbol, timeframe, start_date, end_date, config)
+        show_sessions = bool(sessions_switch)
         if replay_state["on"] and not replay_state["picking"]:
             replay, message = load_replay(*args)
             figure, message, store = (
-                replay_chart(replay, replay_state, config) if replay else (None, message, None)
+                replay_chart(replay, replay_state, config, show_sessions)
+                if replay
+                else (None, message, None)
             )
         else:
-            figure, message, store = load_chart(*args)
+            figure, message, store = load_chart(*args, show_sessions=show_sessions)
             if replay_state["on"] and figure:
                 now = datetime.fromisoformat(replay_state["now"])
                 message = (

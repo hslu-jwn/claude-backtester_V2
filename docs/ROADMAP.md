@@ -60,8 +60,9 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Replay steps on the shown timeframe (M5: 5 minutes per step, H1: one hour) and keeps
   the replay time when switching timeframe. Start: click a candle (default: first candle of
   the last day). `engine/replay.py` hands out the views; the 3.1 engine loop reuses it.
-- ☐ **1.3 Session lines.** Implement `sessions.py` (DST-aware, tested around the March and
-  October/November changes) and draw a vertical line at each session start.
+- ☑ **1.3 Session lines.** Implement `sessions.py` (DST-aware, tested around the March and
+  October/November changes) and draw a vertical line at each session start (Tokyo yellow,
+  London blue, NY red), with one "Sessions" switch to show or hide them all.
 
 ## Phase 2: Confluences on the chart (visual check)
 
