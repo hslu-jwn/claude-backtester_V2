@@ -36,6 +36,9 @@ for each base-timeframe candle i (5m for strategy 1), oldest first:
     4. engine fills orders at candle i's close (spec: "enter at that close")
 ```
 
+`engine/replay.py` (`Replay`) gives the views for a cursor (`v5` and, via the clocks, `v30`/`v1h`).
+The chart replay (ROADMAP 1.2) draws from it, so it shows exactly what the engine sees.
+
 A higher-timeframe detector is updated only when a new candle of that timeframe has
 closed, so it is called exactly once per candle, as on its own chart.
 

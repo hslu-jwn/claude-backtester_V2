@@ -5,36 +5,50 @@ inclusive, limited to cached days). A range touching a day that was never downlo
 the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
 Zooming or panning updates the x-axis labels and fits the price axis to the visible candles.
 
-Later steps add: replay (1.2), session lines (1.3), zones, confluences and position boxes.
+Replay (ROADMAP.md › 1.2): "Replay" first shows the full chart and asks for a start candle
+(click one, or press ▶ to start at the first candle of the last day). From then on only the
+candles of `Replay.view(cursor)` are drawn, a `SeriesView`, so the chart shows exactly what
+the engine sees; the price axis and the x-axis labels also come only from those candles.
+Replay steps on the shown timeframe (M5: 5 minutes per step, H1: one hour). The replay
+state stores `now` (the close time of the cursor candle), so switching timeframe keeps the
+replay time: the chart then shows the candles of that timeframe closed at `now`.
+
+Later steps add: session lines (1.3), zones, confluences and position boxes.
 """
 
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
-from dash import Dash, Input, Output, Patch, State, dcc, html, no_update
+from dash import Dash, Input, Output, Patch, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
+from backtester.core.series import CandleSeries, SeriesView
 from backtester.data.adapters.cache_adapter import (
     CacheAdapter,
     MissingCacheError,
     available_symbols,
     cached_days,
+    candles_from_frame,
     latest_run,
 )
 from backtester.data.resample import supported
+from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import (
     DEFAULT_CONFIG,
     ChartConfig,
     build_candle_figure,
+    frame_from_candles,
     time_ticks,
     y_range,
 )
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
 DEFAULT_TIMEFRAME = Timeframe.M5.name
+REPLAY_OFF = {"on": False, "picking": False, "playing": False, "start": None, "now": None}
 
 
 def load_chart(
@@ -50,62 +64,179 @@ def load_chart(
     Returns (figure or None, message, store data or None). `start_date`/`end_date` are
     ISO days, both inclusive.
     """
+    frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
+    if frame is None:
+        return None, message, None
+    figure = build_candle_figure(frame, symbol, Timeframe[timeframe], config)
+    return figure, message, _axis_store(frame)
+
+
+def _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config):
+    """(candle frame or None, message) for the chosen inputs."""
     if not (symbol and timeframe and start_date and end_date):
-        return None, "Pick a symbol, timeframe and date range.", None
+        return None, "Pick a symbol, timeframe and date range."
     start, end = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
     if end < start:
-        return None, "The end date is before the start date.", None
+        return None, "The end date is before the start date."
     try:
         frame = CacheAdapter(cache_dir).fetch_frame(
             symbol, Timeframe[timeframe], _midnight(start), _midnight(end + timedelta(days=1))
         )
     except MissingCacheError as e:
-        return None, str(e), None
+        return None, str(e)
     if frame.empty:
-        return None, f"No {symbol} candles from {start} to {end} (market closed?).", None
+        return None, f"No {symbol} candles from {start} to {end} (market closed?)."
     if len(frame) > config.max_candles:
-        return (
-            None,
-            (
-                f"{len(frame):,} {timeframe} candles is more than the limit of "
-                f"{config.max_candles:,}. Pick a shorter range or a higher timeframe."
-            ),
-            None,
+        return None, (
+            f"{len(frame):,} {timeframe} candles is more than the limit of "
+            f"{config.max_candles:,}. Pick a shorter range or a higher timeframe."
         )
-    store = {
+    return frame, f"{len(frame):,} {timeframe} candles, {start} to {end} (UTC)."
+
+
+def _axis_store(frame: pd.DataFrame, x0: int = 0) -> dict:
+    """What the zoom callback needs: open times and lows/highs of the drawn candles, which
+    start at x = x0. During replay these are only candles up to the cursor."""
+    return {
+        "x0": x0,
         "ts": frame["ts"].dt.strftime("%Y-%m-%dT%H:%M:%SZ").tolist(),
         "low": frame["low"].tolist(),
         "high": frame["high"].tolist(),
     }
-    message = f"{len(frame):,} {timeframe} candles, {start} to {end} (UTC)."
-    return build_candle_figure(frame, symbol, Timeframe[timeframe], config), message, store
+
+
+@lru_cache(maxsize=8)
+def _cached_replay(cache_dir, symbol, timeframe, start_date, end_date, config):
+    frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
+    if frame is None:
+        return None, message
+    series = CandleSeries(symbol, Timeframe[timeframe], candles_from_frame(frame))
+    return Replay(series), message
+
+
+def load_replay(
+    cache_dir: Path,
+    symbol: str | None,
+    timeframe: str | None,
+    start_date: str | None,
+    end_date: str | None,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple[Replay | None, str]:
+    """(Replay over the chosen candles or None, message). Kept in memory for the next steps
+    (restart the app to see days downloaded while it runs)."""
+    return _cached_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+
+
+def default_start(replay: Replay) -> int:
+    """Cursor of the first candle of the last UTC day in the replay."""
+    last = replay.close_time(len(replay) - 1) - replay.timeframe.duration
+    before = replay.cursor_at(datetime.combine(last.date(), datetime.min.time(), UTC))
+    return 0 if before is None else before + 1
+
+
+def replay_step(action: str, state: dict, replay: Replay | None, clicked_x=None) -> dict:
+    """Next replay state after a button, timer tick, candle click or data change.
+
+    Actions: toggle, pick, click, start (back to the start candle), back, forward, play
+    (play/pause), tick (autoplay step), data (symbol/timeframe/dates changed).
+    """
+    if action == "toggle":
+        if state["on"] or replay is None:
+            return dict(REPLAY_OFF)
+        now = _iso(replay.close_time(default_start(replay)))
+        return {"on": True, "picking": True, "playing": False, "start": now, "now": now}
+    if not state["on"] or replay is None:
+        return state
+    now = datetime.fromisoformat(state["now"])
+    if action == "data":
+        if replay.close_time(0) <= now <= replay.close_time(len(replay) - 1):
+            return state
+        start = _iso(replay.close_time(default_start(replay)))
+        return {**state, "picking": True, "playing": False, "start": start, "now": start}
+    if action == "pick":
+        return {**state, "picking": True, "playing": False}
+    if action == "click":
+        if clicked_x is None or not 0 <= clicked_x < len(replay):
+            return state
+        at = _iso(replay.close_time(int(clicked_x)))
+        return {**state, "picking": False, "playing": False, "start": at, "now": at}
+    if action == "start":
+        return {**state, "picking": False, "playing": False, "now": state["start"]}
+    if action == "play":
+        return {**state, "picking": False, "playing": not state["playing"]}
+    if action == "tick" and not state["playing"]:
+        return state
+
+    cursor = replay.cursor_at(now)
+    if action == "back":
+        to = 0 if cursor is None else max(cursor - 1, 0)
+        return {**state, "picking": False, "playing": False, "now": _iso(replay.close_time(to))}
+    if action in ("forward", "tick"):
+        to = 0 if cursor is None else cursor + 1
+        if to >= len(replay):
+            return {**state, "picking": False, "playing": False}
+        playing = action == "tick" and to < len(replay) - 1
+        return {**state, "picking": False, "playing": playing, "now": _iso(replay.close_time(to))}
+    raise ValueError(f"unknown replay action {action!r}")
+
+
+def replay_figure(view: SeriesView, config: ChartConfig = DEFAULT_CONFIG):
+    """(figure, axis store) drawn only from `view`: its last `replay_window` candles, at
+    their absolute positions, with the cursor near the right edge."""
+    candles = view.last(config.replay_window)
+    first_x = view.cursor + 1 - len(candles)
+    frame = frame_from_candles(candles)
+    x_range = (
+        view.cursor - config.replay_visible + 0.5,
+        view.cursor + config.replay_right_space + 0.5,
+    )
+    figure = build_candle_figure(frame, view.symbol, view.timeframe, config, first_x, x_range)
+    return figure, _axis_store(frame, first_x)
+
+
+def replay_chart(replay: Replay, state: dict, config: ChartConfig = DEFAULT_CONFIG):
+    """(figure or None, message, axis store or None) at the replay time `state["now"]`."""
+    now = datetime.fromisoformat(state["now"])
+    cursor = replay.cursor_at(now)
+    if cursor is None:
+        return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
+    view = replay.view(cursor)
+    figure, store = replay_figure(view, config)
+    message = (
+        f"Replay · candle {cursor + 1:,} of {len(replay):,} · "
+        f"{view.current.ts:%Y-%m-%d %H:%M} {replay.timeframe.name} candle, closed at "
+        f"{replay.close_time(cursor):%H:%M} UTC"
+    )
+    return figure, message, store
 
 
 def visible_axes(relayout: dict | None, store: dict | None, config: ChartConfig = DEFAULT_CONFIG):
     """New x-axis labels and price range after a zoom/pan, or None if nothing to change."""
     if not relayout or not store:
         return None
-    n = len(store["ts"])
+    n, first = len(store["ts"]), store.get("x0", 0)
     if relayout.get("xaxis.autorange"):
-        x0, x1 = 0.0, n - 1.0
+        x0, x1 = first, first + n - 1.0
     elif "xaxis.range[0]" in relayout:
         x0, x1 = relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]
     elif "xaxis.range" in relayout:
         x0, x1 = relayout["xaxis.range"]
     else:
         return None
-    lo, hi = max(round(x0), 0), min(round(x1), n - 1)
+    lo, hi = max(round(x0) - first, 0), min(round(x1) - first, n - 1)
     if hi < lo:
         return None
     ts = pd.to_datetime(pd.Series(store["ts"]), utc=True)
     tickvals, ticktext = time_ticks(ts, lo, hi, config.max_ticks)
     prices = pd.DataFrame({"low": store["low"], "high": store["high"]})
+    tickvals = [first + p for p in tickvals]
     return tickvals, ticktext, y_range(prices, lo, hi, config.y_padding)
 
 
-def layout(cache_dir: Path) -> html.Div:
+def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
     symbols = available_symbols(cache_dir)
     label = {"color": "#d1d4dc", "marginRight": "6px"}
+    row = {"display": "flex", "alignItems": "center", "gap": "8px", "padding": "8px"}
     return html.Div(
         [
             html.Div(
@@ -131,11 +262,38 @@ def layout(cache_dir: Path) -> html.Div:
                     dcc.DatePickerRange(
                         id="chart-dates", display_format="YYYY-MM-DD", first_day_of_week=1
                     ),
+                    html.Button("Replay", id="chart-replay-toggle", title="Replay on/off"),
+                    html.Div(
+                        [
+                            html.Button("Pick start", id="chart-replay-pick"),
+                            html.Button("⏮", id="chart-replay-start", title="Back to start"),
+                            html.Button("◀", id="chart-replay-back", title="One candle back"),
+                            html.Button("▶", id="chart-replay-forward", title="One candle"),
+                            html.Button("Play", id="chart-replay-play"),
+                            dcc.Dropdown(
+                                id="chart-replay-speed",
+                                options=[
+                                    {"label": f"{s}/s", "value": s} for s in config.replay_speeds
+                                ],
+                                value=config.replay_default_speed,
+                                clearable=False,
+                                style={"width": "80px"},
+                            ),
+                        ],
+                        id="chart-replay-controls",
+                        style={**row, "display": "none", "padding": "0"},
+                    ),
                 ],
-                style={"display": "flex", "alignItems": "center", "gap": "8px", "padding": "8px"},
+                style=row,
             ),
             html.Div(id="chart-message", style={"color": "#d1d4dc", "padding": "0 8px"}),
             dcc.Store(id="chart-candles"),
+            dcc.Store(id="chart-replay", data=REPLAY_OFF),
+            dcc.Interval(
+                id="chart-replay-timer",
+                interval=1000 // config.replay_default_speed,
+                disabled=True,
+            ),
             dcc.Graph(
                 id="chart-graph",
                 style={"height": "calc(100vh - 110px)", "display": "none"},
@@ -182,14 +340,67 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         Input("chart-timeframe", "value"),
         Input("chart-dates", "start_date"),
         Input("chart-dates", "end_date"),
+        Input("chart-replay", "data"),
         State("chart-graph", "style"),
     )
-    def _draw(symbol, timeframe, start_date, end_date, style):
-        figure, message, store = load_chart(
-            cache_dir, symbol, timeframe, start_date, end_date, config
-        )
+    def _draw(symbol, timeframe, start_date, end_date, replay_state, style):
+        args = (cache_dir, symbol, timeframe, start_date, end_date, config)
+        if replay_state["on"] and not replay_state["picking"]:
+            replay, message = load_replay(*args)
+            figure, message, store = (
+                replay_chart(replay, replay_state, config) if replay else (None, message, None)
+            )
+        else:
+            figure, message, store = load_chart(*args)
+            if replay_state["on"] and figure:
+                now = datetime.fromisoformat(replay_state["now"])
+                message = (
+                    "Replay: click the candle to start at, or press ▶ to start after the "
+                    f"candle closing at {now:%Y-%m-%d %H:%M} UTC."
+                )
         style = {**(style or {}), "display": "block" if figure else "none"}
         return figure or {}, style, message, store
+
+    @app.callback(
+        Output("chart-replay", "data"),
+        Output("chart-replay-timer", "disabled"),
+        Output("chart-replay-play", "children"),
+        Output("chart-replay-controls", "style"),
+        Output("chart-replay-toggle", "style"),
+        Input("chart-replay-toggle", "n_clicks"),
+        Input("chart-replay-pick", "n_clicks"),
+        Input("chart-replay-start", "n_clicks"),
+        Input("chart-replay-back", "n_clicks"),
+        Input("chart-replay-forward", "n_clicks"),
+        Input("chart-replay-play", "n_clicks"),
+        Input("chart-replay-timer", "n_intervals"),
+        Input("chart-graph", "clickData"),
+        Input("chart-symbol", "value"),
+        Input("chart-timeframe", "value"),
+        Input("chart-dates", "start_date"),
+        Input("chart-dates", "end_date"),
+        State("chart-replay", "data"),
+        State("chart-replay-controls", "style"),
+        prevent_initial_call=True,
+    )
+    def _replay_control(*args):
+        symbol, timeframe, start_date, end_date, state, controls_style = args[-6:]
+        action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
+        replay, _ = load_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+        clicked = ctx.triggered[0]["value"] if action == "click" else None
+        clicked_x = clicked["points"][0]["x"] if clicked and clicked.get("points") else None
+        new = replay_step(action, state, replay, clicked_x)
+        return (
+            new if new != state else no_update,
+            not new["playing"],
+            "Pause" if new["playing"] else "Play",
+            {**controls_style, "display": "flex" if new["on"] else "none"},
+            {"fontWeight": "bold", "background": "#2962ff", "color": "white"} if new["on"] else {},
+        )
+
+    @app.callback(Output("chart-replay-timer", "interval"), Input("chart-replay-speed", "value"))
+    def _speed(speed):
+        return 1000 // speed
 
     @app.callback(
         Output("chart-graph", "figure", allow_duplicate=True),
@@ -208,6 +419,22 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         if yrange:
             patch["layout"]["yaxis"]["range"] = yrange
         return patch
+
+
+_REPLAY_ACTIONS = {
+    "chart-replay-toggle": "toggle",
+    "chart-replay-pick": "pick",
+    "chart-replay-start": "start",
+    "chart-replay-back": "back",
+    "chart-replay-forward": "forward",
+    "chart-replay-play": "play",
+    "chart-replay-timer": "tick",
+    "chart-graph": "click",
+}
+
+
+def _iso(t: datetime) -> str:
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _midnight(d: date) -> datetime:

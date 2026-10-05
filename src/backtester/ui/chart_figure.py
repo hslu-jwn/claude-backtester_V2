@@ -4,18 +4,23 @@ Candles are placed at x = 0, 1, 2, … (their position in the frame), not at the
 weekends, holidays and the daily break take no space, as on TradingView. The x-axis labels
 are approximate open times (UTC): one label at the first candle of each time step, with the
 step chosen from the visible time span (`time_ticks`). Hover shows the exact open time.
+
+During replay (1.2) the figure gets only the candles of a `SeriesView` (`frame_from_candles`),
+drawn at their absolute positions (`first_x`), so the x positions match the full chart.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import log10
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from backtester.core.models import Timeframe
+from backtester.core.models import Candle, Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
+from backtester.data.resample import CANDLE_COLUMNS
 
 # Label steps in minutes. All divide a week, so steps are anchored on a Monday 00:00 UTC.
 TICK_STEPS = (5, 15, 30, 60, 120, 240, 360, 720, 1440, 10080)
@@ -27,6 +32,11 @@ class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
     max_ticks: int = 10  # at most this many x-axis labels in the visible range
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below
+    replay_window: int = 1500  # replay draws at most this many candles up to the cursor
+    replay_visible: int = 120  # candles shown left of the cursor after each replay step
+    replay_right_space: int = 10  # empty candle slots right of the cursor
+    replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
+    replay_default_speed: int = 5
     up_color: str = "#26a69a"
     down_color: str = "#ef5350"
     background: str = "#131722"
@@ -97,16 +107,38 @@ def y_range(frame: pd.DataFrame, lo: int, hi: int, padding: float) -> list[float
     return [low - pad, high + pad]
 
 
+def frame_from_candles(candles: Sequence[Candle]) -> pd.DataFrame:
+    """Candles (e.g. from a `SeriesView`) as a frame with the cache adapter's columns."""
+    frame = pd.DataFrame(
+        [(c.ts, c.open, c.high, c.low, c.close, c.volume, c.spread) for c in candles],
+        columns=CANDLE_COLUMNS,
+    )
+    frame["ts"] = pd.to_datetime(frame["ts"], utc=True)
+    return frame
+
+
 def build_candle_figure(
-    frame: pd.DataFrame, symbol: str, timeframe: Timeframe, config: ChartConfig = DEFAULT_CONFIG
+    frame: pd.DataFrame,
+    symbol: str,
+    timeframe: Timeframe,
+    config: ChartConfig = DEFAULT_CONFIG,
+    first_x: int = 0,
+    x_range: tuple[float, float] | None = None,
 ) -> go.Figure:
-    """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread)."""
+    """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread).
+
+    The first candle is drawn at x = `first_x`. `x_range` is the initially visible x range
+    (default: all candles); labels and price range fit the candles inside it.
+    """
     digits = price_digits(symbol)
     n = len(frame)
+    last_x = first_x + n - 1
+    x0, x1 = x_range or (first_x - 0.5, last_x + 0.5)
+    lo, hi = max(round(x0), first_x) - first_x, min(round(x1), last_x) - first_x
     hover_time = frame["ts"].dt.strftime("%Y-%m-%d %H:%M")
     fig = go.Figure(
         go.Candlestick(
-            x=list(range(n)),
+            x=list(range(first_x, first_x + n)),
             open=frame["open"],
             high=frame["high"],
             low=frame["low"],
@@ -123,7 +155,7 @@ def build_candle_figure(
             name=symbol,
         )
     )
-    tickvals, ticktext = time_ticks(frame["ts"], 0, n - 1, config.max_ticks)
+    tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     fig.update_layout(
         title={"text": f"{symbol} · {timeframe.name} · bid · UTC", "x": 0.01},
         paper_bgcolor=config.background,
@@ -133,12 +165,12 @@ def build_candle_figure(
         dragmode="pan",
         hovermode="closest",
         showlegend=False,
-        uirevision=f"{symbol}-{timeframe.name}-{n}",
+        uirevision=f"{symbol}-{timeframe.name}-{first_x}-{n}",
     )
     fig.update_xaxes(
-        range=[-0.5, n - 0.5],
+        range=[x0, x1],
         tickmode="array",
-        tickvals=tickvals,
+        tickvals=[first_x + p for p in tickvals],
         ticktext=ticktext,
         rangeslider_visible=False,
         gridcolor=config.grid_color,
@@ -148,7 +180,7 @@ def build_candle_figure(
     )
     fig.update_yaxes(
         side="right",
-        range=y_range(frame, 0, n - 1, config.y_padding),
+        range=y_range(frame, lo, hi, config.y_padding),
         tickformat=f".{digits}f",
         gridcolor=config.grid_color,
         showspikes=True,

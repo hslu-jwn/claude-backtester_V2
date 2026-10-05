@@ -36,18 +36,7 @@ class CacheAdapter(DataAdapter):
     def fetch(
         self, symbol: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]:
-        return [
-            Candle(
-                ts=row.ts.to_pydatetime(),
-                open=row.open,
-                high=row.high,
-                low=row.low,
-                close=row.close,
-                volume=row.volume,
-                spread=row.spread,
-            )
-            for row in self.fetch_frame(symbol, timeframe, start, end).itertuples(index=False)
-        ]
+        return candles_from_frame(self.fetch_frame(symbol, timeframe, start, end))
 
     def fetch_frame(
         self, symbol: str, timeframe: Timeframe, start: datetime, end: datetime
@@ -75,6 +64,22 @@ class CacheAdapter(DataAdapter):
         candles = resample(drop_flat_minutes(m1), timeframe)
         in_range = (candles["ts"] >= start) & (candles["ts"] < end)
         return candles[in_range].reset_index(drop=True)
+
+
+def candles_from_frame(frame: pd.DataFrame) -> list[Candle]:
+    """Rows of a `fetch_frame` result as `Candle`s."""
+    return [
+        Candle(
+            ts=row.ts.to_pydatetime(),
+            open=row.open,
+            high=row.high,
+            low=row.low,
+            close=row.close,
+            volume=row.volume,
+            spread=row.spread,
+        )
+        for row in frame.itertuples(index=False)
+    ]
 
 
 def _utc(dt: datetime) -> datetime:
