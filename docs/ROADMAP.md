@@ -33,13 +33,16 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   download: the downloader should stop the whole run after several days in a row fail
   with 503/timeouts (clear message, suggest a higher `--delay`), and the default delay
   should be 2 s. Download one pair at a time.
-- ☐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
+- ◐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
   holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
   (high < low etc.), and a spot check. **The user compares 3 candles at known times with
   TradingView or MT5** (remember MT5 shows server time, usually UTC+2/+3).
   Gold's price scaling is already verified (0.1); **GBPUSD and GBPJPY are not yet**: check
   their point factors here (GBPUSD ≈ 1.2–1.4, GBPJPY ≈ 180–210) and add a real sample
   file test for each, like the XAUUSD one.
+  Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
+  17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
+  not downloaded, unexpected), so no holiday calendar is needed.
 - ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
   `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
   mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of

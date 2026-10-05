@@ -94,6 +94,7 @@ pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
 python -m backtester.ui.app     # start the Dash app (once implemented)
 python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
+python -m backtester.data.check XAUUSD GBPUSD GBPJPY  # data check report (gaps, broken candles, spot check)
 ```
 
 ## Testing

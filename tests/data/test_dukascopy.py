@@ -373,3 +373,25 @@ def test_real_xauusd_file_parses_to_known_candles():
     assert len(brk) == 60 and (brk.volume == 0).all()
     assert (brk.open == brk.high).all() and (brk.low == brk.close).all()
     assert (brk.high == brk.low).all()
+
+
+# Real GBPUSD / GBPJPY files for the same day, saved once from
+# https://datafeed.dukascopy.com/datafeed/{SYMBOL}/2026/08/01/BID_candles_min_1.bi5
+# They verify the point factors (ROADMAP.md › 0.3): a wrong factor is off by x10 or more.
+# TODO(0.3): add the exact OHLC of the 08:00 UTC candle once checked against TradingView/MT5.
+FX_SAMPLES = {
+    "GBPUSD": (1.2, 1.4),
+    "GBPJPY": (180.0, 210.0),
+}
+
+
+@pytest.mark.parametrize("symbol", sorted(FX_SAMPLES))
+def test_real_fx_file_point_factor(symbol):
+    path = Path(__file__).parent / "fixtures" / f"{symbol}_2026-09-01_BID_candles_min_1.bi5"
+    if not path.exists():
+        pytest.skip(f"sample file missing: {path}")
+    df = parse_bi5(path.read_bytes(), date(2026, 9, 1), duka.POINT_FACTORS[symbol])
+
+    assert len(df) == 1440
+    low, high = FX_SAMPLES[symbol]
+    assert df["low"].min() > low and df["high"].max() < high

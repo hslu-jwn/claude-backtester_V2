@@ -65,7 +65,7 @@ class CacheAdapter(DataAdapter):
         missing = [d for d, p in zip(days, paths) if not p.exists()]
         if missing:
             raise MissingCacheError(
-                f"{symbol}: {len(missing)} day(s) not in {self.cache_dir}: {_ranges(missing)}. "
+                f"{symbol}: {len(missing)} day(s) not in {self.cache_dir}: {day_ranges(missing)}. "
                 f"Run: python -m backtester.data.download {symbol} {missing[0]} "
                 f"{missing[-1] + timedelta(days=1)}"
             )
@@ -87,7 +87,7 @@ def _days(start: datetime, end: datetime) -> list[date]:
     return [first + timedelta(days=i) for i in range((last - first).days + 1)]
 
 
-def _ranges(days: list[date]) -> str:
+def day_ranges(days: list[date]) -> str:
     """Compact list of consecutive day runs: '2026-01-01..2026-01-03, 2026-02-10'."""
     runs: list[list[date]] = []
     for d in days:
