@@ -16,8 +16,11 @@
 - The trend label flips immediately; the broken level becomes the new reference point.
 
 ## Strong-move filter
-- A candle is a strong move if its range ≥ k × ATR(n). Default k = 2; k and n are tunable backtest parameters.
-- Used to filter insignificant FVGs, OBs, etc.
+- A candle is a strong move if its range (high − low) ≥ k × ATR(n). Default k = 2; k and n are settings.
+- The filter can be **switched on/off separately** for FVGs and for order blocks (settings), so backtests can compare with and without it.
+- **FVG:** the middle candle (candle 2, the push that creates the gap) must be a strong move.
+- **Order block:** at least one candle of the move *away* from the OB (from the first opposite-color candle after the leg until the move's next swing point) must be a strong move.
+- Breakers and BPRs inherit it: a breaker comes from a filtered OB, a BPR from filtered FVGs.
 
 ## Validation (FVG, OB, breaker, BPR, no exceptions)
 - **Tap:** a wick into the zone is enough; no close inside needed.
