@@ -311,11 +311,107 @@ def test_http_fetcher_stale_connection_retried_at_once_without_using_an_attempt(
     assert fake.sleeps == [0, 0]  # no retry wait
 
 
-def test_http_fetcher_gives_up_after_last_retry(fake_http):
-    fake_http([TimeoutError("timed out")] * 3)
+@pytest.mark.parametrize(
+    ("outcome", "message"), [(TimeoutError("timed out"), "timed out"), (503, "HTTP 503")]
+)
+def test_http_fetcher_gives_up_after_last_retry(fake_http, outcome, message):
+    fake_http([outcome] * 3)
     fetch = duka.http_fetcher(dataclasses.replace(NO_DELAY, retries=3))
-    with pytest.raises(DukascopyError, match="giving up.*timed out"):
+    with pytest.raises(duka.ServerUnavailableError, match=f"giving up.*{message}"):
         fetch(url(SEP1, Side.BID))
+
+
+def test_default_delay_is_two_seconds():
+    assert DukascopyConfig().request_delay_s == 2.0
+
+
+UNAVAILABLE = duka.ServerUnavailableError("giving up on ...: HTTP 503")
+
+
+def unavailable_feed(ok_days: set[date]) -> FakeFeed:
+    """Days in `ok_days` serve the Sept 1 sample, every other day fails with 503s."""
+    files: dict[str, bytes | Exception] = {}
+    for d in (date(2026, 9, i) for i in range(1, 31)):
+        for side, raw in ((Side.BID, BID_0901), (Side.ASK, ASK_0901)):
+            files[url(d, side)] = raw if d in ok_days else UNAVAILABLE
+    return FakeFeed(files)
+
+
+def sep(*days: int) -> list[date]:
+    return [date(2026, 9, d) for d in days]
+
+
+def run_until_stopped(dl: DukascopyDownloader) -> tuple[list[duka.DayResult], str]:
+    """Download Sept 1-29; return the days reported before the stop and the stop message."""
+    results: list[duka.DayResult] = []
+    with pytest.raises(duka.DownloadStoppedError) as stop:
+        # extend keeps the results yielded before the generator raises
+        results.extend(dl.download("XAUUSD", SEP1, date(2026, 9, 30), today=date(2026, 10, 4)))
+    return results, str(stop.value)
+
+
+def test_download_stops_after_three_unavailable_days_in_a_row(tmp_path):
+    feed = unavailable_feed(ok_days=set())
+    dl = DukascopyDownloader(tmp_path, CONFIG, feed)
+    results, message = run_until_stopped(dl)
+    assert message.startswith("3 days in a row") and "2026-09-03" in message
+    assert "HTTP 503" in message
+    assert [r.day for r in results] == sep(1, 2, 3)  # the third failed day is still reported
+    assert all(r.status is DayStatus.FAILED and r.server_unavailable for r in results)
+    assert feed.requests[-1] == url(date(2026, 9, 3), Side.BID)  # nothing after day 3
+
+
+def test_a_day_the_server_answers_resets_the_count(tmp_path):
+    feed = unavailable_feed(ok_days=set(sep(3, 6)))
+    dl = DukascopyDownloader(tmp_path, CONFIG, feed)
+    results, message = run_until_stopped(dl)
+    assert "2026-09-09" in message
+    ok = {r.day for r in results if r.status is DayStatus.DOWNLOADED}
+    assert [r.day for r in results] == sep(*range(1, 10))  # 2 fails, ok, 2 fails, ok, 3 fails
+    assert ok == set(sep(3, 6))
+
+
+def test_cached_days_do_not_reset_the_count(tmp_path):
+    # 09-02 is already cached: no request, so it says nothing about the server.
+    first_run = DukascopyDownloader(tmp_path, CONFIG, unavailable_feed({date(2026, 9, 2)}))
+    list(first_run.download("XAUUSD", date(2026, 9, 2), date(2026, 9, 3), today=date(2026, 10, 4)))
+    dl = DukascopyDownloader(tmp_path, CONFIG, unavailable_feed(ok_days=set()))
+    results, _ = run_until_stopped(dl)
+    assert [(r.day, r.status) for r in results] == [
+        (SEP1, DayStatus.FAILED),
+        (date(2026, 9, 2), DayStatus.CACHED),
+        (date(2026, 9, 3), DayStatus.FAILED),
+        (date(2026, 9, 4), DayStatus.FAILED),
+    ]
+
+
+def test_bad_data_failures_do_not_count_as_unavailable(tmp_path):
+    # Corrupt files every day: each day fails, but the server answers, so no stop.
+    files = {url(d, side): b"garbage" for d in sep(*range(1, 8)) for side in (Side.BID, Side.ASK)}
+    dl = DukascopyDownloader(tmp_path, CONFIG, FakeFeed(files))
+    results = list(dl.download("XAUUSD", SEP1, date(2026, 9, 8), today=date(2026, 10, 4)))
+    assert len(results) == 7
+    assert all(r.status is DayStatus.FAILED and not r.server_unavailable for r in results)
+
+
+def test_cli_stops_after_unavailable_days_and_suggests_larger_delay(tmp_path, monkeypatch, capsys):
+    requests = []
+
+    def unavailable(u):
+        requests.append(u)
+        raise UNAVAILABLE
+
+    monkeypatch.setattr(duka, "http_fetcher", lambda config: unavailable)
+    code = download.main(
+        ["XAUUSD", "2026-09-01", "2026-09-30", "--cache-dir", str(tmp_path), "--delay", "2"]
+    )
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "STOPPED: 3 days in a row failed" in out
+    assert "larger --delay (now 2 s, try 4)" in out
+    assert "failed: 3" in out
+    assert "Failed days: 2026-09-01, 2026-09-02, 2026-09-03" in out
+    assert len(requests) == 3  # each day's bid request fails before the ask is asked for
 
 
 def test_http_fetcher_stops_at_once_when_rate_limited(fake_http):

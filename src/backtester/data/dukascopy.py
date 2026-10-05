@@ -66,20 +66,32 @@ class DukascopyError(RuntimeError):
     """Download or parse failure that must not be silently cached."""
 
 
+class ServerUnavailableError(DukascopyError):
+    """All retries for one file failed with HTTP errors (503 = busy / throttling) or
+    timeouts / dropped connections. A corrupt file is a plain DukascopyError instead."""
+
+
 class RateLimitedError(RuntimeError):
     """HTTP 429: Dukascopy has blocked this IP for now. Every further request would fail
     too, so the whole download stops instead of marking day after day as failed."""
 
 
+class DownloadStoppedError(RuntimeError):
+    """Several days in a row failed with ServerUnavailableError: Dukascopy is throttling or
+    unreachable, so the run stops instead of marking the rest of the range as failed."""
+
+
 @dataclass(frozen=True, slots=True)
 class DukascopyConfig:
     base_url: str = "https://datafeed.dukascopy.com/datafeed"
-    request_delay_s: float = 1.0  # pause after every HTTP request, to be polite
+    request_delay_s: float = 2.0  # pause after every HTTP request, to be polite
     timeout_s: float = 10.0  # per connect / socket read; a 1-day file is < 100 kB
     retries: int = 5
     busy_backoff_s: float = 5.0  # after an HTTP error (503 = busy): backoff * attempt number
     network_retry_s: float = 2.0  # after a timeout / dropped connection
     user_agent: str = "backtester/0.1"
+    # Stop the run after this many requested days in a row failed with 503s / timeouts.
+    max_unavailable_days_in_row: int = 3
 
 
 # A fetcher returns the raw file bytes, or None if the file does not exist (HTTP 404).
@@ -197,7 +209,7 @@ def http_fetcher(config: DukascopyConfig) -> Fetcher:
             log.warning("attempt %d/%d failed for %s: %s", attempt, config.retries, url, err)
             if attempt < config.retries:
                 time.sleep(wait)
-        raise DukascopyError(f"giving up on {url}: {err}")
+        raise ServerUnavailableError(f"giving up on {url}: {err}")
 
     return fetch
 
@@ -215,6 +227,7 @@ class DayResult:
     status: DayStatus
     rows: int = 0
     error: str = ""
+    server_unavailable: bool = False  # failed with 503s / timeouts, not bad data
 
 
 @dataclass
@@ -235,12 +248,28 @@ class DukascopyDownloader:
         self, symbol: str, start: date, end: date, today: date | None = None
     ) -> Iterator[DayResult]:
         """Download days start <= day < end. Days from `today` (UTC) on are not final yet
-        on Dukascopy and are never requested."""
+        on Dukascopy and are never requested.
+
+        Raises DownloadStoppedError (after yielding the last failed day) once
+        `max_unavailable_days_in_row` requested days in a row failed with 503s / timeouts.
+        A day the server answered resets the count; a cached day makes no request and
+        leaves it unchanged.
+        """
         point_factor = _point_factor(symbol)
         today = today or datetime.now(UTC).date()
+        limit = self.config.max_unavailable_days_in_row
+        in_row = 0
         day = start
         while day < min(end, today):
-            yield self._download_day(symbol, day, point_factor)
+            result = self._download_day(symbol, day, point_factor)
+            yield result
+            if result.status is not DayStatus.CACHED:
+                in_row = in_row + 1 if result.server_unavailable else 0
+            if in_row >= limit:
+                raise DownloadStoppedError(
+                    f"{in_row} days in a row failed with HTTP errors (503 = busy / "
+                    f"throttling) or timeouts, last {symbol} {day}: {result.error}"
+                )
             day += timedelta(days=1)
 
     def _download_day(self, symbol: str, day: date, point_factor: int) -> DayResult:
@@ -258,7 +287,8 @@ class DukascopyDownloader:
             }
         except DukascopyError as e:
             log.error("%s %s: %s", symbol, day, e)
-            return DayResult(day, DayStatus.FAILED, error=str(e))
+            unavailable = isinstance(e, ServerUnavailableError)
+            return DayResult(day, DayStatus.FAILED, error=str(e), server_unavailable=unavailable)
 
         bid, ask = sides[Side.BID], sides[Side.ASK]
         if bid.empty != ask.empty:

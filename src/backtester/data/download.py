@@ -3,7 +3,8 @@
     python -m backtester.data.download XAUUSD 2020-01-01 2026-10-01
 
 END is exclusive (same as `DataAdapter.fetch`). Already cached days are skipped, so an
-interrupted download can simply be started again.
+interrupted download can simply be started again. The run stops early on HTTP 429, or when
+several days in a row fail with 503s / timeouts (Dukascopy throttling).
 Spec: ROADMAP.md › 0.1.
 """
 
@@ -21,6 +22,7 @@ from backtester.data.dukascopy import (
     DEFAULT_CACHE_DIR,
     POINT_FACTORS,
     DayStatus,
+    DownloadStoppedError,
     DukascopyConfig,
     DukascopyDownloader,
     RateLimitedError,
@@ -47,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     downloader = DukascopyDownloader(args.cache_dir, config)
     counts = dict.fromkeys(DayStatus, 0)
     failed: list[date] = []
-    rate_limited = False
+    stopped = False
     try:
         for result in downloader.download(args.symbol, args.start, args.end):
             counts[result.status] += 1
@@ -56,18 +58,27 @@ def main(argv: list[str] | None = None) -> int:
             detail = f"{result.rows} rows" if result.rows else result.error
             print(f"{args.symbol} {result.day}  {result.status.value:<10} {detail}", flush=True)
     except RateLimitedError as e:
-        rate_limited = True
+        stopped = True
         print(f"\nSTOPPED: {e}")
         print(
             "Dukascopy is blocking this IP address for now. Wait (at least an hour), then run "
             "the same command again, ideally with a larger --delay. Cached days are kept."
+        )
+    except DownloadStoppedError as e:
+        stopped = True
+        print(f"\nSTOPPED: {e}")
+        print(
+            "Dukascopy is throttling this connection or cannot be reached. Wait a while, then "
+            f"run the same command again with a larger --delay (now {args.delay:g} s, try "
+            f"{2 * args.delay:g}), or from another network (phone hotspot). Download one pair "
+            "at a time. Cached days are kept."
         )
 
     print("\n" + ", ".join(f"{s.value}: {n}" for s, n in counts.items()))
     if failed:
         print(f"Failed days: {', '.join(map(str, failed))}. Run the same command again to retry.")
     _print_sample(downloader, args.symbol, args.start, args.end)
-    return 1 if failed or rate_limited else 0
+    return 1 if failed or stopped else 0
 
 
 def _print_sample(downloader: DukascopyDownloader, symbol: str, start: date, end: date) -> None:

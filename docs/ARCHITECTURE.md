@@ -79,7 +79,10 @@ different settings, or fed the manual R log, without repeating detection.
   that was never downloaded, so gaps in the cache are never silent. A day Dukascopy had no
   data for is cached as empty and simply has no candles.
 - The server answers **HTTP 503** when it is busy or throttling; the downloader retries with
-  a growing wait, and a rerun picks up any day that still failed.
+  a growing wait, and a rerun picks up any day that still failed. After 3 days in a row
+  fail with 503s / timeouts (`DukascopyConfig.max_unavailable_days_in_row`), the whole run
+  stops and suggests a larger `--delay` (default 2 s per request). **HTTP 429** means the IP
+  is blocked: the run stops at once.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
 
 ### MetaTrader 5 (FTMO feed, live trading)
