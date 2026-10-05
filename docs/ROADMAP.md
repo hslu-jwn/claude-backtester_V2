@@ -27,6 +27,12 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
   daily break shows as a gap like on TradingView.
   Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
+- ⏸ **Postponed: the full download.** Dukascopy is currently throttling the user's
+  connection (HTTP 503 / timeouts on every request). 0.3 waits until the download works
+  again; Phase 1 continues with the XAUUSD days already in the cache. Before the next
+  download: the downloader should stop the whole run after several days in a row fail
+  with 503/timeouts (clear message, suggest a higher `--delay`), and the default delay
+  should be 2 s. Download one pair at a time.
 - ☐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
   holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
   (high < low etc.), and a spot check. **The user compares 3 candles at known times with
