@@ -5,6 +5,8 @@
 ## Swing high / low
 - High: green candle followed by red. High = highest wick of the two.
 - Low: red candle followed by green. Low = lowest wick of the two.
+- **Only the two candles at the turn count** (the last green and the first red for a high; dojis between them skipped). Example: green high 4410, green high 4408, red high 4405 → swing high = 4408, not 4410. Lows mirrored.
+- The swing is confirmed at the close of the turning candle (the red one for a high).
 - Doji/thin candles are skipped and don't break the pattern, so a swing can span more than 2 candles.
 - **Doji/thin candle:** body |close − open| ≤ a per-symbol maximum (setting). XAUUSD: 0.065 (user-defined, same on every timeframe). GBPUSD / GBPJPY: not defined yet, ask the user before using those pairs. Bid prices, as on the chart.
 
