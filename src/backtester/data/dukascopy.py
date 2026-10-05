@@ -31,8 +31,7 @@ import lzma
 import os
 import struct
 import time
-import urllib.error
-import urllib.request
+import urllib.parse
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -67,13 +66,19 @@ class DukascopyError(RuntimeError):
     """Download or parse failure that must not be silently cached."""
 
 
+class RateLimitedError(RuntimeError):
+    """HTTP 429: Dukascopy has blocked this IP for now. Every further request would fail
+    too, so the whole download stops instead of marking day after day as failed."""
+
+
 @dataclass(frozen=True, slots=True)
 class DukascopyConfig:
     base_url: str = "https://datafeed.dukascopy.com/datafeed"
     request_delay_s: float = 1.0  # pause after every HTTP request, to be polite
-    timeout_s: float = 20.0
+    timeout_s: float = 10.0  # per connect / socket read; a 1-day file is < 100 kB
     retries: int = 5
-    retry_backoff_s: float = 10.0  # wait = backoff * attempt number (503 = server busy)
+    busy_backoff_s: float = 5.0  # after an HTTP error (503 = busy): backoff * attempt number
+    network_retry_s: float = 2.0  # after a timeout / dropped connection
     user_agent: str = "backtester/0.1"
 
 
@@ -133,27 +138,65 @@ def merge_sides(bid: pd.DataFrame, ask: pd.DataFrame) -> pd.DataFrame:
 
 
 def http_fetcher(config: DukascopyConfig) -> Fetcher:
-    """Fetch with retries; returns None on 404, raises DukascopyError after the last retry."""
+    """Fetch over one kept-alive HTTPS connection per host, so a flaky network (hotspot)
+    doesn't pay a TLS handshake per file. Returns None on 404, raises DukascopyError after
+    the last retry.
+
+    A failure on a reused connection the server has silently closed is retried once
+    immediately on a fresh connection, without counting as an attempt.
+    """
+    conns: dict[str, http.client.HTTPSConnection] = {}
+
+    def drop(host: str) -> None:
+        if conn := conns.pop(host, None):
+            conn.close()
+
+    def get(host: str, path: str) -> tuple[int, bytes]:
+        if host not in conns:
+            conns[host] = http.client.HTTPSConnection(host, timeout=config.timeout_s)
+        conn = conns[host]
+        conn.request("GET", path, headers={"User-Agent": config.user_agent})
+        resp = conn.getresponse()
+        return resp.status, resp.read()
 
     def fetch(url: str) -> bytes | None:
-        req = urllib.request.Request(url, headers={"User-Agent": config.user_agent})
-        for attempt in range(1, config.retries + 1):
+        parts = urllib.parse.urlsplit(url)
+        host, path = parts.netloc, parts.path
+        stale_retry_used = False
+        attempt = 0
+        while attempt < config.retries:
+            attempt += 1
+            reused = host in conns
             try:
-                with urllib.request.urlopen(req, timeout=config.timeout_s) as resp:
-                    return resp.read()
-            except urllib.error.HTTPError as e:
-                if e.code == 404:
-                    return None
+                status, body = get(host, path)
+            except (ConnectionResetError, BrokenPipeError) as e:
+                # RemoteDisconnected is a ConnectionResetError: the idle connection was closed.
+                drop(host)
+                if reused and not stale_retry_used:
+                    stale_retry_used = True
+                    attempt -= 1
+                    continue
                 err: Exception = e
-            # OSError covers URLError, timeouts, refused/reset connections (WinError 10060);
-            # HTTPException covers truncated responses (IncompleteRead, RemoteDisconnected).
+                wait = config.network_retry_s
+            # OSError covers timeouts, refused/reset connections (WinError 10060/10054) and
+            # TLS errors; HTTPException covers truncated responses (IncompleteRead).
             except (OSError, http.client.HTTPException) as e:
+                drop(host)
                 err = e
-            finally:
+                wait = config.network_retry_s
+            else:
                 time.sleep(config.request_delay_s)
+                if status == 200:
+                    return body
+                if status == 404:
+                    return None
+                if status == 429:
+                    raise RateLimitedError(f"HTTP 429 Too Many Requests for {url}")
+                err = DukascopyError(f"HTTP {status}")
+                wait = config.busy_backoff_s * attempt
             log.warning("attempt %d/%d failed for %s: %s", attempt, config.retries, url, err)
             if attempt < config.retries:
-                time.sleep(config.retry_backoff_s * attempt)
+                time.sleep(wait)
         raise DukascopyError(f"giving up on {url}: {err}")
 
     return fetch

@@ -23,6 +23,7 @@ from backtester.data.dukascopy import (
     DayStatus,
     DukascopyConfig,
     DukascopyDownloader,
+    RateLimitedError,
     read_cached_day,
 )
 
@@ -46,18 +47,27 @@ def main(argv: list[str] | None = None) -> int:
     downloader = DukascopyDownloader(args.cache_dir, config)
     counts = dict.fromkeys(DayStatus, 0)
     failed: list[date] = []
-    for result in downloader.download(args.symbol, args.start, args.end):
-        counts[result.status] += 1
-        if result.status is DayStatus.FAILED:
-            failed.append(result.day)
-        detail = f"{result.rows} rows" if result.rows else result.error
-        print(f"{args.symbol} {result.day}  {result.status.value:<10} {detail}", flush=True)
+    rate_limited = False
+    try:
+        for result in downloader.download(args.symbol, args.start, args.end):
+            counts[result.status] += 1
+            if result.status is DayStatus.FAILED:
+                failed.append(result.day)
+            detail = f"{result.rows} rows" if result.rows else result.error
+            print(f"{args.symbol} {result.day}  {result.status.value:<10} {detail}", flush=True)
+    except RateLimitedError as e:
+        rate_limited = True
+        print(f"\nSTOPPED: {e}")
+        print(
+            "Dukascopy is blocking this IP address for now. Wait (at least an hour), then run "
+            "the same command again, ideally with a larger --delay. Cached days are kept."
+        )
 
     print("\n" + ", ".join(f"{s.value}: {n}" for s, n in counts.items()))
     if failed:
         print(f"Failed days: {', '.join(map(str, failed))}. Run the same command again to retry.")
     _print_sample(downloader, args.symbol, args.start, args.end)
-    return 1 if failed else 0
+    return 1 if failed or rate_limited else 0
 
 
 def _print_sample(downloader: DukascopyDownloader, symbol: str, start: date, end: date) -> None:

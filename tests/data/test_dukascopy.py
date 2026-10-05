@@ -3,10 +3,14 @@ Dukascopy's format (big-endian: seconds, open, close, low, high, volume)."""
 
 from __future__ import annotations
 
+import dataclasses
+import http.client
 import lzma
+import ssl
 import struct
 from datetime import UTC, date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -212,67 +216,138 @@ def test_cli_downloads_range(tmp_path, monkeypatch, capsys):
     assert "3450.12" in out
 
 
-class FakeResponse:
-    def __init__(self, body: bytes):
-        self.body = body
+class FakeHTTP:
+    """Stands in for http.client.HTTPSConnection. Each request takes the next outcome:
+    bytes = 200 response, int = that HTTP status with an empty body, Exception = raised."""
 
-    def __enter__(self):
-        return self
+    def __init__(self, outcomes: list[bytes | int | Exception]):
+        self.outcomes = outcomes
+        self.paths: list[str] = []
+        self.connections = 0  # connections opened
+        self.sleeps: list[float] = []
 
-    def __exit__(self, *exc):
-        return False
+    def connection(self, host, timeout):
+        self.connections += 1
+        fake = self
 
-    def read(self) -> bytes:
-        return self.body
+        class Conn:
+            def request(self, method, path, headers):
+                fake.paths.append(path)
+                outcome = fake.outcomes[len(fake.paths) - 1]
+                if isinstance(outcome, Exception):
+                    raise outcome
+                self.outcome = outcome
+
+            def getresponse(self):
+                status, body = (
+                    (200, self.outcome)
+                    if isinstance(self.outcome, bytes)
+                    else (
+                        self.outcome,
+                        b"",
+                    )
+                )
+                return SimpleNamespace(status=status, read=lambda: body)
+
+            def close(self):
+                pass
+
+        return Conn()
 
 
-def scripted_urlopen(monkeypatch, outcomes: list[bytes | Exception]) -> list[str]:
-    """Each urlopen call takes the next outcome: bytes = 200 response, Exception = raised."""
-    calls: list[str] = []
+@pytest.fixture
+def fake_http(monkeypatch):
+    def install(outcomes):
+        fake = FakeHTTP(outcomes)
+        monkeypatch.setattr(duka.http.client, "HTTPSConnection", fake.connection)
+        monkeypatch.setattr(duka.time, "sleep", fake.sleeps.append)
+        return fake
 
-    def urlopen(req, timeout):
-        calls.append(req.full_url)
-        outcome = outcomes[len(calls) - 1]
-        if isinstance(outcome, Exception):
-            raise outcome
-        return FakeResponse(outcome)
-
-    monkeypatch.setattr(duka.urllib.request, "urlopen", urlopen)
-    monkeypatch.setattr(duka.time, "sleep", lambda s: None)
-    return calls
+    return install
 
 
-def test_http_fetcher_retries_network_errors(monkeypatch):
-    import http.client
-    import urllib.error
+NO_DELAY = DukascopyConfig(request_delay_s=0, retries=5, busy_backoff_s=5, network_retry_s=2)
 
-    calls = scripted_urlopen(
-        monkeypatch,
+
+def test_http_fetcher_reuses_one_connection(fake_http):
+    fake = fake_http([BID_0901, ASK_0901])
+    fetch = duka.http_fetcher(NO_DELAY)
+    assert fetch(url(SEP1, Side.BID)) == BID_0901
+    assert fetch(url(SEP1, Side.ASK)) == ASK_0901
+    assert fake.connections == 1
+    assert fake.paths == [
+        "/datafeed/XAUUSD/2026/08/01/BID_candles_min_1.bi5",
+        "/datafeed/XAUUSD/2026/08/01/ASK_candles_min_1.bi5",
+    ]
+
+
+def test_http_fetcher_retries_network_errors_on_a_new_connection(fake_http):
+    fake = fake_http(
         [
-            urllib.error.URLError(TimeoutError("WinError 10060")),
-            ConnectionResetError(),
+            TimeoutError("WinError 10060"),
+            ssl.SSLError("handshake timed out"),
             http.client.IncompleteRead(b"partial"),
             BID_0901,
-        ],
+        ]
     )
-    fetch = duka.http_fetcher(DukascopyConfig(retries=5))
-    assert fetch(url(SEP1, Side.BID)) == BID_0901
-    assert len(calls) == 4
+    assert duka.http_fetcher(NO_DELAY)(url(SEP1, Side.BID)) == BID_0901
+    assert fake.connections == 4  # a failed connection is never reused
+    assert fake.sleeps == [2, 2, 2, 0]  # short network waits, then the polite delay
 
 
-def test_http_fetcher_gives_up_after_last_retry(monkeypatch):
-    scripted_urlopen(monkeypatch, [TimeoutError("timed out")] * 3)
-    fetch = duka.http_fetcher(DukascopyConfig(retries=3))
-    with pytest.raises(DukascopyError, match="giving up"):
+def test_http_fetcher_backs_off_longer_when_server_is_busy(fake_http):
+    fake = fake_http([503, 503, BID_0901])
+    assert duka.http_fetcher(NO_DELAY)(url(SEP1, Side.BID)) == BID_0901
+    assert fake.sleeps == [0, 5, 0, 10, 0]  # delay + backoff * attempt after each 503
+    assert fake.connections == 1  # an HTTP error keeps the connection
+
+
+def test_http_fetcher_stale_connection_retried_at_once_without_using_an_attempt(fake_http):
+    fake = fake_http([BID_0901, http.client.RemoteDisconnected("closed"), ASK_0901])
+    fetch = duka.http_fetcher(dataclasses.replace(NO_DELAY, retries=1))
+    fetch(url(SEP1, Side.BID))
+    assert fetch(url(SEP1, Side.ASK)) == ASK_0901
+    assert fake.connections == 2
+    assert fake.sleeps == [0, 0]  # no retry wait
+
+
+def test_http_fetcher_gives_up_after_last_retry(fake_http):
+    fake_http([TimeoutError("timed out")] * 3)
+    fetch = duka.http_fetcher(dataclasses.replace(NO_DELAY, retries=3))
+    with pytest.raises(DukascopyError, match="giving up.*timed out"):
         fetch(url(SEP1, Side.BID))
 
 
-def test_http_fetcher_404_means_no_file(monkeypatch):
-    import urllib.error
+def test_http_fetcher_stops_at_once_when_rate_limited(fake_http):
+    fake = fake_http([429, BID_0901])
+    with pytest.raises(duka.RateLimitedError):
+        duka.http_fetcher(NO_DELAY)(url(SEP1, Side.BID))
+    assert len(fake.paths) == 1  # no retry hammering a blocked IP
 
-    not_found = urllib.error.HTTPError(url(SEP5, Side.BID), 404, "Not Found", {}, None)
-    scripted_urlopen(monkeypatch, [not_found])
-    assert duka.http_fetcher(CONFIG)(url(SEP5, Side.BID)) is None
+
+def test_cli_stops_whole_run_when_rate_limited(tmp_path, monkeypatch, capsys):
+    feed = FakeFeed({})
+    calls = 0
+
+    def limited(u):
+        nonlocal calls
+        calls += 1
+        if calls > 2:  # first day (bid + ask) succeeds, then the IP is blocked
+            raise duka.RateLimitedError("HTTP 429")
+        return feed(u)
+
+    monkeypatch.setattr(duka, "http_fetcher", lambda config: limited)
+    code = download.main(["XAUUSD", "2026-09-05", "2026-09-10", "--cache-dir", str(tmp_path)])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "STOPPED" in out and "empty: 1" in out
+    assert calls == 3  # nothing requested after the 429
+    assert len(list(tmp_path.rglob("*.parquet"))) == 1
+
+
+def test_http_fetcher_404_means_no_file(fake_http):
+    fake_http([404])
+    assert duka.http_fetcher(NO_DELAY)(url(SEP5, Side.BID)) is None
 
 
 # Real Dukascopy file, saved once from
