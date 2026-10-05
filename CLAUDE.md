@@ -51,6 +51,10 @@ Every detector needs a test proving this (see Testing).
 
 - **Bullish is described, bearish is mirrored.** Implement one code path parameterized by
   `Direction`, never two copy-pasted versions.
+- **Strategy logic stays in its strategy folder.** Detectors, sessions, engine, risk and
+  the chart are shared by every strategy. Anything only one strategy needs (e.g. "only
+  FVGs after a session sweep") lives in `strategy/<name>/`, never in a shared layer, so a
+  new strategy can be added later as another folder and compared with the existing ones.
 - **Timeframe-agnostic tools.** Detectors don't know which timeframe they run on; the
   strategy decides (strategy 1: 30m zones, 5m entries, 1h TP obstacles).
 - **No magic numbers.** Every tunable value (ATR multiplier, buffers, R caps, obstacle count,
