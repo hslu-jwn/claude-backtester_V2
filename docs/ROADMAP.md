@@ -74,7 +74,8 @@ session view (3.5) is separate. Overlays draw a small marker on the
 **confirming candle**, so the user can see when each pattern became known, and a hover
 text with its state (active / tapped / confirmed / invalidated).
 
-- ☐ **2.1** ATR + strong-move filter (no overlay; used by the others)
+- ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
+  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
 - ☐ **2.2** Swing highs / lows
 - ☐ **2.3** Trend label + BOS
 - ☐ **2.4** Zone validation state machine (shared by all zones)

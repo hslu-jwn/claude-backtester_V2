@@ -16,8 +16,11 @@
 - The trend label flips immediately; the broken level becomes the new reference point.
 
 ## Strong-move filter
-- A candle is a strong move if its range (high − low) ≥ k × ATR(n). Default k = 2; k and n are settings.
-- The filter can be **switched on/off separately** for FVGs and for order blocks (settings), so backtests can compare with and without it.
+- A candle is a strong move if its range (high − low) ≥ k × ATR(n). Default k = 2, n = 14 (n still to be swept); k and n are settings.
+- **ATR as on TradingView:** true range (max of high − low, |high − previous close|, |low − previous close|; the first candle uses high − low) smoothed with Wilder's RMA, seeded with the simple average of the first n true ranges. Gaps (daily break, weekend) therefore count.
+- The candle is compared with the ATR of the n candles **before** it (the ATR known at the previous candle's close), so a big candle doesn't raise its own threshold. While fewer than n earlier candles exist, no candle is a strong move.
+- The ATR is on the **same timeframe** as the candle being checked (a 5m FVG uses the 5m ATR, a 30m FVG the 30m ATR).
+- The filter can be **switched on/off separately** for FVGs and for order blocks (settings, default on), so backtests can compare with and without it.
 - **FVG:** the middle candle (candle 2, the push that creates the gap) must be a strong move.
 - **Order block:** at least one candle of the move *away* from the OB (from the first opposite-color candle after the leg until the move's next swing point) must be a strong move.
 - Breakers and BPRs inherit it: a breaker comes from a filtered OB, a BPR from filtered FVGs.

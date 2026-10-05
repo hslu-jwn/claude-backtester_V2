@@ -6,14 +6,15 @@ TBD in the spec are placeholders to be swept, not decisions.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from backtester.detectors.atr import StrongMoveConfig
 
 
 @dataclass(frozen=True, slots=True)
 class SessionZoneSweepConfig:
-    # strong-move filter (confluences.md)
-    atr_period: int = 14  # TBD: lookback to sweep
-    strong_move_atr_mult: float = 2.0
+    # strong-move filter (confluences.md); on/off per FVG / OB comes with those detectors
+    strong_move: StrongMoveConfig = field(default_factory=StrongMoveConfig)
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction

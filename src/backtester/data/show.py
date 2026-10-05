@@ -5,22 +5,36 @@
 
 START/END are UTC (END exclusive). `--tz` adds a column with the open time in another time
 zone, e.g. MT5 server time (`Etc/GMT-3` = UTC+3; note the inverted sign in Etc/ names).
-Spec: ROADMAP.md › 0.2.
+`--atr N` adds the ATR(N) at each candle's close (compare with TradingView's ATR indicator),
+the range a candle needed to be a strong move (k x ATR of the candles before it) and a
+`strong` flag. Earlier candles are loaded for the warm-up but not printed.
+Spec: ROADMAP.md › 0.2, 2.1; confluences.md › Strong-move filter.
 """
 
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 
 from backtester.core.models import Timeframe
-from backtester.data.adapters.cache_adapter import CacheAdapter, MissingCacheError
+from backtester.core.series import CandleSeries
+from backtester.data.adapters.cache_adapter import (
+    CacheAdapter,
+    MissingCacheError,
+    candles_from_frame,
+)
 from backtester.data.dukascopy import DEFAULT_CACHE_DIR, POINT_FACTORS
 from backtester.data.resample import supported
+from backtester.detectors.atr import StrongMoveConfig, StrongMoveFilter
+
+# ATR warm-up loaded before START: this many ATR periods (Wilder's seed has faded by then)
+# plus a few days so weekends and holidays don't eat the warm-up.
+ATR_WARMUP_PERIODS = 20
+ATR_WARMUP_EXTRA = timedelta(days=4)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,13 +44,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("start", type=datetime.fromisoformat, help="UTC, e.g. 2026-09-02T13:00")
     p.add_argument("end", type=datetime.fromisoformat, help="UTC, exclusive")
     p.add_argument("--tz", type=ZoneInfo, help="also show open time in this time zone")
+    p.add_argument("--atr", type=int, metavar="N", help="add ATR(N) and the strong-move flag")
+    p.add_argument("--atr-mult", type=float, default=StrongMoveConfig().atr_mult, metavar="K")
     p.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
     args = p.parse_args(argv)
 
+    adapter = CacheAdapter(args.cache_dir)
+    timeframe = Timeframe[args.timeframe]
     try:
-        frame = CacheAdapter(args.cache_dir).fetch_frame(
-            args.symbol, Timeframe[args.timeframe], args.start, args.end
-        )
+        frame = adapter.fetch_frame(args.symbol, timeframe, args.start, args.end)
+        if args.atr and not frame.empty:
+            frame = add_atr(adapter, args, timeframe, frame)
     except MissingCacheError as e:
         print(e)
         return 1
@@ -54,6 +72,42 @@ def main(argv: list[str] | None = None) -> int:
         )
     print(f"\n{len(frame)} {args.timeframe} candles (bid prices; spread = mean ask - bid)")
     return 0
+
+
+def add_atr(
+    adapter: CacheAdapter, args: argparse.Namespace, timeframe: Timeframe, frame: pd.DataFrame
+) -> pd.DataFrame:
+    """Columns atr, needed (k x previous ATR) and strong, computed with a warm-up."""
+    config = StrongMoveConfig(atr_period=args.atr, atr_mult=args.atr_mult)
+    warmup = ATR_WARMUP_PERIODS * args.atr * timeframe.duration + ATR_WARMUP_EXTRA
+    from_ = args.start - warmup
+    while True:  # shorten the warm-up day by day until all its days are cached
+        try:
+            full = adapter.fetch_frame(args.symbol, timeframe, from_, args.end)
+            break
+        except MissingCacheError:
+            from_ = datetime.combine(from_.date() + timedelta(days=1), datetime.min.time())
+            if from_ >= args.start:
+                full, from_ = frame, args.start
+                break
+    warmup_candles = len(full) - len(frame)
+    if warmup_candles < ATR_WARMUP_PERIODS * args.atr:
+        print(
+            f"Note: only {warmup_candles} warm-up candles in the cache "
+            f"(want {ATR_WARMUP_PERIODS * args.atr}); early ATR values may differ from TradingView."
+        )
+    series = CandleSeries(args.symbol, timeframe, candles_from_frame(full))
+    f = StrongMoveFilter(config)
+    for i in range(len(series)):
+        f.update(series.view(i))
+    first = len(full) - len(frame)
+    idx = range(first, len(full))
+    return frame.assign(
+        atr=[f.atr.at(i) for i in idx],
+        needed=[f.threshold_at(i) for i in idx],
+        range=(frame["high"] - frame["low"]).to_list(),
+        strong=["yes" if f.is_strong(i) else "" for i in idx],
+    )
 
 
 if __name__ == "__main__":
