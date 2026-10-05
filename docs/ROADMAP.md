@@ -65,8 +65,11 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
 ## Phase 2: Confluences on the chart (visual check)
 
-Every detector gets: tests (incl. the no-lookahead test) → an overlay layer with an on/off
-toggle → **user checks it on the chart** → commit. Overlays draw a small marker on the
+Every detector gets: tests (incl. the no-lookahead test) → an overlay layer → **user
+checks it on the chart** → commit. The chart starts empty: a switch turns the overlays on
+and a dropdown picks which types are shown (multi-select: swings, BOS, FVG, OB, breaker,
+BPR, session zones, …). This "all confluences" mode checks the detectors; the strategy's
+session view (3.5) is separate. Overlays draw a small marker on the
 **confirming candle**, so the user can see when each pattern became known, and a hover
 text with its state (active / tapped / confirmed / invalidated).
 
@@ -89,11 +92,14 @@ text with its state (active / tapped / confirmed / invalidated).
 - ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
 - ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
-  and settings used to `results/<run>/`.
-- ☐ **3.5 Trades on the chart.** Position boxes; only the session zone and confluence used
-  for each trade are drawn. Each trade carries a reason trail (which zone, sweep candle,
-  BOS candle, confluence) shown on hover.
-- ☐ **3.6 Results view.** Trade list (click a trade → chart jumps to it), win rate,
+  and settings used to `results/<run>/`. Also records, per session, the session zones and
+  the confluences that were part of a setup (triggered or not, confirmed or not), so the
+  session view (3.5) can draw them without re-running the strategy.
+- ☐ **3.5 Session view.** Click a session line → that session's zones, setup confluences
+  and trades (TradingView-style position boxes) are drawn; click outside the chart → off.
+  Static by default, with a "replay this session" button.
+  Spec: `strategy-session-zones.md › Session inspection view`.
+- ☐ **3.6 Results view.** Trade list (click a trade → chart jumps to it and selects its session), win rate,
   expectancy, profit factor, max drawdown in R, equity curve in R, split by symbol /
   session / tag.
 - ☐ **3.7 Cross-check with the manual backtest.** Run the same XAUUSD period as the

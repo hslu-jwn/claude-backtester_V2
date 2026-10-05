@@ -46,6 +46,28 @@
    - TP may pass at most ⚙️ N obstacles and sits just below the next one.
 4. **Final TP < 1.2R → no trade.**
 
+## Session inspection view (chart)
+How the user checks strategy 1 session by session. Part of the strategy-1 UI, so other
+strategies are not affected.
+- **Default chart is empty:** candles and session lines only, no zones, confluences or trades.
+- **Select a session:** left-click a session's vertical start line. The session runs from
+  that line to the next session line. Clicking outside the chart turns the session view off.
+- **Shown for the selected session** (static by default, from the backtest results):
+  - **Session zones** of the previous session (high and low zone): light blue fill with a
+    darker blue edge, drawn from where they formed and extended to the end of the selected
+    session. No extra markers for flips or kills.
+  - **Confluences** (FVG, OB, breaker, BPR) that were part of a setup in this session,
+    including setups that never triggered or were cancelled. Light green = bullish,
+    light red = bearish; drawn darker if the setup confirmed them. Drawn from the candle
+    they formed until they were used for entry, invalidated, or the session ended.
+    No reason labels for cancelled setups; the user reads those from the chart.
+  - **Trades** as TradingView-style long/short position boxes: entry line, green zone
+    entry → TP, red zone entry → SL, R:R on the box. The box starts at the entry candle and
+    ends at the candle where TP or SL was hit. No markers for sweep, 30m reaction or BOS.
+- **Replay this session:** a button steps through the selected session candle by candle
+  (same no-lookahead replay as 1.2); zones, confluences and boxes appear only once they
+  exist at the replay time.
+
 ## Backtest options (tunable; review periodically)
 - Strong-move filter: ATR multiplier (default 2×) and lookback
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
