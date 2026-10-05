@@ -51,7 +51,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
 ## Phase 1: Chart (no lookahead)
 
-- ☐ **1.1 Dash chart page.** Candlesticks from the cache. Pick symbol, timeframe and date
+- ☑ **1.1 Dash chart page.** Candlesticks from the cache. Pick symbol, timeframe and date
   range. Approximate timestamps on the x-axis, zoom/pan, no gaps for weekends.
 - ☐ **1.2 Replay mode.** A cursor that steps forward candle by candle (buttons + autoplay
   speed). Only candles up to the cursor are drawn, using `SeriesView`, so the chart shows

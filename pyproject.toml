@@ -23,7 +23,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "tests/data"]  # tests/data: m1_frames helper
 
 [tool.ruff]
 line-length = 100

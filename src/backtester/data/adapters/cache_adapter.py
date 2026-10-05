@@ -96,3 +96,30 @@ def day_ranges(days: list[date]) -> str:
         else:
             runs.append([d])
     return ", ".join(f"{r[0]}..{r[-1]}" if len(r) > 1 else str(r[0]) for r in runs)
+
+
+def available_symbols(cache_dir: str | Path = DEFAULT_CACHE_DIR) -> list[str]:
+    """Symbols with at least one cached day, sorted. Folders without cache files are ignored."""
+    root = Path(cache_dir)
+    if not root.is_dir():
+        return []
+    return sorted(p.name for p in root.iterdir() if p.is_dir() and any(p.glob("*/*.parquet")))
+
+
+def cached_days(symbol: str, cache_dir: str | Path = DEFAULT_CACHE_DIR) -> list[date]:
+    """Days cached for `symbol`, oldest first. Days cached as empty count as cached."""
+    return sorted(
+        date.fromisoformat(p.stem) for p in (Path(cache_dir) / symbol).glob("*/*.parquet")
+    )
+
+
+def latest_run(days: list[date]) -> tuple[date, date] | None:
+    """First and last day of the newest run of consecutive days, or None if there are none."""
+    if not days:
+        return None
+    first = days[-1]
+    for d in reversed(days[:-1]):
+        if first - d != timedelta(days=1):
+            break
+        first = d
+    return first, days[-1]

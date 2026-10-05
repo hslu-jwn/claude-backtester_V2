@@ -10,7 +10,13 @@ from m1_frames import m1
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data import show
-from backtester.data.adapters.cache_adapter import CacheAdapter, MissingCacheError
+from backtester.data.adapters.cache_adapter import (
+    CacheAdapter,
+    MissingCacheError,
+    available_symbols,
+    cached_days,
+    latest_run,
+)
 from backtester.data.dukascopy import _empty_cache_frame, cache_path
 
 
@@ -130,3 +136,24 @@ def test_show_reports_missing_days(cache, capsys):
     assert (
         "python -m backtester.data.download XAUUSD 2026-09-04 2026-09-05" in capsys.readouterr().out
     )
+
+
+def test_available_symbols_lists_only_symbols_with_cached_days(cache):
+    (cache / "GBPUSD" / "2026").mkdir(parents=True)  # folder without any cached day
+    write_day(cache, date(2026, 9, 2), _empty_cache_frame(), symbol="GBPJPY")
+    assert available_symbols(cache) == ["GBPJPY", "XAUUSD"]
+    assert available_symbols(cache / "nowhere") == []
+
+
+def test_cached_days_sorted_and_empty_days_count(cache):
+    write_day(cache, date(2025, 12, 31), _empty_cache_frame())
+    assert cached_days("XAUUSD", cache) == [date(2025, 12, 31), date(2026, 9, 2), date(2026, 9, 3)]
+    assert cached_days("GBPUSD", cache) == []
+
+
+def test_latest_run_is_newest_block_of_consecutive_days():
+    d = date.fromisoformat
+    days = [d("2020-01-01"), d("2020-01-02"), d("2026-09-01"), d("2026-09-02"), d("2026-09-03")]
+    assert latest_run(days) == (d("2026-09-01"), d("2026-09-03"))
+    assert latest_run([d("2020-01-01")]) == (d("2020-01-01"), d("2020-01-01"))
+    assert latest_run([]) is None
