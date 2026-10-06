@@ -128,10 +128,9 @@ text with its state (active / tapped / confirmed / invalidated).
   `strategy/session_zone_sweep/zones.py` (`SessionZoneTracker`; a candle belongs to the session it closes in). Overlay "Session zones": dotted box from the swing to the end of the session the zone is used in (or its kill), colored by that session, filled only there. Session lines now go through the candle the session starts on.
 - ☑ **2.10** Multi-timeframe view: show 30m zones on the 5m chart (done with 2.9: shown on M5–M30; the chart loads 30m candles, read only through the replay's clock).
 - ☐ **2.11** Liquidity sweep. `detectors/sweep.py` (`confluences.md › Liquidity sweep`):
-  the top of the move that took a high confirmed since the last BOS, turned into a sweep by
+  the top of the move that took a high confirmed since the last BOS (or the high that BOS broke), turned into a sweep by
   the next bearish BOS (lows mirrored); exists from the BOS candle. Overlay "Liquidity
   sweep": magenta line from the swept high to the sweeping candle, marker on the wick, hover.
-  ⚠️ One open point in the spec (does the high broken by the last BOS count?).
 - ☐ **2.12** Order block rework. Rewrite `detectors/order_block.py` on top of 2.11
   (`confluences.md › Order block`): one OB per liquidity sweep; range = same-color leg into
   the sweeping candle, wick to wick; exists from the BOS candle; no strong-move filter
