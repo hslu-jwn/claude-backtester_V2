@@ -154,6 +154,8 @@ text with its state (active / tapped / confirmed / invalidated).
 
 - ☐ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
   session filters, costs), with defaults from the spec.
+  Must include (user's wish): the session zone kill rule as its own setting: on/off, and the
+  number of breaks that kills a zone (`SessionZoneSweepConfig.zone_kill_breaks`, default 3).
 - ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
 - ☐ **4.3 UI layout and look review** (at the end of the UI work; the user decides the

@@ -87,7 +87,7 @@ strategies are not affected.
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
 - TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
-- Zone kill: the 3rd break kills a zone (default, setting); later maybe only within a time window
+- Zone kill: the 3rd break kills a zone (default); in the settings menu (4.1) as on/off plus the number of breaks; later maybe only within a time window
 - Session times following each city's DST; session end = next session start (may revisit)
 - Friday NY → Monday Tokyo carry-over (watch for odd behavior)
 - Possibly skip the Tokyo session (low volume)
