@@ -60,7 +60,7 @@ different settings, or fed the manual R log, without repeating detection.
 Every source has its own cache folder (`data/cache/dukascopy/`, `data/cache/histdata/`,
 same layout and columns). `data/sources.py` (`SymbolSources`) maps each symbol to the
 folder it is read from; the app, `data.check` and `data.show` all use it, so all symbols
-show in one app. Current mapping: XAUUSD → Dukascopy, GBPUSD and GBPJPY → histdata.com.
+show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Dukascopy downloads paused).
 `--cache-dir` on `data.check` / `data.show` overrides it for a single run.
 
 ### Dukascopy (backtest history)
@@ -94,12 +94,16 @@ show in one app. Current mapping: XAUUSD → Dukascopy, GBPUSD and GBPJPY → hi
   is blocked: the run stops at once.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
 
-### histdata.com (GBPUSD, GBPJPY while Dukascopy throttles)
+### histdata.com (XAUUSD, GBPUSD, GBPJPY while Dukascopy downloads are paused)
 
 - Monthly M1 files in MetaTrader format, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, put in
   `data/raw/histdata/` by hand. Imported with `python -m backtester.data.histdata data/raw/histdata/`
   into `data/cache/histdata/` (same layout and columns as the Dukascopy cache, own folder
-  so the sources never mix). `data/sources.py` reads GBPUSD and GBPJPY from there.
+  so the sources never mix). `data/sources.py` reads all three symbols from there.
+  XAUUSD histdata was compared with the Dukascopy cache on 2026-09-02..07: every M1
+  candle identical (same minutes, OHLC within 0.001), so the switch changes nothing for
+  those days. Differences to Dukascopy: no ask prices (spread unknown, NaN), and the
+  September 2026 files have **no rows for Friday 2026-09-25** (all three pairs).
 - Timestamps: **New York local time with daylight saving** (`America/New_York`: UTC−4 in
   summer, UTC−5 in winter), converted to UTC on import.
   **This contradicts HistData's FAQ**, which says the files are "EST without daylight

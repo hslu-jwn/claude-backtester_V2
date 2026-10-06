@@ -4,8 +4,10 @@ Every source keeps its own cache folder (same layout and columns, `data/dukascop
 sources never mix. `SymbolSources` maps each symbol to one of these folders; the chart,
 `data.check` and `data.show` all read through it, so every symbol can be shown in one app.
 
-Default: XAUUSD from Dukascopy; GBPUSD and GBPJPY from histdata.com until their Dukascopy
-download works again (ROADMAP.md › 0.3). To switch a symbol, change `DEFAULT_SOURCES`.
+Default: all three symbols from histdata.com while Dukascopy downloads are paused
+(ROADMAP.md › 0.3). The XAUUSD days already in the Dukascopy cache stay there, unused;
+histdata matched them exactly (2026-09-02..07, every M1 candle). To switch a symbol back,
+change `DEFAULT_SOURCES`.
 """
 
 from __future__ import annotations
@@ -17,7 +19,6 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.data.adapters.cache_adapter import CacheAdapter, cached_days
-from backtester.data.dukascopy import DEFAULT_CACHE_DIR
 from backtester.data.histdata import DEFAULT_HISTDATA_CACHE_DIR
 
 
@@ -62,7 +63,7 @@ class SymbolSources:
 
 DEFAULT_SOURCES = SymbolSources(
     {
-        "XAUUSD": DEFAULT_CACHE_DIR,
+        "XAUUSD": DEFAULT_HISTDATA_CACHE_DIR,
         "GBPUSD": DEFAULT_HISTDATA_CACHE_DIR,
         "GBPJPY": DEFAULT_HISTDATA_CACHE_DIR,
     }
