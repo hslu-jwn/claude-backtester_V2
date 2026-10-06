@@ -134,8 +134,11 @@ def test_price_digits_per_symbol():
 def test_colors_come_from_the_config():
     fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30)
     candles = fig.data[0]
-    assert candles.increasing.fillcolor == "#6f9ceb" and candles.increasing.line.color == "#000000"
-    assert candles.decreasing.fillcolor == "#000000" and candles.increasing.line.width == 0.5
+    assert candles.increasing.fillcolor == "#6f9ceb" and candles.decreasing.fillcolor == "#000000"
+    # no Plotly candle line: it adds a median line inside the body (thick top edge)
+    assert candles.increasing.line.width == 0 and candles.decreasing.line.width == 0
+    edges = fig.data[2]
+    assert edges.line.color == "#000000" and edges.line.width == 0.5
     assert fig.layout.plot_bgcolor == "#ffffff" and fig.layout.xaxis.showgrid is False
     custom = ChartConfig(up_body="#00ff00", background="#123456", show_grid=True)
     fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30, custom)
@@ -151,3 +154,12 @@ def test_wicks_run_from_the_body_to_high_and_low_only():
     assert list(wicks.x[:6]) == [5, 5, None, 5, 5, None]
     assert list(wicks.y[:6]) == [2501.0, 2502.0, None, 2499.0, 2500.0, None]
     assert list(wicks.x[6:9]) == [6, 6, None]
+
+
+def test_edges_outline_each_body_with_the_body_width():
+    fig = build_candle_figure(WEEKEND.iloc[:1], "XAUUSD", Timeframe.M30, first_x=5)
+    edges = fig.data[2]
+    # candle 5: O 2500 C 2501, body width 0.6 -> 4.7..5.3
+    assert list(edges.x[:5]) == pytest.approx([4.7, 5.3, 5.3, 4.7, 4.7]) and edges.x[5] is None
+    assert list(edges.y[:5]) == [2501.0, 2501.0, 2500.0, 2500.0, 2501.0]
+    assert fig.layout.boxgap == pytest.approx(0.4) and fig.layout.boxgroupgap == 0

@@ -12,12 +12,16 @@ Session lines (1.3): a dashed vertical line at each session start (`sessions.py`
 only over the candles in the frame, so during replay no line appears past the cursor.
 One switch shows or hides all session lines; hidden on timeframes above `session_max_timeframe`.
 
-Candles: Plotly draws a candle's edge and wick with one line, so the edge is kept very thin
-and the wicks are drawn as their own trace (`fig.data[1]`), from the body to the high and
-low only, so they never cross a body.
+Candles are three traces (`CANDLE_TRACES`): the candlestick draws only the filled bodies
+(line width 0, because Plotly also draws a box-plot "median" line 1 px inside every body,
+which made the top edge of up candles look thick); the wicks (`fig.data[1]`) go from the
+body to the high and low only, so they never cross a body; the edges (`fig.data[2]`) are a
+thin outline around each body. The body width is set with the layout's box gap, so the
+outline fits exactly.
 
 Overlays (Phase 2, `ui/overlays.py`) are passed in as ready-made traces and drawn on top
-of the candles; the candlestick trace always stays `fig.data[0]`, overlays start at `fig.data[2]`.
+of the candles; the candlestick trace always stays `fig.data[0]`, overlays start at
+`fig.data[CANDLE_TRACES]`.
 """
 
 from __future__ import annotations
@@ -52,10 +56,10 @@ class ChartConfig:
     replay_default_speed: int = 5
     # Colors (white, like the user's TradingView).
     up_body: str = "#6f9ceb"
-    up_edge: str = "#000000"
     down_body: str = "#000000"
-    down_edge: str = "#000000"
+    edge_color: str = "#000000"
     edge_width: float = 0.5  # very thin, so a small blue body still looks blue
+    body_width: float = 0.6  # share of the space per candle
     wick_color: str = "#000000"
     wick_width: float = 1
     background: str = "#ffffff"
@@ -80,6 +84,7 @@ class ChartConfig:
 
 
 DEFAULT_CONFIG = ChartConfig()
+CANDLE_TRACES = 3  # candlestick bodies, wicks, edges; overlays come after them
 
 
 def price_digits(symbol: str) -> int:
@@ -242,6 +247,27 @@ def _wicks(frame: pd.DataFrame, first_x: int, config: ChartConfig) -> go.Scatter
     )
 
 
+def _edges(frame: pd.DataFrame, first_x: int, config: ChartConfig) -> go.Scatter:
+    """Outline of every body (a flat line for a doji), `body_width` wide."""
+    top = frame[["open", "close"]].max(axis=1)
+    bottom = frame[["open", "close"]].min(axis=1)
+    half = config.body_width / 2
+    xs: list[float | None] = []
+    ys: list[float | None] = []
+    for i, (t, b) in enumerate(zip(top, bottom)):
+        left, right = first_x + i - half, first_x + i + half
+        xs += [left, right, right, left, left, None]
+        ys += [t, t, b, b, t, None]
+    return go.Scatter(
+        x=xs,
+        y=ys,
+        mode="lines",
+        line={"color": config.edge_color, "width": config.edge_width},
+        hoverinfo="skip",
+        name="edges",
+    )
+
+
 def _axis_style(config: ChartConfig) -> dict:
     return {
         "showgrid": config.show_grid,
@@ -305,18 +331,12 @@ def build_candle_figure(
                 f"L %{{low:.{digits}f}}  C %{{close:.{digits}f}}<br>"
                 f"spread %{{customdata[1]:.{digits}f}}<extra></extra>"
             ),
-            increasing={
-                "line": {"color": config.up_edge, "width": config.edge_width},
-                "fillcolor": config.up_body,
-            },
-            decreasing={
-                "line": {"color": config.down_edge, "width": config.edge_width},
-                "fillcolor": config.down_body,
-            },
+            increasing={"line": {"width": 0}, "fillcolor": config.up_body},
+            decreasing={"line": {"width": 0}, "fillcolor": config.down_body},
             name=symbol,
         )
     )
-    fig.add_trace(_wicks(frame, first_x, config))
+    fig.add_traces([_wicks(frame, first_x, config), _edges(frame, first_x, config)])
     fig.add_traces(list(overlays))
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     shapes, labels = (
@@ -332,6 +352,8 @@ def build_candle_figure(
         margin={"l": 10, "r": 70, "t": 40, "b": 30},
         dragmode="pan",
         hovermode="closest",
+        boxgap=1 - config.body_width,  # candlestick body width (one candle per x step)
+        boxgroupgap=0,
         showlegend=False,
         uirevision=f"{symbol}-{timeframe.name}-{first_x}-{n}",
     )
