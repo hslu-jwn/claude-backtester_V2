@@ -72,7 +72,11 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 
 ## Balanced price range (BPR)
 - Overlap of a bullish and a bearish FVG. One is usually invalidated as the other forms, so the invalidated one's stored range is used.
-- Staleness-over-time rule is deferred to the strategy layer.
+- **Range** = the overlap of the two FVG ranges (no overlap, no BPR).
+- **Direction** = the direction of the **newer** FVG (rule set by the user). Example: a bearish FVG, then price reverses up and leaves an overlapping bullish FVG → bullish BPR.
+- **Timing** (rule set by the user): the older FVG must still be **open** (not confirmed or invalidated) when the newer one forms, **or** be invalidated by the same move that creates the newer one, i.e. by a candle from the newer FVG's candle 1 to its candle 3. Older pairs form no BPR.
+- Exists from the close of the newer FVG's candle 3. Validation as in › Validation, starting with the next candle.
+- Further staleness rules, if any, are the strategy's.
 - **On the chart:** no drawing of its own (rule set by the user): overlapping FVGs stack, so a BPR shows as the darker overlap of the green FVG boxes.
 
 ## Equilibrium (currently NOT used for entries)
