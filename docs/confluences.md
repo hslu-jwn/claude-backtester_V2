@@ -34,27 +34,25 @@
 - **ATR as on TradingView:** true range (max of high − low, |high − previous close|, |low − previous close|; the first candle uses high − low) smoothed with Wilder's RMA, seeded with the simple average of the first n true ranges. Gaps (daily break, weekend) therefore count.
 - The candle is compared with the ATR of the n candles **before** it (the ATR known at the previous candle's close), so a big candle doesn't raise its own threshold. While fewer than n earlier candles exist, no candle is a strong move.
 - The ATR is on the **same timeframe** as the candle being checked (a 5m FVG uses the 5m ATR, a 30m FVG the 30m ATR).
-- The filter can be **switched on/off separately** for FVGs and for order blocks (settings, default on), so backtests can compare with and without it.
-- **FVG:** the middle candle (candle 2, the push that creates the gap) must be a strong move.
+- The filter can be **switched on/off separately** for FVGs and for order blocks, so backtests can compare with and without it. Defaults: **off for FVGs** (rule set by the user: at k = 2 it removed far too many FVGs), on for order blocks.
+- **FVG** (when switched on): the middle candle (candle 2, the push that creates the gap) must be a strong move.
 - **Order block:** at least one candle of the move *away* from the OB (from the first opposite-color candle after the leg until the move's next swing point) must be a strong move.
 - Breakers and BPRs inherit it: a breaker comes from a filtered OB, a BPR from filtered FVGs.
 
 ## Validation (FVG, OB, breaker, BPR, no exceptions)
-- **Tap:** a wick into the zone is enough; no close inside needed.
-- **Confirmed (usable for entry):** **after a tap**, a candle closes beyond the zone boundary in the zone's bias direction (bullish: green close above the top). It can be the tapping candle itself (wick into the zone, close back outside) or a later candle. Without a tap first there is no confirmation, so an FVG's own third candle never confirms it (rule set by the user).
-- **Invalidated:** a candle closes beyond the opposite boundary.
-- A zone stays usable for the strategy until it is invalidated (strategy rules may end it earlier, e.g. at the session end). How long it is *drawn* is display only and never limits its use.
+Described for a bullish zone (price comes from above), bearish mirrored. Checking starts with the candle after the one that confirms the zone.
+- **Tap:** a wick into the zone is enough; no close inside needed. The wick must go **into** the zone (low < top): touching the edge is no tap (rule set by the user).
+- **Confirmed (usable for entry):** a candle closes beyond the zone boundary in the zone's bias direction (bullish: green close above the top). **Only after a tap** (rule set by the user); the tap may be on the same candle (wick into the zone, green close above it). A close above the top without a tap does nothing. A doji (body ≤ the symbol's doji threshold) never confirms.
+- **Invalidated:** a candle closes beyond the opposite boundary (bullish: below the bottom). Any candle counts, also a doji or a green one, tapped before or not (rule set by the user).
+- Confirmed and invalidated are **final**: the zone is no longer checked. What a strategy does with an invalidated zone (e.g. an inverse FVG) is up to the strategy.
+- How long a zone is **drawn** on the chart is display only and never limits its use (FVG drawing: ROADMAP 2.5).
 
 ## Fair value gap (FVG)
-- 3-candle pattern; the gap lies between the wicks of candle 1 and candle 3. Candle 2's wick is ignored.
-- Bullish in an uptrend, bearish in a downtrend: the trend of the **FVG's own timeframe** (a 5m FVG uses the 5m trend), not the overall 4H trend (rule set by the user).
+- 3-candle pattern; the gap lies between the wicks of candle 1 and candle 3. Candle 2's wick is ignored. Bullish: candle 3's low > candle 1's high; the zone runs from candle 1's high to candle 3's low. Equal wicks are no gap. Candle 2's color doesn't matter (rule set by the user).
+- Confirmed at the close of candle 3.
+- **Every gap is an FVG**, in both directions, whatever the trend (rule set by the user). Which direction a strategy **uses** is the strategy's rule (strategy 1: the trend of the FVG's own timeframe, see `strategy-session-zones.md` › Entry sequence).
+- Gaps across the daily break or a weekend count like any other.
 - An FVG is used when price **retraces back into it**: a bullish FVG forms in a move up, and a later bearish move into it uses it (taps it). Bearish mirrored.
-- **On the chart** (display only, rule set by the user):
-  - drawn from the moment it forms (close of candle 3), from candle 1 to the right;
-  - extends **8 candles** of its own timeframe after forming (setting); if price hits it (a wick into it) later, the drawing extends up to that hit candle, so it reaches the latest hit;
-  - stops at the candle that **invalidates** it, whatever comes first;
-  - confirmation changes nothing on the general chart (the strategy's session view draws confirmed confluences darker).
-  - The 8-candle limit is only visual: an FVG that was never hit within 8 candles can still be tapped, confirmed and used later.
 
 ## Order block (OB)
 - Range = the entire consecutive same-color leg from the prior swing point to the swing extreme before reversal, from the lowest wick to the highest wick of the leg.

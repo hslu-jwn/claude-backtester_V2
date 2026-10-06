@@ -214,4 +214,13 @@ def _badge_text(
     return text, last.trend
 
 
-BOS = register(OverlayType("bos", "BOS + trend", detect_bos, draw_bos, trend_badges))
+BOS = register(
+    OverlayType(
+        "bos",
+        "BOS + trend",
+        lambda replay, _settings: detect_bos(replay),
+        draw_bos,
+        trend_badges,
+        order=2.3,
+    )
+)

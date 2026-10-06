@@ -16,11 +16,14 @@ from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import CANDLE_TRACES, DEFAULT_CONFIG, ChartConfig
 from backtester.ui.overlays import (
+    DEFAULT_SETTINGS,
     OverlayContext,
     OverlayType,
     OverlayUnavailable,
-    dropdown_options,
+    overlay_options,
+    overlay_summary,
     overlay_traces,
+    register,
     run_detector,
     visible_events,
 )
@@ -48,7 +51,9 @@ def draw_markers(events, ctx: OverlayContext):
 
 
 def fake_registry(**extra) -> dict[str, OverlayType]:
-    green = OverlayType("green", "Green", lambda r: run_detector(GreenCandles(), r), draw_markers)
+    green = OverlayType(
+        "green", "Green", lambda r, _s: run_detector(GreenCandles(), r), draw_markers
+    )
     return {"green": green, **extra}
 
 
@@ -76,12 +81,37 @@ def test_switch_off_means_no_overlays_whatever_the_dropdown_says():
     assert selected_overlays(["on"], ["green"]) == ["green"]
 
 
-def test_dropdown_lists_registered_types_in_order():
-    registry = fake_registry(red=OverlayType("red", "Red", lambda r: [], draw_markers))
-    assert dropdown_options(registry) == [
-        {"label": "Green", "value": "green"},
-        {"label": "Red", "value": "red"},
+def test_panel_lists_registered_types_in_order_disabled_while_the_switch_is_off():
+    registry = fake_registry(red=OverlayType("red", "Red", lambda r, _s: [], draw_markers))
+    assert overlay_options(registry=registry) == [
+        {"label": "Green", "value": "green", "disabled": False},
+        {"label": "Red", "value": "red", "disabled": False},
     ]
+    assert all(o["disabled"] for o in overlay_options(enabled=False, registry=registry))
+
+
+def test_register_keeps_the_roadmap_order_whatever_the_import_order():
+    registry = {}
+    for key, order in (("c", 2.5), ("a", 2.2), ("b", 2.3)):
+        overlay = OverlayType(key, key.upper(), lambda r, _s: [], draw_markers, order=order)
+        register(overlay, registry)
+    assert list(registry) == ["a", "b", "c"]
+
+
+def test_sub_entries_right_under_their_type_only_tickable_while_it_is():
+    def noop(replay, settings):
+        return []
+
+    registry = {
+        "a": OverlayType("a", "A", noop, draw_markers, parts=(("x", "★ xs"),)),
+        "b": OverlayType("b", "B", noop, draw_markers),
+    }
+    values = [(o["value"], o["disabled"]) for o in overlay_options([], True, registry)]
+    assert values == [("a", False), ("a.x", True), ("b", False)]
+    ticked = overlay_options(["a"], True, registry)
+    assert ticked[1]["disabled"] is False and ticked[1]["label"].endswith("↳ ★ xs")
+    assert overlay_summary(["b", "a", "a.x"], registry) == "Overlay types: A, B"
+    assert overlay_summary([], registry) == "Overlay types"
 
 
 def test_only_selected_types_are_drawn_and_unknown_keys_are_ignored():
@@ -94,13 +124,15 @@ def test_only_selected_types_are_drawn_and_unknown_keys_are_ignored():
 
 
 def test_unavailable_overlay_becomes_a_message_not_an_error():
-    def refuse(replay):
+    def refuse(replay, _settings):
         raise OverlayUnavailable("doji threshold not defined for TEST")
 
     registry = fake_registry(no=OverlayType("no", "Nope", refuse, draw_markers))
     ctx = OverlayContext("TEST", cursor=0, first_x=0)
     replay = replay_of(GREEN)
-    traces, messages = overlay_traces(lambda o: o.detect(replay), ["green", "no"], ctx, registry)
+    traces, messages = overlay_traces(
+        lambda o: o.detect(replay, DEFAULT_SETTINGS), ["green", "no"], ctx, registry
+    )
     assert len(traces) == 1
     assert messages == ["Nope: doji threshold not defined for TEST"]
 

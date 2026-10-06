@@ -84,6 +84,12 @@ class ChartConfig:
     trend_down_color: str = "#f23645"
     trend_none_color: str = "#9598a1"
     trend_badge_spacing: float = 0.05  # paper height between the stacked trend badges
+    fvg_bullish_color: str = "#089981"  # edge and markers; the fill is a light shade of it
+    fvg_bearish_color: str = "#f23645"
+    fvg_fill_opacity: float = 0.18
+    fvg_invalidated_opacity: float = 0.07  # invalidated FVGs stay visible, fainter
+    zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
+    zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe
     overall_trend_warmup_days: int = 60  # overall-trend history loaded before the chart range
     marker_size: int = 9

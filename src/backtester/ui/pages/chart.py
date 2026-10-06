@@ -22,10 +22,16 @@ Session lines (ROADMAP.md › 1.3): the "Sessions" switch shows or hides all ses
 lines (Tokyo, London, NY), in the normal chart and in replay; the choice is kept in the browser.
 
 Overlays (ROADMAP.md › Phase 2): the chart starts empty. The "Overlays" switch turns the
-detector overlays on and the dropdown next to it picks which types are drawn (multi-select,
-one entry per registered `OverlayType`, see `ui/overlays.py`). Events are computed once per
+detector overlays on and the "Overlay types" panel next to it (opens like a dropdown) picks
+which types are drawn: one checkbox per registered `OverlayType` in roadmap order, see
+`ui/overlays.py`. A checkbox panel rather than a dropdown, so ticked entries stay in place
+and sub-entries stay right under their type. Events are computed once per
 loaded range by feeding the detector `SeriesView`s; during replay only events confirmed at
-or before the cursor are drawn. Both choices are kept in the browser.
+or before the cursor are drawn. Both choices are kept in the browser. The "FVG strong-move
+filter" switch (confluences.md › Strong-move filter, default off) is passed to the FVG
+detector; events are cached per setting, so switching back is instant. Zone overlays
+have indented sub-entries (FVG: "↳ ★ confirmations", "↳ ✕ invalidations") that show their
+★ / ✕ markers (drawing only); they can only be ticked while their type is.
 
 Later steps add: the session view (3.5) and position boxes.
 """
@@ -51,6 +57,7 @@ from backtester.data.sources import SymbolSources
 from backtester.engine.replay import Replay
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
+    fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
 )
 from backtester.ui.chart_figure import (
@@ -62,10 +69,13 @@ from backtester.ui.chart_figure import (
     y_range,
 )
 from backtester.ui.overlays import (
+    DEFAULT_SETTINGS,
     OVERLAYS,
     OverlayContext,
+    OverlaySettings,
     OverlayType,
-    dropdown_options,
+    overlay_options,
+    overlay_summary,
     overlay_traces,
 )
 
@@ -84,6 +94,7 @@ def load_chart(
     show_sessions: bool = True,
     overlay_keys: Sequence[str] = (),
     registry: dict[str, OverlayType] = OVERLAYS,
+    settings: OverlaySettings = DEFAULT_SETTINGS,
 ):
     """Figure, message and stored candle data for the chosen inputs.
 
@@ -96,7 +107,9 @@ def load_chart(
     traces, notes = [], []
     if overlay_keys:
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
-        traces, notes = chart_overlays(replay, overlay_keys, len(replay) - 1, 0, config, registry)
+        traces, notes = chart_overlays(
+            replay, overlay_keys, len(replay) - 1, 0, config, registry, settings
+        )
     figure = build_candle_figure(
         frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions, overlays=traces
     )
@@ -110,20 +123,27 @@ def chart_overlays(
     first_x: int,
     config: ChartConfig = DEFAULT_CONFIG,
     registry: dict[str, OverlayType] = OVERLAYS,
+    settings: OverlaySettings = DEFAULT_SETTINGS,
 ):
     """(traces, messages) of the selected overlays for candles first_x..cursor of `replay`."""
     if not keys:
         return [], []
     ctx = OverlayContext(
-        replay.symbol, cursor, first_x, config, replay.timeframe, replay.overall_timeframe
+        replay.symbol,
+        cursor,
+        first_x,
+        config,
+        replay.timeframe,
+        replay.overall_timeframe,
     )
-    return overlay_traces(lambda o: _cached_events(replay, o), keys, ctx, registry)
+    return overlay_traces(lambda o: _cached_events(replay, o, settings), keys, ctx, registry)
 
 
 @lru_cache(maxsize=32)
-def _cached_events(replay: Replay, overlay: OverlayType):
-    """Events of one overlay over the whole replay range, computed once per range."""
-    return tuple(overlay.detect(replay))
+def _cached_events(replay: Replay, overlay: OverlayType, settings: OverlaySettings):
+    """Events of one overlay over the whole replay range, computed once per range and
+    settings."""
+    return tuple(overlay.detect(replay, settings))
 
 
 def _with_notes(message: str, notes: Sequence[str]) -> str:
@@ -332,6 +352,7 @@ def replay_chart(
     overlay_keys: Sequence[str] = (),
     registry: dict[str, OverlayType] = OVERLAYS,
     span: dict | None = None,
+    settings: OverlaySettings = DEFAULT_SETTINGS,
 ):
     """(figure or None, message, axis store or None) at the replay time `state["now"]`,
     showing the replay `span`. Overlays show only events confirmed at or before the cursor."""
@@ -341,7 +362,7 @@ def replay_chart(
         return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
     view = replay.view(cursor)
     traces, notes = chart_overlays(
-        replay, overlay_keys, cursor, replay_first_x(cursor, config), config, registry
+        replay, overlay_keys, cursor, replay_first_x(cursor, config), config, registry, settings
     )
     figure, store = replay_figure(view, config, show_sessions, traces, span)
     message = (
@@ -420,15 +441,49 @@ def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html
                         style={"color": config.text_color},
                         inputStyle={"marginRight": "4px"},
                     ),
-                    dcc.Dropdown(
-                        id="chart-overlay-types",
-                        options=dropdown_options(),
+                    html.Details(
+                        [
+                            html.Summary(
+                                "Overlay types" if OVERLAYS else "No overlay types yet",
+                                id="chart-overlay-summary",
+                                style={"cursor": "pointer", "color": config.text_color},
+                            ),
+                            dcc.Checklist(
+                                id="chart-overlay-types",
+                                options=overlay_options(enabled=False),
+                                value=[],
+                                persistence=True,
+                                style={
+                                    "position": "absolute",
+                                    "zIndex": 10,
+                                    "top": "100%",
+                                    "left": 0,
+                                    "minWidth": "220px",
+                                    "padding": "6px 10px",
+                                    "background": config.background,
+                                    "border": f"1px solid {config.spike_color}",
+                                    "borderRadius": "4px",
+                                    "color": config.text_color,
+                                },
+                                labelStyle={"display": "block", "whiteSpace": "nowrap"},
+                                inputStyle={"marginRight": "6px"},
+                            ),
+                        ],
+                        style={
+                            "position": "relative",
+                            "minWidth": "220px",
+                            "padding": "4px 8px",
+                            "border": f"1px solid {config.spike_color}",
+                            "borderRadius": "4px",
+                        },
+                    ),
+                    dcc.Checklist(
+                        id="chart-strong-move",
+                        options=[{"label": "FVG strong-move filter", "value": "on"}],
                         value=[],
-                        multi=True,
                         persistence=True,
-                        disabled=True,
-                        placeholder="Overlay types" if OVERLAYS else "No overlay types yet",
-                        style={"minWidth": "220px"},
+                        style={"color": config.text_color},
+                        inputStyle={"marginRight": "4px"},
                     ),
                     html.Button("Replay", id="chart-replay-toggle", title="Replay on/off"),
                     html.Div(
@@ -515,6 +570,7 @@ def register_callbacks(
         Input("chart-sessions", "value"),
         Input("chart-overlays", "value"),
         Input("chart-overlay-types", "value"),
+        Input("chart-strong-move", "value"),
         State("chart-graph", "style"),
         State("chart-replay-span", "data"),
     )
@@ -527,22 +583,26 @@ def register_callbacks(
         sessions_switch,
         overlays_switch,
         overlay_types,
+        strong_move_switch,
         style,
         span,
     ):
         args = (sources, symbol, timeframe, start_date, end_date, config)
         show_sessions = bool(sessions_switch)
         keys = selected_overlays(overlays_switch, overlay_types)
+        settings = OverlaySettings(fvg_strong_move_filter=bool(strong_move_switch))
         if replay_state["on"] and not replay_state["picking"]:
             replay, message = load_replay(*args)
             figure, message, store = (
-                replay_chart(replay, replay_state, config, show_sessions, keys, span=span)
+                replay_chart(
+                    replay, replay_state, config, show_sessions, keys, span=span, settings=settings
+                )
                 if replay
                 else (None, message, None)
             )
         else:
             figure, message, store = load_chart(
-                *args, show_sessions=show_sessions, overlay_keys=keys
+                *args, show_sessions=show_sessions, overlay_keys=keys, settings=settings
             )
             if replay_state["on"] and figure:
                 now = datetime.fromisoformat(replay_state["now"])
@@ -596,9 +656,17 @@ def register_callbacks(
             else {},
         )
 
-    @app.callback(Output("chart-overlay-types", "disabled"), Input("chart-overlays", "value"))
-    def _overlay_types_enabled(overlays_switch):
-        return not overlays_switch
+    @app.callback(
+        Output("chart-overlay-types", "options"),
+        Output("chart-overlay-summary", "children"),
+        Input("chart-overlays", "value"),
+        Input("chart-overlay-types", "value"),
+    )
+    def _overlay_panel(overlays_switch, overlay_types):
+        selected = overlay_types or []
+        if not OVERLAYS:
+            return [], "No overlay types yet"
+        return overlay_options(selected, bool(overlays_switch)), overlay_summary(selected)
 
     @app.callback(Output("chart-replay-timer", "interval"), Input("chart-replay-speed", "value"))
     def _speed(speed):

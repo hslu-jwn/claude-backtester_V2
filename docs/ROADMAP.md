@@ -77,8 +77,9 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
 Every detector gets: tests (incl. the no-lookahead test) → an overlay layer → **user
 checks it on the chart** → commit. The chart starts empty: a switch turns the overlays on
-and a dropdown picks which types are shown (multi-select: swings, BOS, FVG, OB, breaker,
-BPR, session zones, …). This "all confluences" mode checks the detectors; the strategy's
+and the "Overlay types" checkbox panel (opens like a dropdown) picks which types are shown
+(swings, BOS, FVG, OB, breaker, BPR, session zones, … in roadmap order; zone types have
+indented sub-entries for their ★ confirmation / ✕ invalidation markers). This "all confluences" mode checks the detectors; the strategy's
 session view (3.5) is separate. Overlays draw a small marker on the
 **confirming candle**, so the user can see when each pattern became known, and a hover
 text with its state (active / tapped / confirmed / invalidated).
@@ -96,8 +97,18 @@ text with its state (active / tapped / confirmed / invalidated).
   at the replay cursor: the **overall trend** (4H by default, `TrendConfig.overall_timeframe`;
   60 days of 4H warm-up history before the chart range, `ChartConfig.overall_trend_warmup_days`)
   and the shown timeframe's trend.
-- ☐ **2.4** Zone validation state machine (shared by all zones)
-- ☐ **2.5** FVG
+- ☑ **2.4** Zone validation state machine (shared by all zones). `detectors/zone.py`:
+  `ZoneBox` (fixed geometry), `ZoneValidator` (tap → confirmed, or invalidated; emits
+  `ZoneTransition` events), `ZoneBook` (the zones a detector still checks). No overlay of
+  its own; seen through the FVG overlay. Check: `pytest tests/detectors/test_zone.py`.
+- ☑ **2.5** FVG. `detectors/fvg.py`, every gap in both directions, strong-move filter on
+  candle 2 (switch, default off). Overlay "FVG": a green (bullish) / red (bearish) box from
+  candle 1 until it is used: to the candle that confirmed or invalidated it, to the cursor
+  while still open (no length limit); invalidated ones fainter. No marker on candle 3
+  (user's choice): hovering over the box shows range, candle 2 vs. the strong-move
+  threshold, the shown timeframe's trend (with / against) and the state (taps are
+  listed there, no marker on the chart); the sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" under FVG add ★ / ✕
+  (every zone overlay gets these sub-entries). Panel switch "FVG strong-move filter".
 - ☐ **2.6** Order block
 - ☐ **2.7** Breaker block
 - ☐ **2.8** BPR
