@@ -135,6 +135,14 @@ text with its state (active / tapped / confirmed / invalidated).
   Costs: the cache has no ask prices now (histdata.com), so the spread is a **fixed setting
   per symbol** (user's FTMO values), plus an optional commission per trade; both can be
   switched off. Longs enter at ask (bid + spread) and exit at bid; shorts mirrored.
+  Default costs (estimates, user asked for rough values; FTMO publishes no fixed spreads):
+  spread XAUUSD 0.25 (25 cents), GBPUSD 0.00003 (0.3 pip), GBPJPY 0.010 (1.0 pip);
+  commission per lot round turn $5 for forex (user's figure), $6 for gold (reported about
+  $5.81, scales with the gold price). Commission is a dollar amount per lot, so in R it
+  depends on the SL distance: commission_R = commission per lot / (SL distance x value of a
+  1.0 price move per lot). Contract specs: XAUUSD 100 oz per lot ($100 per $1 move),
+  GBPUSD 100,000 GBP per lot ($10 per pip), GBPJPY 100,000 GBP per lot (pip value in USD
+  via USDJPY, use a fixed approximation, setting).
   Reuses `engine/replay.py` for the multi-timeframe stepping.
 - ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
 - ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
