@@ -124,8 +124,9 @@ text with its state (active / tapped / confirmed / invalidated).
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
   from the older FVG's candle 1 until confirmed / invalidated, hover over the box (both
   FVGs, state), sub-entries ★ / ✕. Follows the "FVG strong-move filter" switch.
-- ☐ **2.9** Session zones (30m), incl. support/resistance by price, flips and the kill on the 3rd break (`strategy-session-zones.md › Session zones`, › Zone flips, › Session zones on the chart)
-- ☐ **2.10** Multi-timeframe view: show 30m zones on the 5m chart
+- ☑ **2.9** Session zones (30m), incl. support/resistance by price, flips and the kill on the 3rd break (`strategy-session-zones.md › Session zones`, › Zone flips, › Session zones on the chart).
+  `strategy/session_zone_sweep/zones.py` (`SessionZoneTracker`; a candle belongs to the session it closes in). Overlay "Session zones": dotted box from the swing to the end of the session the zone is used in (or its kill), colored by that session, filled only there. Session lines now go through the candle the session starts on.
+- ☑ **2.10** Multi-timeframe view: show 30m zones on the 5m chart (done with 2.9: shown on M5–M30; the chart loads 30m candles, read only through the replay's clock).
 
 ## Phase 3: Strategy 1 + backtest
 

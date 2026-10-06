@@ -8,8 +8,10 @@ Spec: strategy-session-zones.md › Sessions.
 - Sessions run Monday to Friday by their own city's date, so Monday's Tokyo session starts
   on Sunday evening in New York.
 - A session ends when the next one starts (Friday New York ends at Monday Tokyo).
-- Candles before a session start belong to the previous session.
-- Sunday-open candles before Tokyo's start are ignored: `session_of` returns None for them.
+- A candle belongs to the session it CLOSES in (rule set by the user): pass its close
+  time to `session_of`. The 30m candle closing at the New York open is New York's first.
+- Times on the weekend before Tokyo's start are in no session: `session_of` returns None
+  (candles closing there, i.e. the Sunday open, are ignored).
 All inputs and outputs are UTC datetimes; conversion uses zoneinfo, never fixed offsets.
 Holidays are not handled here: a session on a closed day simply has no candles.
 """
@@ -96,8 +98,8 @@ def session_starts(
 
 
 def session_of(ts: datetime, config: SessionConfig = DEFAULT_SESSIONS) -> SessionInstance | None:
-    """The session a candle opening at `ts` (UTC) belongs to, or None on the weekend before
-    Tokyo's start (Sunday-open candles)."""
+    """The session running at `ts` (UTC), or None on the weekend before Tokyo's start. A
+    candle belongs to the session of its CLOSE time."""
     _check_utc(ts)
     candidates = session_starts(ts - timedelta(days=4), ts + timedelta(seconds=1), config)
     if not candidates:

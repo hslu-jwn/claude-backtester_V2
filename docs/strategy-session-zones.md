@@ -5,16 +5,18 @@
 ## Sessions
 - Starts (ET): New York 08:00, London 03:00, Tokyo 20:00. Each session follows its own city's daylight-saving shifts and ends when the next one starts.
 - Local start times: Tokyo 09:00 Asia/Tokyo (no DST: 20:00 ET in US summer, 19:00 ET in US winter), London 08:00 Europe/London (04:00 ET in the weeks when US and European DST dates differ), New York 08:00 America/New_York. The ET times above are the US summer values. Sessions run Monday to Friday by their own city's date.
-- A chart line is drawn at each session start.
-- Candles before a session start belong to the previous session. Sunday-open candles before Tokyo's start are ignored and form no zones.
+- A chart line is drawn at each session start, through the middle of the candle the session starts on (rule set by the user): NY 08:00 → the 08:00 candle; on 4H the candle the start falls in.
+- **A candle belongs to the session it closes in** (rule set by the user): the 30m candle closing at the New York open (12:30–13:00 UTC in winter) is New York's first candle, not London's last. This holds on every timeframe, each for its own candles: 1m or 5m candles that close before the open still belong to the previous session (5m: the 12:55 candle is New York's first). Candles closing on the weekend before Tokyo's start (the Sunday open) are ignored and form no zones; the candle closing at Tokyo's start is Tokyo's first.
 
 ## Session zones (30m)
 - For each session, take the single most extreme **confirmed** high and low (swing rule). If the absolute extreme is unconfirmed, use the most extreme confirmed one. A swing confirmed by the first candle of the next session doesn't count.
-- Zone size is as big as possible: the high zone runs from the highest wick to the lowest body top of its swing candles; the low zone is mirrored.
+- **A swing belongs to the session of its extreme-wick candle** (rule set by the user): candles of a session only count for that session. A swing whose extreme is on the last London candle and that is confirmed by the first New York candle counts for neither; a swing whose extreme is on the first New York candle counts for New York. If its other turn candle is London's last, that candle doesn't count: the zone (and its box) come from the New York candle only.
+- Zone size is as big as possible: the high zone runs from the highest wick to the lowest body top of its swing candles in that session; the low zone is mirrored.
 - Zones are valid only during the next session (London→NY, NY→Tokyo, Tokyo→London). Friday NY zones carry into Monday Tokyo.
 - **No confirmed swing** on one side in a session → no zone on that side for the next session (rule set by the user).
-- **Support or resistance by price** (rule set by the user): at the start of the next session, a zone below price (the close of the last candle before the session start is above the zone) is **support**, a zone above price is **resistance**. If that close is inside the zone, its role is set by the first 30m close outside it (that close is no break). ⚠️ The inside case is an assumption, confirm with the user.
-- **Break** (rule set by the user): a 30m candle **closes beyond the whole zone** on the other side (support: close below its bottom). A wick never counts.
+- **Support or resistance by price** (rule set by the user): the close of the forming session's last candle decides: a zone below that close is **support**, a zone above it is **resistance**. Example: London's zones in New York take their role from London's last close (12:00–12:30 UTC candle in winter), and New York's first candle (12:30–13:00) can already break them. If that close is inside the zone, its role is set by the first 30m close outside it (that close is no break; a doji's close never sets it; confirmed by the user).
+- **Weekend** (rule set by the user): Sunday-open candles before Tokyo's start are ignored for the zones too: they form no swings and break nothing, and the role of a Friday NY zone in Monday Tokyo comes from Friday's last close.
+- **Break** (rule set by the user): a 30m candle **closes beyond the whole zone** on the other side (support: close below its bottom). A wick never counts, and neither does a doji's close (rule set by the user).
 
 ## Entry sequence (long)
 1. **Sweep:** a wick into the support zone.
@@ -38,6 +40,8 @@
 - Drawn like the other confluences (always visible when the overlay is on). The user wants to change this later (session view, 3.5).
 - **Color = the session the zone is active in** (Tokyo yellow, London blue, New York red, like the session lines), so a zone formed in London and active in New York is red. Replaces the light blue for now.
 - From the swing candle where the zone formed to the end of the session it is active in; stops at the candle that kills it. Flips are not marked.
+- Dotted edge. Only the part in the session where the zone is used is filled; the part in the session it formed in is an outline only (rule set by the user).
+- Shown on the 30m chart and below, down to 5m (rule set by the user). On a lower chart a 30m candle counts only from the close of the chart candle that ends with it. The fill starts with the chart candle that closes at the active session's start and the box ends with the last chart candle closing before its end (5m: 12:55 to 23:50 UTC for New York in winter).
 
 ## Stop loss
 - Just below the entry confluence's low, plus a buffer ⚙️.

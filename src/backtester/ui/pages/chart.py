@@ -62,6 +62,7 @@ from backtester.ui import (
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
+    session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
 )
 from backtester.ui.chart_figure import (
@@ -198,7 +199,24 @@ def _cached_replay(sources, symbol, timeframe, start_date, end_date, config):
         return None, message
     series = CandleSeries(symbol, Timeframe[timeframe], candles_from_frame(frame))
     overall = _overall_series(sources, symbol, start_date, end_date, config)
-    return Replay(series, overall=overall), message
+    higher = _higher_series(sources, symbol, series.timeframe, start_date, end_date, config)
+    return Replay(series, higher, overall=overall), message
+
+
+def _higher_series(sources, symbol, timeframe, start_date, end_date, config) -> list:
+    """The chart range on `config.higher_timeframes` above the shown one (e.g. 30m for
+    session zones on the 5m chart), read by overlays only through the replay's clocks."""
+    start, end = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
+    out = []
+    for tf in config.higher_timeframes:
+        if tf.value <= timeframe.value:
+            continue
+        frame = sources.adapter(symbol).fetch_frame(
+            symbol, tf, _midnight(start), _midnight(end + timedelta(days=1))
+        )
+        if len(frame):
+            out.append(CandleSeries(symbol, tf, candles_from_frame(frame)))
+    return out
 
 
 def _overall_series(sources, symbol, start_date, end_date, config) -> CandleSeries | None:

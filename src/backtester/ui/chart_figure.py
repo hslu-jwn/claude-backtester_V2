@@ -8,7 +8,8 @@ step chosen from the visible time span (`time_ticks`). Hover shows the exact ope
 During replay (1.2) the figure gets only the candles of a `SeriesView` (`frame_from_candles`),
 drawn at their absolute positions (`first_x`), so the x positions match the full chart.
 
-Session lines (1.3): a dashed vertical line at each session start (`sessions.py`), drawn
+Session lines (1.3): a dashed vertical line at each session start (`sessions.py`), through
+the middle of the candle the session starts on (NY 08:00: the 08:00 candle), drawn
 only over the candles in the frame, so during replay no line appears past the cursor.
 One switch shows or hides all session lines; hidden on timeframes above `session_max_timeframe`.
 
@@ -95,6 +96,11 @@ class ChartConfig:
     bpr_color: str = "#9c27b0"  # purple
     bpr_fill_opacity: float = 0.22
     bpr_invalidated_opacity: float = 0.08
+    session_zone_fill_opacity: float = 0.2  # color = the session the zone is active in
+    session_zone_line_dash: str = "dot"
+    session_zone_min_timeframe: Timeframe = Timeframe.M5  # 30m zones shown down to this
+    # higher timeframes loaded with the chart for overlays built on them (session zones)
+    higher_timeframes: tuple[Timeframe, ...] = (Timeframe.M30,)
     zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
     zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe
@@ -180,10 +186,10 @@ def session_line_positions(
 ) -> list[tuple[float, Session]]:
     """(x, session) for each session start within the candles `ts` (open times, UTC).
 
-    x is the start's place on the candle axis: the left edge of the candle opening at it
-    (x - 0.5), or a point inside the candle containing it (H4). A start inside a gap (e.g.
-    after a holiday) goes to the next candle's left edge, if that candle is still in the
-    session; sessions without candles get no line.
+    x is the middle of the candle the session starts on (rule set by the user): the candle
+    containing the start time (NY 08:00: the 08:00 candle; on H4 the 4h candle it falls
+    in). A start inside a gap (e.g. after a holiday) goes to the next candle, if that
+    candle is still in the session; sessions without candles get no line.
     """
     if ts.empty:
         return []
@@ -194,13 +200,13 @@ def session_line_positions(
     for s in session_starts(first, end, sessions):
         start = pd.Timestamp(s.start)
         i = int(opens.searchsorted(start, side="right")) - 1
-        if opens.iloc[i] + duration > start:
-            offset = (start - opens.iloc[i]) / duration
+        if i >= 0 and opens.iloc[i] + duration > start:
+            pass  # the candle containing the start
         elif i + 1 < len(opens) and opens.iloc[i + 1] < pd.Timestamp(s.end):
-            i, offset = i + 1, 0.0
+            i += 1
         else:
             continue
-        positions.append((first_x + i - 0.5 + offset, s.session))
+        positions.append((float(first_x + i), s.session))
     return positions
 
 

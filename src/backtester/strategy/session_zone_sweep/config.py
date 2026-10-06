@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from backtester.core.models import Timeframe
 from backtester.detectors.atr import StrongMoveConfig
 from backtester.detectors.swings import SwingConfig
+from backtester.sessions import DEFAULT_SESSIONS, SessionConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,6 +19,11 @@ class SessionZoneSweepConfig:
     # strong-move filter (confluences.md); on/off per FVG / OB comes with those detectors
     strong_move: StrongMoveConfig = field(default_factory=StrongMoveConfig)
     swings: SwingConfig = field(default_factory=SwingConfig)  # doji threshold per symbol
+    sessions: SessionConfig = DEFAULT_SESSIONS
+
+    # session zones (strategy-session-zones.md › Session zones, › Zone flips)
+    zone_timeframe: Timeframe = Timeframe.M30
+    zone_kill_breaks: int = 3  # the 3rd break kills a zone for the rest of its session
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction
@@ -34,3 +41,7 @@ class SessionZoneSweepConfig:
     include_last_minutes_trades: bool = True
     skip_tokyo: bool = False
     friday_ny_carries_to_monday_tokyo: bool = True
+
+    def __post_init__(self) -> None:
+        if self.zone_kill_breaks < 1:
+            raise ValueError("zone_kill_breaks must be >= 1")
