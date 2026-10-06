@@ -69,6 +69,8 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 ## Breaker block
 - An OB invalidated by a later BOS through the level it defended becomes a breaker: same range, OPPOSITE bias.
 - Example: an uptrend's HH→HL leg is a bullish OB. If a candle later closes below that HL, the zone becomes a bearish breaker. Works in both directions.
+- ⏸ **Waiting for the user:** the user will explain OBs and breakers again (which close turns an OB into a breaker, whether the OB must still be open). Don't build 2.7 before that; the OB rules may change with it.
+- Decided already (rule set by the user): validation like all zones (› Validation), drawn from the breaking candle onward; every breaker is **orange** on the chart, whatever its direction.
 
 ## Balanced price range (BPR)
 - Overlap of a bullish and a bearish FVG: an older FVG invalidated by the move that creates a newer FVG in the opposite direction. The older one's stored range is used.
