@@ -1,7 +1,11 @@
-"""Data check report for the Dukascopy M1 cache.
+"""Data check report for the M1 cache (Dukascopy, or histdata.com with --cache-dir).
 
     python -m backtester.data.check XAUUSD GBPUSD GBPJPY
     python -m backtester.data.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
+    python -m backtester.data.check GBPUSD GBPJPY --cache-dir data/cache/histdata
+
+Bid-only sources without filler minutes (histdata.com) skip the checks that need asks
+(bid without ask, spread outliers) or filler (1440 rows per day file).
 
 Spec: ROADMAP.md › 0.3, ARCHITECTURE.md › Data sources › Dukascopy.
 
@@ -180,8 +184,12 @@ def integrity_findings(
         finding("duplicate timestamps", ts.duplicated(keep=False)),
         finding("not on a whole minute", ts != ts.dt.floor("min")),
         finding("row in the wrong day file", ts.dt.date != file_day),
+        finding("ask without bid", raw["bid_close"].isna() & raw["ask_close"].notna()),
         finding(
-            "bid without ask or ask without bid", raw["bid_close"].isna() != raw["ask_close"].isna()
+            "bid without ask (in a day file that has asks)",
+            raw["bid_close"].notna()
+            & raw["ask_close"].isna()
+            & _day_has(raw, file_day, "ask_close"),
         ),
     ]
     for side in _SIDES:
@@ -202,6 +210,11 @@ def integrity_findings(
     return out
 
 
+def _day_has(raw: pd.DataFrame, file_day: pd.Series, column: str) -> pd.Series:
+    """Per row: does any row of the same day file have a value in `column`?"""
+    return raw[column].notna().groupby(file_day.to_numpy()).transform("any")
+
+
 def outlier_findings(traded: pd.DataFrame, config: DataCheckConfig) -> list[Finding]:
     """Unusual but possibly real minutes (news, rollover). Listed largest first."""
     n = config.examples
@@ -216,12 +229,19 @@ def outlier_findings(traded: pd.DataFrame, config: DataCheckConfig) -> list[Find
         examples = [f"{_fmt_ts(traded['ts'][i])}  {values[i]:.5g}" for i in hits.index[:n]]
         return Finding(f"{name} (> {limit:.5g})", len(hits), examples)
 
+    spread_finding = (
+        [
+            finding(
+                f"spread > {config.spread_outlier_factor:g} x median",
+                spread,
+                config.spread_outlier_factor * spread.median(),
+            )
+        ]
+        if spread.notna().any()
+        else []  # bid-only source (histdata.com): no spread to check
+    )
     return [
-        finding(
-            f"spread > {config.spread_outlier_factor:g} x median",
-            spread,
-            config.spread_outlier_factor * spread.median(),
-        ),
+        *spread_finding,
         finding(
             f"jump between minutes > {config.jump_outlier_factor:g} x median range",
             jump,
@@ -309,8 +329,11 @@ def check_symbol(
     if raw.empty:
         return report
 
+    # Only sources that fill every minute (Dukascopy: flat zero-volume filler) have 1440
+    # rows per day; histdata.com leaves non-trading minutes out (volume unknown = NaN).
+    filled = raw["bid_volume"].notna().groupby(file_day.to_numpy()).any()
     rows_per_file = Counter(file_day)
-    short_files = [str(d) for d, k in rows_per_file.items() if k != 24 * 60]
+    short_files = [str(d) for d, k in rows_per_file.items() if k != 24 * 60 and filled[d]]
     report.integrity = [
         *integrity_findings(raw, file_day, config),
         Finding(

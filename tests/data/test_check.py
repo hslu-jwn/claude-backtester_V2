@@ -115,7 +115,8 @@ def test_planted_problems_are_each_found_once():
     assert got["bid: high < low"] == 1
     assert got["bid: open/close outside high-low"] == 2
     assert got["ask < bid (negative spread)"] == 1
-    assert got["bid without ask or ask without bid"] == 1
+    assert got["bid without ask (in a day file that has asks)"] == 1
+    assert got["ask without bid"] == 0
     assert got["not on a whole minute"] == 1
     assert got["bid: price <= 0"] == 0
 

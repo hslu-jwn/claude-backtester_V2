@@ -41,6 +41,10 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   their point factors here (GBPUSD ≈ 1.2–1.4, GBPJPY ≈ 180–210) and add a real sample
   file test for each, like the XAUUSD one. The current GBP sample files in
   `tests/data/fixtures/` are Dukascopy "TooManyRequests" replies, not data: download them again.
+  Meanwhile GBPUSD / GBPJPY September 2026 come from histdata.com:
+  `python -m backtester.data.histdata data/raw/histdata/` → `data/cache/histdata/`
+  (New York time with DST, verified against TradingView; see `ARCHITECTURE.md › histdata.com`).
+  Check: `python -m backtester.data.check GBPUSD GBPJPY --cache-dir data/cache/histdata`.
   Also measure each pair's median 5m candle range and set its doji threshold
   (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low).
   Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the

@@ -1,4 +1,4 @@
-"""Build higher-timeframe candles from cached Dukascopy M1 rows.
+"""Build higher-timeframe candles from cached M1 rows (Dukascopy or histdata.com).
 
 Spec: ARCHITECTURE.md › Data sources › Dukascopy, ROADMAP.md › 0.2.
 
@@ -31,7 +31,9 @@ def supported(timeframe: Timeframe) -> bool:
 def drop_flat_minutes(m1: pd.DataFrame) -> pd.DataFrame:
     """Remove minutes with bid O = H = L = C and zero bid volume, and minutes without a bid.
 
-    A flat minute that has volume is a real (quiet) minute and is kept.
+    A flat minute that has volume is a real (quiet) minute and is kept. So is a flat minute
+    whose volume is unknown (NaN): sources like histdata.com (`data/histdata.py`) leave
+    non-trading minutes out instead of filling them, so every minute they have is real.
     """
     flat = (
         (m1["bid_open"] == m1["bid_high"])

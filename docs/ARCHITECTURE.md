@@ -88,6 +88,39 @@ different settings, or fed the manual R log, without repeating detection.
   is blocked: the run stops at once.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
 
+### histdata.com (GBPUSD, GBPJPY while Dukascopy throttles)
+
+- Monthly M1 files in MetaTrader format, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, put in
+  `data/raw/histdata/` by hand. Imported with `python -m backtester.data.histdata data/raw/histdata/`
+  into `data/cache/histdata/` (same layout and columns as the Dukascopy cache, own folder
+  so the sources never mix). Use `--cache-dir data/cache/histdata` for `data.check`,
+  `data.show` and the app.
+- Timestamps: **New York local time with daylight saving** (`America/New_York`: UTC−4 in
+  summer, UTC−5 in winter), converted to UTC on import.
+  **This contradicts HistData's FAQ**, which says the files are "EST without daylight
+  saving" (fixed UTC−5). Read as fixed UTC−5, the September 2026 files put the weekend at
+  Fri 22:00 → Sun 22:00 UTC and the rollover at 22:00 UTC, one hour after the 17:00 New York
+  close. Two GBPUSD M5 candles were compared with TradingView (chart in UTC):
+
+  | Candle (UTC) | histdata read as New York time (UTC−4) | Read as fixed UTC−5 | TradingView |
+  |---|---|---|---|
+  | 2026-09-30 07:00 | O 1.32544 · H 1.32626 · L 1.32527 · C 1.32583 | O 1.32447 · H 1.32583 · L 1.32439 · C 1.32566 | matches New York time on all four values |
+  | 2026-09-30 13:30 | O 1.32924 · H 1.32949 · L 1.32913 · C 1.32926 | O 1.3288 · H 1.33109 · L 1.32869 · C 1.3303 | matches neither (feed difference, or a candle TradingView builds differently) |
+
+  The 07:00 candle and the gap positions (below) decide it for New York time; the 13:30
+  mismatch is not explained yet and is worth a look when more candles are compared.
+
+  After the switch, the data check finds the weekends at Fri 17:00 → Sun 17:00 New York
+  and GBPJPY's daily breaks at the 17:00 close. US clocks change on a Sunday at 02:00, when
+  FX is closed: a minute in the skipped or repeated local hour stops the import.
+  Re-check a winter month against TradingView when one is imported.
+- Bid only (ask columns empty, candle `spread` NaN). Volume is always 0 in the files and is
+  stored as NaN (unknown). Non-trading minutes are **missing**, not flat filler, so the
+  flat-zero-volume filter never drops a histdata minute.
+- Only UTC days fully inside the imported months are cached (a month runs from New York
+  midnight of the 1st: 04:00 UTC in summer, 05:00 UTC in winter). Minutes that appear twice (a feed glitch: single-tick rows written
+  out of order) are merged in file order: first open, max high, min low, last close.
+
 ### MetaTrader 5 (FTMO feed, live trading)
 
 FTMO's server keeps only about one month of 5m history, so MT5 is used for the feed
