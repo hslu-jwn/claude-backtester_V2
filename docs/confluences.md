@@ -15,15 +15,19 @@
 
 ## Break of structure (BOS)
 - **Bullish BOS:** a candle **closes above** the most recent confirmed swing high (its wick price). **Bearish BOS:** a candle closes below the most recent confirmed swing low. A wick alone never counts.
+- **Only a move in the BOS direction counts** (rule set by the user): a bullish BOS needs a green breaking candle (close > open), a bearish BOS a red one. A red candle closing above the high (e.g. after a gap up) is no bullish BOS. A doji (body ≤ the symbol's doji threshold, see Swing high / low) is neither green nor red, so it never causes a BOS.
 - The swing must already be confirmed when the breaking candle closes (no lookahead). Each swing level can be broken only once (the first close beyond it).
+- **Only the most recent swing counts** (rule set by the user): once it is broken, there is no further BOS in that direction until a new swing high (low) is confirmed, even if price later closes above an older, higher high that was never broken. A close through several highs at once is one BOS, against the most recent one.
+- **A BOS only happens against the current trend** (rule set by the user): in a downtrend a close below the latest swing low (a lower low) is **no BOS**; in an uptrend a close above the latest swing high (a higher high) is no BOS. Such a close changes nothing, but the swing level counts as broken (each level only once). So BOS directions alternate; before the first BOS on a chart either direction counts.
 - Works the same on every timeframe.
 
 ## Trend
 - **Defined only by BOS** (rule set by the user; replaces the earlier higher-high/higher-low rule):
   - after a bullish BOS the market is in an **uptrend**, after a bearish BOS in a **downtrend**;
   - it stays in that trend until a BOS in the other direction occurs (that BOS flips it immediately);
-  - a BOS in the trend's own direction confirms the trend and changes nothing.
+  - a break in the trend's own direction is no BOS (see above) and changes nothing, so every BOS after the first one flips the trend.
 - Before the first BOS on a chart there is no trend yet.
+- **Overall trend = the 4H trend** (rule set by the user): the trend above, on the 4H chart. The timeframe is a setting (`TrendConfig.overall_timeframe`, default 4H), so it can be changed and compared in backtests. On a lower timeframe it is read without lookahead: only 4H candles closed at the current candle's close count. Each timeframe also has its own trend from its own BOS (e.g. the 5m trend); "the trend" without a timeframe means the overall trend.
 
 ## Strong-move filter
 - A candle is a strong move if its range (high − low) ≥ k × ATR(n). Default k = 2, n = 14 (n still to be swept); k and n are settings.
@@ -42,7 +46,8 @@
 
 ## Fair value gap (FVG)
 - 3-candle pattern; the gap lies between the wicks of candle 1 and candle 3. Candle 2's wick is ignored.
-- Bullish in an uptrend, bearish in a downtrend.
+- Bullish in an uptrend, bearish in a downtrend: the trend of the **FVG's own timeframe** (a 5m FVG uses the 5m trend), not the overall 4H trend (rule set by the user).
+- An FVG is used when price **retraces back into it**: a bullish FVG forms in a move up, and a later bearish move into it uses it (taps it). Bearish mirrored.
 
 ## Order block (OB)
 - Range = the entire consecutive same-color leg from the prior swing point to the swing extreme before reversal, from the lowest wick to the highest wick of the leg.

@@ -16,7 +16,7 @@
 ## Entry sequence (long)
 1. **Sweep:** a wick into the support zone.
 2. **30m reaction:** a green 30m candle closes above the zone. It need not be the sweep candle; a red close never counts.
-3. **5m BOS up:** a 5m close above the high right beforehand (the bullish BOS of `confluences.md` on the 5m chart), during that 30m candle or after.
+3. **5m BOS up:** a 5m close above the high right beforehand, during that 30m candle or after. ⚠️ **Open question (user is researching it; ask again before 3.2):** `confluences.md` now only counts a BOS *against* the trend, so if the 5m chart is already in an uptrend this close is no confluence BOS. Provisional answer (b): step 3 is its own check in `strategy/session_zone_sweep/` (any 5m close above the swing high right before it), not the confluence BOS.
 4. **Confluence:** an FVG, OB, breaker or BPR (FVGs are most promising), usually formed in the BOS move; a breaker comes from the move before. Price taps it, then a green 5m candle closes above it → **enter at that close**. No confluence = no trade.
 
 ## Invalidation & reset

@@ -66,7 +66,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   exactly what the engine sees. Higher timeframes during replay come from
   `HigherTimeframeClock` only.
   Replay steps on the shown timeframe (M5: 5 minutes per step, H1: one hour) and keeps
-  the replay time when switching timeframe. Start: click a candle (default: first candle of
+  the replay time when switching timeframe, and the visible time span around it (M5 -> M1:
+  the same hours with smaller candles; a zoom/pan sets the span and replay steps keep it). Start: click a candle (default: first candle of
   the last day). `engine/replay.py` hands out the views; the 3.1 engine loop reuses it.
 - ☑ **1.3 Session lines.** Implement `sessions.py` (DST-aware, tested around the March and
   October/November changes) and draw a vertical line at each session start (Tokyo yellow,
@@ -88,7 +89,13 @@ text with its state (active / tapped / confirmed / invalidated).
   the candle with the extreme wick, a thin line at the swing price over the turn candles
   (first turn candle to the confirming candle) ending in a dot on the confirming candle (hover).
   Also adds the Overlays switch and the type dropdown every later detector plugs into.
-- ☐ **2.3** Trend label + BOS
+- ☑ **2.3** Trend label + BOS. `detectors/bos.py`, `detectors/trend.py`, overlay
+  "BOS + trend": a red horizontal line at the broken swing's price, from the swing's
+  extreme-wick candle to the breaking candle, labeled "BOS", hover dot on the breaking
+  candle (first BOS / trend flip; a break with the trend is no BOS). Two badges in the chart's top-left corner show the trend
+  at the replay cursor: the **overall trend** (4H by default, `TrendConfig.overall_timeframe`;
+  60 days of 4H warm-up history before the chart range, `ChartConfig.overall_trend_warmup_days`)
+  and the shown timeframe's trend.
 - ☐ **2.4** Zone validation state machine (shared by all zones)
 - ☐ **2.5** FVG
 - ☐ **2.6** Order block

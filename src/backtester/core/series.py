@@ -87,6 +87,14 @@ class SeriesView:
         start = max(0, self._cursor + 1 - n)
         return self._series._candles[start : self._cursor + 1]
 
+    def at(self, cursor: int) -> SeriesView:
+        """An earlier view of the same series (candles 0..cursor). Never a later one."""
+        if cursor > self._cursor:
+            raise LookaheadError(f"view at {cursor} is in the future (cursor={self._cursor})")
+        if cursor < 0:
+            raise IndexError("cursor before start of history")
+        return SeriesView(self._series, cursor)
+
     def window(self, start: int, stop: int) -> tuple[Candle, ...]:
         """Absolute indices [start, stop). `stop` may not exceed cursor + 1."""
         if stop > self._cursor + 1:

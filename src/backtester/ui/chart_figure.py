@@ -27,7 +27,7 @@ of the candles; the candlestick trace always stays `fig.data[0]`, overlays start
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import log10
 
 import pandas as pd
@@ -37,6 +37,7 @@ from plotly.basedatatypes import BaseTraceType
 from backtester.core.models import Candle, Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import CANDLE_COLUMNS
+from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
 
 # Label steps in minutes. All divide a week, so steps are anchored on a Monday 00:00 UTC.
@@ -52,6 +53,7 @@ class ChartConfig:
     replay_window: int = 1500  # replay draws at most this many candles up to the cursor
     replay_visible: int = 120  # candles shown left of the cursor after each replay step
     replay_right_space: int = 10  # empty candle slots right of the cursor
+    replay_min_visible: int = 5  # at least this many candles left of the cursor (e.g. on H4)
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
     # Colors (white, like the user's TradingView).
@@ -77,6 +79,13 @@ class ChartConfig:
     session_max_timeframe: Timeframe = Timeframe.H4  # more lines than candles above this
     swing_high_color: str = "#ff9800"
     swing_low_color: str = "#00bcd4"
+    bos_color: str = "#f23645"  # BOS line, label and hover dot (both directions)
+    trend_up_color: str = "#089981"  # trend badge background
+    trend_down_color: str = "#f23645"
+    trend_none_color: str = "#9598a1"
+    trend_badge_spacing: float = 0.05  # paper height between the stacked trend badges
+    trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe
+    overall_trend_warmup_days: int = 60  # overall-trend history loaded before the chart range
     marker_size: int = 9
 
     def session_color(self, session: Session) -> str:
@@ -302,14 +311,15 @@ def build_candle_figure(
     first_x: int = 0,
     x_range: tuple[float, float] | None = None,
     show_sessions: bool = True,
-    overlays: Sequence[BaseTraceType] = (),
+    overlays: Sequence[BaseTraceType | go.layout.Annotation] = (),
 ) -> go.Figure:
     """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread).
 
     The first candle is drawn at x = `first_x`. `x_range` is the initially visible x range
     (default: all candles); labels and price range fit the candles inside it.
     `show_sessions` draws the session start lines; `overlays` are extra traces (markers of
-    detected patterns) added after the candles.
+    detected patterns) added after the candles, and layout annotations (e.g. the trend
+    badge) added after the session labels.
     """
     digits = price_digits(symbol)
     n = len(frame)
@@ -337,14 +347,14 @@ def build_candle_figure(
         )
     )
     fig.add_traces([_wicks(frame, first_x, config), _edges(frame, first_x, config)])
-    fig.add_traces(list(overlays))
+    fig.add_traces([o for o in overlays if not isinstance(o, go.layout.Annotation)])
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     shapes, labels = (
         _session_shapes(frame["ts"], timeframe, first_x, config) if show_sessions else ([], [])
     )
     fig.update_layout(
         shapes=shapes,
-        annotations=labels,
+        annotations=labels + [o for o in overlays if isinstance(o, go.layout.Annotation)],
         title={"text": f"{symbol} · {timeframe.name} · bid · UTC", "x": 0.01},
         paper_bgcolor=config.background,
         plot_bgcolor=config.background,

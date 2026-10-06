@@ -8,6 +8,10 @@ picks which types are drawn. Every detector plugs in by registering an `OverlayT
   `CandleSeries`.
 - `draw(events, ctx)` turns events into Plotly traces: a small marker on the
   **confirming candle** (x = `event.confirmed_index`) and a hover text with its state.
+- `status(events, ctx)` (optional) returns layout annotations for a state that depends on
+  every event up to the cursor, not only the drawn ones (e.g. the current trend, which can
+  come from a BOS before the replay window). It gets all events confirmed at or before the
+  cursor.
 
 Events are computed once per loaded range and then filtered by `visible_events`: during
 replay only events whose confirming candle is at or before the cursor are drawn. Because
@@ -21,7 +25,9 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from plotly.basedatatypes import BaseTraceType
+from plotly.graph_objs.layout import Annotation
 
+from backtester.core.models import Timeframe
 from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG, ChartConfig, price_digits
@@ -40,6 +46,8 @@ class OverlayContext:
     cursor: int  # latest closed candle shown (absolute index = x on the chart)
     first_x: int  # first candle drawn
     config: ChartConfig = DEFAULT_CONFIG
+    timeframe: Timeframe = Timeframe.M5  # shown timeframe
+    overall_timeframe: Timeframe | None = None  # the replay's overall-trend series, if any
 
     @property
     def digits(self) -> int:
@@ -52,6 +60,7 @@ class OverlayType:
     label: str  # dropdown text, e.g. "Swings"
     detect: Callable[[Replay], Sequence[Event]]
     draw: Callable[[Sequence[Event], OverlayContext], list[BaseTraceType]]
+    status: Callable[[Sequence[Event], OverlayContext], list[Annotation]] | None = None
 
 
 OVERLAYS: dict[str, OverlayType] = {}  # in dropdown order
@@ -86,14 +95,14 @@ def overlay_traces(
     keys: Sequence[str],
     ctx: OverlayContext,
     registry: dict[str, OverlayType] = OVERLAYS,
-) -> tuple[list[BaseTraceType], list[str]]:
-    """(traces, messages) for the selected overlay types, in registry order.
+) -> tuple[list[BaseTraceType | Annotation], list[str]]:
+    """(traces and annotations, messages) for the selected overlay types, in registry order.
 
     `events_for(overlay)` returns that overlay's events over the loaded range (the chart
     page caches them). Unknown keys (e.g. a type removed since the browser saved the
     choice) are ignored; an `OverlayUnavailable` becomes a message.
     """
-    traces: list[BaseTraceType] = []
+    traces: list[BaseTraceType | Annotation] = []
     messages: list[str] = []
     for key, overlay in registry.items():
         if key not in keys:
@@ -104,4 +113,6 @@ def overlay_traces(
             messages.append(f"{overlay.label}: {e}")
             continue
         traces.extend(overlay.draw(visible_events(events, ctx.cursor, ctx.first_x), ctx))
+        if overlay.status is not None:
+            traces.extend(overlay.status(visible_events(events, ctx.cursor), ctx))
     return traces, messages

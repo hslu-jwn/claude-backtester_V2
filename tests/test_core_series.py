@@ -47,3 +47,15 @@ def test_candle_rejects_inconsistent_ohlc(make_candles):
     ts = make_candles(OHLC)[0].ts
     with pytest.raises(ValueError):
         Candle(ts=ts, open=1.0, high=0.9, low=0.8, close=1.0)
+
+
+def test_at_gives_earlier_views_only(make_series):
+    series = make_series(OHLC)
+    last = len(series) - 1
+    view = series.view(last)
+    assert view.at(0).cursor == 0 and list(view.at(0)) == list(series.view(0))
+    assert view.at(last).cursor == last
+    with pytest.raises(LookaheadError):
+        series.view(0).at(1)
+    with pytest.raises(IndexError):
+        view.at(-1)
