@@ -105,10 +105,9 @@ different settings, or fed the manual R log, without repeating detection.
   | Candle (UTC) | histdata read as New York time (UTC−4) | Read as fixed UTC−5 | TradingView |
   |---|---|---|---|
   | 2026-09-30 07:00 | O 1.32544 · H 1.32626 · L 1.32527 · C 1.32583 | O 1.32447 · H 1.32583 · L 1.32439 · C 1.32566 | matches New York time on all four values |
-  | 2026-09-30 13:30 | O 1.32924 · H 1.32949 · L 1.32913 · C 1.32926 | O 1.3288 · H 1.33109 · L 1.32869 · C 1.3303 | matches neither (feed difference, or a candle TradingView builds differently) |
+  | 2026-09-30 13:30 | O 1.32924 · H 1.32949 · L 1.32913 · C 1.32926 | O 1.3288 · H 1.33109 · L 1.32869 · C 1.3303 | O ≈ 1.3292 · H 1.3295 · L 1.3291 · C 1.3293: matches New York time |
 
-  The 07:00 candle and the gap positions (below) decide it for New York time; the 13:30
-  mismatch is not explained yet and is worth a look when more candles are compared.
+  Both candles and the gap positions (below) decide it for New York time.
 
   After the switch, the data check finds the weekends at Fri 17:00 → Sun 17:00 New York
   and GBPJPY's daily breaks at the 17:00 close. US clocks change on a Sunday at 02:00, when
