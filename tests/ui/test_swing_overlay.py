@@ -35,9 +35,11 @@ def test_marker_at_extreme_wick_line_and_hover_dot_at_confirming_candle():
     assert list(dot.x) == [1] and triangle.marker.symbol == "triangle-down"
     assert list(line.x) == [0, 1, None]
     assert "Swing high 4410.000" in dot.text[0]
-    _, low_triangle, low_dot = by_name["swing low"]
+    low_line, low_triangle, low_dot = by_name["swing low"]
     # low: red (low 4390) then, skipping the doji, green (low 4389.5) -> 4389.5 at candle 3
     assert list(low_triangle.y) == [4389.5] and list(low_dot.x) == [3]
+    # extreme wick on the confirming candle: the line still spans from the red candle
+    assert list(low_line.x) == [1, 3, None] and list(low_line.y) == [4389.5, 4389.5, None]
 
 
 def test_replay_cursor_hides_swings_not_yet_confirmed():

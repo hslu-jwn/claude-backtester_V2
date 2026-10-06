@@ -12,8 +12,12 @@ Session lines (1.3): a dashed vertical line at each session start (`sessions.py`
 only over the candles in the frame, so during replay no line appears past the cursor.
 One switch shows or hides all session lines; hidden on timeframes above `session_max_timeframe`.
 
+Candles: Plotly draws a candle's edge and wick with one line, so the edge is kept very thin
+and the wicks are drawn as their own trace (`fig.data[1]`), from the body to the high and
+low only, so they never cross a body.
+
 Overlays (Phase 2, `ui/overlays.py`) are passed in as ready-made traces and drawn on top
-of the candles; the candlestick trace always stays `fig.data[0]`.
+of the candles; the candlestick trace always stays `fig.data[0]`, overlays start at `fig.data[2]`.
 """
 
 from __future__ import annotations
@@ -46,13 +50,14 @@ class ChartConfig:
     replay_right_space: int = 10  # empty candle slots right of the cursor
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
-    # Colors (white, like the user's TradingView). Plotly draws a candle's border and wick
-    # with one line, so `*_line` is both the border and the wick color.
+    # Colors (white, like the user's TradingView).
     up_body: str = "#6f9ceb"
-    up_line: str = "#6f9ceb"
+    up_edge: str = "#000000"
     down_body: str = "#000000"
-    down_line: str = "#000000"
-    candle_line_width: float = 1
+    down_edge: str = "#000000"
+    edge_width: float = 0.5  # very thin, so a small blue body still looks blue
+    wick_color: str = "#000000"
+    wick_width: float = 1
     background: str = "#ffffff"
     text_color: str = "#131722"
     axis_color: str = "#131722"  # axis lines and tick marks
@@ -217,6 +222,26 @@ def _session_shapes(
     return shapes, labels
 
 
+def _wicks(frame: pd.DataFrame, first_x: int, config: ChartConfig) -> go.Scatter:
+    """Upper (body top to high) and lower (low to body bottom) wick of every candle."""
+    top = frame[["open", "close"]].max(axis=1)
+    bottom = frame[["open", "close"]].min(axis=1)
+    xs: list[float | None] = []
+    ys: list[float | None] = []
+    for i, (high, low, t, b) in enumerate(zip(frame["high"], frame["low"], top, bottom)):
+        x = first_x + i
+        xs += [x, x, None, x, x, None]
+        ys += [t, high, None, low, b, None]
+    return go.Scatter(
+        x=xs,
+        y=ys,
+        mode="lines",
+        line={"color": config.wick_color, "width": config.wick_width},
+        hoverinfo="skip",
+        name="wicks",
+    )
+
+
 def _axis_style(config: ChartConfig) -> dict:
     return {
         "showgrid": config.show_grid,
@@ -281,16 +306,17 @@ def build_candle_figure(
                 f"spread %{{customdata[1]:.{digits}f}}<extra></extra>"
             ),
             increasing={
-                "line": {"color": config.up_line, "width": config.candle_line_width},
+                "line": {"color": config.up_edge, "width": config.edge_width},
                 "fillcolor": config.up_body,
             },
             decreasing={
-                "line": {"color": config.down_line, "width": config.candle_line_width},
+                "line": {"color": config.down_edge, "width": config.edge_width},
                 "fillcolor": config.down_body,
             },
             name=symbol,
         )
     )
+    fig.add_trace(_wicks(frame, first_x, config))
     fig.add_traces(list(overlays))
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     shapes, labels = (

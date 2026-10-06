@@ -80,6 +80,7 @@ class SwingPoint(Event):
     price: float
     index: int  # candle holding the extreme wick (one of the two turn candles)
     ts: datetime  # open time of that candle
+    first_index: int  # first turn candle (the green one for a high); last = confirmed_index
 
 
 def is_doji(candle: Candle, max_body: float) -> bool:
@@ -134,5 +135,6 @@ class SwingDetector(Detector[SwingPoint]):
                 price=price,
                 index=index,
                 ts=extreme.ts,
+                first_index=prev[0],
             )
         ]

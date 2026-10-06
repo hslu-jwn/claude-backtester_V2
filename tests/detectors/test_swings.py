@@ -137,7 +137,7 @@ def test_no_lookahead_events_only_at_their_candle_and_never_rewritten():
     detector, seen = SwingDetector(0.065), []
     for i in range(len(series)):
         new = detector.update(series.view(i))
-        assert all(e.confirmed_index == i and e.index <= i for e in new)
+        assert all(e.confirmed_index == i and e.first_index <= e.index <= i for e in new)
         seen.extend(new)
         # (b) a fresh run over a shorter history gives exactly the events emitted so far
         if i % 97 == 0:

@@ -112,10 +112,10 @@ def test_replay_draws_only_events_confirmed_up_to_the_cursor():
     state = {"on": True, "picking": False, "playing": False, "start": None}
     state["now"] = datetime(2026, 1, 5, 0, 10, tzinfo=UTC).isoformat()
     fig, _, _ = replay_chart(replay, state, overlay_keys=["green"], registry=registry)
-    assert list(fig.data[1].x) == [0]
+    assert list(fig.data[2].x) == [0]
     state["now"] = datetime(2026, 1, 5, 0, 20, tzinfo=UTC).isoformat()
     fig, _, _ = replay_chart(replay, state, overlay_keys=["green"], registry=registry)
-    assert list(fig.data[1].x) == [0, 2, 3]
+    assert list(fig.data[2].x) == [0, 2, 3]
     assert isinstance(fig.data[0], go.Candlestick)
 
 
@@ -127,5 +127,5 @@ def test_replay_overlays_start_at_the_first_drawn_candle():
     fig, _, _ = replay_chart(
         replay, state, config, overlay_keys=["green"], registry=fake_registry()
     )
-    assert list(fig.data[1].x) == [2, 3]
+    assert list(fig.data[2].x) == [2, 3]
     assert DEFAULT_CONFIG.replay_window > 2

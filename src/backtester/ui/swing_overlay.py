@@ -1,8 +1,9 @@
 """Swings overlay. Spec: ROADMAP.md › 2.2, confluences.md › Swing high / low.
 
 Per swing: a triangle at the swing price on the candle with the extreme wick (▼ high,
-▲ low), a thin line at that price to the confirming candle, and a dot on the confirming
-candle with the hover text. Swings have no state yet (BOS in 2.3 uses them).
+▲ low), a thin line at that price over the turn candles (first turn candle to confirming
+candle, so it shows even when the extreme wick is on the confirming candle), and a dot on
+the confirming candle with the hover text. Swings have no state yet (BOS in 2.3 uses them).
 """
 
 from __future__ import annotations
@@ -50,7 +51,7 @@ def draw_swings(swings: Sequence[SwingPoint], ctx: OverlayContext) -> list[go.Sc
             continue
         line_x, line_y = [], []
         for s in points:
-            line_x += [s.index, s.confirmed_index, None]
+            line_x += [s.first_index, s.confirmed_index, None]
             line_y += [s.price, s.price, None]
         name = f"swing {kind.value}"
         traces += [

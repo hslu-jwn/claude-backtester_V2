@@ -134,10 +134,20 @@ def test_price_digits_per_symbol():
 def test_colors_come_from_the_config():
     fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30)
     candles = fig.data[0]
-    assert candles.increasing.fillcolor == "#6f9ceb" and candles.increasing.line.color == "#6f9ceb"
-    assert candles.decreasing.fillcolor == "#000000" and candles.decreasing.line.color == "#000000"
+    assert candles.increasing.fillcolor == "#6f9ceb" and candles.increasing.line.color == "#000000"
+    assert candles.decreasing.fillcolor == "#000000" and candles.increasing.line.width == 0.5
     assert fig.layout.plot_bgcolor == "#ffffff" and fig.layout.xaxis.showgrid is False
     custom = ChartConfig(up_body="#00ff00", background="#123456", show_grid=True)
     fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30, custom)
     assert fig.data[0].increasing.fillcolor == "#00ff00"
     assert fig.layout.paper_bgcolor == "#123456" and fig.layout.yaxis.showgrid is True
+
+
+def test_wicks_run_from_the_body_to_high_and_low_only():
+    fig = build_candle_figure(WEEKEND.iloc[:2], "XAUUSD", Timeframe.M30, first_x=5)
+    wicks = fig.data[1]
+    assert wicks.line.color == "#000000" and wicks.line.width == 1
+    # candle 5: O 2500 H 2502 L 2499 C 2501 -> 2501..2502 and 2499..2500
+    assert list(wicks.x[:6]) == [5, 5, None, 5, 5, None]
+    assert list(wicks.y[:6]) == [2501.0, 2502.0, None, 2499.0, 2500.0, None]
+    assert list(wicks.x[6:9]) == [6, 6, None]

@@ -85,7 +85,8 @@ text with its state (active / tapped / confirmed / invalidated).
 - ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
   Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
 - ☑ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
-  the candle with the extreme wick, a thin line to a dot on the confirming candle (hover).
+  the candle with the extreme wick, a thin line at the swing price over the turn candles
+  (first turn candle to the confirming candle) ending in a dot on the confirming candle (hover).
   Also adds the Overlays switch and the type dropdown every later detector plugs into.
 - ☐ **2.3** Trend label + BOS
 - ☐ **2.4** Zone validation state machine (shared by all zones)
