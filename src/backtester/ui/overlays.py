@@ -43,6 +43,7 @@ class OverlaySettings:
     """Detector switches on the chart page (the settings page replaces them in Phase 4)."""
 
     fvg_strong_move_filter: bool = False  # spec › Strong-move filter (FVG default off)
+    ob_strong_move_filter: bool = True  # spec › Strong-move filter (OB default on)
 
 
 DEFAULT_SETTINGS = OverlaySettings()

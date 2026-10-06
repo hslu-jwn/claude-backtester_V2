@@ -109,9 +109,18 @@ text with its state (active / tapped / confirmed / invalidated).
   threshold, the shown timeframe's trend (with / against) and the state (taps are
   listed there, no marker on the chart); the sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" under FVG add ★ / ✕
   (every zone overlay gets these sub-entries). Panel switch "FVG strong-move filter".
-- ☐ **2.6** Order block
+- ☑ **2.6** Order block. ⚠️ Works for now, but the user may rework OBs entirely later
+  (rules and drawing). `detectors/order_block.py`: at each BOS, the leg into the most
+  recent swing of the opposite kind (`confluences.md › Order block`); strong-move filter on
+  the move away (switch, default on). Overlay "Order block": yellow box from the leg's
+  first candle until confirmed / invalidated, hover over the box (leg, swing, BOS, strong
+  candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
+  is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
+  OB yellow), overlapping boxes stack darker.
 - ☐ **2.7** Breaker block
-- ☐ **2.8** BPR
+- ☐ **2.8** BPR: detector only (used by the strategy as a confluence). **No overlay of its
+  own** (rule set by the user): on the chart a BPR is the darker overlap of the green FVG
+  boxes. Check with tests and the FVG overlay.
 - ☐ **2.9** Session zones (30m), incl. flips and the second-break kill
 - ☐ **2.10** Multi-timeframe view: show 30m zones on the 5m chart
 
@@ -143,6 +152,10 @@ text with its state (active / tapped / confirmed / invalidated).
   session filters, costs), with defaults from the spec.
 - ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
+- ☐ **4.3 UI layout and look review** (at the end of the UI work; the user decides the
+  details then). Known wishes so far: the strong-move filter switches (FVG, OB) become a
+  dropdown; the overall layout of the controls; chart colors and other visual details.
+  Until then the current layout and colors stay as they are.
 
 ## Phase 5: Risk & FTMO simulation
 

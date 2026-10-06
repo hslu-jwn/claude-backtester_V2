@@ -12,7 +12,6 @@ from conftest import build_series
 
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG
-from backtester.ui.fvg_overlay import hover_xs
 from backtester.ui.overlays import OVERLAYS, OverlaySettings, overlay_options
 from backtester.ui.pages.chart import chart_overlays
 
@@ -69,8 +68,8 @@ def test_nothing_before_candle_3_closes():
 def test_active_box_from_candle_1_to_the_cursor_with_hover_over_the_box_no_dot():
     replay = gold_replay(*FVG, *[ABOVE] * 4)
     t = traces_at(replay, 7)
-    assert box(t["bullish FVG"]) == [(1, 7, 4403.0, 4410.0)]
-    assert t["bullish FVG"].fill == "toself"
+    assert box(t["FVG box"]) == [(1, 7, 4403.0, 4410.0)]
+    assert t["FVG box"].fill == "toself"
     hover = t["FVG"]
     assert hover.marker.opacity == 0  # invisible: no dot on candle 3
     assert list(hover.x) == [1, 3, 5, 7] and set(hover.y) == {4406.5}  # along the box
@@ -85,9 +84,9 @@ def test_active_box_from_candle_1_to_the_cursor_with_hover_over_the_box_no_dot()
 
 def test_open_box_extends_to_the_cursor_until_it_is_used():
     replay = gold_replay(*FVG, *[ABOVE] * 30, TAP, CONFIRM)
-    assert box(traces_at(replay, 33)["bullish FVG"]) == [(1, 33, 4403.0, 4410.0)]
-    assert box(traces_at(replay, 34)["bullish FVG"]) == [(1, 34, 4403.0, 4410.0)]  # tapped
-    assert box(traces_at(replay, 35)["bullish FVG"]) == [(1, 35, 4403.0, 4410.0)]  # confirmed
+    assert box(traces_at(replay, 33)["FVG box"]) == [(1, 33, 4403.0, 4410.0)]
+    assert box(traces_at(replay, 34)["FVG box"]) == [(1, 34, 4403.0, 4410.0)]  # tapped
+    assert box(traces_at(replay, 35)["FVG box"]) == [(1, 35, 4403.0, 4410.0)]  # confirmed
 
 
 def test_replay_shows_the_state_at_the_cursor_and_the_box_ends_at_confirmation():
@@ -95,10 +94,10 @@ def test_replay_shows_the_state_at_the_cursor_and_the_box_ends_at_confirmation()
     tapped = traces_at(replay, 4)
     assert "state: tapped" in tapped["FVG"].text[0]
     assert "FVG state" not in tapped  # no marker for a tap
-    assert box(tapped["bullish FVG"]) == [(1, 4, 4403.0, 4410.0)]
+    assert box(tapped["FVG box"]) == [(1, 4, 4403.0, 4410.0)]
 
     later = traces_at(replay, 6)
-    assert box(later["bullish FVG"]) == [(1, 5, 4403.0, 4410.0)]  # ends at the confirming candle
+    assert box(later["FVG box"]) == [(1, 5, 4403.0, 4410.0)]  # ends at the confirming candle
     marks = later["FVG state"]
     assert list(marks.x) == [5] and list(marks.marker.symbol) == ["star"]
     assert list(marks.y) == [4410.0]  # at the top edge (where price comes from)
@@ -108,8 +107,8 @@ def test_replay_shows_the_state_at_the_cursor_and_the_box_ends_at_confirmation()
 def test_invalidated_fvg_ends_at_that_candle_drawn_fainter():
     replay = gold_replay(*FVG, INVALIDATE)
     t = traces_at(replay, 4)
-    assert "bullish FVG" not in t
-    faded = t["bullish FVG (invalidated)"]
+    assert "FVG box" not in t
+    faded = t["FVG box (invalidated)"]
     assert box(faded) == [(1, 4, 4403.0, 4410.0)]
     assert faded.fillcolor.endswith(f",{DEFAULT_CONFIG.fvg_invalidated_opacity})")
     marks = t["FVG state"]
@@ -133,11 +132,11 @@ def test_confirmation_and_invalidation_markers_only_with_their_sub_entries():
     confirmed = gold_replay(*FVG, TAP, CONFIRM)
     t = traces_at(confirmed, 5, keys=["fvg", "fvg.invalidated"])
     assert "FVG state" not in t  # no ★ without its sub-entry, and taps have no marker
-    assert box(t["bullish FVG"]) == [(1, 5, 4403.0, 4410.0)]  # box still ends there
+    assert box(t["FVG box"]) == [(1, 5, 4403.0, 4410.0)]  # box still ends there
 
     invalidated = gold_replay(*FVG, INVALIDATE)
     t = traces_at(invalidated, 4, keys=["fvg", "fvg.confirmed"])
-    assert "FVG state" not in t and "bullish FVG (invalidated)" in t
+    assert "FVG state" not in t and "FVG box (invalidated)" in t
 
 
 def test_a_sub_entry_alone_draws_nothing():
@@ -145,6 +144,10 @@ def test_a_sub_entry_alone_draws_nothing():
     assert traces_at(replay, 5, keys=["fvg.confirmed", "fvg.invalidated"]) == {}
 
 
-def test_hover_points_only_near_both_ends_of_a_long_box():
-    assert hover_xs(1, 7, 2, 10) == [1, 3, 5, 7]
-    assert hover_xs(0, 100, 2, 10) == [0, 2, 4, 6, 8, 92, 94, 96, 98, 100]
+def test_every_fvg_is_green_whatever_its_direction():
+    bearish = [(8800 - o, 8800 - lo, 8800 - h, 8800 - c) for o, h, lo, c in FVG]  # mirrored
+    for ohlc, direction in ((FVG, "Bullish"), (bearish, "Bearish")):
+        t = traces_at(gold_replay(*ohlc), 3)
+        assert t["FVG"].text[0].startswith(f"{direction} FVG")
+        assert t["FVG box"].fillcolor.startswith("rgba(8,153,129,")  # #089981
+        assert DEFAULT_CONFIG.fvg_color == "#089981"

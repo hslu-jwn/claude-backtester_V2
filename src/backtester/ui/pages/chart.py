@@ -28,10 +28,11 @@ which types are drawn: one checkbox per registered `OverlayType` in roadmap orde
 and sub-entries stay right under their type. Events are computed once per
 loaded range by feeding the detector `SeriesView`s; during replay only events confirmed at
 or before the cursor are drawn. Both choices are kept in the browser. The "FVG strong-move
-filter" switch (confluences.md › Strong-move filter, default off) is passed to the FVG
-detector; events are cached per setting, so switching back is instant. Zone overlays
-have indented sub-entries (FVG: "↳ ★ confirmations", "↳ ✕ invalidations") that show their
-★ / ✕ markers (drawing only); they can only be ticked while their type is.
+filter" (default off) and "OB strong-move filter" (default on) switches
+(confluences.md › Strong-move filter) are passed to those detectors; events are cached
+per setting, so switching back is instant. Zone overlays (FVG, Order block) have indented
+sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" that show their ★ / ✕ markers
+(drawing only); they can only be ticked while their type is.
 
 Later steps add: the session view (3.5) and position boxes.
 """
@@ -58,6 +59,7 @@ from backtester.engine.replay import Replay
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
+    ob_overlay,  # noqa: F401  (registers the Order block overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
 )
 from backtester.ui.chart_figure import (
@@ -478,9 +480,12 @@ def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html
                         },
                     ),
                     dcc.Checklist(
-                        id="chart-strong-move",
-                        options=[{"label": "FVG strong-move filter", "value": "on"}],
-                        value=[],
+                        id="chart-filters",
+                        options=[
+                            {"label": "FVG strong-move filter", "value": "fvg"},
+                            {"label": "OB strong-move filter", "value": "ob"},
+                        ],
+                        value=["ob"],
                         persistence=True,
                         style={"color": config.text_color},
                         inputStyle={"marginRight": "4px"},
@@ -570,7 +575,7 @@ def register_callbacks(
         Input("chart-sessions", "value"),
         Input("chart-overlays", "value"),
         Input("chart-overlay-types", "value"),
-        Input("chart-strong-move", "value"),
+        Input("chart-filters", "value"),
         State("chart-graph", "style"),
         State("chart-replay-span", "data"),
     )
@@ -583,14 +588,17 @@ def register_callbacks(
         sessions_switch,
         overlays_switch,
         overlay_types,
-        strong_move_switch,
+        filters,
         style,
         span,
     ):
         args = (sources, symbol, timeframe, start_date, end_date, config)
         show_sessions = bool(sessions_switch)
         keys = selected_overlays(overlays_switch, overlay_types)
-        settings = OverlaySettings(fvg_strong_move_filter=bool(strong_move_switch))
+        settings = OverlaySettings(
+            fvg_strong_move_filter="fvg" in (filters or []),
+            ob_strong_move_filter="ob" in (filters or []),
+        )
         if replay_state["on"] and not replay_state["picking"]:
             replay, message = load_replay(*args)
             figure, message, store = (

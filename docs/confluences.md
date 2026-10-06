@@ -53,15 +53,18 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - **Every gap is an FVG**, in both directions, whatever the trend (rule set by the user). Which direction a strategy **uses** is the strategy's rule (strategy 1: the trend of the FVG's own timeframe, see `strategy-session-zones.md` › Entry sequence).
 - Gaps across the daily break or a weekend count like any other.
 - An FVG is used when price **retraces back into it**: a bullish FVG forms in a move up, and a later bearish move into it uses it (taps it). Bearish mirrored.
+- **On the chart** every FVG is **green**, whatever its direction (rule set by the user). Overlapping FVGs (imbalances) are not drawn separately: their fills stack, so the overlap shows darker.
 
 ## Order block (OB)
+⚠️ Provisional (user, 2026-10-06): these rules work for now, but OBs may be reworked entirely later.
 - Range = the entire consecutive same-color leg from the prior swing point to the swing extreme before reversal, from the lowest wick to the highest wick of the leg.
 - Green leg (e.g. HL→HH at the top of an uptrend) = bearish OB. Red leg (e.g. HH→HL, or into a low of a downtrend) = bullish OB.
 - A doji inside the leg is ignored. An opposite-color candle ends the leg immediately, and its wick is excluded.
-- **Only OBs that led to a BOS** (rule set by the user, for now): a bullish OB is the red leg into a swing low that is the most recent swing low when a **bullish BOS** happens (the move up from that low breaks structure). Bearish mirrored. Since a BOS only happens against the trend, OBs only form where the trend flips (and at the first BOS).
-- **Exists from** (rule set by the user): the close of the BOS candle. With the strong-move filter on (default for OBs), additionally at least one candle of the move away (from the swing to the move's next swing point) must be a strong move: the OB then exists from the later of the BOS candle and the first strong candle. If the move's next swing point is confirmed with no strong candle, there is no OB.
+  This also holds for the swing's own turn candle (rule set by the user): if the green candle that confirms a swing low has the lower wick, that wick is **not** in the bullish OB, so the OB's bottom can lie above the swing price.
+- **Only OBs that led to a BOS** (rule set by the user, for now): a bullish OB is the red leg into a swing low that is the most recent swing low when a **bullish BOS** happens (the move up from that low breaks structure). A low confirmed by the BOS candle itself counts (one green candle that confirms the low and closes above the high, rule set by the user). Bearish mirrored. Since a BOS only happens against the trend, OBs only form where the trend flips (and at the first BOS).
+- **Exists from** (rule set by the user): the close of the BOS candle. With the strong-move filter on (default for OBs), additionally at least one candle of the move away (from the swing's opposite-color turn candle up to the candle **before** the one that confirms the move's next swing point; that candle starts the pullback and doesn't count, rule set by the user) must be a strong move: the OB then exists from the later of the BOS candle and the first strong candle. If the move's next swing point is confirmed with no strong candle, there is no OB.
 - Validation as in › Validation, starting with the candle after the one it exists from.
-- **On the chart:** like the FVG: from the leg's first candle until the candle that confirms or invalidates it, up to the cursor while still open. No 8-candle limit (rule set by the user, also for FVGs).
+- **On the chart:** like the FVG: from the leg's first candle until the candle that confirms or invalidates it, up to the cursor while still open. No 8-candle limit (rule set by the user, also for FVGs). Every OB is **yellow**, whatever its direction (rule set by the user).
 
 ## Breaker block
 - An OB invalidated by a later BOS through the level it defended becomes a breaker: same range, OPPOSITE bias.
@@ -70,6 +73,7 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 ## Balanced price range (BPR)
 - Overlap of a bullish and a bearish FVG. One is usually invalidated as the other forms, so the invalidated one's stored range is used.
 - Staleness-over-time rule is deferred to the strategy layer.
+- **On the chart:** no drawing of its own (rule set by the user): overlapping FVGs stack, so a BPR shows as the darker overlap of the green FVG boxes.
 
 ## Equilibrium (currently NOT used for entries)
 - 50% of the most recent swing leg: upper half = premium, lower half = discount.
