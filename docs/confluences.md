@@ -9,7 +9,7 @@
 - The swing is confirmed at the close of the turning candle (the red one for a high).
 - Doji/thin candles are skipped and don't break the pattern, so a swing can span more than 2 candles.
 - **Doji/thin candle:** body |close − open| ≤ a per-symbol maximum (setting). XAUUSD: 0.065 (user-defined, same on every timeframe). Bid prices, as on the chart.
-- **Other pairs: gold is the reference.** Their threshold covers the same share of a typical candle as gold's: 0.065 is 1.53% of gold's median 5m candle range (4.255, XAUUSD 2026-09-01..07), so a pair's default is 1.53% × its own median 5m range. Every pair's value can be changed in the settings. GBPUSD / GBPJPY: measure once their data is downloaded (ROADMAP 0.3); until then swings for them are not computed.
+- **Other pairs: gold is the reference** (rule confirmed by the user). Their threshold covers the same share of a typical candle as gold's: 0.065 is 1.53% of gold's median 5m candle range (4.255, XAUUSD 2026-09-01..07), so a pair's default is 1.53% × its own median 5m range. Every pair's value can be changed in the settings. GBPUSD / GBPJPY: measure once their data is downloaded (ROADMAP 0.3); until then swings for them are not computed.
 - A turning candle also starts the next swing: green, red, green gives a high (confirmed by the red) and a low (confirmed by the second green).
 - If both turn candles have the same extreme wick, the swing belongs to the earlier candle.
 
