@@ -57,6 +57,12 @@ different settings, or fed the manual R log, without repeating detection.
 
 ## Data sources
 
+Every source has its own cache folder (`data/cache/dukascopy/`, `data/cache/histdata/`,
+same layout and columns). `data/sources.py` (`SymbolSources`) maps each symbol to the
+folder it is read from; the app, `data.check` and `data.show` all use it, so all symbols
+show in one app. Current mapping: XAUUSD → Dukascopy, GBPUSD and GBPJPY → histdata.com.
+`--cache-dir` on `data.check` / `data.show` overrides it for a single run.
+
 ### Dukascopy (backtest history)
 
 - Free historical data, M1 candles and ticks, many years back, timestamps in **UTC**,
@@ -93,8 +99,7 @@ different settings, or fed the manual R log, without repeating detection.
 - Monthly M1 files in MetaTrader format, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, put in
   `data/raw/histdata/` by hand. Imported with `python -m backtester.data.histdata data/raw/histdata/`
   into `data/cache/histdata/` (same layout and columns as the Dukascopy cache, own folder
-  so the sources never mix). Use `--cache-dir data/cache/histdata` for `data.check`,
-  `data.show` and the app.
+  so the sources never mix). `data/sources.py` reads GBPUSD and GBPJPY from there.
 - Timestamps: **New York local time with daylight saving** (`America/New_York`: UTC−4 in
   summer, UTC−5 in winter), converted to UTC on import.
   **This contradicts HistData's FAQ**, which says the files are "EST without daylight

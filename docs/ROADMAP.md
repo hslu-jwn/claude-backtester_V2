@@ -44,9 +44,10 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Meanwhile GBPUSD / GBPJPY September 2026 come from histdata.com:
   `python -m backtester.data.histdata data/raw/histdata/` → `data/cache/histdata/`
   (New York time with DST, verified against TradingView; see `ARCHITECTURE.md › histdata.com`).
-  Check: `python -m backtester.data.check GBPUSD GBPJPY --cache-dir data/cache/histdata`.
-  Also measure each pair's median 5m candle range and set its doji threshold
-  (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low).
+  Each symbol is read from its own source's cache (`data/sources.py`), no `--cache-dir` needed.
+  Done: each pair's median 5m candle range is measured and its doji threshold set
+  (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low);
+  `data.check` prints both.
   Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
@@ -83,7 +84,7 @@ text with its state (active / tapped / confirmed / invalidated).
 
 - ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
   Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
-- ◐ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
+- ☑ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
   the candle with the extreme wick, a thin line to a dot on the confirming candle (hover).
   Also adds the Overlays switch and the type dropdown every later detector plugs into.
 - ☐ **2.3** Trend label + BOS

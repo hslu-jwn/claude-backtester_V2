@@ -1,6 +1,7 @@
-"""Chart page: TradingView-like candlesticks from the Dukascopy cache. Spec: ROADMAP.md › 1.1.
+"""Chart page: TradingView-like candlesticks from the M1 cache. Spec: ROADMAP.md › 1.1.
 
-Pick symbol (only symbols with cached days), timeframe and a date range (UTC days, both
+Pick symbol (every symbol of `SymbolSources` with cached days, each read from its own
+source's cache, `data/sources.py`), timeframe and a date range (UTC days, both
 inclusive, limited to cached days). A range touching a day that was never downloaded shows
 the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
 Zooming or panning updates the x-axis labels and fits the price axis to the visible candles.
@@ -30,7 +31,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
-from pathlib import Path
 
 import pandas as pd
 from dash import Dash, Input, Output, Patch, State, ctx, dcc, html, no_update
@@ -38,14 +38,12 @@ from dash import Dash, Input, Output, Patch, State, ctx, dcc, html, no_update
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries, SeriesView
 from backtester.data.adapters.cache_adapter import (
-    CacheAdapter,
     MissingCacheError,
-    available_symbols,
-    cached_days,
     candles_from_frame,
     latest_run,
 )
 from backtester.data.resample import supported
+from backtester.data.sources import SymbolSources
 from backtester.engine.replay import Replay
 from backtester.ui import swing_overlay  # noqa: F401  (registers the Swings overlay)
 from backtester.ui.chart_figure import (
@@ -70,7 +68,7 @@ REPLAY_OFF = {"on": False, "picking": False, "playing": False, "start": None, "n
 
 
 def load_chart(
-    cache_dir: Path,
+    sources: SymbolSources,
     symbol: str | None,
     timeframe: str | None,
     start_date: str | None,
@@ -85,12 +83,12 @@ def load_chart(
     Returns (figure or None, message, store data or None). `start_date`/`end_date` are
     ISO days, both inclusive. `overlay_keys` are the overlay types to draw (all their events).
     """
-    frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
+    frame, message = _load_frame(sources, symbol, timeframe, start_date, end_date, config)
     if frame is None:
         return None, message, None
     traces, notes = [], []
     if overlay_keys:
-        replay, _ = load_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+        replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
         traces, notes = chart_overlays(replay, overlay_keys, len(replay) - 1, 0, config, registry)
     figure = build_candle_figure(
         frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions, overlays=traces
@@ -123,7 +121,7 @@ def _with_notes(message: str, notes: Sequence[str]) -> str:
     return " · ".join([message, *notes])
 
 
-def _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config):
+def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
     """(candle frame or None, message) for the chosen inputs."""
     if not (symbol and timeframe and start_date and end_date):
         return None, "Pick a symbol, timeframe and date range."
@@ -131,7 +129,7 @@ def _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config):
     if end < start:
         return None, "The end date is before the start date."
     try:
-        frame = CacheAdapter(cache_dir).fetch_frame(
+        frame = sources.adapter(symbol).fetch_frame(
             symbol, Timeframe[timeframe], _midnight(start), _midnight(end + timedelta(days=1))
         )
     except MissingCacheError as e:
@@ -158,8 +156,8 @@ def _axis_store(frame: pd.DataFrame, x0: int = 0) -> dict:
 
 
 @lru_cache(maxsize=8)
-def _cached_replay(cache_dir, symbol, timeframe, start_date, end_date, config):
-    frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
+def _cached_replay(sources, symbol, timeframe, start_date, end_date, config):
+    frame, message = _load_frame(sources, symbol, timeframe, start_date, end_date, config)
     if frame is None:
         return None, message
     series = CandleSeries(symbol, Timeframe[timeframe], candles_from_frame(frame))
@@ -167,7 +165,7 @@ def _cached_replay(cache_dir, symbol, timeframe, start_date, end_date, config):
 
 
 def load_replay(
-    cache_dir: Path,
+    sources: SymbolSources,
     symbol: str | None,
     timeframe: str | None,
     start_date: str | None,
@@ -176,7 +174,7 @@ def load_replay(
 ) -> tuple[Replay | None, str]:
     """(Replay over the chosen candles or None, message). Kept in memory for the next steps
     (restart the app to see days downloaded while it runs)."""
-    return _cached_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+    return _cached_replay(sources, symbol, timeframe, start_date, end_date, config)
 
 
 def default_start(replay: Replay) -> int:
@@ -309,9 +307,9 @@ def visible_axes(relayout: dict | None, store: dict | None, config: ChartConfig 
     return tickvals, ticktext, y_range(prices, lo, hi, config.y_padding)
 
 
-def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
-    symbols = available_symbols(cache_dir)
-    label = {"color": "#d1d4dc", "marginRight": "6px"}
+def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
+    symbols = sources.available_symbols()
+    label = {"color": config.text_color, "marginRight": "6px"}
     row = {"display": "flex", "alignItems": "center", "gap": "8px", "padding": "8px"}
     return html.Div(
         [
@@ -343,7 +341,7 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                         options=[{"label": "Sessions", "value": "on"}],
                         value=["on"],
                         persistence=True,
-                        style={"color": "#d1d4dc"},
+                        style={"color": config.text_color},
                         inputStyle={"marginRight": "4px"},
                     ),
                     dcc.Checklist(
@@ -351,7 +349,7 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                         options=[{"label": "Overlays", "value": "on"}],
                         value=[],
                         persistence=True,
-                        style={"color": "#d1d4dc"},
+                        style={"color": config.text_color},
                         inputStyle={"marginRight": "4px"},
                     ),
                     dcc.Dropdown(
@@ -388,7 +386,7 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                 ],
                 style=row,
             ),
-            html.Div(id="chart-message", style={"color": "#d1d4dc", "padding": "0 8px"}),
+            html.Div(id="chart-message", style={"color": config.text_color, "padding": "0 8px"}),
             dcc.Store(id="chart-candles"),
             dcc.Store(id="chart-replay", data=REPLAY_OFF),
             dcc.Interval(
@@ -402,11 +400,13 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                 config={"scrollZoom": True, "displaylogo": False},
             ),
         ],
-        style={"backgroundColor": ChartConfig.background, "minHeight": "100vh"},
+        style={"backgroundColor": config.background, "minHeight": "100vh"},
     )
 
 
-def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> None:
+def register_callbacks(
+    app: Dash, sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG
+) -> None:
     @app.callback(
         Output("chart-dates", "min_date_allowed"),
         Output("chart-dates", "max_date_allowed"),
@@ -417,7 +417,7 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         Input("chart-symbol", "value"),
     )
     def _date_limits(symbol):
-        days = cached_days(symbol, cache_dir) if symbol else []
+        days = sources.cached_days(symbol) if symbol else []
         if not days:
             return None, None, [], None, None, None
         cached = set(days)
@@ -459,7 +459,7 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         overlay_types,
         style,
     ):
-        args = (cache_dir, symbol, timeframe, start_date, end_date, config)
+        args = (sources, symbol, timeframe, start_date, end_date, config)
         show_sessions = bool(sessions_switch)
         keys = selected_overlays(overlays_switch, overlay_types)
         if replay_state["on"] and not replay_state["picking"]:
@@ -507,7 +507,7 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
     def _replay_control(*args):
         symbol, timeframe, start_date, end_date, state, controls_style = args[-6:]
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
-        replay, _ = load_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+        replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
         clicked = ctx.triggered[0]["value"] if action == "click" else None
         clicked_x = clicked["points"][0]["x"] if clicked and clicked.get("points") else None
         new = replay_step(action, state, replay, clicked_x)
@@ -516,7 +516,9 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
             not new["playing"],
             "Pause" if new["playing"] else "Play",
             {**controls_style, "display": "flex" if new["on"] else "none"},
-            {"fontWeight": "bold", "background": "#2962ff", "color": "white"} if new["on"] else {},
+            {"fontWeight": "bold", "background": config.accent_color, "color": "white"}
+            if new["on"]
+            else {},
         )
 
     @app.callback(Output("chart-overlay-types", "disabled"), Input("chart-overlays", "value"))

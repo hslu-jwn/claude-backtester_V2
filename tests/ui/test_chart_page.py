@@ -9,6 +9,7 @@ import pytest
 from m1_frames import m1
 
 from backtester.data.dukascopy import _empty_cache_frame, cache_path
+from backtester.data.sources import SymbolSources
 from backtester.ui.chart_figure import ChartConfig
 from backtester.ui.pages.chart import load_chart, visible_axes
 
@@ -41,7 +42,7 @@ def cache(tmp_path):
         ),
     )
     write_day(tmp_path, "2026-09-03", _empty_cache_frame())
-    return tmp_path
+    return SymbolSources({"XAUUSD": tmp_path})
 
 
 def test_end_day_is_inclusive_and_flat_minutes_are_dropped(cache):

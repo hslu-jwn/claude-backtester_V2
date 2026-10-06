@@ -155,11 +155,14 @@ def test_update_out_of_order_or_twice_raises():
         detector.update(series.view(0))
 
 
-def test_config_gold_default_other_pairs_need_a_value():
+def test_config_gold_default_gbp_pairs_scaled_others_need_a_value():
     config = SwingConfig()
     assert config.doji_threshold("XAUUSD") == 0.065
-    with pytest.raises(KeyError, match="GBPUSD"):
-        config.doji_threshold("GBPUSD")
+    # same share of the median 5m range as gold (histdata 2026-09-02..30)
+    assert config.doji_threshold("GBPUSD") == pytest.approx(0.00028 * 0.065 / 4.255)
+    assert config.doji_threshold("GBPJPY") == pytest.approx(0.066 * 0.065 / 4.255)
+    with pytest.raises(KeyError, match="EURUSD"):
+        config.doji_threshold("EURUSD")
     assert SwingConfig({"GBPUSD": 0.00002}).doji_threshold("GBPUSD") == 0.00002
     with pytest.raises(ValueError):
         SwingConfig({"XAUUSD": -1.0})

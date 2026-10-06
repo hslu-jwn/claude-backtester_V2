@@ -27,8 +27,9 @@ from backtester.data.adapters.cache_adapter import (
     MissingCacheError,
     candles_from_frame,
 )
-from backtester.data.dukascopy import DEFAULT_CACHE_DIR, POINT_FACTORS
+from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import supported
+from backtester.data.sources import DEFAULT_SOURCES
 from backtester.detectors.atr import StrongMoveConfig, StrongMoveFilter
 
 # ATR warm-up loaded before START: this many ATR periods (Wilder's seed has faded by then)
@@ -46,10 +47,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--tz", type=ZoneInfo, help="also show open time in this time zone")
     p.add_argument("--atr", type=int, metavar="N", help="add ATR(N) and the strong-move flag")
     p.add_argument("--atr-mult", type=float, default=StrongMoveConfig().atr_mult, metavar="K")
-    p.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
+    p.add_argument("--cache-dir", type=Path, help="default: the symbol's source (data/sources.py)")
     args = p.parse_args(argv)
 
-    adapter = CacheAdapter(args.cache_dir)
+    adapter = (
+        CacheAdapter(args.cache_dir) if args.cache_dir else DEFAULT_SOURCES.adapter(args.symbol)
+    )
     timeframe = Timeframe[args.timeframe]
     try:
         frame = adapter.fetch_frame(args.symbol, timeframe, args.start, args.end)

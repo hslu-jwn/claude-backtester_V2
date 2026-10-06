@@ -47,16 +47,27 @@ def test_replay_cursor_hides_swings_not_yet_confirmed():
 
 
 def test_symbol_without_doji_threshold_shows_a_message():
-    replay = Replay(build_series([GREEN, RED], symbol="GBPUSD"))
+    replay = Replay(build_series([GREEN, RED], symbol="EURUSD"))
     traces, messages = chart_overlays(replay, ["swings"], cursor=1, first_x=0)
     assert traces == []
-    assert messages and messages[0].startswith("Swings: no doji threshold for GBPUSD")
+    assert messages and messages[0].startswith("Swings: no doji threshold for EURUSD")
     try:
         detect_swings(replay)
     except OverlayUnavailable:
         pass
     else:
         raise AssertionError("expected OverlayUnavailable")
+
+
+def test_gbp_pairs_have_a_threshold_so_their_swings_are_drawn():
+    # the bug behind "swings don't show": GBP pairs had no threshold, so the overlay was
+    # only a note in the message line
+    for symbol in ("GBPUSD", "GBPJPY"):
+        replay = Replay(
+            build_series([(1.30, 1.31, 1.29, 1.305), (1.305, 1.307, 1.28, 1.285)], symbol=symbol)
+        )
+        traces, messages = chart_overlays(replay, ["swings"], cursor=1, first_x=0)
+        assert messages == [] and {t.name for t in traces} == {"swing high"}
 
 
 def test_draw_nothing_for_no_swings():

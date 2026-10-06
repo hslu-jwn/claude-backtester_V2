@@ -12,6 +12,7 @@ from m1_frames import m1
 from backtester.data import check
 from backtester.data.check import DataCheckConfig, GapKind, classify_gap, daily_closes
 from backtester.data.dukascopy import _empty_cache_frame, cache_path
+from backtester.data.sources import SymbolSources
 
 CFG = DataCheckConfig()
 
@@ -210,6 +211,7 @@ def test_report_on_cache(cache):
         "2026-09-02 16:30",
     ]  # UTC+3 in summer
     assert r.spot.iloc[0][["open", "high", "low", "close"]].tolist() == [100.0, 100.5, 99.5, 100.2]
+    assert r.median_m5_range == 1.0  # every traded minute spans 99.5..100.5
 
 
 def test_report_start_end_limit_days(cache):
@@ -231,6 +233,21 @@ def test_cli_prints_report_and_flags_problems(cache, capsys):
     assert "NOT DOWNLOADED   1  (2026-09-03)" in out
     assert "daily break" in out and "2026-09-04 13:30" in out
     assert "===== GBPUSD =====" in out and "No cached days" in out
+    # swing doji threshold section: 1.53% of the median 5m range (1.0) vs gold's 0.065
+    assert "median 5m range  1.000" in out
+    assert "gold rule gives  0.01528" in out and "configured       0.06500" in out
+
+
+def test_cli_reads_each_symbol_from_its_source(tmp_path, monkeypatch, capsys):
+    gold, fx = tmp_path / "dukascopy", tmp_path / "histdata"
+    write_day(gold, date(2026, 9, 2), full_day("2026-09-02"))
+    write_day(fx, date(2026, 9, 3), full_day("2026-09-03"), symbol="GBPUSD")
+    sources = SymbolSources({"XAUUSD": gold, "GBPUSD": fx})
+    monkeypatch.setattr(check, "DEFAULT_SOURCES", sources)
+    assert check.main(["XAUUSD", "GBPUSD"]) == 0
+    out = capsys.readouterr().out
+    assert "cached days      1  (2026-09-02 .. 2026-09-02)" in out
+    assert "cached days      1  (2026-09-03 .. 2026-09-03)" in out
 
 
 def test_cli_clean_cache_exits_zero(tmp_path, capsys):

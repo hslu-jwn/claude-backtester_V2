@@ -46,11 +46,20 @@ class ChartConfig:
     replay_right_space: int = 10  # empty candle slots right of the cursor
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
-    up_color: str = "#26a69a"
-    down_color: str = "#ef5350"
-    background: str = "#131722"
-    grid_color: str = "#2a2e39"
-    text_color: str = "#d1d4dc"
+    # Colors (white, like the user's TradingView). Plotly draws a candle's border and wick
+    # with one line, so `*_line` is both the border and the wick color.
+    up_body: str = "#6f9ceb"
+    up_line: str = "#6f9ceb"
+    down_body: str = "#000000"
+    down_line: str = "#000000"
+    candle_line_width: float = 1
+    background: str = "#ffffff"
+    text_color: str = "#131722"
+    axis_color: str = "#131722"  # axis lines and tick marks
+    show_grid: bool = False
+    grid_color: str = "#f0f3fa"  # very faint, used when show_grid is on
+    spike_color: str = "#9598a1"  # crosshair lines
+    accent_color: str = "#2962ff"  # replay button while replay is on
     tokyo_color: str = "#f5c518"
     london_color: str = "#2962ff"
     new_york_color: str = "#f23645"
@@ -208,6 +217,22 @@ def _session_shapes(
     return shapes, labels
 
 
+def _axis_style(config: ChartConfig) -> dict:
+    return {
+        "showgrid": config.show_grid,
+        "gridcolor": config.grid_color,
+        "zeroline": False,
+        "showline": True,
+        "linecolor": config.axis_color,
+        "ticks": "outside",
+        "tickcolor": config.axis_color,
+        "showspikes": True,
+        "spikemode": "across",
+        "spikethickness": 1,
+        "spikecolor": config.spike_color,
+    }
+
+
 def frame_from_candles(candles: Sequence[Candle]) -> pd.DataFrame:
     """Candles (e.g. from a `SeriesView`) as a frame with the cache adapter's columns."""
     frame = pd.DataFrame(
@@ -255,8 +280,14 @@ def build_candle_figure(
                 f"L %{{low:.{digits}f}}  C %{{close:.{digits}f}}<br>"
                 f"spread %{{customdata[1]:.{digits}f}}<extra></extra>"
             ),
-            increasing={"line": {"color": config.up_color}, "fillcolor": config.up_color},
-            decreasing={"line": {"color": config.down_color}, "fillcolor": config.down_color},
+            increasing={
+                "line": {"color": config.up_line, "width": config.candle_line_width},
+                "fillcolor": config.up_body,
+            },
+            decreasing={
+                "line": {"color": config.down_line, "width": config.candle_line_width},
+                "fillcolor": config.down_body,
+            },
             name=symbol,
         )
     )
@@ -284,18 +315,12 @@ def build_candle_figure(
         tickvals=[first_x + p for p in tickvals],
         ticktext=ticktext,
         rangeslider_visible=False,
-        gridcolor=config.grid_color,
-        showspikes=True,
-        spikemode="across",
-        spikethickness=1,
+        **_axis_style(config),
     )
     fig.update_yaxes(
         side="right",
         range=y_range(frame, lo, hi, config.y_padding),
         tickformat=f".{digits}f",
-        gridcolor=config.grid_color,
-        showspikes=True,
-        spikemode="across",
-        spikethickness=1,
+        **_axis_style(config),
     )
     return fig

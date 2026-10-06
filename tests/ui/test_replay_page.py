@@ -9,6 +9,7 @@ import pytest
 from m1_frames import m1
 
 from backtester.data.dukascopy import cache_path
+from backtester.data.sources import SymbolSources
 from backtester.ui.chart_figure import DEFAULT_CONFIG, ChartConfig
 from backtester.ui.pages.chart import (
     REPLAY_OFF,
@@ -41,7 +42,7 @@ def cache(tmp_path):
         path = cache_path(tmp_path, "XAUUSD", date.fromisoformat(day))
         path.parent.mkdir(parents=True, exist_ok=True)
         frame.to_parquet(path, index=False)
-    return tmp_path
+    return SymbolSources({"XAUUSD": tmp_path})
 
 
 def replay_of(cache, timeframe="M5", config=DEFAULT_CONFIG):

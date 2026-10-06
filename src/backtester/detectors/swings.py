@@ -30,6 +30,10 @@ from backtester.detectors.base import Detector, Event
 DOJI_REFERENCE_SYMBOL = "XAUUSD"
 DOJI_RANGE_SHARE = 0.065 / 4.255
 
+# Median 5m candle range (high - low) the other pairs' defaults come from, measured with
+# `python -m backtester.data.check` (histdata.com, 2026-09-02..30).
+MEDIAN_M5_RANGE = MappingProxyType({"GBPUSD": 0.00028, "GBPJPY": 0.066})
+
 
 class SwingKind(Enum):
     HIGH = "high"
@@ -38,11 +42,16 @@ class SwingKind(Enum):
 
 @dataclass(frozen=True, slots=True)
 class SwingConfig:
-    # max |close - open| of a doji/thin candle, per symbol, in bid price units. Pairs not
-    # listed have no threshold yet: set one from `equivalent_doji_body` once their data is
-    # downloaded (ROADMAP.md › 0.3).
+    # max |close - open| of a doji/thin candle, per symbol, in bid price units. Gold's is
+    # set by the user; the others are the same share of their median 5m range. Pairs not
+    # listed have no threshold: swings aren't computed for them.
     doji_max_body: Mapping[str, float] = field(
-        default_factory=lambda: MappingProxyType({DOJI_REFERENCE_SYMBOL: 0.065})
+        default_factory=lambda: MappingProxyType(
+            {
+                DOJI_REFERENCE_SYMBOL: 0.065,
+                **{s: equivalent_doji_body(r) for s, r in MEDIAN_M5_RANGE.items()},
+            }
+        )
     )
 
     def __post_init__(self) -> None:

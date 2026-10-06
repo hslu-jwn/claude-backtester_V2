@@ -1,8 +1,11 @@
-"""Data check report for the M1 cache (Dukascopy, or histdata.com with --cache-dir).
+"""Data check report for the M1 cache.
 
     python -m backtester.data.check XAUUSD GBPUSD GBPJPY
     python -m backtester.data.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
-    python -m backtester.data.check GBPUSD GBPJPY --cache-dir data/cache/histdata
+    python -m backtester.data.check GBPUSD --cache-dir data/cache/dukascopy
+
+Each symbol is read from its source's cache (`data/sources.py`); `--cache-dir` reads all
+given symbols from one folder instead.
 
 Bid-only sources without filler minutes (histdata.com) skip the checks that need asks
 (bid without ask, spread outliers) or filler (1440 rows per day file).
@@ -33,6 +36,8 @@ Per symbol it prints:
 5. Lowest and highest bid per year (catches a wrong point factor over the whole history).
 6. Spot check: a few candles in UTC, New York and MT5 server time, to compare by hand
    with TradingView or MT5.
+7. Swing doji threshold: the median 5m candle range, the threshold the gold rule gives for
+   it (`equivalent_doji_body`) and the one configured (confluences.md › Swing high / low).
 """
 
 from __future__ import annotations
@@ -42,6 +47,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 from enum import Enum
+from math import log10
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -49,8 +55,10 @@ import pandas as pd
 
 from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import CacheAdapter, day_ranges
-from backtester.data.dukascopy import DEFAULT_CACHE_DIR, POINT_FACTORS, read_cached_day
-from backtester.data.resample import drop_flat_minutes
+from backtester.data.dukascopy import POINT_FACTORS, read_cached_day
+from backtester.data.resample import drop_flat_minutes, resample
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.detectors.swings import DOJI_RANGE_SHARE, SwingConfig, equivalent_doji_body
 
 NEW_YORK = ZoneInfo("America/New_York")
 MINUTE = timedelta(minutes=1)
@@ -122,6 +130,7 @@ class SymbolReport:
     outliers: list[Finding]  # for information
     price_range: pd.DataFrame  # per year: low, high
     spot: pd.DataFrame
+    median_m5_range: float | None = None  # median high - low of the 5m candles
 
 
 def daily_closes(start: datetime, end: datetime, config: DataCheckConfig) -> list[datetime]:
@@ -350,6 +359,8 @@ def check_symbol(
     report.gaps = find_gaps(traded["ts"], set(missing), config)
     report.outliers = outlier_findings(traded, config)
     report.price_range = price_range(traded)
+    m5 = resample(traded, Timeframe.M5)
+    report.median_m5_range = float((m5["high"] - m5["low"]).median())
     spot_times = spot or default_spot_times(days, set(traded["ts"].dt.date), config)
     if spot_times:
         report.spot = spot_check(CacheAdapter(cache_dir), symbol, spot_times, config)
@@ -432,7 +443,23 @@ def format_report(r: SymbolReport, config: DataCheckConfig = DEFAULT_CONFIG) -> 
             index=False, float_format=lambda x: f"{x:.5f}".rstrip("0").rstrip(".")
         )
         lines += ["  " + line for line in table.splitlines()]
+
+    if r.median_m5_range is not None:
+        lines += ["", *_doji_lines(r)]
     return "\n".join(lines)
+
+
+def _doji_lines(r: SymbolReport) -> list[str]:
+    """Swing doji threshold section (confluences.md › Swing high / low)."""
+    digits = round(log10(POINT_FACTORS.get(r.symbol, 10**5)))
+    config = SwingConfig().doji_max_body.get(r.symbol)
+    return [
+        f"Swing doji threshold (gold rule: {DOJI_RANGE_SHARE:.2%} of the median 5m range)",
+        f"  median 5m range  {r.median_m5_range:.{digits}f}",
+        f"  gold rule gives  {equivalent_doji_body(r.median_m5_range):.{digits + 2}f}",
+        "  configured       "
+        + (f"{config:.{digits + 2}f}" if config is not None else "none (swings not computed)"),
+    ]
 
 
 def _fmt_ts(t) -> str:
@@ -467,12 +494,15 @@ def main(argv: list[str] | None = None) -> int:
         action="append",
         help="UTC time of a candle to print for comparison (repeatable), e.g. 2026-09-02T13:30",
     )
-    p.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
+    p.add_argument("--cache-dir", type=Path, help="read all symbols from this folder")
     args = p.parse_args(argv)
+    sources = (
+        SymbolSources.single(args.cache_dir, args.symbols) if args.cache_dir else DEFAULT_SOURCES
+    )
 
     problems = False
     for symbol in args.symbols:
-        report = check_symbol(args.cache_dir, symbol, args.start, args.end, args.spot)
+        report = check_symbol(sources.cache_dir(symbol), symbol, args.start, args.end, args.spot)
         print(format_report(report), end="\n\n", flush=True)
         problems |= any(f.count for f in report.integrity) or bool(report.missing_days)
         problems |= any(g.kind is GapKind.UNEXPECTED for g in report.gaps)

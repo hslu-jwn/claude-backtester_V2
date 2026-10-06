@@ -6,7 +6,13 @@ import pandas as pd
 import pytest
 
 from backtester.core.models import Timeframe
-from backtester.ui.chart_figure import build_candle_figure, price_digits, time_ticks, y_range
+from backtester.ui.chart_figure import (
+    ChartConfig,
+    build_candle_figure,
+    price_digits,
+    time_ticks,
+    y_range,
+)
 
 
 def frame(*rows: tuple[str, float, float, float, float]) -> pd.DataFrame:
@@ -123,3 +129,15 @@ def test_long_ranges_use_multiples_of_a_week_starting_on_monday():
 
 def test_price_digits_per_symbol():
     assert (price_digits("XAUUSD"), price_digits("GBPUSD"), price_digits("GBPJPY")) == (3, 5, 3)
+
+
+def test_colors_come_from_the_config():
+    fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30)
+    candles = fig.data[0]
+    assert candles.increasing.fillcolor == "#6f9ceb" and candles.increasing.line.color == "#6f9ceb"
+    assert candles.decreasing.fillcolor == "#000000" and candles.decreasing.line.color == "#000000"
+    assert fig.layout.plot_bgcolor == "#ffffff" and fig.layout.xaxis.showgrid is False
+    custom = ChartConfig(up_body="#00ff00", background="#123456", show_grid=True)
+    fig = build_candle_figure(WEEKEND, "XAUUSD", Timeframe.M30, custom)
+    assert fig.data[0].increasing.fillcolor == "#00ff00"
+    assert fig.layout.paper_bgcolor == "#123456" and fig.layout.yaxis.showgrid is True
