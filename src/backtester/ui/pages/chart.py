@@ -30,7 +30,8 @@ loaded range by feeding the detector `SeriesView`s; during replay only events co
 or before the cursor are drawn. Both choices are kept in the browser. The "FVG strong-move
 filter" (default off) and "OB strong-move filter" (default on) switches
 (confluences.md › Strong-move filter) are passed to those detectors; events are cached
-per setting, so switching back is instant. Zone overlays (FVG, Order block) have indented
+per setting, so switching back is instant (the FVG switch also applies to BPRs, which are
+built from FVGs). Zone overlays (FVG, Order block, BPR) have indented
 sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" that show their ★ / ✕ markers
 (drawing only); they can only be ticked while their type is.
 
@@ -58,6 +59,7 @@ from backtester.data.sources import SymbolSources
 from backtester.engine.replay import Replay
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
+    bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)

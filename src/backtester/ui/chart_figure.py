@@ -92,6 +92,9 @@ class ChartConfig:
     ob_color: str = "#fbc02d"  # yellow
     ob_fill_opacity: float = 0.25
     ob_invalidated_opacity: float = 0.1
+    bpr_color: str = "#9c27b0"  # purple
+    bpr_fill_opacity: float = 0.22
+    bpr_invalidated_opacity: float = 0.08
     zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
     zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe

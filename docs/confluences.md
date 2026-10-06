@@ -71,13 +71,14 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - Example: an uptrend's HH→HL leg is a bullish OB. If a candle later closes below that HL, the zone becomes a bearish breaker. Works in both directions.
 
 ## Balanced price range (BPR)
-- Overlap of a bullish and a bearish FVG. One is usually invalidated as the other forms, so the invalidated one's stored range is used.
+- Overlap of a bullish and a bearish FVG: an older FVG invalidated by the move that creates a newer FVG in the opposite direction. The older one's stored range is used.
 - **Range** = the overlap of the two FVG ranges (no overlap, no BPR).
 - **Direction** = the direction of the **newer** FVG (rule set by the user). Example: a bearish FVG, then price reverses up and leaves an overlapping bullish FVG → bullish BPR.
-- **Timing** (rule set by the user): the older FVG must still be **open** (not confirmed or invalidated) when the newer one forms, **or** be invalidated by the same move that creates the newer one, i.e. by a candle from the newer FVG's candle 1 to its candle 3. Older pairs form no BPR.
+- **Timing** (rule set by the user): the older FVG must be **invalidated by the same move that creates the newer one**, i.e. by a candle from the newer FVG's candle 1 to its candle 3. An older FVG that is still open when the newer one forms, or was confirmed or invalidated before the newer one's candle 1, forms no BPR. (Invalidation by candle 1 can't give an overlap: candle 1's wick is then beyond the older FVG and is the newer gap's edge.)
+- **Pairs** (rule set by the user): if the move invalidates several older opposite FVGs that overlap the newer one, each of them forms its own BPR with it. An older FVG forms **at most one BPR**: if the move creates two newer FVGs that both qualify, only the first one (the earlier candle 3) pairs with it.
 - Exists from the close of the newer FVG's candle 3. Validation as in › Validation, starting with the next candle.
 - Further staleness rules, if any, are the strategy's.
-- **On the chart:** no drawing of its own (rule set by the user): overlapping FVGs stack, so a BPR shows as the darker overlap of the green FVG boxes.
+- **On the chart:** like the FVG: from the older FVG's candle 1 until the candle that confirms or invalidates it, up to the cursor while still open. Every BPR is **purple**, whatever its direction (rule set by the user).
 
 ## Equilibrium (currently NOT used for entries)
 - 50% of the most recent swing leg: upper half = premium, lower half = discount.

@@ -1,9 +1,9 @@
-"""Shared drawing of zone overlays (FVG, OB, later breaker and BPR). Spec: ROADMAP.md › 2.5,
-2.6; confluences.md › Validation.
+"""Shared drawing of zone overlays (FVG, OB, BPR, later breaker). Spec: ROADMAP.md › 2.5,
+2.6, 2.8; confluences.md › Validation.
 
 Per zone: a filled box from its first candle to the candle that confirmed or invalidated
 it, or to the cursor while it is still active or tapped (no length limit). One color per
-zone type, whatever the direction (FVG green, OB yellow, rule set by the user); invalidated
+zone type, whatever the direction (FVG green, OB yellow, BPR purple, rule set by the user); invalidated
 zones stay drawn, fainter. Where boxes overlap, the fills stack and the overlap is darker
 (e.g. overlapping FVGs = an imbalance, rule set by the user). Plotly fills all boxes of one
 trace as one shape, so overlapping boxes would NOT stack inside a trace: boxes are spread

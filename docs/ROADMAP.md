@@ -117,10 +117,13 @@ text with its state (active / tapped / confirmed / invalidated).
   candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
   is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
   OB yellow), overlapping boxes stack darker.
-- ☐ **2.7** Breaker block
-- ☐ **2.8** BPR: detector only (used by the strategy as a confluence). **No overlay of its
-  own** (rule set by the user): on the chart a BPR is the darker overlap of the green FVG
-  boxes. Check with tests and the FVG overlay.
+- ☐ **2.7** Breaker block. ⏸ Postponed: breakers come from OBs, which may be reworked
+  (see 2.6); build this step after that decision.
+- ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
+  by the move (candles 1–3) that creates an overlapping FVG in the opposite direction
+  (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
+  from the older FVG's candle 1 until confirmed / invalidated, hover over the box (both
+  FVGs, state), sub-entries ★ / ✕. Follows the "FVG strong-move filter" switch.
 - ☐ **2.9** Session zones (30m), incl. flips and the second-break kill
 - ☐ **2.10** Multi-timeframe view: show 30m zones on the 5m chart
 
