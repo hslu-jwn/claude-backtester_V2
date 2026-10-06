@@ -58,6 +58,10 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - Range = the entire consecutive same-color leg from the prior swing point to the swing extreme before reversal, from the lowest wick to the highest wick of the leg.
 - Green leg (e.g. HL→HH at the top of an uptrend) = bearish OB. Red leg (e.g. HH→HL, or into a low of a downtrend) = bullish OB.
 - A doji inside the leg is ignored. An opposite-color candle ends the leg immediately, and its wick is excluded.
+- **Only OBs that led to a BOS** (rule set by the user, for now): a bullish OB is the red leg into a swing low that is the most recent swing low when a **bullish BOS** happens (the move up from that low breaks structure). Bearish mirrored. Since a BOS only happens against the trend, OBs only form where the trend flips (and at the first BOS).
+- **Exists from** (rule set by the user): the close of the BOS candle. With the strong-move filter on (default for OBs), additionally at least one candle of the move away (from the swing to the move's next swing point) must be a strong move: the OB then exists from the later of the BOS candle and the first strong candle. If the move's next swing point is confirmed with no strong candle, there is no OB.
+- Validation as in › Validation, starting with the candle after the one it exists from.
+- **On the chart:** like the FVG: from the leg's first candle until the candle that confirms or invalidates it, up to the cursor while still open. No 8-candle limit (rule set by the user, also for FVGs).
 
 ## Breaker block
 - An OB invalidated by a later BOS through the level it defended becomes a breaker: same range, OPPOSITE bias.
