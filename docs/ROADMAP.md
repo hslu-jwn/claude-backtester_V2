@@ -124,7 +124,7 @@ text with its state (active / tapped / confirmed / invalidated).
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
   from the older FVG's candle 1 until confirmed / invalidated, hover over the box (both
   FVGs, state), sub-entries ★ / ✕. Follows the "FVG strong-move filter" switch.
-- ☐ **2.9** Session zones (30m), incl. flips and the second-break kill
+- ☐ **2.9** Session zones (30m), incl. support/resistance by price, flips and the kill on the 3rd break (`strategy-session-zones.md › Session zones`, › Zone flips, › Session zones on the chart)
 - ☐ **2.10** Multi-timeframe view: show 30m zones on the 5m chart
 
 ## Phase 3: Strategy 1 + backtest

@@ -12,6 +12,9 @@
 - For each session, take the single most extreme **confirmed** high and low (swing rule). If the absolute extreme is unconfirmed, use the most extreme confirmed one. A swing confirmed by the first candle of the next session doesn't count.
 - Zone size is as big as possible: the high zone runs from the highest wick to the lowest body top of its swing candles; the low zone is mirrored.
 - Zones are valid only during the next session (London→NY, NY→Tokyo, Tokyo→London). Friday NY zones carry into Monday Tokyo.
+- **No confirmed swing** on one side in a session → no zone on that side for the next session (rule set by the user).
+- **Support or resistance by price** (rule set by the user): at the start of the next session, a zone below price (the close of the last candle before the session start is above the zone) is **support**, a zone above price is **resistance**. If that close is inside the zone, its role is set by the first 30m close outside it (that close is no break). ⚠️ The inside case is an assumption, confirm with the user.
+- **Break** (rule set by the user): a 30m candle **closes beyond the whole zone** on the other side (support: close below its bottom). A wick never counts.
 
 ## Entry sequence (long)
 1. **Sweep:** a wick into the support zone.
@@ -29,7 +32,12 @@
 
 ## Zone flips
 - A red 30m close below support flips the setup to a short. That close counts directly as the 30m reaction, so go straight to the 5m BOS. Same the other way round.
-- A second break of the same zone kills it for the rest of the session.
+- **Breaks** (rule set by the user, backtested by them): the 1st break flips the zone (support → resistance), the 2nd break flips it back, the **3rd break kills it** for the rest of the session. The number of breaks that kills a zone is a setting (default 3).
+
+## Session zones on the chart (for testing, provisional)
+- Drawn like the other confluences (always visible when the overlay is on). The user wants to change this later (session view, 3.5).
+- **Color = the session the zone is active in** (Tokyo yellow, London blue, New York red, like the session lines), so a zone formed in London and active in New York is red. Replaces the light blue for now.
+- From the swing candle where the zone formed to the end of the session it is active in; stops at the candle that kills it. Flips are not marked.
 
 ## Stop loss
 - Just below the entry confluence's low, plus a buffer ⚙️.
@@ -75,7 +83,7 @@ strategies are not affected.
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
 - TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
-- Second-break zone kill: currently any second break; later maybe only within a time window
+- Zone kill: the 3rd break kills a zone (default, setting); later maybe only within a time window
 - Session times following each city's DST; session end = next session start (may revisit)
 - Friday NY → Monday Tokyo carry-over (watch for odd behavior)
 - Possibly skip the Tokyo session (low volume)
