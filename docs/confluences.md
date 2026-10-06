@@ -13,12 +13,17 @@
 - A turning candle also starts the next swing: green, red, green gives a high (confirmed by the red) and a low (confirmed by the second green).
 - If both turn candles have the same extreme wick, the swing belongs to the earlier candle.
 
-## Trend
-- Uptrend: 2 consecutive HH + HL. Downtrend: 2 consecutive LH + LL. Otherwise sideways.
-
 ## Break of structure (BOS)
-- Uptrend: a candle CLOSE below the most recent prior swing low. Downtrend: a close above the most recent prior swing high. A wick alone never counts.
-- The trend label flips immediately; the broken level becomes the new reference point.
+- **Bullish BOS:** a candle **closes above** the most recent confirmed swing high (its wick price). **Bearish BOS:** a candle closes below the most recent confirmed swing low. A wick alone never counts.
+- The swing must already be confirmed when the breaking candle closes (no lookahead). Each swing level can be broken only once (the first close beyond it).
+- Works the same on every timeframe.
+
+## Trend
+- **Defined only by BOS** (rule set by the user; replaces the earlier higher-high/higher-low rule):
+  - after a bullish BOS the market is in an **uptrend**, after a bearish BOS in a **downtrend**;
+  - it stays in that trend until a BOS in the other direction occurs (that BOS flips it immediately);
+  - a BOS in the trend's own direction confirms the trend and changes nothing.
+- Before the first BOS on a chart there is no trend yet.
 
 ## Strong-move filter
 - A candle is a strong move if its range (high − low) ≥ k × ATR(n). Default k = 2, n = 14 (n still to be swept); k and n are settings.
