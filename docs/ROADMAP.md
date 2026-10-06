@@ -132,7 +132,10 @@ text with its state (active / tapped / confirmed / invalidated).
 
 - ☐ **3.1 Engine.** Backtest loop over 5m with 30m/1h clocks; trade management in R
   (SL before TP inside one candle, break-even rule at the next session start).
-  Spread from MT5 data applied to entries/exits (setting; can be switched off).
+  Costs: the cache has no ask prices now (histdata.com), so the spread is a **fixed setting
+  per symbol** (user's FTMO values), plus an optional commission per trade; both can be
+  switched off. Longs enter at ask (bid + spread) and exit at bid; shorts mirrored.
+  Reuses `engine/replay.py` for the multi-timeframe stepping.
 - ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
 - ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
