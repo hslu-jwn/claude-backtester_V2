@@ -9,12 +9,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from backtester.detectors.atr import StrongMoveConfig
+from backtester.detectors.swings import SwingConfig
 
 
 @dataclass(frozen=True, slots=True)
 class SessionZoneSweepConfig:
     # strong-move filter (confluences.md); on/off per FVG / OB comes with those detectors
     strong_move: StrongMoveConfig = field(default_factory=StrongMoveConfig)
+    swings: SwingConfig = field(default_factory=SwingConfig)  # doji threshold per symbol
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction

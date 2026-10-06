@@ -11,6 +11,9 @@ drawn at their absolute positions (`first_x`), so the x positions match the full
 Session lines (1.3): a dashed vertical line at each session start (`sessions.py`), drawn
 only over the candles in the frame, so during replay no line appears past the cursor.
 One switch shows or hides all session lines; hidden on timeframes above `session_max_timeframe`.
+
+Overlays (Phase 2, `ui/overlays.py`) are passed in as ready-made traces and drawn on top
+of the candles; the candlestick trace always stays `fig.data[0]`.
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ from math import log10
 
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.basedatatypes import BaseTraceType
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
@@ -53,6 +57,9 @@ class ChartConfig:
     session_line_width: int = 1
     session_line_dash: str = "dash"
     session_max_timeframe: Timeframe = Timeframe.H4  # more lines than candles above this
+    swing_high_color: str = "#ff9800"
+    swing_low_color: str = "#00bcd4"
+    marker_size: int = 9
 
     def session_color(self, session: Session) -> str:
         return getattr(self, f"{session.value}_color")
@@ -219,12 +226,14 @@ def build_candle_figure(
     first_x: int = 0,
     x_range: tuple[float, float] | None = None,
     show_sessions: bool = True,
+    overlays: Sequence[BaseTraceType] = (),
 ) -> go.Figure:
     """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread).
 
     The first candle is drawn at x = `first_x`. `x_range` is the initially visible x range
     (default: all candles); labels and price range fit the candles inside it.
-    `show_sessions` draws the session start lines.
+    `show_sessions` draws the session start lines; `overlays` are extra traces (markers of
+    detected patterns) added after the candles.
     """
     digits = price_digits(symbol)
     n = len(frame)
@@ -251,6 +260,7 @@ def build_candle_figure(
             name=symbol,
         )
     )
+    fig.add_traces(list(overlays))
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     shapes, labels = (
         _session_shapes(frame["ts"], timeframe, first_x, config) if show_sessions else ([], [])

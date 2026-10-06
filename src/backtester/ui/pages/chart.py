@@ -16,11 +16,18 @@ replay time: the chart then shows the candles of that timeframe closed at `now`.
 Session lines (ROADMAP.md › 1.3): the "Sessions" switch shows or hides all session start
 lines (Tokyo, London, NY), in the normal chart and in replay; the choice is kept in the browser.
 
-Later steps add: zones, confluences and position boxes.
+Overlays (ROADMAP.md › Phase 2): the chart starts empty. The "Overlays" switch turns the
+detector overlays on and the dropdown next to it picks which types are drawn (multi-select,
+one entry per registered `OverlayType`, see `ui/overlays.py`). Events are computed once per
+loaded range by feeding the detector `SeriesView`s; during replay only events confirmed at
+or before the cursor are drawn. Both choices are kept in the browser.
+
+Later steps add: the session view (3.5) and position boxes.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -40,6 +47,7 @@ from backtester.data.adapters.cache_adapter import (
 )
 from backtester.data.resample import supported
 from backtester.engine.replay import Replay
+from backtester.ui import swing_overlay  # noqa: F401  (registers the Swings overlay)
 from backtester.ui.chart_figure import (
     DEFAULT_CONFIG,
     ChartConfig,
@@ -47,6 +55,13 @@ from backtester.ui.chart_figure import (
     frame_from_candles,
     time_ticks,
     y_range,
+)
+from backtester.ui.overlays import (
+    OVERLAYS,
+    OverlayContext,
+    OverlayType,
+    dropdown_options,
+    overlay_traces,
 )
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
@@ -62,19 +77,50 @@ def load_chart(
     end_date: str | None,
     config: ChartConfig = DEFAULT_CONFIG,
     show_sessions: bool = True,
+    overlay_keys: Sequence[str] = (),
+    registry: dict[str, OverlayType] = OVERLAYS,
 ):
     """Figure, message and stored candle data for the chosen inputs.
 
     Returns (figure or None, message, store data or None). `start_date`/`end_date` are
-    ISO days, both inclusive.
+    ISO days, both inclusive. `overlay_keys` are the overlay types to draw (all their events).
     """
     frame, message = _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config)
     if frame is None:
         return None, message, None
+    traces, notes = [], []
+    if overlay_keys:
+        replay, _ = load_replay(cache_dir, symbol, timeframe, start_date, end_date, config)
+        traces, notes = chart_overlays(replay, overlay_keys, len(replay) - 1, 0, config, registry)
     figure = build_candle_figure(
-        frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions
+        frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions, overlays=traces
     )
-    return figure, message, _axis_store(frame)
+    return figure, _with_notes(message, notes), _axis_store(frame)
+
+
+def chart_overlays(
+    replay: Replay,
+    keys: Sequence[str],
+    cursor: int,
+    first_x: int,
+    config: ChartConfig = DEFAULT_CONFIG,
+    registry: dict[str, OverlayType] = OVERLAYS,
+):
+    """(traces, messages) of the selected overlays for candles first_x..cursor of `replay`."""
+    if not keys:
+        return [], []
+    ctx = OverlayContext(replay.symbol, cursor, first_x, config)
+    return overlay_traces(lambda o: _cached_events(replay, o), keys, ctx, registry)
+
+
+@lru_cache(maxsize=32)
+def _cached_events(replay: Replay, overlay: OverlayType):
+    """Events of one overlay over the whole replay range, computed once per range."""
+    return tuple(overlay.detect(replay))
+
+
+def _with_notes(message: str, notes: Sequence[str]) -> str:
+    return " · ".join([message, *notes])
 
 
 def _load_frame(cache_dir, symbol, timeframe, start_date, end_date, config):
@@ -190,20 +236,27 @@ def replay_figure(
     view: SeriesView,
     config: ChartConfig = DEFAULT_CONFIG,
     show_sessions: bool = True,
+    overlays: Sequence = (),
 ):
     """(figure, axis store) drawn only from `view`: its last `replay_window` candles, at
-    their absolute positions, with the cursor near the right edge."""
+    their absolute positions, with the cursor near the right edge. `overlays` are traces
+    built for candles `replay_first_x(view.cursor)`..cursor."""
     candles = view.last(config.replay_window)
-    first_x = view.cursor + 1 - len(candles)
+    first_x = replay_first_x(view.cursor, config)
     frame = frame_from_candles(candles)
     x_range = (
         view.cursor - config.replay_visible + 0.5,
         view.cursor + config.replay_right_space + 0.5,
     )
     figure = build_candle_figure(
-        frame, view.symbol, view.timeframe, config, first_x, x_range, show_sessions
+        frame, view.symbol, view.timeframe, config, first_x, x_range, show_sessions, overlays
     )
     return figure, _axis_store(frame, first_x)
+
+
+def replay_first_x(cursor: int, config: ChartConfig = DEFAULT_CONFIG) -> int:
+    """First candle drawn during replay: at most `replay_window` candles up to the cursor."""
+    return max(0, cursor + 1 - config.replay_window)
 
 
 def replay_chart(
@@ -211,20 +264,26 @@ def replay_chart(
     state: dict,
     config: ChartConfig = DEFAULT_CONFIG,
     show_sessions: bool = True,
+    overlay_keys: Sequence[str] = (),
+    registry: dict[str, OverlayType] = OVERLAYS,
 ):
-    """(figure or None, message, axis store or None) at the replay time `state["now"]`."""
+    """(figure or None, message, axis store or None) at the replay time `state["now"]`.
+    Overlays show only events confirmed at or before the cursor."""
     now = datetime.fromisoformat(state["now"])
     cursor = replay.cursor_at(now)
     if cursor is None:
         return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
     view = replay.view(cursor)
-    figure, store = replay_figure(view, config, show_sessions)
+    traces, notes = chart_overlays(
+        replay, overlay_keys, cursor, replay_first_x(cursor, config), config, registry
+    )
+    figure, store = replay_figure(view, config, show_sessions, traces)
     message = (
         f"Replay · candle {cursor + 1:,} of {len(replay):,} · "
         f"{view.current.ts:%Y-%m-%d %H:%M} {replay.timeframe.name} candle, closed at "
         f"{replay.close_time(cursor):%H:%M} UTC"
     )
-    return figure, message, store
+    return figure, _with_notes(message, notes), store
 
 
 def visible_axes(relayout: dict | None, store: dict | None, config: ChartConfig = DEFAULT_CONFIG):
@@ -286,6 +345,24 @@ def layout(cache_dir: Path, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
                         persistence=True,
                         style={"color": "#d1d4dc"},
                         inputStyle={"marginRight": "4px"},
+                    ),
+                    dcc.Checklist(
+                        id="chart-overlays",
+                        options=[{"label": "Overlays", "value": "on"}],
+                        value=[],
+                        persistence=True,
+                        style={"color": "#d1d4dc"},
+                        inputStyle={"marginRight": "4px"},
+                    ),
+                    dcc.Dropdown(
+                        id="chart-overlay-types",
+                        options=dropdown_options(),
+                        value=[],
+                        multi=True,
+                        persistence=True,
+                        disabled=True,
+                        placeholder="Overlay types" if OVERLAYS else "No overlay types yet",
+                        style={"minWidth": "220px"},
                     ),
                     html.Button("Replay", id="chart-replay-toggle", title="Replay on/off"),
                     html.Div(
@@ -367,20 +444,35 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
         Input("chart-dates", "end_date"),
         Input("chart-replay", "data"),
         Input("chart-sessions", "value"),
+        Input("chart-overlays", "value"),
+        Input("chart-overlay-types", "value"),
         State("chart-graph", "style"),
     )
-    def _draw(symbol, timeframe, start_date, end_date, replay_state, sessions_switch, style):
+    def _draw(
+        symbol,
+        timeframe,
+        start_date,
+        end_date,
+        replay_state,
+        sessions_switch,
+        overlays_switch,
+        overlay_types,
+        style,
+    ):
         args = (cache_dir, symbol, timeframe, start_date, end_date, config)
         show_sessions = bool(sessions_switch)
+        keys = selected_overlays(overlays_switch, overlay_types)
         if replay_state["on"] and not replay_state["picking"]:
             replay, message = load_replay(*args)
             figure, message, store = (
-                replay_chart(replay, replay_state, config, show_sessions)
+                replay_chart(replay, replay_state, config, show_sessions, keys)
                 if replay
                 else (None, message, None)
             )
         else:
-            figure, message, store = load_chart(*args, show_sessions=show_sessions)
+            figure, message, store = load_chart(
+                *args, show_sessions=show_sessions, overlay_keys=keys
+            )
             if replay_state["on"] and figure:
                 now = datetime.fromisoformat(replay_state["now"])
                 message = (
@@ -427,6 +519,10 @@ def register_callbacks(app: Dash, cache_dir: Path, config: ChartConfig = DEFAULT
             {"fontWeight": "bold", "background": "#2962ff", "color": "white"} if new["on"] else {},
         )
 
+    @app.callback(Output("chart-overlay-types", "disabled"), Input("chart-overlays", "value"))
+    def _overlay_types_enabled(overlays_switch):
+        return not overlays_switch
+
     @app.callback(Output("chart-replay-timer", "interval"), Input("chart-replay-speed", "value"))
     def _speed(speed):
         return 1000 // speed
@@ -460,6 +556,11 @@ _REPLAY_ACTIONS = {
     "chart-replay-timer": "tick",
     "chart-graph": "click",
 }
+
+
+def selected_overlays(switch: list | None, types: list | None) -> list[str]:
+    """Overlay types to draw: none while the switch is off (the chart starts empty)."""
+    return list(types or []) if switch else []
 
 
 def _iso(t: datetime) -> str:

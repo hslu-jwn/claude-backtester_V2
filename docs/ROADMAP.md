@@ -39,7 +39,10 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   TradingView or MT5** (remember MT5 shows server time, usually UTC+2/+3).
   Gold's price scaling is already verified (0.1); **GBPUSD and GBPJPY are not yet**: check
   their point factors here (GBPUSD ≈ 1.2–1.4, GBPJPY ≈ 180–210) and add a real sample
-  file test for each, like the XAUUSD one.
+  file test for each, like the XAUUSD one. The current GBP sample files in
+  `tests/data/fixtures/` are Dukascopy "TooManyRequests" replies, not data: download them again.
+  Also measure each pair's median 5m candle range and set its doji threshold
+  (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low).
   Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
@@ -76,7 +79,9 @@ text with its state (active / tapped / confirmed / invalidated).
 
 - ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
   Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
-- ☐ **2.2** Swing highs / lows
+- ◐ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
+  the candle with the extreme wick, a thin line to a dot on the confirming candle (hover).
+  Also adds the Overlays switch and the type dropdown every later detector plugs into.
 - ☐ **2.3** Trend label + BOS
 - ☐ **2.4** Zone validation state machine (shared by all zones)
 - ☐ **2.5** FVG
