@@ -109,16 +109,16 @@ text with its state (active / tapped / confirmed / invalidated).
   threshold, the shown timeframe's trend (with / against) and the state (taps are
   listed there, no marker on the chart); the sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" under FVG add ★ / ✕
   (every zone overlay gets these sub-entries). Panel switch "FVG strong-move filter".
-- ☑ **2.6** Order block. ⚠️ Works for now, but the user may rework OBs entirely later
-  (rules and drawing). `detectors/order_block.py`: at each BOS, the leg into the most
+- ☑ **2.6** Order block, first version. ⚠️ Replaced by 2.12 (user re-explained OBs on
+  2026-10-06: sweep + BOS, no strong-move filter); kept here as built. `detectors/order_block.py`: at each BOS, the leg into the most
   recent swing of the opposite kind (`confluences.md › Order block`); strong-move filter on
   the move away (switch, default on). Overlay "Order block": yellow box from the leg's
   first candle until confirmed / invalidated, hover over the box (leg, swing, BOS, strong
   candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
   is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
   OB yellow), overlapping boxes stack darker.
-- ☐ **2.7** Breaker block. ⏸ Postponed: the user will explain OBs and breakers again first
-  (`confluences.md › Breaker block`); then check the OB code against it and build this step.
+- ☐ **2.7** Breaker block. ⏸ Postponed until the user clarifies breakers ("once it's
+  relevant", `confluences.md › Breaker block`). Build after 2.12.
 - ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
   by the move (candles 1–3) that creates an overlapping FVG in the opposite direction
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
@@ -127,6 +127,20 @@ text with its state (active / tapped / confirmed / invalidated).
 - ☑ **2.9** Session zones (30m), incl. support/resistance by price, flips and the kill on the 3rd break (`strategy-session-zones.md › Session zones`, › Zone flips, › Session zones on the chart).
   `strategy/session_zone_sweep/zones.py` (`SessionZoneTracker`; a candle belongs to the session it closes in). Overlay "Session zones": dotted box from the swing to the end of the session the zone is used in (or its kill), colored by that session, filled only there. Session lines now go through the candle the session starts on.
 - ☑ **2.10** Multi-timeframe view: show 30m zones on the 5m chart (done with 2.9: shown on M5–M30; the chart loads 30m candles, read only through the replay's clock).
+- ☐ **2.11** Liquidity sweep. `detectors/sweep.py` (`confluences.md › Liquidity sweep`):
+  a candle whose wick goes above a confirmed swing high (below a swing low), close beyond
+  allowed. Overlay "Liquidity sweep": magenta line from the swing to the sweeping candle,
+  marker on the wick, hover. Drawn for every sweep, so the user can check them on the chart.
+  ⚠️ Ask the user before building: how far back a swept high still counts, and when the
+  same high can be swept again.
+- ☐ **2.12** Order block rework. Rewrite `detectors/order_block.py` on top of 2.11
+  (`confluences.md › Order block`): sweep, then a BOS in the next move (chance ends when
+  price goes beyond the sweep again); range = same-color leg into the sweep, wick to wick;
+  exists from the BOS candle; no strong-move filter (remove the switch and
+  `OrderBlockConfig.strong_move*`); only invalidation (close beyond the far edge), no
+  tap / confirm. Overlay stays yellow, drawn until invalidated, only the ✕ sub-entry.
+  ⚠️ Ask the user before building: which leg is the OB when the move from the sweep makes
+  a lower high before the BOS.
 
 ## Phase 3: Strategy 1 + backtest
 

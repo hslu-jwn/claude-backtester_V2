@@ -83,7 +83,7 @@ strategies are not affected.
   exist at the replay time.
 
 ## Backtest options (tunable; review periodically)
-- Strong-move filter: ATR multiplier (default 2×) and lookback; on/off for FVGs (default off) and OBs (default on) separately
+- Strong-move filter: ATR multiplier (default 2×) and lookback; on/off for FVGs (default off). OBs no longer use it.
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
 - TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
