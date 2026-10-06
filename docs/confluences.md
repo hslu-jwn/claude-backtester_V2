@@ -41,13 +41,20 @@
 
 ## Validation (FVG, OB, breaker, BPR, no exceptions)
 - **Tap:** a wick into the zone is enough; no close inside needed.
-- **Confirmed (usable for entry):** a candle closes beyond the zone boundary in the zone's bias direction (bullish: green close above the top).
+- **Confirmed (usable for entry):** **after a tap**, a candle closes beyond the zone boundary in the zone's bias direction (bullish: green close above the top). It can be the tapping candle itself (wick into the zone, close back outside) or a later candle. Without a tap first there is no confirmation, so an FVG's own third candle never confirms it (rule set by the user).
 - **Invalidated:** a candle closes beyond the opposite boundary.
+- A zone stays usable for the strategy until it is invalidated (strategy rules may end it earlier, e.g. at the session end). How long it is *drawn* is display only and never limits its use.
 
 ## Fair value gap (FVG)
 - 3-candle pattern; the gap lies between the wicks of candle 1 and candle 3. Candle 2's wick is ignored.
 - Bullish in an uptrend, bearish in a downtrend: the trend of the **FVG's own timeframe** (a 5m FVG uses the 5m trend), not the overall 4H trend (rule set by the user).
 - An FVG is used when price **retraces back into it**: a bullish FVG forms in a move up, and a later bearish move into it uses it (taps it). Bearish mirrored.
+- **On the chart** (display only, rule set by the user):
+  - drawn from the moment it forms (close of candle 3), from candle 1 to the right;
+  - extends **8 candles** of its own timeframe after forming (setting); if price hits it (a wick into it) later, the drawing extends up to that hit candle, so it reaches the latest hit;
+  - stops at the candle that **invalidates** it, whatever comes first;
+  - confirmation changes nothing on the general chart (the strategy's session view draws confirmed confluences darker).
+  - The 8-candle limit is only visual: an FVG that was never hit within 8 candles can still be tapped, confirmed and used later.
 
 ## Order block (OB)
 - Range = the entire consecutive same-color leg from the prior swing point to the swing extreme before reversal, from the lowest wick to the highest wick of the leg.
