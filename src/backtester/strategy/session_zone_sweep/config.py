@@ -10,7 +10,10 @@ from dataclasses import dataclass, field
 
 from backtester.core.models import Timeframe
 from backtester.detectors.atr import StrongMoveConfig
+from backtester.detectors.fvg import FvgConfig
+from backtester.detectors.order_block import OrderBlockConfig
 from backtester.detectors.swings import SwingConfig
+from backtester.detectors.zone import ZoneKind
 from backtester.sessions import DEFAULT_SESSIONS, SessionConfig
 
 
@@ -18,6 +21,8 @@ from backtester.sessions import DEFAULT_SESSIONS, SessionConfig
 class SessionZoneSweepConfig:
     # strong-move filter (confluences.md); on/off per FVG / OB comes with those detectors
     strong_move: StrongMoveConfig = field(default_factory=StrongMoveConfig)
+    fvg: FvgConfig = field(default_factory=FvgConfig)  # strong-move filter default off
+    order_block: OrderBlockConfig = field(default_factory=OrderBlockConfig)  # filter on
     swings: SwingConfig = field(default_factory=SwingConfig)  # doji threshold per symbol
     sessions: SessionConfig = DEFAULT_SESSIONS
 
@@ -30,6 +35,12 @@ class SessionZoneSweepConfig:
     # while the 5m chart is already in the trade's direction
     entry_bos_with_trend: bool = False
 
+    # entry sequence step 4: the confluence types that can trigger an entry (breakers are
+    # not built yet, ROADMAP 2.7)
+    confluence_kinds: frozenset[ZoneKind] = frozenset(
+        {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BPR}
+    )
+
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction
     small_confluence_atr_mult: float = 0.5  # confluence height < this * ATR -> SL below BOS leg
@@ -40,6 +51,8 @@ class SessionZoneSweepConfig:
     fallback_tp_r_range: tuple[float, float] = (1.2, 2.0)  # price already beyond the zone
     obstacles_passable: int = 0  # test 0-3
     obstacle_cluster_r: float = 0.2
+    obstacle_timeframe: Timeframe = Timeframe.H1
+    tp_buffer_atr_mult: float = 0.0  # TBD: "just below" an obstacle, as 5m ATR fraction
 
     # session filters
     tag_last_minutes_before_next_session: int = 90

@@ -5,6 +5,7 @@ Modules:
   config.py   all tunable parameters (backtest options list)
   zones.py    session high/low zones on 30m
   setup.py    entry sequence state machine (sweep -> 30m reaction -> 5m BOS -> confluence)
+  signals.py  feeds the setups from the 5m / 30m detectors, emits entry signals
   targets.py  stop loss and take profit (zone target, 3R cap, 1h obstacles, 1.2R minimum)
   strategy.py ties it together as a Strategy
 """
