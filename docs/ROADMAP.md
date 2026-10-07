@@ -161,6 +161,9 @@ text with its state (active / tapped / confirmed / invalidated).
   via USDJPY, use a fixed approximation, setting).
   Reuses `engine/replay.py` for the multi-timeframe stepping.
 - ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
+  Step 3 uses the confluence BOS (only against the 5m trend); setting
+  `SessionZoneSweepConfig.entry_bos_with_trend` (default off) also lets a close above the
+  last 5m swing high in a 5m uptrend count (`strategy-session-zones.md › Entry sequence`).
 - ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
   and settings used to `results/<run>/`. Also records, per session, the session zones and
@@ -183,6 +186,7 @@ text with its state (active / tapped / confirmed / invalidated).
   session filters, costs), with defaults from the spec.
   Must include (user's wish): the session zone kill rule as its own setting: on/off, and the
   number of breaks that kills a zone (`SessionZoneSweepConfig.zone_kill_breaks`, default 3).
+  Also (user's wish): step 3 with the 5m trend on/off (`entry_bos_with_trend`, default off).
 - ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
 - ☐ **4.3 UI layout and look review** (at the end of the UI work; the user decides the

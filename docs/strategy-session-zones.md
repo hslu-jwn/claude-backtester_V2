@@ -21,7 +21,7 @@
 ## Entry sequence (long)
 1. **Sweep:** a wick into the support zone.
 2. **30m reaction:** a green 30m candle closes above the zone. It need not be the sweep candle; a red close never counts.
-3. **5m BOS up:** a 5m close above the high right beforehand, during that 30m candle or after. ⚠️ **Open question (user is researching it; ask again before 3.2):** `confluences.md` now only counts a BOS *against* the trend, so if the 5m chart is already in an uptrend this close is no confluence BOS. Provisional answer (b): step 3 is its own check in `strategy/session_zone_sweep/` (any 5m close above the swing high right before it), not the confluence BOS.
+3. **5m BOS up:** a 5m bullish BOS (`confluences.md` › Break of structure) during that 30m candle or after. **Only a real BOS counts** (rule set by the user): if the 5m chart is already in an uptrend, a close above the last 5m swing high is no BOS and does **not** fulfil step 3. Setting `entry_bos_with_trend` (default **off**): when on, any green 5m close above the swing high right before it counts as step 3, also in a 5m uptrend, so backtests can compare both.
 4. **Confluence:** an FVG, OB, breaker or BPR (FVGs are most promising), usually formed in the BOS move; a breaker comes from the move before. Price taps it, then a green 5m candle closes above it → **enter at that close**. No confluence = no trade.
    Only FVGs in the direction of the trend of their own timeframe are used: bullish FVGs in a 5m uptrend, bearish ones in a 5m downtrend (the trend after the FVG's candle 3 closed, including a BOS made by candle 2 or 3; no trend yet = no FVG used). The FVG detector itself finds gaps in both directions (`confluences.md` › Fair value gap).
 
@@ -84,6 +84,7 @@ strategies are not affected.
 
 ## Backtest options (tunable; review periodically)
 - Strong-move filter: ATR multiplier (default 2×) and lookback; on/off for FVGs (default off). OBs: on (default) while the first OB version is in use; the new OB rules drop it (on hold, ROADMAP 2.12).
+- Step 3 with the 5m trend (`entry_bos_with_trend`, default off: only a real 5m BOS, i.e. against the 5m trend, counts)
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
 - TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result

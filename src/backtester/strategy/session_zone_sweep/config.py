@@ -25,6 +25,11 @@ class SessionZoneSweepConfig:
     zone_timeframe: Timeframe = Timeframe.M30
     zone_kill_breaks: int = 3  # the 3rd break kills a zone for the rest of its session
 
+    # entry sequence step 3 (strategy-session-zones.md › Entry sequence): off = only a real
+    # 5m BOS (against the 5m trend) counts; on = also a close above the last 5m swing high
+    # while the 5m chart is already in the trade's direction
+    entry_bos_with_trend: bool = False
+
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction
     small_confluence_atr_mult: float = 0.5  # confluence height < this * ATR -> SL below BOS leg
