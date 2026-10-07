@@ -81,7 +81,12 @@ class OverlayType:
     # optional sub-entries listed under it in the panel, (part key, label), e.g.
     # ("confirmed", "★ confirmations"); `draw` gets the selected ones in `ctx.parts`
     parts: tuple[tuple[str, str], ...] = field(default=())
-    order: float = 99.0  # position in the panel: the roadmap step (e.g. 2.5 for FVG)
+    order: str = "99"  # position in the panel: the roadmap step (e.g. "2.5" for FVG)
+
+    @property
+    def step(self) -> tuple[int, ...]:
+        """`order` as numbers, so "2.11" comes after "2.9"."""
+        return tuple(int(p) for p in self.order.split("."))
 
     def part_value(self, part: str) -> str:
         """Panel value of a sub-entry, e.g. "fvg.confirmed"."""
@@ -95,7 +100,7 @@ def register(overlay: OverlayType, registry: dict[str, OverlayType] = OVERLAYS) 
     """Add `overlay`, keeping the registry sorted by `order` (import order doesn't matter)."""
     if overlay.key in registry:
         raise ValueError(f"overlay {overlay.key!r} registered twice")
-    entries = sorted([*registry.values(), overlay], key=lambda o: o.order)
+    entries = sorted([*registry.values(), overlay], key=lambda o: o.step)
     registry.clear()
     registry.update((o.key, o) for o in entries)
     return overlay

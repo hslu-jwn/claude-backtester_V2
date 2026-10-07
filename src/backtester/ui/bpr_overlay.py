@@ -70,4 +70,4 @@ def draw_bprs(events: Sequence[BalancedPriceRange | ZoneTransition], ctx: Overla
     return draw_zones(events, ctx, style, hover_text)
 
 
-BPR = register(OverlayType("bpr", "BPR", detect_bprs, draw_bprs, parts=ZONE_PARTS, order=2.8))
+BPR = register(OverlayType("bpr", "BPR", detect_bprs, draw_bprs, parts=ZONE_PARTS, order="2.8"))

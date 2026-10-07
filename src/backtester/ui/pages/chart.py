@@ -63,6 +63,7 @@ from backtester.ui import (
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
     session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)
+    sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
 )
 from backtester.ui.chart_figure import (

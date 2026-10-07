@@ -61,6 +61,11 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - **The candidate is the top of the move:** a later candle that goes above the candidate's high replaces it (it takes the same highs and more). A higher high is always "a kind of sweep" (user).
 - **Only a BOS makes it a liquidity sweep** (rule set by the user): the candidate becomes a liquidity sweep when the next move down makes a **bearish BOS** (› Break of structure, so only against the trend) before price goes above the candidate's high. The sweep therefore **exists from the close of that BOS candle**, not from the sweeping candle (no lookahead: before the BOS nobody knows it was one). A lower high between the sweep and the BOS doesn't matter (rule set by the user).
 - If the new high is followed by no BOS, the market is just in an uptrend: no sweep, no OB.
+- **Consequences and edge cases** (confirmed by the user, 2026-10-07):
+  - A bullish BOS candle always closes above the high it breaks, so it takes that high: every bearish BOS after a bullish one comes with a sweep (and an OB). Only the first BOS on a chart can come without one.
+  - A doji's wick can sweep (no doji exception here).
+  - Before the first BOS on a chart, every confirmed high counts.
+  - One candle can be both: if it wicks above the top and then closes below the low (bearish BOS), it is the sweeping candle and the BOS candle.
 - Timeframe-agnostic, like every detector. Strategy 1's session-zone sweep (a wick into a session zone) is the strategy's own rule and stays in `strategy/session_zone_sweep/`.
 - Example for the broken high: a bullish BOS closes above a swing high, price runs a bit higher and then reverses with a bearish BOS. The top took the broken high, so this is a liquidity sweep and forms an OB.
 - **On the chart:** a thin magenta line at the swept high's price, from that swing's extreme-wick candle to the sweeping candle, with a small marker on the sweeping wick, drawn from the BOS candle on. If several highs were taken, the line goes to the highest of them and the hover lists all (display choice).

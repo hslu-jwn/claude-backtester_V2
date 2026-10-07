@@ -86,6 +86,10 @@ def draw_swings(swings: Sequence[SwingPoint], ctx: OverlayContext) -> list[go.Sc
 
 SWINGS = register(
     OverlayType(
-        "swings", "Swings", lambda replay, _settings: detect_swings(replay), draw_swings, order=2.2
+        "swings",
+        "Swings",
+        lambda replay, _settings: detect_swings(replay),
+        draw_swings,
+        order="2.2",
     )
 )

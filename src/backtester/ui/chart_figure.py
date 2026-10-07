@@ -84,6 +84,7 @@ class ChartConfig:
     trend_up_color: str = "#089981"  # trend badge background
     trend_down_color: str = "#f23645"
     trend_none_color: str = "#9598a1"
+    sweep_color: str = "#ff00ff"  # liquidity sweep line and wick marker (both directions)
     trend_badge_spacing: float = 0.05  # paper height between the stacked trend badges
     # zones: one color per type, both directions (overlaps stack darker); the edge and
     # markers use the color, the fill a light shade of it; invalidated zones are fainter

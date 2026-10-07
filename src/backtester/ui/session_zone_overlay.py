@@ -278,6 +278,6 @@ def draw_session_zones(events: Sequence[ChartZoneEvent], ctx: OverlayContext) ->
 
 SESSION_ZONES = register(
     OverlayType(
-        "session_zones", "Session zones", detect_session_zones, draw_session_zones, order=2.9
+        "session_zones", "Session zones", detect_session_zones, draw_session_zones, order="2.9"
     )
 )

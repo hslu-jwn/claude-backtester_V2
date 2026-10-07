@@ -102,4 +102,4 @@ def draw_fvgs(events: Sequence[ChartFvg | ZoneTransition], ctx: OverlayContext):
     return draw_zones(events, ctx, style, hover_text)
 
 
-FVG = register(OverlayType("fvg", "FVG", detect_fvgs, draw_fvgs, parts=ZONE_PARTS, order=2.5))
+FVG = register(OverlayType("fvg", "FVG", detect_fvgs, draw_fvgs, parts=ZONE_PARTS, order="2.5"))

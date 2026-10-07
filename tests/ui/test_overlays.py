@@ -92,10 +92,10 @@ def test_panel_lists_registered_types_in_order_disabled_while_the_switch_is_off(
 
 def test_register_keeps_the_roadmap_order_whatever_the_import_order():
     registry = {}
-    for key, order in (("c", 2.5), ("a", 2.2), ("b", 2.3)):
+    for key, order in (("d", "2.11"), ("c", "2.5"), ("a", "2.2"), ("b", "2.3")):
         overlay = OverlayType(key, key.upper(), lambda r, _s: [], draw_markers, order=order)
         register(overlay, registry)
-    assert list(registry) == ["a", "b", "c"]
+    assert list(registry) == ["a", "b", "c", "d"]  # 2.11 after 2.5
 
 
 def test_sub_entries_right_under_their_type_only_tickable_while_it_is():

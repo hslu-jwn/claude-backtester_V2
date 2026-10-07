@@ -221,6 +221,6 @@ BOS = register(
         lambda replay, _settings: detect_bos(replay),
         draw_bos,
         trend_badges,
-        order=2.3,
+        order="2.3",
     )
 )
