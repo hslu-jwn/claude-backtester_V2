@@ -222,6 +222,15 @@ text with its state (active / tapped / confirmed / invalidated).
   - R for TP / minimum R:R is on chart prices (costs not included).
   - A signal whose TP is below 1.2R is dropped and still restarts the setup.
   - Last 1.5h tag: entry close time within 90 minutes of the next session start.
+- ☐ **3.3b Trades on the chart** (user's wish, before 3.4). Spec:
+  `strategy-session-zones.md › Trades on the chart`. The chart page runs strategy 1 + the
+  engine on the shown symbol and range (same `Replay`, with enough warm-up before it) and
+  draws overlay "Trades": position boxes (long: green entry→TP, red entry→SL; short
+  flipped) from entry to exit, R:R label, hover; sub-entry "↳ trade confluences" (swept
+  session zone, 5m BOS, entry confluence, BOS-move low when the SL used it) in the normal
+  overlay colors. Replay: boxes appear at the entry close and grow until the exit.
+  Also in this step: **break-even with costs** (3.1 change: SL moves to the level where a
+  hit is 0R net; "in profit" = the close is beyond that level).
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
   and settings used to `results/<run>/`. Also records, per session, the session zones and
   the confluences that were part of a setup (triggered or not, confirmed or not), so the

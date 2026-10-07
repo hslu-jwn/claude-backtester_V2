@@ -61,6 +61,21 @@
    - TP may pass at most ⚙️ N obstacles and sits just below the next one.
 4. **Final TP < 1.2R → no trade.**
 
+## Trades on the chart
+Rules set by the user (2026-10-07). Part of the strategy-1 UI, like the session view.
+- **Overlay "Trades"** (in the Overlays panel): every trade the backtest took on the shown range, as a TradingView-style **position box**.
+  - Long: entry line; **green** from entry up to the TP, **red** from entry down to the SL. Short flipped (green below, red above).
+  - From the entry candle to the candle where TP, SL or break-even was hit. Still open at the cursor (replay) → up to the cursor.
+  - R:R on the box. Hover: entry, SL, TP, result in R (before and after costs), exit reason (TP / SL / break-even / end of data), confluence type.
+  - Break-even: a line at the moved SL from the candle it moved on (display choice).
+- **Sub-entry "↳ trade confluences"** (one switch, for all trades at once, rule set by the user): draws what led to each trade, in the **normal overlay colors** of each type:
+  - the **session zone** that was swept (session-zone style);
+  - the **5m BOS** of the setup (red BOS line from the broken swing to the BOS candle);
+  - the **entry confluence** (FVG green, OB yellow, BPR purple), from where it formed to the entry candle;
+  - the **BOS move's low** (short high for a short) when the SL was placed there because the confluence was small: a line at that price from its candle to the entry (display choice: thin dashed, neutral color, label "SL ref").
+  - No markers for the sweep candle or the 30m reaction (rule set by the user).
+- **Replay** (no lookahead): a box appears at the close of the entry candle and grows candle by candle until TP / SL; its confluences appear with it.
+
 ## Session inspection view (chart)
 How the user checks strategy 1 session by session. Part of the strategy-1 UI, so other
 strategies are not affected.
