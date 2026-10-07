@@ -98,7 +98,7 @@ Described for a bearish OB (the user's example), bullish mirrored. Example: XAUU
 - Further staleness rules, if any, are the strategy's.
 - **On the chart:** like the FVG: from the older FVG's candle 1 until the candle that confirms or invalidates it, up to the cursor while still open. Every BPR is **purple**, whatever its direction (rule set by the user).
 
-## Equilibrium (currently NOT used for entries)
+## Equilibrium (strategy 1 uses it as an entry confluence since 2026-10-07, see `strategy-session-zones.md` › Entry sequence)
 - 50% of the most recent swing leg: upper half = premium, lower half = discount.
 - Bullish confirmation: price retraces into discount, then a bullish candle closes back in premium.
 - Invalidated by a close or wick below the leg's swing low.

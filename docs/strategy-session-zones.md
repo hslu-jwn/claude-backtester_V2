@@ -21,8 +21,9 @@
 ## Entry sequence (long)
 1. **Sweep:** a wick into the support zone.
 2. **30m reaction:** a green 30m candle closes above the zone. It need not be the sweep candle; a red close never counts.
-3. **5m BOS up:** a 5m bullish BOS (`confluences.md` › Break of structure) during that 30m candle or after. **Only a real BOS counts** (rule set by the user): if the 5m chart is already in an uptrend, a close above the last 5m swing high is no BOS and does **not** fulfil step 3. Setting `entry_bos_with_trend` (default **off**): when on, any green 5m close above the swing high right before it counts as step 3, also in a 5m uptrend, so backtests can compare both.
-4. **Confluence:** an FVG, OB, breaker or BPR (FVGs are most promising), usually formed in the BOS move; a breaker comes from the move before. Price taps it, then a green 5m candle closes above it → **enter at that close**. No confluence = no trade.
+3. **5m BOS up:** a 5m bullish BOS (`confluences.md` › Break of structure) during that 30m candle or after. **Only a real BOS counts** (rule set by the user): if the 5m chart is already in an uptrend, a close above the last 5m swing high is no BOS and does **not** fulfil step 3. Setting `entry_bos_with_trend` (default **off**): when on, any green 5m close above the swing high right before it counts as step 3, also in a 5m uptrend, so backtests can compare both. In the user's manual trades this happens sometimes ("just a lower low", short case), always with a **close** beyond the swing, never a wick only (rule set by the user, 2026-10-07): worth testing with the setting on.
+4. **Confluence:** an FVG, OB, breaker, BPR or **equilibrium** (FVGs are most promising; equilibrium added by the user 2026-10-07, own on/off switch `use_equilibrium`, default on), usually formed in the BOS move; a breaker comes from the move before. Price taps it, then a green 5m candle closes above it → **enter at that close**. No confluence = no trade.
+   **Equilibrium entry** (user's trade 1 on 2026-09-14, provisional reading, ⚠️ check): the leg is the BOS move, from the BOS leg's low to the move's high (fixed once that high is a confirmed 5m swing high, i.e. the pullback has started). Its lower half (discount: from the 0.5 level down to the leg's low) works like a zone: a wick below 0.5 is the tap, a green 5m close back above 0.5 confirms → enter at that close; a close below the leg's low invalidates it. SL below the leg's low, like any confluence. Short mirrored (upper half, premium).
    Only FVGs in the direction of the trend of their own timeframe are used: bullish FVGs in a 5m uptrend, bearish ones in a 5m downtrend (the trend after the FVG's candle 3 closed, including a BOS made by candle 2 or 3; no trend yet = no FVG used). The FVG detector itself finds gaps in both directions (`confluences.md` › Fair value gap).
 
 ## Invalidation & reset
@@ -47,19 +48,29 @@
 ## Stop loss
 - Just below the entry confluence's low, plus a buffer ⚙️.
 - If the confluence is small (⚙️ height < 0.5 × ATR): SL goes below the BOS leg's low instead.
+- **SL size** (rules set by the user, 2026-10-07), measured in 5m ATR at the entry:
+  - **Big SL:** the trade is still taken (smaller position, same risk; in R nothing changes), as long as the SL isn't unreasonable: setting `max_sl_atr_mult` (default off) skips trades whose SL is wider. The TP must then still be at a real level (› Take profit), never a far fixed R.
+  - **Small SL:** widened to `min_sl_atr_mult` × ATR when it is tighter than that ("I widen a very small one, but if it's not necessary I leave it"); default value TBD, to be swept.
 - The SL is fixed, except at the next session start, if the trade is still open:
   - in profit → SL moves to break-even. **Break-even includes the costs** (rule set by the user): the SL is placed so that a hit ends at 0R after spread and commission (long: entry + spread + commission in price units; short mirrored). "In profit" = the close is beyond that level; otherwise the original SL stays.
   - in loss → original SL stays
 - The trade runs until SL or TP is hit.
 
 ## Take profit
-1. **Target** = the lowest point of the resistance zone, capped at **3R**.
-2. **Price already above the zone** → aim for 1.2–2R at earlier 1h highs/lows or confluences.
-3. **Obstacles:**
-   - A major obstacle is an untouched 1h swing high, or an unmitigated bearish 1h FVG / OB / breaker, that existed before entry.
-   - Obstacles less than ⚙️ 0.2R apart count as one.
-   - TP may pass at most ⚙️ N obstacles and sits just below the next one.
-4. **Final TP < 1.2R → no trade.**
+Reworked by the user on 2026-10-07 (replaces "zone bottom capped at 3R, otherwise 1.2–2R"). Described for a long, short mirrored. All levels must exist at the entry.
+1. **Possible reversal levels** (where a TP may sit), nearest first above the entry:
+   - the near edge (bottom) of a resistance **session zone**;
+   - an untouched **1h swing high** (a previous high no later 1h wick has reached);
+   - the near edge of an unmitigated bearish **1h order block**.
+   1h FVGs don't count (rule set by the user). Levels less than ⚙️ 0.2R apart count as one.
+   1h OBs and highs are references only: they don't always hold, so a TP may lie **beyond** them.
+2. **4H order blocks are a must** (rule set by the user): no TP beyond the nearest unmitigated bearish 4H OB above the entry; a TP sits just below it at the latest. If that OB is closer than the minimum R → no trade.
+3. **Two TPs** (rule set by the user): half the position (⚙️ 50%) closes at **TP1**, the rest at **TP2**; after TP1 the SL of the rest moves to break-even (with costs, as above).
+   - **TP1 (conservative)** = the first level at or beyond the minimum R (⚙️ `min_rr`, default 1.2R). Levels closer than that are passed.
+   - **TP2 (a bit higher)** = the next level after TP1 (⚙️ `obstacles_passable`: how many further levels it may pass), never beyond the 4H OB limit and ⚙️ `tp_cap_r` (3R).
+   - No further level before the limit → the whole position closes at TP1.
+4. **No level in reach** (none between the minimum R and the 4H limit / cap): TP at the **minimum R** (⚙️ `min_rr`) (rule set by the user: "every trade with a good setup is taken").
+5. Result in R = the weighted sum of both parts (e.g. 0.5 × TP1 R + 0.5 × TP2 R, or 0.5 × TP1 R + 0.5 × 0R after break-even).
 
 ## Trades on the chart
 Rules set by the user (2026-10-07). Part of the strategy-1 UI, like the session view.
@@ -102,7 +113,9 @@ strategies are not affected.
 - Strong-move filter: ATR multiplier (default 2×) and lookback; on/off for FVGs (default off). OBs: on (default) while the first OB version is in use; the new OB rules drop it (on hold, ROADMAP 2.12).
 - Step 3 with the 5m trend (`entry_bos_with_trend`, default off: only a real 5m BOS, i.e. against the 5m trend, counts)
 - Small-confluence threshold (default 0.5 × ATR); SL buffer
-- TP cap (3R), minimum R:R (1.2R), obstacles passable N (test 0–3), obstacle clustering (0.2R)
+- TP cap (3R), minimum R (1.2R, also the TP when no level is in reach), levels passable for TP2 (test 0–3), level clustering (0.2R), TP1 share (50%), break-even after TP1 (on)
+- SL size: `max_sl_atr_mult` (default off), `min_sl_atr_mult` (widen tighter SLs; default TBD)
+- Equilibrium as entry confluence (`use_equilibrium`, default on)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
 - Zone kill: the 3rd break kills a zone (default); in the settings menu (4.1) as on/off plus the number of breaks; later maybe only within a time window
 - Session times following each city's DST; session end = next session start (may revisit)

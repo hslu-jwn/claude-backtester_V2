@@ -242,6 +242,17 @@ text with its state (active / tapped / confirmed / invalidated).
   - The swept session zone is drawn from where it formed to the entry candle, filled from
     its active session's start; the BOS line from the broken swing's wick candle to the
     BOS candle.
+- ☐ **3.3c Strategy rework from the user's manual trades** (2026-10-07, XAUUSD 2026-09-14).
+  Spec: `strategy-session-zones.md` › Entry sequence (equilibrium entry), › Stop loss (SL
+  size), › Take profit (reworked: reversal levels = session zones, untouched 1h highs,
+  1h OBs; no 1h FVGs; 4H OBs as hard limit; two TPs 50/50 with break-even after TP1; TP at
+  the minimum R when no level is in reach). New settings: `use_equilibrium`,
+  `max_sl_atr_mult`, `min_sl_atr_mult`, TP1 share, break-even after TP1. The engine must
+  support partial closes (result in R = weighted sum), and the chart boxes show TP1 and TP2.
+- ☐ **3.3d Review mode** (proposed, user to confirm): the app jumps from one setup the
+  program found to the next; the user marks take / skip (+ short reason, optional own TP);
+  saved to a file. Builds a reference set (agreement % after every rule change) and, later,
+  training data for a learned filter.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
   and settings used to `results/<run>/`. Also records, per session, the session zones and
   the confluences that were part of a setup (triggered or not, confirmed or not), so the
