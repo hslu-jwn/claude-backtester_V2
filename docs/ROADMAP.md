@@ -146,7 +146,7 @@ text with its state (active / tapped / confirmed / invalidated).
 
 ## Phase 3: Strategy 1 + backtest
 
-- ☐ **3.1 Engine.** Backtest loop over 5m with 30m/1h clocks; trade management in R
+- ◐ **3.1 Engine.** Backtest loop over 5m with 30m/1h clocks; trade management in R
   (SL before TP inside one candle, break-even rule at the next session start).
   Costs: the cache has no ask prices now (histdata.com), so the spread is a **fixed setting
   per symbol** (user's FTMO values), plus an optional commission per trade; both can be
@@ -160,6 +160,21 @@ text with its state (active / tapped / confirmed / invalidated).
   GBPUSD 100,000 GBP per lot ($10 per pip), GBPJPY 100,000 GBP per lot (pip value in USD
   via USDJPY, use a fixed approximation, setting).
   Reuses `engine/replay.py` for the multi-timeframe stepping.
+  Built: `engine/backtest.py` (`run_backtest`, `EngineConfig`), `engine/trade.py`
+  (`TradeResult`), `engine/costs.py` (`CostConfig`, `SymbolCosts`), tests in
+  `tests/engine/test_backtest.py`. **Provisional assumptions, awaiting the user's check:**
+  - 1R = chart (bid) distance entry → initial SL. `r_gross` uses chart prices;
+    `r_net = r_gross − spread_R − commission_R`, spread_R = spread / SL distance.
+  - SL / TP are triggered by the chart (bid) prices for longs and shorts alike; a short's
+    exit fills at ask (level + spread) but is not triggered earlier by the ask.
+  - Break-even: decided once, by the close of the first base candle closing at or after
+    the first session start after the entry (5m: the candle closing at the start). Close
+    beyond the entry → SL = entry price (no cost offset) from the next candle on;
+    exactly at the entry or in loss → the original SL stays for good.
+  - Gap through the SL fills at the candle's open (can be worse than −1R); gap through
+    the TP fills at the TP (never better than planned).
+  - Still open at the end of the data → closed at the last close (`END_OF_DATA`).
+  - GBPJPY commission uses USDJPY ≈ 150 (`USDJPY_APPROX`).
 - ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
   Step 3 uses the confluence BOS (only against the 5m trend); setting
   `SessionZoneSweepConfig.entry_bos_with_trend` (default off) also lets a close above the

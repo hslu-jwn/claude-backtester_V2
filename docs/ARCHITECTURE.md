@@ -31,10 +31,15 @@ for each base-timeframe candle i (5m for strategy 1), oldest first:
     v30   = clock_30m.view_at(now)     # only fully closed 30m candles
     v1h   = clock_1h.view_at(now)
     1. update open trades with candle i (SL first if SL and TP share a candle)
-    2. detectors.update(...) for each timeframe whose newest candle just closed
-    3. strategy.on_candle(now, v5, v30, v1h, detector state) -> new orders
+    2. break-even check for trades whose next session start is now reached
+    3. strategy.on_candle(now, {M5: v5, M30: v30, H1: v1h}) -> new orders
+       (the strategy updates its own detectors for each timeframe whose newest
+       candle just closed)
     4. engine fills orders at candle i's close (spec: "enter at that close")
 ```
+
+`engine/backtest.py` (`run_backtest`) implements this loop on top of `Replay`; trades are
+`engine/trade.py` (`TradeResult`: gross and net R), costs `engine/costs.py` (`CostConfig`).
 
 `engine/replay.py` (`Replay`) gives the views for a cursor (`v5` and, via the clocks, `v30`/`v1h`).
 The chart replay (ROADMAP 1.2) draws from it, so it shows exactly what the engine sees.
