@@ -31,6 +31,7 @@
 - Untriggered setups die at the next session start.
 - The same zone can produce more trades if the full sequence repeats from a new 30m close.
 - Long and short setups may build in the same session.
+- Several trades open at once are allowed (the user: very unlikely in practice); no limit for now.
 
 ## Zone flips
 - A red 30m close below support flips the setup to a short. That close counts directly as the 30m reaction, so go straight to the 5m BOS. Same the other way round.
@@ -47,7 +48,7 @@
 - Just below the entry confluence's low, plus a buffer ⚙️.
 - If the confluence is small (⚙️ height < 0.5 × ATR): SL goes below the BOS leg's low instead.
 - The SL is fixed, except at the next session start, if the trade is still open:
-  - in profit → SL moves to break-even
+  - in profit → SL moves to break-even. **Break-even includes the costs** (rule set by the user): the SL is placed so that a hit ends at 0R after spread and commission (long: entry + spread + commission in price units; short mirrored). "In profit" = the close is beyond that level; otherwise the original SL stays.
   - in loss → original SL stays
 - The trade runs until SL or TP is hit.
 

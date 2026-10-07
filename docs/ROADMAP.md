@@ -169,8 +169,10 @@ text with its state (active / tapped / confirmed / invalidated).
     exit fills at ask (level + spread) but is not triggered earlier by the ask.
   - Break-even: decided once, by the close of the first base candle closing at or after
     the first session start after the entry (5m: the candle closing at the start). Close
-    beyond the entry → SL = entry price (no cost offset) from the next candle on;
-    exactly at the entry or in loss → the original SL stays for good.
+    beyond the cost-covered break-even level → SL = that level from the next candle on;
+    otherwise the original SL stays for good. **Changed by the user (2026-10-07):
+    break-even includes the costs** (a hit ends at 0R net, `strategy-session-zones.md ›
+    Stop loss`); still to be built.
   - Gap through the SL fills at the candle's open (can be worse than −1R); gap through
     the TP fills at the TP (never better than planned).
   - Still open at the end of the data → closed at the last close (`END_OF_DATA`).
