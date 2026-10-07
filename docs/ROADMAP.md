@@ -109,8 +109,8 @@ text with its state (active / tapped / confirmed / invalidated).
   threshold, the shown timeframe's trend (with / against) and the state (taps are
   listed there, no marker on the chart); the sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" under FVG add ★ / ✕
   (every zone overlay gets these sub-entries). Panel switch "FVG strong-move filter".
-- ☑ **2.6** Order block, first version. ⚠️ Replaced by 2.12 (user re-explained OBs on
-  2026-10-06: sweep + BOS, no strong-move filter); kept here as built. `detectors/order_block.py`: at each BOS, the leg into the most
+- ☑ **2.6** Order block, first version. **This is the code in use** (2.12 is on hold, see
+  there); kept here as built. `detectors/order_block.py`: at each BOS, the leg into the most
   recent swing of the opposite kind (`confluences.md › Order block`); strong-move filter on
   the move away (switch, default on). Overlay "Order block": yellow box from the leg's
   first candle until confirmed / invalidated, hover over the box (leg, swing, BOS, strong
@@ -131,7 +131,10 @@ text with its state (active / tapped / confirmed / invalidated).
   the top of the move that took a high confirmed since the last BOS (or the high that BOS broke), turned into a sweep by
   the next bearish BOS (lows mirrored); exists from the BOS candle. Overlay "Liquidity
   sweep": magenta line from the swept high to the sweeping candle, marker on the wick, hover.
-- ☐ **2.12** Order block rework. Rewrite `detectors/order_block.py` on top of 2.11
+- ⏸ **2.12** Order block rework. **On hold** (user, 2026-10-07): built, then reverted because
+  the user found the first version (2.6) looked better on the chart; may come back to it.
+  The built version is on branch `ob-rework-2.12` (incl. the rule for a red top: then the
+  previous green run). Planned as: Rewrite `detectors/order_block.py` on top of 2.11
   (`confluences.md › Order block`): one OB per liquidity sweep; range = same-color leg into
   the sweeping candle, wick to wick; exists from the BOS candle; no strong-move filter
   (remove the switch and `OrderBlockConfig.strong_move*`); only invalidation (close beyond

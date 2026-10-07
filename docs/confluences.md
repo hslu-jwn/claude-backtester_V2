@@ -34,7 +34,7 @@
 - **ATR as on TradingView:** true range (max of high − low, |high − previous close|, |low − previous close|; the first candle uses high − low) smoothed with Wilder's RMA, seeded with the simple average of the first n true ranges. Gaps (daily break, weekend) therefore count.
 - The candle is compared with the ATR of the n candles **before** it (the ATR known at the previous candle's close), so a big candle doesn't raise its own threshold. While fewer than n earlier candles exist, no candle is a strong move.
 - The ATR is on the **same timeframe** as the candle being checked (a 5m FVG uses the 5m ATR, a 30m FVG the 30m ATR).
-- The filter can be **switched on/off** for FVGs, so backtests can compare with and without it. Default **off** (rule set by the user: at k = 2 it removed far too many FVGs). Order blocks no longer use it (rule set by the user, 2026-10-06: the sweep and the BOS are enough).
+- The filter can be **switched on/off** for FVGs, so backtests can compare with and without it. Default **off** (rule set by the user: at k = 2 it removed far too many FVGs). Order blocks no longer use it under the new OB rules (2026-10-06: the sweep and the BOS are enough); those rules are on hold, so the code still has the OB switch (default on), see › Order block.
 - **FVG** (when switched on): the middle candle (candle 2, the push that creates the gap) must be a strong move.
 - BPRs inherit it: a BPR comes from filtered FVGs.
 
@@ -71,6 +71,8 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - **On the chart:** a thin magenta line at the swept high's price, from that swing's extreme-wick candle to the sweeping candle, with a small marker on the sweeping wick, drawn from the BOS candle on. If several highs were taken, the line goes to the highest of them and the hover lists all (display choice).
 
 ## Order block (OB)
+> ⏸ **Not in use** (user, 2026-10-07): these rules were built (ROADMAP 2.12, branch `ob-rework-2.12`) and reverted; the code still uses the first version (ROADMAP 2.6: the leg into the most recent swing at each BOS, strong-move filter on by default, tap / confirm / invalidate). The user may come back to this.
+
 Rules set by the user on 2026-10-06; they replace the earlier OB rules (leg into the most recent swing at any BOS, strong-move filter).
 Described for a bearish OB (the user's example), bullish mirrored. Example: XAUUSD, a previous high at 3947.89 is swept by the move up, a big red candle then makes the bearish BOS, and the green candles of the move up into the sweep are the OB; price later came back up into it.
 - **Every liquidity sweep forms an OB** (› Liquidity sweep: sweep of a high, then a bearish BOS in the next move down; so only against the trend). In a downtrend a wick above a high followed by a close below the low is no BOS, so no OB (confirmed by the user).
