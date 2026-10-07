@@ -134,7 +134,10 @@ text with its state (active / tapped / confirmed / invalidated).
 - ⏸ **2.12** Order block rework. **On hold** (user, 2026-10-07): built, then reverted because
   the user found the first version (2.6) looked better on the chart; may come back to it.
   The built version is on branch `ob-rework-2.12` (incl. the rule for a red top: then the
-  previous green run). Planned as: Rewrite `detectors/order_block.py` on top of 2.11
+  previous green run). The user finds OBs hard to define as fixed rules (which swept high
+  counts is intuition: a recent one, not necessarily the last one, sometimes much older).
+  Later idea: the user shows a set of example OBs and an algorithm is derived from them.
+  Planned as: Rewrite `detectors/order_block.py` on top of 2.11
   (`confluences.md › Order block`): one OB per liquidity sweep; range = same-color leg into
   the sweeping candle, wick to wick; exists from the BOS candle; no strong-move filter
   (remove the switch and `OrderBlockConfig.strong_move*`); only invalidation (close beyond
