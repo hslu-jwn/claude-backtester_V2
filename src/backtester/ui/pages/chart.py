@@ -35,7 +35,11 @@ built from FVGs). Zone overlays (FVG, Order block, BPR) have indented
 sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" that show their ★ / ✕ markers
 (drawing only); they can only be ticked while their type is.
 
-Later steps add: the session view (3.5) and position boxes.
+Trades (ROADMAP.md › 3.3b): the "Trades" overlay runs strategy 1 and the engine on the
+shown symbol and range (with warm-up) and draws position boxes, see `ui/trades_overlay.py`.
+Overlays that load their own data (`OverlayType.needs_sources`) get the page's sources.
+
+Later steps add: the session view (3.5).
 """
 
 from __future__ import annotations
@@ -55,7 +59,7 @@ from backtester.data.adapters.cache_adapter import (
     latest_run,
 )
 from backtester.data.resample import supported
-from backtester.data.sources import SymbolSources
+from backtester.data.sources import SymbolSources, warmup_start
 from backtester.engine.replay import Replay
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
@@ -65,6 +69,7 @@ from backtester.ui import (
     session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
+    trades_overlay,  # noqa: F401  (registers the Trades overlay)
 )
 from backtester.ui.chart_figure import (
     DEFAULT_CONFIG,
@@ -80,6 +85,7 @@ from backtester.ui.overlays import (
     OverlayContext,
     OverlaySettings,
     OverlayType,
+    OverlayUnavailable,
     overlay_options,
     overlay_summary,
     overlay_traces,
@@ -114,7 +120,7 @@ def load_chart(
     if overlay_keys:
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
         traces, notes = chart_overlays(
-            replay, overlay_keys, len(replay) - 1, 0, config, registry, settings
+            replay, overlay_keys, len(replay) - 1, 0, config, registry, settings, sources
         )
     figure = build_candle_figure(
         frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions, overlays=traces
@@ -130,8 +136,10 @@ def chart_overlays(
     config: ChartConfig = DEFAULT_CONFIG,
     registry: dict[str, OverlayType] = OVERLAYS,
     settings: OverlaySettings = DEFAULT_SETTINGS,
+    sources: SymbolSources | None = None,
 ):
-    """(traces, messages) of the selected overlays for candles first_x..cursor of `replay`."""
+    """(traces, messages) of the selected overlays for candles first_x..cursor of `replay`.
+    `sources` are passed to overlays that load their own data (e.g. the Trades overlay)."""
     if not keys:
         return [], []
     ctx = OverlayContext(
@@ -142,13 +150,24 @@ def chart_overlays(
         replay.timeframe,
         replay.overall_timeframe,
     )
-    return overlay_traces(lambda o: _cached_events(replay, o, settings), keys, ctx, registry)
+    return overlay_traces(
+        lambda o: _cached_events(replay, o, settings, sources), keys, ctx, registry
+    )
 
 
 @lru_cache(maxsize=32)
-def _cached_events(replay: Replay, overlay: OverlayType, settings: OverlaySettings):
+def _cached_events(
+    replay: Replay,
+    overlay: OverlayType,
+    settings: OverlaySettings,
+    sources: SymbolSources | None = None,
+):
     """Events of one overlay over the whole replay range, computed once per range and
     settings."""
+    if overlay.needs_sources:
+        if sources is None:
+            raise OverlayUnavailable("needs the chart's data sources")
+        return tuple(overlay.detect(replay, settings, sources))
     return tuple(overlay.detect(replay, settings))
 
 
@@ -232,15 +251,6 @@ def _overall_series(sources, symbol, start_date, end_date, config) -> CandleSeri
         symbol, timeframe, _midnight(first), _midnight(end + timedelta(days=1))
     )
     return CandleSeries(symbol, timeframe, candles_from_frame(frame)) if len(frame) else None
-
-
-def warmup_start(cached: set[date], start: date, max_days: int) -> date:
-    """Earliest day, at most `max_days` before `start`, with every day from it up to
-    `start` in the cache."""
-    first = start
-    while (start - first).days < max_days and first - timedelta(days=1) in cached:
-        first -= timedelta(days=1)
-    return first
 
 
 def load_replay(
@@ -376,6 +386,7 @@ def replay_chart(
     registry: dict[str, OverlayType] = OVERLAYS,
     span: dict | None = None,
     settings: OverlaySettings = DEFAULT_SETTINGS,
+    sources: SymbolSources | None = None,
 ):
     """(figure or None, message, axis store or None) at the replay time `state["now"]`,
     showing the replay `span`. Overlays show only events confirmed at or before the cursor."""
@@ -385,7 +396,14 @@ def replay_chart(
         return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
     view = replay.view(cursor)
     traces, notes = chart_overlays(
-        replay, overlay_keys, cursor, replay_first_x(cursor, config), config, registry, settings
+        replay,
+        overlay_keys,
+        cursor,
+        replay_first_x(cursor, config),
+        config,
+        registry,
+        settings,
+        sources,
     )
     figure, store = replay_figure(view, config, show_sessions, traces, span)
     message = (
@@ -624,7 +642,14 @@ def register_callbacks(
             replay, message = load_replay(*args)
             figure, message, store = (
                 replay_chart(
-                    replay, replay_state, config, show_sessions, keys, span=span, settings=settings
+                    replay,
+                    replay_state,
+                    config,
+                    show_sessions,
+                    keys,
+                    span=span,
+                    settings=settings,
+                    sources=sources,
                 )
                 if replay
                 else (None, message, None)

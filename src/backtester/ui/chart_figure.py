@@ -102,6 +102,13 @@ class ChartConfig:
     session_zone_min_timeframe: Timeframe = Timeframe.M5  # 30m zones shown down to this
     # higher timeframes loaded with the chart for overlays built on them (session zones)
     higher_timeframes: tuple[Timeframe, ...] = (Timeframe.M30,)
+    # trades (strategy 1, ROADMAP 3.3b): TradingView-style position boxes
+    trade_profit_color: str = "#089981"  # entry -> TP
+    trade_loss_color: str = "#f23645"  # entry -> SL
+    trade_box_opacity: float = 0.2
+    trade_entry_color: str = "#787b86"  # entry line
+    trade_break_even_color: str = "#2962ff"  # the moved SL, from the candle it moved on
+    sl_ref_color: str = "#787b86"  # BOS move's low when the SL was placed there
     zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
     zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe

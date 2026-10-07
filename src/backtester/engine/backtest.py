@@ -7,8 +7,9 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
 1. Open trades are checked against candle i's OHLC only (`OpenTrade.exit_on`: SL before
    TP when both are inside the candle).
 2. Break-even rule: the first candle closing at or after the first session start after a
-   trade's entry decides. Close in profit (beyond the entry on the chart) -> the SL moves
-   to the entry price from the next candle on; otherwise the original SL stays for good.
+   trade's entry decides. Break-even includes the costs: the level where a hit ends at 0R
+   net (long: entry + spread + commission as a price distance). Close beyond that level ->
+   the SL moves there from the next candle on; otherwise the original SL stays for good.
 3. `strategy.on_candle(now, views)`; views of every declared timeframe, higher ones only
    with candles closed at `now`. The strategy owns and updates its detectors itself.
 4. New orders are filled at candle i's close and managed from candle i + 1.
@@ -134,6 +135,7 @@ class Backtest:
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
+            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol),
             tags=order.tags,
             reason=order.reason,
         )
@@ -143,8 +145,8 @@ class Backtest:
         if trade.break_even_check is None or now < trade.break_even_check:
             return
         trade.break_even_check = None  # only the next session start counts
-        if trade.r_at(candle.close) > 0:
-            trade.stop_loss = trade.entry
+        if trade.sign * (candle.close - trade.break_even_level) > 0:
+            trade.stop_loss = trade.break_even_level
             trade.break_even_time = now
 
     def _close(

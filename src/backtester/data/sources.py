@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from types import MappingProxyType
 
@@ -68,3 +68,24 @@ DEFAULT_SOURCES = SymbolSources(
         "GBPJPY": DEFAULT_HISTDATA_CACHE_DIR,
     }
 )
+
+
+def warmup_start(cached: set[date], start: date, max_days: int) -> date:
+    """Earliest day, at most `max_days` before `start`, with every day from it up to
+    `start` in the cache (warm-up history for trends, zones, backtests on a chart range)."""
+    first = start
+    while (start - first).days < max_days and first - timedelta(days=1) in cached:
+        first -= timedelta(days=1)
+    return first
+
+
+def cached_block(cached: set[date], day: date) -> tuple[date, date]:
+    """(first, last) day of the run of consecutive cached days that contains `day`."""
+    if day not in cached:
+        raise KeyError(f"{day} is not cached")
+    first, last = day, day
+    while first - timedelta(days=1) in cached:
+        first -= timedelta(days=1)
+    while last + timedelta(days=1) in cached:
+        last += timedelta(days=1)
+    return first, last

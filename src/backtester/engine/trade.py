@@ -27,7 +27,7 @@ from backtester.core.models import Candle, Direction
 class ExitReason(Enum):
     STOP_LOSS = "stop_loss"
     TAKE_PROFIT = "take_profit"
-    BREAK_EVEN = "break_even"  # the SL after its move to the entry price was hit
+    BREAK_EVEN = "break_even"  # the SL after its move to the break-even level was hit
     END_OF_DATA = "end_of_data"  # still open at the last candle: closed at its close
 
 
@@ -54,7 +54,8 @@ class TradeResult:
     r_net: float
     spread_r: float
     commission_r: float
-    break_even_time: datetime | None  # when the SL moved to the entry price (None: never)
+    break_even_time: datetime | None  # when the SL moved to break-even (None: never)
+    break_even_stop: float | None  # the moved SL: 0R net after costs (None: never moved)
     mae_r: float  # worst floating R on the chart while open (<= 0)
     mfe_r: float  # best floating R on the chart while open (>= 0)
     tags: frozenset[str] = field(default_factory=frozenset)
@@ -84,6 +85,7 @@ class OpenTrade:
     stop_loss: float  # current SL (may move to the entry price once)
     take_profit: float
     break_even_check: datetime | None  # next session start; None once checked or if off
+    break_even_level: float  # where a hit is 0R net: entry + spread + commission (long)
     tags: frozenset[str] = field(default_factory=frozenset)
     reason: str = ""
     break_even_time: datetime | None = None
@@ -159,6 +161,7 @@ class OpenTrade:
             spread_r=spread / self.risk,
             commission_r=commission_r,
             break_even_time=self.break_even_time,
+            break_even_stop=self.stop_loss if self.break_even_time else None,
             mae_r=self.mae_r,
             mfe_r=self.mfe_r,
             tags=self.tags,

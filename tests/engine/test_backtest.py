@@ -187,6 +187,41 @@ def test_break_even_can_be_switched_off():
     assert t.break_even_time is None and t.exit_reason is ExitReason.STOP_LOSS
 
 
+# XAUUSD with costs: spread 0.25 + commission $6 / $100 per 1.0 = 0.06 -> a long's
+# break-even stop is 100.31, where a hit is 0R net.
+GOLD = EngineConfig()
+
+
+def test_break_even_with_costs_is_0r_net():
+    [t] = run(
+        be_candles(101.0), {0: [(LONG, 98.0, 106.0)]}, GOLD, start=BEFORE_LONDON, symbol="XAUUSD"
+    )
+    assert t.break_even_stop == pytest.approx(100.31)
+    assert t.exit_reason is ExitReason.BREAK_EVEN and t.exit_price == pytest.approx(100.31)
+    assert t.r_net == pytest.approx(0.0)
+    assert t.r_gross == pytest.approx(0.155)  # 0.31 / risk 2
+
+
+def test_close_in_profit_but_below_the_cost_level_does_not_move_the_sl():
+    [t] = run(
+        be_candles(100.3), {0: [(LONG, 98.0, 106.0)]}, GOLD, start=BEFORE_LONDON, symbol="XAUUSD"
+    )
+    assert t.break_even_time is None and t.break_even_stop is None
+    assert t.exit_reason is ExitReason.STOP_LOSS and t.r_gross == pytest.approx(-1.0)
+
+
+def test_short_break_even_with_costs_is_mirrored():
+    ohlc = [
+        ENTRY,
+        *[QUIET] * 4,
+        (100.2, 100.3, 98.8, 99.0),  # closes 08:00 below 99.69
+        (99.0, 99.8, 98.9, 99.5),  # back up through 99.69
+    ]
+    [t] = run(ohlc, {0: [(SHORT, 102.0, 94.0)]}, GOLD, start=BEFORE_LONDON, symbol="XAUUSD")
+    assert t.break_even_stop == pytest.approx(99.69)
+    assert t.exit_reason is ExitReason.BREAK_EVEN and t.r_net == pytest.approx(0.0)
+
+
 # --- costs in R ---------------------------------------------------------------------------
 
 # XAUUSD: spread 0.25, $6 per lot, $100 per 1.0 move. Risk 2.5: spread 0.1R,

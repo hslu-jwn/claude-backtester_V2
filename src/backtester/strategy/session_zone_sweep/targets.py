@@ -82,15 +82,20 @@ class Targets:
     stop_loss: float
     take_profit: float
     target: str  # where the TP came from: "zone", "zone_cap", "fallback_level", ...
+    sl_at_bos_leg: bool = False  # SL below the BOS move's low (the confluence was small)
 
 
 def stop_loss(signal: EntrySignal, atr: float | None, config: SessionZoneSweepConfig) -> float:
     sign = _sign(signal.direction)
     atr_value = atr or 0.0  # no ATR yet (warm-up): no buffer, never "small"
-    zone = signal.confluence
-    small = atr is not None and zone.top - zone.bottom < config.small_confluence_atr_mult * atr
-    base = signal.bos.leg_extreme if small else zone.far
+    base = signal.bos.leg_extreme if is_small(signal, atr, config) else signal.confluence.far
     return base - sign * config.sl_buffer_atr_mult * atr_value
+
+
+def is_small(signal: EntrySignal, atr: float | None, config: SessionZoneSweepConfig) -> bool:
+    """The entry confluence is small (height < k x ATR): the SL goes below the BOS leg."""
+    zone = signal.confluence
+    return atr is not None and zone.top - zone.bottom < config.small_confluence_atr_mult * atr
 
 
 def target_zone_level(
@@ -173,4 +178,4 @@ def targets(
     )
     if found is None:
         return None
-    return Targets(sl, *found)
+    return Targets(sl, *found, sl_at_bos_leg=is_small(signal, atr, config))

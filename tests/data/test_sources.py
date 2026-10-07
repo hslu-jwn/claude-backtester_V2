@@ -61,3 +61,16 @@ def test_chart_shows_each_symbol_from_its_source(sources):
     _, message, fx = load_chart(sources, "GBPUSD", "M5", "2026-09-02", "2026-09-02")
     assert gold["high"] == [4401.0]
     assert fx["high"] == [1.3 + 1] and "1 M5 candles" in message
+
+
+def test_cached_block_is_the_run_of_consecutive_cached_days():
+    from datetime import date, timedelta
+
+    from backtester.data.sources import cached_block
+
+    d = date(2026, 9, 1)
+    cached = {d + timedelta(days=i) for i in (0, 1, 2, 4, 5)}
+    assert cached_block(cached, d + timedelta(days=1)) == (d, d + timedelta(days=2))
+    assert cached_block(cached, d + timedelta(days=5)) == (d + timedelta(days=4), d + timedelta(days=5))
+    with pytest.raises(KeyError):
+        cached_block(cached, d + timedelta(days=3))

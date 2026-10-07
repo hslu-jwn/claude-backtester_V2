@@ -67,6 +67,18 @@ class CostConfig:
     def spread_r(self, symbol: str, risk: float) -> float:
         return self.spread(symbol) / risk
 
+    def commission_price(self, symbol: str) -> float:
+        """Commission as a price distance per lot (0 when switched off)."""
+        if not self.commission_enabled:
+            return 0.0
+        costs = self.for_symbol(symbol)
+        return costs.commission_per_lot / costs.value_per_price_unit
+
+    def break_even_offset(self, symbol: str) -> float:
+        """Distance from the entry (chart price) to the break-even stop, so a hit there
+        ends at 0R after spread and commission (strategy-session-zones.md › Stop loss)."""
+        return self.spread(symbol) + self.commission_price(symbol)
+
     def commission_r(self, symbol: str, risk: float) -> float:
         """Commission in R for an SL distance of `risk` (price units)."""
         if not self.commission_enabled:

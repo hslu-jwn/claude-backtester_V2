@@ -82,6 +82,9 @@ class OverlayType:
     # ("confirmed", "★ confirmations"); `draw` gets the selected ones in `ctx.parts`
     parts: tuple[tuple[str, str], ...] = field(default=())
     order: str = "99"  # position in the panel: the roadmap step (e.g. "2.5" for FVG)
+    # True: `detect(replay, settings, sources)` also gets the chart's `SymbolSources`, for
+    # overlays that load their own candles (e.g. the Trades overlay's 5m backtest)
+    needs_sources: bool = False
 
     @property
     def step(self) -> tuple[int, ...]:
