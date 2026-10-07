@@ -175,11 +175,51 @@ text with its state (active / tapped / confirmed / invalidated).
     the TP fills at the TP (never better than planned).
   - Still open at the end of the data → closed at the last close (`END_OF_DATA`).
   - GBPJPY commission uses USDJPY ≈ 150 (`USDJPY_APPROX`).
-- ☐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
+- ◐ **3.2 Setup state machine** (sweep → 30m reaction → 5m BOS → confluence → entry).
   Step 3 uses the confluence BOS (only against the 5m trend); setting
   `SessionZoneSweepConfig.entry_bos_with_trend` (default off) also lets a close above the
   last 5m swing high in a 5m uptrend count (`strategy-session-zones.md › Entry sequence`).
-- ☐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
+  Built: `strategy/session_zone_sweep/setup.py` (`Setup`, `StructureTracker`),
+  `signals.py` (`SetupTracker`: feeds the setups from the 5m / 30m detectors), tests in
+  `tests/strategy/session_zone_sweep/test_setup.py` with a hand-built London / New York
+  day (`scenario.py`). **Provisional assumptions, awaiting the user's check:**
+  - Sweep and reaction are read on closed 30m candles. Sweep = wick into the zone past
+    its near edge (touch is no sweep, like a tap). Reaction = green, non-doji 30m close
+    above the zone; the sweep candle can be the reaction candle.
+  - The 30m candle that sets an undecided zone's role (first close outside) can itself be
+    the sweep + reaction.
+  - "During that 30m candle or after": the 5m BOS candle closes after the reaction
+    candle's open.
+  - Confluence: a bullish FVG / OB / BPR that came into existence at or after the BOS
+    leg's low (lowest low between the broken swing's wick candle and the BOS candle), not
+    yet confirmed or invalidated, confirmed (zone.py validation) by a candle after the
+    BOS candle. Taps before step 4 count. Breakers are left out (not built, 2.7).
+  - FVG trend rule only for FVGs; OBs and BPRs have none.
+  - Cancel: only a real opposite 5m BOS cancels (also with `entry_bos_with_trend` on).
+  - After an entry the zone's setup restarts at the sweep; only 30m candles closing after
+    the entry count. Several setups triggering on the same candle in the same direction
+    give one entry (all of them restart). Several confluences confirmed at once: the most
+    recently formed one is used.
+  - A zone flip by a close of the other color (e.g. a green candle gapping below support)
+    is no reaction: the new setup starts at the sweep.
+  - `skip_tokyo` ignores the zones active in Tokyo.
+- ◐ **3.3 SL / TP** incl. 1h obstacles and the 1.2R minimum.
+  Built: `strategy/session_zone_sweep/targets.py` (`ObstacleTracker`, `stop_loss`,
+  `take_profit`), `strategy.py` (`SessionZoneSweep`, the `Strategy` the engine runs; keeps
+  every signal and its outcome in `decisions`), tests in `test_targets.py`.
+  **Provisional assumptions, awaiting the user's check:**
+  - ATR = the 5m ATR(14) at the entry close. SL buffer and "just below" an obstacle are
+    ATR fractions, both default 0 (`sl_buffer_atr_mult`, `tp_buffer_atr_mult`; spec: TBD).
+  - "The resistance zone" = the nearest live session zone with role resistance whose
+    bottom is above the entry. Entry inside or above every resistance zone → fallback.
+  - Fallback: the nearest obstacle level between 1.2R and 2R; none → 2R.
+  - Obstacles: untouched 1h swing highs (no later 1h wick reached them) and never-tapped
+    bearish 1h FVGs / OBs, existing at the entry, level = swing price / zone bottom.
+    Clustering chains: each level less than 0.2R above the previous one joins its cluster.
+    The TP sits below the first level of the first cluster it may not pass.
+  - R for TP / minimum R:R is on chart prices (costs not included).
+  - A signal whose TP is below 1.2R is dropped and still restarts the setup.
+  - Last 1.5h tag: entry close time within 90 minutes of the next session start.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
   and settings used to `results/<run>/`. Also records, per session, the session zones and
   the confluences that were part of a setup (triggered or not, confirmed or not), so the
