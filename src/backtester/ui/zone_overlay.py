@@ -42,6 +42,11 @@ class ZoneStyle:
     invalidated_opacity: float
 
 
+def zone_group(event: Event) -> ZoneBox:
+    """A zone and its transitions draw together (`OverlayType.group`)."""
+    return event.zone
+
+
 def zone_history(events: Sequence[Event]) -> list[tuple[Event, list[ZoneTransition]]]:
     """Each zone event (any event with a `zone` that isn't a transition) with its
     transitions among `events`, in order."""
@@ -111,6 +116,7 @@ def draw_zones(
                         f"close {t.close:.{ctx.digits}f}"
                     ),
                     outline=1,
+                    part=t.state.value,
                 )
             )
     return [*groups[False], *groups[True], *hovers, *marks]

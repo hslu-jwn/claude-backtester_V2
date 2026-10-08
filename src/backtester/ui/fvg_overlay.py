@@ -30,7 +30,7 @@ from backtester.ui.overlays import (
     OverlayUnavailable,
     register,
 )
-from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text
+from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text, zone_group
 
 TREND_DIRECTION = {Trend.UP: Direction.BULLISH, Trend.DOWN: Direction.BEARISH}
 
@@ -102,4 +102,8 @@ def draw_fvgs(events: Sequence[ChartFvg | ZoneTransition], ctx: OverlayContext):
     return draw_zones(events, ctx, style, hover_text)
 
 
-FVG = register(OverlayType("fvg", "FVG", detect_fvgs, draw_fvgs, parts=ZONE_PARTS, order="2.5"))
+FVG = register(
+    OverlayType(
+        "fvg", "FVG", detect_fvgs, draw_fvgs, parts=ZONE_PARTS, order="2.5", group=zone_group
+    )
+)

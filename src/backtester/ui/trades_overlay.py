@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
 from functools import lru_cache
 
@@ -49,7 +49,7 @@ from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
-from backtester.ui.chart_figure import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
+from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
 from backtester.ui.drawing import Box, Drawing, Hover, Label, Line
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
@@ -401,7 +401,7 @@ def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Draw
                     anchor="bottom right" if above else "top right",
                 )
             )
-    return [
+    drawings = [
         *(b for boxes in zone_fills.values() for b in boxes),
         *(b for boxes in zone_outlines.values() for b in boxes),
         *(b for boxes in confluences.values() for b in boxes),
@@ -410,6 +410,7 @@ def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Draw
         *sl_ref,
         *sl_ref_labels,
     ]
+    return [replace(d, part=CONFLUENCES) for d in drawings]
 
 
 TRADES = register(

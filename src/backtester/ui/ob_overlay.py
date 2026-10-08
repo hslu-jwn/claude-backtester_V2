@@ -27,7 +27,7 @@ from backtester.ui.overlays import (
     register,
     run_detector,
 )
-from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text
+from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text, zone_group
 
 
 def detect_obs(
@@ -71,4 +71,8 @@ def draw_obs(events: Sequence[OrderBlock | ZoneTransition], ctx: OverlayContext)
     return draw_zones(events, ctx, style, hover_text)
 
 
-OB = register(OverlayType("ob", "Order block", detect_obs, draw_obs, parts=ZONE_PARTS, order="2.6"))
+OB = register(
+    OverlayType(
+        "ob", "Order block", detect_obs, draw_obs, parts=ZONE_PARTS, order="2.6", group=zone_group
+    )
+)

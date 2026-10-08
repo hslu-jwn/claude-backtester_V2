@@ -49,7 +49,7 @@ from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 
 import pandas as pd
-from dash import Dash, Input, Output, Patch, State, ctx, dcc, html, no_update
+from dash import ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries, SeriesView
@@ -71,6 +71,8 @@ from backtester.ui import (
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
 )
+from backtester.ui.chart_config import price_digits
+from backtester.ui.chart_data import ChartData
 from backtester.ui.chart_figure import (
     DEFAULT_CONFIG,
     ChartConfig,
@@ -437,6 +439,152 @@ def visible_axes(relayout: dict | None, store: dict | None, config: ChartConfig 
     return tickvals, ticktext, y_range(prices, lo, hi, config.y_padding)
 
 
+# --- Lightweight Charts payloads (ROADMAP 4.0a) -----------------------------------------
+
+
+def chart_key(symbol, timeframe, start_date, end_date) -> str:
+    """Identifies the loaded candles: payloads for another key are ignored by the browser."""
+    return f"{symbol}|{timeframe}|{start_date}|{end_date}"
+
+
+def overlay_settings(filters: Sequence[str] | None) -> OverlaySettings:
+    filters = filters or []
+    return OverlaySettings(
+        fvg_strong_move_filter="fvg" in filters, ob_strong_move_filter="ob" in filters
+    )
+
+
+@lru_cache(maxsize=16)
+def chart_data(
+    replay: Replay,
+    settings: OverlaySettings = DEFAULT_SETTINGS,
+    sources: SymbolSources | None = None,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> ChartData:
+    """Payload builder for one loaded range and detector setting (kept for replay steps)."""
+    return ChartData(replay, lambda o: _cached_events(replay, o, settings, sources), config)
+
+
+def replay_message(replay: Replay, cursor: int) -> str:
+    current = replay.view(cursor).current
+    return (
+        f"Replay · candle {cursor + 1:,} of {len(replay):,} · "
+        f"{current.ts:%Y-%m-%d %H:%M} {replay.timeframe.name} candle, closed at "
+        f"{replay.close_time(cursor):%H:%M} UTC"
+    )
+
+
+def base_payload(
+    sources: SymbolSources,
+    symbol: str | None,
+    timeframe: str | None,
+    start_date: str | None,
+    end_date: str | None,
+    replay_state: dict = REPLAY_OFF,
+    span: dict | None = None,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple[dict | None, str]:
+    """(candles up to the cursor + session lines, message). The cursor is the last candle,
+    or in replay (start picked) the candle closed at the replay time `now`."""
+    replay, message = load_replay(sources, symbol, timeframe, start_date, end_date, config)
+    if replay is None:
+        return None, message
+    in_replay = replay_state["on"] and not replay_state["picking"]
+    cursor = len(replay) - 1
+    if in_replay:
+        now = datetime.fromisoformat(replay_state["now"])
+        cursor = replay.cursor_at(now)
+        if cursor is None:
+            return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶."
+        message = replay_message(replay, cursor)
+    elif replay_state["on"]:
+        now = datetime.fromisoformat(replay_state["now"])
+        message = (
+            "Replay: click the candle to start at, or press ▶ to start after the "
+            f"candle closing at {now:%Y-%m-%d %H:%M} UTC."
+        )
+    data = chart_data(replay, DEFAULT_SETTINGS, sources, config)
+    tf = Timeframe[timeframe]
+    payload = {
+        "key": chart_key(symbol, timeframe, start_date, end_date),
+        "symbol": symbol,
+        "tf": tf.name,
+        "tfmin": tf.value,
+        "digits": price_digits(symbol),
+        "cursor": cursor,
+        "replay": bool(replay_state["on"]),
+        "picking": bool(replay_state["on"] and replay_state["picking"]),
+        "candles": data.candles(0, cursor + 1),
+        "sessions": data.sessions(0, cursor + 1),
+        "span": (span or default_span(tf, config)) if in_replay else None,
+    }
+    return payload, message
+
+
+def overlay_payload(
+    sources: SymbolSources,
+    request: dict,
+    symbol,
+    timeframe,
+    start_date,
+    end_date,
+    filters,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> dict | None:
+    """Full drawings of the requested overlay types at the browser's cursor, or None if
+    the request is for other candles than the ones selected now."""
+    if not request or request["key"] != chart_key(symbol, timeframe, start_date, end_date):
+        return None
+    replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
+    if replay is None or not 0 <= request["cursor"] < len(replay):
+        return None
+    data = chart_data(replay, overlay_settings(filters), sources, config)
+    return {
+        **data.full(request["types"], request["cursor"]),
+        "key": request["key"],
+        "filters": request["filters"],
+        "requested": request["types"],
+        "order": list(OVERLAYS),
+    }
+
+
+def replay_delta(
+    sources: SymbolSources,
+    view: dict | None,
+    replay: Replay,
+    cursor: int,
+    key: str,
+    filters,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> dict | None:
+    """Delta from what the browser shows (`view`: key, cursor, loaded types) to `cursor`."""
+    if not view or view.get("key") != key or view.get("cursor") is None:
+        return None
+    frm = view["cursor"]
+    if not 0 <= frm < len(replay):
+        return None
+    data = chart_data(replay, overlay_settings(filters), sources, config)
+    return {**data.delta(view.get("types") or [], frm, cursor), "key": key}
+
+
+def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
+    """Colors and sizes the browser chart needs."""
+    return {
+        "background": config.background,
+        "text_color": config.text_color,
+        "axis_border": config.axis_color,
+        "show_grid": config.show_grid,
+        "grid_color": config.grid_color,
+        "spike_color": config.spike_color,
+        "up_body": config.up_body,
+        "down_body": config.down_body,
+        "edge_color": config.edge_color,
+        "wick_color": config.wick_color,
+        "y_padding": config.y_padding,
+        "replay_min_visible": config.replay_min_visible,
+    }
+
+
 def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
     symbols = sources.available_symbols()
     label = {"color": config.text_color, "marginRight": "6px"}
@@ -553,22 +701,38 @@ def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html
                 ],
                 style=row,
             ),
-            html.Div(id="chart-message", style={"color": config.text_color, "padding": "0 8px"}),
-            dcc.Store(id="chart-candles"),
+            html.Div(
+                [
+                    html.Span(id="chart-message"),
+                    html.Span(id="chart-notes", style={"marginLeft": "12px"}),
+                ],
+                style={"color": config.text_color, "padding": "0 8px"},
+            ),
+            dcc.Store(id="chart-config", data=chart_settings(config)),
+            dcc.Store(id="chart-base"),
+            dcc.Store(id="chart-base-done"),
+            dcc.Store(id="chart-need"),
+            dcc.Store(id="chart-ovl"),
+            dcc.Store(id="chart-delta"),
+            dcc.Store(id="chart-view"),
+            dcc.Store(id="chart-click"),
+            dcc.Store(id="chart-resync"),
             dcc.Store(id="chart-replay", data=REPLAY_OFF),
+            dcc.Store(id="chart-replay-mode", data={"on": False, "picking": False}),
             dcc.Store(id="chart-replay-span"),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
                 disabled=True,
             ),
-            dcc.Graph(
-                id="chart-graph",
-                style={"height": "calc(100vh - 110px)", "display": "none"},
-                config={"scrollZoom": True, "displaylogo": False},
-            ),
+            html.Div(id="chart-lwc", style={"flex": "1 1 auto", "minHeight": "0"}),
         ],
-        style={"backgroundColor": config.background, "minHeight": "100vh"},
+        style={
+            "backgroundColor": config.background,
+            "height": "100vh",
+            "display": "flex",
+            "flexDirection": "column",
+        },
     )
 
 
@@ -602,74 +766,72 @@ def register_callbacks(
         )
 
     @app.callback(
-        Output("chart-graph", "figure"),
-        Output("chart-graph", "style"),
+        Output("chart-base", "data"),
         Output("chart-message", "children"),
-        Output("chart-candles", "data"),
         Input("chart-symbol", "value"),
         Input("chart-timeframe", "value"),
         Input("chart-dates", "start_date"),
         Input("chart-dates", "end_date"),
-        Input("chart-replay", "data"),
-        Input("chart-sessions", "value"),
+        Input("chart-replay-mode", "data"),
+        Input("chart-resync", "data"),
+        State("chart-replay", "data"),
+        State("chart-replay-span", "data"),
+    )
+    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, replay_state, span):
+        return base_payload(
+            sources, symbol, timeframe, start_date, end_date, replay_state, span, config
+        )
+
+    @app.callback(
+        Output("chart-ovl", "data"),
+        Input("chart-need", "data"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "start_date"),
+        State("chart-dates", "end_date"),
+        State("chart-filters", "value"),
+        prevent_initial_call=True,
+    )
+    def _overlays(request, symbol, timeframe, start_date, end_date, filters):
+        payload = overlay_payload(
+            sources, request, symbol, timeframe, start_date, end_date, filters, config
+        )
+        return payload if payload is not None else no_update
+
+    app.clientside_callback(
+        ClientsideFunction("chart", "base"),
+        Output("chart-base-done", "data"),
+        Input("chart-base", "data"),
+        State("chart-config", "data"),
+    )
+    app.clientside_callback(
+        ClientsideFunction("chart", "select"),
+        Output("chart-need", "data"),
         Input("chart-overlays", "value"),
         Input("chart-overlay-types", "value"),
         Input("chart-filters", "value"),
-        State("chart-graph", "style"),
-        State("chart-replay-span", "data"),
+        Input("chart-sessions", "value"),
+        Input("chart-base-done", "data"),
     )
-    def _draw(
-        symbol,
-        timeframe,
-        start_date,
-        end_date,
-        replay_state,
-        sessions_switch,
-        overlays_switch,
-        overlay_types,
-        filters,
-        style,
-        span,
-    ):
-        args = (sources, symbol, timeframe, start_date, end_date, config)
-        show_sessions = bool(sessions_switch)
-        keys = selected_overlays(overlays_switch, overlay_types)
-        settings = OverlaySettings(
-            fvg_strong_move_filter="fvg" in (filters or []),
-            ob_strong_move_filter="ob" in (filters or []),
-        )
-        if replay_state["on"] and not replay_state["picking"]:
-            replay, message = load_replay(*args)
-            figure, message, store = (
-                replay_chart(
-                    replay,
-                    replay_state,
-                    config,
-                    show_sessions,
-                    keys,
-                    span=span,
-                    settings=settings,
-                    sources=sources,
-                )
-                if replay
-                else (None, message, None)
-            )
-        else:
-            figure, message, store = load_chart(
-                *args, show_sessions=show_sessions, overlay_keys=keys, settings=settings
-            )
-            if replay_state["on"] and figure:
-                now = datetime.fromisoformat(replay_state["now"])
-                message = (
-                    "Replay: click the candle to start at, or press ▶ to start after the "
-                    f"candle closing at {now:%Y-%m-%d %H:%M} UTC."
-                )
-        style = {**(style or {}), "display": "block" if figure else "none"}
-        return figure or {}, style, message, store
+    app.clientside_callback(
+        ClientsideFunction("chart", "overlays"),
+        Output("chart-need", "data", allow_duplicate=True),
+        Input("chart-ovl", "data"),
+        prevent_initial_call=True,
+    )
+    app.clientside_callback(
+        ClientsideFunction("chart", "delta"),
+        Output("chart-resync", "data"),
+        Input("chart-delta", "data"),
+        prevent_initial_call=True,
+    )
 
     @app.callback(
         Output("chart-replay", "data"),
+        Output("chart-replay-mode", "data"),
         Output("chart-replay-span", "data", allow_duplicate=True),
+        Output("chart-delta", "data"),
+        Output("chart-message", "children", allow_duplicate=True),
         Output("chart-replay-timer", "disabled"),
         Output("chart-replay-play", "children"),
         Output("chart-replay-controls", "style"),
@@ -681,33 +843,55 @@ def register_callbacks(
         Input("chart-replay-forward", "n_clicks"),
         Input("chart-replay-play", "n_clicks"),
         Input("chart-replay-timer", "n_intervals"),
-        Input("chart-graph", "clickData"),
+        Input("chart-click", "data"),
         Input("chart-symbol", "value"),
         Input("chart-timeframe", "value"),
         Input("chart-dates", "start_date"),
         Input("chart-dates", "end_date"),
         State("chart-replay", "data"),
         State("chart-replay-controls", "style"),
+        State("chart-view", "data"),
+        State("chart-filters", "value"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style = args[-6:]
+        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-8:]
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
         clicked = ctx.triggered[0]["value"] if action == "click" else None
-        clicked_x = clicked["points"][0]["x"] if clicked and clicked.get("points") else None
+        clicked_x = clicked.get("x") if isinstance(clicked, dict) else None
         new = replay_step(action, state, replay, clicked_x)
         # replay switched on: the span starts at the default of the shown timeframe
         started = action == "toggle" and new["on"]
+        mode = {"on": new["on"], "picking": new["picking"]}
+        mode_changed = mode != {"on": state["on"], "picking": state["picking"]}
+        delta, message = no_update, no_update
+        stepping = new["on"] and not new["picking"] and not mode_changed and action != "data"
+        if stepping and replay is not None and new["now"] != state["now"]:
+            cursor = replay.cursor_at(datetime.fromisoformat(new["now"]))
+            key = chart_key(symbol, timeframe, start_date, end_date)
+            found = replay_delta(sources, view, replay, cursor, key, filters, config)
+            if found is not None:
+                delta, message = found, replay_message(replay, cursor)
+        # only what changed, so a replay step re-renders nothing but the chart and message
+        playing = new["playing"] != state["playing"]
+        on = new["on"] != state["on"]
         return (
             new if new != state else no_update,
+            mode if mode_changed else no_update,
             default_span(Timeframe[timeframe], config) if started else no_update,
-            not new["playing"],
-            "Pause" if new["playing"] else "Play",
-            {**controls_style, "display": "flex" if new["on"] else "none"},
-            {"fontWeight": "bold", "background": config.accent_color, "color": "white"}
-            if new["on"]
-            else {},
+            delta,
+            message,
+            not new["playing"] if playing else no_update,
+            ("Pause" if new["playing"] else "Play") if playing else no_update,
+            {**controls_style, "display": "flex" if new["on"] else "none"} if on else no_update,
+            (
+                {"fontWeight": "bold", "background": config.accent_color, "color": "white"}
+                if new["on"]
+                else {}
+            )
+            if on
+            else no_update,
         )
 
     @app.callback(
@@ -726,26 +910,6 @@ def register_callbacks(
     def _speed(speed):
         return 1000 // speed
 
-    @app.callback(
-        Output("chart-graph", "figure", allow_duplicate=True),
-        Output("chart-replay-span", "data", allow_duplicate=True),
-        Input("chart-graph", "relayoutData"),
-        State("chart-candles", "data"),
-        prevent_initial_call=True,
-    )
-    def _fit_visible(relayout, store):
-        span = zoomed_span(relayout, store) or no_update
-        axes = visible_axes(relayout, store, config)
-        if axes is None:
-            return no_update, span
-        tickvals, ticktext, yrange = axes
-        patch = Patch()
-        patch["layout"]["xaxis"]["tickvals"] = tickvals
-        patch["layout"]["xaxis"]["ticktext"] = ticktext
-        if yrange:
-            patch["layout"]["yaxis"]["range"] = yrange
-        return patch, span
-
 
 _REPLAY_ACTIONS = {
     "chart-replay-toggle": "toggle",
@@ -755,7 +919,7 @@ _REPLAY_ACTIONS = {
     "chart-replay-forward": "forward",
     "chart-replay-play": "play",
     "chart-replay-timer": "tick",
-    "chart-graph": "click",
+    "chart-click": "click",
 }
 
 

@@ -27,7 +27,7 @@ from backtester.ui.overlays import (
     register,
     run_detector,
 )
-from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text
+from backtester.ui.zone_overlay import ZONE_PARTS, ZoneStyle, draw_zones, steps_text, zone_group
 
 
 def detect_bprs(
@@ -70,4 +70,8 @@ def draw_bprs(events: Sequence[BalancedPriceRange | ZoneTransition], ctx: Overla
     return draw_zones(events, ctx, style, hover_text)
 
 
-BPR = register(OverlayType("bpr", "BPR", detect_bprs, draw_bprs, parts=ZONE_PARTS, order="2.8"))
+BPR = register(
+    OverlayType(
+        "bpr", "BPR", detect_bprs, draw_bprs, parts=ZONE_PARTS, order="2.8", group=zone_group
+    )
+)

@@ -12,6 +12,10 @@ type's sub-entries stay indented right under it and can only be ticked while it 
   lines, markers, labels, hover areas), e.g. a small marker on the **confirming candle**
   (x = `event.confirmed_index`) and a hover text with its state (zones: hover over the
   zone itself, no marker). `ui/plotly_render.py` turns them into Plotly traces.
+- `group` (optional) says which events draw together (a zone with its transitions):
+  `draw` on one group's events gives exactly that group's part of `draw` on all events,
+  so a replay step only re-draws the groups that changed (`ui/chart_data.py`). Default:
+  every event is drawn on its own.
 - `parts` (optional) are sub-entries listed under the overlay in the panel (e.g.
   "↳ ★ confirmations" under FVG); the selected ones reach `draw` as `ctx.parts`.
 - `status(events, ctx)` (optional) returns badges (`drawing.Badge`) for a state that depends on
@@ -27,13 +31,13 @@ shows exactly what an incremental run up to the cursor would have emitted.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass, field, replace
 
 from backtester.core.models import Timeframe
 from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
-from backtester.ui.chart_figure import DEFAULT_CONFIG, ChartConfig, price_digits
+from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.drawing import Badge, Drawing
 
 
@@ -84,6 +88,8 @@ class OverlayType:
     # True: `detect(replay, settings, sources)` also gets the chart's `SymbolSources`, for
     # overlays that load their own candles (e.g. the Trades overlay's 5m backtest)
     needs_sources: bool = False
+    # events drawn together (see the module docstring); None: each event alone
+    group: Callable[[Event], Hashable] | None = None
 
     @property
     def step(self) -> tuple[int, ...]:

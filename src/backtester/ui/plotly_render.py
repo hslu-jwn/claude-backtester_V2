@@ -24,7 +24,7 @@ from plotly.basedatatypes import BaseTraceType
 from backtester.ui.drawing import Badge, Box, Drawing, Hover, Label, Line, Marker
 
 if TYPE_CHECKING:
-    from backtester.ui.chart_figure import ChartConfig
+    from backtester.ui.chart_config import ChartConfig
 
 Rect = tuple[float, float, float, float]  # x0, x1, bottom, top
 HOVER_TEMPLATE = "%{text}<extra></extra>"

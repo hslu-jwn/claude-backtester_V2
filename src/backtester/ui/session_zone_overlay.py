@@ -42,7 +42,7 @@ from backtester.strategy.session_zone_sweep.zones import (
     ZoneExpired,
     ZoneRoleSet,
 )
-from backtester.ui.chart_figure import DEFAULT_CONFIG, SESSION_LABELS
+from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS
 from backtester.ui.drawing import Box, Drawing, Hover
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
@@ -248,6 +248,11 @@ def draw_session_zones(events: Sequence[ChartZoneEvent], ctx: OverlayContext) ->
 
 SESSION_ZONES = register(
     OverlayType(
-        "session_zones", "Session zones", detect_session_zones, draw_session_zones, order="2.9"
+        "session_zones",
+        "Session zones",
+        detect_session_zones,
+        draw_session_zones,
+        order="2.9",
+        group=lambda e: e.zone,  # a zone with its later events
     )
 )

@@ -21,6 +21,9 @@ mt5 = ["MetaTrader5; platform_system == 'Windows'", "python-dotenv>=1.0"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"backtester.ui" = ["assets/*"]  # chart JavaScript, Lightweight Charts and its license
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "tests/data"]  # tests/data: m1_frames helper

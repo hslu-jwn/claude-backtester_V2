@@ -12,7 +12,9 @@ texts use "\\n" for line breaks.
 
 `layer` names a group of objects of one kind and style (e.g. "FVG box"); a renderer may
 draw a run of consecutive objects with the same layer and style as one series, in the
-order given. Later layers draw on top of earlier ones.
+order given. Later layers draw on top of earlier ones. `part` is the overlay's panel
+sub-entry the object belongs to (e.g. "confirmed" for a zone's ★), None for the overlay
+itself: the chart shows it only while that sub-entry is ticked.
 """
 
 from __future__ import annotations
@@ -52,6 +54,7 @@ class Box:
     edge_opacity: float | None = None  # None: the plain color
     edge_dash: Dash = "solid"
     edge_width: float = 1
+    part: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +69,7 @@ class Line:
     color: str
     width: float = 1
     dash: Dash = "solid"
+    part: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +85,7 @@ class Marker:
     size: float
     hover: str | None = None
     outline: float = 0
+    part: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +99,7 @@ class Label:
     color: str
     size: float = 10
     anchor: Anchor = "middle center"
+    part: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +112,7 @@ class Hover:
     y: float
     text: str
     layer: str
+    part: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
