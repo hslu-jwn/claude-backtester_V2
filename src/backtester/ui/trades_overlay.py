@@ -39,8 +39,6 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from functools import lru_cache
 
-import plotly.graph_objects as go
-
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
@@ -52,6 +50,7 @@ from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
 from backtester.ui.chart_figure import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
+from backtester.ui.drawing import Box, Drawing, Hover, Label, Line
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OverlayContext,
@@ -60,7 +59,6 @@ from backtester.ui.overlays import (
     OverlayUnavailable,
     register,
 )
-from backtester.ui.zone_overlay import Box, hover_xs, rgba, stack_lanes
 
 CONFLUENCES = "confluences"  # the sub-entry's part key
 EXIT_LABELS = {
@@ -205,75 +203,6 @@ def detect_trades(
 # --- drawing ------------------------------------------------------------------------------
 
 
-def _path(boxes: Sequence[Box]) -> tuple[list, list]:
-    xs, ys = [], []
-    for x0, x1, bottom, top in boxes:
-        xs += [x0, x1, x1, x0, x0, None]
-        ys += [bottom, bottom, top, top, bottom, None]
-    return xs, ys
-
-
-def _filled(boxes: Sequence[Box], color: str, opacity: float, name: str, line=None):
-    """Boxes as filled traces, spread over lanes so overlapping ones stack."""
-    if not boxes:
-        return []
-    lanes = stack_lanes(boxes)
-    traces = []
-    for lane in range(max(lanes) + 1):
-        xs, ys = _path([b for b, n in zip(boxes, lanes, strict=True) if n == lane])
-        traces.append(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                mode="lines",
-                fill="toself",
-                fillcolor=rgba(color, opacity),
-                line=line or {"width": 0},
-                hoverinfo="skip",
-                name=name,
-            )
-        )
-    return traces
-
-
-def _lines(segments: Sequence[tuple[float, float, float]], color: str, name: str, dash="solid"):
-    """Horizontal lines (x0, x1, y) as one trace."""
-    if not segments:
-        return []
-    xs, ys = [], []
-    for x0, x1, y in segments:
-        xs += [x0, x1, None]
-        ys += [y, y, None]
-    return [
-        go.Scatter(
-            x=xs,
-            y=ys,
-            mode="lines",
-            line={"color": color, "width": 1, "dash": dash},
-            hoverinfo="skip",
-            name=name,
-        )
-    ]
-
-
-def _labels(points: Sequence[tuple[float, float, str, str]], color: str, name: str, size=10):
-    """Text labels (x, y, text, position) as one trace."""
-    if not points:
-        return []
-    return [
-        go.Scatter(
-            x=[p[0] for p in points],
-            y=[p[1] for p in points],
-            mode="text",
-            text=[p[2] for p in points],
-            textposition=[p[3] for p in points],
-            textfont={"color": color, "size": size},
-            hoverinfo="skip",
-            name=name,
-        )
-    ]
-
-
 def _r(value: float) -> str:
     return f"{value:+.2f}R"
 
@@ -337,64 +266,60 @@ def hover_text(e: ChartTrade, ctx: OverlayContext) -> str:
         lines.append("still open at the cursor")
     if t.tags:
         lines.append(f"tags: {', '.join(sorted(t.tags))}")
-    return "<br>".join(lines)
+    return "\n".join(lines)
 
 
-def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.Scatter]:
+def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Drawing]:
     if not events:
         return []
     cfg = ctx.config
-    profit, loss, entries, break_even, tp1_lines, labels = [], [], [], [], [], []
-    hover_x, hover_y, hover_text_ = [], [], []
+    profit, loss, entries, break_even, tp1_lines, labels, hovers = [], [], [], [], [], [], []
     for e in events:
         t = e.trade
         x0, x1 = e.entry_x, min(e.exit_x, ctx.cursor)  # grows with the cursor in replay
         far_tp = t.take_profit if t.take_profit_2 is None else t.take_profit_2
-        profit.append((x0, x1, min(t.entry, far_tp), max(t.entry, far_tp)))
-        if t.take_profit_2 is not None:
-            tp1_lines.append((x0, x1, t.take_profit))
-        loss.append((x0, x1, min(t.entry, t.initial_stop), max(t.entry, t.initial_stop)))
-        entries.append((x0, x1, t.entry))
-        if e.break_even_x is not None and e.break_even_x <= ctx.cursor:
-            break_even.append((e.break_even_x, x1, t.break_even_stop))
-        labels.append(
-            (
-                (x0 + x1) / 2,
-                (t.entry + far_tp) / 2,
-                rr_label(t),
-                "middle center",
+        profit.append(
+            Box(
+                x0,
+                x1,
+                min(t.entry, far_tp),
+                max(t.entry, far_tp),
+                "Trade target",
+                fill=cfg.trade_profit_color,
+                fill_opacity=cfg.trade_box_opacity,
             )
         )
-        hx = hover_xs(x0, x1, cfg.zone_hover_step, cfg.zone_hover_ends)
-        text = hover_text(e, ctx)
-        hover_x += hx
-        hover_y += [t.entry] * len(hx)
-        hover_text_ += [text] * len(hx)
-    traces = [
-        *_filled(profit, cfg.trade_profit_color, cfg.trade_box_opacity, "Trade target"),
-        *_filled(loss, cfg.trade_loss_color, cfg.trade_box_opacity, "Trade risk"),
-        *_lines(entries, cfg.trade_entry_color, "Trade entry"),
-        *_lines(break_even, cfg.trade_break_even_color, "Trade break-even", dash="dash"),
-        *_lines(tp1_lines, cfg.trade_tp1_color, "Trade TP1", dash="dash"),
-        *_labels(labels, cfg.text_color, "Trade R:R"),
-    ]
-    if CONFLUENCES in ctx.parts:
-        traces += _confluences(events, ctx)
-    traces.append(
-        go.Scatter(
-            x=hover_x,
-            y=hover_y,
-            mode="markers",
-            marker={"size": cfg.marker_size, "opacity": 0},  # invisible, only for hover
-            text=hover_text_,
-            hovertemplate="%{text}<extra></extra>",
-            name="Trade",
+        if t.take_profit_2 is not None:
+            tp = t.take_profit
+            tp1_lines.append(Line(x0, x1, tp, tp, "Trade TP1", cfg.trade_tp1_color, dash="dash"))
+        loss.append(
+            Box(
+                x0,
+                x1,
+                min(t.entry, t.initial_stop),
+                max(t.entry, t.initial_stop),
+                "Trade risk",
+                fill=cfg.trade_loss_color,
+                fill_opacity=cfg.trade_box_opacity,
+            )
         )
-    )
-    return traces
+        entries.append(Line(x0, x1, t.entry, t.entry, "Trade entry", cfg.trade_entry_color))
+        if e.break_even_x is not None and e.break_even_x <= ctx.cursor:
+            stop, color = t.break_even_stop, cfg.trade_break_even_color
+            break_even.append(
+                Line(e.break_even_x, x1, stop, stop, "Trade break-even", color, dash="dash")
+            )
+        labels.append(
+            Label((x0 + x1) / 2, (t.entry + far_tp) / 2, rr_label(t), "Trade R:R", cfg.text_color)
+        )
+        hovers.append(Hover(x0, x1, t.entry, hover_text(e, ctx), "Trade"))
+    out: list[Drawing] = [*profit, *loss, *entries, *break_even, *tp1_lines, *labels]
+    if CONFLUENCES in ctx.parts:
+        out += _confluences(events, ctx)
+    return out + hovers
 
 
-def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.Scatter]:
+def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Drawing]:
     cfg = ctx.config
     kind_style = {
         ZoneKind.FVG: (cfg.fvg_color, cfg.fvg_fill_opacity),
@@ -412,46 +337,79 @@ def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.S
         signal, x = e.decision.signal, e.entry_x
         zone = signal.zone
         color = cfg.session_color(zone.active_in.session)
-        zone_outlines.setdefault(color, []).append((e.zone_x0, x, zone.bottom, zone.top))
-        zone_fills.setdefault(color, []).append((e.zone_fill_x, x, zone.bottom, zone.top))
+        zone_outlines.setdefault(color, []).append(
+            Box(
+                e.zone_x0,
+                x,
+                zone.bottom,
+                zone.top,
+                "Trade zone",
+                edge=color,
+                edge_dash=cfg.session_zone_line_dash,
+            )
+        )
+        zone_fills.setdefault(color, []).append(
+            Box(
+                e.zone_fill_x,
+                x,
+                zone.bottom,
+                zone.top,
+                "Trade zone fill",
+                fill=color,
+                fill_opacity=cfg.session_zone_fill_opacity,
+            )
+        )
         c = signal.confluence
-        confluences.setdefault(c.kind, []).append((e.confluence_x0, x, c.bottom, c.top))
+        c_color, opacity = kind_style.get(c.kind, (cfg.trade_entry_color, cfg.trade_box_opacity))
+        confluences.setdefault(c.kind, []).append(
+            Box(
+                e.confluence_x0,
+                x,
+                c.bottom,
+                c.top,
+                f"Trade {c.kind.value}",
+                fill=c_color,
+                fill_opacity=opacity,
+                edge=c_color,
+            )
+        )
         price = signal.bos.swing.price
-        bos.append((e.bos_x0, e.bos_x1, price))
+        bos.append(Line(e.bos_x0, e.bos_x1, price, price, "Trade BOS", cfg.bos_color))
         above = signal.direction is Direction.BULLISH
         bos_labels.append(
-            ((e.bos_x0 + e.bos_x1) / 2, price, "BOS", "top center" if above else "bottom center")
+            Label(
+                (e.bos_x0 + e.bos_x1) / 2,
+                price,
+                "BOS",
+                "Trade BOS label",
+                cfg.bos_color,
+                anchor="top center" if above else "bottom center",
+            )
         )
         targets = e.decision.targets
         if targets is not None and targets.sl_at_bos_leg:
             low = signal.bos.leg_extreme
-            sl_ref.append((e.leg_x, x, low))
-            sl_ref_labels.append((e.leg_x, low, "SL ref", "bottom right" if above else "top right"))
-    traces = []
-    for color, boxes in zone_fills.items():
-        traces += _filled(boxes, color, cfg.session_zone_fill_opacity, "Trade zone fill")
-    for color, boxes in zone_outlines.items():
-        xs, ys = _path(boxes)
-        traces.append(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                mode="lines",
-                line={"color": color, "width": 1, "dash": cfg.session_zone_line_dash},
-                hoverinfo="skip",
-                name="Trade zone",
+            sl_ref.append(Line(e.leg_x, x, low, low, "Trade SL ref", cfg.sl_ref_color, dash="dot"))
+            sl_ref_labels.append(
+                Label(
+                    e.leg_x,
+                    low,
+                    "SL ref",
+                    "Trade SL ref label",
+                    cfg.sl_ref_color,
+                    size=9,
+                    anchor="bottom right" if above else "top right",
+                )
             )
-        )
-    for kind, boxes in confluences.items():
-        color, opacity = kind_style.get(kind, (cfg.trade_entry_color, cfg.trade_box_opacity))
-        traces += _filled(
-            boxes, color, opacity, f"Trade {kind.value}", line={"color": color, "width": 1}
-        )
-    traces += _lines(bos, cfg.bos_color, "Trade BOS")
-    traces += _labels(bos_labels, cfg.bos_color, "Trade BOS label")
-    traces += _lines(sl_ref, cfg.sl_ref_color, "Trade SL ref", dash="dot")
-    traces += _labels(sl_ref_labels, cfg.sl_ref_color, "Trade SL ref label", size=9)
-    return traces
+    return [
+        *(b for boxes in zone_fills.values() for b in boxes),
+        *(b for boxes in zone_outlines.values() for b in boxes),
+        *(b for boxes in confluences.values() for b in boxes),
+        *bos,
+        *bos_labels,
+        *sl_ref,
+        *sl_ref_labels,
+    ]
 
 
 TRADES = register(

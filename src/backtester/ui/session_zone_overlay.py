@@ -30,8 +30,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-import plotly.graph_objects as go
-
 from backtester.core.series import SeriesView
 from backtester.detectors.base import Event
 from backtester.engine.replay import Replay
@@ -45,6 +43,7 @@ from backtester.strategy.session_zone_sweep.zones import (
     ZoneRoleSet,
 )
 from backtester.ui.chart_figure import DEFAULT_CONFIG, SESSION_LABELS
+from backtester.ui.drawing import Box, Drawing, Hover
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OverlayContext,
@@ -53,7 +52,6 @@ from backtester.ui.overlays import (
     OverlayUnavailable,
     register,
 )
-from backtester.ui.zone_overlay import Box, hover_xs, rgba, stack_lanes
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,77 +201,49 @@ def hover_text(zone: SessionZone, steps: Sequence[ChartZoneEvent], ctx: OverlayC
             role = f"expired ({role})"
             lines.append(f"expired: end of {_session(zone.active_in)}")
     lines.insert(3, f"role: {role}")
-    return "<br>".join(lines)
+    return "\n".join(lines)
 
 
-def _box_path(boxes: Sequence[Box]) -> tuple[list, list]:
-    xs, ys = [], []
-    for x0, x1, bottom, top in boxes:
-        xs += [x0, x1, x1, x0, x0, None]
-        ys += [bottom, bottom, top, top, bottom, None]
-    return xs, ys
-
-
-def draw_session_zones(events: Sequence[ChartZoneEvent], ctx: OverlayContext) -> list[go.Scatter]:
+def draw_session_zones(events: Sequence[ChartZoneEvent], ctx: OverlayContext) -> list[Drawing]:
     cfg = ctx.config
     outlines: dict[str, list[Box]] = {}  # by color: the whole box
     fills: dict[str, list[Box]] = {}  # by color: the part in the session it is used in
-    hover_x, hover_y, hover_text_ = [], [], []
+    hovers = []
     for placed, steps in zone_steps(events):
         zone = placed.zone
         x0, x1 = placed.x, box_end(steps, ctx.cursor)
         color = cfg.session_color(zone.active_in.session)
-        outlines.setdefault(color, []).append((x0, x1, zone.bottom, zone.top))
+        outlines.setdefault(color, []).append(
+            Box(
+                x0,
+                x1,
+                zone.bottom,
+                zone.top,
+                "Session zone box",
+                edge=color,
+                edge_dash=cfg.session_zone_line_dash,
+            )
+        )
         active_x = next((s.x for s in steps if s.activates), None)
         if active_x is not None and active_x <= x1:
-            fills.setdefault(color, []).append((active_x, x1, zone.bottom, zone.top))
-        hx = hover_xs(x0, x1, cfg.zone_hover_step, cfg.zone_hover_ends)
-        hover_x += hx
-        hover_y += [(zone.top + zone.bottom) / 2] * len(hx)
-        hover_text_ += [hover_text(zone, steps, ctx)] * len(hx)
-    if not hover_x:
-        return []
-    traces = []
-    for color, boxes in fills.items():  # one trace per lane, so overlaps stack darker
-        lanes = stack_lanes(boxes)
-        for lane in range(max(lanes) + 1):
-            xs, ys = _box_path([b for b, n in zip(boxes, lanes, strict=True) if n == lane])
-            traces.append(
-                go.Scatter(
-                    x=xs,
-                    y=ys,
-                    mode="lines",
-                    fill="toself",
-                    fillcolor=rgba(color, cfg.session_zone_fill_opacity),
-                    line={"width": 0},
-                    hoverinfo="skip",
-                    name="Session zone fill",
+            fills.setdefault(color, []).append(
+                Box(
+                    active_x,
+                    x1,
+                    zone.bottom,
+                    zone.top,
+                    "Session zone fill",
+                    fill=color,
+                    fill_opacity=cfg.session_zone_fill_opacity,
                 )
             )
-    for color, boxes in outlines.items():
-        xs, ys = _box_path(boxes)
-        traces.append(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                mode="lines",
-                line={"color": color, "width": 1, "dash": cfg.session_zone_line_dash},
-                hoverinfo="skip",
-                name="Session zone box",
-            )
-        )
-    traces.append(
-        go.Scatter(
-            x=hover_x,
-            y=hover_y,
-            mode="markers",
-            marker={"size": cfg.marker_size, "opacity": 0},  # invisible, only for hover
-            text=hover_text_,
-            hovertemplate="%{text}<extra></extra>",
-            name="Session zone",
-        )
-    )
-    return traces
+        middle = (zone.top + zone.bottom) / 2
+        hovers.append(Hover(x0, x1, middle, hover_text(zone, steps, ctx), "Session zone"))
+    return [
+        *(b for boxes in fills.values() for b in boxes),
+        *(b for boxes in outlines.values() for b in boxes),
+        *hovers,
+    ]
 
 
 SESSION_ZONES = register(

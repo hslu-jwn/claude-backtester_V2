@@ -12,11 +12,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.core.models import Timeframe
 from backtester.engine.replay import Replay
 from backtester.ui.overlays import OVERLAYS
-from backtester.ui.pages.chart import chart_overlays
 
 LONDON = datetime(2026, 1, 5, 8, 0, tzinfo=UTC)
 NEW_YORK = datetime(2026, 1, 5, 13, 0, tzinfo=UTC)

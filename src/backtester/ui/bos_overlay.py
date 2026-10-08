@@ -20,14 +20,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-import plotly.graph_objects as go
-
 from backtester.core.models import Direction, Timeframe
 from backtester.detectors.base import Event
 from backtester.detectors.bos import BosDetector, BreakOfStructure
 from backtester.detectors.swings import SwingConfig
 from backtester.detectors.trend import Trend, TrendChange, TrendDetector, TrendState
 from backtester.engine.replay import Replay
+from backtester.ui.drawing import Badge, Drawing, Label, Line, Marker
 from backtester.ui.overlays import (
     OverlayContext,
     OverlayType,
@@ -110,62 +109,48 @@ def trend_effect(event: TrendBos) -> str:
 def hover_text(event: TrendBos, digits: int) -> str:
     bos, swing = event.bos, event.bos.swing
     return (
-        f"{bos.direction.value.capitalize()} BOS {bos.price:.{digits}f}<br>"
-        f"broke swing {swing.kind.value} (wick: {swing.ts:%Y-%m-%d %H:%M} UTC candle)<br>"
-        f"close {bos.close:.{digits}f}, candle closed {bos.confirmed_at:%Y-%m-%d %H:%M} UTC<br>"
+        f"{bos.direction.value.capitalize()} BOS {bos.price:.{digits}f}\n"
+        f"broke swing {swing.kind.value} (wick: {swing.ts:%Y-%m-%d %H:%M} UTC candle)\n"
+        f"close {bos.close:.{digits}f}, candle closed {bos.confirmed_at:%Y-%m-%d %H:%M} UTC\n"
         f"{trend_effect(event)}"
     )
 
 
-def draw_bos(
-    events: Sequence[TrendBos | OverallTrendChange], ctx: OverlayContext
-) -> list[go.Scatter]:
+def draw_bos(events: Sequence[TrendBos | OverallTrendChange], ctx: OverlayContext) -> list[Drawing]:
     events = [e for e in events if isinstance(e, TrendBos)]
-    if not events:
-        return []
     color = ctx.config.bos_color
     breaks = [e.bos for e in events]
-    line_x, line_y = [], []
-    for b in breaks:
-        line_x += [b.swing.index, b.confirmed_index, None]
-        line_y += [b.price, b.price, None]
     return [
-        go.Scatter(
-            x=line_x,
-            y=line_y,
-            mode="lines",
-            line={"color": color, "width": 1},
-            hoverinfo="skip",
-            name="BOS",
+        *(Line(b.swing.index, b.confirmed_index, b.price, b.price, "BOS", color) for b in breaks),
+        *(
+            Label(
+                (b.swing.index + b.confirmed_index) / 2,
+                b.price,
+                "BOS",
+                "BOS label",
+                color,
+                anchor="top center" if b.direction is Direction.BULLISH else "bottom center",
+            )
+            for b in breaks
         ),
-        go.Scatter(
-            x=[(b.swing.index + b.confirmed_index) / 2 for b in breaks],
-            y=[b.price for b in breaks],
-            mode="text",
-            text=["BOS"] * len(breaks),
-            textposition=[
-                "top center" if b.direction is Direction.BULLISH else "bottom center"
-                for b in breaks
-            ],
-            textfont={"color": color, "size": 10},
-            hoverinfo="skip",
-            name="BOS label",
-        ),
-        go.Scatter(
-            x=[b.confirmed_index for b in breaks],
-            y=[b.price for b in breaks],
-            mode="markers",
-            marker={"symbol": "circle", "color": color, "size": ctx.config.marker_size // 2 + 1},
-            text=[hover_text(e, ctx.digits) for e in events],
-            hovertemplate="%{text}<extra></extra>",
-            name="BOS",
+        *(
+            Marker(
+                e.bos.confirmed_index,
+                e.bos.price,
+                "BOS",
+                "circle",
+                color,
+                ctx.config.marker_size // 2 + 1,
+                hover=hover_text(e, ctx.digits),
+            )
+            for e in events
         ),
     ]
 
 
 def trend_badges(
     events: Sequence[TrendBos | OverallTrendChange], ctx: OverlayContext
-) -> list[go.layout.Annotation]:
+) -> list[Badge]:
     """Overall trend (if the replay has an overall series) and the shown timeframe's trend
     after the last change at or before the cursor (`events` are all of them)."""
     cfg = ctx.config
@@ -183,20 +168,7 @@ def trend_badges(
         Trend.NONE: cfg.trend_none_color,
     }
     return [
-        go.layout.Annotation(
-            text=text,
-            xref="paper",
-            yref="paper",
-            x=0.005,
-            y=0.995 - i * cfg.trend_badge_spacing,
-            xanchor="left",
-            yanchor="top",
-            showarrow=False,
-            bgcolor=colors[trend],
-            font={"color": "#ffffff", "size": 12 if i == 0 else 11},
-            borderpad=4,
-            name="trend",
-        )
+        Badge(text, colors[trend], i, "trend", size=12 if i == 0 else 11)
         for i, (text, trend) in enumerate(badges)
     ]
 

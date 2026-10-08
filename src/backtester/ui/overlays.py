@@ -8,12 +8,13 @@ type's sub-entries stay indented right under it and can only be ticked while it 
   `replay.view(cursor)` once per candle, in order (`run_detector`). Detectors never see a
   `CandleSeries`. `settings` are the chart's detector switches (`OverlaySettings`, e.g. the
   strong-move filter); overlays that have none ignore them.
-- `draw(events, ctx)` turns events into Plotly traces: a small marker on the
-  **confirming candle** (x = `event.confirmed_index`) and a hover text with its state
-  (zones: hover over the zone itself, no marker).
+- `draw(events, ctx)` turns events into neutral drawing objects (`ui/drawing.py`: boxes,
+  lines, markers, labels, hover areas), e.g. a small marker on the **confirming candle**
+  (x = `event.confirmed_index`) and a hover text with its state (zones: hover over the
+  zone itself, no marker). `ui/plotly_render.py` turns them into Plotly traces.
 - `parts` (optional) are sub-entries listed under the overlay in the panel (e.g.
   "↳ ★ confirmations" under FVG); the selected ones reach `draw` as `ctx.parts`.
-- `status(events, ctx)` (optional) returns layout annotations for a state that depends on
+- `status(events, ctx)` (optional) returns badges (`drawing.Badge`) for a state that depends on
   every event up to the cursor, not only the drawn ones (e.g. the current trend, which can
   come from a BOS before the replay window). It gets all events confirmed at or before the
   cursor.
@@ -29,13 +30,11 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 
-from plotly.basedatatypes import BaseTraceType
-from plotly.graph_objs.layout import Annotation
-
 from backtester.core.models import Timeframe
 from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG, ChartConfig, price_digits
+from backtester.ui.drawing import Badge, Drawing
 
 
 @dataclass(frozen=True)
@@ -76,8 +75,8 @@ class OverlayType:
     key: str  # panel value, e.g. "swings"
     label: str  # panel text, e.g. "Swings"
     detect: Callable[[Replay, OverlaySettings], Sequence[Event]]
-    draw: Callable[[Sequence[Event], OverlayContext], list[BaseTraceType]]
-    status: Callable[[Sequence[Event], OverlayContext], list[Annotation]] | None = None
+    draw: Callable[[Sequence[Event], OverlayContext], list[Drawing]]
+    status: Callable[[Sequence[Event], OverlayContext], list[Badge]] | None = None
     # optional sub-entries listed under it in the panel, (part key, label), e.g.
     # ("confirmed", "★ confirmations"); `draw` gets the selected ones in `ctx.parts`
     parts: tuple[tuple[str, str], ...] = field(default=())
@@ -148,20 +147,20 @@ def visible_events(events: Sequence[Event], cursor: int, first_x: int = 0) -> li
     return [e for e in events if first_x <= e.confirmed_index <= cursor]
 
 
-def overlay_traces(
+def overlay_drawings(
     events_for: Callable[[OverlayType], Sequence[Event]],
     keys: Sequence[str],
     ctx: OverlayContext,
     registry: dict[str, OverlayType] = OVERLAYS,
-) -> tuple[list[BaseTraceType | Annotation], list[str]]:
-    """(traces and annotations, messages) for the selected overlay types, in registry order.
+) -> tuple[list[Drawing], list[str]]:
+    """(drawings and badges, messages) for the selected overlay types, in registry order.
 
     `events_for(overlay)` returns that overlay's events over the loaded range (the chart
     page caches them). Unknown keys (e.g. a type removed since the browser saved the
     choice) are ignored; an `OverlayUnavailable` becomes a message. A sub-entry only
     draws with its overlay selected; `draw` gets the selected ones in `ctx.parts`.
     """
-    traces: list[BaseTraceType | Annotation] = []
+    drawings: list[Drawing] = []
     messages: list[str] = []
     for key, overlay in registry.items():
         if key not in keys:
@@ -173,7 +172,7 @@ def overlay_traces(
             continue
         parts = frozenset(p for p, _ in overlay.parts if overlay.part_value(p) in keys)
         drawn = replace(ctx, parts=parts)
-        traces.extend(overlay.draw(visible_events(events, ctx.cursor, ctx.first_x), drawn))
+        drawings.extend(overlay.draw(visible_events(events, ctx.cursor, ctx.first_x), drawn))
         if overlay.status is not None:
-            traces.extend(overlay.status(visible_events(events, ctx.cursor), ctx))
-    return traces, messages
+            drawings.extend(overlay.status(visible_events(events, ctx.cursor), ctx))
+    return drawings, messages

@@ -8,11 +8,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from plotly_helpers import plotly
+
 from backtester.core.models import Direction
 from backtester.detectors.base import Event
 from backtester.detectors.zone import ZoneBox, ZoneKind
 from backtester.ui.overlays import OverlayContext
-from backtester.ui.zone_overlay import ZoneStyle, draw_zones, hover_xs, stack_lanes
+from backtester.ui.plotly_render import hover_xs, stack_lanes
+from backtester.ui.zone_overlay import ZoneStyle, draw_zones
 
 T = datetime(2026, 1, 5, tzinfo=UTC)
 STYLE = ZoneStyle("Z", "#089981", 0.2, 0.1)
@@ -30,7 +33,7 @@ def fake(start, created, bottom, top, direction=Direction.BULLISH):
 
 def draw(*events, cursor=20):
     ctx = OverlayContext("XAUUSD", cursor, 0)
-    return draw_zones(events, ctx, STYLE, lambda e, h, c: "hover")
+    return plotly(draw_zones(events, ctx, STYLE, lambda e, h, c: "hover"))
 
 
 def boxes_per_trace(traces):

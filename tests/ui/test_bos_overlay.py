@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 
 import plotly.graph_objects as go
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.core.models import Timeframe
 from backtester.detectors.trend import Trend, TrendConfig
@@ -13,7 +14,7 @@ from backtester.engine.replay import Replay
 from backtester.ui.bos_overlay import detect_overall_trend
 from backtester.ui.chart_figure import DEFAULT_CONFIG, ChartConfig
 from backtester.ui.overlays import OVERLAYS
-from backtester.ui.pages.chart import chart_overlays, replay_chart, warmup_start
+from backtester.ui.pages.chart import replay_chart, warmup_start
 
 # swing high 4410 (wick on candle 0, confirmed 1), swing low 4389 (candle 2, confirmed 2)
 GREEN = (4400.0, 4410.0, 4399.0, 4405.0)

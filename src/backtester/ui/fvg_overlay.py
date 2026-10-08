@@ -88,10 +88,10 @@ def hover_text(event: ChartFvg, history: Sequence[ZoneTransition], ctx: OverlayC
     fvg, zone, digits = event.fvg, event.zone, ctx.digits
     return (
         f"{zone.direction.value.capitalize()} FVG {zone.bottom:.{digits}f} – {zone.top:.{digits}f} "
-        f"(size {zone.top - zone.bottom:.{digits}f})<br>"
-        f"confirmed: candle 3 closed {fvg.confirmed_at:%Y-%m-%d %H:%M} UTC<br>"
-        f"{_strong_text(fvg, digits)}<br>"
-        f"{_trend_text(event, ctx.timeframe.name)}<br>"
+        f"(size {zone.top - zone.bottom:.{digits}f})\n"
+        f"confirmed: candle 3 closed {fvg.confirmed_at:%Y-%m-%d %H:%M} UTC\n"
+        f"{_strong_text(fvg, digits)}\n"
+        f"{_trend_text(event, ctx.timeframe.name)}\n"
         f"{steps_text(history)}"
     )
 

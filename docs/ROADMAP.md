@@ -346,11 +346,11 @@ at once, date range, settings preset, Run button with progress). Date range: nic
 a calendar popover plus quick ranges (1M, 3M, 6M, YTD, 1Y, all) like TradingView's bottom
 bar. Light theme like the screenshot. After a run the results page (3.6) opens.
 
-- ☐ **4.0a Chart engine: TradingView Lightweight Charts** (user, 2026-10-08: the Plotly
+- ◐ **4.0a Chart engine: TradingView Lightweight Charts** (user, 2026-10-08: the Plotly
   chart is too slow). First measure where the time goes (detectors, strategy run, figure
   building, sending the figure, drawing in the browser). Then, in sub-steps, each checked
   by the user on the chart:
-  1. Overlays output neutral drawing objects (box, line, marker, label, with color and
+  1. ☑ Overlays output neutral drawing objects (box, line, marker, label, with color and
      hover text) instead of Plotly traces, so the chart library can be swapped.
   2. Candles, volume-free, session lines, zoom / pan / price axis with Lightweight Charts
      (library file served locally from `ui/assets/`, no CDN), TradingView look.
@@ -359,6 +359,19 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   4. Replay in the browser: the cursor step only adds the next candle and the drawings
      that exist by then, instead of rebuilding the whole figure on the server.
   No lookahead rule unchanged: the browser only ever gets data up to the replay cursor.
+  Measured (2026-10-08, XAUUSD M5, 2026-09-21..25 = 1,104 candles, all overlays and
+  sub-entries on): detectors 50 ms, Trades (strategy + engine over the whole cached block)
+  ~0.9 s, both once per range; full chart: drawing 12 ms, Plotly figure 160 ms, JSON 36 ms,
+  1.48 MB sent (0.14 MB gzipped; Dash sends it uncompressed), FVG 409 kB and BPR 205 kB
+  the largest. One replay step: ~90 ms on the server (figure 65 ms, of it candles only
+  35 ms), 0.8 MB sent per step. Most server time is Plotly building and validating trace
+  objects. Drawing in the browser was not measured.
+  Step 1 built: `ui/drawing.py` (Box, Line, Marker, Label, Hover, Badge; x = chart candle
+  position, y = price, "\n" line breaks), `ui/plotly_render.py` (`to_plotly`, called in
+  `build_candle_figure`; lanes for stacked fills and hover points moved there),
+  `overlays.overlay_drawings`; tests in `tests/ui/test_plotly_render.py`, the overlay tests
+  check the converted traces (`tests/ui/plotly_helpers.py`). Same figure as before for 32
+  cases (3 symbols, M5 / M30 / H1, full chart and replay).
 - ☐ **4.0 Top toolbar** as described above, replacing the current controls (no new
   features: the existing chart settings, overlays and replay move into the popovers;
   the backtest button is wired once 3.4 exists).

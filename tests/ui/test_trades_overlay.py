@@ -17,6 +17,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).parents[1] / "strategy" / "session_zone_sweep"))
 import scenario
+from plotly_helpers import chart_overlays, plotly
 from scenario import ENTRY_INDEX, LONDON, NY_FIRST, NY_SETUP, TO_TARGET
 
 from backtester.core.models import Timeframe
@@ -26,8 +27,8 @@ from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, PartialExit
 from backtester.ui.chart_figure import frame_from_candles
 from backtester.ui.overlays import OverlayContext
-from backtester.ui.pages.chart import chart_overlays
-from backtester.ui.trades_overlay import detect_trades, draw_trades
+from backtester.ui.trades_overlay import detect_trades
+from backtester.ui.trades_overlay import draw_trades as draw_trade_drawings
 
 TF = {Timeframe.M5: 0, Timeframe.M30: 1, Timeframe.H1: 2, Timeframe.H4: 3}
 
@@ -85,6 +86,10 @@ def test_higher_chart_places_the_trade_on_the_candle_containing_it():
     # entry 13:40 is in the 13:30 30m candle, the TP hit (13:45 close) too
     assert replay.view(e.entry_x).current.ts == datetime(2026, 1, 5, 13, 30, tzinfo=UTC)
     assert e.exit_x == e.entry_x
+
+
+def draw_trades(events, ctx):
+    return plotly(draw_trade_drawings(events, ctx))
 
 
 def by_name(traces):

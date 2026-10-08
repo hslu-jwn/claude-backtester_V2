@@ -10,24 +10,26 @@ from datetime import UTC, datetime
 
 import plotly.graph_objects as go
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.core.series import SeriesView
 from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import CANDLE_TRACES, DEFAULT_CONFIG, ChartConfig
+from backtester.ui.drawing import Marker
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OverlayContext,
     OverlayType,
     OverlayUnavailable,
+    overlay_drawings,
     overlay_options,
     overlay_summary,
-    overlay_traces,
     register,
     run_detector,
     visible_events,
 )
-from backtester.ui.pages.chart import chart_overlays, replay_chart, selected_overlays
+from backtester.ui.pages.chart import replay_chart, selected_overlays
 
 GREEN = (1.0, 1.2, 0.9, 1.1)
 RED = (1.1, 1.2, 0.9, 1.0)
@@ -47,7 +49,7 @@ class GreenCandles(Detector[Event]):
 
 
 def draw_markers(events, ctx: OverlayContext):
-    return [go.Scatter(x=[e.confirmed_index for e in events], y=[1.0] * len(events), name="g")]
+    return [Marker(e.confirmed_index, 1.0, "g", "circle", "#000000", 5) for e in events]
 
 
 def fake_registry(**extra) -> dict[str, OverlayType]:
@@ -130,10 +132,10 @@ def test_unavailable_overlay_becomes_a_message_not_an_error():
     registry = fake_registry(no=OverlayType("no", "Nope", refuse, draw_markers))
     ctx = OverlayContext("TEST", cursor=0, first_x=0)
     replay = replay_of(GREEN)
-    traces, messages = overlay_traces(
+    drawings, messages = overlay_drawings(
         lambda o: o.detect(replay, DEFAULT_SETTINGS), ["green", "no"], ctx, registry
     )
-    assert len(traces) == 1
+    assert len(drawings) == 1
     assert messages == ["Nope: doji threshold not defined for TEST"]
 
 

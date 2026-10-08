@@ -9,11 +9,11 @@ exists with the strong-move filter off (`OFF`, the default).
 from __future__ import annotations
 
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG
 from backtester.ui.overlays import OVERLAYS, OverlaySettings, overlay_options
-from backtester.ui.pages.chart import chart_overlays
 
 OFF = OverlaySettings()
 FVG = [

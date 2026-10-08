@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.engine.replay import Replay
 from backtester.ui.overlays import OVERLAYS, OverlayContext, OverlayUnavailable
-from backtester.ui.pages.chart import chart_overlays
 from backtester.ui.swing_overlay import detect_swings, draw_swings
 
 GREEN = (4400.0, 4410.0, 4399.0, 4405.0)
@@ -32,7 +32,7 @@ def test_marker_at_extreme_wick_line_and_hover_dot_at_confirming_candle():
         by_name.setdefault(t.name, []).append(t)
     line, triangle, dot = by_name["swing high"]
     assert list(triangle.x) == [0] and list(triangle.y) == [4410.0]
-    assert list(dot.x) == [1] and triangle.marker.symbol == "triangle-down"
+    assert list(dot.x) == [1] and list(triangle.marker.symbol) == ["triangle-down"]
     assert list(line.x) == [0, 1, None]
     assert "Swing high 4410.000" in dot.text[0]
     low_line, low_triangle, low_dot = by_name["swing low"]

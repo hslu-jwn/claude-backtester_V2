@@ -86,9 +86,9 @@ from backtester.ui.overlays import (
     OverlaySettings,
     OverlayType,
     OverlayUnavailable,
+    overlay_drawings,
     overlay_options,
     overlay_summary,
-    overlay_traces,
 )
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
@@ -138,7 +138,7 @@ def chart_overlays(
     settings: OverlaySettings = DEFAULT_SETTINGS,
     sources: SymbolSources | None = None,
 ):
-    """(traces, messages) of the selected overlays for candles first_x..cursor of `replay`.
+    """(drawings, messages) of the selected overlays for candles first_x..cursor of `replay`.
     `sources` are passed to overlays that load their own data (e.g. the Trades overlay)."""
     if not keys:
         return [], []
@@ -150,7 +150,7 @@ def chart_overlays(
         replay.timeframe,
         replay.overall_timeframe,
     )
-    return overlay_traces(
+    return overlay_drawings(
         lambda o: _cached_events(replay, o, settings, sources), keys, ctx, registry
     )
 
@@ -327,7 +327,7 @@ def replay_figure(
     span: dict | None = None,
 ):
     """(figure, axis store) drawn only from `view`: its last `replay_window` candles, at
-    their absolute positions, with the cursor near the right edge. `overlays` are traces
+    their absolute positions, with the cursor near the right edge. `overlays` are drawings
     built for candles `replay_first_x(view.cursor)`..cursor. `span` is the replay span
     (minutes left/right of the cursor's close, see `default_span`), shown in candles of
     this view's timeframe."""

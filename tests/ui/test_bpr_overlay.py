@@ -8,11 +8,11 @@ so a bullish BPR 4130-4135 exists from candle 5.
 from __future__ import annotations
 
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG
 from backtester.ui.overlays import DEFAULT_SETTINGS, OVERLAYS, OverlaySettings, overlay_options
-from backtester.ui.pages.chart import chart_overlays
 
 BPR = [
     (4150.0, 4152.0, 4140.0, 4142.0),  # 0: low 4140

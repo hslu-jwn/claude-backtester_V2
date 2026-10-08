@@ -20,8 +20,9 @@ body to the high and low only, so they never cross a body; the edges (`fig.data[
 thin outline around each body. The body width is set with the layout's box gap, so the
 outline fits exactly.
 
-Overlays (Phase 2, `ui/overlays.py`) are passed in as ready-made traces and drawn on top
-of the candles; the candlestick trace always stays `fig.data[0]`, overlays start at
+Overlays (Phase 2, `ui/overlays.py`) are passed in as neutral drawing objects
+(`ui/drawing.py`), turned into Plotly traces by `ui/plotly_render.py` and drawn on top of
+the candles; the candlestick trace always stays `fig.data[0]`, overlays start at
 `fig.data[CANDLE_TRACES]`.
 """
 
@@ -33,13 +34,14 @@ from math import log10
 
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.basedatatypes import BaseTraceType
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import CANDLE_COLUMNS
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
+from backtester.ui.drawing import Drawing
+from backtester.ui.plotly_render import to_plotly
 
 # Label steps in minutes. All divide a week, so steps are anchored on a Monday 00:00 UTC.
 TICK_STEPS = (5, 15, 30, 60, 120, 240, 360, 720, 1440, 10080)
@@ -341,15 +343,15 @@ def build_candle_figure(
     first_x: int = 0,
     x_range: tuple[float, float] | None = None,
     show_sessions: bool = True,
-    overlays: Sequence[BaseTraceType | go.layout.Annotation] = (),
+    overlays: Sequence[Drawing] = (),
 ) -> go.Figure:
     """Candlesticks for `frame` (columns ts, open, high, low, close, volume, spread).
 
     The first candle is drawn at x = `first_x`. `x_range` is the initially visible x range
     (default: all candles); labels and price range fit the candles inside it.
-    `show_sessions` draws the session start lines; `overlays` are extra traces (markers of
-    detected patterns) added after the candles, and layout annotations (e.g. the trend
-    badge) added after the session labels.
+    `show_sessions` draws the session start lines; `overlays` are drawing objects of
+    detected patterns, drawn after the candles (badges, e.g. the trend, as layout
+    annotations after the session labels).
     """
     digits = price_digits(symbol)
     n = len(frame)
@@ -377,6 +379,7 @@ def build_candle_figure(
         )
     )
     fig.add_traces([_wicks(frame, first_x, config), _edges(frame, first_x, config)])
+    overlays = to_plotly(overlays, config)
     fig.add_traces([o for o in overlays if not isinstance(o, go.layout.Annotation)])
     tickvals, ticktext = time_ticks(frame["ts"], lo, hi, config.max_ticks)
     shapes, labels = (

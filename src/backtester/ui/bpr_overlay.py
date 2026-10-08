@@ -54,12 +54,12 @@ def hover_text(
     zone, digits = bpr.zone, ctx.digits
     return (
         f"{zone.direction.value.capitalize()} BPR {zone.bottom:.{digits}f} – {zone.top:.{digits}f} "
-        f"(size {zone.top - zone.bottom:.{digits}f})<br>"
-        f"{_fvg_text('older', bpr.older, digits)}<br>"
-        f"{_fvg_text('newer', bpr.newer, digits)}<br>"
+        f"(size {zone.top - zone.bottom:.{digits}f})\n"
+        f"{_fvg_text('older', bpr.older, digits)}\n"
+        f"{_fvg_text('newer', bpr.newer, digits)}\n"
         f"older invalidated by candle {bpr.older_invalidated_index - bpr.newer.start_index + 1} "
-        f"of the newer FVG<br>"
-        f"exists from: candle closed {bpr.confirmed_at:%Y-%m-%d %H:%M} UTC<br>"
+        f"of the newer FVG\n"
+        f"exists from: candle closed {bpr.confirmed_at:%Y-%m-%d %H:%M} UTC\n"
         f"{steps_text(history)}"
     )
 

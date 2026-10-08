@@ -8,11 +8,11 @@ at candle 3, swing high 11.5, candle 6 runs to 11.8, bearish BOS at candle 8.
 from __future__ import annotations
 
 from conftest import build_series
+from plotly_helpers import chart_overlays
 
 from backtester.engine.replay import Replay
 from backtester.ui.chart_figure import DEFAULT_CONFIG
 from backtester.ui.overlays import OVERLAYS
-from backtester.ui.pages.chart import chart_overlays
 
 SWEEP = [
     (10.0, 11.0, 9.5, 10.8),  # 0 green

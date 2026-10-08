@@ -54,13 +54,13 @@ def hover_text(ob: OrderBlock, history: Sequence[ZoneTransition], ctx: OverlayCo
     zone, digits = ob.zone, ctx.digits
     return (
         f"{zone.direction.value.capitalize()} OB {zone.bottom:.{digits}f} – {zone.top:.{digits}f} "
-        f"(size {zone.top - zone.bottom:.{digits}f})<br>"
+        f"(size {zone.top - zone.bottom:.{digits}f})\n"
         f"leg into swing {ob.swing.kind.value} {ob.swing.price:.{digits}f} "
-        f"(confirmed {ob.swing.confirmed_at:%Y-%m-%d %H:%M} UTC)<br>"
+        f"(confirmed {ob.swing.confirmed_at:%Y-%m-%d %H:%M} UTC)\n"
         f"{ob.bos.direction.value} BOS of {ob.bos.price:.{digits}f}: candle closed "
-        f"{ob.bos.confirmed_at:%Y-%m-%d %H:%M} UTC<br>"
-        f"{_strong_text(ob, ctx)}<br>"
-        f"exists from: candle closed {ob.confirmed_at:%Y-%m-%d %H:%M} UTC<br>"
+        f"{ob.bos.confirmed_at:%Y-%m-%d %H:%M} UTC\n"
+        f"{_strong_text(ob, ctx)}\n"
+        f"exists from: candle closed {ob.confirmed_at:%Y-%m-%d %H:%M} UTC\n"
         f"{steps_text(history)}"
     )
 
