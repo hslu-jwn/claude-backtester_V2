@@ -439,6 +439,28 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   dropdown; the overall layout of the controls; chart colors and other visual details.
   Until then the current layout and colors stay as they are.
 
+- ☐ **4.0b Chart improvements** (user, 2026-10-08), TradingView look and behaviour:
+  1. **Keep the position when switching timeframe:** the time at the centre of the view
+     stays at the centre and the number of visible candles stays the same (5m 2026-09-12
+     12:15 in the middle → on 30m the candle containing 12:15 in the middle). Cached days
+     needed by the new timeframe (D, W) are loaded automatically. Replay keeps its time
+     as now.
+  2. **1D and 1W timeframes**, resampled from M1 (bid). Day = 17:00 New York to 17:00
+     New York (DST-aware), week = Sunday 17:00 NY open to Friday 17:00 NY close, like
+     TradingView for forex / gold; setting (option: UTC midnight). Intraday timeframes
+     (incl. 4H, used by the overall trend) unchanged. No session lines on D / W.
+  3. **Screenshot button** (top right): PNG of the chart as shown, with a stamp in the
+     corner (symbol, timeframe, first → last visible candle in UTC, replay time if on,
+     overlays on, preset) and the same data in a Windows-safe file name, e.g.
+     `GBPJPY_M5_2026-09-12T0800_2026-09-12T1630_UTC_replay-1215.png`; also copy to
+     clipboard. Purpose: the user sends screenshots for trade reviews and the stamp says
+     exactly where on the chart they are.
+  4. **Go to date / time** (like TradingView's Alt+G): enter a UTC time, the chart loads
+     that day if needed and centres on that candle.
+  5. **Box zoom** (like Plotly): zoom tool in the toolbar; drag a rectangle → zoom to that
+     time and price range; reset zoom / double-click goes back; double-click on the price
+     axis = auto-scale again. No clash with picking the replay start or normal panning.
+
 ## Phase 5: Risk & FTMO simulation
 
 `docs/risk-management.md`: sizer, account simulator, Monte Carlo, sweep, and the
