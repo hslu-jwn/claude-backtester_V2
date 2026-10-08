@@ -314,6 +314,19 @@ at once, date range, settings preset, Run button with progress). Date range: nic
 a calendar popover plus quick ranges (1M, 3M, 6M, YTD, 1Y, all) like TradingView's bottom
 bar. Light theme like the screenshot. After a run the results page (3.6) opens.
 
+- ☐ **4.0a Chart engine: TradingView Lightweight Charts** (user, 2026-10-08: the Plotly
+  chart is too slow). First measure where the time goes (detectors, strategy run, figure
+  building, sending the figure, drawing in the browser). Then, in sub-steps, each checked
+  by the user on the chart:
+  1. Overlays output neutral drawing objects (box, line, marker, label, with color and
+     hover text) instead of Plotly traces, so the chart library can be swapped.
+  2. Candles, volume-free, session lines, zoom / pan / price axis with Lightweight Charts
+     (library file served locally from `ui/assets/`, no CDN), TradingView look.
+  3. Boxes (zones, FVG, OB, BPR, session zones, position boxes) as one custom primitive;
+     lines and markers with the library's own tools; all overlays and the hover texts.
+  4. Replay in the browser: the cursor step only adds the next candle and the drawings
+     that exist by then, instead of rebuilding the whole figure on the server.
+  No lookahead rule unchanged: the browser only ever gets data up to the replay cursor.
 - ☐ **4.0 Top toolbar** as described above, replacing the current controls (no new
   features: the existing chart settings, overlays and replay move into the popovers;
   the backtest button is wired once 3.4 exists).
