@@ -55,6 +55,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
+from uuid import uuid4
 
 from dash import ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
@@ -68,6 +69,7 @@ from backtester.data.adapters.cache_adapter import (
 from backtester.data.resample import supported
 from backtester.data.sources import SymbolSources, warmup_start
 from backtester.engine.replay import Replay
+from backtester.runner import BackgroundRun, start_run
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
@@ -390,6 +392,38 @@ def replay_delta(
     return {**data.delta(view.get("types") or [], frm, cursor), "key": key}
 
 
+# --- backtest from the toolbar (ROADMAP 4.0, runner.start_run) ---------------------------
+
+_RUNS: dict[str, BackgroundRun] = {}  # running backtests by job id (this server process)
+
+
+def start_backtest(sources: SymbolSources, symbols, start_date, end_date, start=start_run):
+    """Outputs of the backtest callback after "Run": (job, timer disabled, status, bar
+    style, page). The run goes on in a background thread; `poll_backtest` follows it."""
+    if not symbols or not start_date or not end_date:
+        return no_update, True, "Pick one or more symbols and the days.", {"width": "0%"}, no_update
+    job = uuid4().hex
+    first, last = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
+    _RUNS[job] = start(list(symbols), first, last, sources=sources)
+    return {"id": job}, False, f"Running {', '.join(symbols)} …", {"width": "0%"}, no_update
+
+
+def poll_backtest(job: dict | None):
+    """Progress of the running backtest; when it is done, open its results page."""
+    run = _RUNS.get(job["id"]) if job else None
+    if run is None:
+        return no_update, True, no_update, no_update, no_update
+    if not run.finished:
+        share = run.done / run.total if run.total else 0.0
+        status = f"{run.done:,} of {run.total:,} candles" if run.total else "Loading candles …"
+        return no_update, False, status, {"width": f"{share:.0%}"}, no_update
+    del _RUNS[job["id"]]
+    if run.error is not None:
+        return None, True, f"Failed: {run.error}", {"width": "0%"}, no_update
+    name = run.folder.name
+    return None, True, f"Done: results/{name}", {"width": "100%"}, f"/results/{name}"
+
+
 def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
     """Colors and sizes the browser chart needs."""
     return {
@@ -411,129 +445,227 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
     }
 
 
+QUICK_RANGES = ("1M", "3M", "6M", "YTD", "1Y", "All")
+STRATEGIES = [{"label": "Strategy 1 · Session zone sweep", "value": "session_zone_sweep"}]
+
+
+def timeframe_label(name: str) -> str:
+    """TradingView's button text: 1m, 5m, 1h, 4h, D."""
+    minutes = Timeframe[name].value
+    if minutes < 60:
+        return f"{minutes}m"
+    if minutes < 1440:
+        return f"{minutes // 60}h"
+    return "D" if minutes == 1440 else "W"
+
+
+def _months_back(d: date, months: int) -> date:
+    year, month = divmod(d.year * 12 + d.month - 1 - months, 12)
+    month += 1
+    last_day = (date(year + month // 12, month % 12 + 1, 1) - timedelta(days=1)).day
+    return date(year, month, min(d.day, last_day))
+
+
+def quick_range(days: Sequence[date], key: str) -> tuple[date, date] | None:
+    """(first, last) day of a quick range ending on the last cached day, limited to the run of
+    consecutive cached days it ends in (a range over a missing day can't be shown)."""
+    if not days:
+        return None
+    first, last = latest_run(days)
+    starts = {
+        "1M": _months_back(last, 1) + timedelta(days=1),
+        "3M": _months_back(last, 3) + timedelta(days=1),
+        "6M": _months_back(last, 6) + timedelta(days=1),
+        "YTD": date(last.year, 1, 1),
+        "1Y": last - timedelta(days=364),
+        "All": first,
+    }
+    return max(starts[key], first), last
+
+
+def _icon_button(id_: str, icon: str, title: str, pop: str | None = None, **kwargs):
+    attrs = {"data-pop": pop} if pop else {}
+    return html.Button(
+        html.Span(className=f"tb-icon icon-{icon}"),
+        id=id_,
+        title=title,
+        className="tb-btn",
+        n_clicks=0,
+        **attrs,
+        **kwargs,
+    )
+
+
+def _popover(id_: str, title: str, children) -> html.Div:
+    return html.Div(
+        [html.Div(title, className="tb-pop-title"), *children], id=id_, className="tb-pop"
+    )
+
+
+def _switch(id_: str, label: str, value: list) -> dcc.Checklist:
+    return dcc.Checklist(
+        id=id_,
+        options=[{"label": label, "value": "on"}],
+        value=value,
+        persistence=True,
+        className="tb-check",
+    )
+
+
 def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
     symbols = sources.available_symbols()
-    label = {"color": config.text_color, "marginRight": "6px"}
-    row = {"display": "flex", "alignItems": "center", "gap": "8px", "padding": "8px"}
+    settings = _popover(
+        "pop-settings",
+        "Chart settings",
+        [
+            _switch("chart-sessions", "Session lines", ["on"]),
+            _switch("chart-overlays", "Overlays", []),
+            html.Div(
+                "Overlay types" if OVERLAYS else "No overlay types yet",
+                id="chart-overlay-summary",
+                className="tb-pop-sub",
+            ),
+            dcc.Checklist(
+                id="chart-overlay-types",
+                options=overlay_options(enabled=False),
+                value=[],
+                persistence=True,
+                className="tb-check tb-types",
+            ),
+            html.Div("Detector settings", className="tb-pop-sub"),
+            dcc.Checklist(
+                id="chart-filters",
+                options=[
+                    {"label": "FVG strong-move filter", "value": "fvg"},
+                    {"label": "OB strong-move filter", "value": "ob"},
+                ],
+                value=["ob"],
+                persistence=True,
+                className="tb-check",
+            ),
+        ],
+    )
+    strategy = _popover(
+        "pop-strategy",
+        "Strategy",
+        [
+            dcc.Dropdown(
+                id="chart-strategy",
+                options=STRATEGIES,
+                value=STRATEGIES[0]["value"],
+                clearable=False,
+                searchable=False,
+            ),
+            html.Div(
+                "Used by the Trades overlay and the backtest. Its settings come with step 4.1.",
+                className="tb-pop-note",
+            ),
+        ],
+    )
+    backtest = _popover(
+        "pop-backtest",
+        "Backtest",
+        [
+            html.Div("Symbols", className="tb-pop-sub"),
+            dcc.Dropdown(id="bt-symbols", options=symbols, value=symbols[:1], multi=True),
+            html.Div("Days (UTC)", className="tb-pop-sub"),
+            dcc.DatePickerRange(id="bt-dates", display_format="YYYY-MM-DD", first_day_of_week=1),
+            html.Div(
+                [html.Button("Run", id="bt-run", className="tb-run", n_clicks=0)],
+                className="tb-pop-row",
+            ),
+            html.Div(html.Div(id="bt-bar", className="tb-progress-bar"), className="tb-progress"),
+            html.Div(id="bt-status", className="tb-pop-note"),
+        ],
+    )
+    toolbar = html.Div(
+        [
+            dcc.Dropdown(
+                id="chart-symbol",
+                options=symbols,
+                value=symbols[0] if symbols else None,
+                clearable=False,
+                searchable=True,
+                persistence=True,
+                placeholder="No symbols in the cache",
+                className="tb-symbol",
+            ),
+            html.Div(className="tb-sep"),
+            dcc.RadioItems(
+                id="chart-timeframe",
+                options=[{"label": timeframe_label(tf), "value": tf} for tf in TIMEFRAMES],
+                value=DEFAULT_TIMEFRAME,
+                persistence=True,
+                className="tb-timeframes",
+            ),
+            html.Div(className="tb-sep"),
+            html.Div(
+                [
+                    _icon_button("tb-settings", "settings", "Chart settings", "pop-settings"),
+                    settings,
+                ],
+                className="tb-anchor",
+            ),
+            html.Div(
+                [_icon_button("tb-strategy", "strategy", "Strategy", "pop-strategy"), strategy],
+                className="tb-anchor",
+            ),
+            _icon_button("chart-replay-toggle", "replay", "Bar replay (on / off)"),
+            html.Div(
+                [_icon_button("tb-backtest", "backtest", "Backtest", "pop-backtest"), backtest],
+                className="tb-anchor",
+            ),
+        ],
+        className="tb-bar tb-top",
+    )
+    replay_bar = html.Div(
+        [
+            html.Button("Select bar", id="chart-replay-pick", title="Click a candle to start at"),
+            html.Button("⏮", id="chart-replay-start", title="Back to the start candle"),
+            html.Button("◀", id="chart-replay-back", title="One candle back"),
+            html.Button("▶", id="chart-replay-play", title="Play / pause"),
+            html.Button("▶|", id="chart-replay-forward", title="One candle forward"),
+            dcc.Dropdown(
+                id="chart-replay-speed",
+                options=[{"label": f"{s}/s", "value": s} for s in config.replay_speeds],
+                value=config.replay_default_speed,
+                clearable=False,
+                searchable=False,
+                className="tb-speed",
+            ),
+            html.Button("✕", id="chart-replay-exit", title="Exit replay"),
+        ],
+        id="chart-replay-controls",
+        className="tb-replay",
+        style={"display": "none"},
+    )
+    bottom = html.Div(
+        [
+            *[
+                html.Button(k, id=f"range-{k}", className="tb-range", n_clicks=0)
+                for k in QUICK_RANGES
+            ],
+            html.Div(className="tb-sep"),
+            html.Span(className="tb-icon icon-calendar tb-cal-icon"),
+            dcc.DatePickerRange(
+                id="chart-dates",
+                display_format="YYYY-MM-DD",
+                first_day_of_week=1,
+                className="tb-dates",
+            ),
+            html.Div(
+                [html.Span(id="chart-message"), html.Span(id="chart-notes")],
+                className="tb-message",
+            ),
+            html.Span("UTC", className="tb-utc"),
+        ],
+        className="tb-bar tb-bottom",
+    )
     return html.Div(
         [
-            html.Div(
-                [
-                    html.Span("Symbol", style=label),
-                    dcc.Dropdown(
-                        id="chart-symbol",
-                        options=symbols,
-                        value=symbols[0] if symbols else None,
-                        clearable=False,
-                        placeholder="No symbols in the cache",
-                        style={"width": "140px"},
-                    ),
-                    html.Span("Timeframe", style=label),
-                    dcc.Dropdown(
-                        id="chart-timeframe",
-                        options=TIMEFRAMES,
-                        value=DEFAULT_TIMEFRAME,
-                        clearable=False,
-                        style={"width": "100px"},
-                    ),
-                    html.Span("Days (UTC)", style=label),
-                    dcc.DatePickerRange(
-                        id="chart-dates", display_format="YYYY-MM-DD", first_day_of_week=1
-                    ),
-                    dcc.Checklist(
-                        id="chart-sessions",
-                        options=[{"label": "Sessions", "value": "on"}],
-                        value=["on"],
-                        persistence=True,
-                        style={"color": config.text_color},
-                        inputStyle={"marginRight": "4px"},
-                    ),
-                    dcc.Checklist(
-                        id="chart-overlays",
-                        options=[{"label": "Overlays", "value": "on"}],
-                        value=[],
-                        persistence=True,
-                        style={"color": config.text_color},
-                        inputStyle={"marginRight": "4px"},
-                    ),
-                    html.Details(
-                        [
-                            html.Summary(
-                                "Overlay types" if OVERLAYS else "No overlay types yet",
-                                id="chart-overlay-summary",
-                                style={"cursor": "pointer", "color": config.text_color},
-                            ),
-                            dcc.Checklist(
-                                id="chart-overlay-types",
-                                options=overlay_options(enabled=False),
-                                value=[],
-                                persistence=True,
-                                style={
-                                    "position": "absolute",
-                                    "zIndex": 10,
-                                    "top": "100%",
-                                    "left": 0,
-                                    "minWidth": "220px",
-                                    "padding": "6px 10px",
-                                    "background": config.background,
-                                    "border": f"1px solid {config.spike_color}",
-                                    "borderRadius": "4px",
-                                    "color": config.text_color,
-                                },
-                                labelStyle={"display": "block", "whiteSpace": "nowrap"},
-                                inputStyle={"marginRight": "6px"},
-                            ),
-                        ],
-                        style={
-                            "position": "relative",
-                            "minWidth": "220px",
-                            "padding": "4px 8px",
-                            "border": f"1px solid {config.spike_color}",
-                            "borderRadius": "4px",
-                        },
-                    ),
-                    dcc.Checklist(
-                        id="chart-filters",
-                        options=[
-                            {"label": "FVG strong-move filter", "value": "fvg"},
-                            {"label": "OB strong-move filter", "value": "ob"},
-                        ],
-                        value=["ob"],
-                        persistence=True,
-                        style={"color": config.text_color},
-                        inputStyle={"marginRight": "4px"},
-                    ),
-                    html.Button("Replay", id="chart-replay-toggle", title="Replay on/off"),
-                    html.Div(
-                        [
-                            html.Button("Pick start", id="chart-replay-pick"),
-                            html.Button("⏮", id="chart-replay-start", title="Back to start"),
-                            html.Button("◀", id="chart-replay-back", title="One candle back"),
-                            html.Button("▶", id="chart-replay-forward", title="One candle"),
-                            html.Button("Play", id="chart-replay-play"),
-                            dcc.Dropdown(
-                                id="chart-replay-speed",
-                                options=[
-                                    {"label": f"{s}/s", "value": s} for s in config.replay_speeds
-                                ],
-                                value=config.replay_default_speed,
-                                clearable=False,
-                                style={"width": "80px"},
-                            ),
-                        ],
-                        id="chart-replay-controls",
-                        style={**row, "display": "none", "padding": "0"},
-                    ),
-                ],
-                style=row,
-            ),
-            html.Div(
-                [
-                    html.Span(id="chart-message"),
-                    html.Span(id="chart-notes", style={"marginLeft": "12px"}),
-                ],
-                style={"color": config.text_color, "padding": "0 8px"},
-            ),
+            toolbar,
+            html.Div([html.Div(id="chart-lwc"), replay_bar], className="tb-chart"),
+            bottom,
             dcc.Store(id="chart-config", data=chart_settings(config)),
             dcc.Store(id="chart-base"),
             dcc.Store(id="chart-base-done"),
@@ -546,19 +678,15 @@ def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html
             dcc.Store(id="chart-replay", data=REPLAY_OFF),
             dcc.Store(id="chart-replay-mode", data={"on": False, "picking": False}),
             dcc.Store(id="chart-replay-span"),
+            dcc.Store(id="bt-job"),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
                 disabled=True,
             ),
-            html.Div(id="chart-lwc", style={"flex": "1 1 auto", "minHeight": "0"}),
+            dcc.Interval(id="bt-timer", interval=500, disabled=True),
         ],
-        style={
-            "backgroundColor": config.background,
-            "height": "100vh",
-            "display": "flex",
-            "flexDirection": "column",
-        },
+        className="tb-page",
     )
 
 
@@ -661,8 +789,9 @@ def register_callbacks(
         Output("chart-replay-timer", "disabled"),
         Output("chart-replay-play", "children"),
         Output("chart-replay-controls", "style"),
-        Output("chart-replay-toggle", "style"),
+        Output("chart-replay-toggle", "className"),
         Input("chart-replay-toggle", "n_clicks"),
+        Input("chart-replay-exit", "n_clicks"),
         Input("chart-replay-pick", "n_clicks"),
         Input("chart-replay-start", "n_clicks"),
         Input("chart-replay-back", "n_clicks"),
@@ -709,15 +838,9 @@ def register_callbacks(
             delta,
             message,
             not new["playing"] if playing else no_update,
-            ("Pause" if new["playing"] else "Play") if playing else no_update,
+            ("❚❚" if new["playing"] else "▶") if playing else no_update,
             {**controls_style, "display": "flex" if new["on"] else "none"} if on else no_update,
-            (
-                {"fontWeight": "bold", "background": config.accent_color, "color": "white"}
-                if new["on"]
-                else {}
-            )
-            if on
-            else no_update,
+            ("tb-btn active" if new["on"] else "tb-btn") if on else no_update,
         )
 
     @app.callback(
@@ -736,9 +859,61 @@ def register_callbacks(
     def _speed(speed):
         return 1000 // speed
 
+    @app.callback(
+        Output("chart-dates", "start_date", allow_duplicate=True),
+        Output("chart-dates", "end_date", allow_duplicate=True),
+        *[Input(f"range-{k}", "n_clicks") for k in QUICK_RANGES],
+        State("chart-symbol", "value"),
+        prevent_initial_call=True,
+    )
+    def _quick_range(*args):
+        symbol = args[-1]
+        key = str(ctx.triggered_id).removeprefix("range-")
+        found = quick_range(sources.cached_days(symbol) if symbol else [], key)
+        if found is None:
+            return no_update, no_update
+        return found[0].isoformat(), found[1].isoformat()
+
+    @app.callback(
+        Output("bt-symbols", "value"),
+        Output("bt-dates", "start_date"),
+        Output("bt-dates", "end_date"),
+        Output("bt-dates", "min_date_allowed"),
+        Output("bt-dates", "max_date_allowed"),
+        Input("chart-symbol", "value"),
+        Input("chart-dates", "start_date"),
+        Input("chart-dates", "end_date"),
+        State("chart-dates", "min_date_allowed"),
+        State("chart-dates", "max_date_allowed"),
+    )
+    def _backtest_defaults(symbol, start, end, low, high):
+        """The backtest starts out with the chart's symbol and days."""
+        symbols = [symbol] if symbol else []
+        return symbols, start, end, low, high
+
+    @app.callback(
+        Output("bt-job", "data"),
+        Output("bt-timer", "disabled"),
+        Output("bt-status", "children"),
+        Output("bt-bar", "style"),
+        Output("url", "pathname"),
+        Input("bt-run", "n_clicks"),
+        Input("bt-timer", "n_intervals"),
+        State("bt-symbols", "value"),
+        State("bt-dates", "start_date"),
+        State("bt-dates", "end_date"),
+        State("bt-job", "data"),
+        prevent_initial_call=True,
+    )
+    def _backtest(_run, _tick, symbols, start, end, job):
+        if ctx.triggered_id == "bt-run":
+            return start_backtest(sources, symbols, start, end)
+        return poll_backtest(job)
+
 
 _REPLAY_ACTIONS = {
     "chart-replay-toggle": "toggle",
+    "chart-replay-exit": "toggle",
     "chart-replay-pick": "pick",
     "chart-replay-start": "start",
     "chart-replay-back": "back",

@@ -306,6 +306,12 @@
     const el = document.getElementById("chart-lwc");
     if (!el) return false;
     if (S.chart && S.el === el) return true;
+    if (S.chart) { // the page was rebuilt (back from the results page): start over
+      S.chart.remove();
+      S.chart = null;
+      S.key = null;
+      clearDrawings();
+    }
     const L = window.LightweightCharts;
     S.el = el;
     el.textContent = "";

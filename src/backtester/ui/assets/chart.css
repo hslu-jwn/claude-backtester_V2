@@ -1,10 +1,6 @@
 /* Chart page: legend, trend badges and hover tooltip over the Lightweight Charts canvas
    (ui/assets/chart.js). TradingView light theme. */
 
-#chart-lwc {
-  position: relative;
-}
-
 .chart-legend {
   position: absolute;
   top: 6px;
@@ -48,8 +44,4 @@
   color: #131722;
   white-space: pre-line;
   pointer-events: none;
-}
-
-body {
-  margin: 0;
 }

@@ -1,23 +1,41 @@
 """Dash app entry point: `python -m backtester.ui.app` → http://127.0.0.1:8050
 
-Pages: chart (pages/chart.py). The Risk & Prop Firm page (pages/risk.py) comes in Phase 5.
-Each symbol is read from the cache of its own data source (`data/sources.py`). The layout is
-rebuilt on every page load, so symbols cached while the app runs appear after a reload.
+Pages: chart (`/`, pages/chart.py) and a backtest's results (`/results/<run id>`,
+pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
+Prop Firm page (pages/risk.py) comes in Phase 5. Each symbol is read from the cache of its
+own data source (`data/sources.py`). A page is built when it is opened, so symbols cached
+while the app runs appear after a reload.
 """
 
 from __future__ import annotations
 
 import argparse
 
-from dash import Dash
+from dash import Dash, Input, Output, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.ui.pages import chart
+from backtester.ui.pages import chart, results
+
+RESULTS_PREFIX = "/results/"
+
+
+def page_for(pathname: str | None, sources: SymbolSources):
+    if pathname and pathname.startswith(RESULTS_PREFIX):
+        return results.layout(pathname.removeprefix(RESULTS_PREFIX))
+    return chart.layout(sources)
 
 
 def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
-    app = Dash(__name__, title="Backtester")
-    app.layout = lambda: chart.layout(sources)
+    app = Dash(__name__, title="Backtester", suppress_callback_exceptions=True)
+    app.layout = html.Div([dcc.Location(id="url"), html.Div(id="page")])
+    app.validation_layout = html.Div(
+        [dcc.Location(id="url"), html.Div(id="page"), chart.layout(sources)]
+    )
+
+    @app.callback(Output("page", "children"), Input("url", "pathname"))
+    def _page(pathname):
+        return page_for(pathname, sources)
+
     chart.register_callbacks(app, sources)
     return app
 

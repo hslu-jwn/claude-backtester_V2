@@ -40,7 +40,6 @@ class ChartConfig:
     show_grid: bool = False
     grid_color: str = "#f0f3fa"  # very faint, used when show_grid is on
     spike_color: str = "#9598a1"  # crosshair lines
-    accent_color: str = "#2962ff"  # replay button while replay is on
     tokyo_color: str = "#f5c518"
     london_color: str = "#2962ff"
     new_york_color: str = "#f23645"
