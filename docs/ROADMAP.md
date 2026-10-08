@@ -282,14 +282,20 @@ text with its state (active / tapped / confirmed / invalidated).
   saved to a file. Builds a reference set (agreement % after every rule change) and, later,
   training data for a learned filter.
 - ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
-  and settings used to `results/<run>/`. Also records, per session, the session zones and
+  and settings used to `results/<run>/`. **One or several symbols per run** (user, 2026-10-08):
+  results per symbol and combined (trades merged in time order). Reports progress (for the
+  progress bar in 4.0) and can run in the background so the app stays usable. Also records, per session, the session zones and
   the confluences that were part of a setup (triggered or not, confirmed or not), so the
   session view (3.5) can draw them without re-running the strategy.
 - ☐ **3.5 Session view.** Click a session line → that session's zones, setup confluences
   and trades (TradingView-style position boxes) are drawn; click outside the chart → off.
   Static by default, with a "replay this session" button.
   Spec: `strategy-session-zones.md › Session inspection view`.
-- ☐ **3.6 Results view.** Trade list (click a trade → chart jumps to it and selects its session), win rate,
+- ☐ **3.6 Results view.** Its own page, opened automatically when a run finishes (user,
+  2026-10-08), TradingView look (see 4.0). Stat cards (net R gross / net, number of trades,
+  win rate, average R:R, average win / loss, profit factor, expectancy, max drawdown in R),
+  equity curve in R over time (gross and net), R distribution, splits by symbol / session /
+  long-short / confluence type / TP1-TP2 / tag, run selector (earlier runs). Trade list (click a trade → chart jumps to it and selects its session), win rate,
   expectancy, profit factor, max drawdown in R, equity curve in R, split by symbol /
   session / tag.
 - ☐ **3.7 Cross-check with the manual backtest.** Run the same XAUUSD period as the
@@ -297,6 +303,20 @@ text with its state (active / tapped / confirmed / invalidated).
   an unclear spec rule. Clarify with the user, don't guess.
 
 ## Phase 4: Settings menu
+
+**UI layout** (user, 2026-10-08; inspiration: TradingView's top toolbar, screenshot in the
+chat). One top bar, left to right: **symbol selector** (top left, dropdown with search),
+**timeframe buttons** (1m 5m 30m 1h 4h …), then small clean **icon buttons**, each opening a
+popover / dropdown: **chart settings** (overlays switch + types panel, colors), **strategy**
+(select the strategy, only strategy 1 for now; its settings, 4.1), **replay** (like
+TradingView's replay: play, step, speed, select date), **backtest** (symbols: one or several
+at once, date range, settings preset, Run button with progress). Date range: nicer than now,
+a calendar popover plus quick ranges (1M, 3M, 6M, YTD, 1Y, all) like TradingView's bottom
+bar. Light theme like the screenshot. After a run the results page (3.6) opens.
+
+- ☐ **4.0 Top toolbar** as described above, replacing the current controls (no new
+  features: the existing chart settings, overlays and replay move into the popovers;
+  the backtest button is wired once 3.4 exists).
 
 - ☐ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
   session filters, costs), with defaults from the spec.
