@@ -257,8 +257,8 @@ text with its state (active / tapped / confirmed / invalidated).
   `tests/engine/test_backtest.py`, `tests/ui/test_trades_overlay.py`.
   **Provisional assumptions, awaiting the user's check:**
   - Confirmed by the user (2026-10-07): the equilibrium's move ends at the first 5m
-    swing high confirmed after the BOS candle (leg = BOS leg's low → that swing's price,
-    fixed); only a **close** below the leg's low invalidates it (confluences.md updated);
+    swing high confirmed after the BOS candle (leg = BOS leg's low → the highest wick up
+    to the candle confirming that swing, fixed; 2026-10-08); only a **close** below the leg's low invalidates it (confluences.md updated);
     `min_sl_atr_mult` stays off by default.
   - Equilibrium exists from the end swing's confirming candle, whose own wick doesn't tap
     it (zone.py rule). Only the setup whose BOS made the leg may use it. It also follows
@@ -314,9 +314,11 @@ text with its state (active / tapped / confirmed / invalidated).
   - A trade belongs to the session whose start < entry close time <= end.
   - Symbols run in separate processes (one per symbol); results are identical to a run in
     one process.
-  **Open (user to look at, 2026-10-08):** GBPUSD runs crash in `equilibrium_zone`: twice in
-  September (2026-09-04 21:00, 2026-09-24 23:50) the first 5m swing after the BOS is not
-  beyond the BOS leg's extreme, so the equilibrium leg is upside down. XAUUSD / GBPJPY: none.
+  Fixed (user, 2026-10-08): GBPUSD runs crashed in `equilibrium_zone` (2026-09-04 21:00,
+  2026-09-24 23:50): the first 5m swing high after the BOS was below the BOS leg's low
+  (weekend / rollover gap), so the leg was upside down. The leg's far end is now the
+  move's high: the highest wick from the BOS leg's low up to the candle that confirms the
+  end swing (short mirrored); test with the hand-built 2026-09-04 GBPUSD candles.
 - ☐ **3.5 Session view.** Click a session line → that session's zones, setup confluences
   and trades (TradingView-style position boxes) are drawn; click outside the chart → off.
   Static by default, with a "replay this session" button.

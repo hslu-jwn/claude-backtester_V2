@@ -19,17 +19,19 @@ from datetime import UTC, datetime
 
 import pytest
 import scenario
+from conftest import build_candles, build_series
 from scenario import LONDON, NY_FIRST, NY_SETUP, bar, doji
 from test_setup import run_tracker
 
-from backtester.core.models import Direction
+from backtester.core.models import Direction, Timeframe
+from backtester.core.series import CandleSeries
 from backtester.detectors.swings import SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneKind
 from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import StructureBreak
-from backtester.strategy.session_zone_sweep.signals import equilibrium_zone
+from backtester.strategy.session_zone_sweep.signals import SetupTracker, equilibrium_zone
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
 
 LONG, SHORT = Direction.BULLISH, Direction.BEARISH
@@ -93,16 +95,69 @@ def test_close_below_the_leg_low_invalidates_it():
 
 
 def test_equilibrium_zone_geometry_and_short_mirrored():
+    # leg extreme at candle 2, the move's high / low (104 / 98) at candle 4, end swing
+    # (104 / 98) confirmed by candle 6
     swing = SwingPoint(1, T, SwingKind.HIGH, 101.0, 1, T, 0)
     long_break = StructureBreak(LONG, 3, T, swing, True, 2, 98.0)
-    end = SwingPoint(6, T, SwingKind.HIGH, 104.0, 5, T, 5)
-    z = equilibrium_zone(long_break, end)
+    ohlc = [(99, 100, 99, 100), (100, 101, 99, 100), (100, 100, 98, 99), (99, 102, 99, 102),
+            (102, 104, 101, 103), (103, 103.5, 102, 102), (102, 102.5, 101, 101)]  # fmt: skip
+    up = build_series(ohlc)
+    end = SwingPoint(6, T, SwingKind.HIGH, 104.0, 4, T, 4)
+    z = equilibrium_zone(up.view(6), long_break, end)
     assert (z.direction, z.bottom, z.top, z.near, z.far) == (LONG, 98.0, 101.0, 101.0, 98.0)
     assert (z.start_index, z.created_index) == (2, 6)
     short_break = StructureBreak(SHORT, 3, T, swing, True, 2, 104.0)
-    low = SwingPoint(6, T, SwingKind.LOW, 98.0, 5, T, 5)
-    z = equilibrium_zone(short_break, low)
+    down = build_series([(202 - o, 202 - lo, 202 - h, 202 - c) for o, h, lo, c in ohlc])
+    low = SwingPoint(6, T, SwingKind.LOW, 98.0, 4, T, 4)
+    z = equilibrium_zone(down.view(6), short_break, low)
     assert (z.direction, z.bottom, z.top, z.near, z.far) == (SHORT, 101.0, 104.0, 101.0, 104.0)
+
+
+# GBPUSD 2026-09-04 (Friday) 20:00 - 20:55, then Sunday 2026-09-06 21:00 - 21:25 after the
+# weekend gap (real bid candles, rebuilt by hand). Bullish BOS at 20:55 over the 20:40
+# swing high 1.35155; BOS leg low 1.35137 (20:50); break candle high 1.35178. After the gap
+# down, the first swing high confirmed after the break is 1.35123 (green 21:05, doji, red 21:15):
+# below the leg low. The move's high is the break candle's 1.35178, so the equilibrium is
+# 1.35137 - 1.351575 from 21:15 (this crashed before: the leg was upside down). The next
+# close (21:20) is below the leg low and invalidates it.
+GBPUSD_FRI = datetime(2026, 9, 4, 20, 0, tzinfo=UTC)
+GBPUSD_SUN = datetime(2026, 9, 6, 21, 0, tzinfo=UTC)
+GBPUSD_GAP = [
+    (1.35187, 1.35194, 1.35174, 1.35183),  # 20:00
+    (1.35183, 1.35183, 1.35150, 1.35152),
+    (1.35153, 1.35155, 1.35145, 1.35155),
+    (1.35154, 1.35157, 1.35154, 1.35156),
+    (1.35160, 1.35164, 1.35154, 1.35159),
+    (1.35161, 1.35179, 1.35157, 1.35170),  # 20:25
+    (1.35169, 1.35171, 1.35149, 1.35151),
+    (1.35150, 1.35152, 1.35145, 1.35150),
+    (1.35151, 1.35155, 1.35148, 1.35152),  # 20:40 swing high 1.35155
+    (1.35152, 1.35154, 1.35138, 1.35144),
+    (1.35145, 1.35152, 1.35137, 1.35148),  # 20:50 BOS leg low 1.35137
+    (1.35146, 1.35178, 1.35138, 1.35158),  # 20:55 bullish BOS, high 1.35178
+    (1.35099, 1.35104, 1.35099, 1.35104),  # Sunday 21:00
+    (1.35104, 1.35115, 1.35104, 1.35115),
+    (1.35115, 1.35115, 1.35115, 1.35115),
+    (1.35115, 1.35123, 1.35105, 1.35106),  # 21:15 swing high 1.35123, confirmed
+    (1.35118, 1.35121, 1.35101, 1.35117),
+    (1.35118, 1.35134, 1.35106, 1.35118),
+]
+GBPUSD_BOS, GBPUSD_END = 11, 15
+
+
+def test_move_high_is_the_highest_wick_not_the_end_swing_gbpusd_weekend_gap():
+    fri = build_candles(GBPUSD_GAP[:12], start=GBPUSD_FRI)
+    sun = build_candles(GBPUSD_GAP[12:], start=GBPUSD_SUN)
+    series = CandleSeries("GBPUSD", Timeframe.M5, fri + sun)
+    tracker = SetupTracker("GBPUSD")
+    for i in range(GBPUSD_END + 1):
+        view = series.view(i)
+        tracker.update(view.current.ts + Timeframe.M5.duration, view, None)
+    assert [s.price for s in tracker.structure.new_swings] == [1.35123]
+    z = tracker._equilibrium[(GBPUSD_BOS, LONG)]
+    assert z.kind is ZoneKind.EQUILIBRIUM and z.direction is LONG
+    assert (z.bottom, z.top) == (1.35137, pytest.approx((1.35137 + 1.35178) / 2))
+    assert (z.start_index, z.created_index) == (10, GBPUSD_END)
 
 
 def test_no_lookahead_equilibrium_exists_only_from_the_move_end():

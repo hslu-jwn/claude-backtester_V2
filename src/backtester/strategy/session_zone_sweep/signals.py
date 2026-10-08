@@ -17,8 +17,10 @@ direction per candle: if several setups trigger on the same candle, the first li
 signal is used and all of them restart.
 
 Equilibrium entry (strategy-session-zones.md › Entry sequence step 4, confluences.md › Equilibrium):
-the leg runs from the break's leg extreme (long: the BOS leg's low) to the move's end, the
-first 5m swing high confirmed after the break candle. From that candle on, the leg's lower
+the leg runs from the break's leg extreme (long: the BOS leg's low) to the move's high: the
+highest wick from that low up to the candle that confirms the move's end, the first 5m swing
+high confirmed after the break candle (that swing itself can be lower, e.g. after a weekend
+gap). From that confirming candle on, the leg's lower
 half (0.5 level down to the low) is validated like a zone (zone.py): a wick below 0.5 taps
 it, a green close back above 0.5 confirms it, a close below the low invalidates it. Only
 the setup whose BOS made the leg may use it.
@@ -67,10 +69,17 @@ ROLE_DIRECTION = {Role.SUPPORT: Direction.BULLISH, Role.RESISTANCE: Direction.BE
 MOVE_END = {Direction.BULLISH: SwingKind.HIGH, Direction.BEARISH: SwingKind.LOW}
 
 
-def equilibrium_zone(b: StructureBreak, end: SwingPoint) -> ZoneBox:
+def equilibrium_zone(view: SeriesView, b: StructureBreak, end: SwingPoint) -> ZoneBox:
     """The discount half of `b`'s move (long: 0.5 level down to the leg's low), existing
-    from the candle that confirmed the move's end swing `end`."""
-    mid = (b.leg_extreme + end.price) / 2
+    from the candle that confirmed the move's end swing `end` (`view`'s current candle).
+    The move's high: the highest wick from the leg's low to that candle (short mirrored).
+    Spec: strategy-session-zones.md › Entry sequence (equilibrium entry)."""
+    candles = view.window(b.leg_index, end.confirmed_index + 1)
+    if b.direction is Direction.BULLISH:
+        far = max(c.high for c in candles)
+    else:
+        far = min(c.low for c in candles)
+    mid = (b.leg_extreme + far) / 2
     top, bottom = (mid, b.leg_extreme) if b.direction is Direction.BULLISH else (b.leg_extreme, mid)
     return ZoneBox(
         ZoneKind.EQUILIBRIUM,
@@ -184,7 +193,7 @@ class SetupTracker:
             if end is None:
                 waiting.append(b)
                 continue
-            zone = equilibrium_zone(b, end)
+            zone = equilibrium_zone(v5, b, end)
             self._eq_book.add(zone)
             self._equilibrium[(b.index, b.direction)] = zone
         self._eq_waiting = waiting + breaks  # a move ends after its break candle
