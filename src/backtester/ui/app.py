@@ -1,6 +1,7 @@
 """Dash app entry point: `python -m backtester.ui.app` → http://127.0.0.1:8050
 
-Pages: chart (`/`, pages/chart.py) and a backtest's results (`/results/<run id>`,
+Pages: chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
+one trade, from the results page) and a backtest's results (`/results/<run id>`,
 pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
 Prop Firm page (pages/risk.py) comes in Phase 5. Each symbol is read from the cache of its
 own data source (`data/sources.py`). A page is built when it is opened, so symbols cached
@@ -11,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.ui.pages import chart, results
@@ -19,24 +20,30 @@ from backtester.ui.pages import chart, results
 RESULTS_PREFIX = "/results/"
 
 
-def page_for(pathname: str | None, sources: SymbolSources):
+def page_for(pathname: str | None, sources: SymbolSources, search: str | None = None):
     if pathname and pathname.startswith(RESULTS_PREFIX):
         return results.layout(pathname.removeprefix(RESULTS_PREFIX))
-    return chart.layout(sources)
+    return chart.layout(sources, focus=chart.focus_from_query(search))
 
 
 def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
     app = Dash(__name__, title="Backtester", suppress_callback_exceptions=True)
     app.layout = html.Div([dcc.Location(id="url"), html.Div(id="page")])
     app.validation_layout = html.Div(
-        [dcc.Location(id="url"), html.Div(id="page"), chart.layout(sources)]
+        [
+            dcc.Location(id="url"),
+            html.Div(id="page"),
+            chart.layout(sources),
+            results.layout(""),
+        ]
     )
 
-    @app.callback(Output("page", "children"), Input("url", "pathname"))
-    def _page(pathname):
-        return page_for(pathname, sources)
+    @app.callback(Output("page", "children"), Input("url", "pathname"), State("url", "search"))
+    def _page(pathname, search):
+        return page_for(pathname, sources, search)
 
     chart.register_callbacks(app, sources)
+    results.register_callbacks(app)
     return app
 
 

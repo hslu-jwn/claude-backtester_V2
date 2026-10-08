@@ -163,6 +163,8 @@ def test_results_folder(cache, tmp_path):
     assert float(rows[0]["r_net"]) == pytest.approx(NET)
     assert float(rows[0]["planned_rr"]) == pytest.approx(1.2)
     assert json.loads(rows[0]["parts"])[0]["reason"] == "take_profit"
+    assert rows[0]["confluence"] in {"fvg", "order_block", "bpr", "equilibrium"}
+    assert rows[0]["confluence"] in rows[0]["reason"]
 
     settings = json.loads((folder / "settings.json").read_text())
     assert settings["run"]["symbols"] == ["XAUUSD", "GOLD"]
@@ -177,6 +179,7 @@ def test_results_folder(cache, tmp_path):
 
     summary = json.loads((folder / "summary.json").read_text())
     assert summary["run_id"] == "test-run"
+    assert datetime.fromisoformat(summary["created"]).tzinfo is not None
     assert summary["combined"]["trades"] == 2
     assert summary["per_symbol"]["XAUUSD"]["net_r_gross"] == pytest.approx(1.2)
     assert summary["days"]["GOLD"] == {

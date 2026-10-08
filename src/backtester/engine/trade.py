@@ -83,6 +83,7 @@ class TradeResult:
     mfe_r: float  # best floating R on the chart while open (>= 0)
     tags: frozenset[str] = field(default_factory=frozenset)
     reason: str = ""
+    confluence: str = ""  # entry confluence type (Order.confluence)
     take_profit_2: float | None = None
     tp1_share: float = 1.0
     parts: tuple[PartialExit, ...] = ()  # in the order they were closed
@@ -120,6 +121,7 @@ class OpenTrade:
     break_even_level: float  # where a hit is 0R net: entry + spread + commission (long)
     tags: frozenset[str] = field(default_factory=frozenset)
     reason: str = ""
+    confluence: str = ""  # entry confluence type (Order.confluence)
     take_profit_2: float | None = None
     tp1_share: float = 1.0
     break_even_after_tp1: bool = False
@@ -240,6 +242,7 @@ class OpenTrade:
             mfe_r=self.mfe_r,
             tags=self.tags,
             reason=self.reason,
+            confluence=self.confluence,
             take_profit_2=self.take_profit_2,
             tp1_share=self.tp1_share if self.take_profit_2 is not None else 1.0,
             parts=tuple(self.parts),

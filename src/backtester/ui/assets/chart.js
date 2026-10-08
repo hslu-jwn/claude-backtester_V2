@@ -18,7 +18,9 @@
   "use strict";
 
   const HOVER_PX = 20; // like Plotly's hover distance
-  const DETAIL_PX = 3; // narrower candles: no markers / labels (unreadable, slow to draw)
+  const FOCUS_BEFORE = 60; // candles shown before a focused trade's entry ...
+  const FOCUS_AFTER = 30; // ... and after its exit
+  const DETAIL_PX = 3;// narrower candles: no markers / labels (unreadable, slow to draw)
   const DASHES = { solid: [], dot: [3, 3], dash: [9, 9] }; // Plotly's patterns at width 1
   const KIND_ORDER = { bf: 0, bo: 1, l: 2, m: 3, t: 4 }; // fills, outlines, lines, markers, labels
   const S = {
@@ -284,6 +286,7 @@
 
   function showBadges() {
     const el = S.badgesEl;
+    if (!el) return; // no chart yet (a selection can arrive before the first candles)
     el.textContent = "";
     if (!S.overlaysOn) return;
     for (const type of S.order) {
@@ -504,6 +507,27 @@
         S.drawn.overlays = performance.now();
         const req = need(wanted()); // a type ticked while this one was on its way
         return req || no();
+      },
+
+      /* Trade focus (from the results page): once the focused symbol's candles are drawn,
+         scroll to the trade (entry candle t0 .. exit time t1) and mark the focus done. */
+      focus(_done, focus) {
+        if (!focus || focus.done || !S.chart || S.symbol !== focus.symbol || !S.times.length) {
+          return no();
+        }
+        const t0 = Date.parse(focus.t0) / 1000;
+        const t1 = Date.parse(focus.t1) / 1000;
+        const last = S.times.length - 1;
+        if (t0 < S.times[0] || t0 > S.times[last]) return no(); // not this range (yet)
+        let i0 = 0;
+        while (i0 < last && S.times[i0 + 1] <= t0) i0++; // the candle containing the entry
+        let i1 = i0;
+        while (i1 < last && S.times[i1 + 1] < t1) i1++; // ... and the exit
+        S.chart.timeScale().setVisibleLogicalRange({
+          from: i0 - FOCUS_BEFORE,
+          to: i1 + FOCUS_AFTER,
+        });
+        return Object.assign({}, focus, { done: true });
       },
 
       /* Replay delta: from our cursor to the next one. */

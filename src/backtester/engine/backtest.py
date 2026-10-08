@@ -154,6 +154,7 @@ class Backtest:
             break_even_level=entry + sign * self._config.costs.break_even_offset(symbol),
             tags=order.tags,
             reason=order.reason,
+            confluence=order.confluence,
             take_profit_2=order.take_profit_2,
             tp1_share=order.tp1_share if order.take_profit_2 is not None else 1.0,
             break_even_after_tp1=order.break_even_after_tp1,

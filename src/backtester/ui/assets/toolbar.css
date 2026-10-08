@@ -289,20 +289,3 @@ body {
   color: var(--tb-muted);
   font-size: 12px;
 }
-
-/* results page (placeholder until 3.6) */
-.rs-page {
-  max-width: 900px;
-  margin: 24px auto;
-  padding: 0 16px;
-}
-.rs-back {
-  color: var(--tb-accent);
-  text-decoration: none;
-}
-.rs-table {
-  padding: 12px;
-  background: #f8f9fd;
-  border: 1px solid var(--tb-line);
-  border-radius: 4px;
-}

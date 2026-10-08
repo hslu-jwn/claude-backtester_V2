@@ -24,6 +24,7 @@ class Order:
     take_profit: float  # TP1 (the whole position when take_profit_2 is None)
     tags: frozenset[str] = field(default_factory=frozenset)  # e.g. {"last_1.5h"}
     reason: str = ""  # human-readable trail for the chart / debugging
+    confluence: str = ""  # entry confluence type, e.g. "fvg" (results split by it)
     take_profit_2: float | None = None  # the rest of the position closes here
     tp1_share: float = 1.0  # share closed at TP1; < 1 only with a take_profit_2
     break_even_after_tp1: bool = False  # SL of the rest to break-even (with costs) after TP1

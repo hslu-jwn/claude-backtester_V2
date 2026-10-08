@@ -330,6 +330,37 @@ text with its state (active / tapped / confirmed / invalidated).
   long-short / confluence type / TP1-TP2 / tag, run selector (earlier runs). Trade list (click a trade → chart jumps to it and selects its session), win rate,
   expectancy, profit factor, max drawdown in R, equity curve in R, split by symbol /
   session / tag.
+  Built (2026-10-08, awaiting the user's check): `ui/pages/results.py` (top bar: ← Chart,
+  run selector, symbol filter All / per symbol for every tab; header: run, symbols, days,
+  preset, run date; tabs Overview / Performance summary / List of trades),
+  `assets/results.js` (equity curve with Lightweight Charts), `assets/results.css`;
+  metrics in `analytics/metrics.py` (`summarize` extended, `split` + `SPLITS`,
+  `equity_curve`, `r_histogram`, `tp_outcome`), trades.csv read back by
+  `analytics/records.py` (`TradeRecord`); new `confluence` column in trades.csv
+  (`Order.confluence` → `TradeResult.confluence`) and `created` in summary.json; chart
+  focus `/?symbol=…&from=…&to=…&t0=…&t1=…` in `pages/chart.py` + `chart.js` `focus`.
+  Tests: `tests/analytics/test_metrics.py`, `tests/ui/test_results_page.py`.
+  Check (choices made while building):
+  - Every number is computed from trades.csv with `analytics/metrics.py` (so the symbol
+    filter and older runs work); summary.json gets the same new metrics for new runs.
+  - Expectancy = average net R per trade (so it equals "avg realized R (net)"); average
+    win / loss and profit factor on net R; profit factor "—" without a loss.
+  - Losing streak: losses in a row by exit time; a break-even ends a streak.
+  - **Max drawdown changed (3.4 metric):** trades closing at the same time (same candle)
+    now count as one step, as on the equity curve (their order inside a candle is
+    unknown). The run 2026-09-02..30 (3 symbols) is unchanged (49.97 R).
+  - Equity curve: net (blue area) and gross (dashed grey) on the top pane, net drawdown
+    shaded red in a pane below; x = exit time, starts at 0 at the first entry.
+  - Performance tab: TradingView-style table All / Long / Short, then the six split
+    tables (two per row) and the R histogram (Plotly, net R, 0.25 R bins).
+  - TP outcome groups: "TP1 + TP2", "TP1, rest out" (rest at break-even / SL / end of
+    data), "TP (one target)", "no TP". Tag groups: "last 1.5h" / "other". Runs written
+    before the confluence column take it from the reason text.
+  - Trade list: sorted by the arrows in the header (dash DataTable, still built into Dash
+    but marked deprecated; no new dependency). Click a row → the chart opens on that
+    symbol with the days from entry to exit, Trades overlay + "trade confluences" on,
+    scrolled to the trade (60 candles before, 30 after), on the current timeframe. The
+    session view (3.5) isn't built, so no session is selected yet.
 - ☐ **3.7 Cross-check with the manual backtest.** Run the same XAUUSD period as the
   user's manual R log and compare trade by trade. Every difference is either a code bug or
   an unclear spec rule. Clarify with the user, don't guess.

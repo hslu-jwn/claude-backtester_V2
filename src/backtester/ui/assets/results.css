@@ -1,0 +1,242 @@
+/* Results page (ROADMAP 3.6): TradingView Strategy Tester look, light theme, the same
+   tokens as the toolbar (toolbar.css :root). */
+
+.rs-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #ffffff;
+}
+.rs-page .tb-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.rs-back {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--tb-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+.rs-back:hover {
+  background: var(--tb-hover);
+}
+.rs-run {
+  width: 520px;
+  font-size: 13px;
+}
+.rs-run .dash-dropdown,
+.rs-run .dash-dropdown-trigger,
+.rs-run button {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+}
+.rs-body {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+  box-sizing: border-box;
+}
+
+/* header */
+.rs-header {
+  padding: 18px 0 8px;
+}
+.rs-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.rs-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  font-size: 13px;
+}
+.rs-meta-key {
+  margin-right: 6px;
+  color: var(--tb-muted);
+}
+.rs-notes {
+  margin-top: 6px;
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+
+/* tabs: TradingView's underlined tabs */
+.rs-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--tb-line);
+}
+.rs-tabs label {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px 9px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--tb-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.rs-tabs label:hover {
+  color: var(--tb-text);
+}
+.rs-tabs input {
+  display: none;
+}
+.rs-tabs label:has(input:checked) {
+  color: var(--tb-text) !important;
+  border-bottom-color: var(--tb-text);
+  font-weight: 600;
+}
+.rs-content {
+  padding-top: 16px;
+}
+.rs-empty {
+  padding: 40px 0;
+  color: var(--tb-muted);
+  text-align: center;
+}
+.rs-hint {
+  margin-bottom: 8px;
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+
+/* overview cards */
+.rs-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: 1px solid var(--tb-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.rs-card {
+  padding: 12px 14px;
+  border-right: 1px solid var(--tb-line);
+  border-bottom: 1px solid var(--tb-line);
+  margin: 0 -1px -1px 0;
+}
+.rs-card-label {
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+.rs-card-value {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.rs-card-sub {
+  margin-top: 2px;
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+.rs-up {
+  color: #089981;
+}
+.rs-down {
+  color: #f23645;
+}
+
+/* section titles, equity curve */
+.rs-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.rs-section-title {
+  margin: 22px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rs-keys {
+  display: flex;
+  gap: 16px;
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+.rs-key::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px solid;
+}
+.rs-key-net::before {
+  border-color: #2962ff;
+}
+.rs-key-gross::before {
+  border-top: 2px dashed #787b86;
+}
+.rs-key-dd::before {
+  border-top: 6px solid rgba(242, 54, 69, 0.35);
+}
+.rs-equity {
+  position: relative;
+  height: 430px;
+  border: 1px solid var(--tb-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* tables */
+.rs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.rs-table th {
+  padding: 7px 10px;
+  color: var(--tb-muted);
+  font-weight: 600;
+  text-align: right;
+  border-bottom: 1px solid var(--tb-line);
+}
+.rs-table td {
+  padding: 6px 10px;
+  text-align: right;
+  border-bottom: 1px solid #f0f3fa;
+  white-space: nowrap;
+}
+.rs-table th:first-child,
+.rs-table td:first-child {
+  text-align: left;
+}
+.rs-table tbody tr:hover {
+  background: #f8f9fd;
+}
+.rs-summary {
+  max-width: 760px;
+}
+.rs-splits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+}
+.rs-histogram {
+  border: 1px solid var(--tb-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* trade list (dash_table): hover like TradingView's list */
+#rs-trades .dash-spreadsheet-container tr:hover td {
+  background-color: #f0f3fa !important;
+}
+
+@media (max-width: 1100px) {
+  .rs-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rs-splits {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

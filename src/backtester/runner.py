@@ -20,7 +20,7 @@ order. Progress: `progress(done, total)` in 5m candles over all symbols.
 - `settings.json` the exact settings: run (symbols, range, warm-up, cache folders),
   strategy and engine (incl. costs) config dataclasses
 - `summary.json` per symbol and combined (analytics/metrics.py `summarize`), the days
-  used per symbol and notes
+  used per symbol, notes and when the run was made (`created`, UTC)
 - `sessions.json` per symbol and session: the session zones, the setup confluences
   (strategy/session_zone_sweep/journal.py) and the ids of the trades entered in it
 
@@ -282,7 +282,7 @@ TRADE_COLUMNS = (
     "entry_fill", "initial_stop", "take_profit", "take_profit_2", "tp1_share", "planned_rr",
     "exit_time", "exit_candle", "exit_price", "exit_fill", "exit_reason", "r_gross", "r_net",
     "spread_r", "commission_r", "break_even_time", "break_even_stop", "mae_r", "mfe_r",
-    "tags", "reason", "parts",
+    "tags", "confluence", "reason", "parts",
 )  # fmt: skip
 
 
@@ -377,6 +377,7 @@ def write_results(
     }
     summary = {
         "run_id": run_id,
+        "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "symbols": result.symbols,
         "start": result.start,
         "end": result.end,

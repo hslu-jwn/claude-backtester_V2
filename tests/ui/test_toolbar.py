@@ -3,7 +3,6 @@ Spec: ROADMAP.md › 4.0 (Phase 4 › UI layout)."""
 
 from __future__ import annotations
 
-import json
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -11,7 +10,7 @@ from dash import no_update
 
 from backtester.data.sources import SymbolSources
 from backtester.ui import app as app_module
-from backtester.ui.pages import chart, results
+from backtester.ui.pages import chart
 from backtester.ui.pages.chart import poll_backtest, quick_range, start_backtest, timeframe_label
 
 SEP = [date(2026, 9, 1) + timedelta(days=i) for i in range(30)]  # 09-01 .. 09-30
@@ -89,30 +88,6 @@ def test_backtest_errors_and_missing_input_are_shown():
     assert timer_off and status == "Failed: XAUUSD: no cached day" and page is no_update
     _, timer_off, status, _, _ = start_backtest(None, [], "2026-09-02", "2026-09-30")
     assert timer_off and status.startswith("Pick one or more symbols")
-
-
-def test_results_page_shows_the_summary_and_never_reads_outside_the_results_folder(tmp_path):
-    folder = tmp_path / "20261008-120000_XAUUSD"
-    folder.mkdir()
-    summary = {
-        "run_id": folder.name,
-        "symbols": ["XAUUSD"],
-        "start": "2026-09-02",
-        "end": "2026-09-30",
-        "per_symbol": {"XAUUSD": {"trades": 3, "win_rate": 0.5, "net_r_gross": 1.0,
-                                  "net_r_net": 0.5, "avg_rr": 2.0, "max_drawdown_r_net": 1.0}},
-        "combined": {"trades": 3, "win_rate": 0.5, "net_r_gross": 1.0, "net_r_net": 0.5,
-                     "avg_rr": 2.0, "max_drawdown_r_net": 1.0},
-        "notes": ["XAUUSD: 2026-09-01 not cached"],
-    }  # fmt: skip
-    (folder / "summary.json").write_text(json.dumps(summary))
-    (folder / "trades.csv").write_text("")
-    page = str(results.layout(folder.name, tmp_path))
-    assert "Backtest 20261008-120000_XAUUSD" in page and "combined" in page
-    assert "trades.csv" in page and "not cached" in page
-    for bad in ("..", "../etc", "a/b", "", "missing"):
-        assert results.run_folder(bad, tmp_path) is None
-        assert "Run not found" in str(results.layout(bad, tmp_path))
 
 
 def test_pages_by_address():

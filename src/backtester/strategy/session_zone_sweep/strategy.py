@@ -115,6 +115,7 @@ class SessionZoneSweep(Strategy):
                 found.take_profit,
                 tags,
                 _reason(signal, found),
+                confluence=signal.confluence.kind.value,
                 take_profit_2=found.take_profit_2,
                 tp1_share=self.config.tp1_share if two else 1.0,
                 break_even_after_tp1=self.config.break_even_after_tp1,

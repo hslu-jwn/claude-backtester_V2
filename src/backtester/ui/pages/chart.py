@@ -47,6 +47,12 @@ Trades (ROADMAP.md › 3.3b): the "Trades" overlay runs strategy 1 and the engin
 shown symbol and range (with warm-up) and draws position boxes, see `ui/trades_overlay.py`.
 Overlays that load their own data (`OverlayType.needs_sources`) get the page's sources.
 
+Focus on one trade (ROADMAP.md › 3.6, from the results page's trade list):
+`/?symbol=…&from=…&to=…&t0=…&t1=…` selects the symbol and the UTC days from..to, turns on
+the Trades overlay with its confluences and, once the candles are drawn, scrolls the chart
+to the trade (t0 = entry candle, t1 = exit time). Applied once; the store `chart-focus` is
+then marked done, so later changes of symbol or days are the user's again.
+
 Later steps add: the session view (3.5).
 """
 
@@ -55,6 +61,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
+from urllib.parse import parse_qs
 from uuid import uuid4
 
 from dash import ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
@@ -512,7 +519,58 @@ def _switch(id_: str, label: str, value: list) -> dcc.Checklist:
     )
 
 
-def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html.Div:
+TRADES_OVERLAY = ("trades", "trades.confluences")  # turned on by a trade focus
+
+
+def focus_from_query(search: str | None) -> dict | None:
+    """The trade focus from the URL query (see the module docstring), or None."""
+    query = {k: v[0] for k, v in parse_qs((search or "").lstrip("?")).items()}
+    try:
+        focus = {
+            "symbol": query["symbol"],
+            "from": date.fromisoformat(query["from"]).isoformat(),
+            "to": date.fromisoformat(query["to"]).isoformat(),
+            "t0": datetime.fromisoformat(query["t0"]).isoformat(),
+            "t1": datetime.fromisoformat(query["t1"]).isoformat(),
+        }
+    except (KeyError, ValueError):
+        return None
+    return focus if focus["from"] <= focus["to"] else None
+
+
+def focus_selection(focus: dict | None, overlay_types: list | None):
+    """(symbol, overlays switch, overlay types) for a pending focus, else None."""
+    if not focus or focus.get("done"):
+        return None
+    types = list(overlay_types or [])
+    return focus["symbol"], ["on"], types + [t for t in TRADES_OVERLAY if t not in types]
+
+
+def date_limits(days: Sequence[date], symbol: str | None = None, focus: dict | None = None):
+    """Date picker limits and the range shown when the symbol changes: the latest run of
+    consecutive cached days, or a pending trade focus's days for its symbol."""
+    if not days:
+        return None, None, [], None, None, None
+    cached = set(days)
+    span = (days[-1] - days[0]).days
+    holes = [days[0] + timedelta(days=i) for i in range(span + 1)]
+    first, last = latest_run(days)
+    start, end = first.isoformat(), last.isoformat()
+    if focus and not focus.get("done") and focus["symbol"] == symbol:
+        start, end = focus["from"], focus["to"]
+    return (
+        days[0].isoformat(),
+        days[-1].isoformat(),
+        [d.isoformat() for d in holes if d not in cached],
+        start,
+        end,
+        start,
+    )
+
+
+def layout(
+    sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG, focus: dict | None = None
+) -> html.Div:
     symbols = sources.available_symbols()
     settings = _popover(
         "pop-settings",
@@ -679,6 +737,7 @@ def layout(sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG) -> html
             dcc.Store(id="chart-replay-mode", data={"on": False, "picking": False}),
             dcc.Store(id="chart-replay-span"),
             dcc.Store(id="bt-job"),
+            dcc.Store(id="chart-focus", data=focus),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
@@ -701,23 +760,28 @@ def register_callbacks(
         Output("chart-dates", "end_date"),
         Output("chart-dates", "initial_visible_month"),
         Input("chart-symbol", "value"),
+        State("chart-focus", "data"),
     )
-    def _date_limits(symbol):
-        days = sources.cached_days(symbol) if symbol else []
-        if not days:
-            return None, None, [], None, None, None
-        cached = set(days)
-        span = (days[-1] - days[0]).days
-        holes = [days[0] + timedelta(days=i) for i in range(span + 1)]
-        first, last = latest_run(days)
-        return (
-            days[0].isoformat(),
-            days[-1].isoformat(),
-            [d.isoformat() for d in holes if d not in cached],
-            first.isoformat(),
-            last.isoformat(),
-            first.isoformat(),
-        )
+    def _date_limits(symbol, focus):
+        return date_limits(sources.cached_days(symbol) if symbol else [], symbol, focus)
+
+    @app.callback(
+        Output("chart-symbol", "value"),
+        Output("chart-overlays", "value"),
+        Output("chart-overlay-types", "value"),
+        Input("chart-focus", "data"),
+        State("chart-overlay-types", "value"),
+    )
+    def _focus(focus, overlay_types):
+        found = focus_selection(focus, overlay_types)
+        return found if found is not None else (no_update, no_update, no_update)
+
+    app.clientside_callback(
+        ClientsideFunction("chart", "focus"),
+        Output("chart-focus", "data"),
+        Input("chart-base-done", "data"),
+        State("chart-focus", "data"),
+    )
 
     @app.callback(
         Output("chart-base", "data"),
