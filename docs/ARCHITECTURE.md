@@ -20,7 +20,8 @@ Each layer only imports from the layers above it in this list.
 7. **analytics/**: statistics on R trade lists.
 8. **risk/**: turns an R trade list into account equity under prop-firm rules; Monte Carlo
    and parameter sweeps. Spec: `risk-management.md`.
-9. **ui/**: Dash + Plotly. Reads results; never contains trading logic.
+9. **ui/**: Dash app with a TradingView Lightweight Charts chart in the browser. Reads
+   results; never contains trading logic. See "How the chart gets its data" below.
 
 ## How a backtest steps through time
 
@@ -47,6 +48,30 @@ The chart replay (ROADMAP 1.2) draws from it, so it shows exactly what the engin
 A higher-timeframe detector is updated only when a new candle of that timeframe has
 closed, so it is called exactly once per candle, as on its own chart.
 
+## How the chart gets its data
+
+The chart page (ROADMAP 4.0a) draws with TradingView Lightweight Charts in the browser
+(`ui/assets/chart.js`, the chart object is created once). The server never builds a
+figure; it sends data, always cut at a **cursor** (the last candle, or the replay cursor),
+so the browser never receives anything that isn't known at that candle (Invariant #1):
+
+```
+cache -> Replay (candles of the range + 30m / overall clocks)
+      -> detectors / strategy per overlay, once per range and setting (events, cached)
+      -> overlay draw(events confirmed by the cursor) -> drawing objects (ui/drawing.py)
+      -> ui/chart_data.py -> JSON stores -> chart.js
+```
+
+- `chart-base`: candles 0..cursor as columns (UTC seconds, OHLC, spread) and session lines.
+- `chart-ovl`: the drawings of the overlay types the browser asked for (`chart-need`),
+  with every sub-entry; the browser shows / hides types and sub-entries itself.
+- `chart-delta` (replay): from the browser's cursor (`chart-view`) to the next one: new
+  candles (or how many to drop), drawings added / removed (ids = hash of the JSON), badges.
+  A drawing that runs to the cursor is sent "live" (end = the latest candle), so a step only
+  sends what changed. Per step the server draws again only the groups of events
+  (`OverlayType.group`, e.g. a zone with its transitions) that got an event on the new
+  candle or were live.
+
 ## Data flow
 
 ```
@@ -54,7 +79,8 @@ DataAdapter -> CandleSeries -> engine loop -> detectors -> strategy -> trades (R
                                                                         |
                          analytics (win rate, expectancy, DD in R) <----+
                          risk (sizing, FTMO sim, Monte Carlo, sweep) <--+
-                         ui (chart with zones + position boxes, risk page)
+                         ui (Lightweight Charts chart with zones + position boxes,
+                             results page, risk page)
 ```
 
 R trade lists are saved (e.g. as CSV/Parquet in `results/`) so `risk/` can be rerun with

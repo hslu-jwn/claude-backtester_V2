@@ -7,8 +7,8 @@ Guidance for Claude Code working in this repository. Read this first, every sess
 A Python backtester for rule-based price-action trading strategies (session zones, FVGs,
 order blocks, BOS, liquidity sweeps). It replays historical candles one at a time, detects
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
-account results for an **FTMO $100k challenge**. Results are shown in a TradingView-style
-Plotly/Dash web app. History comes from Dukascopy; MetaTrader 5 (FTMO) for feed comparison and later live trading.
+account results for an **FTMO $100k challenge**. Results are shown in a Dash web app with a
+TradingView Lightweight Charts chart. History comes from Dukascopy; MetaTrader 5 (FTMO) for feed comparison and later live trading.
 
 ## Specs are the source of truth
 
@@ -82,7 +82,8 @@ src/backtester/
   engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
-  ui/          Dash app: chart page (candles, zones, position boxes), Risk & Prop Firm page
+  ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
+               backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
 data/raw/      Local CSV candles, <SYMBOL>_<TF>.csv (git-ignored)
 docs/          Specs (source of truth)

@@ -372,9 +372,60 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   `overlays.overlay_drawings`; tests in `tests/ui/test_plotly_render.py`, the overlay tests
   check the converted traces (`tests/ui/plotly_helpers.py`). Same figure as before for 32
   cases (3 symbols, M5 / M30 / H1, full chart and replay).
-- ☐ **4.0 Top toolbar** as described above, replacing the current controls (no new
+  **Parts 2-4 built (2026-10-08, awaiting the user's check):** Lightweight Charts 5.2.1
+  (`ui/assets/lightweight-charts-5.2.1.standalone.production.js`, Apache 2.0, license in
+  `ui/assets/LICENSE-lightweight-charts.txt`, TradingView logo on), `ui/assets/chart.js`
+  (chart created once; candles, session lines, legend, trend badges, one primitive for
+  boxes / lines / markers / labels, hover tooltip, replay deltas), `ui/chart_data.py`
+  (candle, drawing and delta payloads cut at the cursor; drawings redrawn per group of
+  events, `OverlayType.group`), `ui/chart_config.py` (config, no Plotly). The Plotly chart
+  and `ui/plotly_render.py` are removed; overlay tests check the drawing objects
+  (`tests/ui/overlay_helpers.py`), `tests/ui/test_chart_data.py` checks the payloads: no
+  candle, drawing, end or time after the cursor in any full payload or delta, and deltas
+  (forward, back, jumps) add up to the full payload at every cursor of a scenario day.
+  Measured the same way as part 1 (XAUUSD M5 21-25 Sep, all overlays; GBPJPY the same):
+
+  | | before (Plotly) | after |
+  |---|---|---|
+  | open the week in the browser, chart drawn | ~1.8 s (1.5 MB) | candles 0.14 s, overlays 0.22 s (0.68 MB); new range with cold detectors 0.3 / 0.4 s |
+  | one replay step | ~1.0 s, 1.09 MB | click -> applied 25-31 ms, drawn the next frame (<= 16 ms later; 70 ms with two frames waited); 1.6 kB (max 3.2) |
+  | server per replay step | ~90 ms (figure) | 1 ms on a week, 3 ms on a month |
+  | one month (5,514 candles), all overlays | tab crashed (headless Chrome) | candles 0.21 s, overlays 1.2 s (3.3 MB); zoom / pan at 60 fps (95% of frames <= 17 ms) |
+
+  The first Trades load of a range is the slow part (strategy + engine over the cached
+  block, ~1 s): overlays appear after the candles.
+  Check (choices made while building, TradingView style):
+  - ★ ✕ ▼ ▲ markers are drawn by our primitive at their price (the library's series
+    markers only have circle / square / arrows above / below a bar).
+  - Markers and labels are hidden while candles are narrower than 3 px (unreadable there,
+    and it keeps a fully zoomed-out month smooth).
+  - Hover: the nearest hover area or marker within 20 px; a zone shows its text anywhere
+    along its middle (Plotly only near the box's ends). Candle OHLC + spread are in the
+    legend top-left (TradingView style) instead of a tooltip.
+  - Session labels at the bottom of the chart (the legend is top-left); grid off as before.
+  - Drawing order inside an overlay: fills, outlines, lines, markers, labels.
+  - Outside replay the whole range is shown (as before); time axis labels are the
+    library's (UTC).
+- ◐ **4.0 Top toolbar** as described above, replacing the current controls (no new
   features: the existing chart settings, overlays and replay move into the popovers;
   the backtest button is wired once 3.4 exists).
+  Built (2026-10-08, awaiting the user's check): `pages/chart.py` layout (top bar: symbol
+  dropdown with search, timeframe buttons, icon buttons with popovers for chart settings,
+  strategy, replay on/off and backtest; replay bar floating at the bottom of the chart;
+  bottom bar: quick ranges, calendar, messages, UTC), `assets/toolbar.css` (icons as inline
+  SVG), `assets/toolbar.js` (popovers close on a click outside or Escape), backtest via
+  `runner.start_run` in the background with a progress bar, then `/results/<run id>`
+  (`pages/results.py`: summary table, notes, files, raw summary.json; placeholder until
+  3.6), page routing in `ui/app.py`; tests in `tests/ui/test_toolbar.py`. No new
+  dependency.
+  Check (choices made while building):
+  - Quick ranges end on the last cached day and stop at a missing day (a range over it
+    can't be shown); "All" = the latest run of consecutive cached days.
+  - Timeframe buttons only for the timeframes the data layer supports (no D button yet).
+  - The backtest starts with the chart's symbol and days; when it finishes the results page
+    opens in the same tab ("← Chart" goes back; symbol and timeframe are remembered).
+  - Strategy popover: one entry (strategy 1); it doesn't change anything yet (4.1).
+  - Escape first closes an open menu or calendar inside a popover, then the popover.
 
 - ☐ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
   session filters, costs), with defaults from the spec.
