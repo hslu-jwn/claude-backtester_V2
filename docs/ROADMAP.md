@@ -281,12 +281,42 @@ text with its state (active / tapped / confirmed / invalidated).
   program found to the next; the user marks take / skip (+ short reason, optional own TP);
   saved to a file. Builds a reference set (agreement % after every rule change) and, later,
   training data for a learned filter.
-- ☐ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
+- ☑ **3.4 Backtest run + results file.** Command to run a backtest; writes the R trade list
   and settings used to `results/<run>/`. **One or several symbols per run** (user, 2026-10-08):
   results per symbol and combined (trades merged in time order). Reports progress (for the
   progress bar in 4.0) and can run in the background so the app stays usable. Also records, per session, the session zones and
   the confluences that were part of a setup (triggered or not, confirmed or not), so the
   session view (3.5) can draw them without re-running the strategy.
+  Built: `runner.py` (`run_backtests`, `write_results`, `start_run` / `BackgroundRun`),
+  command `python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30`
+  (`run.py`; options `--warmup-days`, `--workers`, `--out`, `--cache-dir`), summary in
+  `analytics/metrics.py`, per-session record in `strategy/session_zone_sweep/journal.py`
+  (fed by `SetupTracker`'s `session_zone_events` / `zone_transitions` / `links`), engine
+  progress callback; tests in `tests/test_runner.py`, `tests/analytics/test_metrics.py`,
+  `tests/strategy/session_zone_sweep/test_journal.py`. Files: `trades.csv`, `settings.json`,
+  `summary.json`, `sessions.json`. Choices made while building (check them):
+  - Days are UTC days, both ends included. Uncached days at the start / end of the range
+    are left out with a note (the cache starts 2026-09-02); a gap inside is an error.
+  - Warm-up: up to 14 cached days before the range (`RunSettings.warmup_days`), only
+    consecutive cached days. Trades entered in the warm-up are dropped. The chart (3.3b)
+    runs over the whole cached block instead, so the two can differ when the block starts
+    more than 14 days before the range.
+  - Trades still open at the range's end close at the last close (`END_OF_DATA`); the run
+    does not continue past `--end`.
+  - Win / loss / break-even by net R (break-even: 0R net). Average R:R = planned R if every
+    TP is hit (share-weighted). Max drawdown on cumulative R with trades counted at their
+    exit time.
+  - "Part of a setup" = a confluence a setup at step 4 (after its 30m reaction and BOS)
+    could have used: open, same direction, formed at or after the BOS leg's low (an
+    equilibrium only for its own BOS). `setup_confirmed` = a setup took its confirmation
+    (an entry signal); `traded` = it became an order. Its record ends when it is
+    confirmed, invalidated or its session ends; a setup's reset doesn't end it.
+  - A trade belongs to the session whose start < entry close time <= end.
+  - Symbols run in separate processes (one per symbol); results are identical to a run in
+    one process.
+  **Open (user to look at, 2026-10-08):** GBPUSD runs crash in `equilibrium_zone`: twice in
+  September (2026-09-04 21:00, 2026-09-24 23:50) the first 5m swing after the BOS is not
+  beyond the BOS leg's extreme, so the equilibrium leg is upside down. XAUUSD / GBPJPY: none.
 - ☐ **3.5 Session view.** Click a session line → that session's zones, setup confluences
   and trades (TradingView-style position boxes) are drawn; click outside the chart → off.
   Static by default, with a "replay this session" button.

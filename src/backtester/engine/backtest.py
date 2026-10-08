@@ -16,13 +16,14 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
 4. New orders are filled at candle i's close and managed from candle i + 1.
 
 Trades still open after the last candle are closed at its close (END_OF_DATA).
-Output: closed trades in R, in entry order.
+Output: closed trades in R, in entry order. `progress(done, total)` (optional) is called
+every `progress_every` base candles and once at the end (ROADMAP 3.4: progress bar).
 """
 
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -45,14 +46,17 @@ class EngineConfig:
 
 DEFAULT_ENGINE = EngineConfig()
 
+Progress = Callable[[int, int], None]  # (base candles done, total)
+
 
 def run_backtest(
     strategy: Strategy,
     series: Sequence[CandleSeries],
     config: EngineConfig = DEFAULT_ENGINE,
+    progress: Progress | None = None,
 ) -> list[TradeResult]:
     """Run `strategy` over `series` (one per timeframe it declares, same symbol)."""
-    return Backtest(strategy, series, config).run()
+    return Backtest(strategy, series, config).run(progress)
 
 
 class Backtest:
@@ -75,11 +79,14 @@ class Backtest:
         self._higher = tuple(tf for tf in strategy.timeframes if tf is not strategy.base_timeframe)
         self._replay = Replay(by_tf[strategy.base_timeframe], [by_tf[tf] for tf in self._higher])
 
-    def run(self) -> list[TradeResult]:
+    def run(self, progress: Progress | None = None, progress_every: int = 500) -> list[TradeResult]:
         replay = self._replay
         open_trades: list[OpenTrade] = []
         closed: list[TradeResult] = []
-        for cursor in range(len(replay)):
+        total = len(replay)
+        for cursor in range(total):
+            if progress is not None and cursor and cursor % progress_every == 0:
+                progress(cursor, total)
             view = replay.view(cursor)
             candle = view.current
             now = replay.close_time(cursor)
@@ -102,6 +109,8 @@ class Backtest:
             for trade in open_trades:
                 trade.close_all(last, now, last.close, ExitReason.END_OF_DATA)
                 closed.append(self._result(trade))
+        if progress is not None:
+            progress(total, total)
         closed.sort(key=lambda t: t.entry_time)
         return closed
 

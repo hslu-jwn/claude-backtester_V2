@@ -37,3 +37,8 @@ class Strategy(ABC):
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         """`now` = close time of the current base candle. A view is None until its first
         candle has closed."""
+
+    def session_records(self, run_end: datetime | None = None) -> list[dict]:
+        """What the strategy saw per session, JSON-ready, for the results file (ROADMAP
+        3.4). Records still open end at `run_end`. Default: nothing."""
+        return []

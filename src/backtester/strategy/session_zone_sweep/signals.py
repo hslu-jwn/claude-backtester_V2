@@ -22,6 +22,12 @@ first 5m swing high confirmed after the break candle. From that candle on, the l
 half (0.5 level down to the low) is validated like a zone (zone.py): a wick below 0.5 taps
 it, a green close back above 0.5 confirms it, a close below the low invalidates it. Only
 the setup whose BOS made the leg may use it.
+
+For the results file (journal.py) every `update` also leaves what it saw on this candle:
+`session_zone_events` (zones formed, roles, breaks, expiries), `zone_transitions` (taps,
+confirmations, invalidations of the confluences and equilibria) and `links`: each
+confluence a setup at step 4 could use (open, or confirmed now and accepted), read before
+a triggered setup restarts.
 """
 
 from __future__ import annotations
@@ -42,12 +48,14 @@ from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import (
     EntrySignal,
     Setup,
+    Step,
     StructureBreak,
     StructureTracker,
 )
 from backtester.strategy.session_zone_sweep.zones import (
     Role,
     SessionZone,
+    SessionZoneEvent,
     SessionZoneTracker,
     ZoneBreak,
     ZoneExpired,
@@ -82,6 +90,17 @@ class LiveZone:
     setup: Setup | None = None  # None while the role is unknown
 
 
+@dataclass(frozen=True, slots=True)
+class SetupLink:
+    """`confluence` is part of `zone`'s setup at the current candle. `accepted`: it was
+    confirmed by this candle and the setup took it (an entry signal)."""
+
+    zone: SessionZone
+    direction: Direction
+    confluence: ZoneBox
+    accepted: bool
+
+
 @dataclass
 class SignalState:
     """What the signal side knows at the current candle (read by SL / TP)."""
@@ -109,14 +128,19 @@ class SetupTracker:
         self._eq_book = ZoneBook(doji)
         self._equilibrium: dict[tuple[int, Direction], ZoneBox] = {}  # by break, still open
         self.state = SignalState()
+        self.session_zone_events: list[SessionZoneEvent] = []
+        self.zone_transitions: list[ZoneTransition] = []
+        self.links: list[SetupLink] = []
 
     def update(self, now: datetime, v5: SeriesView, v30: SeriesView | None) -> list[EntrySignal]:
+        self.session_zone_events, self.zone_transitions = [], []
         breaks, confirmed = self._update_5m(v5)
         touched = self._update_zones(now, v30)
         for live in self._live.values():
             if live.setup is not None and live.setup not in touched:
                 live.setup.on_breaks(breaks)
         self.state = SignalState(list(self._live.values()), self._atr.current)
+        self.links = self._links(v5, confirmed)
         return self._entries(v5, now, confirmed)
 
     def _update_5m(self, v5: SeriesView) -> tuple[list[StructureBreak], list[ZoneBox]]:
@@ -129,6 +153,7 @@ class SetupTracker:
         confirmed = []
         for e in [*self._fvg.update(v5), *self._ob.update(v5), *self._bpr.update(v5)]:
             if isinstance(e, ZoneTransition):
+                self.zone_transitions.append(e)
                 if e.state is ZoneState.CONFIRMED and e.zone in self._usable:
                     confirmed.append(e.zone)
                 if e.state.finished:
@@ -147,7 +172,9 @@ class SetupTracker:
     def _update_equilibria(self, v5: SeriesView, breaks: list[StructureBreak]) -> list[ZoneBox]:
         """Validate the open equilibria with this candle, then add those whose move ended
         with it. Returns the ones this candle confirmed."""
-        confirmed = [t.zone for t in self._eq_book.on_candle(v5) if t.state is ZoneState.CONFIRMED]
+        transitions = self._eq_book.on_candle(v5)
+        self.zone_transitions += transitions
+        confirmed = [t.zone for t in transitions if t.state is ZoneState.CONFIRMED]
         still = {*self._eq_book.open_zones, *confirmed}
         self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
         waiting = []
@@ -184,7 +211,9 @@ class SetupTracker:
         closed_at = candle.ts + view.timeframe.duration
         flipped: set[SessionZone] = set()
         with_trend = self.config.entry_bos_with_trend
-        for e in self._zones.update(view):
+        events = self._zones.update(view)
+        self.session_zone_events += events
+        for e in events:
             if isinstance(e, SessionZone):
                 self._live[e] = LiveZone(e)
             elif isinstance(e, ZoneRoleSet):
@@ -221,6 +250,25 @@ class SetupTracker:
 
     def _trades_in(self, zone: SessionZone) -> bool:
         return not (self.config.skip_tokyo and zone.active_in.session is Session.TOKYO)
+
+    def _links(self, v5: SeriesView, confirmed: list[ZoneBox]) -> list[SetupLink]:
+        """The confluences each setup at step 4 could use at this candle."""
+        out = []
+        for live in self._live.values():
+            setup = live.setup
+            if setup is None or setup.step is not Step.CONFLUENCE or not self._trades_in(live.zone):
+                continue
+            own = self.equilibrium_of(setup.bos)
+            open_ = [z for z in self._usable if z.direction is setup.direction]
+            if own is not None and own not in confirmed:
+                open_.append(own)
+            for z in open_:
+                if z.created_index >= setup.bos.leg_index:
+                    out.append(SetupLink(live.zone, setup.direction, z, False))
+            for z in confirmed:
+                if setup.accepts(z, v5.cursor) and (z.kind is not ZoneKind.EQUILIBRIUM or z == own):
+                    out.append(SetupLink(live.zone, setup.direction, z, True))
+        return out
 
     def _entries(
         self, v5: SeriesView, now: datetime, confirmed: list[ZoneBox]

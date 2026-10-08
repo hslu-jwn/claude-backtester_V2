@@ -9,7 +9,8 @@ TP1 (`break_even_after_tp1`). Trades entered in the last
 `tag_last_minutes_before_next_session` minutes before the next session start are tagged
 `LAST_MINUTES_TAG` (or skipped when `include_last_minutes_trades` is off). Every signal
 and what became of it is kept in `decisions`, for checking against the chart and for the
-results file (ROADMAP 3.4).
+results file (ROADMAP 3.4); per session, the zones and setup confluences are kept in
+`journal` (journal.py, `session_records()`).
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from backtester.core.series import SeriesView
 from backtester.sessions import session_of
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
+from backtester.strategy.session_zone_sweep.journal import SessionJournal
 from backtester.strategy.session_zone_sweep.setup import EntrySignal
 from backtester.strategy.session_zone_sweep.signals import SetupTracker
 from backtester.strategy.session_zone_sweep.targets import (
@@ -61,6 +63,7 @@ class SessionZoneSweep(Strategy):
         self.limits = UnmitigatedOrderBlocks(doji, config)
         self._cursors = {config.obstacle_timeframe: -1, config.limit_timeframe: -1}
         self.decisions: list[Decision] = []
+        self.journal = SessionJournal()
 
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         v5 = views[Timeframe.M5]
@@ -68,13 +71,23 @@ class SessionZoneSweep(Strategy):
             raise ValueError(f"{v5.symbol} candles for a {self.symbol} strategy")
         self._catch_up(self.obstacles, views[self.config.obstacle_timeframe])
         self._catch_up(self.limits, views[self.config.limit_timeframe])
-        signals = self.setups.update(now, v5, views[self.config.zone_timeframe])
+        v30 = views[self.config.zone_timeframe]
+        setups = self.setups
+        signals = setups.update(now, v5, v30)
+        journal = self.journal
+        journal.on_candle(
+            now, v5, v30, setups.session_zone_events, setups.zone_transitions, setups.links
+        )
         orders = []
         for signal in signals:
             order = self._order(signal, now)
+            journal.on_signal(signal.zone.active_in, signal.confluence, order is not None)
             if order is not None:
                 orders.append(order)
         return orders
+
+    def session_records(self, run_end: datetime | None = None) -> list[dict]:
+        return self.journal.records(run_end)
 
     def _catch_up(self, tracker, view: SeriesView | None) -> None:
         """Feed `tracker` every candle of `view`'s timeframe closed since the last call."""

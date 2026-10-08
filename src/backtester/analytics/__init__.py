@@ -1,4 +1,3 @@
-"""Statistics on R trade lists: win rate, expectancy, profit factor, max drawdown in R,
-longest losing streak, results per symbol / session / tag.
-TODO: implement in metrics.py.
+"""Statistics on R trade lists. metrics.py: the run summary (win rate, net R, average R:R,
+max drawdown in R). TODO: profit factor, longest losing streak, results per session / tag.
 """
