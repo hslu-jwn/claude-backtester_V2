@@ -6,16 +6,13 @@ don't depend on which real detectors are registered.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
-import plotly.graph_objects as go
 from conftest import build_series
-from plotly_helpers import chart_overlays
+from overlay_helpers import chart_overlays
 
 from backtester.core.series import SeriesView
 from backtester.detectors.base import Detector, Event
 from backtester.engine.replay import Replay
-from backtester.ui.chart_figure import CANDLE_TRACES, DEFAULT_CONFIG, ChartConfig
+from backtester.ui.chart_data import ChartData
 from backtester.ui.drawing import Marker
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
@@ -29,7 +26,7 @@ from backtester.ui.overlays import (
     run_detector,
     visible_events,
 )
-from backtester.ui.pages.chart import replay_chart, selected_overlays
+from backtester.ui.pages.chart import selected_overlays
 
 GREEN = (1.0, 1.2, 0.9, 1.1)
 RED = (1.1, 1.2, 0.9, 1.0)
@@ -120,7 +117,7 @@ def test_only_selected_types_are_drawn_and_unknown_keys_are_ignored():
     replay = replay_of(GREEN, RED, GREEN)
     registry = fake_registry()
     traces, messages = chart_overlays(replay, ["green", "gone"], 2, 0, registry=registry)
-    assert [list(t.x) for t in traces] == [[0, 2]]
+    assert [d.x for d in traces] == [0, 2]
     assert messages == []
     assert chart_overlays(replay, [], 2, 0, registry=registry) == ([], [])
 
@@ -139,27 +136,15 @@ def test_unavailable_overlay_becomes_a_message_not_an_error():
     assert messages == ["Nope: doji threshold not defined for TEST"]
 
 
-def test_replay_draws_only_events_confirmed_up_to_the_cursor():
+def test_the_browser_gets_only_events_confirmed_up_to_the_cursor():
     replay = replay_of(GREEN, RED, GREEN, GREEN)
     registry = fake_registry()
-    # cursor 1: candle 1 (closes 00:10) is the latest closed candle
-    state = {"on": True, "picking": False, "playing": False, "start": None}
-    state["now"] = datetime(2026, 1, 5, 0, 10, tzinfo=UTC).isoformat()
-    fig, _, _ = replay_chart(replay, state, overlay_keys=["green"], registry=registry)
-    assert list(fig.data[CANDLE_TRACES].x) == [0]
-    state["now"] = datetime(2026, 1, 5, 0, 20, tzinfo=UTC).isoformat()
-    fig, _, _ = replay_chart(replay, state, overlay_keys=["green"], registry=registry)
-    assert list(fig.data[CANDLE_TRACES].x) == [0, 2, 3]
-    assert isinstance(fig.data[0], go.Candlestick)
+    data = ChartData(replay, lambda o: o.detect(replay, DEFAULT_SETTINGS), registry=registry)
 
+    def xs(cursor):
+        return sorted(d["x"] for d in data.full(["green"], cursor)["types"]["green"])
 
-def test_replay_overlays_start_at_the_first_drawn_candle():
-    replay = replay_of(GREEN, GREEN, GREEN, GREEN)
-    config = ChartConfig(replay_window=2)
-    state = {"on": True, "picking": False, "playing": False, "start": None}
-    state["now"] = datetime(2026, 1, 5, 0, 20, tzinfo=UTC).isoformat()
-    fig, _, _ = replay_chart(
-        replay, state, config, overlay_keys=["green"], registry=fake_registry()
-    )
-    assert list(fig.data[CANDLE_TRACES].x) == [2, 3]
-    assert DEFAULT_CONFIG.replay_window > 2
+    assert xs(1) == [0]  # cursor 1: candle 1 (closes 00:10) is the latest closed candle
+    assert xs(3) == [0, 2, 3]
+    delta = data.delta(["green"], 1, 2)
+    assert [d["x"] for d in delta["add"]] == [2] and delta["remove"] == []

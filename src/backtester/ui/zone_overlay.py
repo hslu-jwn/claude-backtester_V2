@@ -5,7 +5,8 @@ Per zone: a filled box from its first candle to the candle that confirmed or inv
 it, or to the cursor while it is still active or tapped (no length limit). One color per
 zone type, whatever the direction (FVG green, OB yellow, BPR purple, rule set by the user); invalidated
 zones stay drawn, fainter. Where boxes overlap, the fills stack and the overlap is darker
-(e.g. overlapping FVGs = an imbalance, rule set by the user; see `ui/plotly_render.py`).
+(e.g. overlapping FVGs = an imbalance, rule set by the user): the browser fills every box
+on its own.
 
 No marker on the zone's confirming candle (user's choice) and none for a tap: hovering
 over the box shows the hover text (a hover area along the middle of the box). The panel

@@ -10,13 +10,10 @@ import pandas as pd
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
+from backtester.engine.replay import Replay
 from backtester.sessions import Session
-from backtester.ui.chart_figure import (
-    DEFAULT_CONFIG,
-    build_candle_figure,
-    session_line_positions,
-)
-from backtester.ui.pages.chart import replay_figure
+from backtester.ui.chart_config import session_line_positions
+from backtester.ui.chart_data import ChartData
 
 TOKYO, LONDON, NEW_YORK = Session.TOKYO, Session.LONDON, Session.NEW_YORK
 
@@ -39,8 +36,12 @@ def hourly(start: str, periods: int) -> pd.DataFrame:
     return candles(list(pd.date_range(start, periods=periods, freq="1h", tz="UTC")))
 
 
-def line_colors(fig) -> list[str]:
-    return [shape.line.color for shape in fig.layout.shapes]
+def lines_sent(frame, timeframe=Timeframe.H1, cursor=None) -> list[list]:
+    """Session lines the page sends with candles 0..cursor: (x, color, label)."""
+    series = CandleSeries("XAUUSD", timeframe, candles_from_frame(frame))
+    data = ChartData(Replay(series), lambda o: [])
+    stop = len(series) if cursor is None else cursor + 1
+    return data.sessions(0, stop)
 
 
 def test_lines_go_through_the_candle_opening_at_each_start():
@@ -108,32 +109,18 @@ def test_session_without_candles_gets_no_line():
 
 
 def test_lines_have_session_colors_and_labels():
-    fig = build_candle_figure(hourly("2026-07-15 00:00", 24), "XAUUSD", Timeframe.H1)
-    assert line_colors(fig) == ["#f5c518", "#2962ff", "#f23645"]  # yellow, blue, red
-    assert [a.text for a in fig.layout.annotations] == ["Tokyo", "London", "NY"]
-    assert all(s.yref == "paper" and (s.y0, s.y1) == (0, 1) for s in fig.layout.shapes)
-
-
-def test_one_switch_hides_all_session_lines():
-    frame = hourly("2026-07-15 00:00", 24)
-    fig = build_candle_figure(frame, "XAUUSD", Timeframe.H1, show_sessions=False)
-    assert fig.layout.shapes == () and fig.layout.annotations == ()
-    series = CandleSeries("XAUUSD", Timeframe.H1, candles_from_frame(frame))
-    fig, _ = replay_figure(series.view(23), DEFAULT_CONFIG, show_sessions=False)
-    assert fig.layout.shapes == ()
+    lines = lines_sent(hourly("2026-07-15 00:00", 24))
+    assert [color for _, color, _ in lines] == ["#f5c518", "#2962ff", "#f23645"]  # Y, B, R
+    assert [label for _, _, label in lines] == ["Tokyo", "London", "NY"]
 
 
 def test_no_lines_on_daily_candles():
     frame = candles(list(pd.date_range("2026-07-13", periods=5, freq="1D", tz="UTC")))
-    assert build_candle_figure(frame, "XAUUSD", Timeframe.D1).layout.shapes == ()
+    assert lines_sent(frame, Timeframe.D1) == []
 
 
-def test_replay_draws_no_line_past_the_cursor():
+def test_replay_sends_no_line_past_the_cursor():
     frame = hourly("2026-07-15 00:00", 24)
-    series = CandleSeries("XAUUSD", Timeframe.H1, candles_from_frame(frame))
-    fig, _ = replay_figure(series.view(10), DEFAULT_CONFIG)  # cursor at the 10:00 candle
-    assert [s.x0 for s in fig.layout.shapes] == [0, 7]  # NY (12) not yet
-    fig, _ = replay_figure(series.view(11), DEFAULT_CONFIG)  # 11:00 candle: NY opens next
-    assert [s.x0 for s in fig.layout.shapes] == [0, 7]
-    fig, _ = replay_figure(series.view(12), DEFAULT_CONFIG)  # the 12:00 candle, NY's line
-    assert [s.x0 for s in fig.layout.shapes] == [0, 7, 12]
+    assert [x for x, _, _ in lines_sent(frame, cursor=10)] == [0, 7]  # NY (12) not yet
+    assert [x for x, _, _ in lines_sent(frame, cursor=11)] == [0, 7]  # NY opens next
+    assert [x for x, _, _ in lines_sent(frame, cursor=12)] == [0, 7, 12]  # NY's candle

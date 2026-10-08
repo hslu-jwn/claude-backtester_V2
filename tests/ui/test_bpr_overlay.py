@@ -8,10 +8,10 @@ so a bullish BPR 4130-4135 exists from candle 5.
 from __future__ import annotations
 
 from conftest import build_series
-from plotly_helpers import chart_overlays
+from overlay_helpers import boxes, by_layer, chart_overlays, hovers
 
 from backtester.engine.replay import Replay
-from backtester.ui.chart_figure import DEFAULT_CONFIG
+from backtester.ui.chart_config import DEFAULT_CONFIG
 from backtester.ui.overlays import DEFAULT_SETTINGS, OVERLAYS, OverlaySettings, overlay_options
 
 BPR = [
@@ -31,15 +31,10 @@ def gold_replay(*ohlc) -> Replay:
     return Replay(build_series(list(ohlc), symbol="XAUUSD"))
 
 
-def traces_at(replay, cursor, settings=DEFAULT_SETTINGS, keys=ALL):
-    traces, messages = chart_overlays(replay, keys, cursor, 0, settings=settings)
+def drawn_at(replay, cursor, settings=DEFAULT_SETTINGS, keys=ALL):
+    drawings, messages = chart_overlays(replay, keys, cursor, 0, settings=settings)
     assert messages == []
-    return {t.name: t for t in traces}
-
-
-def box(trace):
-    xs, ys = list(trace.x), list(trace.y)
-    return [(xs[i], xs[i + 1], ys[i], ys[i + 2]) for i in range(0, len(xs), 6)]
+    return by_layer(drawings)
 
 
 def test_bpr_in_the_panel_after_order_block_with_sub_entries():
@@ -52,12 +47,11 @@ def test_bpr_in_the_panel_after_order_block_with_sub_entries():
 
 def test_nothing_before_the_newer_fvgs_candle_3_then_a_purple_box():
     replay = gold_replay(*BPR, TAP)
-    assert traces_at(replay, 4) == {}
-    t = traces_at(replay, 5)
-    assert box(t["BPR box"]) == [(0, 5, 4130.0, 4135.0)]  # from the older FVG's candle 1
-    assert t["BPR box"].fillcolor.startswith("rgba(156,39,176,")  # purple #9c27b0
-    assert DEFAULT_CONFIG.bpr_color == "#9c27b0"
-    text = t["BPR"].text[0]
+    assert drawn_at(replay, 4) == {}
+    t = drawn_at(replay, 5)
+    assert boxes(t["BPR box"]) == [(0, 5, 4130.0, 4135.0)]  # from the older FVG's candle 1
+    assert t["BPR box"][0].fill == DEFAULT_CONFIG.bpr_color == "#9c27b0"  # purple
+    text = hovers(t["BPR"])[0]
     assert "Bullish BPR 4130.000 – 4135.000 (size 5.000)" in text
     assert "older: bearish FVG 4130.000 – 4140.000" in text
     assert "newer: bullish FVG 4125.000 – 4135.000" in text
@@ -67,13 +61,13 @@ def test_nothing_before_the_newer_fvgs_candle_3_then_a_purple_box():
 
 def test_box_ends_at_confirmation_with_its_marker():
     replay = gold_replay(*BPR, TAP, CONFIRM, (4144.0, 4150.0, 4143.0, 4149.0))
-    t = traces_at(replay, 8)
-    assert box(t["BPR box"]) == [(0, 7, 4130.0, 4135.0)]
-    assert list(t["BPR state"].marker.symbol) == ["star"]
-    assert "state: confirmed" in t["BPR"].text[0]
+    t = drawn_at(replay, 8)
+    assert boxes(t["BPR box"]) == [(0, 7, 4130.0, 4135.0)]
+    assert [m.shape for m in t["BPR state"]] == ["star"]
+    assert "state: confirmed" in hovers(t["BPR"])[0]
 
 
 def test_follows_the_fvg_strong_move_filter_switch():
     replay = gold_replay(*BPR)
     on = OverlaySettings(fvg_strong_move_filter=True)
-    assert traces_at(replay, 5, on) == {}  # ATR warm-up: no strong candle 2, no FVG
+    assert drawn_at(replay, 5, on) == {}  # ATR warm-up: no strong candle 2, no FVG

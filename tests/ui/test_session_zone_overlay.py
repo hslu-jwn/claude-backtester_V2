@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from conftest import build_series
-from plotly_helpers import chart_overlays
+from overlay_helpers import boxes, by_layer, chart_overlays, hovers
 
 from backtester.core.models import Timeframe
 from backtester.engine.replay import Replay
@@ -37,14 +37,13 @@ def replay_of(ohlc, start=LONDON, timeframe=Timeframe.M30):
 
 
 def traces_at(replay, cursor):
-    traces, messages = chart_overlays(replay, ["session_zones"], cursor, 0)
+    drawings, messages = chart_overlays(replay, ["session_zones"], cursor, 0)
     assert messages == []
-    return {t.name: t for t in traces}
+    return by_layer(drawings)
 
 
-def boxes(trace):
-    xs, ys = list(trace.x), list(trace.y)
-    return sorted((xs[i], xs[i + 1], ys[i], ys[i + 2]) for i in range(0, len(xs), 6))
+def zone_boxes(drawings):
+    return sorted(boxes(drawings))
 
 
 def test_session_zones_in_the_panel_after_bpr_without_sub_entries():
@@ -57,28 +56,29 @@ def test_zones_appear_when_their_session_ends_colored_by_the_session_they_are_ac
     replay = replay_of([*SWINGS, *[doji(109.5)] * 22])
     assert traces_at(replay, 7) == {}  # London not over yet
     t = traces_at(replay, 8)
-    assert boxes(t["Session zone box"]) == [(0, 8, 107.0, 108.0), (2, 8, 111.0, 112.0)]
-    assert t["Session zone box"].line.color == "#f23645"  # New York red
-    assert t["Session zone box"].line.dash == "dot"
+    assert zone_boxes(t["Session zone box"]) == [(0, 8, 107.0, 108.0), (2, 8, 111.0, 112.0)]
+    assert {b.edge for b in t["Session zone box"]} == {"#f23645"}  # New York red
+    assert {b.edge_dash for b in t["Session zone box"]} == {"dot"}
+    assert all(b.fill is None for b in t["Session zone box"])  # outline only
     assert "Session zone fill" not in t  # still in London, where they formed: no fill
-    text = next(s for s in t["Session zone"].text if "(low)" in s)
+    text = next(s for s in hovers(t["Session zone"]) if "(low)" in s)
     assert "NY Mon 01-05 session zone (low) 107.000 – 108.000" in text
     assert "formed in London Mon 01-05" in text and "role: support" in text
     # in New York the box follows the cursor, filled from New York's first candle
     t = traces_at(replay, 20)
-    assert boxes(t["Session zone box"])[0] == (0, 20, 107.0, 108.0)
-    assert boxes(t["Session zone fill"]) == [(9, 20, 107.0, 108.0), (9, 20, 111.0, 112.0)]
-    assert t["Session zone fill"].fillcolor.startswith("rgba(242,54,69,")
+    assert zone_boxes(t["Session zone box"])[0] == (0, 20, 107.0, 108.0)
+    assert zone_boxes(t["Session zone fill"]) == [(9, 20, 107.0, 108.0), (9, 20, 111.0, 112.0)]
+    assert {b.fill for b in t["Session zone fill"]} == {"#f23645"}
 
 
 def test_a_new_york_zone_is_yellow_in_tokyo_and_stops_at_its_end():
     ohlc = [*SWINGS, *[doji(109.5)] * 38]  # NY 0-20 (13:00-23:00), Tokyo 21-36 (23:30-07:00)
     replay = replay_of(ohlc, start=NEW_YORK)
     t = traces_at(replay, 41)
-    assert t["Session zone box"].line.color == "#f5c518"  # Tokyo yellow
-    assert boxes(t["Session zone box"]) == [(0, 36, 107.0, 108.0), (2, 36, 111.0, 112.0)]
-    assert boxes(t["Session zone fill"]) == [(21, 36, 107.0, 108.0), (21, 36, 111.0, 112.0)]
-    assert "expired" in t["Session zone"].text[-1]
+    assert {b.edge for b in t["Session zone box"]} == {"#f5c518"}  # Tokyo yellow
+    assert zone_boxes(t["Session zone box"]) == [(0, 36, 107.0, 108.0), (2, 36, 111.0, 112.0)]
+    assert zone_boxes(t["Session zone fill"]) == [(21, 36, 107.0, 108.0), (21, 36, 111.0, 112.0)]
+    assert "expired" in hovers(t["Session zone"])[-1]
 
 
 def test_the_box_stops_at_the_candle_that_kills_the_zone():
@@ -90,9 +90,9 @@ def test_the_box_stops_at_the_candle_that_kills_the_zone():
     ]
     replay = replay_of([*SWINGS, *[doji(109.5)] * 6, *breaks, *[doji(106.5)] * 18])
     t = traces_at(replay, 29)  # New York's last candle is 30: its own zones come later
-    assert boxes(t["Session zone box"])[0] == (0, 13, 107.0, 108.0)
-    assert boxes(t["Session zone fill"])[0] == (9, 13, 107.0, 108.0)
-    low_text = next(s for s in t["Session zone"].text if "(low)" in s)
+    assert zone_boxes(t["Session zone box"])[0] == (0, 13, 107.0, 108.0)
+    assert zone_boxes(t["Session zone fill"])[0] == (9, 13, 107.0, 108.0)
+    low_text = next(s for s in hovers(t["Session zone"]) if "(low)" in s)
     assert "role: killed" in low_text and "break 3" in low_text
 
 
@@ -110,25 +110,25 @@ def test_on_the_5m_chart_from_the_30m_candles_closed_at_each_5m_close():
     )
     assert traces_at(replay, 52) == {}  # London's last 30m candle closes with 5m candle 53
     t = traces_at(replay, 53)
-    assert boxes(t["Session zone box"]) == [(0, 53, 107.0, 108.0), (12, 53, 111.0, 112.0)]
+    assert zone_boxes(t["Session zone box"]) == [(0, 53, 107.0, 108.0), (12, 53, 111.0, 112.0)]
     assert "Session zone fill" not in t
     # 5m candles belong to the session they close in: 12:30-12:50 are still London's, the
     # fill starts with the 12:55 candle (59), which closes at the NY open
     t = traces_at(replay, 100)
-    assert boxes(t["Session zone fill"]) == [(59, 100, 107.0, 108.0), (59, 100, 111.0, 112.0)]
+    assert zone_boxes(t["Session zone fill"]) == [(59, 100, 107.0, 108.0), (59, 100, 111.0, 112.0)]
     # NY's last 30m candle (23:00) closes with 5m candle 185, but the 5m candles up to
     # 23:50 (190) still close in NY; 23:55 closes at Tokyo's start
-    assert boxes(traces_at(replay, 188)["Session zone box"])[0] == (0, 188, 107.0, 108.0)
+    assert zone_boxes(traces_at(replay, 188)["Session zone box"])[0] == (0, 188, 107.0, 108.0)
     t = traces_at(replay, 199)
-    assert boxes(t["Session zone box"]) == [(0, 190, 107.0, 108.0), (12, 190, 111.0, 112.0)]
-    assert boxes(t["Session zone fill"]) == [(59, 190, 107.0, 108.0), (59, 190, 111.0, 112.0)]
+    assert zone_boxes(t["Session zone box"]) == [(0, 190, 107.0, 108.0), (12, 190, 111.0, 112.0)]
+    assert zone_boxes(t["Session zone fill"]) == [(59, 190, 107.0, 108.0), (59, 190, 111.0, 112.0)]
 
 
 def test_only_from_5m_to_30m_charts():
     for tf in (Timeframe.M1, Timeframe.H1):
         replay = replay_of([doji(100.0)] * 3, timeframe=tf)
-        traces, messages = chart_overlays(replay, ["session_zones"], 2, 0)
-        assert traces == []
+        drawings, messages = chart_overlays(replay, ["session_zones"], 2, 0)
+        assert drawings == []
         assert messages == ["Session zones: built on M30 candles, shown on M5 to M30 charts"]
     replay = replay_of([doji(100.0)] * 3, timeframe=Timeframe.M5)  # no 30m series loaded
     _, messages = chart_overlays(replay, ["session_zones"], 2, 0)

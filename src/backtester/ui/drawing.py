@@ -1,8 +1,8 @@
 """Neutral drawing objects: what overlays draw, independent of the chart library.
 Spec: ROADMAP.md › 4.0a (step 1).
 
-Overlays return a list of these; `ui/plotly_render.py` turns them into Plotly traces in
-one place (later the Lightweight Charts page reads the same objects). No Plotly here.
+Overlays return a list of these; `ui/chart_data.py` turns them into JSON for the browser,
+where `ui/assets/chart.js` draws them on the Lightweight Charts chart.
 
 Coordinates: x is the chart candle position (the candle's absolute index in the shown
 series, as everywhere on the chart; fractional values sit between candles, e.g. a label

@@ -141,8 +141,8 @@
       const ts = S.chart.timeScale();
       target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
         ctx.save();
-        ctx.lineWidth = 1;
-        ctx.setLineDash(DASHES.dash);
+        ctx.lineWidth = S.cfg.session_line_width;
+        ctx.setLineDash(DASHES[S.cfg.session_line_dash] || []);
         ctx.font = "10px -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif";
         ctx.textBaseline = "bottom";
         ctx.textAlign = "left";
@@ -378,7 +378,8 @@
 
   function spanRange() {
     if (!S.span) return null;
-    const left = Math.min(Math.max(S.span.left / S.tfmin, S.cfg.replay_min_visible), S.times.length);
+    // same rule as span_candles() in pages/chart.py
+    const left = Math.min(Math.max(S.span.left / S.tfmin, S.cfg.replay_min_visible), S.cfg.replay_window);
     const right = Math.max(S.span.right / S.tfmin, 1);
     return { from: S.cursor - left + 0.5, to: S.cursor + right + 0.5 };
   }
@@ -450,8 +451,7 @@
         clearDrawings();
         S.filters = null;
         if (payload.span) S.span = payload.span;
-        const r = payload.replay && !payload.picking ? spanRange() : null;
-        if (r) S.chart.timeScale().setVisibleLogicalRange(r);
+        if (payload.range) S.chart.timeScale().setVisibleLogicalRange(payload.range);
         else S.chart.timeScale().fitContent();
         showLegend(null);
         showBadges();

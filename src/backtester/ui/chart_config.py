@@ -22,9 +22,8 @@ from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, sessio
 @dataclass(frozen=True)
 class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
-    max_ticks: int = 10  # at most this many x-axis labels in the visible range
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below
-    replay_window: int = 1500  # replay draws at most this many candles up to the cursor
+    replay_window: int = 1500  # the replay span shows at most this many candles left of the cursor
     replay_visible: int = 120  # candles shown left of the cursor after each replay step
     replay_right_space: int = 10  # empty candle slots right of the cursor
     replay_min_visible: int = 5  # at least this many candles left of the cursor (e.g. on H4)
@@ -34,10 +33,7 @@ class ChartConfig:
     up_body: str = "#6f9ceb"
     down_body: str = "#000000"
     edge_color: str = "#000000"
-    edge_width: float = 0.5  # very thin, so a small blue body still looks blue
-    body_width: float = 0.6  # share of the space per candle
     wick_color: str = "#000000"
-    wick_width: float = 1
     background: str = "#ffffff"
     text_color: str = "#131722"
     axis_color: str = "#131722"  # axis lines and tick marks
@@ -58,7 +54,6 @@ class ChartConfig:
     trend_down_color: str = "#f23645"
     trend_none_color: str = "#9598a1"
     sweep_color: str = "#ff00ff"  # liquidity sweep line and wick marker (both directions)
-    trend_badge_spacing: float = 0.05  # paper height between the stacked trend badges
     # zones: one color per type, both directions (overlaps stack darker); the edge and
     # markers use the color, the fill a light shade of it; invalidated zones are fainter
     fvg_color: str = "#089981"  # green
@@ -85,8 +80,6 @@ class ChartConfig:
     trade_tp1_color: str = "#089981"  # TP1 line inside the green box (two TPs, 3.3c)
     equilibrium_color: str = "#3f51b5"  # entry confluence: the BOS move's discount half
     equilibrium_fill_opacity: float = 0.15
-    zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
-    zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe
     overall_trend_warmup_days: int = 60  # overall-trend history loaded before the chart range
     marker_size: int = 9

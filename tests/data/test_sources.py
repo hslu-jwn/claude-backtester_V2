@@ -10,7 +10,7 @@ from m1_frames import m1
 
 from backtester.data.dukascopy import cache_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.ui.pages.chart import load_chart
+from backtester.ui.pages.chart import base_payload
 
 
 def write_day(cache_dir: Path, symbol: str, day: str, price: float) -> None:
@@ -57,10 +57,10 @@ def test_single_folder_override(tmp_path):
 
 
 def test_chart_shows_each_symbol_from_its_source(sources):
-    _, _, gold = load_chart(sources, "XAUUSD", "M5", "2026-09-01", "2026-09-01")
-    _, message, fx = load_chart(sources, "GBPUSD", "M5", "2026-09-02", "2026-09-02")
-    assert gold["high"] == [4401.0]
-    assert fx["high"] == [1.3 + 1] and "1 M5 candles" in message
+    gold, _ = base_payload(sources, "XAUUSD", "M5", "2026-09-01", "2026-09-01")
+    fx, message = base_payload(sources, "GBPUSD", "M5", "2026-09-02", "2026-09-02")
+    assert gold["candles"]["h"] == [4401.0]
+    assert fx["candles"]["h"] == [1.3 + 1] and "1 M5 candles" in message
 
 
 def test_cached_block_is_the_run_of_consecutive_cached_days():
@@ -71,6 +71,9 @@ def test_cached_block_is_the_run_of_consecutive_cached_days():
     d = date(2026, 9, 1)
     cached = {d + timedelta(days=i) for i in (0, 1, 2, 4, 5)}
     assert cached_block(cached, d + timedelta(days=1)) == (d, d + timedelta(days=2))
-    assert cached_block(cached, d + timedelta(days=5)) == (d + timedelta(days=4), d + timedelta(days=5))
+    assert cached_block(cached, d + timedelta(days=5)) == (
+        d + timedelta(days=4),
+        d + timedelta(days=5),
+    )
     with pytest.raises(KeyError):
         cached_block(cached, d + timedelta(days=3))

@@ -11,7 +11,7 @@ type's sub-entries stay indented right under it and can only be ticked while it 
 - `draw(events, ctx)` turns events into neutral drawing objects (`ui/drawing.py`: boxes,
   lines, markers, labels, hover areas), e.g. a small marker on the **confirming candle**
   (x = `event.confirmed_index`) and a hover text with its state (zones: hover over the
-  zone itself, no marker). `ui/plotly_render.py` turns them into Plotly traces.
+  zone itself, no marker). The browser draws them (`ui/chart_data.py`, `assets/chart.js`).
 - `group` (optional) says which events draw together (a zone with its transitions):
   `draw` on one group's events gives exactly that group's part of `draw` on all events,
   so a replay step only re-draws the groups that changed (`ui/chart_data.py`). Default:

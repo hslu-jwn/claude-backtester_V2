@@ -8,10 +8,10 @@ at candle 3, swing high 11.5, candle 6 runs to 11.8, bearish BOS at candle 8.
 from __future__ import annotations
 
 from conftest import build_series
-from plotly_helpers import chart_overlays
+from overlay_helpers import by_layer, chart_overlays, hovers, lines, points
 
 from backtester.engine.replay import Replay
-from backtester.ui.chart_figure import DEFAULT_CONFIG
+from backtester.ui.chart_config import DEFAULT_CONFIG
 from backtester.ui.overlays import OVERLAYS
 
 SWEEP = [
@@ -27,11 +27,11 @@ SWEEP = [
 ]
 
 
-def traces_at(cursor):
+def drawn_at(cursor):
     replay = Replay(build_series(SWEEP, symbol="XAUUSD"))
-    traces, messages = chart_overlays(replay, ["sweep"], cursor, 0)
+    drawings, messages = chart_overlays(replay, ["sweep"], cursor, 0)
     assert messages == []
-    return {t.name: t for t in traces}
+    return by_layer(drawings)
 
 
 def test_liquidity_sweep_in_the_panel_after_session_zones():
@@ -41,17 +41,17 @@ def test_liquidity_sweep_in_the_panel_after_session_zones():
 
 
 def test_nothing_until_the_bos_candle():
-    assert traces_at(7) == {}
+    assert drawn_at(7) == {}
 
 
 def test_magenta_line_from_the_highest_swept_swing_to_the_sweeping_candle():
-    t = traces_at(8)
+    t = drawn_at(8)
     line, wick = t["Sweep"], t["Sweep wick"]
     # highest swept high 11.5 has its wick on candle 3; the sweeping candle is 6
-    assert list(line.x) == [3, 6, None] and list(line.y) == [11.5, 11.5, None]
-    assert line.line.color == DEFAULT_CONFIG.sweep_color == "#ff00ff"
-    assert list(wick.x) == [6] and list(wick.y) == [11.8]
-    text = wick.text[0]
+    assert lines(line) == [(3, 6, 11.5, 11.5)]
+    assert line[0].color == DEFAULT_CONFIG.sweep_color == "#ff00ff"
+    assert points(wick) == [(6, 11.8)] and wick[0].shape == "triangle-down"
+    text = hovers(wick)[0]
     assert "Bearish liquidity sweep of highs" in text
     assert "high 11.500" in text and "high 11.000" in text  # every swept high listed
     assert "bearish BOS of 10.900" in text

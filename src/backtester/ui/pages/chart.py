@@ -1,22 +1,30 @@
-"""Chart page: TradingView-like candlesticks from the M1 cache. Spec: ROADMAP.md › 1.1.
+"""Chart page: TradingView-like candlesticks from the M1 cache. Spec: ROADMAP.md › 1.1, 4.0a.
+
+The chart is TradingView Lightweight Charts in the browser (`ui/assets/chart.js`, created
+once and kept). The server only sends data (`ui/chart_data.py`), through stores:
+`chart-base` = candles up to the cursor and session lines (a new symbol, timeframe, range
+or replay mode); `chart-ovl` = the drawings of the overlay types the browser asked for in
+`chart-need` (types it doesn't have yet for this range and filter setting); `chart-delta`
+= one replay step from the browser's cursor (`chart-view`, written by the browser) to the
+next. Showing / hiding overlays, sub-entries and session lines happens in the browser.
 
 Pick symbol (every symbol of `SymbolSources` with cached days, each read from its own
 source's cache, `data/sources.py`), timeframe and a date range (UTC days, both
 inclusive, limited to cached days). A range touching a day that was never downloaded shows
 the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
-Zooming or panning updates the x-axis labels and fits the price axis to the visible candles.
+Zooming or panning is the library's; the price axis fits the visible candles.
 
 Replay (ROADMAP.md › 1.2): "Replay" first shows the full chart and asks for a start candle
 (click one, or press ▶ to start at the first candle of the last day). From then on only the
-candles of `Replay.view(cursor)` are drawn, a `SeriesView`, so the chart shows exactly what
-the engine sees; the price axis and the x-axis labels also come only from those candles.
+candles of `Replay.view(cursor)` are sent, a `SeriesView`, so the chart shows exactly what
+the engine sees; each step sends only the next candle and what changed with it.
 Replay steps on the shown timeframe (M5: 5 minutes per step, H1: one hour). The replay
 state stores `now` (the close time of the cursor candle), so switching timeframe keeps the
 replay time: the chart then shows the candles of that timeframe closed at `now`.
 It also keeps the visible TIME span around the cursor (the "replay span", minutes left and
 right of `now`): switching M5 -> M1 shows the same hours with smaller candles. The span
 starts at `replay_visible` / `replay_right_space` candles of the timeframe replay was
-started on and follows the user's zoom/pan; each replay step keeps it.
+started on and follows the user's zoom/pan (the browser reports it); each step keeps it.
 
 Session lines (ROADMAP.md › 1.3): the "Sessions" switch shows or hides all session start
 lines (Tokyo, London, NY), in the normal chart and in replay; the choice is kept in the browser.
@@ -48,11 +56,10 @@ from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 
-import pandas as pd
 from dash import ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
-from backtester.core.series import CandleSeries, SeriesView
+from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import (
     MissingCacheError,
     candles_from_frame,
@@ -71,24 +78,14 @@ from backtester.ui import (
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
 )
-from backtester.ui.chart_config import price_digits
+from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
-from backtester.ui.chart_figure import (
-    DEFAULT_CONFIG,
-    ChartConfig,
-    build_candle_figure,
-    frame_from_candles,
-    time_ticks,
-    y_range,
-)
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OVERLAYS,
-    OverlayContext,
     OverlaySettings,
     OverlayType,
     OverlayUnavailable,
-    overlay_drawings,
     overlay_options,
     overlay_summary,
 )
@@ -96,65 +93,6 @@ from backtester.ui.overlays import (
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
 DEFAULT_TIMEFRAME = Timeframe.M5.name
 REPLAY_OFF = {"on": False, "picking": False, "playing": False, "start": None, "now": None}
-
-
-def load_chart(
-    sources: SymbolSources,
-    symbol: str | None,
-    timeframe: str | None,
-    start_date: str | None,
-    end_date: str | None,
-    config: ChartConfig = DEFAULT_CONFIG,
-    show_sessions: bool = True,
-    overlay_keys: Sequence[str] = (),
-    registry: dict[str, OverlayType] = OVERLAYS,
-    settings: OverlaySettings = DEFAULT_SETTINGS,
-):
-    """Figure, message and stored candle data for the chosen inputs.
-
-    Returns (figure or None, message, store data or None). `start_date`/`end_date` are
-    ISO days, both inclusive. `overlay_keys` are the overlay types to draw (all their events).
-    """
-    frame, message = _load_frame(sources, symbol, timeframe, start_date, end_date, config)
-    if frame is None:
-        return None, message, None
-    traces, notes = [], []
-    if overlay_keys:
-        replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
-        traces, notes = chart_overlays(
-            replay, overlay_keys, len(replay) - 1, 0, config, registry, settings, sources
-        )
-    figure = build_candle_figure(
-        frame, symbol, Timeframe[timeframe], config, show_sessions=show_sessions, overlays=traces
-    )
-    return figure, _with_notes(message, notes), _axis_store(frame)
-
-
-def chart_overlays(
-    replay: Replay,
-    keys: Sequence[str],
-    cursor: int,
-    first_x: int,
-    config: ChartConfig = DEFAULT_CONFIG,
-    registry: dict[str, OverlayType] = OVERLAYS,
-    settings: OverlaySettings = DEFAULT_SETTINGS,
-    sources: SymbolSources | None = None,
-):
-    """(drawings, messages) of the selected overlays for candles first_x..cursor of `replay`.
-    `sources` are passed to overlays that load their own data (e.g. the Trades overlay)."""
-    if not keys:
-        return [], []
-    ctx = OverlayContext(
-        replay.symbol,
-        cursor,
-        first_x,
-        config,
-        replay.timeframe,
-        replay.overall_timeframe,
-    )
-    return overlay_drawings(
-        lambda o: _cached_events(replay, o, settings, sources), keys, ctx, registry
-    )
 
 
 @lru_cache(maxsize=32)
@@ -171,10 +109,6 @@ def _cached_events(
             raise OverlayUnavailable("needs the chart's data sources")
         return tuple(overlay.detect(replay, settings, sources))
     return tuple(overlay.detect(replay, settings))
-
-
-def _with_notes(message: str, notes: Sequence[str]) -> str:
-    return " · ".join([message, *notes])
 
 
 def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
@@ -198,20 +132,6 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
             f"{config.max_candles:,}. Pick a shorter range or a higher timeframe."
         )
     return frame, f"{len(frame):,} {timeframe} candles, {start} to {end} (UTC)."
-
-
-def _axis_store(frame: pd.DataFrame, x0: int = 0, timeframe: Timeframe | None = None) -> dict:
-    """What the zoom callback needs: open times and lows/highs of the drawn candles, which
-    start at x = x0. During replay these are only candles up to the cursor, and the store
-    also has the cursor's x and the timeframe (to turn a zoom into a replay span)."""
-    replay = {} if timeframe is None else {"cursor_x": x0 + len(frame) - 1, "tf": timeframe.value}
-    return {
-        **replay,
-        "x0": x0,
-        "ts": frame["ts"].dt.strftime("%Y-%m-%dT%H:%M:%SZ").tolist(),
-        "low": frame["low"].tolist(),
-        "high": frame["high"].tolist(),
-    }
 
 
 @lru_cache(maxsize=8)
@@ -321,30 +241,6 @@ def replay_step(action: str, state: dict, replay: Replay | None, clicked_x=None)
     raise ValueError(f"unknown replay action {action!r}")
 
 
-def replay_figure(
-    view: SeriesView,
-    config: ChartConfig = DEFAULT_CONFIG,
-    show_sessions: bool = True,
-    overlays: Sequence = (),
-    span: dict | None = None,
-):
-    """(figure, axis store) drawn only from `view`: its last `replay_window` candles, at
-    their absolute positions, with the cursor near the right edge. `overlays` are drawings
-    built for candles `replay_first_x(view.cursor)`..cursor. `span` is the replay span
-    (minutes left/right of the cursor's close, see `default_span`), shown in candles of
-    this view's timeframe."""
-    candles = view.last(config.replay_window)
-    first_x = replay_first_x(view.cursor, config)
-    frame = frame_from_candles(candles)
-    span = span or default_span(view.timeframe, config)
-    left, right = span_candles(span, view.timeframe, config)
-    x_range = (view.cursor - left + 0.5, view.cursor + right + 0.5)
-    figure = build_candle_figure(
-        frame, view.symbol, view.timeframe, config, first_x, x_range, show_sessions, overlays
-    )
-    return figure, _axis_store(frame, first_x, view.timeframe)
-
-
 def default_span(timeframe: Timeframe, config: ChartConfig = DEFAULT_CONFIG) -> dict:
     """Replay span when replay starts: `replay_visible` candles left of the cursor and
     `replay_right_space` empty slots right of it, in minutes of `timeframe`."""
@@ -358,85 +254,6 @@ def span_candles(span: dict, timeframe: Timeframe, config: ChartConfig = DEFAULT
     minutes = timeframe.value
     left = min(max(span["left"] / minutes, config.replay_min_visible), config.replay_window)
     return left, max(span["right"] / minutes, 1.0)
-
-
-def zoomed_span(relayout: dict | None, store: dict | None) -> dict | None:
-    """Replay span after a zoom/pan during replay (None: no x change, or not in replay)."""
-    if not relayout or not store or "cursor_x" not in store:
-        return None
-    if "xaxis.range[0]" in relayout:
-        x0, x1 = relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]
-    elif "xaxis.range" in relayout:
-        x0, x1 = relayout["xaxis.range"]
-    else:
-        return None
-    cursor, minutes = store["cursor_x"], store["tf"]
-    return {"left": (cursor + 0.5 - x0) * minutes, "right": (x1 - cursor - 0.5) * minutes}
-
-
-def replay_first_x(cursor: int, config: ChartConfig = DEFAULT_CONFIG) -> int:
-    """First candle drawn during replay: at most `replay_window` candles up to the cursor."""
-    return max(0, cursor + 1 - config.replay_window)
-
-
-def replay_chart(
-    replay: Replay,
-    state: dict,
-    config: ChartConfig = DEFAULT_CONFIG,
-    show_sessions: bool = True,
-    overlay_keys: Sequence[str] = (),
-    registry: dict[str, OverlayType] = OVERLAYS,
-    span: dict | None = None,
-    settings: OverlaySettings = DEFAULT_SETTINGS,
-    sources: SymbolSources | None = None,
-):
-    """(figure or None, message, axis store or None) at the replay time `state["now"]`,
-    showing the replay `span`. Overlays show only events confirmed at or before the cursor."""
-    now = datetime.fromisoformat(state["now"])
-    cursor = replay.cursor_at(now)
-    if cursor is None:
-        return None, f"Replay at {now:%Y-%m-%d %H:%M} UTC: no candle closed yet. Press ▶.", None
-    view = replay.view(cursor)
-    traces, notes = chart_overlays(
-        replay,
-        overlay_keys,
-        cursor,
-        replay_first_x(cursor, config),
-        config,
-        registry,
-        settings,
-        sources,
-    )
-    figure, store = replay_figure(view, config, show_sessions, traces, span)
-    message = (
-        f"Replay · candle {cursor + 1:,} of {len(replay):,} · "
-        f"{view.current.ts:%Y-%m-%d %H:%M} {replay.timeframe.name} candle, closed at "
-        f"{replay.close_time(cursor):%H:%M} UTC"
-    )
-    return figure, _with_notes(message, notes), store
-
-
-def visible_axes(relayout: dict | None, store: dict | None, config: ChartConfig = DEFAULT_CONFIG):
-    """New x-axis labels and price range after a zoom/pan, or None if nothing to change."""
-    if not relayout or not store:
-        return None
-    n, first = len(store["ts"]), store.get("x0", 0)
-    if relayout.get("xaxis.autorange"):
-        x0, x1 = first, first + n - 1.0
-    elif "xaxis.range[0]" in relayout:
-        x0, x1 = relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]
-    elif "xaxis.range" in relayout:
-        x0, x1 = relayout["xaxis.range"]
-    else:
-        return None
-    lo, hi = max(round(x0) - first, 0), min(round(x1) - first, n - 1)
-    if hi < lo:
-        return None
-    ts = pd.to_datetime(pd.Series(store["ts"]), utc=True)
-    tickvals, ticktext = time_ticks(ts, lo, hi, config.max_ticks)
-    prices = pd.DataFrame({"low": store["low"], "high": store["high"]})
-    tickvals = [first + p for p in tickvals]
-    return tickvals, ticktext, y_range(prices, lo, hi, config.y_padding)
 
 
 # --- Lightweight Charts payloads (ROADMAP 4.0a) -----------------------------------------
@@ -516,8 +333,14 @@ def base_payload(
         "picking": bool(replay_state["on"] and replay_state["picking"]),
         "candles": data.candles(0, cursor + 1),
         "sessions": data.sessions(0, cursor + 1),
-        "span": (span or default_span(tf, config)) if in_replay else None,
+        "span": None,
+        "range": None,
     }
+    if in_replay:  # the replay span (minutes left / right of the cursor) on this timeframe
+        span = span or default_span(tf, config)
+        left, right = span_candles(span, tf, config)
+        payload["span"] = span
+        payload["range"] = {"from": cursor - left + 0.5, "to": cursor + right + 0.5}
     return payload, message
 
 
@@ -581,7 +404,10 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
         "edge_color": config.edge_color,
         "wick_color": config.wick_color,
         "y_padding": config.y_padding,
+        "session_line_width": config.session_line_width,
+        "session_line_dash": config.session_line_dash,
         "replay_min_visible": config.replay_min_visible,
+        "replay_window": config.replay_window,
     }
 
 

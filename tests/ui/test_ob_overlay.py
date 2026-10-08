@@ -9,10 +9,10 @@ candle is in the ATR warm-up (never strong), so the OB only exists with the OB f
 from __future__ import annotations
 
 from conftest import build_series
-from plotly_helpers import chart_overlays
+from overlay_helpers import boxes, by_layer, chart_overlays, hovers
 
 from backtester.engine.replay import Replay
-from backtester.ui.chart_figure import DEFAULT_CONFIG
+from backtester.ui.chart_config import DEFAULT_CONFIG
 from backtester.ui.overlays import OVERLAYS, OverlaySettings, overlay_options
 
 OFF = OverlaySettings(ob_strong_move_filter=False)
@@ -33,15 +33,10 @@ def gold_replay(*ohlc) -> Replay:
     return Replay(build_series(list(ohlc), symbol="XAUUSD"))
 
 
-def traces_at(replay, cursor, settings=OFF, keys=ALL):
-    traces, messages = chart_overlays(replay, keys, cursor, 0, settings=settings)
+def drawn_at(replay, cursor, settings=OFF, keys=ALL):
+    drawings, messages = chart_overlays(replay, keys, cursor, 0, settings=settings)
     assert messages == []
-    return {t.name: t for t in traces}
-
-
-def box(trace):
-    xs, ys = list(trace.x), list(trace.y)
-    return [(xs[i], xs[i + 1], ys[i], ys[i + 2]) for i in range(0, len(xs), 6)]
+    return by_layer(drawings)
 
 
 def test_order_block_in_the_panel_after_fvg_with_sub_entries():
@@ -54,12 +49,11 @@ def test_order_block_in_the_panel_after_fvg_with_sub_entries():
 
 def test_nothing_before_the_bos_then_a_yellow_box_from_the_legs_first_candle():
     replay = gold_replay(*OB, TAP)
-    assert traces_at(replay, 4) == {}
-    t = traces_at(replay, 5)
-    assert box(t["OB box"]) == [(1, 5, 4390.0, 4409.0)]
-    assert t["OB box"].fillcolor.startswith("rgba(251,192,45,")  # yellow #fbc02d
-    assert DEFAULT_CONFIG.ob_color == "#fbc02d"
-    text = t["OB"].text[0]
+    assert drawn_at(replay, 4) == {}
+    t = drawn_at(replay, 5)
+    assert boxes(t["OB box"]) == [(1, 5, 4390.0, 4409.0)]
+    assert t["OB box"][0].fill == DEFAULT_CONFIG.ob_color == "#fbc02d"  # yellow
+    text = hovers(t["OB"])[0]
     assert "Bullish OB 4390.000 – 4409.000 (size 19.000)" in text
     assert "leg into swing low 4390.000" in text
     assert "bullish BOS of 4410.000" in text
@@ -69,14 +63,14 @@ def test_nothing_before_the_bos_then_a_yellow_box_from_the_legs_first_candle():
 
 def test_box_ends_at_confirmation_with_its_marker():
     replay = gold_replay(*OB, TAP, CONFIRM, (4411.0, 4420.0, 4410.0, 4418.0))
-    t = traces_at(replay, 8)
-    assert box(t["OB box"]) == [(1, 7, 4390.0, 4409.0)]
-    assert list(t["OB state"].marker.symbol) == ["star"]
-    assert "state: confirmed" in t["OB"].text[0]
+    t = drawn_at(replay, 8)
+    assert boxes(t["OB box"]) == [(1, 7, 4390.0, 4409.0)]
+    assert [m.shape for m in t["OB state"]] == ["star"]
+    assert "state: confirmed" in hovers(t["OB"])[0]
 
 
 def test_ob_strong_move_filter_switch_on_by_default():
     replay = gold_replay(*OB)
     assert OverlaySettings().ob_strong_move_filter
-    assert traces_at(replay, 5, OverlaySettings()) == {}  # no strong candle (ATR warm-up)
-    assert "OB" in traces_at(replay, 5, OFF)
+    assert drawn_at(replay, 5, OverlaySettings()) == {}  # no strong candle (ATR warm-up)
+    assert "OB" in drawn_at(replay, 5, OFF)

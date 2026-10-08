@@ -13,24 +13,35 @@ from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 sys.path.append(str(Path(__file__).parents[1] / "strategy" / "session_zone_sweep"))
 import scenario
-from plotly_helpers import chart_overlays, plotly
+from overlay_helpers import boxes, by_layer, chart_overlays, hovers, lines, texts
 from scenario import ENTRY_INDEX, LONDON, NY_FIRST, NY_SETUP, TO_TARGET
 
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
+from backtester.data.resample import CANDLE_COLUMNS
 from backtester.detectors.zone import ZoneKind
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, PartialExit
-from backtester.ui.chart_figure import frame_from_candles
 from backtester.ui.overlays import OverlayContext
 from backtester.ui.trades_overlay import detect_trades
 from backtester.ui.trades_overlay import draw_trades as draw_trade_drawings
 
 TF = {Timeframe.M5: 0, Timeframe.M30: 1, Timeframe.H1: 2, Timeframe.H4: 3}
+
+
+def frame_from_candles(candles) -> pd.DataFrame:
+    """Candles as a frame with the cache adapter's columns."""
+    frame = pd.DataFrame(
+        [(c.ts, c.open, c.high, c.low, c.close, c.volume, c.spread) for c in candles],
+        columns=CANDLE_COLUMNS,
+    )
+    frame["ts"] = pd.to_datetime(frame["ts"], utc=True)
+    return frame
 
 
 class FakeSources:
@@ -89,14 +100,7 @@ def test_higher_chart_places_the_trade_on_the_candle_containing_it():
 
 
 def draw_trades(events, ctx):
-    return plotly(draw_trade_drawings(events, ctx))
-
-
-def by_name(traces):
-    out = {}
-    for t in traces:
-        out.setdefault(t.name, []).append(t)
-    return out
+    return draw_trade_drawings(events, ctx)
 
 
 def ctx(cursor, parts=frozenset()):
@@ -105,49 +109,49 @@ def ctx(cursor, parts=frozenset()):
 
 def test_box_green_to_tp_red_to_sl_entry_line_and_rr_label():
     e, _, _ = one_trade()
-    traces = by_name(draw_trades([e], ctx(len(FULL) - 1)))
-    [target], [risk] = traces["Trade target"], traces["Trade risk"]
-    assert target.x[:5] == (ENTRY_INDEX, ENTRY_INDEX + 1, ENTRY_INDEX + 1, ENTRY_INDEX, ENTRY_INDEX)
-    assert sorted(target.y[:5]) == pytest.approx([110.0, 110.0, 110.0, 111.08, 111.08])
-    assert set(risk.y[:5]) == {109.1, 110.0}
-    assert "rgba(8,153,129" in target.fillcolor and "rgba(242,54,69" in risk.fillcolor
-    assert traces["Trade entry"][0].y[:2] == (110.0, 110.0)
-    assert traces["Trade R:R"][0].text == ("R:R 1.20",)
-    hover = traces["Trade"][0].text[-1]
+    layers = by_layer(draw_trades([e], ctx(len(FULL) - 1)))
+    [target], [risk] = boxes(layers["Trade target"]), boxes(layers["Trade risk"])
+    assert target[:2] == (ENTRY_INDEX, ENTRY_INDEX + 1)
+    assert target[2:] == pytest.approx((110.0, 111.08))
+    assert risk == (ENTRY_INDEX, ENTRY_INDEX + 1, 109.1, 110.0)
+    assert layers["Trade target"][0].fill == "#089981" and layers["Trade risk"][0].fill == "#f23645"
+    assert lines(layers["Trade entry"])[0][2:] == (110.0, 110.0)
+    assert texts(layers["Trade R:R"]) == ["R:R 1.20"]
+    hover = hovers(layers["Trade"])[-1]
     assert "Long · FVG · London low zone" in hover
     assert "TP at 111.080" in hover and "result +1.20R before costs" in hover
     assert "SL from the confluence · TP from min R" in hover
-    assert "Trade TP1" not in traces  # one TP only
-    assert "Trade zone" not in traces  # confluences only with the sub-entry
+    assert "Trade TP1" not in layers  # one TP only
+    assert "Trade zone" not in layers  # confluences only with the sub-entry
 
 
 def test_trade_confluences_sub_entry():
     e, _, _ = one_trade()
-    traces = by_name(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
-    zone = traces["Trade zone"][0]
-    assert min(x for x in zone.x if x is not None) == 6
-    assert {y for y in zone.y if y is not None} == {107.0, 108.0}
-    assert traces["Trade BOS"][0].y[:2] == (108.8, 108.8)
-    fvg = traces["Trade fvg"][0]
-    assert {y for y in fvg.y if y is not None} == {109.1, 109.5}
-    assert "Trade SL ref" not in traces  # the SL is at the FVG, not the BOS move's low
+    layers = by_layer(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
+    [zone] = boxes(layers["Trade zone"])
+    assert zone == (6, ENTRY_INDEX, 107.0, 108.0)
+    assert layers["Trade zone"][0].part == "confluences"
+    assert lines(layers["Trade BOS"])[0][2:] == (108.8, 108.8)
+    [fvg] = boxes(layers["Trade fvg"])
+    assert fvg[2:] == (109.1, 109.5)
+    assert "Trade SL ref" not in layers  # the SL is at the FVG, not the BOS move's low
 
 
 def test_replay_shows_the_trade_from_its_entry_close_and_grows_until_the_exit():
     _, replay, sources = one_trade()
 
     def drawn(cursor):
-        traces, _ = chart_overlays(replay, ["trades"], cursor, 0, sources=sources)
-        return by_name(traces)
+        drawings, _ = chart_overlays(replay, ["trades"], cursor, 0, sources=sources)
+        return by_layer(drawings)
 
     assert drawn(ENTRY_INDEX - 1) == {}  # not entered yet
     at_entry = drawn(ENTRY_INDEX)
-    assert max(x for x in at_entry["Trade target"][0].x if x is not None) == ENTRY_INDEX
-    hover = at_entry["Trade"][0].text[-1]
+    assert boxes(at_entry["Trade target"])[0][1] == ENTRY_INDEX
+    hover = hovers(at_entry["Trade"])[-1]
     assert "still open at the cursor" in hover and "TP at" not in hover
     later = drawn(ENTRY_INDEX + 5)
-    assert max(x for x in later["Trade target"][0].x if x is not None) == ENTRY_INDEX + 1
-    assert "TP at" in later["Trade"][0].text[-1]
+    assert boxes(later["Trade target"])[0][1] == ENTRY_INDEX + 1
+    assert "TP at" in hovers(later["Trade"])[-1]
 
 
 def test_break_even_line_only_from_the_candle_it_moved_on():
@@ -163,20 +167,20 @@ def test_break_even_line_only_from_the_candle_it_moved_on():
         break_even_x=ENTRY_INDEX + 1,
         exit_x=ENTRY_INDEX + 3,
     )
-    assert "Trade break-even" not in by_name(draw_trades([moved], ctx(ENTRY_INDEX)))
-    [line] = by_name(draw_trades([moved], ctx(ENTRY_INDEX + 3)))["Trade break-even"]
-    assert line.x[:2] == (ENTRY_INDEX + 1, ENTRY_INDEX + 3) and line.y[:2] == (110.31, 110.31)
+    assert "Trade break-even" not in by_layer(draw_trades([moved], ctx(ENTRY_INDEX)))
+    [line] = lines(by_layer(draw_trades([moved], ctx(ENTRY_INDEX + 3)))["Trade break-even"])
+    assert line == (ENTRY_INDEX + 1, ENTRY_INDEX + 3, 110.31, 110.31)
 
 
 def test_sl_ref_line_when_the_sl_used_the_bos_move_low():
     e, _, _ = one_trade()
     targets = replace(e.decision.targets, sl_at_bos_leg=True)
     e = replace(e, decision=replace(e.decision, targets=targets))
-    traces = by_name(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
-    [line] = traces["Trade SL ref"]
-    assert line.x[:2] == (NY_FIRST + 2, ENTRY_INDEX) and line.y[:2] == (108.1, 108.1)
-    assert line.line.dash == "dot"
-    assert traces["Trade SL ref label"][0].text == ("SL ref",)
+    layers = by_layer(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
+    [ref] = layers["Trade SL ref"]
+    assert lines([ref]) == [(NY_FIRST + 2, ENTRY_INDEX, 108.1, 108.1)]
+    assert ref.dash == "dot"
+    assert texts(layers["Trade SL ref label"]) == ["SL ref"]
 
 
 def test_no_lookahead_later_candles_never_change_what_was_known():
@@ -208,18 +212,18 @@ def test_two_tps_box_lines_and_hover():
         part_xs=(ENTRY_INDEX + 1, ENTRY_INDEX + 3),
         exit_x=ENTRY_INDEX + 3,
     )
-    traces = by_name(draw_trades([two], ctx(ENTRY_INDEX + 3)))
-    [target] = traces["Trade target"]
-    assert max(y for y in target.y if y is not None) == pytest.approx(112.7)  # up to TP2
-    [tp1] = traces["Trade TP1"]
-    assert tp1.y[:2] == pytest.approx((111.08, 111.08)) and tp1.line.dash == "dash"
-    assert traces["Trade R:R"][0].text == ("R:R 1.20 / 3.00",)
-    hover = traces["Trade"][0].text[-1]
+    layers = by_layer(draw_trades([two], ctx(ENTRY_INDEX + 3)))
+    [target] = boxes(layers["Trade target"])
+    assert target[3] == pytest.approx(112.7)  # up to TP2
+    [tp1] = layers["Trade TP1"]
+    assert (tp1.y0, tp1.y1) == pytest.approx((111.08, 111.08)) and tp1.dash == "dash"
+    assert texts(layers["Trade R:R"]) == ["R:R 1.20 / 3.00"]
+    hover = hovers(layers["Trade"])[-1]
     assert "TP1 111.080 (50%, 1.20R) · TP2 112.700 (50%, 3.00R)" in hover
     assert "TP1 part (50%): TP at 111.080" in hover
     assert "rest (50%): break-even at 110.310" in hover and "result +0.77R" in hover
     # replay: after TP1, before the rest closed -> only the first part
-    hover = by_name(draw_trades([two], ctx(ENTRY_INDEX + 2)))["Trade"][0].text[-1]
+    hover = hovers(by_layer(draw_trades([two], ctx(ENTRY_INDEX + 2)))["Trade"])[-1]
     assert "TP1 part" in hover and "rest (50%)" not in hover
     assert "still open at the cursor" in hover
 
@@ -229,6 +233,6 @@ def test_equilibrium_confluence_is_drawn_in_its_color():
     signal = e.decision.signal
     eq = replace(signal.confluence, kind=ZoneKind.EQUILIBRIUM)
     e = replace(e, decision=replace(e.decision, signal=replace(signal, confluence=eq)))
-    traces = by_name(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
-    assert "Trade equilibrium" in traces
-    assert "EQUILIBRIUM" in traces["Trade"][0].text[-1]
+    layers = by_layer(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
+    assert layers["Trade equilibrium"][0].fill == "#3f51b5"
+    assert "EQUILIBRIUM" in hovers(layers["Trade"])[-1]
