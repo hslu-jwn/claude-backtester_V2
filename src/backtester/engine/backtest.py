@@ -4,8 +4,9 @@ ROADMAP.md › 3.1, strategy-session-zones.md › Stop loss.
 Steps the strategy's base timeframe (5m for strategy 1) with `Replay`, so the strategy
 gets exactly the views the chart replay shows. Per base candle i, `now` = its close time:
 
-1. Open trades are checked against candle i's OHLC only (`OpenTrade.exit_on`: SL before
-   TP when both are inside the candle).
+1. Open trades are checked against candle i's OHLC only (`OpenTrade.on_candle`: SL before
+   TP when both are inside the candle; an order with two TPs closes in two parts, and the
+   rest's SL may move to break-even after TP1, see engine/trade.py).
 2. Break-even rule: the first candle closing at or after the first session start after a
    trade's entry decides. Break-even includes the costs: the level where a hit ends at 0R
    net (long: entry + spread + commission as a price distance). Close beyond that level ->
@@ -85,12 +86,12 @@ class Backtest:
             still_open = []
             for trade in open_trades:
                 trade.track_excursion(candle)
-                hit = trade.exit_on(candle)
-                if hit is None:
+                trade.on_candle(candle, now)
+                if trade.is_closed:
+                    closed.append(self._result(trade))
+                else:
                     self._check_break_even(trade, candle, now)
                     still_open.append(trade)
-                else:
-                    closed.append(self._close(trade, now, candle, *hit))
             open_trades = still_open
             views = self._views(cursor, view)
             for order in self._strategy.on_candle(now, views):
@@ -99,7 +100,8 @@ class Backtest:
             last = replay.view(len(replay) - 1).current
             now = replay.close_time(len(replay) - 1)
             for trade in open_trades:
-                closed.append(self._close(trade, now, last, last.close, ExitReason.END_OF_DATA))
+                trade.close_all(last, now, last.close, ExitReason.END_OF_DATA)
+                closed.append(self._result(trade))
         closed.sort(key=lambda t: t.entry_time)
         return closed
 
@@ -119,6 +121,11 @@ class Backtest:
             raise ValueError(f"{order.direction.value} SL {order.stop_loss} not beyond {entry}")
         if sign * (order.take_profit - entry) <= 0:
             raise ValueError(f"{order.direction.value} TP {order.take_profit} not beyond {entry}")
+        if order.take_profit_2 is not None:
+            if sign * (order.take_profit_2 - order.take_profit) <= 0:
+                raise ValueError(f"TP2 {order.take_profit_2} not beyond TP1 {order.take_profit}")
+            if not 0 < order.tp1_share < 1:
+                raise ValueError(f"tp1_share {order.tp1_share} must be in (0, 1) with a TP2")
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol)
         check = None
@@ -138,6 +145,10 @@ class Backtest:
             break_even_level=entry + sign * self._config.costs.break_even_offset(symbol),
             tags=order.tags,
             reason=order.reason,
+            take_profit_2=order.take_profit_2,
+            tp1_share=order.tp1_share if order.take_profit_2 is not None else 1.0,
+            break_even_after_tp1=order.break_even_after_tp1,
+            spread=spread,
         )
 
     @staticmethod
@@ -146,18 +157,7 @@ class Backtest:
             return
         trade.break_even_check = None  # only the next session start counts
         if trade.sign * (candle.close - trade.break_even_level) > 0:
-            trade.stop_loss = trade.break_even_level
-            trade.break_even_time = now
+            trade.move_to_break_even(now)
 
-    def _close(
-        self, trade: OpenTrade, now: datetime, candle: Candle, price: float, reason: ExitReason
-    ) -> TradeResult:
-        costs = self._config.costs
-        return trade.close(
-            exit_time=now,
-            exit_candle=candle.ts,
-            exit_price=price,
-            reason=reason,
-            spread=costs.spread(trade.symbol),
-            commission_r=costs.commission_r(trade.symbol, trade.risk),
-        )
+    def _result(self, trade: OpenTrade) -> TradeResult:
+        return trade.result(self._config.costs.commission_r(trade.symbol, trade.risk))

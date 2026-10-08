@@ -27,7 +27,8 @@ BEFORE_LONDON = datetime(2026, 1, 5, 7, 30, tzinfo=UTC)
 
 
 class Scripted(Strategy):
-    """Dummy strategy: at base cursor k, enter each (direction, SL, TP) of script[k]."""
+    """Dummy strategy: at base cursor k, enter each (direction, SL, TP) of script[k] (or a
+    dict of Order fields without the entry)."""
 
     base_timeframe = Timeframe.M5
 
@@ -40,7 +41,12 @@ class Scripted(Strategy):
         self.seen.append((now, views))
         base = views[Timeframe.M5]
         close = base.current.close
-        return [Order(d, close, sl, tp) for d, sl, tp in self.script.get(base.cursor, [])]
+        return [
+            Order(item["direction"], close, **{k: v for k, v in item.items() if k != "direction"})
+            if isinstance(item, dict)
+            else Order(item[0], close, *item[1:])
+            for item in self.script.get(base.cursor, [])
+        ]
 
 
 def run(ohlc, script, config=NO_COSTS, start=DEFAULT_START, symbol="TEST"):
@@ -333,3 +339,116 @@ def test_future_candles_never_change_finished_trades():
         assert [t.entry_time for t in part] == [
             t.entry_time for t in full if t.entry_time <= DEFAULT_START + k * M5
         ]
+
+
+# --- two TPs: partial closes (strategy-session-zones.md › Take profit) ---------------------
+
+NO_SESSION_BE = EngineConfig(
+    costs=CostConfig(spread_enabled=False, commission_enabled=False),
+    break_even_at_next_session=False,
+)
+
+
+def two_tps(direction=LONG, sl=98.0, tp1=102.4, tp2=104.0, share=0.5, be=True):
+    """Entry 100, 1R = 2: TP1 at 1.2R, TP2 at 2R by default."""
+    return {
+        0: [
+            {
+                "direction": direction,
+                "stop_loss": sl,
+                "take_profit": tp1,
+                "take_profit_2": tp2,
+                "tp1_share": share,
+                "break_even_after_tp1": be,
+            }
+        ]
+    }
+
+
+TP1_CANDLE = (100.2, 102.5, 100.1, 102.2)  # reaches TP1 102.4, closes above break-even
+
+
+def test_tp1_then_tp2_is_the_weighted_sum():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 104.1, 101.0, 103.9)]
+    [t] = run(ohlc, two_tps(), NO_SESSION_BE)
+    first, rest = t.parts
+    assert (first.share, first.price, first.reason) == (0.5, 102.4, ExitReason.TAKE_PROFIT)
+    assert first.time == DEFAULT_START + 2 * M5 and first.r_gross == pytest.approx(1.2)
+    assert (rest.share, rest.price, rest.reason) == (0.5, 104.0, ExitReason.TAKE_PROFIT)
+    assert t.r_gross == pytest.approx(0.5 * 1.2 + 0.5 * 2.0)
+    assert t.exit_time == DEFAULT_START + 3 * M5 and t.exit_price == 104.0
+    assert t.planned_r == pytest.approx(1.6)
+    # the SL of the rest moved to break-even with the TP1 candle (no costs: the entry)
+    assert t.break_even_time == DEFAULT_START + 2 * M5 and t.break_even_stop == 100.0
+
+
+def test_rest_stopped_at_break_even_after_tp1():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 102.3, 99.9, 100.5)]
+    [t] = run(ohlc, two_tps(), NO_SESSION_BE)
+    assert [p.reason for p in t.parts] == [ExitReason.TAKE_PROFIT, ExitReason.BREAK_EVEN]
+    assert t.exit_reason is ExitReason.BREAK_EVEN and t.r_gross == pytest.approx(0.6)
+
+
+def test_break_even_counts_from_the_candle_after_tp1():
+    # the TP1 candle's low (99.5) is below the entry, but may have come before TP1
+    ohlc = [ENTRY, (100.2, 102.5, 99.5, 102.2), (102.2, 102.3, 100.5, 101.0)]
+    [t] = run(ohlc, two_tps(), NO_SESSION_BE)
+    assert t.exit_reason is ExitReason.END_OF_DATA and len(t.parts) == 2
+
+
+def test_tp1_candle_closing_back_below_break_even_stops_the_rest_in_it():
+    ohlc = [ENTRY, (100.2, 102.5, 99.5, 99.8), QUIET]
+    [t] = run(ohlc, two_tps(), NO_SESSION_BE)
+    assert [p.reason for p in t.parts] == [ExitReason.TAKE_PROFIT, ExitReason.BREAK_EVEN]
+    assert t.parts[1].time == DEFAULT_START + 2 * M5 and t.parts[1].price == 100.0
+    assert t.r_gross == pytest.approx(0.6)
+
+
+def test_without_break_even_after_tp1_the_rest_keeps_its_sl():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 102.3, 97.9, 98.5)]
+    [t] = run(ohlc, two_tps(be=False), NO_SESSION_BE)
+    assert t.break_even_time is None and t.exit_reason is ExitReason.STOP_LOSS
+    assert t.r_gross == pytest.approx(0.5 * 1.2 - 0.5)
+
+
+def test_tp1_and_tp2_in_one_candle_sl_first_with_tp1():
+    [both] = run([ENTRY, (100.2, 104.1, 100.1, 104.0)], two_tps(), NO_SESSION_BE)
+    assert len(both.parts) == 2 and both.r_gross == pytest.approx(1.6)
+    [sl] = run([ENTRY, (100.2, 102.5, 97.9, 101.0)], two_tps(), NO_SESSION_BE)
+    assert len(sl.parts) == 1 and sl.r_gross == pytest.approx(-1.0)
+
+
+def test_tp1_share_setting():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 102.3, 99.9, 100.5)]
+    [t] = run(ohlc, two_tps(share=0.25), NO_SESSION_BE)
+    assert [p.share for p in t.parts] == [0.25, 0.75]
+    assert t.r_gross == pytest.approx(0.25 * 1.2)
+
+
+def test_short_two_tps_mirrored():
+    ohlc = [ENTRY, (99.8, 99.9, 97.5, 97.8), (97.8, 99.0, 95.9, 96.2)]
+    [t] = run(ohlc, two_tps(SHORT, sl=102.0, tp1=97.6, tp2=96.0), NO_SESSION_BE)
+    assert [p.price for p in t.parts] == [97.6, 96.0]
+    assert t.r_gross == pytest.approx(1.6)
+
+
+def test_two_tps_net_of_costs():
+    # XAUUSD, risk 2: spread 0.125R, commission 6 / (2 x 100) = 0.03R; break-even 100.31
+    gold = EngineConfig(break_even_at_next_session=False)
+    win = [ENTRY, TP1_CANDLE, (102.2, 104.1, 101.0, 103.9)]
+    [t] = run(win, two_tps(), gold, symbol="XAUUSD")
+    assert t.r_net == pytest.approx(1.6 - 0.125 - 0.03)
+    back = [ENTRY, TP1_CANDLE, (102.2, 102.3, 99.9, 100.5)]
+    [t] = run(back, two_tps(), gold, symbol="XAUUSD")
+    assert t.break_even_stop == pytest.approx(100.31)
+    # TP1 half: 0.5 x (102.4 - 100.25) / 2 - 0.015 commission; the rest ends at 0R net
+    assert t.r_net == pytest.approx(0.5 * 2.15 / 2 - 0.015)
+    rest = t.parts[1]
+    assert 0.5 * rest.r_fills - 0.015 == pytest.approx(0.0)
+
+
+def test_bad_two_tp_orders_raise():
+    with pytest.raises(ValueError, match="TP2"):
+        run([ENTRY, QUIET], two_tps(tp2=102.0), NO_SESSION_BE)
+    with pytest.raises(ValueError, match="tp1_share"):
+        run([ENTRY, QUIET], two_tps(share=1.0), NO_SESSION_BE)

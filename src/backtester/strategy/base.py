@@ -2,7 +2,8 @@
 
 The engine calls `on_candle` once per closed base-timeframe candle with lookahead-safe views
 of every timeframe the strategy declared. A strategy returns orders in price terms
-(entry, SL, TP); the engine fills them and records results in R.
+(entry, SL, TP); the engine fills them and records results in R. An order may close in
+two parts: `tp1_share` of the position at `take_profit`, the rest at `take_profit_2`.
 """
 
 from __future__ import annotations
@@ -20,9 +21,12 @@ class Order:
     direction: Direction
     entry: float  # filled at the close of the current base candle
     stop_loss: float
-    take_profit: float
+    take_profit: float  # TP1 (the whole position when take_profit_2 is None)
     tags: frozenset[str] = field(default_factory=frozenset)  # e.g. {"last_1.5h"}
     reason: str = ""  # human-readable trail for the chart / debugging
+    take_profit_2: float | None = None  # the rest of the position closes here
+    tp1_share: float = 1.0  # share closed at TP1; < 1 only with a take_profit_2
+    break_even_after_tp1: bool = False  # SL of the rest to break-even (with costs) after TP1
 
 
 class Strategy(ABC):

@@ -101,7 +101,7 @@ Described for a bearish OB (the user's example), bullish mirrored. Example: XAUU
 ## Equilibrium (strategy 1 uses it as an entry confluence since 2026-10-07, see `strategy-session-zones.md` › Entry sequence)
 - 50% of the most recent swing leg: upper half = premium, lower half = discount.
 - Bullish confirmation: price retraces into discount, then a bullish candle closes back in premium.
-- Invalidated by a close or wick below the leg's swing low.
+- Invalidated by a **close** below the leg's swing low; a wick below it doesn't count (rule set by the user, 2026-10-07).
 
 ## SMT divergence (future, needs multiple symbols)
 - Compare the latest swings of two correlated symbols at the same time. If one makes a stronger swing (HL) while the other makes a weaker one (LL), expect the weaker one to reverse and follow the stronger one.

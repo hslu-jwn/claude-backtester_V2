@@ -11,16 +11,18 @@ The run is cached per symbol and block. Trades entered on the shown range are dr
 timeframe: a 5m time is placed on the chart candle that contains it.
 
 Per trade, a TradingView-style position box from the entry candle to the candle in which
-TP, SL or break-even was hit: green between entry and TP, red between entry and SL (a short
-is flipped automatically: its TP is below), a grey entry line, "R:R" on the box, and the
-break-even line at the moved SL from the candle it moved on. Hover along the entry line:
-entry, SL, TP, result in R (before and after costs), exit reason, confluence.
+the last part closed (TP, SL or break-even): green between entry and the furthest TP, red
+between entry and SL (a short is flipped automatically: its TP is below), a grey entry
+line, "R:R" on the box (TP1 / TP2 with two TPs, 3.3c), a dashed TP1 line inside the green
+part when there is a TP2, and the break-even line at the moved SL from the candle it moved
+on. Hover along the entry line: entry, SL, TP1 / TP2 with their shares, each closed part
+with its result, the total in R (before and after costs), exit reason, confluence.
 
 Sub-entry "↳ trade confluences" (one switch for all trades): what led to each trade, in the
 normal overlay colors: the swept session zone (session-zone style, from where it formed to
 the entry, filled from its active session's start), the 5m BOS (red line from the broken
 swing to the BOS candle), the entry confluence (FVG green, OB yellow, BPR purple, from its
-first candle to the entry) and, when the SL was placed below the BOS move's low because the
+first candle to the entry; equilibrium indigo: the BOS move's discount half) and, when the SL was placed below the BOS move's low because the
 confluence was small, a thin dashed "SL ref" line at that low.
 
 No lookahead: a trade is an event confirmed by its entry candle, so in replay it appears
@@ -117,7 +119,8 @@ class ChartTrade(Event):
 
     trade: TradeResult
     decision: Decision | None
-    exit_x: int  # candle in which TP / SL / break-even was hit (or the last one)
+    exit_x: int  # candle in which the last part closed (or the last one)
+    part_xs: tuple[int, ...]  # candle in which each part closed (trade.parts order)
     break_even_x: int | None  # candle whose close moved the SL to break-even
     zone_x0: int  # the swept session zone: where it formed (clipped to the chart's start)
     zone_fill_x: int  # ... first candle of the session it is used in
@@ -168,6 +171,7 @@ def detect_trades(
         decision = run.decisions.get((trade.entry_time, trade.direction))
         be_x = None if trade.break_even_time is None else containing(trade.break_even_time)
         exit_x = min(containing(trade.exit_time), len(opens) - 1)
+        part_xs = tuple(min(containing(p.time), len(opens) - 1) for p in trade.parts)
         zone_x0 = zone_fill_x = bos_x0 = bos_x1 = confluence_x0 = leg_x = entry_x
         if decision is not None:
             signal = decision.signal
@@ -185,6 +189,7 @@ def detect_trades(
                 trade,
                 decision,
                 exit_x,
+                part_xs,
                 be_x,
                 zone_x0,
                 zone_fill_x,
@@ -273,6 +278,12 @@ def _r(value: float) -> str:
     return f"{value:+.2f}R"
 
 
+def rr_label(t: TradeResult) -> str:
+    if t.take_profit_2 is None:
+        return f"R:R {t.r_at(t.take_profit):.2f}"
+    return f"R:R {t.r_at(t.take_profit):.2f} / {t.r_at(t.take_profit_2):.2f}"
+
+
 def hover_text(e: ChartTrade, ctx: OverlayContext) -> str:
     t, d = e.trade, ctx.digits
     side = "Long" if t.direction is Direction.BULLISH else "Short"
@@ -284,27 +295,44 @@ def hover_text(e: ChartTrade, ctx: OverlayContext) -> str:
             f" · {signal.confluence.kind.value.upper().replace('_', ' ')} · "
             f"{SESSION_LABELS[zone.formed_in.session]} {zone.side.value} zone"
         )
+    if t.take_profit_2 is None:
+        tps = f"TP {t.take_profit:.{d}f} · R:R {t.planned_r:.2f}"
+    else:
+        tps = (
+            f"TP1 {t.take_profit:.{d}f} ({t.tp1_share:.0%}, {t.r_at(t.take_profit):.2f}R) · "
+            f"TP2 {t.take_profit_2:.{d}f} ({1 - t.tp1_share:.0%}, "
+            f"{t.r_at(t.take_profit_2):.2f}R)"
+        )
     lines = [
         head,
         f"entry {t.entry:.{d}f} (candle closed {t.entry_time:%Y-%m-%d %H:%M} UTC)",
-        f"SL {t.initial_stop:.{d}f} · TP {t.take_profit:.{d}f} · R:R {t.planned_r:.2f}",
+        f"SL {t.initial_stop:.{d}f} · {tps}",
     ]
     if e.decision is not None and e.decision.targets is not None:
         targets = e.decision.targets
         sl_from = "BOS move's low" if targets.sl_at_bos_leg else "confluence"
         if t.direction is Direction.BEARISH:
             sl_from = sl_from.replace("low", "high")
-        lines.append(f"SL from the {sl_from} · TP from {targets.target.replace('_', ' ')}")
+        if targets.sl_widened:
+            sl_from += " (widened to the minimum SL)"
+        tp_from = f"TP from {targets.tp1_from}"
+        if targets.tp2_from is not None:
+            tp_from = f"TP1 from {targets.tp1_from} · TP2 from {targets.tp2_from}"
+        lines.append(f"SL from the {sl_from} · {tp_from}")
     if e.break_even_x is not None and e.break_even_x <= ctx.cursor:
         lines.append(
             f"SL to break-even {t.break_even_stop:.{d}f} at {t.break_even_time:%m-%d %H:%M} UTC"
         )
+    two = len(t.parts) > 1
+    for i, (part, x) in enumerate(zip(t.parts, e.part_xs, strict=True)):
+        if x > ctx.cursor:
+            break
+        what = f"{EXIT_LABELS[part.reason]} at {part.price:.{d}f}"
+        if two:
+            what = f"{'TP1 part' if i == 0 else 'rest'} ({part.share:.0%}): {what}"
+        lines.append(f"{what} (candle closed {part.time:%Y-%m-%d %H:%M} UTC): {_r(part.r_gross)}")
     if e.exit_x <= ctx.cursor:
-        lines.append(
-            f"{EXIT_LABELS[t.exit_reason]} at {t.exit_price:.{d}f} "
-            f"(candle closed {t.exit_time:%Y-%m-%d %H:%M} UTC): "
-            f"{_r(t.r_gross)} before costs, {_r(t.r_net)} after costs"
-        )
+        lines.append(f"result {_r(t.r_gross)} before costs, {_r(t.r_net)} after costs")
     else:
         lines.append("still open at the cursor")
     if t.tags:
@@ -316,12 +344,15 @@ def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.Sc
     if not events:
         return []
     cfg = ctx.config
-    profit, loss, entries, break_even, labels = [], [], [], [], []
+    profit, loss, entries, break_even, tp1_lines, labels = [], [], [], [], [], []
     hover_x, hover_y, hover_text_ = [], [], []
     for e in events:
         t = e.trade
         x0, x1 = e.entry_x, min(e.exit_x, ctx.cursor)  # grows with the cursor in replay
-        profit.append((x0, x1, min(t.entry, t.take_profit), max(t.entry, t.take_profit)))
+        far_tp = t.take_profit if t.take_profit_2 is None else t.take_profit_2
+        profit.append((x0, x1, min(t.entry, far_tp), max(t.entry, far_tp)))
+        if t.take_profit_2 is not None:
+            tp1_lines.append((x0, x1, t.take_profit))
         loss.append((x0, x1, min(t.entry, t.initial_stop), max(t.entry, t.initial_stop)))
         entries.append((x0, x1, t.entry))
         if e.break_even_x is not None and e.break_even_x <= ctx.cursor:
@@ -329,8 +360,8 @@ def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.Sc
         labels.append(
             (
                 (x0 + x1) / 2,
-                (t.entry + t.take_profit) / 2,
-                f"R:R {t.planned_r:.2f}",
+                (t.entry + far_tp) / 2,
+                rr_label(t),
                 "middle center",
             )
         )
@@ -344,6 +375,7 @@ def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.Sc
         *_filled(loss, cfg.trade_loss_color, cfg.trade_box_opacity, "Trade risk"),
         *_lines(entries, cfg.trade_entry_color, "Trade entry"),
         *_lines(break_even, cfg.trade_break_even_color, "Trade break-even", dash="dash"),
+        *_lines(tp1_lines, cfg.trade_tp1_color, "Trade TP1", dash="dash"),
         *_labels(labels, cfg.text_color, "Trade R:R"),
     ]
     if CONFLUENCES in ctx.parts:
@@ -368,6 +400,7 @@ def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[go.S
         ZoneKind.FVG: (cfg.fvg_color, cfg.fvg_fill_opacity),
         ZoneKind.ORDER_BLOCK: (cfg.ob_color, cfg.ob_fill_opacity),
         ZoneKind.BPR: (cfg.bpr_color, cfg.bpr_fill_opacity),
+        ZoneKind.EQUILIBRIUM: (cfg.equilibrium_color, cfg.equilibrium_fill_opacity),
     }
     zone_outlines: dict[str, list[Box]] = {}
     zone_fills: dict[str, list[Box]] = {}

@@ -1,4 +1,4 @@
-"""A hand-built XAUUSD day for strategy 1 tests: 5m candles, aggregated to 30m and 1h.
+"""A hand-built XAUUSD day for strategy 1 tests: 5m candles, aggregated to 30m, 1h, 4h.
 
 Monday 2026-01-05 (winter, no DST): London starts 08:00 UTC, New York 13:00 UTC.
 Fillers are dojis (body 0), so they form no swings and break nothing.
@@ -96,10 +96,12 @@ def aggregate(m5: list[Candle], timeframe: Timeframe) -> list[Candle]:
 
 
 def series(ohlc, symbol: str = SYMBOL) -> list[CandleSeries]:
-    """5m, 30m and 1h series of the same 5m candles."""
+    """5m, 30m, 1h and 4h series of the same 5m candles."""
     m5 = candles(ohlc)
     return [
         CandleSeries(symbol, Timeframe.M5, m5),
-        CandleSeries(symbol, Timeframe.M30, aggregate(m5, Timeframe.M30)),
-        CandleSeries(symbol, Timeframe.H1, aggregate(m5, Timeframe.H1)),
+        *(CandleSeries(symbol, tf, aggregate(m5, tf)) for tf in HIGHER),
     ]
+
+
+HIGHER = (Timeframe.M30, Timeframe.H1, Timeframe.H4)

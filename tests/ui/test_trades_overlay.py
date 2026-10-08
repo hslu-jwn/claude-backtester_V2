@@ -3,7 +3,7 @@ Spec: ROADMAP.md › 3.3b, strategy-session-zones.md › Trades on the chart.
 
 Data: the hand-built London / New York day of the strategy tests (scenario.py), served by a
 fake `SymbolSources`: a long entered at 110.0 (13:40 close, the FVG confirmation), SL 109.1,
-TP 112.7 (3R cap), hit by the next candle.
+TP 111.08 (1.2R: the London zone is beyond the 3R cap), hit by the next candle.
 """
 
 from __future__ import annotations
@@ -21,18 +21,19 @@ from scenario import ENTRY_INDEX, LONDON, NY_FIRST, NY_SETUP, TO_TARGET
 
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
+from backtester.detectors.zone import ZoneKind
 from backtester.engine.replay import Replay
-from backtester.engine.trade import ExitReason
+from backtester.engine.trade import ExitReason, PartialExit
 from backtester.ui.chart_figure import frame_from_candles
 from backtester.ui.overlays import OverlayContext
 from backtester.ui.pages.chart import chart_overlays
 from backtester.ui.trades_overlay import detect_trades, draw_trades
 
-TF = {Timeframe.M5: 0, Timeframe.M30: 1, Timeframe.H1: 2}
+TF = {Timeframe.M5: 0, Timeframe.M30: 1, Timeframe.H1: 2, Timeframe.H4: 3}
 
 
 class FakeSources:
-    """Serves the scenario's 5m / 30m / 1h candles like `SymbolSources` (hash = identity,
+    """Serves the scenario's 5m / 30m / 1h / 4h candles like `SymbolSources` (hash = identity,
     so every test gets a fresh cached run)."""
 
     def __init__(self, ohlc):
@@ -66,10 +67,10 @@ def one_trade(ohlc=FULL, timeframe=Timeframe.M5):
 def test_the_scenario_trade_with_its_chart_positions():
     e, _, _ = one_trade()
     t = e.trade
-    assert (t.entry, t.initial_stop, t.take_profit) == (110.0, 109.1, pytest.approx(112.7))
-    assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(3.0)
+    assert (t.entry, t.initial_stop, t.take_profit) == (110.0, 109.1, pytest.approx(111.08))
+    assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.2)
     # costs on (XAUUSD): spread 0.25 / 0.9 and $6 / (0.9 x $100)
-    assert t.r_net == pytest.approx(3.0 - 0.25 / 0.9 - 6 / 90)
+    assert t.r_net == pytest.approx(1.2 - 0.25 / 0.9 - 6 / 90)
     assert e.entry_x == ENTRY_INDEX and e.exit_x == ENTRY_INDEX + 1
     assert e.decision.signal.confluence.kind.value == "fvg"
     assert e.zone_x0 == 6  # the London 08:00 swing candle (5m 08:00 is candle 6)
@@ -102,15 +103,16 @@ def test_box_green_to_tp_red_to_sl_entry_line_and_rr_label():
     traces = by_name(draw_trades([e], ctx(len(FULL) - 1)))
     [target], [risk] = traces["Trade target"], traces["Trade risk"]
     assert target.x[:5] == (ENTRY_INDEX, ENTRY_INDEX + 1, ENTRY_INDEX + 1, ENTRY_INDEX, ENTRY_INDEX)
-    assert sorted(target.y[:5]) == pytest.approx([110.0, 110.0, 110.0, 112.7, 112.7])
+    assert sorted(target.y[:5]) == pytest.approx([110.0, 110.0, 110.0, 111.08, 111.08])
     assert set(risk.y[:5]) == {109.1, 110.0}
     assert "rgba(8,153,129" in target.fillcolor and "rgba(242,54,69" in risk.fillcolor
     assert traces["Trade entry"][0].y[:2] == (110.0, 110.0)
-    assert traces["Trade R:R"][0].text == ("R:R 3.00",)
+    assert traces["Trade R:R"][0].text == ("R:R 1.20",)
     hover = traces["Trade"][0].text[-1]
     assert "Long · FVG · London low zone" in hover
-    assert "TP at 112.700" in hover and "+3.00R before costs" in hover
-    assert "SL from the confluence · TP from zone cap" in hover
+    assert "TP at 111.080" in hover and "result +1.20R before costs" in hover
+    assert "SL from the confluence · TP from min R" in hover
+    assert "Trade TP1" not in traces  # one TP only
     assert "Trade zone" not in traces  # confluences only with the sub-entry
 
 
@@ -185,3 +187,43 @@ def test_no_lookahead_later_candles_never_change_what_was_known():
         f.take_profit,
         f.entry_time,
     )
+
+
+def test_two_tps_box_lines_and_hover():
+    e, _, _ = one_trade()
+    t = e.trade
+    tp1_time = t.exit_time
+    parts = (
+        PartialExit(0.5, tp1_time, t.exit_candle, 111.08, 111.08, ExitReason.TAKE_PROFIT, 1.2, 1.2),
+        PartialExit(0.5, tp1_time, t.exit_candle, 110.31, 110.31, ExitReason.BREAK_EVEN, 0.34, 0.0),
+    )
+    two = replace(
+        e,
+        trade=replace(t, take_profit_2=112.7, tp1_share=0.5, parts=parts, r_gross=0.77),
+        part_xs=(ENTRY_INDEX + 1, ENTRY_INDEX + 3),
+        exit_x=ENTRY_INDEX + 3,
+    )
+    traces = by_name(draw_trades([two], ctx(ENTRY_INDEX + 3)))
+    [target] = traces["Trade target"]
+    assert max(y for y in target.y if y is not None) == pytest.approx(112.7)  # up to TP2
+    [tp1] = traces["Trade TP1"]
+    assert tp1.y[:2] == pytest.approx((111.08, 111.08)) and tp1.line.dash == "dash"
+    assert traces["Trade R:R"][0].text == ("R:R 1.20 / 3.00",)
+    hover = traces["Trade"][0].text[-1]
+    assert "TP1 111.080 (50%, 1.20R) · TP2 112.700 (50%, 3.00R)" in hover
+    assert "TP1 part (50%): TP at 111.080" in hover
+    assert "rest (50%): break-even at 110.310" in hover and "result +0.77R" in hover
+    # replay: after TP1, before the rest closed -> only the first part
+    hover = by_name(draw_trades([two], ctx(ENTRY_INDEX + 2)))["Trade"][0].text[-1]
+    assert "TP1 part" in hover and "rest (50%)" not in hover
+    assert "still open at the cursor" in hover
+
+
+def test_equilibrium_confluence_is_drawn_in_its_color():
+    e, _, _ = one_trade()
+    signal = e.decision.signal
+    eq = replace(signal.confluence, kind=ZoneKind.EQUILIBRIUM)
+    e = replace(e, decision=replace(e.decision, signal=replace(signal, confluence=eq)))
+    traces = by_name(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
+    assert "Trade equilibrium" in traces
+    assert "EQUILIBRIUM" in traces["Trade"][0].text[-1]

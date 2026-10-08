@@ -242,13 +242,41 @@ text with its state (active / tapped / confirmed / invalidated).
   - The swept session zone is drawn from where it formed to the entry candle, filled from
     its active session's start; the BOS line from the broken swing's wick candle to the
     BOS candle.
-- ☐ **3.3c Strategy rework from the user's manual trades** (2026-10-07, XAUUSD 2026-09-14).
+- ◐ **3.3c Strategy rework from the user's manual trades** (2026-10-07, XAUUSD 2026-09-14).
   Spec: `strategy-session-zones.md` › Entry sequence (equilibrium entry), › Stop loss (SL
   size), › Take profit (reworked: reversal levels = session zones, untouched 1h highs,
   1h OBs; no 1h FVGs; 4H OBs as hard limit; two TPs 50/50 with break-even after TP1; TP at
   the minimum R when no level is in reach). New settings: `use_equilibrium`,
   `max_sl_atr_mult`, `min_sl_atr_mult`, TP1 share, break-even after TP1. The engine must
   support partial closes (result in R = weighted sum), and the chart boxes show TP1 and TP2.
+  Built: equilibrium in `signals.py` (`equilibrium_zone`, `ZoneKind.EQUILIBRIUM`), SL size
+  and the new TP in `targets.py` (`UnmitigatedOrderBlocks` for the 4H limit, `Level`,
+  `Rejected`; `Decision.rejected` says why a signal gave no trade), partial closes in
+  `engine/trade.py` (`PartialExit`, `TradeResult.parts`), TP1 line + per-part hover in
+  `ui/trades_overlay.py`; tests in `test_equilibrium.py`, `test_targets.py`,
+  `tests/engine/test_backtest.py`, `tests/ui/test_trades_overlay.py`.
+  **Provisional assumptions, awaiting the user's check:**
+  - Confirmed by the user (2026-10-07): the equilibrium's move ends at the first 5m
+    swing high confirmed after the BOS candle (leg = BOS leg's low → that swing's price,
+    fixed); only a **close** below the leg's low invalidates it (confluences.md updated);
+    `min_sl_atr_mult` stays off by default.
+  - Equilibrium exists from the end swing's confirming candle, whose own wick doesn't tap
+    it (zone.py rule). Only the setup whose BOS made the leg may use it. It also follows
+    the "most recent confluence wins" rule when several confirm at once.
+  - SL size = entry → SL after the buffer; widening comes before the `max_sl_atr_mult`
+    check. No ATR yet → no SL size checks.
+  - TP levels: a cluster's level is its nearest price; a cluster that starts below
+    `min_rr` is passed as a whole. Resistance zones count only with their bottom above
+    the entry (entry inside a zone: not a level). TP1 / limit compare the TP price after
+    the buffer with `min_rr` / the cap.
+  - TP2 = the furthest of the next 1 + `obstacles_passable` levels within the limit.
+  - 4H OB "unmitigated" = never tapped, same as 1h; strong-move filter as for 1h OBs.
+  - After TP1 the break-even SL counts from the next candle; if the TP1 candle itself
+    closes back beyond the break-even level, the rest closes there in that candle.
+    TP1 and TP2 in one candle (no SL): both filled; SL and TP1 in one candle: SL.
+  - Session-start break-even still applies to the rest if it hasn't moved yet.
+  - Chart: equilibrium drawn indigo (display choice); the green box runs to TP2, with a
+    dashed TP1 line; R:R label "TP1 R / TP2 R".
 - ☐ **3.3d Review mode** (proposed, user to confirm): the app jumps from one setup the
   program found to the next; the user marks take / skip (+ short reason, optional own TP);
   saved to a file. Builds a reference set (agreement % after every rule change) and, later,

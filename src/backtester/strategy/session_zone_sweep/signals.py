@@ -4,7 +4,8 @@ Spec: strategy-session-zones.md › Entry sequence, › Invalidation & reset, �
 Per closed 5m candle (`update(now, v5, v30)`):
 1. 5m detectors: structure (BOS / with-trend breaks, 5m trend), FVG, OB, BPR, ATR. An FVG
    is usable only if it points with the 5m trend after its candle 3 closed (no trend =
-   not used); OBs and BPRs have no trend rule.
+   not used); OBs and BPRs have no trend rule. With `use_equilibrium`: the equilibrium of
+   every 5m break's move (see `equilibrium_zone`), validated like a zone.
 2. Every 30m candle closed by now: session zones (`SessionZoneTracker`), then each live
    zone's setup (sweep, 30m reaction, flips). A setup that just got its 30m reaction
    looks back at the 5m breaks during that 30m candle.
@@ -14,6 +15,13 @@ One setup per live zone, in the direction of the zone's role (support = long). A
 setup only sees 30m candles of the session the zone is active in. At most one entry per
 direction per candle: if several setups trigger on the same candle, the first live zone's
 signal is used and all of them restart.
+
+Equilibrium entry (strategy-session-zones.md › Entry sequence step 4, confluences.md › Equilibrium):
+the leg runs from the break's leg extreme (long: the BOS leg's low) to the move's end, the
+first 5m swing high confirmed after the break candle. From that candle on, the leg's lower
+half (0.5 level down to the low) is validated like a zone (zone.py): a wick below 0.5 taps
+it, a green close back above 0.5 confirms it, a close below the low invalidates it. Only
+the setup whose BOS made the leg may use it.
 """
 
 from __future__ import annotations
@@ -27,7 +35,8 @@ from backtester.detectors.atr import Atr
 from backtester.detectors.bpr import BalancedPriceRange, BprConfig, BprDetector
 from backtester.detectors.fvg import FairValueGap, FvgDetector
 from backtester.detectors.order_block import OrderBlock, OrderBlockDetector
-from backtester.detectors.zone import ZoneBox, ZoneState, ZoneTransition
+from backtester.detectors.swings import SwingKind, SwingPoint
+from backtester.detectors.zone import ZoneBook, ZoneBox, ZoneKind, ZoneState, ZoneTransition
 from backtester.sessions import Session, session_of
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import (
@@ -46,6 +55,24 @@ from backtester.strategy.session_zone_sweep.zones import (
 )
 
 ROLE_DIRECTION = {Role.SUPPORT: Direction.BULLISH, Role.RESISTANCE: Direction.BEARISH}
+# the swing that ends a break's move (a bullish move ends at a swing high)
+MOVE_END = {Direction.BULLISH: SwingKind.HIGH, Direction.BEARISH: SwingKind.LOW}
+
+
+def equilibrium_zone(b: StructureBreak, end: SwingPoint) -> ZoneBox:
+    """The discount half of `b`'s move (long: 0.5 level down to the leg's low), existing
+    from the candle that confirmed the move's end swing `end`."""
+    mid = (b.leg_extreme + end.price) / 2
+    top, bottom = (mid, b.leg_extreme) if b.direction is Direction.BULLISH else (b.leg_extreme, mid)
+    return ZoneBox(
+        ZoneKind.EQUILIBRIUM,
+        b.direction,
+        top,
+        bottom,
+        b.leg_index,
+        end.confirmed_index,
+        end.confirmed_at,
+    )
 
 
 @dataclass
@@ -78,6 +105,9 @@ class SetupTracker:
         self._live: dict[SessionZone, LiveZone] = {}
         self._usable: set[ZoneBox] = set()  # open confluences a setup may use
         self._recent: list[StructureBreak] = []  # 5m breaks of the last 30m
+        self._eq_waiting: list[StructureBreak] = []  # breaks whose move hasn't ended yet
+        self._eq_book = ZoneBook(doji)
+        self._equilibrium: dict[tuple[int, Direction], ZoneBox] = {}  # by break, still open
         self.state = SignalState()
 
     def update(self, now: datetime, v5: SeriesView, v30: SeriesView | None) -> list[EntrySignal]:
@@ -110,7 +140,32 @@ class SetupTracker:
                     self._usable.add(e.zone)
             elif isinstance(e, OrderBlock | BalancedPriceRange):
                 self._usable.add(e.zone)
+        if self.config.use_equilibrium:
+            confirmed += self._update_equilibria(v5, breaks)
         return breaks, confirmed
+
+    def _update_equilibria(self, v5: SeriesView, breaks: list[StructureBreak]) -> list[ZoneBox]:
+        """Validate the open equilibria with this candle, then add those whose move ended
+        with it. Returns the ones this candle confirmed."""
+        confirmed = [t.zone for t in self._eq_book.on_candle(v5) if t.state is ZoneState.CONFIRMED]
+        still = {*self._eq_book.open_zones, *confirmed}
+        self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
+        waiting = []
+        for b in self._eq_waiting:
+            kind = MOVE_END[b.direction]
+            end = next((s for s in self.structure.new_swings if s.kind is kind), None)
+            if end is None:
+                waiting.append(b)
+                continue
+            zone = equilibrium_zone(b, end)
+            self._eq_book.add(zone)
+            self._equilibrium[(b.index, b.direction)] = zone
+        self._eq_waiting = waiting + breaks  # a move ends after its break candle
+        return confirmed
+
+    def equilibrium_of(self, b: StructureBreak) -> ZoneBox | None:
+        """The open (or just confirmed) equilibrium of break `b`'s move."""
+        return self._equilibrium.get((b.index, b.direction))
 
     def _update_zones(self, now: datetime, v30: SeriesView | None) -> set[Setup]:
         """Process every 30m candle closed since the last call. Returns the setups that
@@ -177,7 +232,12 @@ class SetupTracker:
             setup = live.setup
             if setup is None or not self._trades_in(live.zone):
                 continue
-            usable = [z for z in confirmed if setup.accepts(z, v5.cursor)]
+            usable = [
+                z
+                for z in confirmed
+                if setup.accepts(z, v5.cursor)
+                and (z.kind is not ZoneKind.EQUILIBRIUM or z == self.equilibrium_of(setup.bos))
+            ]
             if not usable:
                 continue
             # several at once: the most recent one (on a tie, the one nearest the close)

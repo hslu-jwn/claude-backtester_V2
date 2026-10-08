@@ -1,12 +1,15 @@
 """SessionZoneSweep strategy: wires zones, setups, detectors and targets together.
 
 Spec: strategy-session-zones.md. Timeframes: 30m zones + reaction, 5m BOS + entry (base),
-1h TP obstacles. Per closed 5m candle: the setup side (signals.py) may emit entry signals;
-each gets SL / TP (targets.py) and becomes an order filled at the 5m close, unless the TP
-is below the minimum R:R. Trades entered in the last `tag_last_minutes_before_next_session`
-minutes before the next session start are tagged `LAST_MINUTES_TAG` (or skipped when
-`include_last_minutes_trades` is off). Every signal and what became of it is kept in
-`decisions`, for checking against the chart and for the results file (ROADMAP 3.4).
+1h TP levels, 4H OBs as the TP limit. Per closed 5m candle: the setup side (signals.py) may
+emit entry signals; each gets SL / TP1 / TP2 (targets.py) and becomes an order filled at
+the 5m close, unless targets.py rejects it (SL too wide, 4H OB below the minimum R).
+`tp1_share` of the position closes at TP1, the rest at TP2 with its SL at break-even after
+TP1 (`break_even_after_tp1`). Trades entered in the last
+`tag_last_minutes_before_next_session` minutes before the next session start are tagged
+`LAST_MINUTES_TAG` (or skipped when `include_last_minutes_trades` is off). Every signal
+and what became of it is kept in `decisions`, for checking against the chart and for the
+results file (ROADMAP 3.4).
 """
 
 from __future__ import annotations
@@ -21,7 +24,13 @@ from backtester.strategy.base import Order, Strategy
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import EntrySignal
 from backtester.strategy.session_zone_sweep.signals import SetupTracker
-from backtester.strategy.session_zone_sweep.targets import ObstacleTracker, Targets, targets
+from backtester.strategy.session_zone_sweep.targets import (
+    ObstacleTracker,
+    Rejected,
+    Targets,
+    UnmitigatedOrderBlocks,
+    targets,
+)
 
 LAST_MINUTES_TAG = "last_90m"
 
@@ -29,8 +38,9 @@ LAST_MINUTES_TAG = "last_90m"
 @dataclass(frozen=True, slots=True)
 class Decision:
     signal: EntrySignal
-    targets: Targets | None  # None: no trade (TP below the minimum R:R)
+    targets: Targets | None  # None: no trade (see `rejected`)
     order: Order | None  # None: no trade
+    rejected: str = ""  # why there is no trade
 
 
 class SessionZoneSweep(Strategy):
@@ -39,17 +49,25 @@ class SessionZoneSweep(Strategy):
     def __init__(self, symbol: str, config: SessionZoneSweepConfig | None = None):
         self.symbol = symbol
         self.config = config = config or SessionZoneSweepConfig()
-        self.timeframes = (Timeframe.M5, config.zone_timeframe, config.obstacle_timeframe)
+        self.timeframes = (
+            Timeframe.M5,
+            config.zone_timeframe,
+            config.obstacle_timeframe,
+            config.limit_timeframe,
+        )
         self.setups = SetupTracker(symbol, config)
-        self.obstacles = ObstacleTracker(self.setups.doji_max_body, config)
-        self._obstacle_cursor = -1
+        doji = self.setups.doji_max_body
+        self.obstacles = ObstacleTracker(doji, config)
+        self.limits = UnmitigatedOrderBlocks(doji, config)
+        self._cursors = {config.obstacle_timeframe: -1, config.limit_timeframe: -1}
         self.decisions: list[Decision] = []
 
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         v5 = views[Timeframe.M5]
         if v5.symbol != self.symbol:
             raise ValueError(f"{v5.symbol} candles for a {self.symbol} strategy")
-        self._update_obstacles(views[self.config.obstacle_timeframe])
+        self._catch_up(self.obstacles, views[self.config.obstacle_timeframe])
+        self._catch_up(self.limits, views[self.config.limit_timeframe])
         signals = self.setups.update(now, v5, views[self.config.zone_timeframe])
         orders = []
         for signal in signals:
@@ -58,30 +76,39 @@ class SessionZoneSweep(Strategy):
                 orders.append(order)
         return orders
 
-    def _update_obstacles(self, view: SeriesView | None) -> None:
+    def _catch_up(self, tracker, view: SeriesView | None) -> None:
+        """Feed `tracker` every candle of `view`'s timeframe closed since the last call."""
         if view is None:
             return
-        for cursor in range(self._obstacle_cursor + 1, view.cursor + 1):
-            self.obstacles.update(view.at(cursor))
-        self._obstacle_cursor = view.cursor
+        for cursor in range(self._cursors[view.timeframe] + 1, view.cursor + 1):
+            tracker.update(view.at(cursor))
+        self._cursors[view.timeframe] = view.cursor
 
     def _order(self, signal: EntrySignal, now: datetime) -> Order | None:
         state = self.setups.state
         zones = [(lz.role, lz.zone.top, lz.zone.bottom) for lz in state.live_zones]
-        found = targets(signal, state.atr, zones, self.obstacles, self.config)
-        order = None
-        if found is not None:
-            tags = self._tags(now)
-            if self.config.include_last_minutes_trades or LAST_MINUTES_TAG not in tags:
-                order = Order(
-                    signal.direction,
-                    signal.close,
-                    found.stop_loss,
-                    found.take_profit,
-                    tags,
-                    _reason(signal, found),
-                )
-        self.decisions.append(Decision(signal, found, order))
+        found = targets(signal, state.atr, zones, self.obstacles, self.limits, self.config)
+        if isinstance(found, Rejected):
+            self.decisions.append(Decision(signal, None, None, found.reason))
+            return None
+        tags = self._tags(now)
+        order, rejected = None, ""
+        if self.config.include_last_minutes_trades or LAST_MINUTES_TAG not in tags:
+            two = found.take_profit_2 is not None
+            order = Order(
+                signal.direction,
+                signal.close,
+                found.stop_loss,
+                found.take_profit,
+                tags,
+                _reason(signal, found),
+                take_profit_2=found.take_profit_2,
+                tp1_share=self.config.tp1_share if two else 1.0,
+                break_even_after_tp1=self.config.break_even_after_tp1,
+            )
+        else:
+            rejected = "last minutes before the next session (excluded)"
+        self.decisions.append(Decision(signal, found, order, rejected))
         return order
 
     def _tags(self, now: datetime) -> frozenset[str]:
@@ -94,9 +121,12 @@ class SessionZoneSweep(Strategy):
 
 def _reason(signal: EntrySignal, found: Targets) -> str:
     zone = signal.zone
+    tp = f"TP1 {found.tp1_from}"
+    if found.tp2_from is not None:
+        tp += f", TP2 {found.tp2_from}"
     return (
         f"{zone.formed_in.session.value} {zone.side.value} zone, 30m reaction "
         f"{signal.reaction_open:%H:%M}, 5m BOS {signal.bos.at:%H:%M}"
         f"{'' if signal.bos.is_bos else ' (with trend)'}, "
-        f"{signal.confluence.kind.value}, TP {found.target}"
+        f"{signal.confluence.kind.value}, {tp}"
     )

@@ -109,6 +109,9 @@ class ChartConfig:
     trade_entry_color: str = "#787b86"  # entry line
     trade_break_even_color: str = "#2962ff"  # the moved SL, from the candle it moved on
     sl_ref_color: str = "#787b86"  # BOS move's low when the SL was placed there
+    trade_tp1_color: str = "#089981"  # TP1 line inside the green box (two TPs, 3.3c)
+    equilibrium_color: str = "#3f51b5"  # entry confluence: the BOS move's discount half
+    equilibrium_fill_opacity: float = 0.15
     zone_hover_step: int = 2  # zone hover points along the box, one every this many candles
     zone_hover_ends: int = 10  # ... only over this many candles at each end of a long box
     trend: TrendConfig = field(default_factory=TrendConfig)  # overall-trend timeframe

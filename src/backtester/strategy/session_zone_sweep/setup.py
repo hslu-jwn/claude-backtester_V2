@@ -11,7 +11,8 @@ Described for a long on a support zone, short mirrored:
    close above the most recent unbroken 5m swing high counts, also in a 5m uptrend.
 4. CONFLUENCE: a bullish FVG / OB / BPR that came into existence at or after the BOS leg's
    low is tapped and then confirmed by a green 5m close above it (zone.py validation), on
-   a candle after the BOS candle -> enter at that close (`EntrySignal`).
+   a candle after the BOS candle -> enter at that close (`EntrySignal`). Or the equilibrium
+   of the setup's own BOS move (signals.py, `use_equilibrium`).
 
 Resets: a real bearish 5m BOS after the bullish one -> back to SWEEP. After an entry the
 sequence restarts at SWEEP and only 30m candles closing after the entry count. The zone's
@@ -65,9 +66,10 @@ class StructureTracker:
         self.doji_max_body = doji_max_body
         self._open: dict[Direction, SwingPoint | None] = dict.fromkeys(Direction)
         self.trend: Direction | None = None
+        self.new_swings: list[SwingPoint] = []  # swings confirmed by the current candle
 
     def update(self, view: SeriesView) -> list[StructureBreak]:
-        new_swings = self._swings.update(view)  # checks the call order
+        self.new_swings = new_swings = self._swings.update(view)  # checks the call order
         candle = view.current
         out = []
         for direction, swing in self._open.items():

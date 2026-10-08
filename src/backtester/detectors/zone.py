@@ -33,6 +33,7 @@ class ZoneKind(Enum):
     ORDER_BLOCK = "order_block"
     BREAKER = "breaker"
     BPR = "bpr"
+    EQUILIBRIUM = "equilibrium"  # discount half of a leg (strategy-specific, see the strategy)
 
 
 class ZoneState(Enum):

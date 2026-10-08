@@ -1,4 +1,5 @@
-"""Stop loss, take profit, 1h obstacles and the strategy's orders.
+"""Stop loss (incl. SL size), take profit (reversal levels, 4H OB limit, TP1 / TP2), 1h
+levels and the strategy's orders.
 Spec: strategy-session-zones.md › Stop loss, › Take profit, › Backtest options."""
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from conftest import build_series
 from scenario import LONDON, NY_SETUP, TO_TARGET
 
 from backtester.core.models import Direction
+from backtester.detectors.order_block import OrderBlockConfig
 from backtester.detectors.swings import SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneBox, ZoneKind
 from backtester.engine.backtest import EngineConfig, run_backtest
@@ -20,10 +22,18 @@ from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import EntrySignal, StructureBreak
 from backtester.strategy.session_zone_sweep.strategy import LAST_MINUTES_TAG, SessionZoneSweep
 from backtester.strategy.session_zone_sweep.targets import (
+    MIN_RR,
+    OB,
+    SWING,
+    ZONE,
+    Level,
     ObstacleTracker,
+    Rejected,
+    UnmitigatedOrderBlocks,
     stop_loss,
     take_profit,
-    target_zone_level,
+    targets,
+    zone_levels,
 )
 from backtester.strategy.session_zone_sweep.zones import Role
 
@@ -60,102 +70,191 @@ def test_sl_buffer_and_short_mirrored():
     assert stop_loss(short, atr=2.5, config=CFG) == 104.0
 
 
+class Obs4h:
+    """Stand-in for the 4H OBs: none, or one with its near edge at `edge`."""
+
+    def __init__(self, edge=None):
+        self.edge = edge
+
+    def near_edges(self, direction, entry):
+        return [] if self.edge is None else [self.edge]
+
+
+def sized(config, atr=1.0, sig=None, limits=None):
+    """targets() for the default signal: entry 102, SL 100 (2 x ATR 1.0), no levels."""
+    obstacles = ObstacleTracker(0.065, config)
+    return targets(sig or signal(), atr, [], obstacles, limits or Obs4h(), config)
+
+
+def test_small_sl_is_widened_to_min_sl_atr_mult():
+    found = sized(SessionZoneSweepConfig(min_sl_atr_mult=3.0))
+    assert found.stop_loss == pytest.approx(99.0) and found.sl_widened
+    found = sized(SessionZoneSweepConfig(min_sl_atr_mult=1.5))  # 2 x ATR is wide enough
+    assert found.stop_loss == 100.0 and not found.sl_widened
+    short = signal(SHORT, top=101.0, bottom=100.0, leg_extreme=104.0, close=99.5)  # SL 101
+    found = sized(SessionZoneSweepConfig(min_sl_atr_mult=3.0), sig=short)
+    assert found.stop_loss == pytest.approx(102.5)
+    no_small = SessionZoneSweepConfig(small_confluence_atr_mult=0.0)
+    assert sized(no_small, atr=10.0).stop_loss == 100.0  # off by default: 0.2 x ATR stays
+
+
+def test_too_wide_sl_means_no_trade():
+    found = sized(SessionZoneSweepConfig(max_sl_atr_mult=1.5))
+    assert isinstance(found, Rejected) and "wider than 1.5" in found.reason
+    assert sized(SessionZoneSweepConfig(max_sl_atr_mult=2.0)).stop_loss == 100.0
+    assert sized(CFG, atr=0.1).stop_loss == 100.0  # off by default: 20 x ATR is taken
+
+
+def test_targets_uses_the_4h_ob_as_limit():
+    # entry 102, 1R = 2: a 4H OB at 104 is 1R away -> no trade; at 105 (1.5R) -> TP 104.4
+    found = sized(CFG, limits=Obs4h(104.0))
+    assert isinstance(found, Rejected) and "4H OB" in found.reason
+    found = sized(CFG, limits=Obs4h(105.0))
+    assert (found.take_profit, found.take_profit_2, found.limit) == (104.4, None, 105.0)
+
+
 # --- take profit (entry 100, SL 99: 1R = 1.0) --------------------------------------------
 
 
-def tp(zone_level=None, obstacles=(), config=CFG, direction=LONG, entry=100.0, sl=99.0):
-    return take_profit(direction, entry, sl, zone_level, list(obstacles), None, config)
+def lv(*prices, source=SWING):
+    return [Level(p, source) for p in prices]
 
 
-def test_tp_at_the_resistance_zone_bottom_capped_at_3r():
-    assert tp(102.5) == (102.5, "zone")
-    assert tp(105.0) == (103.0, "zone_cap")
+def tp(levels=(), config=CFG, limit=None, direction=LONG, entry=100.0, sl=99.0, atr=None):
+    """(TP1, TP2), or Rejected."""
+    found = take_profit(direction, entry, sl, list(levels), limit, atr, config)
+    return found if isinstance(found, Rejected) else found[:2]
 
 
-def test_price_above_the_zone_uses_a_1h_level_between_1_2_and_2r():
-    assert tp(None, [100.5, 101.6, 101.9]) is None  # 100.5 is an obstacle below 1.2R
-    passable = SessionZoneSweepConfig(obstacles_passable=1)
-    assert tp(None, [100.5, 101.6, 101.9], passable) == (101.6, "fallback_level")
-    assert tp(None, [102.5]) == (102.0, "fallback_max")  # no level in range: 2R
+def test_tp1_is_the_first_level_at_or_beyond_min_rr():
+    found = take_profit(LONG, 100.0, 99.0, lv(102.5, source=ZONE), None, None, CFG)
+    assert found == (102.5, None, ZONE, None)
+    assert tp(lv(100.5, 101.6)) == (101.6, None)  # 100.5 is below 1.2R: passed
+    assert tp(lv(101.2)) == (101.2, None)  # exactly 1.2R counts
 
 
-def test_tp_sits_below_the_first_obstacle_it_may_not_pass():
-    assert tp(103.0, [101.5, 102.5]) == (101.5, "obstacle")
+def test_no_level_in_reach_means_tp_at_min_rr():
+    assert take_profit(LONG, 100.0, 99.0, [], None, None, CFG) == (101.2, None, MIN_RR, None)
+    assert tp(lv(100.5, 103.5)) == (101.2, None)  # one below 1.2R, one beyond the 3R cap
+
+
+def test_tp2_is_the_next_level_up_to_the_cap():
+    found = take_profit(LONG, 100.0, 99.0, [*lv(101.6), Level(102.0, OB)], None, None, CFG)
+    assert found == (101.6, 102.0, SWING, OB)
+    assert tp(lv(101.6, 102.0, 102.5)) == (101.6, 102.0)
+    assert tp(lv(101.6, 103.0)) == (101.6, 103.0)  # 3R exactly is in reach
+    assert tp(lv(101.6, 103.5)) == (101.6, None)  # beyond the cap: all at TP1
+    assert tp(lv(101.6, 102.0), SessionZoneSweepConfig(tp_cap_r=1.8)) == (101.6, None)
+
+
+def test_tp2_may_pass_obstacles_passable_levels():
+    levels = lv(101.6, 102.0, 102.5, 102.9)
+    assert tp(levels, SessionZoneSweepConfig(obstacles_passable=1)) == (101.6, 102.5)
+    assert tp(levels, SessionZoneSweepConfig(obstacles_passable=2)) == (101.6, 102.9)
+    # fewer levels before the cap than it may pass: the furthest one in reach
     one = SessionZoneSweepConfig(obstacles_passable=1)
-    assert tp(103.0, [101.5, 102.5], one) == (102.5, "obstacle")
-    assert tp(103.0, [101.5, 102.5], SessionZoneSweepConfig(obstacles_passable=2)) == (
-        103.0,
-        "zone",
-    )
+    assert tp(lv(101.6, 102.0, 103.5), one) == (101.6, 102.0)
 
 
-def test_obstacles_closer_than_0_2r_count_as_one():
-    one = SessionZoneSweepConfig(obstacles_passable=1)
-    # 101.5 / 101.65 / 101.8 chain into one cluster, 102.5 is the next
-    assert tp(103.0, [101.5, 101.65, 101.8, 102.5], one) == (102.5, "obstacle")
-    # 0.2R apart exactly is two obstacles
-    assert tp(103.0, [101.5, 101.7, 102.5], one) == (101.7, "obstacle")
+def test_levels_closer_than_0_2r_count_as_one():
+    # 101.5 / 101.65 / 101.8 chain into one level (its nearest price), 102.5 is the next
+    assert tp(lv(101.5, 101.65, 101.8, 102.5)) == (101.5, 102.5)
+    assert tp(lv(101.5, 101.7)) == (101.5, 101.7)  # 0.2R apart exactly: two levels
+    # a cluster starting below 1.2R is passed as a whole
+    assert tp(lv(101.1, 101.25, 102.5)) == (102.5, None)
 
 
-def test_tp_below_1_2r_means_no_trade():
-    assert tp(101.1) is None
-    assert tp(103.0, [101.1]) is None
-    assert tp(101.2) == (101.2, "zone")
+def test_4h_ob_is_a_hard_limit():
+    assert tp(lv(101.5, 102.5), limit=102.0) == (101.5, None)  # 102.5 beyond the 4H OB
+    assert tp(lv(102.5), limit=102.0) == (101.2, None)  # nothing in reach: min R
+    assert tp(lv(101.5, 102.0), limit=102.0) == (101.5, 102.0)  # at the OB's edge
+    found = tp(lv(101.5), limit=101.1)
+    assert isinstance(found, Rejected) and "4H OB" in found.reason
+    assert tp(limit=101.2) == (101.2, None)
 
 
-def test_tp_buffer_below_an_obstacle():
-    config = SessionZoneSweepConfig(tp_buffer_atr_mult=0.1)
-    found = take_profit(LONG, 100.0, 99.0, 103.0, [102.0], 2.0, config)
-    assert found == (pytest.approx(101.8), "obstacle")
+def test_tp_buffer_below_levels_and_the_4h_ob():
+    config = SessionZoneSweepConfig(tp_buffer_atr_mult=0.1)  # 0.2 with ATR 2
+    assert tp(lv(101.6, 102.5), config, atr=2.0) == (pytest.approx(101.4), pytest.approx(102.3))
+    assert tp(lv(101.6, 102.5), config, limit=102.0, atr=2.0) == (pytest.approx(101.4), None)
+    assert isinstance(tp(config=config, limit=101.3, atr=2.0), Rejected)  # 101.1 < 1.2R
 
 
 def test_short_tp_is_mirrored():
-    assert tp(97.5, [], direction=SHORT, entry=100.0, sl=101.0) == (97.5, "zone")
-    assert tp(95.0, [98.5], direction=SHORT, entry=100.0, sl=101.0) == (98.5, "obstacle")
+    assert tp(lv(98.5, 97.5), direction=SHORT, entry=100.0, sl=101.0) == (98.5, 97.5)
+    assert tp(direction=SHORT, entry=100.0, sl=101.0) == (98.8, None)
+    assert isinstance(tp(limit=99.0, direction=SHORT, entry=100.0, sl=101.0), Rejected)
 
 
-def test_target_zone_is_the_nearest_resistance_above_the_entry():
+def test_zone_levels_are_the_near_edges_of_opposite_role_zones_beyond_the_entry():
     zones = [
         (Role.RESISTANCE, 106.0, 105.0),
         (Role.RESISTANCE, 104.0, 103.0),
         (Role.SUPPORT, 99.0, 98.0),
-        (Role.RESISTANCE, 100.5, 99.5),  # entry inside: not a target
+        (Role.RESISTANCE, 100.5, 99.5),  # entry inside: not a level
         (None, 103.0, 102.0),  # role unknown
     ]
-    assert target_zone_level(LONG, 100.0, zones) == 103.0
-    assert target_zone_level(SHORT, 100.0, zones) == 99.0
-    assert target_zone_level(LONG, 107.0, zones) is None
+    assert zone_levels(LONG, 100.0, zones) == lv(105.0, 103.0, source=ZONE)
+    assert zone_levels(SHORT, 100.0, zones) == lv(99.0, source=ZONE)
+    assert zone_levels(LONG, 107.0, zones) == []
 
 
-# --- 1h obstacles -------------------------------------------------------------------------
+# --- 1h levels and 4H OBs -----------------------------------------------------------------
+
+NO_FILTER = SessionZoneSweepConfig(order_block=OrderBlockConfig(strong_move_filter=False))
 
 
-def obstacles_after(ohlc):
-    tracker = ObstacleTracker(0.065, CFG)
+def feed(tracker, ohlc):
     s = build_series(ohlc)
     for i in range(len(s)):
         tracker.update(s.view(i))
     return tracker
 
 
-def test_untouched_swing_high_is_an_obstacle_until_a_wick_reaches_it():
+def obstacles_after(ohlc, config=CFG):
+    return feed(ObstacleTracker(0.065, config), ohlc)
+
+
+def test_untouched_swing_high_is_a_level_until_a_wick_reaches_it():
     up_down = [(100.0, 105.0, 99.5, 104.0), (104.0, 104.5, 101.0, 102.0)]  # high 105
-    assert obstacles_after(up_down).levels(LONG, 102.0) == [105.0]
+    assert obstacles_after(up_down).levels(LONG, 102.0) == lv(105.0)
     assert obstacles_after(up_down).levels(SHORT, 102.0) == []
     touched = [*up_down, (102.0, 105.0, 101.5, 103.0)]
     assert obstacles_after(touched).levels(LONG, 102.0) == []
 
 
-def test_bearish_fvg_is_an_obstacle_until_tapped():
+def test_1h_fvgs_are_no_levels():
     gap_down = [
         (110.0, 110.5, 108.0, 108.5),  # 1: low 108
         (108.5, 108.6, 104.0, 104.5),  # 2
         (104.5, 106.0, 103.5, 105.5),  # 3: high 106 < 108: bearish FVG 106-108
     ]
-    # candle 3 also confirms a swing low (red, green) at 103.5
-    assert obstacles_after(gap_down).levels(LONG, 105.5) == [106.0]
-    tapped = [*gap_down, (105.5, 106.5, 105.4, 106.2)]  # green: no new swing high
-    assert obstacles_after(tapped).levels(LONG, 105.5) == []
+    assert obstacles_after(gap_down).levels(LONG, 105.5) == []
+
+
+# A bearish OB: green leg (candles 1, 2) into the swing high 108.5, bearish BOS by candle 4
+# closing below the swing low 102.5. Leg range 102.9-108.5, reached at its bottom 102.9.
+BEARISH_OB = [
+    (105.0, 105.1, 102.5, 103.0),  # 0 red
+    (103.0, 104.1, 102.9, 104.0),  # 1 green: swing low 102.5
+    (104.0, 108.5, 103.9, 108.0),  # 2 green
+    (108.0, 108.1, 105.9, 106.0),  # 3 red: swing high 108.5
+    (106.0, 106.1, 101.9, 102.0),  # 4 red: closes below 102.5 -> bearish BOS
+]
+
+
+def test_unmitigated_bearish_1h_ob_is_a_level_until_tapped():
+    tracker = obstacles_after(BEARISH_OB, NO_FILTER)
+    assert tracker.levels(LONG, 102.0) == [Level(102.9, OB), Level(108.5, SWING)]
+    tapped = obstacles_after([*BEARISH_OB, (102.0, 103.0, 101.5, 102.2)], NO_FILTER)
+    assert tapped.levels(LONG, 102.2) == [Level(108.5, SWING)]  # 103 > 102.9: tapped
+
+
+def test_4h_obs_near_edges_and_no_lookahead():
+    obs = feed(UnmitigatedOrderBlocks(0.065, NO_FILTER), BEARISH_OB)
+    assert obs.near_edges(LONG, 102.0) == [102.9] and obs.near_edges(SHORT, 102.0) == []
+    before = feed(UnmitigatedOrderBlocks(0.065, NO_FILTER), BEARISH_OB[:4])
+    assert before.near_edges(LONG, 102.0) == []  # exists only from the BOS candle
 
 
 # --- the strategy's orders on the hand-built day -----------------------------------------
@@ -163,8 +262,11 @@ def test_bearish_fvg_is_an_obstacle_until_tapped():
 NO_COSTS = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
 
 
-def run(ohlc, config=None, engine=NO_COSTS):
+def run(ohlc, config=None, engine=NO_COSTS, extra_levels=()):
     strategy = SessionZoneSweep(scenario.SYMBOL, config)
+    if extra_levels:
+        levels = strategy.obstacles.levels
+        strategy.obstacles.levels = lambda d, e: [*levels(d, e), *extra_levels]
     trades = run_backtest(strategy, scenario.series(ohlc), engine)
     return strategy, trades
 
@@ -174,21 +276,46 @@ def test_scenario_order_and_trade():
     [decision] = strategy.decisions
     order = decision.order
     # SL at the FVG's bottom (0.4 high, not small: 5m ATR ~0.35), 1R = 0.9; the London
-    # high zone (113-114) is 3.33R away: TP capped at 3R
+    # high zone (bottom 113) is 3.33R away, beyond the 3R cap: no level in reach -> 1.2R
     assert order.direction is LONG and order.entry == 110.0
     assert order.stop_loss == 109.1
-    assert order.take_profit == pytest.approx(112.7)
-    assert decision.targets.target == "zone_cap"
+    assert order.take_profit == pytest.approx(111.08) and order.take_profit_2 is None
+    assert decision.targets.tp1_from == MIN_RR and decision.rejected == ""
     assert order.tags == frozenset()
-    assert trade.exit_reason is ExitReason.TAKE_PROFIT and trade.r_gross == pytest.approx(3.0)
+    assert trade.exit_reason is ExitReason.TAKE_PROFIT and trade.r_gross == pytest.approx(1.2)
 
 
-def test_lower_cap_and_minimum_rr():
-    strategy, _ = run(LONDON + NY_SETUP, SessionZoneSweepConfig(tp_cap_r=2.0))
-    assert strategy.decisions[0].order.take_profit == pytest.approx(111.8)
-    strategy, trades = run(LONDON + NY_SETUP, SessionZoneSweepConfig(min_rr=3.5))
+def test_session_zone_as_tp_and_min_rr():
+    strategy, _ = run(LONDON + NY_SETUP, SessionZoneSweepConfig(tp_cap_r=4.0))
+    targets_ = strategy.decisions[0].targets
+    assert (targets_.take_profit, targets_.tp1_from) == (113.0, ZONE)
+    config = SessionZoneSweepConfig(tp_cap_r=4.0, min_rr=3.5)  # zone at 3.33R: passed
+    strategy, _ = run(LONDON + NY_SETUP, config)
+    assert strategy.decisions[0].order.take_profit == pytest.approx(110.0 + 3.5 * 0.9)
+
+
+def test_two_tps_order_and_weighted_result():
+    # an extra 1h level at 111.5 (1.67R): TP1 there, TP2 at the London zone (113, 3.33R)
+    # once the cap allows it; the run to 112.8 hits TP1 and leaves the rest open
+    config = SessionZoneSweepConfig(tp_cap_r=4.0)
+    ohlc = LONDON + NY_SETUP + TO_TARGET
+    strategy, [trade] = run(ohlc, config, extra_levels=[Level(111.5, SWING)])
+    order = strategy.decisions[0].order
+    assert (order.take_profit, order.take_profit_2) == (111.5, 113.0)
+    assert order.tp1_share == 0.5 and order.break_even_after_tp1
+    assert trade.exit_reason is ExitReason.END_OF_DATA
+    assert trade.r_gross == pytest.approx(0.5 * 1.5 / 0.9 + 0.5 * 2.8 / 0.9)
+    assert trade.break_even_stop == 110.0  # no costs: the entry
+    share = SessionZoneSweepConfig(tp_cap_r=4.0, tp1_share=0.3, break_even_after_tp1=False)
+    strategy, _ = run(ohlc, share, extra_levels=[Level(111.5, SWING)])
+    order = strategy.decisions[0].order
+    assert order.tp1_share == 0.3 and not order.break_even_after_tp1
+
+
+def test_rejected_trades_keep_their_reason():
+    strategy, trades = run(LONDON + NY_SETUP, SessionZoneSweepConfig(max_sl_atr_mult=1.0))
     [decision] = strategy.decisions
-    assert decision.targets is None and decision.order is None and trades == []
+    assert trades == [] and decision.order is None and "wider than" in decision.rejected
 
 
 def test_last_minutes_tag_and_exclusion():

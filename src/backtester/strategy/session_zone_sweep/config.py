@@ -40,19 +40,26 @@ class SessionZoneSweepConfig:
     confluence_kinds: frozenset[ZoneKind] = frozenset(
         {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BPR}
     )
+    # ... and the equilibrium of the BOS move (› Entry sequence, equilibrium entry)
+    use_equilibrium: bool = True
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction
     small_confluence_atr_mult: float = 0.5  # confluence height < this * ATR -> SL below BOS leg
+    # SL size in 5m ATR at the entry (› Stop loss, SL size); None = off
+    max_sl_atr_mult: float | None = None  # wider SL -> no trade
+    min_sl_atr_mult: float | None = None  # tighter SL -> widened to this (off; to be swept)
 
-    # take profit
+    # take profit (› Take profit, reworked 2026-10-07)
     tp_cap_r: float = 3.0
-    min_rr: float = 1.2
-    fallback_tp_r_range: tuple[float, float] = (1.2, 2.0)  # price already beyond the zone
-    obstacles_passable: int = 0  # test 0-3
-    obstacle_cluster_r: float = 0.2
-    obstacle_timeframe: Timeframe = Timeframe.H1
-    tp_buffer_atr_mult: float = 0.0  # TBD: "just below" an obstacle, as 5m ATR fraction
+    min_rr: float = 1.2  # TP1 at or beyond this; also the TP when no level is in reach
+    obstacles_passable: int = 0  # TP2: further levels it may pass after TP1 (test 0-3)
+    obstacle_cluster_r: float = 0.2  # reversal levels closer than this count as one
+    obstacle_timeframe: Timeframe = Timeframe.H1  # session zones + these highs / OBs
+    limit_timeframe: Timeframe = Timeframe.H4  # OBs here are a hard TP limit
+    tp_buffer_atr_mult: float = 0.0  # TBD: "just below" a level, as 5m ATR fraction
+    tp1_share: float = 0.5  # share of the position closed at TP1
+    break_even_after_tp1: bool = True  # SL of the rest to break-even (with costs)
 
     # session filters
     tag_last_minutes_before_next_session: int = 90
@@ -63,3 +70,9 @@ class SessionZoneSweepConfig:
     def __post_init__(self) -> None:
         if self.zone_kill_breaks < 1:
             raise ValueError("zone_kill_breaks must be >= 1")
+        if not 0 < self.tp1_share <= 1:
+            raise ValueError("tp1_share must be in (0, 1]")
+        if self.tp_cap_r < self.min_rr:
+            raise ValueError("tp_cap_r must be >= min_rr")
+        if self.obstacles_passable < 0:
+            raise ValueError("obstacles_passable must be >= 0")

@@ -225,7 +225,7 @@ def test_short_is_mirrored():
 
 
 def run_tracker(ohlc, config=None):
-    m5, m30, _ = scenario.series(ohlc)
+    m5, m30, *_ = scenario.series(ohlc)
     replay = Replay(m5, [m30])
     tracker = SetupTracker(scenario.SYMBOL, config)
     signals = []
