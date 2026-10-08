@@ -27,7 +27,8 @@ from backtester.data.resample import CANDLE_COLUMNS
 from backtester.detectors.zone import ZoneKind
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, PartialExit
-from backtester.ui.overlays import OverlayContext
+from backtester.settings import settings_from_values, to_json
+from backtester.ui.overlays import OverlayContext, OverlaySettings
 from backtester.ui.trades_overlay import detect_trades
 from backtester.ui.trades_overlay import draw_trades as draw_trade_drawings
 
@@ -236,3 +237,16 @@ def test_equilibrium_confluence_is_drawn_in_its_color():
     layers = by_layer(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
     assert layers["Trade equilibrium"][0].fill == "#3f51b5"
     assert "EQUILIBRIUM" in hovers(layers["Trade"])[-1]
+
+
+def test_the_settings_panel_settings_reach_the_trades_overlay():
+    """ROADMAP 4.1: the strategy and engine settings come in as canonical JSON."""
+    sources = FakeSources(FULL)
+    replay = sources.chart()
+    no_costs = settings_from_values(
+        {"engine.costs.spread_enabled": False, "engine.costs.commission_enabled": False}
+    )
+    [e] = detect_trades(replay, OverlaySettings(strategy=to_json(no_costs)), sources)
+    assert e.trade.r_net == pytest.approx(e.trade.r_gross)
+    tiny_sl = settings_from_values({"strategy.max_sl_atr_mult": 0.01})  # every SL too wide
+    assert detect_trades(replay, OverlaySettings(strategy=to_json(tiny_sl)), sources) == []

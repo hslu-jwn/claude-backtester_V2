@@ -20,7 +20,7 @@ Spec: strategy-session-zones.md › Session zones, › Zone flips.
 - Break: a close beyond the whole zone on the far side (support: below its bottom). A wick
   never counts, nor does a doji (rule set by the user). The 1st break flips the role, the
   2nd flips it back, the `zone_kill_breaks`-th (default 3) kills the zone for the rest of
-  its session.
+  its session. With `zone_kill` off no number of breaks kills a zone (it keeps flipping).
 - Candles closing on the weekend before Tokyo's start (Sunday open) are ignored: no
   swings, no breaks, and the role of a Friday NY zone comes from Friday's last close (rule
   set by the user). The candle closing at Tokyo's start is Tokyo's first.
@@ -185,9 +185,7 @@ class SessionZoneTracker(Detector[SessionZoneEvent]):
             self._consider(swing, session, view)
         for live in self._live:
             out += self._check(live, candle, view.cursor, closed_at)
-        self._live = [
-            live for live in self._live if not (live.breaks >= self.config.zone_kill_breaks)
-        ]
+        self._live = [live for live in self._live if not self._killed(live)]
         self._last = (view.cursor, candle.close)
         if closed_at + view.timeframe.duration >= session.end:  # the next one closes later
             out += self._end_session(view.cursor, closed_at)
@@ -222,8 +220,11 @@ class SessionZoneTracker(Detector[SessionZoneEvent]):
             return []
         live.breaks += 1
         live.role = role.flipped
-        killed = live.breaks >= self.config.zone_kill_breaks
+        killed = self._killed(live)
         return [ZoneBreak(cursor, closed_at, zone, live.breaks, live.role, killed, close)]
+
+    def _killed(self, live: _Live) -> bool:
+        return self.config.zone_kill and live.breaks >= self.config.zone_kill_breaks
 
     def _expire(self, done, cursor: int, closed_at: datetime) -> list[ZoneExpired]:
         expired = [live for live in self._live if done(live.zone)]

@@ -16,8 +16,8 @@ from backtester.core.series import SeriesView
 
 @dataclass(frozen=True, slots=True)
 class StrongMoveConfig:
-    atr_period: int = 14  # n; TBD: lookback to sweep
-    atr_mult: float = 2.0  # k
+    atr_period: int = 14  # n: ATR over the n candles before (TBD: lookback to sweep)
+    atr_mult: float = 2.0  # k: strong move = range >= k x ATR
 
     def __post_init__(self) -> None:
         if self.atr_period < 1:

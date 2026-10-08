@@ -47,6 +47,9 @@ class OverlaySettings:
 
     fvg_strong_move_filter: bool = False  # spec › Strong-move filter (FVG default off)
     ob_strong_move_filter: bool = True  # spec › Strong-move filter (OB default on)
+    # the strategy settings (ROADMAP 4.1) as canonical JSON (backtester/settings.py
+    # `to_json`; "" = spec defaults); only overlays with `strategy_settings` get it
+    strategy: str = ""
 
 
 DEFAULT_SETTINGS = OverlaySettings()
@@ -88,6 +91,7 @@ class OverlayType:
     # True: `detect(replay, settings, sources)` also gets the chart's `SymbolSources`, for
     # overlays that load their own candles (e.g. the Trades overlay's 5m backtest)
     needs_sources: bool = False
+    strategy_settings: bool = False  # uses OverlaySettings.strategy (the Trades overlay)
     # events drawn together (see the module docstring); None: each event alone
     group: Callable[[Event], Hashable] | None = None
 

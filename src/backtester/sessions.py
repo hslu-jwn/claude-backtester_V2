@@ -32,7 +32,7 @@ class Session(Enum):
 
 @dataclass(frozen=True)
 class SessionStart:
-    local_time: time
+    local_time: time  # start in the city's own time (HH:MM), DST-aware
     zone: str  # IANA zone of the session's city
 
 

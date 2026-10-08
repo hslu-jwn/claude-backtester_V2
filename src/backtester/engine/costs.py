@@ -48,8 +48,8 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
 
 @dataclass(frozen=True, slots=True)
 class CostConfig:
-    spread_enabled: bool = True
-    commission_enabled: bool = True
+    spread_enabled: bool = True  # off: no spread on fills (gross = net apart from commission)
+    commission_enabled: bool = True  # off: no commission
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
 
     def for_symbol(self, symbol: str) -> SymbolCosts:

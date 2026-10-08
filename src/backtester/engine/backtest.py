@@ -39,7 +39,8 @@ from backtester.strategy.base import Order, Strategy
 @dataclass(frozen=True, slots=True)
 class EngineConfig:
     costs: CostConfig = field(default_factory=CostConfig)
-    # strategy-session-zones.md › Stop loss: SL to break-even at the next session start
+    # SL to break-even at the next session start if in profit (strategy-session-zones.md
+    # › Stop loss)
     break_even_at_next_session: bool = True
     sessions: SessionConfig = DEFAULT_SESSIONS
 

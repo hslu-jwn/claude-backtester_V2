@@ -289,3 +289,227 @@ body {
   color: var(--tb-muted);
   font-size: 12px;
 }
+
+/* settings panel (ROADMAP 4.1): a modal like TradingView's settings dialog */
+.st-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(19, 23, 34, 0.35);
+  align-items: center;
+  justify-content: center;
+}
+.st-backdrop.open {
+  display: flex;
+}
+.st-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(860px, calc(100vw - 32px));
+  height: min(640px, calc(100vh - 48px));
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(19, 23, 34, 0.25);
+  font-size: 13px;
+}
+.st-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--tb-line);
+}
+.st-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.st-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}
+.st-close:hover,
+.st-reset:hover {
+  background: var(--tb-hover);
+}
+.st-presets:not(:empty) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--tb-line);
+}
+.st-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.st-nav {
+  flex: 0 0 180px;
+  padding: 8px 0;
+  border-right: 1px solid var(--tb-line);
+  overflow-y: auto;
+}
+.st-nav label {
+  display: flex;
+  padding: 8px 20px;
+  cursor: pointer;
+  color: var(--tb-text);
+}
+.st-nav label:hover {
+  background: var(--tb-hover);
+}
+.st-nav input {
+  display: none;
+}
+.st-nav label:has(input:checked) {
+  background: #e3effd;
+  color: var(--tb-accent);
+  font-weight: 600;
+}
+.st-fields {
+  flex: 1 1 auto;
+  padding: 6px 20px 16px;
+  overflow-y: auto;
+}
+.st-section {
+  margin: 16px 0 4px;
+  color: var(--tb-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.st-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px 28px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f3fa;
+}
+.st-label {
+  font-weight: 500;
+}
+.st-row.st-changed .st-label::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--tb-accent);
+  vertical-align: middle;
+}
+.st-row.st-error .st-input {
+  border-color: #f23645;
+}
+.st-help {
+  margin-top: 2px;
+  color: var(--tb-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.st-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--tb-line);
+  border-radius: 4px;
+  font: inherit;
+}
+.st-input:focus {
+  outline: none;
+  border-color: var(--tb-accent);
+}
+.st-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.st-set label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+/* on/off as a TradingView-like switch */
+.st-switch label {
+  display: inline-flex;
+  cursor: pointer;
+}
+.st-switch input {
+  appearance: none;
+  width: 34px;
+  height: 18px;
+  margin: 0;
+  border-radius: 9px;
+  background: #d1d4dc;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.st-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: left 0.15s;
+}
+.st-switch input:checked {
+  background: var(--tb-accent);
+}
+.st-switch input:checked::after {
+  left: 18px;
+}
+.st-reset {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--tb-muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+.st-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--tb-line);
+}
+.st-status {
+  flex: 1 1 auto;
+  color: var(--tb-muted);
+  font-size: 12px;
+}
+.st-btn {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--tb-line);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--tb-text);
+  font: inherit;
+  cursor: pointer;
+}
+.st-btn:hover {
+  background: var(--tb-hover);
+}
+.st-btn.st-primary {
+  border-color: var(--tb-accent);
+  background: var(--tb-accent);
+  color: #ffffff;
+  font-weight: 600;
+}

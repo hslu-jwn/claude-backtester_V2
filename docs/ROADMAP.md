@@ -463,6 +463,34 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   Must include (user's wish): the session zone kill rule as its own setting: on/off, and the
   number of breaks that kills a zone (`SessionZoneSweepConfig.zone_kill_breaks`, default 3).
   Also (user's wish): step 3 with the 5m trend on/off (`entry_bos_with_trend`, default off).
+  Built (2026-10-08, awaiting the user's check): `backtester/settings.py` (`leaves`: every
+  value of `RunSettings` with its path, kind, spec default and help text from its source
+  comment; `form_values` / `settings_from_values`, `to_json` / `from_json`,
+  `SettingsError` naming the field), `ui/settings_panel.py` (modal: groups Entry,
+  Confluences, Stop loss, Take profit, Session zones, Sessions & filters, Detectors, Costs,
+  plus Backtest for the warm-up days; per field label, help, input, ↺ reset, a blue dot
+  when it differs from the default; "Reset all to defaults"), opened by "Settings…" in the
+  strategy popover (`assets/toolbar.js` `data-modal`, styles in `toolbar.css`). New
+  setting `SessionZoneSweepConfig.zone_kill` (on/off; spec updated). The Trades overlay
+  (`OverlaySettings.strategy`, `OverlayType.strategy_settings`) and the backtest use the
+  current settings. Tests: `tests/test_settings.py`, `tests/ui/test_settings_panel.py`,
+  `tests/ui/test_trades_overlay.py`, `tests/strategy/session_zone_sweep/test_zones.py`.
+  Check (choices made while building):
+  - Changes apply at once when valid (no OK / Cancel), kept in the browser (local
+    storage), so they survive a reload. An invalid value is shown in the status line and
+    not applied (the last valid settings stay in use).
+  - Not shown: `strategy.strong_move.atr_mult` (nothing reads it; the strong-move
+    multipliers are per FVG / OB) and the engine's session starts (they always follow the
+    strategy's session starts, one setting for both).
+  - Entry confluence types offer FVG / OB / BPR only (breakers aren't built, the
+    equilibrium has its own switch); timeframes only those the data layer supports.
+  - Help texts are the source comments (some improved); labels are set in
+    `settings_panel.py` (new fields fall back to their name).
+  - The chart settings popover's FVG / OB strong-move switches stay as they were: they
+    only change the FVG / OB / BPR drawing overlays. The strategy's own switches are in
+    the panel (Detectors). Unifying them belongs to 4.3.
+  - A settings change makes the Trades overlay run again (~1 s per range); the other
+    overlays stay cached.
 - ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
 - ☐ **4.3 UI layout and look review** (at the end of the UI work; the user decides the

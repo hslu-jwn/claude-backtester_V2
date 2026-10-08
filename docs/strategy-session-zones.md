@@ -117,7 +117,7 @@ strategies are not affected.
 - SL size: `max_sl_atr_mult` (default off), `min_sl_atr_mult` (widen tighter SLs; default off)
 - Equilibrium as entry confluence (`use_equilibrium`, default on)
 - Last 1.5h before the next session start: trades simulated but tagged; include/exclude toggle to compare the net result
-- Zone kill: the 3rd break kills a zone (default); in the settings menu (4.1) as on/off plus the number of breaks; later maybe only within a time window
+- Zone kill: the 3rd break kills a zone (default); in the settings menu (4.1) as on/off (`zone_kill`; off: breaks only flip the zone, it lives until its session ends) plus the number of breaks (`zone_kill_breaks`); later maybe only within a time window
 - Session times following each city's DST; session end = next session start (may revisit)
 - Friday NY → Monday Tokyo carry-over (watch for odd behavior)
 - Possibly skip the Tokyo session (low volume)

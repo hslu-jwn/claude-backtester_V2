@@ -1,7 +1,8 @@
 """Trades overlay (strategy 1). Spec: ROADMAP.md › 3.3b,
 strategy-session-zones.md › Trades on the chart.
 
-Runs strategy 1 (`SessionZoneSweep`) and the backtest engine on the shown symbol: 5m base
+Runs strategy 1 (`SessionZoneSweep`) and the backtest engine on the shown symbol, with the
+current strategy settings (ROADMAP 4.1, `OverlaySettings.strategy`): 5m base
 candles with 30m and 1h, through the engine's own `Replay`, over the whole run of
 consecutive cached days that contains the shown range (`cached_block`). Starting at the
 block's first day, not a fixed number of days before the range, means every range and
@@ -45,9 +46,11 @@ from backtester.data.adapters.cache_adapter import candles_from_frame
 from backtester.data.sources import SymbolSources, cached_block
 from backtester.detectors.base import Event
 from backtester.detectors.zone import ZoneKind
-from backtester.engine.backtest import EngineConfig, run_backtest
+from backtester.engine.backtest import run_backtest
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
+from backtester.runner import RunSettings
+from backtester.settings import from_json
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
 from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
 from backtester.ui.drawing import Box, Drawing, Hover, Label, Line
@@ -78,20 +81,26 @@ class StrategyRun:
 
 
 def run_strategy(
-    sources: SymbolSources, symbol: str, first_day: date, last_day: date
+    sources: SymbolSources,
+    symbol: str,
+    first_day: date,
+    last_day: date,
+    settings: RunSettings | None = None,
 ) -> StrategyRun:
-    """Strategy 1 + engine over [first_day, last_day] (UTC days, inclusive)."""
+    """Strategy 1 + engine over [first_day, last_day] (UTC days, inclusive), with the
+    strategy and engine settings of `settings` (default: the spec defaults)."""
+    settings = settings or RunSettings()
     start = datetime.combine(first_day, time(), UTC)
     end = datetime.combine(last_day + timedelta(days=1), time(), UTC)
     adapter = sources.adapter(symbol)
-    strategy = SessionZoneSweep(symbol)
+    strategy = SessionZoneSweep(symbol, settings.strategy)
     series = {
         tf: CandleSeries(
             symbol, tf, candles_from_frame(adapter.fetch_frame(symbol, tf, start, end))
         )
         for tf in strategy.timeframes
     }
-    trades = run_backtest(strategy, list(series.values()), EngineConfig())
+    trades = run_backtest(strategy, list(series.values()), settings.engine)
     decisions = {
         (d.signal.at, d.signal.direction): d for d in strategy.decisions if d.order is not None
     }
@@ -99,15 +108,18 @@ def run_strategy(
     return StrategyRun(tuple(trades), decisions, series[Timeframe.M5], series[zone_tf])
 
 
-def block_run(sources: SymbolSources, symbol: str, day: date) -> StrategyRun:
-    """The run over the cached block containing `day`."""
+def block_run(
+    sources: SymbolSources, symbol: str, day: date, settings_json: str = ""
+) -> StrategyRun:
+    """The run over the cached block containing `day`, with the settings given as
+    canonical JSON (backtester/settings.py `to_json`; "" = spec defaults)."""
     first, last = cached_block(set(sources.cached_days(symbol)), day)
-    return _cached_run(sources, symbol, first, last)
+    return _cached_run(sources, symbol, first, last, settings_json)
 
 
 @lru_cache(maxsize=8)
-def _cached_run(sources, symbol, first_day, last_day) -> StrategyRun:
-    return run_strategy(sources, symbol, first_day, last_day)
+def _cached_run(sources, symbol, first_day, last_day, settings_json="") -> StrategyRun:
+    return run_strategy(sources, symbol, first_day, last_day, from_json(settings_json))
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,7 +157,7 @@ def detect_trades(
     duration = replay.timeframe.duration
     closes = [t + duration for t in opens]
     try:
-        run = block_run(sources, replay.symbol, opens[0].date())
+        run = block_run(sources, replay.symbol, opens[0].date(), settings.strategy)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     except ValueError as e:  # e.g. no 5m candles
@@ -422,5 +434,6 @@ TRADES = register(
         parts=((CONFLUENCES, "trade confluences"),),
         order="3.3",
         needs_sources=True,
+        strategy_settings=True,
     )
 )

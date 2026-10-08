@@ -247,6 +247,15 @@ def test_kill_break_count_is_a_setting():
         SessionZoneSweepConfig(zone_kill_breaks=0)
 
 
+def test_kill_rule_off_keeps_flipping_the_zone():
+    config = SessionZoneSweepConfig(zone_kill=False)
+    events = low_zone_events(run(series((LONDON, LONDON_SWINGS + FLIPS)), config))
+    breaks = of(events, ZoneBreak)
+    # the 3rd break no longer kills it, so a later close breaks it a 4th time
+    assert [(b.number, b.killed) for b in breaks] == [(n, False) for n in (1, 2, 3, 4)]
+    assert [b.role for b in breaks][:3] == [Role.RESISTANCE, Role.SUPPORT, Role.RESISTANCE]
+
+
 def test_zone_expires_at_the_end_of_its_session_and_is_not_checked_after():
     tokyo = LONDON + timedelta(hours=15, minutes=30)  # 23:30, closes at Tokyo's start
     s = series((LONDON, LONDON_SWINGS + ny()), (tokyo, [red(109.5, 100.0), *[doji(100)] * 3]))

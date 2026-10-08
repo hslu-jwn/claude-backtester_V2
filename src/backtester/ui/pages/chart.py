@@ -45,6 +45,9 @@ sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" that show their �
 
 Trades (ROADMAP.md › 3.3b): the "Trades" overlay runs strategy 1 and the engine on the
 shown symbol and range (with warm-up) and draws position boxes, see `ui/trades_overlay.py`.
+It and the backtest use the settings panel's current settings (ROADMAP.md › 4.1,
+`ui/settings_panel.py`, store `settings-current`); the browser re-requests the overlays
+when their key changes.
 Overlays that load their own data (`OverlayType.needs_sources`) get the page's sources.
 
 Focus on one trade (ROADMAP.md › 3.6, from the results page's trade list):
@@ -59,6 +62,7 @@ Later steps add: the session view (3.5).
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from urllib.parse import parse_qs
@@ -76,13 +80,14 @@ from backtester.data.adapters.cache_adapter import (
 from backtester.data.resample import supported
 from backtester.data.sources import SymbolSources, warmup_start
 from backtester.engine.replay import Replay
-from backtester.runner import BackgroundRun, start_run
+from backtester.runner import BackgroundRun, RunSettings, start_run
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
     session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)
+    settings_panel,
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
@@ -112,7 +117,10 @@ def _cached_events(
     sources: SymbolSources | None = None,
 ):
     """Events of one overlay over the whole replay range, computed once per range and
-    settings."""
+    settings. Only overlays that use the strategy settings get them (so the others stay
+    cached when they change)."""
+    if not overlay.strategy_settings and settings.strategy:
+        return _cached_events(replay, overlay, replace(settings, strategy=""), sources)
     if overlay.needs_sources:
         if sources is None:
             raise OverlayUnavailable("needs the chart's data sources")
@@ -273,10 +281,14 @@ def chart_key(symbol, timeframe, start_date, end_date) -> str:
     return f"{symbol}|{timeframe}|{start_date}|{end_date}"
 
 
-def overlay_settings(filters: Sequence[str] | None) -> OverlaySettings:
+def overlay_settings(filters: Sequence[str] | None, strategy: str = "") -> OverlaySettings:
+    """The chart's detector switches + the strategy settings (canonical JSON, "" = spec
+    defaults; `settings_panel.store_json`)."""
     filters = filters or []
     return OverlaySettings(
-        fvg_strong_move_filter="fvg" in filters, ob_strong_move_filter="ob" in filters
+        fvg_strong_move_filter="fvg" in filters,
+        ob_strong_move_filter="ob" in filters,
+        strategy=strategy,
     )
 
 
@@ -362,6 +374,7 @@ def overlay_payload(
     end_date,
     filters,
     config: ChartConfig = DEFAULT_CONFIG,
+    strategy: str = "",
 ) -> dict | None:
     """Full drawings of the requested overlay types at the browser's cursor, or None if
     the request is for other candles than the ones selected now."""
@@ -370,7 +383,7 @@ def overlay_payload(
     replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None or not 0 <= request["cursor"] < len(replay):
         return None
-    data = chart_data(replay, overlay_settings(filters), sources, config)
+    data = chart_data(replay, overlay_settings(filters, strategy), sources, config)
     return {
         **data.full(request["types"], request["cursor"]),
         "key": request["key"],
@@ -388,6 +401,7 @@ def replay_delta(
     key: str,
     filters,
     config: ChartConfig = DEFAULT_CONFIG,
+    strategy: str = "",
 ) -> dict | None:
     """Delta from what the browser shows (`view`: key, cursor, loaded types) to `cursor`."""
     if not view or view.get("key") != key or view.get("cursor") is None:
@@ -395,7 +409,7 @@ def replay_delta(
     frm = view["cursor"]
     if not 0 <= frm < len(replay):
         return None
-    data = chart_data(replay, overlay_settings(filters), sources, config)
+    data = chart_data(replay, overlay_settings(filters, strategy), sources, config)
     return {**data.delta(view.get("types") or [], frm, cursor), "key": key}
 
 
@@ -404,14 +418,22 @@ def replay_delta(
 _RUNS: dict[str, BackgroundRun] = {}  # running backtests by job id (this server process)
 
 
-def start_backtest(sources: SymbolSources, symbols, start_date, end_date, start=start_run):
+def start_backtest(
+    sources: SymbolSources,
+    symbols,
+    start_date,
+    end_date,
+    start=start_run,
+    settings: RunSettings | None = None,
+):
     """Outputs of the backtest callback after "Run": (job, timer disabled, status, bar
-    style, page). The run goes on in a background thread; `poll_backtest` follows it."""
+    style, page). The run goes on in a background thread with `settings` (the settings
+    panel's current ones); `poll_backtest` follows it."""
     if not symbols or not start_date or not end_date:
         return no_update, True, "Pick one or more symbols and the days.", {"width": "0%"}, no_update
     job = uuid4().hex
     first, last = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
-    _RUNS[job] = start(list(symbols), first, last, sources=sources)
+    _RUNS[job] = start(list(symbols), first, last, settings=settings, sources=sources)
     return {"id": job}, False, f"Running {', '.join(symbols)} …", {"width": "0%"}, no_update
 
 
@@ -615,9 +637,10 @@ def layout(
                 searchable=False,
             ),
             html.Div(
-                "Used by the Trades overlay and the backtest. Its settings come with step 4.1.",
-                className="tb-pop-note",
+                [html.Button("Settings…", className="tb-run", **{"data-modal": "st-modal"})],
+                className="tb-pop-row",
             ),
+            html.Div("Used by the Trades overlay and the backtest.", className="tb-pop-note"),
         ],
     )
     backtest = _popover(
@@ -738,6 +761,8 @@ def layout(
             dcc.Store(id="chart-replay-span"),
             dcc.Store(id="bt-job"),
             dcc.Store(id="chart-focus", data=focus),
+            dcc.Store(id="settings-current", storage_type="local"),
+            settings_panel.layout(),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
@@ -752,6 +777,8 @@ def layout(
 def register_callbacks(
     app: Dash, sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG
 ) -> None:
+    settings_panel.register_callbacks(app)
+
     @app.callback(
         Output("chart-dates", "min_date_allowed"),
         Output("chart-dates", "max_date_allowed"),
@@ -808,11 +835,13 @@ def register_callbacks(
         State("chart-dates", "start_date"),
         State("chart-dates", "end_date"),
         State("chart-filters", "value"),
+        State("settings-current", "data"),
         prevent_initial_call=True,
     )
-    def _overlays(request, symbol, timeframe, start_date, end_date, filters):
+    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store):
+        strategy = settings_panel.store_json(store)
         payload = overlay_payload(
-            sources, request, symbol, timeframe, start_date, end_date, filters, config
+            sources, request, symbol, timeframe, start_date, end_date, filters, config, strategy
         )
         return payload if payload is not None else no_update
 
@@ -830,6 +859,7 @@ def register_callbacks(
         Input("chart-filters", "value"),
         Input("chart-sessions", "value"),
         Input("chart-base-done", "data"),
+        Input("settings-current", "data"),
     )
     app.clientside_callback(
         ClientsideFunction("chart", "overlays"),
@@ -871,10 +901,12 @@ def register_callbacks(
         State("chart-replay-controls", "style"),
         State("chart-view", "data"),
         State("chart-filters", "value"),
+        State("settings-current", "data"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-8:]
+        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-9:-1]
+        strategy = settings_panel.store_json(args[-1])
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
         clicked = ctx.triggered[0]["value"] if action == "click" else None
@@ -889,7 +921,7 @@ def register_callbacks(
         if stepping and replay is not None and new["now"] != state["now"]:
             cursor = replay.cursor_at(datetime.fromisoformat(new["now"]))
             key = chart_key(symbol, timeframe, start_date, end_date)
-            found = replay_delta(sources, view, replay, cursor, key, filters, config)
+            found = replay_delta(sources, view, replay, cursor, key, filters, config, strategy)
             if found is not None:
                 delta, message = found, replay_message(replay, cursor)
         # only what changed, so a replay step re-renders nothing but the chart and message
@@ -967,11 +999,13 @@ def register_callbacks(
         State("bt-dates", "start_date"),
         State("bt-dates", "end_date"),
         State("bt-job", "data"),
+        State("settings-current", "data"),
         prevent_initial_call=True,
     )
-    def _backtest(_run, _tick, symbols, start, end, job):
+    def _backtest(_run, _tick, symbols, start, end, job, store):
         if ctx.triggered_id == "bt-run":
-            return start_backtest(sources, symbols, start, end)
+            settings = settings_panel.store_settings(store)
+            return start_backtest(sources, symbols, start, end, settings=settings)
         return poll_backtest(job)
 
 
