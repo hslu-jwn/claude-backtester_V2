@@ -25,6 +25,11 @@ class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
     # the day of D / W candles (ROADMAP 4.0b part 2; chart settings popover)
     day_boundary: DayBoundary = DEFAULT_BOUNDARY
+    # longer ranges get a message instead of the Trades overlay (strategy run time)
+    trades_max_days: int = 183
+    # ranges estimated (cached weekdays x candles per day) above this many times max_candles
+    # are refused before reading the cache (a 5m range over years would take long to read)
+    early_refuse_factor: float = 1.5
     # timeframe switch (ROADMAP 4.0b): extra candles loaded left of the view (overlay warm-up)
     switch_warmup_candles: int = 100
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below

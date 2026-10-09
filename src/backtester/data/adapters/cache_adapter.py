@@ -24,7 +24,7 @@ import pandas as pd
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data.adapters.base import DataAdapter
-from backtester.data.dukascopy import DEFAULT_CACHE_DIR, cache_path, read_cached_day
+from backtester.data.dukascopy import DEFAULT_CACHE_DIR, cache_path, read_cached_days
 from backtester.data.resample import (
     CALENDAR,
     DEFAULT_BOUNDARY,
@@ -76,8 +76,7 @@ class CacheAdapter(DataAdapter):
 
         if timeframe in CALENDAR:
             return self._calendar(symbol, timeframe, start, end, days, boundary)
-        frames = [f for f in map(read_cached_day, paths) if not f.empty]
-        m1 = pd.concat(frames, ignore_index=True) if frames else read_cached_day(paths[0])
+        m1 = read_cached_days(paths)
         candles = resample(drop_flat_minutes(m1), timeframe)
         in_range = (candles["ts"] >= start) & (candles["ts"] < end)
         return candles[in_range].reset_index(drop=True)
@@ -87,12 +86,10 @@ class CacheAdapter(DataAdapter):
         span = timeframe.duration + timedelta(days=1)  # a DST day is up to 25 hours
         around = _days(start - span, end + span)
         loaded = [d for d in around if cache_path(self.cache_dir, symbol, d).exists()]
-        frames = [read_cached_day(cache_path(self.cache_dir, symbol, d)) for d in loaded]
-        frames = [f for f in frames if not f.empty]
-        if not frames:
+        m1 = read_cached_days([cache_path(self.cache_dir, symbol, d) for d in loaded])
+        if m1.empty:
             return resample(pd.DataFrame(), timeframe)
-        candles = resample(drop_flat_minutes(pd.concat(frames, ignore_index=True)), timeframe,
-                           boundary)  # fmt: skip
+        candles = resample(drop_flat_minutes(m1), timeframe, boundary)
         close = candles["ts"] + timeframe.duration
         cached = set(loaded)
         complete = [all(d in cached for d in _days(c - timeframe.duration, c)) for c in close]

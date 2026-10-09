@@ -18,9 +18,11 @@ rules (strategy/session_zone_sweep/zones.py).
 
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right, insort
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from math import inf
 
 from backtester.core.models import Candle, Direction
 from backtester.core.series import SeriesView
@@ -151,20 +153,62 @@ class ZoneValidator:
 
 class ZoneBook:
     """The zones a detector still checks. `on_candle(view)` once per closed candle, in
-    order, BEFORE adding zones confirmed by that candle; finished zones are dropped."""
+    order, BEFORE adding zones confirmed by that candle; finished zones are dropped.
+
+    Speed (years of data): zones nobody revisits stay open for good, so checking every
+    open zone on every candle grows with the history. A zone not tapped yet can only
+    change on a candle that reaches into it: bullish, low < top (a tap; a close below the
+    bottom needs that too); bearish mirrored. So untapped zones are kept sorted by that
+    edge and a candle only checks the ones it reaches, plus every tapped zone. The checked
+    zones run in the order they were added, so the transitions are exactly those of
+    checking every zone (`tests/detectors/test_zone.py` compares both).
+    """
 
     def __init__(self, doji_max_body: float):
         self.doji_max_body = doji_max_body
-        self._open: list[ZoneValidator] = []
+        self._open: dict[int, ZoneValidator] = {}  # by insertion number, in that order
+        self._next = 0
+        self._bull: list[tuple[float, int]] = []  # untapped bullish: (top, number), sorted
+        self._bear: list[tuple[float, int]] = []  # untapped bearish: (-bottom, number)
+        self._tapped: set[int] = set()
 
     def add(self, zone: ZoneBox) -> None:
-        self._open.append(ZoneValidator(zone, self.doji_max_body))
+        n = self._next
+        self._next += 1
+        self._open[n] = ZoneValidator(zone, self.doji_max_body)
+        if zone.direction is Direction.BULLISH:
+            insort(self._bull, (zone.top, n))
+        else:
+            insort(self._bear, (-zone.bottom, n))
 
     @property
     def open_zones(self) -> list[ZoneBox]:
-        return [v.zone for v in self._open]
+        return [v.zone for v in self._open.values()]
 
     def on_candle(self, view: SeriesView) -> list[ZoneTransition]:
-        out = [t for v in self._open for t in v.on_candle(view)]
-        self._open = [v for v in self._open if not v.state.finished]
+        candle = view.current
+        reached = [n for _, n in self._bull[bisect_right(self._bull, (candle.low, inf)) :]]
+        reached += [n for _, n in self._bear[bisect_right(self._bear, (-candle.high, inf)) :]]
+        out: list[ZoneTransition] = []
+        for n in sorted({*reached, *self._tapped}):
+            validator = self._open[n]
+            before = validator.state
+            out += validator.on_candle(view)
+            if validator.state is before:
+                continue
+            if before is ZoneState.ACTIVE:
+                self._untapped(n, validator.zone)
+            if validator.state is ZoneState.TAPPED:
+                self._tapped.add(n)
+            elif validator.state.finished:
+                self._tapped.discard(n)
+                del self._open[n]
         return out
+
+    def _untapped(self, n: int, zone: ZoneBox) -> None:
+        """Remove zone `n` from the sorted untapped zones."""
+        if zone.direction is Direction.BULLISH:
+            lst, key = self._bull, (zone.top, n)
+        else:
+            lst, key = self._bear, (-zone.bottom, n)
+        del lst[bisect_left(lst, key)]

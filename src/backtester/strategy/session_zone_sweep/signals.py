@@ -135,6 +135,7 @@ class SetupTracker:
         self._recent: list[StructureBreak] = []  # 5m breaks of the last 30m
         self._eq_waiting: list[StructureBreak] = []  # breaks whose move hasn't ended yet
         self._eq_book = ZoneBook(doji)
+        self._eq_confirmed_before = False  # the last candle confirmed an equilibrium
         self._equilibrium: dict[tuple[int, Direction], ZoneBox] = {}  # by break, still open
         self.state = SignalState()
         self.session_zone_events: list[SessionZoneEvent] = []
@@ -184,8 +185,13 @@ class SetupTracker:
         transitions = self._eq_book.on_candle(v5)
         self.zone_transitions += transitions
         confirmed = [t.zone for t in transitions if t.state is ZoneState.CONFIRMED]
-        still = {*self._eq_book.open_zones, *confirmed}
-        self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
+        # keep the open equilibria and those confirmed by this candle; something can only
+        # drop out after a transition now or a confirmation by the previous candle, so the
+        # filter (which grows with the history) only runs then
+        if transitions or self._eq_confirmed_before:
+            still = {*self._eq_book.open_zones, *confirmed}
+            self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
+        self._eq_confirmed_before = bool(confirmed)
         waiting = []
         for b in self._eq_waiting:
             kind = MOVE_END[b.direction]

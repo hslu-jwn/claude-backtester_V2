@@ -3,12 +3,16 @@ strategy-session-zones.md › Trades on the chart.
 
 Runs strategy 1 (`SessionZoneSweep`) and the backtest engine on the shown symbol, with the
 current strategy settings (ROADMAP 4.1, `OverlaySettings.strategy`): 5m base
-candles with 30m and 1h, through the engine's own `Replay`, over the whole run of
-consecutive cached days that contains the shown range (`cached_block`). Starting at the
-block's first day, not a fixed number of days before the range, means every range and
-timeframe shows the same trades: long-lived state (1h obstacles, setups) depends on where
-a run starts, and with no lookahead the trades up to a time never depend on later candles.
-The run is cached per symbol and block. Trades entered on the shown range are drawn on any
+candles with 30m and 1h, through the engine's own `Replay`, over `run_window`: from the
+first day of the month before the shown range's month (a fixed anchor, so every range
+starting in the same month and every timeframe shows the same trades, with at least a
+month of warm-up: long-lived state like 1h obstacles and setups depends on where a run
+starts) to a week after the range (trades still open at its end reach their exit), within
+the run of consecutive cached days. Until the full history was cached (2026-10-09) the
+run covered the whole cached block; with years cached that took minutes. Ranges longer
+than `ChartConfig.trades_max_days` show a message instead (a backtest covers them). With no
+lookahead, the trades up to a time never depend on later candles. The run is cached per
+symbol, window and settings. Trades entered on the shown range are drawn on any
 timeframe: a 5m time is placed on the chart candle that contains it.
 
 Per trade, a TradingView-style position box from the entry candle to the candle in which
@@ -108,12 +112,29 @@ def run_strategy(
     return StrategyRun(tuple(trades), decisions, series[Timeframe.M5], series[zone_tf])
 
 
-def block_run(
-    sources: SymbolSources, symbol: str, day: date, settings_json: str = ""
+RUN_AFTER = timedelta(days=7)  # the run goes on this long after the shown range
+
+
+def run_window(cached: set[date], first_shown: date, last_shown: date) -> tuple[date, date]:
+    """(first, last) day of the strategy run for a chart showing first_shown..last_shown:
+    from the 1st of the month before first_shown's month to a week after last_shown,
+    within the run of cached days containing first_shown."""
+    block_first, block_last = cached_block(cached, first_shown)
+    month = first_shown.replace(day=1)
+    anchor = (month - timedelta(days=1)).replace(day=1)
+    return max(anchor, block_first), min(last_shown + RUN_AFTER, block_last)
+
+
+def chart_run(
+    sources: SymbolSources,
+    symbol: str,
+    first_shown: date,
+    last_shown: date,
+    settings_json: str = "",
 ) -> StrategyRun:
-    """The run over the cached block containing `day`, with the settings given as
-    canonical JSON (backtester/settings.py `to_json`; "" = spec defaults)."""
-    first, last = cached_block(set(sources.cached_days(symbol)), day)
+    """The run for a chart showing first_shown..last_shown (`run_window`), with the settings
+    given as canonical JSON (backtester/settings.py `to_json`; "" = spec defaults)."""
+    first, last = run_window(set(sources.cached_days(symbol)), first_shown, last_shown)
     return _cached_run(sources, symbol, first, last, settings_json)
 
 
@@ -156,8 +177,14 @@ def detect_trades(
     opens = [c.ts for c in candles]
     duration = replay.timeframe.duration
     closes = [t + duration for t in opens]
+    first_shown, last_shown = opens[0].date(), (closes[-1] - timedelta(microseconds=1)).date()
+    if (last_shown - first_shown).days + 1 > config.trades_max_days:
+        raise OverlayUnavailable(
+            f"Trades: shown for ranges up to {config.trades_max_days} days (the strategy runs "
+            "about 40 s per year of 5m candles); pick a shorter range or run a backtest"
+        )
     try:
-        run = block_run(sources, replay.symbol, opens[0].date(), settings.strategy)
+        run = chart_run(sources, replay.symbol, first_shown, last_shown, settings.strategy)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     except ValueError as e:  # e.g. no 5m candles

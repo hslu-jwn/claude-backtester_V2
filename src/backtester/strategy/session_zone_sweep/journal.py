@@ -66,6 +66,9 @@ class SessionJournal:
     def __init__(self):
         self._zones: dict[SessionZone, ZoneRecord] = {}
         self._confluences: dict[tuple[SessionInstance, ZoneBox], ConfluenceRecord] = {}
+        # the records not ended yet (an end is final), so a candle only looks at those and
+        # the time per candle doesn't grow with the history (ROADMAP 6.3 speed)
+        self._open: dict[tuple[SessionInstance, ZoneBox], ConfluenceRecord] = {}
         self._sessions: set[SessionInstance] = set()
 
     def on_candle(
@@ -85,9 +88,10 @@ class SessionJournal:
         for t in transitions:
             if t.state.finished:
                 self._finish(t)
-        for key, record in self._confluences.items():
-            if record.end is None and key[0].end <= now:
+        for key, record in list(self._open.items()):
+            if key[0].end <= now:
                 record.end_time, record.end = key[0].end, "session_end"
+                del self._open[key]
 
     def on_signal(self, session: SessionInstance, confluence: ZoneBox, traded: bool) -> None:
         """A setup of `session` triggered on `confluence`; `traded`: it became an order."""
@@ -124,15 +128,17 @@ class SessionJournal:
         if record is None:
             box = link.confluence
             record = self._confluences[key] = ConfluenceRecord(box, v5[box.start_index].ts, now)
+            self._open[key] = record
         record.setup_zones.add(link.zone.side.value)
         if link.accepted:
             record.setup_confirmed = True
 
     def _finish(self, t: ZoneTransition) -> None:
         end = "confirmed" if t.state is ZoneState.CONFIRMED else "invalidated"
-        for (_, box), record in self._confluences.items():
-            if box == t.zone and record.end is None:
+        for key, record in list(self._open.items()):
+            if key[1] == t.zone:
                 record.end_time, record.end = t.confirmed_at, end
+                del self._open[key]
 
     def records(self, run_end: datetime | None = None) -> list[dict]:
         """One JSON-ready dict per session that had zones, oldest first. Records still open
@@ -149,12 +155,19 @@ class SessionJournal:
                     "end": _iso(session.end),
                     "zones": [_zone_dict(r, run_end) for r in zones],
                     "confluences": [
-                        _confluence_dict(r, run_end)
-                        for r in sorted(confluences, key=lambda r: (r.box.created_at, r.linked_at))
+                        _confluence_dict(r, run_end) for r in sorted(confluences, key=_record_order)
                     ],
                 }
             )
         return out
+
+
+def _record_order(r: ConfluenceRecord) -> tuple:
+    """Confluences by creation, then linking; ties (e.g. an FVG and a BPR from the same
+    candle) by kind and edges, so the file is the same on every run (the setups collect
+    them in sets, whose order changes between Python processes)."""
+    box = r.box
+    return (box.created_at, r.linked_at, box.kind.value, box.start_index, box.bottom, box.top)
 
 
 def _iso(t: datetime | None) -> str | None:

@@ -706,6 +706,39 @@ Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
 - ☐ **6.2** In-sample / out-of-sample split: tune settings on one period, judge them only on
   a later period the tuning never saw. Walk-forward later.
 - ☐ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
+  **Speed with years of data (2026-10-09, awaiting the user's check).** Before: a backtest
+  slowed down the longer it ran (1 month 4 s, 6 months 48 s; the full history would have
+  taken hours). Found by profiling, changed without changing any result:
+  - `detectors/zone.py` `ZoneBook`: zones nobody revisits stay open for good and were
+    checked on every candle. Now the untapped zones are kept sorted by their near edge and
+    a candle only checks those it reaches, plus the tapped ones, in the same order.
+  - `strategy/session_zone_sweep/journal.py`: only the confluence records not ended yet
+    are looked at per candle (all were); `signals.py`: the equilibria are only filtered
+    after a transition (was every candle).
+  - `data/dukascopy.py` `read_cached_days`: the day files of a range are read in one go
+    (pyarrow dataset), 9x faster than one by one (2,464 files: 7.2 s → 0.8 s).
+  - Found on the way: the order of confluences inside a session record in sessions.json
+    changed from run to run (same content; FVG and BPR made by the same candle came from
+    a set). Now sorted by kind and edges as a tie-break, the same on every run.
+  Proof: `tests/test_speed_same_results.py` (the old check-every-zone book against the new
+  one on random candles, and strategy 1 + engine over three weeks of seeded random-walk
+  candles with both: identical trades and session records); on the real cache, all three
+  symbols 2026-06..07: trades.csv byte-identical to before, sessions.json the same content
+  (and now identical between runs); candles from the new reader identical to the old
+  (5m, 4h, D, XAUUSD and GBPJPY). Now: 6 months 10.6 s, **full history XAUUSD 4 min 41 s**
+  (one process; the symbols run in parallel).
+  Chart with years cached (`tests/ui/test_long_history.py`):
+  - The chart opens on the last month ("1M"), no longer on the whole run of cached days.
+  - A range far over the candle limit (estimated from the cached weekdays, > 1.5 x
+    `max_candles`, e.g. "All" on 5m ≈ 500,000) is refused at once with the message to pick a
+    shorter range or 4h / D; closer to the limit it is read and checked exactly as before.
+    4h / D over all 6.7 years: about 5 s on the server (13 s in the browser), no freeze.
+  - Trades overlay: runs from the 1st of the month before the shown range's month to a
+    week after it (`trades_overlay.run_window`; was the whole run of cached days = 6.7 years
+    ≈ 5 min). Every range starting in the same month shows the same trades; ranges in
+    different months can differ slightly at their start (setups and levels from before the
+    anchor are not known). Ranges longer than 183 days (`ChartConfig.trades_max_days`) show
+    a message instead (the strategy runs about 40 s per year of 5m candles).
 
 ## Phase 7: Live trading via MT5 (much later)
 

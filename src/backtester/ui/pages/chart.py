@@ -156,6 +156,15 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
     start, end = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
     if end < start:
         return None, "The end date is before the start date."
+    tf = Timeframe[timeframe]
+    weekdays = sum(1 for d in sources.cached_days(symbol) if start <= d <= end and d.weekday() < 5)
+    estimate = weekdays * 1440 // tf.value
+    if estimate > config.max_candles * config.early_refuse_factor:
+        return None, (
+            f"About {estimate:,} {timeframe} candles is far more than the limit of "
+            f"{config.max_candles:,}. Pick a shorter range or a higher timeframe "
+            "(e.g. 4h or D for years)."
+        )
     try:
         frame = sources.adapter(symbol).fetch_frame(
             symbol,
@@ -692,14 +701,15 @@ def focus_selection(focus: dict | None, overlay_types: list | None):
 
 
 def date_limits(days: Sequence[date], symbol: str | None = None, focus: dict | None = None):
-    """Date picker limits and the range shown when the symbol changes: the latest run of
-    consecutive cached days, or a pending trade focus's days for its symbol."""
+    """Date picker limits and the range shown when the symbol changes: the last month of
+    cached days (the "1M" quick range; with years cached, all of them would be too many
+    5m candles), or a pending trade focus's days for its symbol."""
     if not days:
         return None, None, [], None, None, None
     cached = set(days)
     span = (days[-1] - days[0]).days
     holes = [days[0] + timedelta(days=i) for i in range(span + 1)]
-    first, last = latest_run(days)
+    first, last = quick_range(days, "1M")
     start, end = first.isoformat(), last.isoformat()
     if focus and not focus.get("done") and focus["symbol"] == symbol:
         start, end = focus["from"], focus["to"]
