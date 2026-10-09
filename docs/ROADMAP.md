@@ -33,7 +33,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   download: the downloader stops the whole run after 3 days in a row fail with
   503/timeouts (clear message, suggests a higher `--delay`), and the default delay is 2 s.
   Download one pair at a time.
-- ◐ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
+- ☑ **0.3 Data check.** Report per symbol: first/last candle, gaps (expected: weekends,
   holidays, daily break around 22:00 UTC for gold), duplicates, broken candles
   (high < low etc.), and a spot check. **The user compares 3 candles at known times with
   TradingView or MT5** (remember MT5 shows server time, usually UTC+2/+3).
@@ -51,7 +51,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
-  **Full history (2026-10-09, awaiting the user's check).** The user downloaded histdata.com
+  **Full history (2026-10-09, confirmed by the user).** The user downloaded histdata.com
   for all three symbols: year files 2020-2025 (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`) and month
   files 2026-01..09. Built: `data/histdata.py` reads year files and zip files too (same
   rules: New York time with DST → UTC, bid only, only UTC days fully covered are written;
@@ -705,8 +705,8 @@ Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
 - ☐ **6.1** Parameter sweeps over the backtest options.
 - ☐ **6.2** In-sample / out-of-sample split: tune settings on one period, judge them only on
   a later period the tuning never saw. Walk-forward later.
-- ☐ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
-  **Speed with years of data (2026-10-09, awaiting the user's check).** Before: a backtest
+- ☑ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
+  **Speed with years of data (2026-10-09, confirmed by the user).** Before: a backtest
   slowed down the longer it ran (1 month 4 s, 6 months 48 s; the full history would have
   taken hours). Found by profiling, changed without changing any result:
   - `detectors/zone.py` `ZoneBook`: zones nobody revisits stay open for good and were
@@ -739,7 +739,7 @@ Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
     different months can differ slightly at their start (setups and levels from before the
     anchor are not known). Ranges longer than 183 days (`ChartConfig.trades_max_days`) show
     a message instead (the strategy runs about 40 s per year of 5m candles).
-  **Results per year / quarter (built 2026-10-09, awaiting the user's check):**
+  **Results per year / quarter (built 2026-10-09, confirmed by the user):**
   `analytics/metrics.py` `by_period` (`by_year`, `by_quarter`: per period the summary of
   all symbols and of each), results page Performance tab "Per year" and (collapsible)
   "Per quarter" tables (trades, win rate, net R, max drawdown in R; all symbols and each
