@@ -18,6 +18,9 @@
   }
 
   document.addEventListener("click", (e) => {
+    // a dropdown option is removed from the page when it is picked, before this click
+    // arrives: it was inside whatever holds the dropdown, never an outside click
+    if (!e.target.isConnected) return;
     const opener = e.target.closest("[data-modal]");
     if (opener) {
       const modal = document.getElementById(opener.dataset.modal);

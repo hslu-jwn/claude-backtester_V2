@@ -60,7 +60,7 @@ class FakeRun:
 def test_backtest_runs_in_the_background_reports_progress_and_opens_its_results():
     started = []
 
-    def fake_start(symbols, start, end, settings, sources):
+    def fake_start(symbols, start, end, settings, sources, preset):
         started.append((symbols, start, end))
         return run
 

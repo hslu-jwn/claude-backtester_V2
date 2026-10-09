@@ -2,8 +2,8 @@
 
     python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30
 
-Default settings (every config dataclass at its spec default); results go to
-`results/<run-id>/` (see runner.py for the files).
+Settings: the spec defaults, or a saved preset with `--preset NAME` (results/presets/,
+ROADMAP 4.2); results go to `results/<run-id>/` (see runner.py for the files).
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ from datetime import date
 from pathlib import Path
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.runner import RESULTS_DIR, RunSettings, run_backtests, write_results
+from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
+from backtester.runner import RESULTS_DIR, run_backtests, write_results
 
 
 def format_summary(summary: dict) -> str:
@@ -65,18 +66,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("symbols", nargs="+", help="e.g. XAUUSD GBPUSD GBPJPY")
     parser.add_argument("--start", type=date.fromisoformat, required=True, help="first UTC day")
     parser.add_argument("--end", type=date.fromisoformat, required=True, help="last UTC day")
-    parser.add_argument("--warmup-days", type=int, default=RunSettings().warmup_days)
+    parser.add_argument("--warmup-days", type=int, default=None, help="default: the preset's")
     parser.add_argument("--workers", type=int, default=None, help="parallel processes")
     parser.add_argument("--out", type=Path, default=RESULTS_DIR, help="results folder")
     parser.add_argument("--cache-dir", type=Path, default=None, help="read every symbol here")
+    parser.add_argument("--preset", default=DEFAULT, help="settings preset (results/presets/)")
+    parser.add_argument("--presets-dir", type=Path, default=PRESETS_DIR, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
     symbols = [s.upper() for s in args.symbols]
     sources = SymbolSources.single(args.cache_dir, symbols) if args.cache_dir else DEFAULT_SOURCES
-    settings = replace(RunSettings(), warmup_days=args.warmup_days)
+    try:
+        preset = load_preset(args.preset, args.presets_dir)
+    except PresetError as e:
+        parser.error(str(e))
+    warmup = args.warmup_days if args.warmup_days is not None else preset.warmup_days
+    settings = replace(preset, warmup_days=warmup)
     result = run_backtests(symbols, args.start, args.end, settings, sources, _Bar(), args.workers)
     print(file=sys.stderr)
-    folder = write_results(result, args.out)
+    name = args.preset if settings == preset else f"{args.preset} (modified)"
+    folder = write_results(result, args.out, preset=name)
     for run in result.runs.values():
         for note in run.notes:
             print(f"note: {note}")

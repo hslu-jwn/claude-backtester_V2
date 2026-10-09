@@ -75,7 +75,7 @@ def test_an_invalid_value_is_named_and_not_stored():
     )
     rule = sp.form_update("field", widgets(strategy__tp_cap_r=1.0), None)  # below min_rr
     assert rule["error"][0] == "strategy" and "tp_cap_r" in rule["error"][1]
-    assert sp.status_text(None, [], out["error"]).startswith("Not applied")
+    assert sp.status_text(out).startswith("Not applied")
 
 
 def test_reset_one_field_or_all():
@@ -99,3 +99,54 @@ def test_store_json_is_empty_for_the_defaults_so_caches_are_shared():
 def test_the_panel_is_on_the_chart_page():
     page = str(chart.layout(SymbolSources({})))
     assert "st-modal" in page and "settings-current" in page and "Settings…" in page
+
+
+# --- presets (ROADMAP 4.2) -------------------------------------------------------------
+
+
+def test_save_as_load_revert_and_the_modified_mark(tmp_path):
+    tight = widgets(strategy__max_sl_atr_mult=2.0)
+    out = sp.form_update("save-as", tight, None, name="Tight SL", folder=tmp_path)
+    assert out["message"] == "Saved as preset 'Tight SL'."
+    assert out["presets"] == ["Default", "Tight SL"]
+    assert out["preset"] == "Tight SL" and out["modified"] is False
+    store = out["store"]
+    assert sp.preset_label(store, tmp_path) == "Tight SL"
+
+    # a change after saving: modified, and a run records it as such
+    out = sp.form_update("field", widgets(strategy__max_sl_atr_mult=2.5), store, folder=tmp_path)
+    assert out["modified"] is True and out["store"]["preset"] == "Tight SL"
+    assert sp.preset_label(out["store"], tmp_path) == "Tight SL (modified)"
+    assert "Preset Tight SL (modified)" in sp.status_text(out)
+
+    reverted = sp.form_update("revert", widgets(strategy__max_sl_atr_mult=2.5), out["store"],
+                              folder=tmp_path)  # fmt: skip
+    assert reverted["widgets"]["strategy.max_sl_atr_mult"] == 2.0 and not reverted["modified"]
+
+    default = sp.form_update({"load": "Default"}, tight, store, folder=tmp_path)
+    assert default["widgets"]["strategy.max_sl_atr_mult"] is None
+    assert default["store"]["preset"] == "Default" and default["changed"] == []
+
+
+def test_default_cannot_be_overwritten_renamed_or_deleted(tmp_path):
+    for action in ("save", "rename", "delete"):
+        out = sp.form_update(action, widgets(strategy__min_rr=1.5), None, name="X", folder=tmp_path)
+        assert "Default" in out["message"] and out["presets"] == ["Default"]
+    out = sp.form_update("save-as", widgets(), None, name="default", folder=tmp_path)
+    assert "can't be overwritten" in out["message"]
+
+
+def test_rename_and_delete(tmp_path):
+    store = sp.form_update("save-as", widgets(), None, name="A", folder=tmp_path)["store"]
+    out = sp.form_update("rename", widgets(), store, name="B", folder=tmp_path)
+    assert out["presets"] == ["Default", "B"] and out["store"]["preset"] == "B"
+    out = sp.form_update("delete", widgets(strategy__min_rr=1.5), out["store"], folder=tmp_path)
+    assert out["presets"] == ["Default"] and out["store"]["preset"] == "Default"
+    assert out["widgets"]["strategy.min_rr"] == 1.2  # the defaults are loaded
+
+
+def test_preset_actions_need_valid_settings_and_a_name(tmp_path):
+    out = sp.form_update("save-as", widgets(strategy__min_rr=None), None, name="A", folder=tmp_path)
+    assert out["message"] == "Fix the invalid setting first." and out["presets"] == ["Default"]
+    out = sp.form_update("save-as", widgets(), None, name="", folder=tmp_path)
+    assert out["message"] == "Enter a preset name."

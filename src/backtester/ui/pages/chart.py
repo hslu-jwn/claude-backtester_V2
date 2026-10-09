@@ -425,6 +425,7 @@ def start_backtest(
     end_date,
     start=start_run,
     settings: RunSettings | None = None,
+    preset: str | None = None,
 ):
     """Outputs of the backtest callback after "Run": (job, timer disabled, status, bar
     style, page). The run goes on in a background thread with `settings` (the settings
@@ -433,7 +434,9 @@ def start_backtest(
         return no_update, True, "Pick one or more symbols and the days.", {"width": "0%"}, no_update
     job = uuid4().hex
     first, last = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
-    _RUNS[job] = start(list(symbols), first, last, settings=settings, sources=sources)
+    _RUNS[job] = start(
+        list(symbols), first, last, settings=settings, sources=sources, preset=preset
+    )
     return {"id": job}, False, f"Running {', '.join(symbols)} …", {"width": "0%"}, no_update
 
 
@@ -651,6 +654,15 @@ def layout(
             dcc.Dropdown(id="bt-symbols", options=symbols, value=symbols[:1], multi=True),
             html.Div("Days (UTC)", className="tb-pop-sub"),
             dcc.DatePickerRange(id="bt-dates", display_format="YYYY-MM-DD", first_day_of_week=1),
+            html.Div("Settings preset", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="bt-preset",
+                options=settings_panel.preset_options([settings_panel.DEFAULT_PRESET]),
+                value=settings_panel.DEFAULT_PRESET,
+                clearable=False,
+                searchable=False,
+            ),
+            html.Div(id="bt-preset-note", className="tb-pop-note"),
             html.Div(
                 [html.Button("Run", id="bt-run", className="tb-run", n_clicks=0)],
                 className="tb-pop-row",
@@ -1004,8 +1016,11 @@ def register_callbacks(
     )
     def _backtest(_run, _tick, symbols, start, end, job, store):
         if ctx.triggered_id == "bt-run":
+            if not _run:  # fired when the page is built (n_clicks 0), not a click
+                return (no_update,) * 5
             settings = settings_panel.store_settings(store)
-            return start_backtest(sources, symbols, start, end, settings=settings)
+            preset = settings_panel.preset_label(store)
+            return start_backtest(sources, symbols, start, end, settings=settings, preset=preset)
         return poll_backtest(job)
 
 

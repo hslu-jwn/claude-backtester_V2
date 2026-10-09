@@ -12,22 +12,40 @@ default. Changes apply at once when valid: the store `settings-current` (browser
 storage) keeps {"preset", "values" (path -> value), "key" (hash of the settings)}; the
 Trades overlay and the backtest popover read it. An invalid value is named in the
 panel's status line and the store keeps the last valid settings.
+
+Presets (ROADMAP.md › 4.2, `backtester/presets.py`): the bar at the top of the panel picks
+a preset (loads its settings), saves the current settings into it, reverts to it, saves
+them as a new one, renames or deletes it; "Default" (the spec defaults) can't be
+overwritten. The backtest popover has the same preset dropdown; a run records the
+preset's name ("<name> (modified)" when the settings differ from it, `preset_label`).
 """
 
 from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 from dash import ALL, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
 from backtester.data.resample import supported
+from backtester.presets import (
+    DEFAULT,
+    PRESETS_DIR,
+    PresetError,
+    delete_preset,
+    list_presets,
+    load_preset,
+    rename_preset,
+    save_preset,
+)
 from backtester.runner import RunSettings
 from backtester.settings import (
     Leaf,
     SettingsError,
+    form_values,
     leaves,
     settings_from_values,
     to_json,
@@ -45,7 +63,7 @@ GROUPS = (
     "Backtest",
 )
 OTHER = "Other"
-DEFAULT_PRESET = "Default"
+DEFAULT_PRESET = DEFAULT
 
 # (path or path prefix ending in ".", group), first match wins
 _GROUP_RULES = (
@@ -216,44 +234,128 @@ def store_json(store: Mapping | None) -> str:
 # --- the panel's logic (pure, tested without Dash) -------------------------------------
 
 
+def _values_of(settings: RunSettings) -> dict[str, Any]:
+    return form_values(settings)
+
+
+def preset_values(name: str, folder: Path) -> dict[str, Any] | None:
+    """The form values saved in preset `name` (None if it can't be read)."""
+    try:
+        return _values_of(load_preset(name, folder))
+    except PresetError:
+        return None
+
+
+def preset_label(store: Mapping | None, folder: Path = PRESETS_DIR) -> str:
+    """The preset name a run records: "<name>", or "<name> (modified)" when the store's
+    settings differ from the preset's saved ones."""
+    name = (store or {}).get("preset") or DEFAULT_PRESET
+    saved = preset_values(name, folder)
+    if saved is None:
+        return f"{name} (missing)"
+    current = form_values(store_settings(store))
+    return name if current == saved else f"{name} (modified)"
+
+
+PRESET_ACTIONS = ("save", "save-as", "rename", "delete", "revert")
+
+
 def form_update(
     trigger: Any,
     widgets: Mapping[str, Any],
     store: Mapping | None,
     leaf_list: Sequence[Leaf] | None = None,
+    name: str | None = None,
+    folder: Path = PRESETS_DIR,
 ) -> dict:
-    """What the panel shows after `trigger`: None (panel built: show the store),
-    {"reset": path}, "reset-all", or a field change. Returns {"widgets": {path: widget
-    value} or None (unchanged), "store": new store or None (unchanged), "changed": paths
-    differing from the default, "error": (path, message) or None}."""
-    leaf_list = list(leaf_list or leaves())
-    by_path = {leaf.path: leaf for leaf in leaf_list}
-    preset = (store or {}).get("preset", DEFAULT_PRESET)
+    """What the panel shows after `trigger`:
+    - None: the panel was built, show the store;
+    - "field": a field changed; {"reset": path}: one field back to its default;
+      "reset-all": every field back to its default;
+    - {"load": preset}: the preset's settings (picked in a preset dropdown);
+      "revert": the current preset's saved settings again;
+    - "save": the current settings into the current preset ("Default" can't be);
+      "save-as" / "rename": into / the current preset to `name`; "delete": the current
+      preset (then "Default" is loaded).
+    Returns {"widgets": {path: widget value} or None (unchanged), "store": new store or
+    None (unchanged), "changed": paths differing from the default, "error": (path,
+    message) of an invalid field or None, "preset": the current preset, "modified": the
+    settings differ from it, "presets": the preset names, "message": the preset action's
+    result or None}."""
+    by_path = {leaf.path: leaf for leaf in (leaf_list or leaves())}
+    preset = (store or {}).get("preset") or DEFAULT_PRESET
+    message = None
+
+    def widgets_for(vals):
+        return {p: to_widget(by_path[p].kind, v) for p, v in vals.items()}
+
     if trigger is None:
         saved = dict((store or {}).get("values") or {})
         values = {p: saved.get(p, leaf.default) for p, leaf in by_path.items()}
-        new_widgets = {p: to_widget(by_path[p].kind, v) for p, v in values.items()}
+        new_widgets = widgets_for(values)
     else:
         values = {p: from_widget(by_path[p].kind, w) for p, w in widgets.items() if p in by_path}
         new_widgets = None
         if trigger == "reset-all":
             values = {p: leaf.default for p, leaf in by_path.items()}
+            new_widgets = widgets_for(values)
         elif isinstance(trigger, Mapping) and trigger.get("reset") in by_path:
             values[trigger["reset"]] = by_path[trigger["reset"]].default
-        if new_widgets is None and trigger != "field":
-            new_widgets = {p: to_widget(by_path[p].kind, v) for p, v in values.items()}
+            new_widgets = widgets_for(values)
+        elif (isinstance(trigger, Mapping) and "load" in trigger) or trigger == "revert":
+            wanted = trigger["load"] if trigger != "revert" else preset
+            loaded = preset_values(wanted or DEFAULT_PRESET, folder)
+            if loaded is None:
+                message = f"Preset {wanted!r} can't be read."
+            else:
+                preset, values = wanted or DEFAULT_PRESET, {**values, **loaded}
+                new_widgets = widgets_for(values)
     changed = [p for p, v in values.items() if v != by_path[p].default]
     try:
         settings = settings_from_values(values)
     except SettingsError as e:
-        return {"widgets": new_widgets, "store": None, "changed": changed, "error": _error(e)}
+        error = _error(e)
+        if trigger in PRESET_ACTIONS:
+            message = "Fix the invalid setting first."
+        return {
+            "widgets": new_widgets,
+            "store": None,
+            "changed": changed,
+            "error": error,
+            "preset": preset,
+            "modified": True,
+            "presets": list_presets(folder),
+            "message": message,
+        }
+    try:
+        if trigger == "save":
+            save_preset(preset, settings, folder)
+            message = f"Saved preset {preset!r}."
+        elif trigger == "save-as":
+            preset = save_preset(name, settings, folder)
+            message = f"Saved as preset {preset!r}."
+        elif trigger == "rename":
+            old, preset = preset, rename_preset(preset, name, folder)
+            message = f"Renamed {old!r} to {preset!r}."
+        elif trigger == "delete":
+            delete_preset(preset, folder)
+            message = f"Deleted preset {preset!r}; the defaults are loaded."
+            preset, values = DEFAULT_PRESET, _values_of(RunSettings())
+            settings, changed, new_widgets = RunSettings(), [], widgets_for(values)
+    except PresetError as e:
+        message = str(e)[:1].upper() + str(e)[1:] + "."
     new_store = store_for(settings, values, preset)
-    same = store and store.get("values") == new_store["values"]
+    same = store and all(store.get(k) == new_store[k] for k in ("values", "preset"))
+    saved = preset_values(preset, folder)
     return {
         "widgets": new_widgets,
         "store": None if same else new_store,
         "changed": changed,
         "error": None,
+        "preset": preset,
+        "modified": saved is not None and saved != values,
+        "presets": list_presets(folder),
+        "message": message,
     }
 
 
@@ -262,15 +364,45 @@ def _error(e: SettingsError) -> tuple[str | None, str]:
     return e.path, f"{where}: {e}"
 
 
-def status_text(store: Mapping | None, changed: Sequence[str], error) -> str:
-    if error:
-        return f"Not applied, {error[1]}"
-    n = len(changed)
-    return (
-        "All settings at the spec defaults."
-        if not n
-        else f"{n} setting(s) differ from the defaults."
-    )
+def status_text(result: Mapping) -> str:
+    if result["error"]:
+        text = f"Not applied, {result['error'][1]}"
+    else:
+        n = len(result["changed"])
+        preset = result["preset"] + (" (modified)" if result["modified"] else "")
+        differ = "all at the spec defaults" if not n else f"{n} differ from the spec defaults"
+        text = f"Preset {preset} · {differ}"
+    return f"{result['message']} {text}" if result["message"] else text
+
+
+def preset_options(names: Sequence[str]) -> list[dict]:
+    return [{"label": n, "value": n} for n in names]
+
+
+def preset_controls() -> list:
+    """Preset bar of the panel: dropdown, name field and the actions."""
+
+    def button(id_, text, title):
+        return html.Button(text, id=id_, title=title, className="st-btn", n_clicks=0)
+
+    return [
+        html.Span("Preset", className="st-preset-label"),
+        dcc.Dropdown(
+            id="st-preset",
+            options=preset_options([DEFAULT_PRESET]),
+            value=DEFAULT_PRESET,
+            clearable=False,
+            searchable=False,
+            className="st-preset",
+        ),
+        button("st-save", "Save", "Save the settings into this preset"),
+        button("st-revert", "Revert", "Load this preset's saved settings again"),
+        html.Div(className="tb-sep"),
+        dcc.Input(id="st-name", type="text", placeholder="New name", className="st-input st-name"),
+        button("st-save-as", "Save as", "Save the settings as a new preset with this name"),
+        button("st-rename", "Rename", "Rename this preset"),
+        button("st-delete", "Delete", "Delete this preset"),
+    ]
 
 
 # --- layout ----------------------------------------------------------------------------
@@ -358,7 +490,7 @@ def _group_body(group: str, leaf_list: list[Leaf], shown: bool) -> html.Div:
     )
 
 
-def layout(preset_controls: list | None = None) -> html.Div:
+def layout() -> html.Div:
     """The modal (hidden until a button with data-modal="st-modal" opens it)."""
     groups = grouped(leaves())
     first = next(iter(groups))
@@ -374,7 +506,7 @@ def layout(preset_controls: list | None = None) -> html.Div:
                     ],
                     className="st-head",
                 ),
-                html.Div(preset_controls or [], className="st-presets"),
+                html.Div(preset_controls(), className="st-presets"),
                 html.Div(
                     [
                         dcc.RadioItems(
@@ -415,7 +547,7 @@ def layout(preset_controls: list | None = None) -> html.Div:
     )
 
 
-def register_callbacks(app: Dash) -> None:
+def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
     app.clientside_callback(
         """function (group, ids) {
             return ids.map((id) => ({display: id.group === group ? "block" : "none"}));
@@ -430,16 +562,25 @@ def register_callbacks(app: Dash) -> None:
         Output({"type": "st-row", "path": ALL}, "className"),
         Output("settings-current", "data"),
         Output("st-status", "children"),
+        Output("st-preset", "options"),
+        Output("st-preset", "value"),
+        Output("bt-preset", "options"),
+        Output("bt-preset", "value"),
+        Output("bt-preset-note", "children"),
         Input({"type": "st-field", "path": ALL}, "value"),
         Input({"type": "st-reset", "path": ALL}, "n_clicks"),
         Input("st-reset-all", "n_clicks"),
+        Input("st-preset", "value"),
+        Input("bt-preset", "value"),
+        *[Input(f"st-{action}", "n_clicks") for action in PRESET_ACTIONS],
+        State("st-name", "value"),
         State("settings-current", "data"),
     )
-    def _settings(values, _resets, _reset_all, store):
+    def _settings(values, *args):
+        name, store = args[-2:]
         paths = [item["id"]["path"] for item in ctx.inputs_list[0]]
         widgets = dict(zip(paths, values, strict=True))
-        trigger = _trigger()
-        result = form_update(trigger, widgets, store)
+        result = form_update(_trigger(), widgets, store, name=name, folder=presets_dir)
         error_path = result["error"][0] if result["error"] else None
         classes = [
             "st-row"
@@ -448,11 +589,18 @@ def register_callbacks(app: Dash) -> None:
             for p in paths
         ]
         new = result["widgets"]
+        options = preset_options(result["presets"])
+        note = "Modified, not saved (see Settings…)." if result["modified"] else ""
         return (
             [new[p] for p in paths] if new is not None else [no_update] * len(paths),
             classes,
             result["store"] if result["store"] is not None else no_update,
-            status_text(store, result["changed"], result["error"]),
+            status_text(result),
+            options,
+            result["preset"],
+            options,
+            result["preset"],
+            note,
         )
 
 
@@ -463,6 +611,10 @@ def _trigger():
         return None
     if tid == "st-reset-all":
         return "reset-all"
+    if tid in ("st-preset", "bt-preset"):
+        return {"load": ctx.triggered[0]["value"]}
+    if isinstance(tid, str) and tid.removeprefix("st-") in PRESET_ACTIONS:
+        return tid.removeprefix("st-")
     if isinstance(tid, Mapping) and tid.get("type") == "st-reset":
         return {"reset": tid["path"]}
     return "field"

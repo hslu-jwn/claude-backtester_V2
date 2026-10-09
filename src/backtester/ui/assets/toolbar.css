@@ -513,3 +513,15 @@ body {
   color: #ffffff;
   font-weight: 600;
 }
+.st-preset-label {
+  color: var(--tb-muted);
+}
+.st-preset {
+  width: 200px;
+}
+.st-name {
+  width: 150px;
+}
+.st-presets .st-btn {
+  white-space: nowrap;
+}

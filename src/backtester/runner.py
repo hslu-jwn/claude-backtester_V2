@@ -18,7 +18,8 @@ order. Progress: `progress(done, total)` in 5m candles over all symbols.
 `write_results` writes `results/<run-id>/` (git-ignored):
 - `trades.csv`  one row per trade, all symbols, entry time order (`id` links sessions.json)
 - `settings.json` the exact settings: run (symbols, range, warm-up, cache folders),
-  strategy and engine (incl. costs) config dataclasses
+  strategy and engine (incl. costs) config dataclasses, and the settings preset's name
+  (`preset`, ROADMAP 4.2; "<name> (modified)" when the run's settings differ from it)
 - `summary.json` per symbol and combined (analytics/metrics.py `summarize`), the days
   used per symbol, notes and when the run was made (`created`, UTC)
 - `sessions.json` per symbol and session: the session zones, the setup confluences
@@ -352,7 +353,10 @@ def new_run_id(symbols: Sequence[str], out_dir: Path, now: datetime | None = Non
 
 
 def write_results(
-    result: RunResult, out_dir: Path = RESULTS_DIR, run_id: str | None = None
+    result: RunResult,
+    out_dir: Path = RESULTS_DIR,
+    run_id: str | None = None,
+    preset: str | None = None,
 ) -> Path:
     """Write the run to `out_dir/<run_id>/`; returns that folder."""
     out_dir = Path(out_dir)
@@ -365,6 +369,7 @@ def write_results(
         writer.writeheader()
         writer.writerows(rows)
     settings = {
+        "preset": preset,
         "run": {
             "symbols": result.symbols,
             "start": result.start,
@@ -438,11 +443,12 @@ def start_run(
     sources: SymbolSources = DEFAULT_SOURCES,
     out_dir: Path = RESULTS_DIR,
     workers: int | None = None,
+    preset: str | None = None,
 ) -> BackgroundRun:
     """`run_backtests` + `write_results` in a background thread."""
 
     def target(progress: Progress) -> Path:
         result = run_backtests(symbols, start, end, settings, sources, progress, workers)
-        return write_results(result, out_dir)
+        return write_results(result, out_dir, preset=preset)
 
     return BackgroundRun(target)

@@ -231,3 +231,24 @@ def test_command_prints_the_summary(cache, tmp_path, capsys):
     out = capsys.readouterr().out
     assert "XAUUSD" in out and "combined" in out and "100.0%" in out
     assert len(list((tmp_path / "out").iterdir())) == 1
+    (run,) = (tmp_path / "out").iterdir()
+    assert json.loads((run / "settings.json").read_text())["preset"] == "Default"
+
+
+def test_command_runs_a_preset_and_records_its_name(cache, tmp_path, capsys):
+    from backtester.presets import save_preset
+
+    no_costs = RunSettings(engine=SETTINGS.engine, warmup_days=SETTINGS.warmup_days)
+    save_preset("No costs", no_costs, tmp_path / "presets")
+    folder = cache.cache_dir("XAUUSD")
+    argv = ["xauusd", "--start", "2026-01-05", "--end", "2026-01-05", "--cache-dir", str(folder)]
+    argv += ["--out", str(tmp_path / "out"), "--presets-dir", str(tmp_path / "presets")]
+    assert main([*argv, "--preset", "No costs"]) == 0
+    assert main([*argv, "--preset", "No costs", "--warmup-days", "3"]) == 0
+    presets = sorted(
+        json.loads((r / "settings.json").read_text())["preset"]
+        for r in (tmp_path / "out").iterdir()
+    )
+    assert presets == ["No costs", "No costs (modified)"]
+    with pytest.raises(SystemExit):
+        main([*argv, "--preset", "missing"])

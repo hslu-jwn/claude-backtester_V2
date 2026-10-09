@@ -493,6 +493,28 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
     overlays stay cached.
 - ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
+  Built (2026-10-09, awaiting the user's check): `backtester/presets.py` (one JSON file per
+  preset in `results/presets/`: name + settings; `list_presets`, `load_preset`,
+  `save_preset`, `rename_preset`, `delete_preset`); preset bar at the top of the settings
+  panel (dropdown, Save, Revert, name field, Save as, Rename, Delete) and a "Settings
+  preset" dropdown in the backtest popover (`ui/settings_panel.py`); `settings.json` of a
+  run gets `preset`; command `python -m backtester.run … --preset NAME`. Tests:
+  `tests/test_presets.py`, `tests/ui/test_settings_panel.py`, `tests/test_runner.py`.
+  Check (choices made while building):
+  - "Default" is not a file: always the spec defaults; it can't be saved over, renamed or
+    deleted ("Save as" makes a new preset from it).
+  - Picking a preset (in the panel or the backtest popover, they are the same choice)
+    loads its settings at once; later changes mark it "(modified)" until "Save"; "Revert"
+    loads the saved settings again. Deleting a preset loads Default.
+  - A run records "<name>" or "<name> (modified)" when its settings differ from the
+    saved preset; the exact settings are always in settings.json.
+  - Names: 1-60 letters, digits, spaces, `_ - . ( ) +`; "Tight SL" and "tight sl" are the
+    same preset (Windows file names), the first spelling is kept.
+  - With `--preset`, `--warmup-days` defaults to the preset's warm-up.
+  Fixed on the way: picking an option in a dropdown inside a toolbar popover closed the
+  popover (the option leaves the page before the click arrives; `toolbar.js`), and the
+  backtest popover showed "Pick one or more symbols…" right after loading the page (Dash
+  ran the Run callback with 0 clicks when the page was built).
 - ☐ **4.3 UI layout and look review** (at the end of the UI work; the user decides the
   details then). Known wishes so far: the strong-move filter switches (FVG, OB) become a
   dropdown; the overall layout of the controls; chart colors and other visual details.
