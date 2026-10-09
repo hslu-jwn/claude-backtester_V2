@@ -572,6 +572,18 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
     - A switch to D / W from a view wider than the D / W candles available shows all of
       them (instead of keeping an empty, huge candle count).
     - D and W can also be chosen for the strategy's timeframe settings (4.1) now.
+  - **Part 3:** camera button top right (`shot-save`: saves the PNG at once) and "▾" with
+    "Download PNG" / "Copy to clipboard" (`pages/chart.py`, `chart.js` `shot`,
+    `shotCanvas`, icon in `toolbar.css`). Check:
+    - The picture is the library's `takeScreenshot` (candles, axes, every drawing and the
+      session lines are in its canvas) with the legend, the trend badges and the stamp
+      drawn on top; the hover tooltip and the crosshair are not in it.
+    - Stamp (bottom left, above the time axis) and file name: first and last visible
+      candle by their open time (D / W: their day), "replay at" = the replay time (close
+      of the cursor candle, as in the replay message), overlays = the ticked types while
+      the Overlays switch is on, preset = the current preset, "(modified)" when changed.
+      Example: `GBPJPY_M5_2026-09-23T1935_2026-09-24T0530_UTC_replay-0535.png`.
+    - Copy works in Chrome / Edge on 127.0.0.1; if the browser refuses, the menu says so.
 
 ## Phase 5: Risk & FTMO simulation
 

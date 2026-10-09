@@ -130,6 +130,9 @@ body {
 .icon-backtest {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3'/%3E%3Cpath d='M7.5 15h9'/%3E%3C/svg%3E");
 }
+.icon-camera {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3v11H4z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E");
+}
 .icon-calendar {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M4 10h16M9 3v4M15 3v4'/%3E%3C/svg%3E");
 }
@@ -524,4 +527,38 @@ body {
 }
 .st-presets .st-btn {
   white-space: nowrap;
+}
+
+/* screenshot button (ROADMAP 4.0b part 3): top right, camera + a small menu */
+.tb-spacer {
+  flex: 1 1 auto;
+}
+.tb-shot {
+  display: flex;
+  align-items: center;
+}
+.tb-caret {
+  width: 16px;
+  color: var(--tb-muted);
+  font-size: 11px;
+}
+.tb-shot .tb-pop {
+  left: auto;
+  right: 0;
+  min-width: 220px;
+}
+.tb-menu-item {
+  display: block;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--tb-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tb-menu-item:hover {
+  background: var(--tb-hover);
 }

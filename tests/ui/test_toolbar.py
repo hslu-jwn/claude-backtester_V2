@@ -95,3 +95,12 @@ def test_pages_by_address():
     assert "Run not found" in str(app_module.page_for("/results/nope", sources))
     assert "chart-lwc" in str(app_module.page_for("/", sources))
     assert "chart-lwc" in str(app_module.page_for(None, sources))
+
+
+def test_screenshot_button_and_its_menu_are_top_right():
+    """ROADMAP 4.0b part 3 (the picture itself is made in the browser, chart.js `shot`)."""
+    top = chart.layout(SymbolSources({})).children[0]
+    ids = [getattr(c, "className", "") for c in top.children]
+    assert ids[-2:] == ["tb-spacer", "tb-anchor tb-shot"]
+    text = str(top.children[-1])
+    assert "shot-save" in text and "shot-copy" in text and "pop-shot" in text

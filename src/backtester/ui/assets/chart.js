@@ -473,6 +473,97 @@
     setProps("chart-notes", { children: S.messages.join(" · ") });
   }
 
+  // --- screenshot (ROADMAP 4.0b part 3) ---------------------------------------------------
+
+  function fmtTime(sec, dateOnly) {
+    const s = new Date(sec * 1000).toISOString();
+    return dateOnly ? s.slice(0, 10) : s.slice(0, 16).replace("T", " ");
+  }
+
+  /* What the stamp and the file name say: symbol, timeframe, first and last visible
+     candle (UTC), the replay time if replay is on, the overlays that are on, the preset. */
+  function shotInfo(overlays, preset) {
+    const r = S.chart.timeScale().getVisibleLogicalRange();
+    const n = S.times.length;
+    const i0 = Math.min(Math.max(Math.round(r.from), 0), n - 1);
+    const i1 = Math.min(Math.max(Math.round(r.to), 0), n - 1);
+    const daily = S.tfmin >= 1440;
+    const info = {
+      symbol: S.symbol, tf: S.tf, daily,
+      from: fmtTime(S.times[i0], daily), to: fmtTime(S.times[i1], daily),
+      replay: null, overlays, preset,
+    };
+    if (S.replay && !S.picking && S.cursor >= 0) {
+      info.replay = fmtTime(S.times[S.cursor] + S.tfmin * 60, false); // the replay time
+    }
+    return info;
+  }
+
+  function stampText(info) {
+    const parts = [info.symbol, info.tf, `${info.from} → ${info.to} UTC`];
+    if (info.replay) {
+      const sameDay = info.replay.slice(0, 10) === info.to.slice(0, 10);
+      parts.push(`replay at ${sameDay ? info.replay.slice(11) : info.replay}`);
+    }
+    parts.push(`overlays: ${info.overlays.length ? info.overlays.join(", ") : "none"}`);
+    parts.push(`preset: ${info.preset}`);
+    return parts.join(" · ");
+  }
+
+  function shotFileName(info) {
+    const stamp = (t) => t.replace(" ", "T").replace(":", "");
+    let name = `${info.symbol}_${info.tf}_${stamp(info.from)}_${stamp(info.to)}_UTC`;
+    if (info.replay) name += `_replay-${info.replay.slice(11).replace(":", "")}`;
+    return name.replace(/[^A-Za-z0-9_.-]/g, "-") + ".png";
+  }
+
+  /* The chart as shown: the library's screenshot (candles, axes, our drawings live in its
+     canvas) plus the HTML layers on top of it (legend, trend badges) and the stamp. */
+  function shotCanvas(info) {
+    const shot = S.chart.takeScreenshot();
+    const ctx = shot.getContext("2d");
+    const box = S.el.getBoundingClientRect();
+    const scale = shot.width / box.width;
+    ctx.save();
+    ctx.scale(scale, scale);
+    const at = (el) => {
+      const b = el.getBoundingClientRect();
+      return { x: b.left - box.left, y: b.top - box.top, w: b.width, h: b.height };
+    };
+    const legend = at(S.legend);
+    ctx.font = getComputedStyle(S.legend).font;
+    ctx.fillStyle = getComputedStyle(S.legend).color;
+    ctx.textBaseline = "top";
+    ctx.fillText(S.legend.textContent, legend.x, legend.y + 1);
+    for (const badge of S.badgesEl.children) {
+      const b = at(badge);
+      const style = getComputedStyle(badge);
+      ctx.fillStyle = style.backgroundColor;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = style.color;
+      ctx.font = style.font;
+      ctx.textBaseline = "middle";
+      ctx.fillText(badge.textContent, b.x + parseFloat(style.paddingLeft), b.y + b.h / 2);
+    }
+    // the stamp, bottom left above the time axis
+    const text = stampText(info);
+    ctx.font = "12px -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, sans-serif";
+    const w = ctx.measureText(text).width + 16;
+    const h = 22;
+    const axis = S.chart.timeScale().height();
+    const x = 8, y = box.height - axis - h - 8;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.strokeStyle = "#9598a1";
+    ctx.lineWidth = 1;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    ctx.fillStyle = "#131722";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x + 8, y + h / 2 + 0.5);
+    ctx.restore();
+    return shot;
+  }
+
   // --- Dash clientside callbacks ---------------------------------------------------------
 
   const no = () => window.dash_clientside.no_update;
@@ -575,6 +666,38 @@
         });
         return Object.assign({}, focus, { done: true });
       },
+
+      /* Screenshot (camera button, or its menu): save the PNG or copy it. */
+      shot(_save, _menuSave, _copy, overlaysOn, types, options, store, modified) {
+        const trig = (window.dash_clientside.callback_context.triggered || [])[0];
+        if (!trig || !trig.value || !S.chart || !S.times.length) return no();
+        const sel = overlaysOn && overlaysOn.length ? types || [] : [];
+        const labels = (options || [])
+          .filter((o) => sel.includes(o.value) && !String(o.value).includes("."))
+          .map((o) => String(o.label).trim());
+        const preset = ((store && store.preset) || "Default") + (modified ? " (modified)" : "");
+        const info = shotInfo(labels, preset);
+        const canvas = shotCanvas(info);
+        const name = shotFileName(info);
+        if (trig.prop_id.startsWith("shot-copy")) {
+          if (!navigator.clipboard || !window.ClipboardItem) {
+            return "This browser doesn't allow copying images: use Download.";
+          }
+          return new Promise((resolve) => canvas.toBlob((blob) => {
+            navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+              .then(() => resolve(`Copied ${name}`))
+              .catch((e) => resolve(`Copy failed (${e.message}): use Download.`));
+          }, "image/png"));
+        }
+        const a = document.createElement("a");
+        a.download = name;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+        return `Saved ${name}`;
+      },
+
+      _shotText: stampText, // for tests and debugging
+      _shotName: shotFileName,
 
       /* Replay delta: from our cursor to the next one. */
       delta(delta) {

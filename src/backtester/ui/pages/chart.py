@@ -62,6 +62,11 @@ reports its view in `chart-viewport`; `chart.js` re-centres after the new candle
 days the new view needs are added to the shown range (`dates_for_view`), so a switch up
 shows as many candles as before. In replay the replay time is kept (as before).
 
+Screenshot (ROADMAP.md › 4.0b part 3): the camera button (top right) saves a PNG of the
+chart as shown, with a stamp (symbol, timeframe, first → last visible candle in UTC, the
+replay time, the overlays that are on, the settings preset) and the same data in the file
+name; "▾" also offers copying it to the clipboard. All in the browser (`chart.js` `shot`).
+
 Later steps add: the session view (3.5).
 """
 
@@ -775,6 +780,39 @@ def layout(
                 [_icon_button("tb-backtest", "backtest", "Backtest", "pop-backtest"), backtest],
                 className="tb-anchor",
             ),
+            html.Div(className="tb-spacer"),
+            html.Div(
+                [
+                    _icon_button("shot-save", "camera", "Save a picture of the chart (PNG)"),
+                    html.Button(
+                        "▾",
+                        title="Picture options",
+                        className="tb-btn tb-caret",
+                        n_clicks=0,
+                        **{"data-pop": "pop-shot"},
+                    ),
+                    _popover(
+                        "pop-shot",
+                        "Picture of the chart",
+                        [
+                            html.Button(
+                                "Download PNG",
+                                id="shot-menu-save",
+                                className="tb-menu-item",
+                                n_clicks=0,
+                            ),
+                            html.Button(
+                                "Copy to clipboard",
+                                id="shot-copy",
+                                className="tb-menu-item",
+                                n_clicks=0,
+                            ),
+                            html.Div(id="shot-status", className="tb-pop-note"),
+                        ],
+                    ),
+                ],
+                className="tb-anchor tb-shot",
+            ),
         ],
         className="tb-bar tb-top",
     )
@@ -979,6 +1017,19 @@ def register_callbacks(
         ClientsideFunction("chart", "overlays"),
         Output("chart-need", "data", allow_duplicate=True),
         Input("chart-ovl", "data"),
+        prevent_initial_call=True,
+    )
+    app.clientside_callback(
+        ClientsideFunction("chart", "shot"),
+        Output("shot-status", "children"),
+        Input("shot-save", "n_clicks"),
+        Input("shot-menu-save", "n_clicks"),
+        Input("shot-copy", "n_clicks"),
+        State("chart-overlays", "value"),
+        State("chart-overlay-types", "value"),
+        State("chart-overlay-types", "options"),
+        State("settings-current", "data"),
+        State("bt-preset-note", "children"),
         prevent_initial_call=True,
     )
     app.clientside_callback(
