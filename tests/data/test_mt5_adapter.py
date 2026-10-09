@@ -153,6 +153,7 @@ def test_nothing_else_imports_metatrader5():
         "backtester.ui.app",
         "backtester.run",
         "backtester.data.mt5_info",
+        "backtester.data.feed_compare",
     ]
     code = (
         "import importlib, sys; sys.modules['MetaTrader5'] = None\n"

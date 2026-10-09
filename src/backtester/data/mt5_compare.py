@@ -238,3 +238,111 @@ def symbol_specs(info) -> dict[str, str]:
         "currencies": f"{info.currency_base} / {info.currency_profit}",
         "spread now": f"{info.spread} points ({info.spread * point:g})",
     }
+
+
+# --- feed comparison ---------------------------------------------------------------------
+
+COMPARE_TIMEFRAMES = (Timeframe.M1, Timeframe.M5, Timeframe.M30, Timeframe.H1)
+MAX_SHIFT = timedelta(hours=3)  # time alignment: shifts tried around 0
+EXAMPLES = 5
+
+
+def on_days(frame: pd.DataFrame, days: Iterable[date]) -> pd.DataFrame:
+    """Rows of `frame` whose UTC date is one of `days`."""
+    wanted = set(days)
+    keep = [ts.date() in wanted for ts in frame["ts"]]
+    return frame[keep].reset_index(drop=True)
+
+
+def _merge(a: pd.DataFrame, b: pd.DataFrame, shift: timedelta = timedelta(0)) -> pd.DataFrame:
+    """Candles of `a` (shifted by `shift`) next to `b`'s at the same time; columns
+    <field>_a, <field>_b."""
+    left = a[["ts", "open", "high", "low", "close"]].copy()
+    left["key"] = _seconds(left["ts"]) + int(shift.total_seconds())
+    right = b[["ts", "open", "high", "low", "close"]].copy()
+    right["key"] = _seconds(right["ts"])
+    return left.drop(columns="ts").merge(right.drop(columns="ts"), on="key", suffixes=("_a", "_b"))
+
+
+def best_shift(
+    mt5: pd.DataFrame, ref: pd.DataFrame, timeframe: Timeframe, max_shift: timedelta = MAX_SHIFT
+) -> tuple[timedelta, float, float]:
+    """The shift of MT5's candle times (multiples of the timeframe, up to ±`max_shift`)
+    with the smallest mean |close difference|: (shift, its error, the error at 0)."""
+    steps = int(max_shift / timeframe.duration)
+    errors = {}
+    for k in range(-steps, steps + 1):
+        shift = k * timeframe.duration
+        merged = _merge(mt5, ref, shift)
+        if len(merged) >= 0.5 * min(len(mt5), len(ref)):
+            errors[shift] = float((merged["close_a"] - merged["close_b"]).abs().mean())
+    if not errors:
+        return timedelta(0), float("nan"), float("nan")
+    best = min(errors, key=errors.get)
+    return best, errors[best], errors.get(timedelta(0), float("nan"))
+
+
+def _color(frame: pd.DataFrame, side: str) -> np.ndarray:
+    return np.sign(frame[f"close_{side}"] - frame[f"open_{side}"]).to_numpy()
+
+
+def compare_frames(mt5: pd.DataFrame, ref: pd.DataFrame) -> dict:
+    """MT5 vs cache candles over the time both cover: average |difference| of O/H/L/C
+    (price, and as a share of the cache's median candle range), how often the color
+    differs, and the candles only one side has."""
+    if mt5.empty or ref.empty:
+        return {"matched": 0}
+    first = max(mt5["ts"].min(), ref["ts"].min())
+    last = min(mt5["ts"].max(), ref["ts"].max())
+    mt5 = mt5[(mt5["ts"] >= first) & (mt5["ts"] <= last)]
+    ref = ref[(ref["ts"] >= first) & (ref["ts"] <= last)]
+    merged = _merge(mt5, ref)
+    median_range = float((ref["high"] - ref["low"]).median())
+    out: dict = {
+        "first": first,
+        "last": last,
+        "mt5_candles": len(mt5),
+        "cache_candles": len(ref),
+        "matched": len(merged),
+        "median_range": median_range,
+    }
+    for field in ("open", "high", "low", "close"):
+        diff = float((merged[f"{field}_a"] - merged[f"{field}_b"]).abs().mean())
+        out[f"{field}_diff"] = diff
+        out[f"{field}_diff_rel"] = diff / median_range if median_range else float("nan")
+    a, b = _color(merged, "a"), _color(merged, "b")
+    out["color_differs"] = float((a != b).mean()) if len(merged) else float("nan")
+    out["color_opposite"] = float(((a * b) < 0).mean()) if len(merged) else float("nan")
+    mt5_times, ref_times = set(mt5["ts"]), set(ref["ts"])
+    only_mt5 = sorted(mt5_times - ref_times)
+    only_ref = sorted(ref_times - mt5_times)
+    out["only_mt5"], out["only_cache"] = len(only_mt5), len(only_ref)
+    out["only_mt5_examples"] = only_mt5[:EXAMPLES]
+    out["only_cache_examples"] = only_ref[:EXAMPLES]
+    return out
+
+
+def spread_by_hour(candles: pd.DataFrame) -> pd.DataFrame:
+    """MT5 spread (price units) per UTC hour of day: candles, median, 90th percentile;
+    plus a row "all"."""
+    spread = candles[["ts", "spread"]].dropna()
+    hours = pd.to_datetime(spread["ts"], utc=True).dt.hour
+    rows = [
+        {
+            "hour": f"{h:02d}",
+            "candles": len(g),
+            "median": float(g.median()),
+            "p90": float(g.quantile(0.9)),
+        }
+        for h, g in spread["spread"].groupby(hours)
+    ]
+    if len(spread):
+        rows.append(
+            {
+                "hour": "all",
+                "candles": len(spread),
+                "median": float(spread["spread"].median()),
+                "p90": float(spread["spread"].quantile(0.9)),
+            }
+        )
+    return pd.DataFrame(rows, columns=["hour", "candles", "median", "p90"])
