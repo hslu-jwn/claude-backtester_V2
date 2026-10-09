@@ -157,9 +157,9 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
 
   After the switch, the data check finds the weekends at Fri 17:00 → Sun 17:00 New York
   and GBPJPY's daily breaks at the 17:00 close. Europe changes at 01:00 UTC on a Sunday,
-  when FX is closed: a minute in the skipped or repeated hour stops the import. Open:
-  histdata's files skip / repeat the hour 19:00-19:59 (their clock) on that Sunday
-  evening, so their change may be at 00:00 UTC Monday (ROADMAP 0.3).
+  when FX is closed: a minute in the skipped or repeated hour stops the import. histdata's
+  files skip the hour 23:00 UTC on the March Sunday and repeat (an exact copy) 00:00 UTC on
+  the October one; checked against TradingView, the conversion is right (ROADMAP 0.3).
 - Bid only (ask columns empty, candle `spread` NaN). Volume is always 0 in the files and is
   stored as NaN (unknown). Non-trading minutes are **missing**, not flat filler, so the
   flat-zero-volume filter never drops a histdata minute.

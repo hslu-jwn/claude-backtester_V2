@@ -103,15 +103,14 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     the full history was re-imported. Now gold's break is at 21:00-22:00 UTC in those
     weeks too, the Sunday opens are at 17:00 New York in every week, and the checked
     candle is at 14:00 (4877.875 / 4886.325 / 4871.798 / 4883.825).
-  - **Open (for the user): the Sunday evening of Europe's change.** In every year and
-    symbol, histdata's files skip the hour 19:00-19:59 (their clock) on the March Sunday
-    and have it twice (all 60 minutes) on the October Sunday. So their clock seems to
-    change at about 00:00 UTC Monday, not at 01:00 UTC Sunday as converted now; then the
-    first 2-4 hours of those two Sundays are one hour off (now: a 1-hour gap at 23:00 UTC in
-    March, the repeated hour merged into 00:00 UTC in October). Check on TradingView,
-    GBPUSD 1h, Sunday 2026-03-29: ours are 21:00 O 1.32576 H 1.32645 L 1.32567 C 1.32601,
-    22:00 O 1.32597 H 1.32597 L 1.32357 C 1.32372, none at 23:00. If TradingView's 22:00 and
-    23:00 candles are these two, the change is at 00:00 UTC Monday.
+  - **The Sunday evening of Europe's change (checked by the user, 2026-10-09).** histdata's
+    files skip the hour 19:00-19:59 (their clock) on the March Sunday and repeat it on the
+    October Sunday, every year and symbol. The user's TradingView check (GBPUSD 5m, Sunday
+    2026-03-29) shows our 22:00-22:55 candles at the same UTC times, so the conversion is
+    right: in March histdata simply has no 23:00 UTC hour (TradingView has it) and has
+    flat pre-open quotes at 21:00-21:55 that TradingView doesn't show; in October the
+    repeated hour is an exact copy (same 60 rows twice), merged by the import with no
+    loss. Both are before Tokyo (00:00 UTC then), no change needed.
   - GBPUSD 2026-05-18: 4 h + 3 h + 2 h + 1 h missing. GBPUSD 2024-11-07: four 1-hour gaps.
   - Days: 2026-09-25 (Friday) has no data for any symbol (missing in the file).
   The data check now picks its spot candles over the whole history when it covers more
