@@ -475,6 +475,116 @@
     setProps("chart-notes", { children: S.messages.join(" · ") });
   }
 
+  // --- box zoom (ROADMAP 4.0b part 5) ----------------------------------------------------
+  /* The zoom button turns the tool on: a transparent layer over the chart pane (not the
+     axes) takes the mouse, so the chart can't pan and no candle click reaches the replay;
+     drag a rectangle, release: the chart shows exactly that time and price range (price
+     axis no longer auto) and the tool turns off. Each zoom remembers the view before it:
+     "reset zoom" or a double-click on the chart goes back one step (with none left: the
+     whole range, prices auto). A double-click on the price axis = auto-scale (library). */
+
+  const ZOOM_MIN_PX = 6; // smaller drags are ignored (the tool stays on)
+  const Z = { on: false, start: null, layer: null, rect: null, history: [] };
+
+  function zoomTool(on) {
+    Z.on = !!(on && S.chart && S.times.length);
+    const button = document.getElementById("tb-zoom");
+    if (button) button.classList.toggle("active", Z.on);
+    if (!Z.on) {
+      if (Z.layer) Z.layer.style.display = "none";
+      Z.start = null;
+      return;
+    }
+    ensureZoomLayer();
+    const size = S.chart.paneSize(0);
+    Object.assign(Z.layer.style, {
+      display: "block", width: S.chart.timeScale().width() + "px", height: size.height + "px",
+    });
+    Z.rect.style.display = "none";
+  }
+
+  function viewState() {
+    const ps = S.series.priceScale();
+    return {
+      range: S.chart.timeScale().getVisibleLogicalRange(),
+      auto: ps.options().autoScale,
+      price: ps.getVisibleRange(),
+    };
+  }
+
+  function zoomBack() {
+    const v = Z.history.pop();
+    const ps = S.series.priceScale();
+    if (!v) { ps.setAutoScale(true); S.chart.timeScale().fitContent(); return; }
+    if (v.range) S.chart.timeScale().setVisibleLogicalRange(v.range);
+    if (v.auto || !v.price) ps.setAutoScale(true); else ps.setVisibleRange(v.price);
+  }
+
+  function zoomTo(a, b) {
+    const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
+    const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+    if (x1 - x0 < ZOOM_MIN_PX || y1 - y0 < ZOOM_MIN_PX) return false;
+    const ts = S.chart.timeScale();
+    const from = ts.coordinateToLogical(x0), to = ts.coordinateToLogical(x1);
+    const top = S.series.coordinateToPrice(y0), bottom = S.series.coordinateToPrice(y1);
+    if (from == null || to == null || top == null || bottom == null) return false;
+    Z.history.push(viewState());
+    ts.setVisibleLogicalRange({ from, to });
+    S.series.priceScale().setVisibleRange({ from: bottom, to: top });
+    return true;
+  }
+
+  function ensureZoomLayer() {
+    if (Z.layer && Z.layer.parentElement === S.el) return;
+    const layer = document.createElement("div");
+    layer.className = "chart-zoom-layer";
+    const rect = document.createElement("div");
+    rect.className = "chart-zoom-rect";
+    layer.appendChild(rect);
+    S.el.appendChild(layer);
+    const point = (e) => {
+      const b = layer.getBoundingClientRect();
+      return { x: e.clientX - b.left, y: e.clientY - b.top };
+    };
+    layer.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      Z.start = point(e);
+      Object.assign(rect.style, { display: "block", left: Z.start.x + "px", top: Z.start.y + "px", width: "0px", height: "0px" });
+    });
+    layer.addEventListener("mousemove", (e) => {
+      if (!Z.start) return;
+      const p = point(e);
+      Object.assign(rect.style, {
+        left: Math.min(p.x, Z.start.x) + "px", top: Math.min(p.y, Z.start.y) + "px",
+        width: Math.abs(p.x - Z.start.x) + "px", height: Math.abs(p.y - Z.start.y) + "px",
+      });
+    });
+    const end = (e) => {
+      if (!Z.start) return;
+      const done = zoomTo(Z.start, point(e));
+      Z.start = null;
+      rect.style.display = "none";
+      if (done) zoomTool(false);
+    };
+    layer.addEventListener("mouseup", end);
+    layer.addEventListener("mouseleave", end);
+    Z.layer = layer;
+    Z.rect = rect;
+  }
+
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#tb-zoom")) zoomTool(!Z.on);
+    else if (e.target.closest("#tb-zoom-reset") && S.chart) { zoomTool(false); zoomBack(); }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && Z.on) zoomTool(false); });
+  document.addEventListener("dblclick", (e) => {
+    if (!S.chart || Z.on || !Z.history.length || !e.target.closest("#chart-lwc")) return;
+    const b = S.el.getBoundingClientRect();
+    const inPane = e.clientX - b.left < S.chart.timeScale().width()
+      && e.clientY - b.top < S.chart.paneSize(0).height;
+    if (inPane) zoomBack(); // on the price axis the library's double-click auto-scales
+  });
+
   // --- screenshot (ROADMAP 4.0b part 3) ---------------------------------------------------
 
   function fmtTime(sec, dateOnly) {
@@ -581,6 +691,9 @@
           return null;
         }
         if (!ensureChart(cfg)) return no();
+        zoomTool(false); // new candles: box zooms of the old ones are forgotten
+        Z.history = [];
+        S.series.priceScale().setAutoScale(true);
         // a timeframe switch outside replay keeps the centre time and the candle count
         const before = S.key && !S.replay && !payload.replay ? viewNow() : null;
         const keep = before && before.symbol === payload.symbol && before.tf !== payload.tf;
@@ -699,6 +812,7 @@
       },
 
       _shotText: stampText, // for tests and debugging
+      _zoom: Z,
       _shotName: shotFileName,
 
       /* Go to a time (store chart-goto {t, symbol}): once its candle is loaded, centre on

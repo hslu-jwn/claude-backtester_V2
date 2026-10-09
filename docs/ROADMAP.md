@@ -594,6 +594,19 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
       the time, keeps the zoom (or shows 120 candles when more than 500 were visible) and
       puts the crosshair on it, so the legend shows that candle.
     - In replay: only times up to the replay time, and no other days are loaded.
+  - **Part 5:** zoom and reset-zoom buttons in the top bar (`chart.js` box zoom,
+    `chart.css`). Check:
+    - Zoom on: a transparent layer over the chart pane takes the mouse (no panning, no
+      candle clicks for the replay start while it is on); drag a rectangle → that time
+      and price range (price axis manual), then the tool turns off. Drags under 6 px are
+      ignored. Escape turns the tool off.
+    - Reset zoom or a double-click on the chart goes back one zoom (several zooms: one
+      step each); with none left it shows the whole range with auto-scale. A
+      double-click on the price axis auto-scales (the library's own, like TradingView).
+    - New candles (symbol, timeframe, days, replay on / off) forget the zoom steps and
+      switch the price axis back to auto-scale.
+    - In replay a box zoom keeps its price range on the following steps (until a
+      double-click / reset), like a manually scaled price axis on TradingView.
 
 ## Phase 5: Risk & FTMO simulation
 

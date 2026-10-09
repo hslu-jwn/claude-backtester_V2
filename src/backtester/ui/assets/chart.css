@@ -45,3 +45,21 @@
   white-space: pre-line;
   pointer-events: none;
 }
+
+/* box zoom (ROADMAP 4.0b part 5): the layer over the chart pane while the tool is on */
+.chart-zoom-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  display: none;
+  cursor: crosshair;
+}
+
+.chart-zoom-rect {
+  position: absolute;
+  display: none;
+  border: 1px solid #2962ff;
+  background: rgba(41, 98, 255, 0.1);
+  pointer-events: none;
+}

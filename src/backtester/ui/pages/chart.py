@@ -71,6 +71,10 @@ Go to (ROADMAP.md › 4.0b part 4): the "Go to" field in the bottom bar (Alt+G) 
 time; its days are loaded if they aren't shown (`goto_dates`) and the browser centres on
 the candle containing it (`chart.js` `goto`). In replay only times up to the replay time.
 
+Box zoom (ROADMAP.md › 4.0b part 5): the zoom button, then drag a rectangle: the chart
+shows that time and price range; "reset zoom" or a double-click on the chart goes back,
+a double-click on the price axis auto-scales. All in the browser (`chart.js`).
+
 Later steps add: the session view (3.5).
 """
 
@@ -833,6 +837,9 @@ def layout(
                 [_icon_button("tb-backtest", "backtest", "Backtest", "pop-backtest"), backtest],
                 className="tb-anchor",
             ),
+            html.Div(className="tb-sep"),
+            _icon_button("tb-zoom", "zoom", "Zoom: drag a rectangle on the chart"),
+            _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
             html.Div(className="tb-spacer"),
             html.Div(
                 [

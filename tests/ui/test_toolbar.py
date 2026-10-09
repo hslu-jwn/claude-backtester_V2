@@ -104,3 +104,10 @@ def test_screenshot_button_and_its_menu_are_top_right():
     assert ids[-2:] == ["tb-spacer", "tb-anchor tb-shot"]
     text = str(top.children[-1])
     assert "shot-save" in text and "shot-copy" in text and "pop-shot" in text
+
+
+def test_zoom_buttons_and_the_go_to_field():
+    """ROADMAP 4.0b parts 4 and 5 (zoom and go-to run in the browser, chart.js)."""
+    page = str(chart.layout(SymbolSources({})))
+    for id_ in ("tb-zoom", "tb-zoom-reset", "chart-goto-input", "chart-goto"):
+        assert f"'{id_}'" in page
