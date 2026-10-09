@@ -25,6 +25,7 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
+from backtester.cli import utf8_output
 from backtester.core.models import Timeframe
 from backtester.data.adapters.mt5_adapter import EPOCH, Mt5Adapter, ServerClock
 from backtester.data.mt5_compare import (
@@ -150,6 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     from backtester.live.connection import session
     from backtester.live.credentials import CredentialStoreError, load_credentials
 
+    utf8_output()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("symbols", nargs="*", default=list(SYMBOLS))
     p.add_argument("--no-save", action="store_true", help="only print, change no setting")
