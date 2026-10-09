@@ -323,14 +323,14 @@ text with its state (active / tapped / confirmed / invalidated).
   and trades (TradingView-style position boxes) are drawn; click outside the chart → off.
   Static by default, with a "replay this session" button.
   Spec: `strategy-session-zones.md › Session inspection view`.
-- ☐ **3.6 Results view.** Its own page, opened automatically when a run finishes (user,
+- ☑ **3.6 Results view.** Its own page, opened automatically when a run finishes (user,
   2026-10-08), TradingView look (see 4.0). Stat cards (net R gross / net, number of trades,
   win rate, average R:R, average win / loss, profit factor, expectancy, max drawdown in R),
   equity curve in R over time (gross and net), R distribution, splits by symbol / session /
   long-short / confluence type / TP1-TP2 / tag, run selector (earlier runs). Trade list (click a trade → chart jumps to it and selects its session), win rate,
   expectancy, profit factor, max drawdown in R, equity curve in R, split by symbol /
   session / tag.
-  Built (2026-10-08, awaiting the user's check): `ui/pages/results.py` (top bar: ← Chart,
+  Built (2026-10-08, confirmed by the user 2026-10-09): `ui/pages/results.py` (top bar: ← Chart,
   run selector, symbol filter All / per symbol for every tab; header: run, symbols, days,
   preset, run date; tabs Overview / Performance summary / List of trades),
   `assets/results.js` (equity curve with Lightweight Charts), `assets/results.css`;
@@ -458,12 +458,12 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   - Strategy popover: one entry (strategy 1); it doesn't change anything yet (4.1).
   - Escape first closes an open menu or calendar inside a popover, then the popover.
 
-- ☐ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
+- ☑ **4.1** Settings page generated from the config dataclasses (strategy, detectors,
   session filters, costs), with defaults from the spec.
   Must include (user's wish): the session zone kill rule as its own setting: on/off, and the
   number of breaks that kills a zone (`SessionZoneSweepConfig.zone_kill_breaks`, default 3).
   Also (user's wish): step 3 with the 5m trend on/off (`entry_bos_with_trend`, default off).
-  Built (2026-10-08, awaiting the user's check): `backtester/settings.py` (`leaves`: every
+  Built (2026-10-08, confirmed by the user 2026-10-09): `backtester/settings.py` (`leaves`: every
   value of `RunSettings` with its path, kind, spec default and help text from its source
   comment; `form_values` / `settings_from_values`, `to_json` / `from_json`,
   `SettingsError` naming the field), `ui/settings_panel.py` (modal: groups Entry,
@@ -491,9 +491,9 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
     the panel (Detectors). Unifying them belongs to 4.3.
   - A settings change makes the Trades overlay run again (~1 s per range); the other
     overlays stay cached.
-- ☐ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
+- ☑ **4.2** Save / load named settings presets (JSON in `results/presets/`); every
   backtest run stores the exact settings it used.
-  Built (2026-10-09, awaiting the user's check): `backtester/presets.py` (one JSON file per
+  Built (2026-10-09, confirmed by the user): `backtester/presets.py` (one JSON file per
   preset in `results/presets/`: name + settings; `list_presets`, `load_preset`,
   `save_preset`, `rename_preset`, `delete_preset`); preset bar at the top of the settings
   panel (dropdown, Save, Revert, name field, Save as, Rename, Delete) and a "Settings
@@ -520,7 +520,7 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   dropdown; the overall layout of the controls; chart colors and other visual details.
   Until then the current layout and colors stay as they are.
 
-- ☐ **4.0b Chart improvements** (user, 2026-10-08), TradingView look and behaviour:
+- ☑ **4.0b Chart improvements** (user, 2026-10-08), TradingView look and behaviour:
   1. **Keep the position when switching timeframe:** the time at the centre of the view
      stays at the centre and the number of visible candles stays the same (5m 2026-09-12
      12:15 in the middle → on 30m the candle containing 12:15 in the middle). Cached days
@@ -541,7 +541,7 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   5. **Box zoom** (like Plotly): zoom tool in the toolbar; drag a rectangle → zoom to that
      time and price range; reset zoom / double-click goes back; double-click on the price
      axis = auto-scale again. No clash with picking the replay start or normal panning.
-  Built, awaiting the user's check on the chart (2026-10-09):
+  Built (2026-10-09, confirmed by the user on the chart):
   - **Part 1:** `chart.js` `viewNow` / `showView` (centre time + candle count kept when only
     the timeframe changes, outside replay; price axis back to auto-scale), the browser
     reports its view in the store `chart-viewport`; `pages/chart.py` `dates_for_view`
