@@ -21,7 +21,7 @@ pytest
 
 Historical data comes from Dukascopy, downloaded into a local cache
 (`pip install -e ".[data]"`, see `docs/ROADMAP.md` › Phase 0). MetaTrader 5 (FTMO) is used
-for feed comparison and later live trading: `pip install -e ".[mt5]"` and the login in `.env`. CSV files in `data/raw/<SYMBOL>_<TF>.csv` with the header
+for feed comparison and later live trading: `pip install -e ".[mt5]"` (Windows only); the login is entered in the app (Settings ⚙ → Trading) and kept in the Windows Credential Manager, never in a file. CSV files in `data/raw/<SYMBOL>_<TF>.csv` with the header
 `timestamp,open,high,low,close[,volume]` (UTC) also work. Data files are not committed.
 
 ## Status

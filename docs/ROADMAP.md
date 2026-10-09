@@ -154,11 +154,22 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   doji_max_body`, saved in presets). Backtests already used it; now the chart overlays do
   too (swings, BOS + trend, sweeps, FVG, OB, BPR, session zones: `OverlaySettings.
   doji_max_body` / `swing_config`). The spec defaults are unchanged (gold 0.065).
-- ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
-  `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
-  mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of
-  Dukascopy vs FTMO candles: average difference of highs/lows/closes, how often candle color
-  differs. Tells us how far Dukascopy backtests can be trusted for FTMO.
+- ◐ **0.4 MT5 adapter + feed comparison** (user's request 2026-10-09: MT5 connection
+  before the strategy trades). `MetaTrader5` is the optional extra `[mt5]` (Windows only);
+  everything else (tests, backtests, chart) works without it, unit tests use a fake module.
+  - `data/adapters/mt5_adapter.py` (`Mt5Adapter`, a `DataAdapter`): candles via
+    `copy_rates_*`, only closed candles (the forming one is dropped), times converted to
+    UTC, MT5's spread per candle kept (real, unlike histdata).
+  - Server time → UTC: not assumed. Determined from the latest tick vs real UTC and from
+    MT5's history against the histdata cache (per week, incl. the DST weeks); the rule is
+    documented in `ARCHITECTURE.md › MetaTrader 5`.
+  - Symbol mapping: FTMO's names for XAUUSD, GBPUSD, GBPJPY (suffixes possible), their
+    specs printed (contract size, digits, tick size / value, volume min / step / max, stops
+    level, swap, trade mode); the mapping is a setting.
+  - Feed comparison per timeframe over the period MT5 has history for: best time offset,
+    average |difference| of O/H/L/C, how often the candle color differs, missing candles on
+    either side. FTMO spread per symbol and hour of day (median, 90%) next to the cost
+    defaults (3.1). Report only; the user decides about the defaults.
 
 ## Phase 1: Chart (no lookahead)
 
@@ -799,7 +810,7 @@ name, FTMO symbol names, risk per trade on demo, demo lock / daily stop / emerge
 fully automatic vs. signal mode, two TPs as two half positions, notifications):
 - **Settings ⚙ → Trading:** platform dropdown (MT5 now, others later), login, password,
   server, "Test connection". Credentials stored only on the user's PC (never in the repo,
-  never in results/), e.g. Windows Credential Manager via `keyring` or the git-ignored `.env`.
+  never in results/): Windows Credential Manager via `keyring` (7.1).
 - **"Trade live"** starts the bot as its own process (not inside the browser) and opens a
   new tab `/live`; closing the tab doesn't stop the bot, the tab can be reopened any time.
 - **Live tab:** connection and account (balance, equity, today's P/L in R and %), FTMO
@@ -809,3 +820,19 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   user's PC first; for 24/5 later a Windows VPS near the broker.
 - Needs from Phase 5 at least: position sizer (lots from risk % and SL distance) and the
   FTMO daily / max loss limits.
+
+- ◐ **7.1 Account connection + demo test orders** (user's request 2026-10-09).
+  - Settings ⚙ → Trading: platform (MT5 now, others later), login, password (masked),
+    server (the servers the terminal knows, else typed), optional terminal path, "Save",
+    "Test connection" (connected or MT5's error; account name, server, DEMO / REAL,
+    currency, balance, equity, leverage, algo trading allowed).
+  - Login, password and server only in the app and in the Windows Credential Manager
+    (`keyring`); never in the repo, `.env`, results/, logs, error messages or test output.
+  - **DEMO LOCK:** every order function refuses unless `account_info().trade_mode` is DEMO.
+    No override yet.
+  - `python -m backtester.live.test_orders XAUUSD` (and a button in Trading, demo only):
+    market buy 2 x min lot with SL / TP (fill vs ask, slippage), modify the SL (break-even
+    test), close half (TP1 test), close the rest; the same as a sell. Every request and
+    result (retcode) logged, execution times, nothing left open afterwards.
+  - Not yet (7.2, after the risk sizer of Phase 5 and the open questions above): strategy
+    trading, the Live tab, position sizing from risk %.
