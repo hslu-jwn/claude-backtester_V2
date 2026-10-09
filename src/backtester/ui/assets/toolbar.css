@@ -84,7 +84,7 @@ body {
   display: none;
 }
 .tb-timeframes label:has(input:checked) {
-  color: var(--tb-accent);
+  color: var(--tb-accent) !important;
   font-weight: 600;
 }
 

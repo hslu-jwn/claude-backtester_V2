@@ -38,7 +38,7 @@
     badges: {}, messages: [],
     sorted: null,       // cached draw list
     span: null,         // replay span {left, right} in minutes
-    spanTimer: null, nonce: 0,
+    spanTimer: null, viewTimer: null, nonce: 0,
     drawn: {},          // performance.now() when each payload kind was last applied
   };
 
@@ -363,6 +363,10 @@
       setProps("chart-click", { data: { x, n: ++S.nonce } });
     });
     S.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (!S.replay && range) { // the server needs it to load the days of a timeframe switch
+        clearTimeout(S.viewTimer);
+        S.viewTimer = setTimeout(() => setProps("chart-viewport", { data: viewNow() }), 250);
+      }
       if (!S.replay || S.picking || !range) return;
       clearTimeout(S.spanTimer);
       S.spanTimer = setTimeout(() => {
@@ -391,6 +395,38 @@
     const left = Math.min(Math.max(S.span.left / S.tfmin, S.cfg.replay_min_visible), S.cfg.replay_window);
     const right = Math.max(S.span.right / S.tfmin, 1);
     return { from: S.cursor - left + 0.5, to: S.cursor + right + 0.5 };
+  }
+
+  /* The visible view as a time (centre of the visible area, UTC seconds) and a number of
+     candles, so it can be kept across a timeframe switch (ROADMAP 4.0b part 1). A candle
+     at logical x covers x - 0.5 .. x + 0.5. */
+  function viewNow() {
+    const range = S.chart && S.chart.timeScale().getVisibleLogicalRange();
+    const n = S.times.length;
+    if (!range || !n) return null;
+    const c = (range.from + range.to) / 2;
+    const i = Math.min(Math.max(Math.round(c), 0), n - 1);
+    const off = Math.min(Math.max(c - i + 0.5, 0), 1);
+    return {
+      key: S.key, symbol: S.symbol, tf: S.tf,
+      center: S.times[i] + off * S.tfmin * 60,
+      count: range.to - range.from,
+    };
+  }
+
+  /* Centre the chart on time `v.center` with `v.count` candles visible; prices auto-fit. */
+  function showView(v) {
+    const t = S.times;
+    let lo = 0, hi = t.length - 1;
+    if (v.center < t[0]) hi = 0;
+    while (lo < hi) { // last candle opening at or before the centre time
+      const mid = (lo + hi + 1) >> 1;
+      if (t[mid] <= v.center) lo = mid; else hi = mid - 1;
+    }
+    const off = Math.min(Math.max((v.center - t[lo]) / (S.tfmin * 60), 0), 1);
+    const c = lo - 0.5 + off;
+    S.series.priceScale().applyOptions({ autoScale: true });
+    S.chart.timeScale().setVisibleLogicalRange({ from: c - v.count / 2, to: c + v.count / 2 });
   }
 
   function view() {
@@ -447,6 +483,9 @@
           return null;
         }
         if (!ensureChart(cfg)) return no();
+        // a timeframe switch outside replay keeps the centre time and the candle count
+        const before = S.key && !S.replay && !payload.replay ? viewNow() : null;
+        const keep = before && before.symbol === payload.symbol && before.tf !== payload.tf;
         S.cfg = cfg;
         S.key = payload.key;
         S.symbol = payload.symbol; S.tf = payload.tf; S.tfmin = payload.tfmin;
@@ -461,6 +500,7 @@
         S.filters = null;
         if (payload.span) S.span = payload.span;
         if (payload.range) S.chart.timeScale().setVisibleLogicalRange(payload.range);
+        else if (keep) showView(before);
         else S.chart.timeScale().fitContent();
         showLegend(null);
         showBadges();

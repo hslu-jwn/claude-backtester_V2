@@ -541,6 +541,17 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   5. **Box zoom** (like Plotly): zoom tool in the toolbar; drag a rectangle → zoom to that
      time and price range; reset zoom / double-click goes back; double-click on the price
      axis = auto-scale again. No clash with picking the replay start or normal panning.
+  Built, awaiting the user's check on the chart (2026-10-09):
+  - **Part 1:** `chart.js` `viewNow` / `showView` (centre time + candle count kept when only
+    the timeframe changes, outside replay; price axis back to auto-scale), the browser
+    reports its view in the store `chart-viewport`; `pages/chart.py` `dates_for_view`
+    (days the new view needs) and the `_timeframe_days` callback; tests in
+    `tests/ui/test_timeframe_switch.py`. Check: the needed days are added to the shown
+    range plus `ChartConfig.switch_warmup_candles` (100) candles on the left for the
+    overlays, within the run of cached days around the centre; when that would exceed
+    `max_candles` (e.g. a month on 1m) only the days the view needs are kept. The centre
+    lands on the candle containing the centre time (5m 12:15 → the 30m 12:00 candle).
+    Also fixed: the selected timeframe button turned purple after a click (Dash 4 style).
 
 ## Phase 5: Risk & FTMO simulation
 

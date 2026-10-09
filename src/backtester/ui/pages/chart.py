@@ -56,6 +56,12 @@ the Trades overlay with its confluences and, once the candles are drawn, scrolls
 to the trade (t0 = entry candle, t1 = exit time). Applied once; the store `chart-focus` is
 then marked done, so later changes of symbol or days are the user's again.
 
+Timeframe switch (ROADMAP.md › 4.0b part 1), outside replay: the time at the centre of
+the view stays at the centre and the number of visible candles stays the same (the browser
+reports its view in `chart-viewport`; `chart.js` re-centres after the new candles). The
+days the new view needs are added to the shown range (`dates_for_view`), so a switch up
+shows as many candles as before. In replay the replay time is kept (as before).
+
 Later steps add: the session view (3.5).
 """
 
@@ -78,7 +84,7 @@ from backtester.data.adapters.cache_adapter import (
     latest_run,
 )
 from backtester.data.resample import supported
-from backtester.data.sources import SymbolSources, warmup_start
+from backtester.data.sources import SymbolSources, cached_block, warmup_start
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
 from backtester.ui import (
@@ -190,6 +196,42 @@ def _overall_series(sources, symbol, start_date, end_date, config) -> CandleSeri
         symbol, timeframe, _midnight(first), _midnight(end + timedelta(days=1))
     )
     return CandleSeries(symbol, timeframe, candles_from_frame(frame)) if len(frame) else None
+
+
+def estimated_candles(first: date, last: date, timeframe: Timeframe) -> int:
+    """Upper estimate of the candles in the UTC days first..last (every minute traded)."""
+    return ((last - first).days + 1) * 1440 // timeframe.value
+
+
+def dates_for_view(
+    cached: Sequence[date],
+    start: date,
+    end: date,
+    view: dict,
+    timeframe: Timeframe,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple[date, date] | None:
+    """Chart days after switching to `timeframe` (ROADMAP 4.0b part 1), or None to keep
+    start..end. `view` = what the browser shows: the centre time (UTC seconds) and the
+    number of visible candles. The new view needs that many candles of `timeframe` around
+    the centre, plus `switch_warmup_candles` on the left for the overlays; the days are
+    added to the shown ones, within the run of cached days around the centre. If that is
+    more than `max_candles` (a switch down), only the days the view needs are kept."""
+    center = datetime.fromtimestamp(view["center"], UTC)
+    cached_set = set(cached)
+    if center.date() not in cached_set:
+        return None
+    block_first, block_last = cached_block(cached_set, center.date())
+    half = view["count"] / 2
+    left = (half + config.switch_warmup_candles) * timeframe.duration
+    need_first = max((center - left).date(), block_first)
+    need_last = min((center + half * timeframe.duration).date(), block_last)
+    first, last = min(start, need_first), max(end, need_last)
+    if not (block_first <= start and end <= block_last):  # shown days in another block
+        first, last = need_first, need_last
+    if estimated_candles(first, last, timeframe) > config.max_candles:
+        first, last = need_first, need_last
+    return None if (first, last) == (start, end) else (first, last)
 
 
 def load_replay(
@@ -773,6 +815,7 @@ def layout(
             dcc.Store(id="chart-replay-span"),
             dcc.Store(id="bt-job"),
             dcc.Store(id="chart-focus", data=focus),
+            dcc.Store(id="chart-viewport"),
             dcc.Store(id="settings-current", storage_type="local"),
             settings_panel.layout(),
             dcc.Interval(
@@ -803,6 +846,35 @@ def register_callbacks(
     )
     def _date_limits(symbol, focus):
         return date_limits(sources.cached_days(symbol) if symbol else [], symbol, focus)
+
+    @app.callback(
+        Output("chart-dates", "start_date", allow_duplicate=True),
+        Output("chart-dates", "end_date", allow_duplicate=True),
+        Input("chart-timeframe", "value"),
+        State("chart-viewport", "data"),
+        State("chart-symbol", "value"),
+        State("chart-dates", "start_date"),
+        State("chart-dates", "end_date"),
+        State("chart-replay", "data"),
+        prevent_initial_call=True,
+    )
+    def _timeframe_days(timeframe, view, symbol, start, end, replay_state):
+        """Keep the view on a timeframe switch: load the days it needs (outside replay)."""
+        if not (view and timeframe and start and end) or view.get("symbol") != symbol:
+            return no_update, no_update
+        if replay_state and replay_state.get("on"):
+            return no_update, no_update
+        found = dates_for_view(
+            sources.cached_days(symbol),
+            date.fromisoformat(start[:10]),
+            date.fromisoformat(end[:10]),
+            view,
+            Timeframe[timeframe],
+            config,
+        )
+        if found is None:
+            return no_update, no_update
+        return found[0].isoformat(), found[1].isoformat()
 
     @app.callback(
         Output("chart-symbol", "value"),

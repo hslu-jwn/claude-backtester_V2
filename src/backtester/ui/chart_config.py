@@ -22,6 +22,8 @@ from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, sessio
 @dataclass(frozen=True)
 class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
+    # timeframe switch (ROADMAP 4.0b): extra candles loaded left of the view (overlay warm-up)
+    switch_warmup_candles: int = 100
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below
     replay_window: int = 1500  # the replay span shows at most this many candles left of the cursor
     replay_visible: int = 120  # candles shown left of the cursor after each replay step
