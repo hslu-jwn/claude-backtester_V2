@@ -29,6 +29,7 @@ from backtester.live.credentials import (
     load_credentials,
     save_credentials,
 )
+from backtester.live.test_orders import run_from_panel
 from backtester.live.trading_settings import (
     PLATFORMS,
     SYMBOLS,
@@ -50,7 +51,7 @@ class Deps:
     backend: Callable[[], object] = keyring_backend
     mt5: Callable[[], ModuleType] | None = None  # None: the real MetaTrader5
     appdata: str | Path | None = None
-    run_test_orders: Callable | None = None  # set by part D
+    run_test_orders: Callable | None = None  # (settings, credentials, symbol, mt5) -> lines
 
 
 def _clock_text(settings: TradingSettings) -> str:
@@ -278,7 +279,7 @@ def layout() -> html.Div:
 
 
 def register_callbacks(app: Dash, deps: Deps | None = None) -> None:
-    deps = deps or Deps()
+    deps = deps or Deps(run_test_orders=run_from_panel)
     triggers = {"tr-open": "load", "tr-save": "save", "tr-test": "test", "tr-orders": "orders"}
     symbol_ids = [f"tr-sym-{s}" for s in SYMBOLS]
 
