@@ -584,6 +584,16 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
       the Overlays switch is on, preset = the current preset, "(modified)" when changed.
       Example: `GBPJPY_M5_2026-09-23T1935_2026-09-24T0530_UTC_replay-0535.png`.
     - Copy works in Chrome / Edge on 127.0.0.1; if the browser refuses, the menu says so.
+  - **Part 4:** "Go to" field in the bottom bar, Alt+G focuses it (`pages/chart.py`
+    `parse_goto`, `goto_dates`, `_goto`; `chart.js` `goto`; `toolbar.js`); tests in
+    `tests/ui/test_goto.py`. Check:
+    - Accepts `2026-09-12 12:15`, `2026-09-12T12:15` (the stamp's format), or a day
+      (= 00:00), UTC; Enter goes there.
+    - A day outside the shown ones: as many days as shown now, centred on it, within the
+      run of cached days and the candle limit. The chart centres on the candle containing
+      the time, keeps the zoom (or shows 120 candles when more than 500 were visible) and
+      puts the crosshair on it, so the legend shows that candle.
+    - In replay: only times up to the replay time, and no other days are loaded.
 
 ## Phase 5: Risk & FTMO simulation
 

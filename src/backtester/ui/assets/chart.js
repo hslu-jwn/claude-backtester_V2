@@ -20,6 +20,8 @@
   const HOVER_PX = 20; // like Plotly's hover distance
   const FOCUS_BEFORE = 60; // candles shown before a focused trade's entry ...
   const FOCUS_AFTER = 30; // ... and after its exit
+  const GOTO_MAX_VISIBLE = 500; // "Go to" keeps the zoom up to this many visible candles ...
+  const GOTO_VISIBLE = 120; // ... else shows this many
   const DETAIL_PX = 3;// narrower candles: no markers / labels (unreadable, slow to draw)
   const DASHES = { solid: [], dot: [3, 3], dash: [9, 9] }; // Plotly's patterns at width 1
   const KIND_ORDER = { bf: 0, bo: 1, l: 2, m: 3, t: 4 }; // fills, outlines, lines, markers, labels
@@ -698,6 +700,26 @@
 
       _shotText: stampText, // for tests and debugging
       _shotName: shotFileName,
+
+      /* Go to a time (store chart-goto {t, symbol}): once its candle is loaded, centre on
+         it (keeping the zoom, or GOTO_VISIBLE candles when zoomed out further than
+         GOTO_MAX_VISIBLE) and put the crosshair on it, so the legend shows that candle. */
+      goto(target) {
+        if (!target || target.done || !S.chart || target.symbol !== S.symbol) return no();
+        const t = S.times;
+        const n = t.length;
+        if (!n || target.t < t[0] || target.t >= t[n - 1] + S.tfmin * 60) return no();
+        let j = 0;
+        while (j < n - 1 && t[j + 1] <= target.t) j++;
+        const r = S.chart.timeScale().getVisibleLogicalRange();
+        const shown = r ? r.to - r.from : n;
+        const count = shown <= GOTO_MAX_VISIBLE ? shown : Math.min(GOTO_VISIBLE, n);
+        S.series.priceScale().applyOptions({ autoScale: true });
+        S.chart.timeScale().setVisibleLogicalRange({ from: j - count / 2, to: j + count / 2 });
+        const bar = S.series.dataByIndex(j);
+        if (bar) setTimeout(() => S.chart.setCrosshairPosition(bar.close, bar.time, S.series), 50);
+        return Object.assign({}, target, { done: true });
+      },
 
       /* Replay delta: from our cursor to the next one. */
       delta(delta) {

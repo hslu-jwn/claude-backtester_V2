@@ -67,11 +67,16 @@ chart as shown, with a stamp (symbol, timeframe, first → last visible candle i
 replay time, the overlays that are on, the settings preset) and the same data in the file
 name; "▾" also offers copying it to the clipboard. All in the browser (`chart.js` `shot`).
 
+Go to (ROADMAP.md › 4.0b part 4): the "Go to" field in the bottom bar (Alt+G) takes a UTC
+time; its days are loaded if they aren't shown (`goto_dates`) and the browser centres on
+the candle containing it (`chart.js` `goto`). In replay only times up to the replay time.
+
 Later steps add: the session view (3.5).
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
@@ -242,6 +247,54 @@ def dates_for_view(
     if estimated_candles(first, last, timeframe) > config.max_candles:
         first, last = need_first, need_last
     return None if (first, last) == (start, end) else (first, last)
+
+
+_GOTO = re.compile(
+    r"^\s*(\d{4}-\d{2}-\d{2})(?:[ T]+(\d{1,2}):(\d{2}))?\s*(?:UTC|Z)?\s*$", re.IGNORECASE
+)
+
+
+def parse_goto(text: str | None) -> datetime | None:
+    """A UTC time typed into "Go to": "2026-09-12 12:15", "2026-09-12T12:15" or a day
+    ("2026-09-12" = 00:00). None if it isn't one."""
+    m = _GOTO.match(text or "")
+    if not m:
+        return None
+    try:
+        day = date.fromisoformat(m.group(1))
+        hour, minute = int(m.group(2) or 0), int(m.group(3) or 0)
+        return datetime(day.year, day.month, day.day, hour, minute, tzinfo=UTC)
+    except ValueError:
+        return None
+
+
+def goto_dates(
+    cached: Sequence[date],
+    start: date,
+    end: date,
+    at: datetime,
+    timeframe: Timeframe,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple[date, date] | str | None:
+    """Days to show for "Go to `at`" (ROADMAP 4.0b part 4): None = the shown days contain
+    it; else as many days as shown now, centred on its day, within the run of cached days
+    around it and the candle limit; a message if its day isn't cached."""
+    day = at.date()
+    if start <= day <= end:
+        return None
+    cached_set = set(cached)
+    if day not in cached_set:
+        return f"Go to: {day} is not in the cache."
+    block_first, block_last = cached_block(cached_set, day)
+    span = (end - start).days
+    while span > 0 and estimated_candles(day, day + timedelta(days=span), timeframe) > (
+        config.max_candles
+    ):
+        span //= 2
+    first = max(day - timedelta(days=span // 2), block_first)
+    last = min(first + timedelta(days=span), block_last)
+    first = max(min(first, last - timedelta(days=span)), block_first)
+    return first, last
 
 
 def load_replay(
@@ -851,6 +904,18 @@ def layout(
                 first_day_of_week=1,
                 className="tb-dates",
             ),
+            html.Div(className="tb-sep"),
+            html.Span(
+                className="tb-icon icon-goto tb-cal-icon",
+                title="Go to a UTC date / time (Alt+G), e.g. 2026-09-12 12:15",
+            ),
+            dcc.Input(
+                id="chart-goto-input",
+                type="text",
+                placeholder="Go to 2026-09-12 12:15",
+                debounce=True,
+                className="tb-goto",
+            ),
             html.Div(
                 [html.Span(id="chart-message"), html.Span(id="chart-notes")],
                 className="tb-message",
@@ -879,6 +944,7 @@ def layout(
             dcc.Store(id="bt-job"),
             dcc.Store(id="chart-focus", data=focus),
             dcc.Store(id="chart-viewport"),
+            dcc.Store(id="chart-goto"),
             dcc.Store(id="settings-current", storage_type="local"),
             settings_panel.layout(),
             dcc.Interval(
@@ -938,6 +1004,62 @@ def register_callbacks(
         if found is None:
             return no_update, no_update
         return found[0].isoformat(), found[1].isoformat()
+
+    @app.callback(
+        Output("chart-goto", "data"),
+        Output("chart-dates", "start_date", allow_duplicate=True),
+        Output("chart-dates", "end_date", allow_duplicate=True),
+        Output("chart-message", "children", allow_duplicate=True),
+        Input("chart-goto-input", "n_submit"),
+        State("chart-goto-input", "value"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "start_date"),
+        State("chart-dates", "end_date"),
+        State("chart-replay", "data"),
+        prevent_initial_call=True,
+    )
+    def _goto(n_submit, text, symbol, timeframe, start, end, replay_state):
+        """Go to a UTC time: load its days if needed; the browser centres on it."""
+        at = parse_goto(text)
+        if not n_submit or not (symbol and timeframe and start and end):
+            return no_update, no_update, no_update, no_update
+        if at is None:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                (f"Go to: {text!r} is not a UTC time like 2026-09-12 12:15."),
+            )
+        goto = {"t": int(at.timestamp()), "symbol": symbol, "n": n_submit}
+        in_replay = bool(replay_state and replay_state.get("on"))
+        if (
+            in_replay
+            and replay_state.get("now")
+            and at > datetime.fromisoformat(replay_state["now"])
+        ):
+            return no_update, no_update, no_update, "Go to: that is after the replay time."
+        found = goto_dates(
+            sources.cached_days(symbol),
+            date.fromisoformat(start[:10]),
+            date.fromisoformat(end[:10]),
+            at,
+            Timeframe[timeframe],
+            config,
+        )
+        if isinstance(found, str):
+            return no_update, no_update, no_update, found
+        if found is None or in_replay:
+            return goto, no_update, no_update, no_update
+        return goto, found[0].isoformat(), found[1].isoformat(), no_update
+
+    app.clientside_callback(
+        ClientsideFunction("chart", "goto"),
+        Output("chart-goto", "data", allow_duplicate=True),
+        Input("chart-goto", "data"),
+        Input("chart-base-done", "data"),
+        prevent_initial_call=True,
+    )
 
     @app.callback(
         Output("chart-symbol", "value"),

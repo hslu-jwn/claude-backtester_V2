@@ -50,6 +50,16 @@
     closeAll(null);
   });
 
+  // Alt+G: the chart's "Go to" field (like TradingView), ROADMAP 4.0b part 4
+  document.addEventListener("keydown", (e) => {
+    if (!e.altKey || e.key.toLowerCase() !== "g") return;
+    const input = document.getElementById("chart-goto-input");
+    if (!input) return;
+    e.preventDefault();
+    input.focus();
+    input.select();
+  });
+
   // capture phase: runs before the component that may close its menu on the same key
   document.addEventListener(
     "keydown",

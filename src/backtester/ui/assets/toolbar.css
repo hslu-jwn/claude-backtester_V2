@@ -133,6 +133,9 @@ body {
 .icon-camera {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3v11H4z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E");
 }
+.icon-goto {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h12M12 7l5 5-5 5'/%3E%3Cpath d='M20 5v14'/%3E%3C/svg%3E");
+}
 .icon-calendar {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M4 10h16M9 3v4M15 3v4'/%3E%3C/svg%3E");
 }
@@ -561,4 +564,19 @@ body {
 }
 .tb-menu-item:hover {
   background: var(--tb-hover);
+}
+
+/* go to date / time (ROADMAP 4.0b part 4) */
+.tb-goto {
+  width: 170px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--tb-line);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+.tb-goto:focus {
+  outline: none;
+  border-color: var(--tb-accent);
 }
