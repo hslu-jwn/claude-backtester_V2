@@ -26,7 +26,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "tests/data"]  # tests/data: m1_frames helper
+pythonpath = ["src", "tests/data", "tests/live"]  # helpers: m1_frames, fake_mt5
 
 [tool.ruff]
 line-length = 100
