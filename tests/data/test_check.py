@@ -274,3 +274,23 @@ def test_history_spot_times_spread_over_years_and_seasons():
     assert {t.year for t in times} >= {2020, 2026}
     assert {check.dst_season(t) for t in times} == {check.SUMMER, check.WINTER, check.US_ONLY}
     assert all(t.weekday() in (1, 2, 3) and t.hour == 14 for t in times)
+
+
+def test_doji_share_and_median_range_per_year_and_last_year_per_quarter():
+    m5 = pd.DataFrame(
+        {
+            "ts": pd.to_datetime(
+                ["2025-03-03 10:00", "2025-03-03 10:05", "2026-01-05 10:00", "2026-07-06 10:00"],
+                utc=True,
+            ),
+            "open": [100.0, 100.0, 100.0, 100.0],
+            "close": [100.05, 101.0, 100.0, 102.0],  # bodies 0.05, 1, 0, 2
+            "high": [101.0, 102.0, 104.0, 106.0],
+            "low": [100.0, 99.0, 100.0, 100.0],  # ranges 1, 3, 4, 6
+        }
+    )
+    out = check.doji_by_period(m5, max_body=0.065)
+    assert list(out.index) == ["2025", "2026 Q1", "2026 Q3"]
+    assert out.loc["2025", "candles"] == 2 and out.loc["2025", "median_range"] == 2.0
+    assert out.loc["2025", "doji_share"] == 0.5 and out.loc["2026 Q1", "doji_share"] == 1.0
+    assert out.loc["2026 Q3", "gold_rule"] == pytest.approx(6 * 0.065 / 4.255)

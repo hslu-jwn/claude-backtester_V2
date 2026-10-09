@@ -42,6 +42,9 @@ Per symbol it prints:
    switches DST on other dates than New York shows up when compared with TradingView.
 7. Swing doji threshold: the median 5m candle range, the threshold the gold rule gives for
    it (`equivalent_doji_body`) and the one configured (confluences.md › Swing high / low).
+   Over more than a year also per year (per quarter in the last year): the median 5m
+   range, the share of 5m candles that are dojis with the configured threshold and what
+   the gold rule would give for that period (`doji_by_period`; a report, no rule).
 """
 
 from __future__ import annotations
@@ -139,6 +142,7 @@ class SymbolReport:
     price_range: pd.DataFrame  # per year: low, high
     spot: pd.DataFrame
     median_m5_range: float | None = None  # median high - low of the 5m candles
+    doji_periods: pd.DataFrame | None = None  # per year / quarter, see doji_by_period
 
 
 def daily_closes(start: datetime, end: datetime, config: DataCheckConfig) -> list[datetime]:
@@ -306,6 +310,28 @@ def spot_check(
     return pd.DataFrame(rows)
 
 
+def doji_by_period(m5: pd.DataFrame, max_body: float | None) -> pd.DataFrame:
+    """Per year (per quarter for the last year): 5m candles, median range, share of dojis
+    (body <= `max_body`, swings.py `is_doji`) and the gold rule's threshold for that
+    median range."""
+    ts = m5["ts"]
+    last = ts.dt.year.max()
+    quarter = "Q" + ts.dt.quarter.astype(str)
+    period = ts.dt.year.astype(str).where(ts.dt.year < last, ts.dt.year.astype(str) + " " + quarter)
+    frame = pd.DataFrame(
+        {
+            "period": period,
+            "range": m5["high"] - m5["low"],
+            "doji": (m5["close"] - m5["open"]).abs() <= (max_body if max_body is not None else -1),
+        }
+    )
+    out = frame.groupby("period", sort=True).agg(
+        candles=("range", "size"), median_range=("range", "median"), doji_share=("doji", "mean")
+    )
+    out["gold_rule"] = out["median_range"].map(equivalent_doji_body)
+    return out
+
+
 def dst_season(t: datetime) -> str:
     """Which clocks are on summer time at `t`: both, none, or only the US (the weeks in
     March and October / November where the two differ). The EU-only case can't happen."""
@@ -411,6 +437,8 @@ def check_symbol(
     report.price_range = price_range(traded)
     m5 = resample(traded, Timeframe.M5)
     report.median_m5_range = float((m5["high"] - m5["low"]).median())
+    if days and (days[-1] - days[0]).days > 365:
+        report.doji_periods = doji_by_period(m5, SwingConfig().doji_max_body.get(symbol))
     traded_days = set(traded["ts"].dt.date)
     long = days and (days[-1] - days[0]).days > 365
     spot_times = spot or (
@@ -520,7 +548,20 @@ def _doji_lines(r: SymbolReport) -> list[str]:
         f"  gold rule gives  {equivalent_doji_body(r.median_m5_range):.{digits + 2}f}",
         "  configured       "
         + (f"{config:.{digits + 2}f}" if config is not None else "none (swings not computed)"),
+        *_doji_period_lines(r, digits),
     ]
+
+
+def _doji_period_lines(r: SymbolReport, digits: int) -> list[str]:
+    if r.doji_periods is None or r.doji_periods.empty:
+        return []
+    lines = ["  per period:  5m candles   median range   dojis (configured)   gold rule would give"]
+    for period, row in r.doji_periods.iterrows():
+        lines.append(
+            f"  {period:<10}{int(row.candles):>12,}   {row.median_range:>12.{digits}f}"
+            f"   {row.doji_share:>18.1%}   {row.gold_rule:>20.{digits + 2}f}"
+        )
+    return lines
 
 
 def _fmt_ts(t) -> str:

@@ -117,6 +117,27 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   | 2025-03-05 14:00 | winter | 2899.735 / 2905.085 / 2899.105 / 2904.875 | 1.28221 / 1.28264 / 1.28194 / 1.28257 | 191.072 / 191.083 / 190.884 / 190.904 |
   | 2026-03-18 14:00 | US summer / EU winter | 4869.495 / 4875.225 / 4865.475 / 4869.175 | 1.33260 / 1.33338 / 1.33258 / 1.33309 | 212.445 / 212.539 / 212.444 / 212.504 |
   | 2026-03-18 13:00 | (1 h earlier) | 4877.875 / 4886.325 / 4871.798 / 4883.825 | 1.33257 / 1.33316 / 1.33236 / 1.33309 | 212.527 / 212.574 / 212.482 / 212.573 |
+  **Doji thresholds over time** (report only, no rule change; the user decides). The data
+  check now prints, over more than a year, per year (per quarter in 2026): the median 5m
+  range, the share of 5m candles that are dojis with the configured threshold and what
+  the gold rule (1.53% x the median 5m range) would give (`doji_by_period`).
+
+  | | XAUUSD median 5m range | XAUUSD dojis at 0.065 | gold rule would give | GBPUSD median | GBPUSD dojis | GBPJPY median | GBPJPY dojis |
+  |---|---|---|---|---|---|---|---|
+  | 2020 | 1.297 | 7.3% | 0.0198 | 0.00052 | 1.8% | 0.062 | 3.5% |
+  | 2021 | 0.970 | 8.9% | 0.0148 | 0.00039 | 2.8% | 0.048 | 4.4% |
+  | 2022 | 1.066 | 8.4% | 0.0163 | 0.00054 | 1.8% | 0.081 | 2.9% |
+  | 2023 | 0.910 | 9.7% | 0.0139 | 0.00041 | 2.3% | 0.069 | 3.3% |
+  | 2024 | 1.340 | 6.8% | 0.0205 | 0.00031 | 3.1% | 0.072 | 3.1% |
+  | 2025 | 2.500 | 3.9% | 0.0382 | 0.00039 | 2.0% | 0.073 | 3.0% |
+  | 2026 Q1 | 6.510 | 1.6% | 0.0995 | 0.00043 | 1.8% | 0.073 | 2.9% |
+  | 2026 Q2 | 4.780 | 1.9% | 0.0730 | 0.00034 | 2.5% | 0.050 | 4.5% |
+  | 2026 Q3 | 4.040 | 2.1% | 0.0617 | 0.00028 | 3.0% | 0.051 | 4.3% |
+
+  Gold's 0.065 is a fixed price amount: with gold's 5m candles 3-7 times smaller in
+  2020-2024 than in 2026, it makes 7-10% of the 5m candles dojis then versus about 2%
+  now. The GBP pairs' thresholds (a few points, prices on the same scale over the years)
+  give 1.8-4.5% in every period.
 - ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
   `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
   mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of
