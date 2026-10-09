@@ -52,8 +52,8 @@ def detect_fvgs(
 ) -> list[ChartFvg | ZoneTransition]:
     config = FvgConfig(strong_move_filter=settings.fvg_strong_move_filter)
     try:
-        fvgs = FvgDetector.for_symbol(replay.symbol, config)
-        trend = TrendDetector(BosDetector.for_symbol(replay.symbol))
+        fvgs = FvgDetector.for_symbol(replay.symbol, config, settings.swing_config)
+        trend = TrendDetector(BosDetector.for_symbol(replay.symbol, settings.swing_config))
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     out: list[ChartFvg | ZoneTransition] = []

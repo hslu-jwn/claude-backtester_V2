@@ -138,6 +138,11 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   2020-2024 than in 2026, it makes 7-10% of the 5m candles dojis then versus about 2%
   now. The GBP pairs' thresholds (a few points, prices on the same scale over the years)
   give 1.8-4.5% in every period.
+  **User (2026-10-09): the doji threshold is a detector setting with a changeable number.**
+  It is one per symbol (Settings › Detectors › Doji threshold, `strategy.swings.
+  doji_max_body`, saved in presets). Backtests already used it; now the chart overlays do
+  too (swings, BOS + trend, sweeps, FVG, OB, BPR, session zones: `OverlaySettings.
+  doji_max_body` / `swing_config`). The spec defaults are unchanged (gold 0.065).
 - ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
   `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
   mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of

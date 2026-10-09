@@ -12,6 +12,7 @@ from collections.abc import Sequence
 
 from backtester.core.models import Direction
 from backtester.detectors.sweep import LiquiditySweep, SweepDetector
+from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.ui.drawing import Drawing, Line, Marker
 from backtester.ui.overlays import (
@@ -23,9 +24,9 @@ from backtester.ui.overlays import (
 )
 
 
-def detect_sweeps(replay: Replay) -> list[LiquiditySweep]:
+def detect_sweeps(replay: Replay, config: SwingConfig | None = None) -> list[LiquiditySweep]:
     try:
-        detector = SweepDetector.for_symbol(replay.symbol)
+        detector = SweepDetector.for_symbol(replay.symbol, config)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     return run_detector(detector, replay)
@@ -73,7 +74,7 @@ SWEEP = register(
     OverlayType(
         "sweep",
         "Liquidity sweep",
-        lambda replay, _settings: detect_sweeps(replay),
+        lambda replay, settings: detect_sweeps(replay, settings.swing_config),
         draw_sweeps,
         order="2.11",
     )

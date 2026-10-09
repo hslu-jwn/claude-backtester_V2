@@ -74,7 +74,7 @@ class ChartZoneEvent(Event):
 def detect_session_zones(
     replay: Replay, settings: OverlaySettings = DEFAULT_SETTINGS, config=DEFAULT_CONFIG
 ) -> list[ChartZoneEvent]:
-    strategy = SessionZoneSweepConfig()
+    strategy = SessionZoneSweepConfig(swings=settings.swing_config)
     zone_tf, shown = strategy.zone_timeframe, replay.timeframe
     if not config.session_zone_min_timeframe.value <= shown.value <= zone_tf.value:
         raise OverlayUnavailable(

@@ -35,7 +35,7 @@ def detect_bprs(
 ) -> list[BalancedPriceRange | ZoneTransition]:
     config = BprConfig(FvgConfig(strong_move_filter=settings.fvg_strong_move_filter))
     try:
-        detector = BprDetector.for_symbol(replay.symbol, config)
+        detector = BprDetector.for_symbol(replay.symbol, config, settings.swing_config)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     return run_detector(detector, replay)

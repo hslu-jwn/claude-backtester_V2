@@ -35,7 +35,7 @@ def detect_obs(
 ) -> list[OrderBlock | ZoneTransition]:
     config = OrderBlockConfig(strong_move_filter=settings.ob_strong_move_filter)
     try:
-        detector = OrderBlockDetector.for_symbol(replay.symbol, config)
+        detector = OrderBlockDetector.for_symbol(replay.symbol, config, settings.swing_config)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     return run_detector(detector, replay)

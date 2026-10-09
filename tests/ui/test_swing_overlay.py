@@ -7,7 +7,7 @@ from overlay_helpers import by_layer, chart_overlays, hovers, lines, points
 
 from backtester.engine.replay import Replay
 from backtester.ui.drawing import Marker
-from backtester.ui.overlays import OVERLAYS, OverlayContext, OverlayUnavailable
+from backtester.ui.overlays import DEFAULT_SETTINGS, OVERLAYS, OverlayContext, OverlayUnavailable
 from backtester.ui.swing_overlay import detect_swings, draw_swings
 
 GREEN = (4400.0, 4410.0, 4399.0, 4405.0)
@@ -78,3 +78,25 @@ def test_gbp_pairs_have_a_threshold_so_their_swings_are_drawn():
 
 def test_draw_nothing_for_no_swings():
     assert draw_swings([], OverlayContext("XAUUSD", 0, 0)) == []
+
+
+def test_doji_threshold_from_the_settings_menu():
+    """Settings › Detectors › Doji threshold: raised to 10, GREEN (body 5) and GREEN2
+    (body 8) are dojis too, so only RED counts and no swing is confirmed (with the spec's
+    0.065 there are both); the other symbols keep the spec's threshold."""
+    from backtester.settings import settings_from_values, to_json
+    from backtester.ui.pages.chart import overlay_settings
+
+    assert overlay_settings([], "").doji_max_body == ()
+    strategy = to_json(settings_from_values({"strategy.swings.doji_max_body.XAUUSD": 10.0}))
+    settings = overlay_settings([], strategy)
+    assert settings.doji_max_body == (("XAUUSD", 10.0),)
+    assert settings.swing_config.doji_threshold("XAUUSD") == 10.0
+    assert settings.swing_config.doji_threshold("GBPUSD") == (
+        DEFAULT_SETTINGS.swing_config.doji_threshold("GBPUSD")
+    )
+    replay = gold_replay(GREEN, RED, DOJI, GREEN2)
+    drawings, _ = chart_overlays(replay, ["swings"], cursor=3)
+    assert set(by_layer(drawings)) == {"swing high", "swing low"}
+    drawings, messages = chart_overlays(replay, ["swings"], cursor=3, settings=settings)
+    assert drawings == [] and messages == []

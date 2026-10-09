@@ -190,7 +190,7 @@ BOS = register(
     OverlayType(
         "bos",
         "BOS + trend",
-        lambda replay, _settings: detect_bos(replay),
+        lambda replay, settings: detect_bos(replay, settings.swing_config),
         draw_bos,
         trend_badges,
         order="2.3",

@@ -33,9 +33,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass, field, replace
+from types import MappingProxyType
 
 from backtester.core.models import Timeframe
 from backtester.detectors.base import Detector, Event
+from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.drawing import Badge, Drawing
@@ -50,6 +52,17 @@ class OverlaySettings:
     # the strategy settings (ROADMAP 4.1) as canonical JSON (backtester/settings.py
     # `to_json`; "" = spec defaults); only overlays with `strategy_settings` get it
     strategy: str = ""
+    # doji thresholds changed in the settings menu (strategy.swings.doji_max_body), as
+    # sorted (symbol, max body) pairs; every overlay's detectors use them (`swing_config`)
+    doji_max_body: tuple[tuple[str, float], ...] = ()
+
+    @property
+    def swing_config(self) -> SwingConfig:
+        """The spec's doji thresholds with the ones changed in the settings menu."""
+        base = SwingConfig()
+        if not self.doji_max_body:
+            return base
+        return SwingConfig(MappingProxyType({**base.doji_max_body, **dict(self.doji_max_body)}))
 
 
 DEFAULT_SETTINGS = OverlaySettings()

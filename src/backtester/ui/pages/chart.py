@@ -99,8 +99,10 @@ from backtester.data.adapters.cache_adapter import (
 )
 from backtester.data.resample import CALENDAR, DEFAULT_BOUNDARY, DayBoundary, supported
 from backtester.data.sources import SymbolSources, cached_block, warmup_start
+from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
+from backtester.settings import from_json
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
@@ -418,7 +420,17 @@ def overlay_settings(filters: Sequence[str] | None, strategy: str = "") -> Overl
         fvg_strong_move_filter="fvg" in filters,
         ob_strong_move_filter="ob" in filters,
         strategy=strategy,
+        doji_max_body=changed_doji(strategy),
     )
+
+
+def changed_doji(strategy: str) -> tuple[tuple[str, float], ...]:
+    """The doji thresholds of the strategy settings that differ from the spec's."""
+    if not strategy:
+        return ()
+    spec = SwingConfig().doji_max_body
+    chosen = from_json(strategy).strategy.swings.doji_max_body
+    return tuple(sorted((s, v) for s, v in chosen.items() if spec.get(s) != v))
 
 
 @lru_cache(maxsize=16)

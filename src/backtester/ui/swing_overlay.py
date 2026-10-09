@@ -70,7 +70,7 @@ SWINGS = register(
     OverlayType(
         "swings",
         "Swings",
-        lambda replay, _settings: detect_swings(replay),
+        lambda replay, settings: detect_swings(replay, settings.swing_config),
         draw_swings,
         order="2.2",
     )
