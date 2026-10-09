@@ -149,9 +149,14 @@ def test_load_mt5_without_the_package(monkeypatch):
 
 def test_nothing_else_imports_metatrader5():
     """Backtests, the chart and the CLI modules load without the package."""
+    modules = [
+        "backtester.ui.app",
+        "backtester.run",
+        "backtester.data.mt5_info",
+    ]
     code = (
-        "import sys; sys.modules['MetaTrader5'] = None\n"
-        "import backtester.ui.app, backtester.run, backtester.data.adapters.mt5_adapter\n"
+        "import importlib, sys; sys.modules['MetaTrader5'] = None\n"
+        f"for m in {modules!r}: importlib.import_module(m)\n"
         "print('ok')"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
