@@ -150,3 +150,13 @@ def test_preset_actions_need_valid_settings_and_a_name(tmp_path):
     assert out["message"] == "Fix the invalid setting first." and out["presets"] == ["Default"]
     out = sp.form_update("save-as", widgets(), None, name="", folder=tmp_path)
     assert out["message"] == "Enter a preset name."
+
+
+def test_doji_threshold_is_first_in_detectors_with_one_explanation():
+    """User (2026-10-09): the doji threshold wasn't visible (it was below the fold)."""
+    detectors = sp.grouped(leaves())["Detectors"]
+    doji = [leaf.path for leaf in detectors[:3]]
+    assert doji == [f"strategy.swings.doji_max_body.{s}" for s in ("XAUUSD", "GBPUSD", "GBPJPY")]
+    body = str(sp._group_body("Detectors", detectors, True))
+    assert body.count("Used by every detector") == 1
+    assert body.index("Doji threshold") < body.index("FVG")

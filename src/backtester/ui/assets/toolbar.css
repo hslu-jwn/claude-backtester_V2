@@ -397,6 +397,9 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+.st-section-help {
+  margin: 0 0 4px;
+}
 .st-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 200px 28px;

@@ -150,6 +150,17 @@ SECTIONS = {
     "strategy.sessions.london.": "London",
     "strategy.sessions.new_york.": "New York",
 }
+# shown first in their group (the doji threshold is used by every detector)
+FIRST_IN_GROUP = ("strategy.swings.doji_max_body.",)
+# one explanation under the section heading instead of the same help on every row
+SECTION_HELP = {
+    "strategy.swings.doji_max_body.": (
+        "Max |close − open| of a doji / thin candle, per symbol, in price units. Used by "
+        "every detector (swings, BOS, sweeps, FVG, OB, BPR, session zones) in backtests "
+        "and on the chart. Gold's 0.065 is set by the user; the pairs' defaults are the "
+        "same share of their median 5m range."
+    ),
+}
 # choices not offered: breakers aren't built (ROADMAP 2.7), the equilibrium has its switch
 HIDDEN_OPTIONS = {"strategy.confluence_kinds": {"BREAKER", "EQUILIBRIUM"}}
 
@@ -450,7 +461,9 @@ def _row(leaf: Leaf) -> html.Div:
             html.Div(
                 [
                     html.Div(label_of(leaf.path), className="st-label"),
-                    html.Div(leaf.help, className="st-help") if leaf.help else None,
+                    html.Div(leaf.help, className="st-help")
+                    if leaf.help and not _section_help_of(leaf.path)
+                    else None,
                 ],
                 className="st-text",
             ),
@@ -468,10 +481,16 @@ def _row(leaf: Leaf) -> html.Div:
     )
 
 
+def _section_help_of(path: str) -> str:
+    return next((h for prefix, h in SECTION_HELP.items() if path.startswith(prefix)), "")
+
+
 def grouped(leaf_list: Sequence[Leaf]) -> dict[str, list[Leaf]]:
     out: dict[str, list[Leaf]] = {g: [] for g in (*GROUPS, OTHER)}
     for leaf in leaf_list:
         out[group_of(leaf.path)].append(leaf)
+    for leaves_ in out.values():
+        leaves_.sort(key=lambda leaf: not leaf.path.startswith(FIRST_IN_GROUP))  # stable
     return {g: ls for g, ls in out.items() if ls}
 
 
@@ -481,6 +500,8 @@ def _group_body(group: str, leaf_list: list[Leaf], shown: bool) -> html.Div:
         s = section_of(leaf.path)
         if s and s != section:
             children.append(html.Div(s, className="st-section"))
+            if help_ := _section_help_of(leaf.path):
+                children.append(html.Div(help_, className="st-help st-section-help"))
         section = s
         children.append(_row(leaf))
     return html.Div(
