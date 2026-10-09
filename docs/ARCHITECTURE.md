@@ -20,7 +20,10 @@ Each layer only imports from the layers above it in this list.
 7. **analytics/**: statistics on R trade lists.
 8. **risk/**: turns an R trade list into account equity under prop-firm rules; Monte Carlo
    and parameter sweeps. Spec: `risk-management.md`.
-9. **ui/**: Dash app with a TradingView Lightweight Charts chart in the browser. Reads
+9. **live/**: platform connection (MT5), the login in the Windows Credential Manager,
+   trading settings, demo-locked order functions (Phase 7). Only the MT5 command-line
+   tools in `data/` (`mt5_info`, `feed_compare`) read its settings and connect through it.
+10. **ui/**: Dash app with a TradingView Lightweight Charts chart in the browser. Reads
    results; never contains trading logic. See "How the chart gets its data" below.
 
 ## How a backtest steps through time
@@ -170,25 +173,82 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
 ### MetaTrader 5 (FTMO feed, live trading)
 
 FTMO's server keeps only about one month of 5m history, so MT5 is used for the feed
-comparison (0.4) and for order execution (Phase 7).
+comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
 
 - The `MetaTrader5` Python package only works on **Windows**, with the MT5 terminal
-  installed, running and logged in. Import it only inside `data/adapters/mt5_adapter.py`
-  (and later `execution/`), so everything else, including the tests, runs without it.
-  Tests use a fake module.
-- **Server time is not UTC.** Bar times from MT5 are in the broker's server time (many
-  brokers use UTC+2 in winter / UTC+3 in summer, switching with US DST; verify for the
-  user's FTMO server, don't assume). The adapter converts to UTC with a configurable
-  server time zone, and Phase 0.3 checks it against a known candle.
-- Bar time = candle **open** time (same as `Candle.ts`).
-- The newest bar MT5 returns may still be **forming**. The adapter drops any bar whose
-  close time is after "now". This matters most for live trading.
-- **History depth** is limited by the broker's server and the terminal's "Max bars in chart"
-  setting. Report the first available candle instead of failing silently.
-- Symbol names can differ by broker (suffixes like `.r`); keep a mapping in config.
-- Rates include a per-bar `spread` (in points). Store it in the cache; the engine can use it
-  as an approximate cost.
-- Never put login, password or server in code or git: read them from `.env` (git-ignored).
+  installed and running. It is the optional extra `[mt5]` (with `keyring`). It is imported
+  only by `data/adapters/mt5_adapter.py` (`load_mt5`); every other module gets the module
+  passed in, so the tests, backtests and the chart run without it
+  (`test_nothing_else_imports_metatrader5`). Tests use a fake module (`tests/live/fake_mt5.py`).
+- **Login:** entered only in the app (Settings ⚙ → Trading → Account connection…) and kept in
+  the Windows Credential Manager (`live/credentials.py`, `keyring`, service
+  `backtester.trading`). Never in the repo, `.env`, results/, logs, error messages or test
+  output: `Credentials` prints as `<hidden>`, MT5 error texts are scrubbed
+  (`connection.scrub`), the password is never sent back to the browser. Without a saved
+  login the tools attach to the account the running terminal is logged in to.
+  Non-secret settings (platform, terminal path, symbol names, server clock) are in
+  `results/trading.json` (`live/trading_settings.py`).
+- `live/connection.py` `session()` connects, yields the module and always shuts down; one
+  lock serializes sessions (the module is process-wide, Dash callbacks run in threads).
+  The server dropdown suggests the folders in the terminal's `bases/` (servers it has
+  connected to).
+
+**Candles (`Mt5Adapter`, a `DataAdapter`)**
+
+- Bar time = candle **open** time in the broker's **server time**, written as if it were
+  UTC. `ServerClock(zone, shift_hours)`: server time = local time in an IANA zone + a
+  whole-hour shift (`UTC` + 2: fixed; `America/New_York` + 7: UTC+2 / +3 on the US dates;
+  `Europe/London` + 2: UTC+2 / +3 on the European dates). The adapter converts bar times
+  with it and asks the terminal for a UTC range in server time (padded by a day).
+  Without a measured clock the adapter refuses to start.
+- Only **closed** candles: a bar whose UTC close time is after now is dropped.
+- Served timeframes: M1, M5, M15, M30, H1 (H4 / D1 bars are cut on the server's day).
+- `spread` per candle = MT5's bar spread (points) x the symbol's point, in price units.
+  MT5 doesn't document whether it is the bar's lowest, average or last spread.
+- **History depth** is the broker's and the terminal's "Max bars in chart";
+  `history()` returns everything the terminal has, the reports print the first candle.
+- Symbol names can differ by broker (suffixes like `.r`): `TradingSettings.symbols` maps
+  ours to the server's.
+
+**Server time → UTC: how the rule is found** (`python -m backtester.data.mt5_info`)
+
+1. Per week of MT5's **H1 history** (server weeks), the whole-hour offset −12..+14 h whose
+   shifted bar times meet the histdata cache's H1 candles with the smallest median
+   |close difference| (at least half the bars matched; `mt5_compare.weekly_offsets`).
+   Also printed: that error as a share of the candle range and how much worse the next
+   best offset is (how clear the match is).
+2. Every rule (zones `UTC`, `America/New_York`, `Europe/London` x shifts −14..+14 h) is
+   scored by the number of weeks it predicts (offset at Wednesday 12:00 UTC);
+   `fit_clock`. The weeks where only the US or only Europe is on summer time (2nd Sunday
+   of March to the last Sunday of March; last Sunday of October to the 1st Sunday of
+   November) decide between US and European dates; they are printed one by one.
+3. The rule is saved only if it predicts **every** week and no other rule does.
+4. Live check: the newest tick's server time − real UTC must be the rule's offset with a
+   tick at most 5 minutes old (only while the market trades).
+
+**Rule found for the FTMO server: not measured yet** (the terminal wasn't logged in on
+2026-10-09). It is written here after the first run of `data.mt5_info`.
+
+**Feed comparison** (`python -m backtester.data.feed_compare`, ROADMAP 0.4): per symbol
+and timeframe (M1, M5, M30, H1), over the days both MT5's history and the cache have:
+best time shift (multiples of the timeframe within ±3 h; 0 when the clock is right),
+average |difference| of O/H/L/C (price and % of the median candle range), how often the
+color differs / is opposite, candles only one side has. FTMO's spread per UTC hour
+(median, 90%) from M1 (else M5) next to the cost defaults. Report in
+`results/feed_compare/<time>/`.
+
+**Orders** (`live/orders.py`, ROADMAP 7.1)
+
+- **DEMO LOCK:** every order function checks `account_info().trade_mode` first and raises
+  `DemoLockError` (nothing sent) unless it is `ACCOUNT_TRADE_MODE_DEMO`. No override yet.
+- Orders carry the magic number `MAGIC`; cleanup only ever closes those, never the user's
+  own positions.
+- Filling mode: the symbol's allowed ones (FOK, IOC), then RETURN; a request rejected with
+  10030 is sent again with the next. Every request and result is logged (`OrderLog`,
+  JSON lines, execution time in ms).
+- `python -m backtester.live.test_orders XAUUSD` / the button in Trading: the scripted
+  test (open 2 x min lot with SL / TP, SL to break-even, close half, close rest; buy and
+  sell), log in `results/live/test_orders/`.
 
 ## Build order
 

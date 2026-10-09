@@ -82,6 +82,7 @@ src/backtester/
   engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
+  live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -101,6 +102,10 @@ python -m backtester.ui.app     # start the Dash app (once implemented)
 python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 python -m backtester.data.check XAUUSD GBPUSD GBPJPY  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
+pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
+python -m backtester.data.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
+python -m backtester.data.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
+python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accounts only
 ```
 
 ## Testing
@@ -127,5 +132,10 @@ python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # ba
   app for them and say what they should see.
 - Commit messages: short imperative summary (`Add FVG detector with validation tests`).
 - Never commit market data, `.env`, MT5 login/password/server or backtest outputs.
+- MT5 login, password and server live only in the Windows Credential Manager (entered in
+  Settings ⚙ → Trading). Never put them in code, `.env`, results/, logs, error messages or
+  test output, and never ask the user for them in the chat.
+- Every order function refuses unless the account is DEMO (`live/orders.py`
+  `require_demo`). Never add an override without the user's explicit decision.
 - When done with a step, summarize what was built, what is still a stub, and any spec
   questions that came up.

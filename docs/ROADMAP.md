@@ -170,6 +170,23 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     average |difference| of O/H/L/C, how often the candle color differs, missing candles on
     either side. FTMO spread per symbol and hour of day (median, 90%) next to the cost
     defaults (3.1). Report only; the user decides about the defaults.
+  **Built (2026-10-09), not yet run against FTMO:** the terminal was running but not
+  logged in (`Terminal: Authorization failed`), so the results below are still open.
+  - `data/adapters/mt5_adapter.py`: `Mt5Adapter`, `ServerClock` (server time = zone time
+    + whole-hour shift), `load_mt5` (the only `MetaTrader5` import). Tests:
+    `tests/data/test_mt5_adapter.py` (US / EU / fixed clocks incl. the US-only summer time
+    weeks, forming candle dropped, spread in price, server-time request window, nothing
+    else imports MetaTrader5).
+  - `python -m backtester.data.mt5_info`: symbol names + specs, the clock measured per
+    week of MT5's H1 history against the cache (`data/mt5_compare.py`), saved to
+    `results/trading.json` (symbol names; the clock only when one rule predicts every week).
+    Method: `ARCHITECTURE.md › MetaTrader 5`. Tests: `tests/data/test_mt5_info.py`.
+  - `python -m backtester.data.feed_compare`: the comparison and spread tables, written to
+    `results/feed_compare/<time>/`. Tests: `tests/data/test_feed_compare.py`.
+  - Check (after the login is saved in Settings ⚙ → Trading): run `data.mt5_info`; it
+    prints FTMO's names and specs, the offsets per week, the deciding DST weeks and the
+    rule. Then `data.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
+    specs, the comparison and spread numbers (→ here, for the user's decision on 3.1).
 
 ## Phase 1: Chart (no lookahead)
 
@@ -836,3 +853,22 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
     result (retcode) logged, execution times, nothing left open afterwards.
   - Not yet (7.2, after the risk sizer of Phase 5 and the open questions above): strategy
     trading, the Live tab, position sizing from risk %.
+  **Built (2026-10-09), not yet run against the demo account** (terminal not logged in):
+  - `live/credentials.py` (keyring), `live/trading_settings.py` (`results/trading.json`:
+    platform, terminal path, symbol names, server clock), `live/connection.py` (session,
+    report, known servers from the terminal's `bases/` folder), `ui/trading_panel.py` (the
+    modal, opened from ⚙ Chart settings → Trading → "Account connection…").
+  - `live/orders.py`: `require_demo` in every order function, `MAGIC` on every order,
+    filling mode fallback, `OrderLog`. `live/test_orders.py`: the scripted test and its
+    report; the break-even move right after the entry is expected to be rejected
+    ("invalid stops": the SL would be on the wrong side of the price), so the test then
+    moves the SL halfway to the entry to test the modify itself.
+  - Tests with fakes (`tests/live/`, `tests/ui/test_trading_panel.py`): secrets never in
+    trading.json, reports or error texts; every order function refuses REAL / CONTEST /
+    no account without sending; the full buy + sell run; filling fallback; market closed;
+    an error midway still closes everything; the user's own positions are left alone.
+  - Check: Settings ⚙ → Trading → "Account connection…": enter login, password, server,
+    Save, Test connection (shows account, DEMO, balance, algo trading). Then "Run demo
+    test orders" (or `python -m backtester.live.test_orders XAUUSD`) while the market is
+    open; afterwards no position in the terminal's Trade tab, history shows 2 x 3 deals
+    per symbol.
