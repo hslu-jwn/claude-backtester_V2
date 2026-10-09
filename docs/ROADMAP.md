@@ -626,3 +626,19 @@ Demo account first, then FTMO. Same strategy code, fed by closed candles only.
 `execution/` module with `order_send`, a kill switch, the FTMO limits from `risk/`
 enforced before every order, and a log of every decision. Not before Phases 3–6 show a
 stable edge.
+
+User's wishes (2026-10-09), to be specified before building (open questions: MT5 server
+name, FTMO symbol names, risk per trade on demo, demo lock / daily stop / emergency stop,
+fully automatic vs. signal mode, two TPs as two half positions, notifications):
+- **Settings ⚙ → Trading:** platform dropdown (MT5 now, others later), login, password,
+  server, "Test connection". Credentials stored only on the user's PC (never in the repo,
+  never in results/), e.g. Windows Credential Manager via `keyring` or the git-ignored `.env`.
+- **"Trade live"** starts the bot as its own process (not inside the browser) and opens a
+  new tab `/live`; closing the tab doesn't stop the bot, the tab can be reopened any time.
+- **Live tab:** connection and account (balance, equity, today's P/L in R and %), FTMO
+  limits as bars, open positions, today's signals / setups, live chart with zones,
+  confluences and trades, log, Start / Stop and an emergency stop (close all + stop).
+- MT5's Python API only works on Windows with the MT5 terminal running: demo on the
+  user's PC first; for 24/5 later a Windows VPS near the broker.
+- Needs from Phase 5 at least: position sizer (lots from risk % and SL distance) and the
+  FTMO daily / max loss limits.
