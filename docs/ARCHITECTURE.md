@@ -127,8 +127,10 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
 
 ### histdata.com (XAUUSD, GBPUSD, GBPJPY while Dukascopy downloads are paused)
 
-- Monthly M1 files in MetaTrader format, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, put in
-  `data/raw/histdata/` by hand. Imported with `python -m backtester.data.histdata data/raw/histdata/`
+- M1 files in MetaTrader format, per month (`DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, the
+  current year) or per year (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`, full past years), plain or
+  inside histdata's zip files, put in `data/raw/histdata/` by hand (history 2020-01 ..
+  2026-09 since 2026-10-09). Imported with `python -m backtester.data.histdata data/raw/histdata/`
   into `data/cache/histdata/` (same layout and columns as the Dukascopy cache, own folder
   so the sources never mix). `data/sources.py` reads all three symbols from there.
   XAUUSD histdata was compared with the Dukascopy cache on 2026-09-02..07: every M1

@@ -51,6 +51,27 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
+  **Full history (2026-10-09, awaiting the user's check).** The user downloaded histdata.com
+  for all three symbols: year files 2020-2025 (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`) and month
+  files 2026-01..09. Built: `data/histdata.py` reads year files and zip files too (same
+  rules: New York time with DST → UTC, bid only, only UTC days fully covered are written;
+  periods may not overlap), rows grouped per day in one pass; tests in
+  `tests/data/test_histdata.py` (year file, 31 Dec / 1 Jan from two files, zip, overlap).
+  Imported (`python -m backtester.data.histdata data/raw/histdata/`, 2 min):
+
+  | | cached days | with minutes | minutes | merged duplicate minutes |
+  |---|---|---|---|---|
+  | XAUUSD | 2020-01-02 .. 2026-09-30 (2,464) | 2,092 | 2,344,432 | 1,092 |
+  | GBPUSD | 2020-01-02 .. 2026-09-30 (2,464) | 2,107 | 2,457,323 | 376 |
+  | GBPJPY | 2020-01-02 .. 2026-09-30 (2,464) | 2,106 | 2,458,886 | 615 |
+
+  No month or week is missing; no day in between is uncached. 2020-01-01 and 2026-10-01
+  are only partly in the files (not written). Weekdays without any minute: holidays
+  (Good Friday, 25 Dec, 1 Jan; gold more of them) and **2026-09-25 (Friday) for all three:
+  histdata's September 2026 file has no row for that day** (and the 24th ends early).
+  **2023-02-20 .. 2023-07-28: many weekdays have exactly 960 / 900 / 840 minutes**, i.e.
+  whole hours missing in histdata's files (gold most, also the GBP pairs; see the data
+  check below).
 - ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
   `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
   mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of

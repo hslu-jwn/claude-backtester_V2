@@ -5,7 +5,10 @@
 
 Spec: ARCHITECTURE.md › Data sources › histdata.com.
 
-One file per symbol and month, named `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, one minute per line:
+One file per symbol and month, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, or per symbol and year
+for full past years, `DAT_MT_{SYMBOL}_M1_{YYYY}.csv`; either may come inside a zip file
+(histdata.com's download, e.g. `HISTDATA_COM_MT_XAUUSD_M1_2023.zip`), which is read without
+unpacking. One minute per line:
 
     2026.09.01,00:00,1.354050,1.354070,1.354020,1.354060,0
     date,      time,  open,    high,    low,     close,   volume
@@ -27,19 +30,24 @@ One file per symbol and month, named `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, one minu
 The cache has the same layout and columns as the Dukascopy one (`data/dukascopy.py`), but
 lives in its own folder (`data/cache/histdata/` by default) so the two sources never mix.
 A month file covers UTC from New York midnight of the 1st (04:00 UTC in summer, 05:00 in
-winter) to New York midnight of the next month's 1st, so only
-UTC days fully inside the imported months are written (the 1st of the first month is only
-complete if the month before is imported too). Days in range without minutes (weekends)
-are cached as empty. Days already cached are overwritten (re-importing refreshes them).
+winter) to New York midnight of the next month's 1st (a year file: 1 January to the next
+1 January, 05:00 UTC), so only UTC days fully inside the imported periods are written
+(the first day is only complete if the period before is imported too: e.g. 1 January
+00:00-05:00 UTC is in the previous year's file). Periods must not overlap (a year file and
+a month file of the same year). Days in range without minutes (weekends) are cached as
+empty. Days already cached are overwritten (re-importing refreshes them).
 """
 
 from __future__ import annotations
 
 import argparse
+import io
 import re
+import zipfile
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from itertools import pairwise
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -49,7 +57,7 @@ from backtester.data.dukascopy import _COLUMNS, _empty_cache_frame, _write_atomi
 
 DEFAULT_HISTDATA_CACHE_DIR = Path("data/cache/histdata")
 HISTDATA_TZ = ZoneInfo("America/New_York")  # with DST, verified against TradingView
-_FILE_NAME = re.compile(r"^DAT_MT_(?P<symbol>[A-Z0-9]+)_M1_(?P<month>\d{6})\.csv$")
+_FILE_NAME = re.compile(r"^DAT_MT_(?P<symbol>[A-Z0-9]+)_M1_(?P<period>\d{6}|\d{4})\.csv$")
 _RAW_COLUMNS = ["date", "time", "open", "high", "low", "close", "volume"]
 
 
@@ -59,9 +67,28 @@ class HistdataError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class MonthFile:
+    """One histdata file: a month or (`yearly`) a whole year, New York time."""
+
     path: Path
     symbol: str
-    month: date  # first day of the month (New York time)
+    month: date  # first day of the period (New York time)
+    yearly: bool = False
+    member: str | None = None  # the csv inside `path` when `path` is a zip file
+
+    @property
+    def end(self) -> date:
+        """First day after the period (New York time)."""
+        if self.yearly:
+            return date(self.month.year + 1, 1, 1)
+        return (self.month.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    @property
+    def label(self) -> str:
+        return f"{self.month:%Y}" if self.yearly else f"{self.month:%Y-%m}"
+
+    @property
+    def name(self) -> str:
+        return self.member or self.path.name
 
     @property
     def utc_start(self) -> datetime:
@@ -71,8 +98,14 @@ class MonthFile:
     @property
     def utc_end(self) -> datetime:
         """End (exclusive) of what this file covers, in UTC."""
-        nxt = (self.month.replace(day=28) + timedelta(days=4)).replace(day=1)
-        return _local_midnight(nxt)
+        return _local_midnight(self.end)
+
+    def open(self):
+        """The csv text (from the zip file when there is one)."""
+        if self.member is None:
+            return self.path
+        with zipfile.ZipFile(self.path) as z:
+            return io.StringIO(z.read(self.member).decode("utf-8"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,12 +118,40 @@ class ImportResult:
     merged_minutes: int = 0  # minutes that appeared more than once in the files
 
 
-def month_file(path: Path) -> MonthFile:
-    m = _FILE_NAME.match(path.name)
+def month_file(path: Path, member: str | None = None) -> MonthFile:
+    """The period of a file from its name (`member`: the csv's name inside a zip)."""
+    name = member.rsplit("/", 1)[-1] if member else path.name
+    m = _FILE_NAME.match(name)
     if not m:
-        raise HistdataError(f"{path.name}: expected a name like DAT_MT_GBPUSD_M1_202609.csv")
-    month = date(int(m["month"][:4]), int(m["month"][4:]), 1)
-    return MonthFile(path, m["symbol"], month)
+        raise HistdataError(
+            f"{name}: expected a name like DAT_MT_GBPUSD_M1_202609.csv (month) "
+            "or DAT_MT_GBPUSD_M1_2023.csv (year)"
+        )
+    period = m["period"]
+    if len(period) == 4:
+        return MonthFile(path, m["symbol"], date(int(period), 1, 1), True, member)
+    return MonthFile(path, m["symbol"], date(int(period[:4]), int(period[4:]), 1), False, member)
+
+
+def files_in(path: Path) -> list[MonthFile]:
+    """The histdata files a path stands for: a csv, a zip (its DAT_MT_ csv files) or a
+    folder (both kinds in it)."""
+    path = Path(path)
+    if path.is_dir():
+        return [
+            f
+            for p in sorted(path.iterdir())
+            if p.suffix.lower() in (".csv", ".zip")
+            and p.name.upper().startswith(("DAT_MT_", "HISTDATA"))
+            for f in files_in(p)
+        ]
+    if path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(path) as z:
+            members = [n for n in z.namelist() if _FILE_NAME.match(n.rsplit("/", 1)[-1])]
+        if not members:
+            raise HistdataError(f"{path.name}: no DAT_MT_..._M1_... csv inside")
+        return [month_file(path, n) for n in members]
+    return [month_file(path)]
 
 
 def parse_histdata_mt(text_or_path, month_file_: MonthFile | None = None) -> pd.DataFrame:
@@ -100,6 +161,8 @@ def parse_histdata_mt(text_or_path, month_file_: MonthFile | None = None) -> pd.
     of caching something plausible-looking. Duplicate minutes are merged
     (`merge_duplicate_minutes`); `frame.attrs["merged_minutes"]` says how many.
     """
+    if isinstance(text_or_path, MonthFile):
+        month_file_, text_or_path = text_or_path, text_or_path.open()
     raw = pd.read_csv(
         text_or_path,
         header=None,
@@ -124,8 +187,8 @@ def parse_histdata_mt(text_or_path, month_file_: MonthFile | None = None) -> pd.
         outside = (ts < month_file_.utc_start) | (ts >= month_file_.utc_end)
         if outside.any():
             raise HistdataError(
-                f"{month_file_.path.name}: {outside.sum()} rows outside "
-                f"{month_file_.month:%Y-%m} (New York time), first: {raw[outside].iloc[0].tolist()}"
+                f"{month_file_.name}: {outside.sum()} rows outside "
+                f"{month_file_.label} (New York time), first: {raw[outside].iloc[0].tolist()}"
             )
     nan = float("nan")
     frame = pd.DataFrame(
@@ -172,36 +235,40 @@ def merge_duplicate_minutes(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def import_files(paths: Iterable[Path], cache_dir: Path = DEFAULT_HISTDATA_CACHE_DIR):
-    """Import month files (any symbols) and return one ImportResult per symbol."""
+    """Import month / year files, csv or zip (any symbols); one ImportResult per symbol."""
     by_symbol: dict[str, list[MonthFile]] = {}
     for path in paths:
-        mf = month_file(Path(path))
-        by_symbol.setdefault(mf.symbol, []).append(mf)
+        for mf in files_in(Path(path)):
+            by_symbol.setdefault(mf.symbol, []).append(mf)
     return [import_symbol(sym, files, cache_dir) for sym, files in sorted(by_symbol.items())]
 
 
 def import_symbol(symbol: str, files: list[MonthFile], cache_dir: Path) -> ImportResult:
     files = sorted(files, key=lambda f: f.month)
-    if len({f.month for f in files}) != len(files):
-        raise HistdataError(f"{symbol}: the same month given twice")
-    parts = [parse_histdata_mt(f.path, f) for f in files]
+    for a, b in pairwise(files):
+        if b.month < a.end:
+            raise HistdataError(f"{symbol}: {a.name} and {b.name} overlap (the same period twice)")
+    parts = [parse_histdata_mt(f) for f in files]
     merged = sum(p.attrs.get("merged_minutes", 0) for p in parts)
     frame = pd.concat(parts, ignore_index=True)
     covered = _covered_intervals(files)
     days = sorted({d for f in files for d in _days_touched(f.utc_start, f.utc_end)})
     written, empty, partial = [], [], []
-    day_of = frame["ts"].dt.date
+    by_day = {day: rows for day, rows in frame.groupby(frame["ts"].dt.date, sort=False)}
+    minutes = 0
     for day in days:
         start = datetime.combine(day, datetime.min.time(), UTC)
         if not any(a <= start and start + timedelta(days=1) <= b for a, b in covered):
             partial.append(day)
             continue
-        rows = frame[day_of == day].reset_index(drop=True)
-        _write_atomic(
-            rows if not rows.empty else _empty_cache_frame(), cache_path(cache_dir, symbol, day)
-        )
-        (empty if rows.empty else written).append(day)
-    minutes = int(frame["ts"].dt.date.isin(set(written)).sum())
+        rows = by_day.get(day)
+        if rows is None or rows.empty:
+            _write_atomic(_empty_cache_frame(), cache_path(cache_dir, symbol, day))
+            empty.append(day)
+            continue
+        _write_atomic(rows.reset_index(drop=True), cache_path(cache_dir, symbol, day))
+        written.append(day)
+        minutes += len(rows)
     return ImportResult(symbol, written, empty, partial, minutes, merged)
 
 
@@ -229,17 +296,12 @@ def main(argv: list[str] | None = None) -> int:
     from backtester.data.adapters.cache_adapter import day_ranges
 
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("paths", nargs="+", type=Path, help="DAT_MT_*_M1_*.csv files or folders")
+    p.add_argument("paths", nargs="+", type=Path, help="DAT_MT_*_M1_*.csv / .zip files or folders")
     p.add_argument("--cache-dir", type=Path, default=DEFAULT_HISTDATA_CACHE_DIR)
     args = p.parse_args(argv)
-    files = [
-        f
-        for p_ in args.paths
-        for f in (sorted(p_.glob("DAT_MT_*_M1_*.csv")) if p_.is_dir() else [p_])
-    ]
-    if not files:
-        p.error("no DAT_MT_*_M1_*.csv files found")
-    for r in import_files(files, args.cache_dir):
+    if not any(files_in(p_) for p_ in args.paths):
+        p.error("no DAT_MT_*_M1_* files found")
+    for r in import_files(args.paths, args.cache_dir):
         print(f"{r.symbol}: {len(r.days_written)} days, {r.minutes:,} minutes -> {args.cache_dir}")
         if r.merged_minutes:
             print(f"  merged {r.merged_minutes} minutes that appeared twice (feed glitch)")
@@ -247,8 +309,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  cached as empty (no minutes): {day_ranges(r.days_empty)}")
         if r.days_partial:
             print(
-                f"  NOT written, only partly in the files (a New York month starts at 04:00 or 05:00 UTC): "
-                f"{day_ranges(r.days_partial)}; import the neighbouring month to complete them"
+                f"  NOT written, only partly in the files (a New York month / year starts at 04:00 "
+                f"or 05:00 UTC): {day_ranges(r.days_partial)}; import the neighbouring period "
+                "to complete them"
             )
     return 0
 

@@ -189,3 +189,76 @@ def test_minute_on_a_dst_change_night_stops_the_import(tmp_path, local):
     path = write(tmp_path, "a.csv", [f"{local},1.30,1.31,1.29,1.305,0"])
     with pytest.raises(HistdataError, match="DST"):
         parse_histdata_mt(path)
+
+
+# --- yearly files and zips (full history, 2026-10-09) ----------------------------------
+
+
+def test_year_file_name_and_period(tmp_path):
+    yf = month_file(tmp_path / "DAT_MT_XAUUSD_M1_2023.csv")
+    assert (yf.symbol, yf.month, yf.end, yf.yearly) == ("XAUUSD", date(2023, 1, 1),
+                                                        date(2024, 1, 1), True)  # fmt: skip
+    assert yf.utc_start == datetime(2023, 1, 1, 5, tzinfo=UTC)  # New York midnight, EST
+    assert yf.utc_end == datetime(2024, 1, 1, 5, tzinfo=UTC)
+
+
+YEAR_2023 = [
+    "2023.01.02,18:00,1830.000000,1831.000000,1829.000000,1830.500000,0",  # Mon 23:00 UTC
+    "2023.07.03,10:00,1920.000000,1921.000000,1919.000000,1920.500000,0",  # EDT: 14:00 UTC
+    "2023.12.29,16:59,2062.000000,2063.000000,2061.000000,2062.500000,0",  # Fri 21:59 UTC
+    "2023.12.31,18:00,2064.000000,2065.000000,2063.000000,2064.500000,0",  # Sun 23:00 UTC
+    "2023.12.31,23:59,2065.000000,2066.000000,2064.000000,2065.500000,0",  # = 01-01 04:59 UTC
+]
+YEAR_2024 = [
+    "2024.01.01,00:00,2066.000000,2067.000000,2065.000000,2066.500000,0",  # 01-01 05:00 UTC
+    "2024.01.02,03:00,2070.000000,2071.000000,2069.000000,2070.500000,0",
+]
+
+
+def test_a_year_file_is_imported_like_its_months(tmp_path):
+    path = write(tmp_path, "DAT_MT_XAUUSD_M1_2023.csv", YEAR_2023)
+    cache = tmp_path / "cache"
+    (r,) = import_files([path], cache)
+    assert r.days_written[0] == date(2023, 1, 2) and date(2023, 7, 3) in r.days_written
+    day = read_cached_day(cache_path(cache, "XAUUSD", date(2023, 7, 3)))
+    assert day["ts"].tolist() == [pd.Timestamp("2023-07-03 14:00", tz="UTC")]  # EDT
+    # 01-01 of 2023 starts at 05:00 UTC in this file and 2024-01-01 at 00:00 UTC in it:
+    # without the neighbouring years both are only partly covered
+    assert r.days_partial == [date(2023, 1, 1), date(2024, 1, 1)]
+
+
+def test_the_year_boundary_is_completed_by_the_next_year(tmp_path):
+    a = write(tmp_path, "DAT_MT_XAUUSD_M1_2023.csv", YEAR_2023)
+    b = write(tmp_path, "DAT_MT_XAUUSD_M1_202401.csv", YEAR_2024)  # a month of the next year
+    cache = tmp_path / "cache"
+    (r,) = import_files([a, b], cache)
+    assert date(2024, 1, 1) in r.days_written and date(2023, 12, 31) in r.days_written
+    new_year = read_cached_day(cache_path(cache, "XAUUSD", date(2024, 1, 1)))
+    # 31 Dec 23:59 New York (EST) = 1 Jan 04:59 UTC, from the 2023 file; 1 Jan 00:00 NY =
+    # 05:00 UTC, from the 2024 file: one UTC day from two files
+    assert new_year["ts"].tolist() == [
+        pd.Timestamp("2024-01-01 04:59", tz="UTC"),
+        pd.Timestamp("2024-01-01 05:00", tz="UTC"),
+    ]
+    dec31 = read_cached_day(cache_path(cache, "XAUUSD", date(2023, 12, 31)))
+    assert dec31["ts"].tolist() == [pd.Timestamp("2023-12-31 23:00", tz="UTC")]
+
+
+def test_year_files_inside_zips_and_folders(tmp_path):
+    import zipfile
+
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    with zipfile.ZipFile(raw / "HISTDATA_COM_MT_XAUUSD_M1_2023.zip", "w") as z:
+        z.writestr("DAT_MT_XAUUSD_M1_2023.csv", "\n".join(YEAR_2023) + "\n")
+        z.writestr("DAT_MT_XAUUSD_M1_2023.txt", "histdata.com readme")
+    write(raw, "DAT_MT_XAUUSD_M1_202401.csv", YEAR_2024)
+    (r,) = import_files([raw], tmp_path / "cache")
+    assert date(2024, 1, 1) in r.days_written and date(2023, 7, 3) in r.days_written
+
+
+def test_overlapping_periods_are_refused(tmp_path):
+    a = write(tmp_path, "DAT_MT_XAUUSD_M1_2024.csv", YEAR_2024)
+    b = write(tmp_path, "DAT_MT_XAUUSD_M1_202401.csv", YEAR_2024)
+    with pytest.raises(HistdataError, match="overlap"):
+        import_files([a, b], tmp_path / "cache")
