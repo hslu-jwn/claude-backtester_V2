@@ -35,7 +35,11 @@ Per symbol it prints:
    median, and jumps between consecutive minutes far above the median minute range.
 5. Lowest and highest bid per year (catches a wrong point factor over the whole history).
 6. Spot check: a few candles in UTC, New York and MT5 server time, to compare by hand
-   with TradingView or MT5.
+   with TradingView or MT5. Over more than a year of data (`history_spot_times`) they are
+   spread over the years and the time-zone seasons: US and EU summer time, winter time,
+   and the weeks where only the US is on summer time (March, late October / early
+   November); for those weeks the candle one hour earlier is printed too, so a source that
+   switches DST on other dates than New York shows up when compared with TradingView.
 7. Swing doji threshold: the median 5m candle range, the threshold the gold rule gives for
    it (`equivalent_doji_body`) and the one configured (confluences.md › Swing high / low).
 """
@@ -61,6 +65,8 @@ from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.detectors.swings import DOJI_RANGE_SHARE, SwingConfig, equivalent_doji_body
 
 NEW_YORK = ZoneInfo("America/New_York")
+EUROPE = ZoneInfo("Europe/London")  # EU summer time: same dates in London and Frankfurt
+SUMMER, WINTER, US_ONLY = "US+EU summer", "winter", "US summer / EU winter"
 MINUTE = timedelta(minutes=1)
 _SIDES = ("bid", "ask")
 _FIELDS = ("open", "high", "low", "close")
@@ -80,6 +86,8 @@ class DataCheckConfig:
     mt5_hours_after_new_york: int = 7
     spot_timeframe: Timeframe = Timeframe.M5
     spot_times_utc: tuple[time, ...] = (time(1, 0), time(8, 0), time(13, 30))
+    history_spot_time_utc: time = time(14, 0)  # spot candles over a long history
+    history_spot_count: int = 6
 
 
 DEFAULT_CONFIG = DataCheckConfig()
@@ -267,10 +275,16 @@ def price_range(traded: pd.DataFrame) -> pd.DataFrame:
 def spot_check(
     adapter: CacheAdapter, symbol: str, times: list[datetime], config: DataCheckConfig
 ) -> pd.DataFrame:
-    """The candles containing each time, with UTC, New York and MT5 server open times."""
+    """The candles containing each time, with UTC, New York and MT5 server open times and
+    the DST season; in a US-only summer time week also the candle one hour earlier."""
     tf = config.spot_timeframe
     rows = []
+    wanted = []
     for t in times:
+        wanted.append((t, dst_season(t)))
+        if dst_season(t) == US_ONLY:
+            wanted.append((t - timedelta(hours=1), "  ^ same, 1 h earlier"))
+    for t, season in wanted:
         open_ts = pd.Timestamp(t).floor(f"{tf.value}min")
         frame = adapter.fetch_frame(
             symbol, tf, open_ts.to_pydatetime(), (open_ts + tf.duration).to_pydatetime()
@@ -281,6 +295,7 @@ def spot_check(
             "UTC": open_ts.strftime("%Y-%m-%d %H:%M"),
             "New York": ny.strftime("%a %H:%M"),
             "MT5 server": mt5.strftime("%Y-%m-%d %H:%M"),
+            "season": season,
         }
         if frame.empty:
             row.update(open="no candle")
@@ -289,6 +304,41 @@ def spot_check(
             row.update(open=c.open, high=c.high, low=c.low, close=c.close, spread=c.spread)
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def dst_season(t: datetime) -> str:
+    """Which clocks are on summer time at `t`: both, none, or only the US (the weeks in
+    March and October / November where the two differ). The EU-only case can't happen."""
+    us = bool(t.astimezone(NEW_YORK).dst())
+    eu = bool(t.astimezone(EUROPE).dst())
+    if us and eu:
+        return SUMMER
+    return US_ONLY if us else WINTER
+
+
+def history_spot_times(traded_days: set[date], config: DataCheckConfig) -> list[datetime]:
+    """`history_spot_count` candles spread over the years, alternating the seasons summer,
+    winter and US-only summer time: the middle Tue/Wed/Thu with trading of that year and
+    season, at `history_spot_time_utc`."""
+    by: dict[tuple[int, str], list[datetime]] = {}
+    for day in sorted(traded_days):
+        if day.weekday() in (1, 2, 3):
+            t = datetime.combine(day, config.history_spot_time_utc, UTC)
+            by.setdefault((day.year, dst_season(t)), []).append(t)
+    years = sorted({y for y, _ in by})
+    seasons = (SUMMER, WINTER, US_ONLY)
+    out: list[datetime] = []
+    n = config.history_spot_count
+    for i in range(n):
+        year = years[round(i * (len(years) - 1) / max(n - 1, 1))]
+        season = seasons[i % 3]
+        near = sorted(years, key=lambda y: abs(y - year))
+        found = next((by[y, season] for y in near if (y, season) in by), None)
+        if found:
+            pick = found[len(found) // 2]
+            if pick not in out:
+                out.append(pick)
+    return sorted(out)
 
 
 def default_spot_times(
@@ -361,7 +411,13 @@ def check_symbol(
     report.price_range = price_range(traded)
     m5 = resample(traded, Timeframe.M5)
     report.median_m5_range = float((m5["high"] - m5["low"]).median())
-    spot_times = spot or default_spot_times(days, set(traded["ts"].dt.date), config)
+    traded_days = set(traded["ts"].dt.date)
+    long = days and (days[-1] - days[0]).days > 365
+    spot_times = spot or (
+        history_spot_times(traded_days, config)
+        if long
+        else default_spot_times(days, traded_days, config)
+    )
     if spot_times:
         report.spot = spot_check(CacheAdapter(cache_dir), symbol, spot_times, config)
     return report
@@ -412,6 +468,11 @@ def format_report(r: SymbolReport, config: DataCheckConfig = DEFAULT_CONFIG) -> 
         lines.append(
             f"  {kind.value:<24}{len(gaps):>6}   minutes: typical {typical}, min {mins[0]}, max {mins[-1]}"
         )
+        if kind is GapKind.UNEXPECTED and len({g.start.year for g in gaps}) > 1:
+            per_year = Counter(g.start.year for g in gaps)
+            lines.append(
+                "      per year: " + ", ".join(f"{y} {k}" for y, k in sorted(per_year.items()))
+            )
         if kind in (GapKind.SHORT, GapKind.DAILY_BREAK, GapKind.WEEKEND):
             continue
         shown = gaps if kind is not GapKind.UNEXPECTED else sorted(gaps, key=lambda g: -g.minutes)

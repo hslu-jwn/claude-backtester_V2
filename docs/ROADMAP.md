@@ -72,6 +72,51 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   **2023-02-20 .. 2023-07-28: many weekdays have exactly 960 / 900 / 840 minutes**, i.e.
   whole hours missing in histdata's files (gold most, also the GBP pairs; see the data
   check below).
+  **Data check over the full history** (`python -m backtester.data.check XAUUSD GBPUSD
+  GBPJPY`, 50 s). Integrity: 0 for every check (no duplicate timestamps after the
+  importer's merge, no broken candles, no price <= 0), nothing "not downloaded", bid
+  price range per year plausible (gold 1,451-5,597, GBPUSD 1.03-1.42, GBPJPY 124-220).
+  Unexpected gaps (no 17:00 New York close inside, >= 5 min), per year:
+
+  | | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 |
+  |---|---|---|---|---|---|---|---|
+  | XAUUSD | 19 | 13 | 14 | 557 | 18 | 22 | 14 |
+  | GBPUSD | 17 | 41 | 41 | 642 | 51 | 28 | 12 |
+  | GBPJPY | 42 | 21 | 28 | 636 | 17 | 24 | 11 |
+
+  - **2023-02 .. 2023-07: about 110-140 hours missing per month and symbol**, as holes of
+    1-3 whole hours on most weekdays (histdata's files). Backtests over that half year see
+    candles missing (e.g. a 30m candle with 0 or 30 minutes); the user decides whether to
+    leave it out or get it from another source.
+  - **Gold, every year, in the weeks where only the US is on summer time** (2nd Sunday of
+    March to the last Sunday of March; last Sunday of October to the 1st Sunday of
+    November): a 60-minute gap at **20:00-21:00 UTC** every weekday. Gold's daily break is
+    17:00-18:00 New York = 21:00-22:00 UTC in US summer time. A break one hour early, only
+    in exactly those weeks, means the files' clock there is one hour off from New York
+    time, as if histdata changed its clock on the European dates; then every UTC time we
+    computed in those ~3 weeks a year is **1 hour too early**. Not changed (the user checks
+    the candles below first). The GBP pairs have no such break to show it.
+  - Every symbol: a 60-minute gap on the Sunday of the EU clock change at 23:00 UTC.
+  - GBPUSD 2026-05-18: 4 h + 3 h + 2 h + 1 h missing. GBPUSD 2024-11-07: four 1-hour gaps.
+  - Days: 2026-09-25 (Friday) has no data for any symbol (missing in the file).
+  The data check now picks its spot candles over the whole history when it covers more
+  than a year (`history_spot_times`: years 2020-2026, US+EU summer, winter and US-only
+  summer time weeks at 14:00 UTC; in the US-only weeks also the candle 1 h earlier) and
+  prints the unexpected gaps per year. Tests in `tests/data/test_check.py`.
+  **For the user to compare with TradingView (M5, bid, UTC):** if TradingView's candle at
+  the UTC time equals our row, the time zone is right; if in the "US summer / EU winter"
+  weeks it equals the "1 h earlier" row instead, those weeks are shifted by one hour.
+
+  | UTC | season | XAUUSD O / H / L / C | GBPUSD O / H / L / C | GBPJPY O / H / L / C |
+  |---|---|---|---|---|
+  | 2020-07-14 14:00 | US+EU summer | 1800.598 / 1802.355 / 1800.058 / 1800.275 | 1.25090 / 1.25114 / 1.25048 / 1.25079 | 134.227 / 134.252 / 134.163 / 134.189 |
+  | 2021-03-09 14:00 | winter | 1713.354 / 1715.879 / 1713.204 / 1714.354 | 1.38868 / 1.38926 / 1.38824 / 1.38870 | 151.193 / 151.231 / 151.136 / 151.158 |
+  | 2022-03-23 14:00 | US summer / EU winter | 1931.743 / 1932.428 / 1930.538 / 1930.828 | 1.31950 / 1.32059 / 1.31950 / 1.32051 | 159.623 / 159.740 / 159.594 / 159.724 |
+  | 2022-03-23 13:00 | (1 h earlier) | 1935.073 / 1936.619 / 1934.828 / 1935.183 | 1.31751 / 1.31798 / 1.31750 / 1.31795 | 159.073 / 159.117 / 159.056 / 159.102 |
+  | 2024-07-16 14:00 | US+EU summer | 2442.605 / 2444.795 / 2442.515 / 2444.265 | 1.29536 / 1.29561 / 1.29532 / 1.29558 | 205.488 / 205.552 / 205.482 / 205.521 |
+  | 2025-03-05 14:00 | winter | 2899.735 / 2905.085 / 2899.105 / 2904.875 | 1.28221 / 1.28264 / 1.28194 / 1.28257 | 191.072 / 191.083 / 190.884 / 190.904 |
+  | 2026-03-18 14:00 | US summer / EU winter | 4869.495 / 4875.225 / 4865.475 / 4869.175 | 1.33260 / 1.33338 / 1.33258 / 1.33309 | 212.445 / 212.539 / 212.444 / 212.504 |
+  | 2026-03-18 13:00 | (1 h earlier) | 4877.875 / 4886.325 / 4871.798 / 4883.825 | 1.33257 / 1.33316 / 1.33236 / 1.33309 | 212.527 / 212.574 / 212.482 / 212.573 |
 - ☐ **0.4 MT5 adapter + feed comparison** (can wait until after Phase 2).
   `data/adapters/mt5_adapter.py` (server time → UTC, drop the forming candle, symbol
   mapping, unit-tested with a fake `MetaTrader5` module). Compare the last month of

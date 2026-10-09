@@ -253,3 +253,24 @@ def test_cli_reads_each_symbol_from_its_source(tmp_path, monkeypatch, capsys):
 def test_cli_clean_cache_exits_zero(tmp_path, capsys):
     write_day(tmp_path, date(2026, 9, 2), full_day("2026-09-02"))
     assert check.main(["XAUUSD", "--cache-dir", str(tmp_path)]) == 0
+
+
+# --- spot candles over a long history (full history, 2026-10-09) -----------------------
+
+
+def test_dst_seasons_including_the_weeks_where_only_the_us_is_on_summer_time():
+    assert check.dst_season(datetime(2024, 7, 16, 14, tzinfo=UTC)) == check.SUMMER
+    assert check.dst_season(datetime(2025, 1, 15, 14, tzinfo=UTC)) == check.WINTER
+    # 2026: US summer time from 03-08, EU from 03-29; US until 11-01, EU until 10-25
+    assert check.dst_season(datetime(2026, 3, 18, 14, tzinfo=UTC)) == check.US_ONLY
+    assert check.dst_season(datetime(2026, 10, 28, 14, tzinfo=UTC)) == check.US_ONLY
+    assert check.dst_season(datetime(2026, 3, 31, 14, tzinfo=UTC)) == check.SUMMER
+
+
+def test_history_spot_times_spread_over_years_and_seasons():
+    days = {date(2020, 1, 1) + pd.Timedelta(days=i).to_pytimedelta() for i in range(2400)}
+    times = check.history_spot_times(days, check.DEFAULT_CONFIG)
+    assert len(times) == 6
+    assert {t.year for t in times} >= {2020, 2026}
+    assert {check.dst_season(t) for t in times} == {check.SUMMER, check.WINTER, check.US_ONLY}
+    assert all(t.weekday() in (1, 2, 3) and t.hour == 14 for t in times)
