@@ -15,6 +15,7 @@ import pandas as pd
 
 from backtester.core.models import Timeframe
 from backtester.data.dukascopy import POINT_FACTORS
+from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
 
@@ -22,6 +23,8 @@ from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, sessio
 @dataclass(frozen=True)
 class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
+    # the day of D / W candles (ROADMAP 4.0b part 2; chart settings popover)
+    day_boundary: DayBoundary = DEFAULT_BOUNDARY
     # timeframe switch (ROADMAP 4.0b): extra candles loaded left of the view (overlay warm-up)
     switch_warmup_candles: int = 100
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below

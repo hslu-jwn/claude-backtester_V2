@@ -552,6 +552,26 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
     `max_candles` (e.g. a month on 1m) only the days the view needs are kept. The centre
     lands on the candle containing the centre time (5m 12:15 → the 30m 12:00 candle).
     Also fixed: the selected timeframe button turned purple after a click (Dash 4 style).
+  - **Part 2:** `Timeframe.W1`; `data/resample.py` (`DayBoundary`: 17:00 New York, the
+    default, or UTC midnight; `candle_close`, `calendar_label`), `CacheAdapter.fetch_frame`
+    (`boundary`; D / W read the cached days around the range), D and W buttons, "Daily /
+    weekly candles" in the chart settings popover (`ChartConfig.day_boundary`); tests in
+    `tests/data/test_resample.py` (DST start week 2026-03-08, DST end week 2026-11-01,
+    weekend, UTC option), `tests/data/test_cache_adapter.py`,
+    `tests/ui/test_daily_weekly_chart.py`. Check:
+    - A D / W candle's `ts` is its close minus 1 / 7 days (so "closed at ts + duration"
+      stays exact on DST days); on the chart it is named by its trading day (D) or the
+      Monday of its week (W), like TradingView.
+    - A D / W candle belongs to the range when it closes in it, and is only shown when
+      every UTC day it covers is cached: with the cache starting 2026-09-02, the first D
+      candle is 09-03 (09-02's day opened 09-01 21:00) and W shows the weeks of 09-07,
+      09-14 and 09-21 (the week of 09-28 closes 10-02, after the cached days).
+    - UTC option: days 00:00-24:00 UTC (Sunday evening is its own small candle), weeks
+      Sunday 00:00 to Sunday 00:00 UTC.
+    - Overlays run on D / W like on other timeframes (session zones stay on 5m-30m).
+    - A switch to D / W from a view wider than the D / W candles available shows all of
+      them (instead of keeping an empty, huge candle count).
+    - D and W can also be chosen for the strategy's timeframe settings (4.1) now.
 
 ## Phase 5: Risk & FTMO simulation
 

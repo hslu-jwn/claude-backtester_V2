@@ -22,6 +22,7 @@ class Timeframe(Enum):
     H1 = 60
     H4 = 240
     D1 = 1440
+    W1 = 10080
 
     @property
     def duration(self) -> timedelta:

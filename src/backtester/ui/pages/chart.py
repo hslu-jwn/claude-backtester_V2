@@ -83,7 +83,7 @@ from backtester.data.adapters.cache_adapter import (
     candles_from_frame,
     latest_run,
 )
-from backtester.data.resample import supported
+from backtester.data.resample import CALENDAR, DEFAULT_BOUNDARY, DayBoundary, supported
 from backtester.data.sources import SymbolSources, cached_block, warmup_start
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
@@ -111,6 +111,7 @@ from backtester.ui.overlays import (
 )
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
+CALENDAR_NAMES = {tf.name for tf in CALENDAR}
 DEFAULT_TIMEFRAME = Timeframe.M5.name
 REPLAY_OFF = {"on": False, "picking": False, "playing": False, "start": None, "now": None}
 
@@ -143,7 +144,11 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
         return None, "The end date is before the start date."
     try:
         frame = sources.adapter(symbol).fetch_frame(
-            symbol, Timeframe[timeframe], _midnight(start), _midnight(end + timedelta(days=1))
+            symbol,
+            Timeframe[timeframe],
+            _midnight(start),
+            _midnight(end + timedelta(days=1)),
+            config.day_boundary,
         )
     except MissingCacheError as e:
         return None, str(e)
@@ -318,9 +323,20 @@ def span_candles(span: dict, timeframe: Timeframe, config: ChartConfig = DEFAULT
 # --- Lightweight Charts payloads (ROADMAP 4.0a) -----------------------------------------
 
 
-def chart_key(symbol, timeframe, start_date, end_date) -> str:
-    """Identifies the loaded candles: payloads for another key are ignored by the browser."""
-    return f"{symbol}|{timeframe}|{start_date}|{end_date}"
+def chart_key(symbol, timeframe, start_date, end_date, config: ChartConfig = DEFAULT_CONFIG):
+    """Identifies the loaded candles: payloads for another key are ignored by the browser.
+    D / W candles also depend on the day boundary."""
+    key = f"{symbol}|{timeframe}|{start_date}|{end_date}"
+    if timeframe in CALENDAR_NAMES and config.day_boundary is not DEFAULT_BOUNDARY:
+        key += f"|{config.day_boundary.name}"
+    return key
+
+
+def with_boundary(config: ChartConfig, boundary: str | None) -> ChartConfig:
+    """The chart config with the day boundary chosen in the chart settings."""
+    if not boundary or boundary not in DayBoundary.__members__:
+        return config
+    return replace(config, day_boundary=DayBoundary[boundary])
 
 
 def overlay_settings(filters: Sequence[str] | None, strategy: str = "") -> OverlaySettings:
@@ -386,7 +402,7 @@ def base_payload(
     data = chart_data(replay, DEFAULT_SETTINGS, sources, config)
     tf = Timeframe[timeframe]
     payload = {
-        "key": chart_key(symbol, timeframe, start_date, end_date),
+        "key": chart_key(symbol, timeframe, start_date, end_date, config),
         "symbol": symbol,
         "tf": tf.name,
         "tfmin": tf.value,
@@ -420,7 +436,7 @@ def overlay_payload(
 ) -> dict | None:
     """Full drawings of the requested overlay types at the browser's cursor, or None if
     the request is for other candles than the ones selected now."""
-    if not request or request["key"] != chart_key(symbol, timeframe, start_date, end_date):
+    if not request or request["key"] != chart_key(symbol, timeframe, start_date, end_date, config):
         return None
     replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None or not 0 <= request["cursor"] < len(replay):
@@ -656,6 +672,15 @@ def layout(
                 value=[],
                 persistence=True,
                 className="tb-check tb-types",
+            ),
+            html.Div("Daily / weekly candles", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="chart-day-boundary",
+                options=[{"label": f"Day from {b.value}", "value": b.name} for b in DayBoundary],
+                value=DEFAULT_BOUNDARY.name,
+                clearable=False,
+                searchable=False,
+                persistence=True,
             ),
             html.Div("Detector settings", className="tb-pop-sub"),
             dcc.Checklist(
@@ -903,12 +928,15 @@ def register_callbacks(
         Input("chart-dates", "end_date"),
         Input("chart-replay-mode", "data"),
         Input("chart-resync", "data"),
+        Input("chart-day-boundary", "value"),
         State("chart-replay", "data"),
         State("chart-replay-span", "data"),
     )
-    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, replay_state, span):
+    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, boundary, replay_state,
+              span):  # fmt: skip
+        cfg = with_boundary(config, boundary)
         return base_payload(
-            sources, symbol, timeframe, start_date, end_date, replay_state, span, config
+            sources, symbol, timeframe, start_date, end_date, replay_state, span, cfg
         )
 
     @app.callback(
@@ -920,12 +948,14 @@ def register_callbacks(
         State("chart-dates", "end_date"),
         State("chart-filters", "value"),
         State("settings-current", "data"),
+        State("chart-day-boundary", "value"),
         prevent_initial_call=True,
     )
-    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store):
+    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store, boundary):
         strategy = settings_panel.store_json(store)
+        cfg = with_boundary(config, boundary)
         payload = overlay_payload(
-            sources, request, symbol, timeframe, start_date, end_date, filters, config, strategy
+            sources, request, symbol, timeframe, start_date, end_date, filters, cfg, strategy
         )
         return payload if payload is not None else no_update
 
@@ -986,13 +1016,15 @@ def register_callbacks(
         State("chart-view", "data"),
         State("chart-filters", "value"),
         State("settings-current", "data"),
+        State("chart-day-boundary", "value"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-9:-1]
-        strategy = settings_panel.store_json(args[-1])
+        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-10:-2]
+        strategy = settings_panel.store_json(args[-2])
+        cfg = with_boundary(config, args[-1])
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
-        replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
+        replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, cfg)
         clicked = ctx.triggered[0]["value"] if action == "click" else None
         clicked_x = clicked.get("x") if isinstance(clicked, dict) else None
         new = replay_step(action, state, replay, clicked_x)
@@ -1004,8 +1036,8 @@ def register_callbacks(
         stepping = new["on"] and not new["picking"] and not mode_changed and action != "data"
         if stepping and replay is not None and new["now"] != state["now"]:
             cursor = replay.cursor_at(datetime.fromisoformat(new["now"]))
-            key = chart_key(symbol, timeframe, start_date, end_date)
-            found = replay_delta(sources, view, replay, cursor, key, filters, config, strategy)
+            key = chart_key(symbol, timeframe, start_date, end_date, cfg)
+            found = replay_delta(sources, view, replay, cursor, key, filters, cfg, strategy)
             if found is not None:
                 delta, message = found, replay_message(replay, cursor)
         # only what changed, so a replay step re-renders nothing but the chart and message

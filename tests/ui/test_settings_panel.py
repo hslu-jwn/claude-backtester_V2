@@ -40,7 +40,7 @@ def test_labels_and_choices():
     kinds = next(leaf for leaf in leaves() if leaf.path == "strategy.confluence_kinds")
     assert sp.options_of(kinds) == ["FVG", "ORDER_BLOCK", "BPR"]  # no breaker / equilibrium
     tf = next(leaf for leaf in leaves() if leaf.path == "strategy.zone_timeframe")
-    assert "M30" in sp.options_of(tf) and "D1" not in sp.options_of(tf)
+    assert "M30" in sp.options_of(tf) and "D1" in sp.options_of(tf)  # D / W since 4.0b
 
 
 def test_opening_the_panel_shows_the_stored_settings():

@@ -35,10 +35,11 @@ import math
 from collections import Counter, OrderedDict
 from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 
+from backtester.data.resample import CALENDAR, calendar_label
 from backtester.detectors.base import Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
@@ -137,6 +138,15 @@ class ChartData:
     def __len__(self) -> int:
         return len(self._all)
 
+    def _time(self, ts: datetime) -> int:
+        """A candle's time on the time axis: its open time; D / W candles are named by
+        their trading day / week (midnight UTC of `calendar_label`), like TradingView."""
+        tf = self.replay.timeframe
+        if tf not in CALENDAR:
+            return _epoch(ts)
+        day = calendar_label(ts, tf, self.config.day_boundary)
+        return _epoch(datetime(day.year, day.month, day.day, tzinfo=UTC))
+
     # --- candles and session lines ------------------------------------------------------
 
     def candles(self, start: int, stop: int) -> dict:
@@ -144,7 +154,7 @@ class ChartData:
         part = self._all[max(start, 0) : stop]
         return {
             "x0": max(start, 0),
-            "t": [_epoch(c.ts) for c in part],
+            "t": [self._time(c.ts) for c in part],
             "o": [c.open for c in part],
             "h": [c.high for c in part],
             "l": [c.low for c in part],

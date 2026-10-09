@@ -417,6 +417,11 @@
   /* Centre the chart on time `v.center` with `v.count` candles visible; prices auto-fit. */
   function showView(v) {
     const t = S.times;
+    S.series.priceScale().applyOptions({ autoScale: true });
+    if (v.count >= t.length) { // fewer candles than were visible (e.g. D): show them all
+      S.chart.timeScale().fitContent();
+      return;
+    }
     let lo = 0, hi = t.length - 1;
     if (v.center < t[0]) hi = 0;
     while (lo < hi) { // last candle opening at or before the centre time

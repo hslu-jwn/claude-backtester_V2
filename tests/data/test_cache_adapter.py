@@ -105,9 +105,20 @@ def test_end_at_midnight_does_not_need_the_next_day(cache):
     CacheAdapter(cache).fetch("XAUUSD", Timeframe.H1, ts(3, 0), ts(4, 0))
 
 
-def test_d1_is_rejected(cache):
-    with pytest.raises(ValueError):
-        CacheAdapter(cache).fetch("XAUUSD", Timeframe.D1, ts(2, 0), ts(3, 0))
+def test_daily_candles_close_in_the_range_and_need_every_day_they_cover(tmp_path):
+    # 09-01 .. 09-04 cached (Tue .. Fri); a NY trading day closes 21:00 UTC (EDT)
+    for d in range(1, 5):
+        write_day(tmp_path, date(2026, 9, d), m1(("12:00", 100.0, 101.0, 99.0, 100.5, 1.0, 0.2),
+                                                   day=f"2026-09-0{d}"))  # fmt: skip
+    found = CacheAdapter(tmp_path).fetch_frame("XAUUSD", Timeframe.D1, ts(2, 0), ts(4, 0))
+    closes = [t + Timeframe.D1.duration for t in found.ts]
+    # trading days 09-02 and 09-03 close in [09-02, 09-04); 09-01's needs 08-31 (missing)
+    assert closes == [pd.Timestamp("2026-09-02 21:00", tz="UTC"),
+                      pd.Timestamp("2026-09-03 21:00", tz="UTC")]  # fmt: skip
+    first = CacheAdapter(tmp_path).fetch_frame("XAUUSD", Timeframe.D1, ts(1, 0), ts(2, 0))
+    assert first.empty  # its open 08-31 21:00 is not cached: no half candle
+    week = CacheAdapter(tmp_path).fetch_frame("XAUUSD", Timeframe.W1, ts(1, 0), ts(5, 0))
+    assert week.empty  # the week of 08-31 started on uncached days
 
 
 def test_show_prints_candles_with_extra_time_zone(cache, capsys):

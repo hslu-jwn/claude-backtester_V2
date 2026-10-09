@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pandas as pd
 import pytest
 from m1_frames import m1
 
 from backtester.core.models import Timeframe
-from backtester.data.resample import drop_flat_minutes, resample, supported
+from backtester.data.resample import (
+    DayBoundary,
+    calendar_label,
+    drop_flat_minutes,
+    resample,
+    supported,
+)
 
 
 def flat(hhmm: str, price: float = 100.0) -> tuple:
@@ -134,8 +140,107 @@ def test_empty_input_gives_empty_frame_with_candle_columns():
     assert list(out.columns) == ["ts", "open", "high", "low", "close", "volume", "spread"]
 
 
-def test_d1_is_not_supported():
-    assert not supported(Timeframe.D1)
-    assert all(supported(tf) for tf in (Timeframe.M1, Timeframe.M5, Timeframe.M30, Timeframe.H1))
-    with pytest.raises(ValueError):
-        resample(m1(("10:00", 1, 1, 1, 1, 1.0, 0.1)), Timeframe.D1)
+def test_d1_and_w1_are_supported_and_intraday_unchanged():
+    assert supported(Timeframe.D1) and supported(Timeframe.W1)
+    assert all(supported(tf) for tf in (Timeframe.M1, Timeframe.M5, Timeframe.M30, Timeframe.H4))
+
+
+# --- D and W: trading days (ROADMAP 4.0b part 2) ---------------------------------------
+
+
+def minutes(*stamps: str) -> pd.DataFrame:
+    """One M1 row per "YYYY-MM-DD HH:MM" (UTC); price = its position, so open / close show
+    which minutes a candle got."""
+    frames = [
+        m1((t[11:], i, i + 0.5, i - 0.5, i, 1.0, 0.1), day=t[:10]) for i, t in enumerate(stamps)
+    ]
+    return pd.concat(frames, ignore_index=True)
+
+
+def ts(s: str) -> datetime:
+    return datetime.fromisoformat(s).replace(tzinfo=UTC)
+
+
+def candles(frame, tf, boundary=DayBoundary.NEW_YORK_17):
+    out = resample(frame, tf, boundary)
+    return [
+        (t.to_pydatetime() + tf.duration, row.open, row.close)
+        for t, row in zip(out.ts, out.itertuples())
+    ]
+
+
+def test_daily_candle_runs_17_00_to_17_00_new_york_in_winter_and_summer():
+    # winter (EST, UTC-5): 17:00 NY = 22:00 UTC; summer (EDT, UTC-4): 21:00 UTC
+    winter = minutes("2026-01-13 21:59", "2026-01-13 22:00", "2026-01-14 21:59")
+    assert candles(winter, Timeframe.D1) == [
+        (ts("2026-01-13 22:00"), 0, 0),  # Tuesday's trading day closes at 22:00 UTC
+        (ts("2026-01-14 22:00"), 1, 2),  # 22:00 already belongs to Wednesday
+    ]
+    summer = minutes("2026-07-14 20:59", "2026-07-14 21:00")
+    assert [c[0] for c in candles(summer, Timeframe.D1)] == [
+        ts("2026-07-14 21:00"),
+        ts("2026-07-15 21:00"),
+    ]
+
+
+def test_dst_start_week_march_2026():
+    # US DST starts Sunday 2026-03-08. Friday 03-06 closes 22:00 UTC (EST); the Sunday
+    # open 17:00 EDT = 21:00 UTC belongs to Monday 03-09, which closes 21:00 UTC (EDT)
+    frame = minutes("2026-03-06 21:59", "2026-03-08 21:00", "2026-03-09 20:59")
+    assert candles(frame, Timeframe.D1) == [
+        (ts("2026-03-06 22:00"), 0, 0),
+        (ts("2026-03-09 21:00"), 1, 2),
+    ]
+    assert candles(frame, Timeframe.W1) == [
+        (ts("2026-03-06 22:00"), 0, 0),  # the week of 03-02 closes Friday 17:00 EST
+        (ts("2026-03-13 21:00"), 1, 2),  # the week of 03-09 closes Friday 17:00 EDT
+    ]
+
+
+def test_dst_end_week_november_2026():
+    # US DST ends Sunday 2026-11-01: Friday 10-30 closes 21:00 UTC (EDT), the Sunday open
+    # 17:00 EST = 22:00 UTC; a minute at 21:30 UTC on that Sunday is still before the open
+    frame = minutes("2026-10-30 20:59", "2026-11-01 21:30", "2026-11-01 22:00", "2026-11-02 21:59")
+    daily = candles(frame, Timeframe.D1)
+    assert daily[0] == (ts("2026-10-30 21:00"), 0, 0)
+    assert daily[-1] == (ts("2026-11-02 22:00"), 2, 3)  # Monday: Sunday 22:00 .. Monday 22:00
+    weekly = candles(frame, Timeframe.W1)
+    assert weekly[0] == (ts("2026-10-30 21:00"), 0, 0)
+    assert weekly[-1][0] == ts("2026-11-06 22:00")
+
+
+def test_a_weekend_makes_no_candle_and_monday_starts_on_sunday_evening():
+    # last Friday minute, then the Sunday 17:00 EDT open (21:00 UTC) and Monday
+    frame = minutes("2026-09-11 20:59", "2026-09-13 21:00", "2026-09-14 12:00")
+    assert candles(frame, Timeframe.D1) == [
+        (ts("2026-09-11 21:00"), 0, 0),
+        (ts("2026-09-14 21:00"), 1, 2),
+    ]
+    assert [c[0] for c in candles(frame, Timeframe.W1)] == [
+        ts("2026-09-11 21:00"),
+        ts("2026-09-18 21:00"),
+    ]
+
+
+def test_ts_plus_duration_is_the_close_and_labels_name_the_trading_day():
+    out = resample(minutes("2026-09-13 21:00"), Timeframe.D1)
+    assert out.ts[0].to_pydatetime() == ts("2026-09-13 21:00")  # close 09-14 21:00 - 1 day
+    assert calendar_label(ts("2026-09-13 21:00"), Timeframe.D1, DayBoundary.NEW_YORK_17) == (
+        date(2026, 9, 14)
+    )
+    week = resample(minutes("2026-09-13 21:00"), Timeframe.W1).ts[0].to_pydatetime()
+    assert week == ts("2026-09-11 21:00")  # close Friday 09-18 21:00 - 7 days
+    assert calendar_label(week, Timeframe.W1, DayBoundary.NEW_YORK_17) == date(2026, 9, 14)
+
+
+def test_utc_midnight_option():
+    frame = minutes("2026-09-13 21:00", "2026-09-13 23:59", "2026-09-14 00:00")
+    assert [c[0] for c in candles(frame, Timeframe.D1, DayBoundary.UTC)] == [
+        ts("2026-09-14 00:00"),
+        ts("2026-09-15 00:00"),
+    ]
+    weekly = resample(frame, Timeframe.W1, DayBoundary.UTC)
+    assert weekly.ts.tolist() == [ts("2026-09-13 00:00")]  # Sunday 00:00 .. Sunday 00:00 UTC
+    assert calendar_label(ts("2026-09-13 00:00"), Timeframe.W1, DayBoundary.UTC) == (
+        date(2026, 9, 14)
+    )
