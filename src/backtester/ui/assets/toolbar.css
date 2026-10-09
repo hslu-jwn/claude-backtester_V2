@@ -589,3 +589,27 @@ body {
   outline: none;
   border-color: var(--tb-accent);
 }
+
+/* Settings → Trading (ROADMAP 7.1) */
+.tr-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.tr-test-symbol {
+  width: 140px;
+}
+.tr-result {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  min-height: 1.4em;
+  background: #f8f9fd;
+  border: 1px solid var(--tb-line);
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.tr-result:empty {
+  display: none;
+}

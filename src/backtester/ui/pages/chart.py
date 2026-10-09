@@ -113,6 +113,7 @@ from backtester.ui import (
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
+    trading_panel,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
@@ -777,6 +778,19 @@ def layout(
                 persistence=True,
                 className="tb-check",
             ),
+            html.Div("Trading", className="tb-pop-sub"),
+            html.Div(
+                [
+                    html.Button(
+                        "Account connection…",
+                        id="tr-open",
+                        className="tb-run",
+                        n_clicks=0,
+                        **{"data-modal": "tr-modal"},
+                    )
+                ],
+                className="tb-pop-row",
+            ),
         ],
     )
     strategy = _popover(
@@ -976,6 +990,7 @@ def layout(
             dcc.Store(id="chart-goto"),
             dcc.Store(id="settings-current", storage_type="local"),
             settings_panel.layout(),
+            trading_panel.layout(),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
@@ -991,6 +1006,7 @@ def register_callbacks(
     app: Dash, sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG
 ) -> None:
     settings_panel.register_callbacks(app)
+    trading_panel.register_callbacks(app)
 
     @app.callback(
         Output("chart-dates", "min_date_allowed"),
