@@ -227,6 +227,19 @@
   overflow: hidden;
 }
 
+/* per year / quarter (ROADMAP 6.3): column groups per symbol */
+.rs-periods th.rs-group {
+  text-align: center;
+  color: var(--tb-text);
+  border-bottom: none;
+}
+.rs-periods .rs-group-start {
+  border-left: 1px solid var(--tb-line);
+}
+.rs-summary-toggle {
+  cursor: pointer;
+}
+
 /* trade list (dash_table): hover like TradingView's list */
 #rs-trades .dash-spreadsheet-container tr:hover td {
   background-color: #f0f3fa !important;

@@ -198,3 +198,23 @@ def test_trades_closing_at_the_same_time_are_one_drawdown_step():
     trades = [trade(2.0, 2.0, 0, 2), trade(-1.0, -1.0, 1, 2), trade(-1.0, -1.0, 3, 4)]
     assert summarize(trades)["max_drawdown_r_net"] == pytest.approx(1.0)
     assert min(p["drawdown"] for p in equity_curve(trades)) == pytest.approx(-1.0)
+
+
+def test_results_per_year_and_quarter_for_all_symbols_and_each():
+    from backtester.analytics.metrics import by_period, by_quarter, by_year
+
+    trades = [
+        trade(2.0, 1.8, 0, 1, symbol="XAUUSD"),  # 2026-09-02
+        trade(-1.0, -1.1, 2, 3, symbol="GBPUSD"),
+        trade(-1.0, -1.0, 24 * 120, 24 * 120 + 1, symbol="XAUUSD"),  # 2026-12-31
+        trade(3.0, 3.0, 24 * 150, 24 * 150 + 1, symbol="GBPUSD"),  # 2027-01-30
+    ]
+    years = by_period(trades, by_year)
+    assert list(years) == ["2026", "2027"]
+    assert years["2026"]["all"]["trades"] == 3 and years["2026"]["all"]["net_r_net"] == (
+        pytest.approx(1.8 - 1.1 - 1.0)
+    )
+    assert years["2026"]["XAUUSD"]["trades"] == 2 and years["2026"]["GBPUSD"]["trades"] == 1
+    assert years["2027"]["XAUUSD"]["trades"] == 0  # every symbol in every period
+    assert years["2026"]["all"]["max_drawdown_r_net"] == pytest.approx(2.1)  # own trades only
+    assert list(by_period(trades, by_quarter)) == ["2026 Q3", "2026 Q4", "2027 Q1"]

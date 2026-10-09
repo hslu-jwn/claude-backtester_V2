@@ -159,3 +159,12 @@ def test_pages_by_address_pass_the_focus_to_the_chart():
     page = app_module.page_for("/", sources, search)
     store = next(c for c in page.children if getattr(c, "id", None) == "chart-focus")
     assert store.data["symbol"] == "XAUUSD"
+
+
+def test_performance_tab_has_results_per_year_and_quarter_per_symbol(results_dir):
+    trades = read_trades(results_dir / RUN)
+    text = str(results.tab_content("performance", trades)[0])
+    assert "Per year" in text and "Per quarter" in text and "2026 Q3" in text
+    assert "All symbols" in text and "GBPUSD" in text
+    gold = str(results.tab_content("performance", results.filtered(trades, "XAUUSD"))[0])
+    assert "GBPUSD" not in gold  # one symbol: only the "all" columns (the same numbers)

@@ -22,7 +22,8 @@ summary.json) and `TradeRecord`s read back from trades.csv (the results page).
   break-even ends a streak.
 
 `split` groups trades by a key (`by_symbol`, `by_session`, …) and summarizes each group;
-`equity_curve` and `r_histogram` feed the results page's charts.
+`by_period` gives per year / quarter (ROADMAP 6.3) the summary of all trades and of each
+symbol; `equity_curve` and `r_histogram` feed the results page's charts.
 """
 
 from __future__ import annotations
@@ -144,6 +145,31 @@ SPLITS: dict[str, Callable] = {
     "TP outcome": tp_outcome,
     "Tag": by_tag,
 }
+
+
+def by_year(t) -> str:
+    """The year the trade was entered in (UTC, entry candle close)."""
+    return f"{t.entry_time:%Y}"
+
+
+def by_quarter(t) -> str:
+    return f"{t.entry_time:%Y} Q{(t.entry_time.month - 1) // 3 + 1}"
+
+
+def by_period(trades: Sequence, key: Callable = by_year) -> dict[str, dict]:
+    """{period: {"all": summary, "<symbol>": summary, …}}, periods in time order. A
+    period's max drawdown counts only its own trades (starting at 0)."""
+    groups: dict[str, list] = {}
+    for t in trades:
+        groups.setdefault(key(t), []).append(t)
+    symbols = sorted({t.symbol for t in trades})
+    out = {}
+    for period in sorted(groups):
+        rows = groups[period]
+        out[period] = {"all": summarize(rows)}
+        for s in symbols:
+            out[period][s] = summarize([t for t in rows if t.symbol == s])
+    return out
 
 
 def split(trades: Sequence, key: Callable) -> dict[str, dict]:

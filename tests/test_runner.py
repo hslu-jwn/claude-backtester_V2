@@ -252,3 +252,11 @@ def test_command_runs_a_preset_and_records_its_name(cache, tmp_path, capsys):
     assert presets == ["No costs", "No costs (modified)"]
     with pytest.raises(SystemExit):
         main([*argv, "--preset", "missing"])
+
+
+def test_per_year_printout(cache, tmp_path, capsys):
+    folder = cache.cache_dir("XAUUSD")
+    argv = ["xauusd", "--start", "2026-01-05", "--end", "2026-01-05", "--cache-dir", str(folder)]
+    assert main([*argv, "--out", str(tmp_path / "out")]) == 0
+    out = capsys.readouterr().out
+    assert "trades    win    net R  max DD" in out and "\n2026 " in out

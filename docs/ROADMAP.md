@@ -739,6 +739,34 @@ Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
     different months can differ slightly at their start (setups and levels from before the
     anchor are not known). Ranges longer than 183 days (`ChartConfig.trades_max_days`) show
     a message instead (the strategy runs about 40 s per year of 5m candles).
+  **Results per year / quarter (built 2026-10-09, awaiting the user's check):**
+  `analytics/metrics.py` `by_period` (`by_year`, `by_quarter`: per period the summary of
+  all symbols and of each), results page Performance tab "Per year" and (collapsible)
+  "Per quarter" tables (trades, win rate, net R, max drawdown in R; all symbols and each
+  symbol; one symbol when the filter shows one), `python -m backtester.run` prints the
+  per-year table too; trade list virtualized (17,747 rows: 25 s → 1.6 s to open). Tests in
+  `tests/analytics/test_metrics.py`, `tests/ui/test_results_page.py`, `tests/test_runner.py`.
+  Check: a trade belongs to the period it was entered in (UTC); a period's max drawdown
+  counts only its own trades, starting at 0.
+  **First full run** (`python -m backtester.run XAUUSD GBPUSD GBPJPY --start 2020-01-01
+  --end 2026-09-30 --preset Default`, `results/20261009-084815_XAUUSD-GBPUSD-GBPJPY`;
+  2020-01-01 isn't cached): 17,747 trades, win rate 34.5%, **net R −3,022.9 (gross
+  −895.1)**, max drawdown 3,027.5 R, profit factor 0.74, average R:R planned 1.76.
+
+  | year | all: trades / win / net R / max DD | XAUUSD | GBPUSD | GBPJPY |
+  |---|---|---|---|---|
+  | 2020 | 2,716 / 35.6% / −381.5 / 389.6 | 901 / 35.3% / −119.7 / 128.1 | 871 / 34.7% / −116.3 / 120.5 | 944 / 36.8% / −145.6 / 155.4 |
+  | 2021 | 2,655 / 35.1% / −460.1 / 461.8 | 850 / 35.4% / −141.9 / 143.6 | 865 / 34.5% / −125.1 / 125.4 | 940 / 35.5% / −193.1 / 198.7 |
+  | 2022 | 2,726 / 32.9% / −549.2 / 561.4 | 872 / 34.2% / −165.6 / 178.0 | 891 / 32.2% / −183.3 / 187.5 | 963 / 32.5% / −200.3 / 200.3 |
+  | 2023 | 2,397 / 34.5% / −448.0 / 453.8 | 789 / 34.3% / −182.6 / 182.6 | 800 / 33.6% / −140.3 / 151.6 | 808 / 35.4% / −125.2 / 145.4 |
+  | 2024 | 2,553 / 35.2% / −428.8 / 436.1 | 821 / 36.3% / −101.3 / 104.3 | 838 / 34.2% / −158.0 / 160.6 | 894 / 35.1% / −169.5 / 178.3 |
+  | 2025 | 2,680 / 34.0% / −445.7 / 454.3 | 833 / 34.5% / −99.2 / 99.2 | 872 / 35.2% / −116.0 / 127.9 | 975 / 32.5% / −230.5 / 239.7 |
+  | 2026 (to 09-30) | 2,020 / 34.4% / −309.6 / 317.7 | 663 / 34.1% / −46.9 / 57.4 | 682 / 33.7% / −117.4 / 126.6 | 675 / 35.3% / −145.3 / 152.2 |
+
+  Every year and every symbol is negative, also before costs (gross −0.05 R per trade,
+  net −0.17 R). Caveats from the data check above: 2023-02..07 has many missing hours
+  and, if the time-zone question is answered "shifted", about 3 weeks a year ran with
+  sessions an hour off. Gold's doji threshold makes 3-5 times more dojis before 2025.
 
 ## Phase 7: Live trading via MT5 (much later)
 

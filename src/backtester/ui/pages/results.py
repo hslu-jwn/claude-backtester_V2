@@ -6,7 +6,8 @@ TradingView Strategy Tester look (light theme, same style as the chart's toolbar
 - Header: run name, symbols, date range, settings preset, run date.
 - Tabs: **Overview** (stat cards, equity curve in R over time, gross and net, with the net
   drawdown shaded in a pane below; Lightweight Charts, `assets/results.js`),
-  **Performance summary** (all / long / short table, splits by symbol, session,
+  **Performance summary** (all / long / short table, per year and per quarter for all
+  symbols and each (ROADMAP 6.3), splits by symbol, session,
   long / short, confluence type, TP outcome and tag, R distribution histogram) and
   **List of trades** (sortable; clicking a trade opens the chart on its symbol and days
   with the Trades overlay and its confluences on, scrolled to the trade).
@@ -28,7 +29,16 @@ import plotly.graph_objects as go
 from dash import Dash, Input, Output, State, dash_table, dcc, html, no_update
 from dash.dash_table.Format import Format, Scheme, Sign
 
-from backtester.analytics.metrics import SPLITS, equity_curve, r_histogram, split, summarize
+from backtester.analytics.metrics import (
+    SPLITS,
+    by_period,
+    by_quarter,
+    by_year,
+    equity_curve,
+    r_histogram,
+    split,
+    summarize,
+)
 from backtester.analytics.records import TradeRecord, read_trades
 from backtester.runner import RESULTS_DIR
 from backtester.ui.chart_config import price_digits
@@ -349,6 +359,49 @@ def histogram_figure(trades: list[TradeRecord]) -> go.Figure:
     return fig
 
 
+PERIOD_COLUMNS = ("Trades", "Win rate", "Net R", "Max DD")
+
+
+def period_table(title: str, periods: dict[str, dict]) -> html.Div:
+    """Per year / quarter (ROADMAP 6.3): trades, win rate, net R and max drawdown, for all
+    symbols together and (several symbols) for each."""
+    groups = list(next(iter(periods.values())))  # "all", then the symbols
+    if len(groups) == 2:  # one symbol: "all" is the same
+        groups = groups[:1]
+    head1 = [html.Th("")] + [
+        html.Th("All symbols" if g == "all" else g, colSpan=len(PERIOD_COLUMNS),
+                className="rs-group")
+        for g in groups
+    ]  # fmt: skip
+    head2 = [html.Th("")] + [
+        html.Th(c, className="rs-group-start" if i == 0 else "")
+        for _ in groups
+        for i, c in enumerate(PERIOD_COLUMNS)
+    ]
+
+    def cells(s: dict) -> list[html.Td]:
+        return [
+            html.Td(str(s["trades"]), className="rs-group-start"),
+            html.Td(fmt_pct(s["win_rate"])),
+            html.Td(fmt_r(s["net_r_net"]), className=tone(s["net_r_net"])),
+            html.Td(fmt_r(s["max_drawdown_r_net"], sign=False)),
+        ]
+
+    rows = [
+        html.Tr([html.Td(period)] + [c for g in groups for c in cells(row[g])])
+        for period, row in periods.items()
+    ]
+    return html.Div(
+        [
+            html.Div(title, className="rs-section-title"),
+            html.Table(
+                [html.Thead([html.Tr(head1), html.Tr(head2)]), html.Tbody(rows)],
+                className="rs-table rs-periods",
+            ),
+        ]
+    )
+
+
 def performance(trades: list[TradeRecord]) -> html.Div:
     if not trades:
         return html.Div("No trades.", className="rs-empty")
@@ -356,6 +409,16 @@ def performance(trades: list[TradeRecord]) -> html.Div:
         [
             html.Div("Performance summary", className="rs-section-title"),
             summary_table(trades),
+            period_table(
+                "Per year (net R; max drawdown within the year)", by_period(trades, by_year)
+            ),
+            html.Details(
+                [
+                    html.Summary("Per quarter", className="rs-section-title rs-summary-toggle"),
+                    period_table("", by_period(trades, by_quarter)),
+                ],
+                open=len({by_year(t) for t in trades}) <= 2,
+            ),
             html.Div(
                 [split_table(title, split(trades, key)) for title, key in SPLITS.items()],
                 className="rs-splits",
@@ -448,6 +511,7 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
                 sort_action="native",
                 sort_by=[{"column_id": "id", "direction": "asc"}],
                 page_action="none",
+                virtualization=True,  # only the visible rows are drawn (years: 17,000+ trades)
                 fixed_rows={"headers": True},
                 style_as_list_view=True,
                 style_table={"height": "calc(100vh - 250px)", "overflowY": "auto"},

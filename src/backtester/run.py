@@ -14,9 +14,30 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
+from backtester.analytics.metrics import by_period, by_year
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
+
+
+def format_periods(trades) -> str:
+    """Per year (ROADMAP 6.3): trades, win rate, net R and max drawdown in R, all symbols
+    and each."""
+    periods = by_period(trades, by_year)
+    if not periods:
+        return ""
+    groups = list(next(iter(periods.values())))
+    header = "  ".join(f"{g:>31}" for g in groups)
+    columns = "  ".join(f"{'trades':>7}{'win':>7}{'net R':>9}{'max DD':>8}" for _ in groups)
+    lines = [f"year  {header}", f"      {columns}"]
+
+    def cells(s):
+        win = "-" if s["win_rate"] is None else f"{s['win_rate']:.0%}"
+        return f"{s['trades']:>7}{win:>7}{s['net_r_net']:>+9.1f}{s['max_drawdown_r_net']:>8.1f}"
+
+    for period, row in periods.items():
+        lines.append(f"{period:<6}" + "  ".join(cells(row[g]) for g in groups))
+    return "\n".join(lines)
 
 
 def format_summary(summary: dict) -> str:
@@ -90,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
         for note in run.notes:
             print(f"note: {note}")
     print(format_summary(result.summary()))
+    print()
+    print(format_periods(result.trades))
     print(f"\nresults: {folder}")
     return 0
 
