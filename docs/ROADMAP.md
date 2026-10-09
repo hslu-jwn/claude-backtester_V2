@@ -43,7 +43,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   `tests/data/fixtures/` are Dukascopy "TooManyRequests" replies, not data: download them again.
   Meanwhile GBPUSD / GBPJPY September 2026 come from histdata.com:
   `python -m backtester.data.histdata data/raw/histdata/` → `data/cache/histdata/`
-  (New York time with DST, verified against TradingView; see `ARCHITECTURE.md › histdata.com`).
+  (New York standard time, one hour later while Europe is on summer time; verified against
+  TradingView, see `ARCHITECTURE.md › histdata.com`).
   Each symbol is read from its own source's cache (`data/sources.py`), no `--cache-dir` needed.
   Done: each pair's median 5m candle range is measured and its doji threshold set
   (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low);
@@ -54,7 +55,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   **Full history (2026-10-09, confirmed by the user).** The user downloaded histdata.com
   for all three symbols: year files 2020-2025 (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`) and month
   files 2026-01..09. Built: `data/histdata.py` reads year files and zip files too (same
-  rules: New York time with DST → UTC, bid only, only UTC days fully covered are written;
+  rules: histdata's clock → UTC (corrected below), bid only, only UTC days fully covered are written;
   periods may not overlap), rows grouped per day in one pass; tests in
   `tests/data/test_histdata.py` (year file, 31 Dec / 1 Jan from two files, zip, overlap).
   Imported (`python -m backtester.data.histdata data/raw/histdata/`, 2 min):
@@ -80,43 +81,54 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
   | | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 |
   |---|---|---|---|---|---|---|---|
-  | XAUUSD | 19 | 13 | 14 | 557 | 18 | 22 | 14 |
-  | GBPUSD | 17 | 41 | 41 | 642 | 51 | 28 | 12 |
-  | GBPJPY | 42 | 21 | 28 | 636 | 17 | 24 | 11 |
+  | XAUUSD | 3 | 1 | 2 | 549 | 3 | 6 | 3 |
+  | GBPUSD | 15 | 41 | 41 | 643 | 51 | 28 | 12 |
+  | GBPJPY | 37 | 18 | 26 | 635 | 17 | 23 | 10 |
+
+  (After the time-zone fix below; before it, gold had 13-22 a year outside 2023, the
+  false 20:00 break.)
 
   - **2023-02 .. 2023-07: about 110-140 hours missing per month and symbol**, as holes of
     1-3 whole hours on most weekdays (histdata's files). Backtests over that half year see
     candles missing (e.g. a 30m candle with 0 or 30 minutes); the user decides whether to
     leave it out or get it from another source.
-  - **Gold, every year, in the weeks where only the US is on summer time** (2nd Sunday of
-    March to the last Sunday of March; last Sunday of October to the 1st Sunday of
-    November): a 60-minute gap at **20:00-21:00 UTC** every weekday. Gold's daily break is
-    17:00-18:00 New York = 21:00-22:00 UTC in US summer time. A break one hour early, only
-    in exactly those weeks, means the files' clock there is one hour off from New York
-    time, as if histdata changed its clock on the European dates; then every UTC time we
-    computed in those ~3 weeks a year is **1 hour too early**. Not changed (the user checks
-    the candles below first). The GBP pairs have no such break to show it.
-  - Every symbol: a 60-minute gap on the Sunday of the EU clock change at 23:00 UTC.
+  - **Time zone fixed (user's TradingView check, 2026-10-09).** Gold showed its daily
+    break at 20:00-21:00 UTC instead of 21:00-22:00 in exactly the weeks where only the US
+    is on summer time (2nd to last Sunday of March; last Sunday of October to 1st Sunday
+    of November). The user compared XAUUSD 5m 2026-03-18 14:00 UTC on TradingView (OANDA:
+    O 4878.655 H 4887.310 L 4872.340 C 4884.035): it was our 13:00 candle. histdata's clock
+    changes on the **European** dates: New York standard time (UTC−5), one hour later
+    while Europe is on summer time. `data/histdata.py › histdata_to_utc` now converts that
+    way (tests: `test_clock_changes_on_europes_dates`, the TradingView candle included);
+    the full history was re-imported. Now gold's break is at 21:00-22:00 UTC in those
+    weeks too, the Sunday opens are at 17:00 New York in every week, and the checked
+    candle is at 14:00 (4877.875 / 4886.325 / 4871.798 / 4883.825).
+  - **Open (for the user): the Sunday evening of Europe's change.** In every year and
+    symbol, histdata's files skip the hour 19:00-19:59 (their clock) on the March Sunday
+    and have it twice (all 60 minutes) on the October Sunday. So their clock seems to
+    change at about 00:00 UTC Monday, not at 01:00 UTC Sunday as converted now; then the
+    first 2-4 hours of those two Sundays are one hour off (now: a 1-hour gap at 23:00 UTC in
+    March, the repeated hour merged into 00:00 UTC in October). Check on TradingView,
+    GBPUSD 1h, Sunday 2026-03-29: ours are 21:00 O 1.32576 H 1.32645 L 1.32567 C 1.32601,
+    22:00 O 1.32597 H 1.32597 L 1.32357 C 1.32372, none at 23:00. If TradingView's 22:00 and
+    23:00 candles are these two, the change is at 00:00 UTC Monday.
   - GBPUSD 2026-05-18: 4 h + 3 h + 2 h + 1 h missing. GBPUSD 2024-11-07: four 1-hour gaps.
   - Days: 2026-09-25 (Friday) has no data for any symbol (missing in the file).
   The data check now picks its spot candles over the whole history when it covers more
   than a year (`history_spot_times`: years 2020-2026, US+EU summer, winter and US-only
   summer time weeks at 14:00 UTC; in the US-only weeks also the candle 1 h earlier) and
   prints the unexpected gaps per year. Tests in `tests/data/test_check.py`.
-  **For the user to compare with TradingView (M5, bid, UTC):** if TradingView's candle at
-  the UTC time equals our row, the time zone is right; if in the "US summer / EU winter"
-  weeks it equals the "1 h earlier" row instead, those weeks are shifted by one hour.
+  **Compared by the user on TradingView (M5, bid, UTC):** 2026-03-18 14:00 was the old
+  "1 h earlier" row, so those weeks were shifted (fixed above). Values after the fix:
 
   | UTC | season | XAUUSD O / H / L / C | GBPUSD O / H / L / C | GBPJPY O / H / L / C |
   |---|---|---|---|---|
   | 2020-07-14 14:00 | US+EU summer | 1800.598 / 1802.355 / 1800.058 / 1800.275 | 1.25090 / 1.25114 / 1.25048 / 1.25079 | 134.227 / 134.252 / 134.163 / 134.189 |
   | 2021-03-09 14:00 | winter | 1713.354 / 1715.879 / 1713.204 / 1714.354 | 1.38868 / 1.38926 / 1.38824 / 1.38870 | 151.193 / 151.231 / 151.136 / 151.158 |
-  | 2022-03-23 14:00 | US summer / EU winter | 1931.743 / 1932.428 / 1930.538 / 1930.828 | 1.31950 / 1.32059 / 1.31950 / 1.32051 | 159.623 / 159.740 / 159.594 / 159.724 |
-  | 2022-03-23 13:00 | (1 h earlier) | 1935.073 / 1936.619 / 1934.828 / 1935.183 | 1.31751 / 1.31798 / 1.31750 / 1.31795 | 159.073 / 159.117 / 159.056 / 159.102 |
+  | 2022-03-23 14:00 | US summer / EU winter | 1935.073 / 1936.619 / 1934.828 / 1935.183 | 1.31751 / 1.31798 / 1.31750 / 1.31795 | 159.073 / 159.117 / 159.056 / 159.102 |
   | 2024-07-16 14:00 | US+EU summer | 2442.605 / 2444.795 / 2442.515 / 2444.265 | 1.29536 / 1.29561 / 1.29532 / 1.29558 | 205.488 / 205.552 / 205.482 / 205.521 |
   | 2025-03-05 14:00 | winter | 2899.735 / 2905.085 / 2899.105 / 2904.875 | 1.28221 / 1.28264 / 1.28194 / 1.28257 | 191.072 / 191.083 / 190.884 / 190.904 |
-  | 2026-03-18 14:00 | US summer / EU winter | 4869.495 / 4875.225 / 4865.475 / 4869.175 | 1.33260 / 1.33338 / 1.33258 / 1.33309 | 212.445 / 212.539 / 212.444 / 212.504 |
-  | 2026-03-18 13:00 | (1 h earlier) | 4877.875 / 4886.325 / 4871.798 / 4883.825 | 1.33257 / 1.33316 / 1.33236 / 1.33309 | 212.527 / 212.574 / 212.482 / 212.573 |
+  | 2026-03-18 14:00 | US summer / EU winter | 4877.875 / 4886.325 / 4871.798 / 4883.825 | 1.33257 / 1.33316 / 1.33236 / 1.33309 | 212.527 / 212.574 / 212.482 / 212.573 |
   **Doji thresholds over time** (report only, no rule change; the user decides). The data
   check now prints, over more than a year, per year (per quarter in 2026): the median 5m
   range, the share of 5m candles that are dojis with the configured threshold and what
@@ -760,18 +772,21 @@ Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
 
   | year | all: trades / win / net R / max DD | XAUUSD | GBPUSD | GBPJPY |
   |---|---|---|---|---|
-  | 2020 | 2,716 / 35.6% / −381.5 / 389.6 | 901 / 35.3% / −119.7 / 128.1 | 871 / 34.7% / −116.3 / 120.5 | 944 / 36.8% / −145.6 / 155.4 |
-  | 2021 | 2,655 / 35.1% / −460.1 / 461.8 | 850 / 35.4% / −141.9 / 143.6 | 865 / 34.5% / −125.1 / 125.4 | 940 / 35.5% / −193.1 / 198.7 |
-  | 2022 | 2,726 / 32.9% / −549.2 / 561.4 | 872 / 34.2% / −165.6 / 178.0 | 891 / 32.2% / −183.3 / 187.5 | 963 / 32.5% / −200.3 / 200.3 |
-  | 2023 | 2,397 / 34.5% / −448.0 / 453.8 | 789 / 34.3% / −182.6 / 182.6 | 800 / 33.6% / −140.3 / 151.6 | 808 / 35.4% / −125.2 / 145.4 |
-  | 2024 | 2,553 / 35.2% / −428.8 / 436.1 | 821 / 36.3% / −101.3 / 104.3 | 838 / 34.2% / −158.0 / 160.6 | 894 / 35.1% / −169.5 / 178.3 |
-  | 2025 | 2,680 / 34.0% / −445.7 / 454.3 | 833 / 34.5% / −99.2 / 99.2 | 872 / 35.2% / −116.0 / 127.9 | 975 / 32.5% / −230.5 / 239.7 |
-  | 2026 (to 09-30) | 2,020 / 34.4% / −309.6 / 317.7 | 663 / 34.1% / −46.9 / 57.4 | 682 / 33.7% / −117.4 / 126.6 | 675 / 35.3% / −145.3 / 152.2 |
+  | 2020 | 2,718 / 35.7% / −366.2 / 374.3 | 909 / 35.1% / −121.4 / 129.7 | 875 / 35.0% / −104.1 / 108.3 | 934 / 36.9% / −140.7 / 150.6 |
+  | 2021 | 2,649 / 35.5% / −433.9 / 435.6 | 844 / 35.8% / −129.5 / 131.3 | 870 / 35.1% / −114.9 / 115.2 | 935 / 35.6% / −189.4 / 193.9 |
+  | 2022 | 2,707 / 32.8% / −553.2 / 565.5 | 868 / 33.5% / −180.7 / 193.1 | 888 / 32.5% / −174.9 / 179.5 | 951 / 32.3% / −197.6 / 197.6 |
+  | 2023 | 2,400 / 34.8% / −427.8 / 433.6 | 792 / 34.3% / −179.5 / 179.5 | 805 / 34.2% / −131.5 / 142.9 | 803 / 35.9% / −116.8 / 140.8 |
+  | 2024 | 2,571 / 35.0% / −444.1 / 451.4 | 826 / 35.5% / −117.9 / 120.9 | 840 / 34.6% / −151.6 / 154.2 | 905 / 35.0% / −174.7 / 183.5 |
+  | 2025 | 2,672 / 33.8% / −436.7 / 445.3 | 826 / 34.6% / −92.7 / 92.7 | 858 / 34.8% / −111.6 / 123.5 | 988 / 32.2% / −232.4 / 241.6 |
+  | 2026 (to 09-30) | 2,025 / 34.7% / −288.4 / 296.4 | 659 / 34.4% / −35.3 / 45.7 | 685 / 33.3% / −125.6 / 134.9 | 681 / 36.3% / −127.5 / 134.4 |
 
   Every year and every symbol is negative, also before costs (gross −0.05 R per trade,
-  net −0.17 R). Caveats from the data check above: 2023-02..07 has many missing hours
-  and, if the time-zone question is answered "shifted", about 3 weeks a year ran with
-  sessions an hour off. Gold's doji threshold makes 3-5 times more dojis before 2025.
+  net −0.17 R). Caveats from the data check above: 2023-02..07 has many missing hours;
+  gold's doji threshold makes 3-5 times more dojis before 2025.
+  **The table is the re-run after the time-zone fix**
+  (`results/20261009-135418_XAUUSD-GBPUSD-GBPJPY`, 7.5 min): 17,742 trades, win rate
+  34.6%, net R −2,950.4 (gross −825.3), max drawdown 2,955 R, profit factor 0.75. The
+  first run (above, before the fix) differs little: the ~3 shifted weeks a year.
 
 ## Phase 7: Live trading via MT5 (much later)
 

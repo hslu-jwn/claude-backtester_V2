@@ -13,13 +13,16 @@ unpacking. One minute per line:
     2026.09.01,00:00,1.354050,1.354070,1.354020,1.354060,0
     date,      time,  open,    high,    low,     close,   volume
 
-- Times are the minute's open in **New York local time with daylight saving**
-  (`America/New_York`: UTC−4 in summer, UTC−5 in winter), so every row is converted to UTC.
-  HistData's FAQ says "EST without daylight saving", but comparing candles with
-  TradingView showed otherwise (ARCHITECTURE.md › Data sources › histdata.com).
-  US clocks change on a Sunday at 02:00, when FX is closed, so the skipped and the
-  repeated local hour should have no minutes; if one does, the import stops
-  (`HistdataError`) instead of guessing its UTC time.
+- Times are the minute's open on **New York's standard time (UTC−5), moved one hour
+  forward while Europe is on summer time** (UTC−4 then), so every row is converted to UTC
+  (`histdata_to_utc`). HistData's FAQ says "EST without daylight saving", but comparing
+  candles with TradingView showed otherwise: the clock follows summer time, and on the
+  **European** dates. In the weeks where only the US is on summer time (March and late
+  October / early November) New York time with US daylight saving put every candle one
+  hour early (user, 2026-10-09: TradingView's XAUUSD 5m candle of 2026-03-18 14:00 UTC is
+  the one that was cached at 13:00). Europe changes on a Sunday at 01:00 UTC, when FX is
+  closed, so the skipped and the repeated hour should have no minutes; if one does, the
+  import stops (`HistdataError`) instead of guessing its UTC time.
 - Prices are **bid** only and already decimal (no point factor). The `ask_*` columns are
   left empty (NaN), so candles get `spread` = NaN (unknown).
 - Volume is always 0 in these files, i.e. unknown: it is stored as NaN, not 0. Minutes
@@ -29,8 +32,8 @@ unpacking. One minute per line:
 
 The cache has the same layout and columns as the Dukascopy one (`data/dukascopy.py`), but
 lives in its own folder (`data/cache/histdata/` by default) so the two sources never mix.
-A month file covers UTC from New York midnight of the 1st (04:00 UTC in summer, 05:00 in
-winter) to New York midnight of the next month's 1st (a year file: 1 January to the next
+A month file covers UTC from midnight of the 1st on that clock (04:00 UTC in European
+summer time, 05:00 otherwise) to midnight of the next month's 1st (a year file: 1 January to the next
 1 January, 05:00 UTC), so only UTC days fully inside the imported periods are written
 (the first day is only complete if the period before is imported too: e.g. 1 January
 00:00-05:00 UTC is in the previous year's file). Periods must not overlap (a year file and
@@ -56,7 +59,10 @@ import pandas as pd
 from backtester.data.dukascopy import _COLUMNS, _empty_cache_frame, _write_atomic, cache_path
 
 DEFAULT_HISTDATA_CACHE_DIR = Path("data/cache/histdata")
-HISTDATA_TZ = ZoneInfo("America/New_York")  # with DST, verified against TradingView
+# histdata's clock: New York's standard offset, + Europe's summer time (module docstring)
+NEW_YORK = ZoneInfo("America/New_York")
+EUROPE = ZoneInfo("Europe/London")  # the EU's summer time dates (all switch at 01:00 UTC)
+_HOUR = pd.Timedelta(hours=1)
 _FILE_NAME = re.compile(r"^DAT_MT_(?P<symbol>[A-Z0-9]+)_M1_(?P<period>\d{6}|\d{4})\.csv$")
 _RAW_COLUMNS = ["date", "time", "open", "high", "low", "close", "volume"]
 
@@ -67,7 +73,7 @@ class HistdataError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class MonthFile:
-    """One histdata file: a month or (`yearly`) a whole year, New York time."""
+    """One histdata file: a month or (`yearly`) a whole year, on histdata's clock."""
 
     path: Path
     symbol: str
@@ -172,13 +178,7 @@ def parse_histdata_mt(text_or_path, month_file_: MonthFile | None = None) -> pd.
     if raw.empty:
         return _empty_cache_frame()
     local = pd.to_datetime(raw["date"] + " " + raw["time"], format="%Y.%m.%d %H:%M")
-    try:
-        ts = local.dt.tz_localize(HISTDATA_TZ, ambiguous="raise", nonexistent="raise")
-    except ValueError as e:  # repeated (ambiguous) or skipped (nonexistent) local time
-        raise HistdataError(
-            f"local time that doesn't map to one UTC time (DST change night): {e}"
-        ) from e
-    ts = ts.dt.tz_convert(UTC)
+    ts = histdata_to_utc(local)
     o, h, lo, c = (raw[f].astype("float64") for f in ("open", "high", "low", "close"))
     bad = (h < lo) | (o > h) | (o < lo) | (c > h) | (c < lo) | (lo <= 0)
     if bad.any():
@@ -288,8 +288,39 @@ def _days_touched(start: datetime, end: datetime) -> list[date]:
     return [first + timedelta(days=i) for i in range((last - first).days + 1)]
 
 
+def _standard_offset(zone: ZoneInfo) -> timedelta:
+    """The zone's offset without summer time (from mid-January)."""
+    january = datetime(2000, 1, 15, tzinfo=zone)
+    return january.utcoffset() - january.dst()
+
+
+def _summer_time(utc: pd.Series) -> pd.Series:
+    """Europe's summer time at each UTC time (1 h or 0)."""
+    local = utc.dt.tz_convert(EUROPE).dt.tz_localize(None)
+    return local - utc.dt.tz_localize(None) - _standard_offset(EUROPE)
+
+
+def histdata_to_utc(local: pd.Series) -> pd.Series:
+    """histdata clock (naive) -> UTC: minus New York's standard offset, minus Europe's
+    summer time. A time in the hour Europe's change skips or repeats (Saturday evening on
+    this clock, FX closed) has no single answer: `HistdataError`."""
+    winter = (local - _standard_offset(NEW_YORK)).dt.tz_localize(UTC)  # if no summer time
+    summer = winter - _HOUR  # if summer time
+    is_winter = _summer_time(winter) == pd.Timedelta(0)
+    is_summer = _summer_time(summer) == _HOUR
+    unclear = is_winter == is_summer  # both (repeated hour) or neither (skipped hour)
+    if unclear.any():
+        raise HistdataError(
+            f"{unclear.sum()} local times in the hour Europe's summer time change skips or "
+            f"repeats, first: {local[unclear].iloc[0]}"
+        )
+    return winter.where(is_winter, summer)
+
+
 def _local_midnight(d: date) -> datetime:
-    return datetime.combine(d, datetime.min.time(), HISTDATA_TZ).astimezone(UTC)
+    """Midnight of `d` on histdata's clock, in UTC."""
+    local = pd.Series([pd.Timestamp(d)])
+    return histdata_to_utc(local).iloc[0].to_pydatetime()
 
 
 def main(argv: list[str] | None = None) -> int:

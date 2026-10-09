@@ -137,8 +137,12 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
   candle identical (same minutes, OHLC within 0.001), so the switch changes nothing for
   those days. Differences to Dukascopy: no ask prices (spread unknown, NaN), and the
   September 2026 files have **no rows for Friday 2026-09-25** (all three pairs).
-- Timestamps: **New York local time with daylight saving** (`America/New_York`: UTC−4 in
-  summer, UTC−5 in winter), converted to UTC on import.
+- Timestamps: **New York standard time (UTC−5), one hour later (UTC−4) while Europe is on
+  summer time**, converted to UTC on import (`histdata_to_utc`). Outside the weeks where
+  only the US is on summer time this equals New York time with daylight saving, which the
+  first check below found; the user's TradingView check of 2026-03-18 14:00 UTC (XAUUSD
+  5m, a US-only summer time week) showed the clock follows the **European** dates (see
+  ROADMAP 0.3).
   **This contradicts HistData's FAQ**, which says the files are "EST without daylight
   saving" (fixed UTC−5). Read as fixed UTC−5, the September 2026 files put the weekend at
   Fri 22:00 → Sun 22:00 UTC and the rollover at 22:00 UTC, one hour after the 17:00 New York
@@ -152,14 +156,15 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
   Both candles and the gap positions (below) decide it for New York time.
 
   After the switch, the data check finds the weekends at Fri 17:00 → Sun 17:00 New York
-  and GBPJPY's daily breaks at the 17:00 close. US clocks change on a Sunday at 02:00, when
-  FX is closed: a minute in the skipped or repeated local hour stops the import.
-  Re-check a winter month against TradingView when one is imported.
+  and GBPJPY's daily breaks at the 17:00 close. Europe changes at 01:00 UTC on a Sunday,
+  when FX is closed: a minute in the skipped or repeated hour stops the import. Open:
+  histdata's files skip / repeat the hour 19:00-19:59 (their clock) on that Sunday
+  evening, so their change may be at 00:00 UTC Monday (ROADMAP 0.3).
 - Bid only (ask columns empty, candle `spread` NaN). Volume is always 0 in the files and is
   stored as NaN (unknown). Non-trading minutes are **missing**, not flat filler, so the
   flat-zero-volume filter never drops a histdata minute.
-- Only UTC days fully inside the imported months are cached (a month runs from New York
-  midnight of the 1st: 04:00 UTC in summer, 05:00 UTC in winter). Minutes that appear twice (a feed glitch: single-tick rows written
+- Only UTC days fully inside the imported months are cached (a month runs from midnight of
+  the 1st on histdata's clock: 04:00 UTC in European summer time, 05:00 UTC otherwise). Minutes that appear twice (a feed glitch: single-tick rows written
   out of order) are merged in file order: first open, max high, min low, last close.
 
 ### MetaTrader 5 (FTMO feed, live trading)

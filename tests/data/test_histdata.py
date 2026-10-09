@@ -174,20 +174,41 @@ def test_file_name_gives_symbol_and_month(tmp_path):
         month_file(tmp_path / "GBPJPY.csv")
 
 
-def test_winter_month_starts_at_new_york_midnight_after_the_clock_change(tmp_path):
-    # DST ends Sun 2026-11-01 02:00 New York: Nov 1 00:00 is still EDT, Dec 1 00:00 is EST
-    mf = month_file(tmp_path / "DAT_MT_GBPUSD_M1_202611.csv")
-    assert mf.utc_start == datetime(2026, 11, 1, 4, tzinfo=UTC)
-    assert mf.utc_end == datetime(2026, 12, 1, 5, tzinfo=UTC)
+def test_month_starts_follow_europes_summer_time_dates(tmp_path):
+    # Europe's summer time ends Sun 2026-10-25 01:00 UTC (the US: 2026-11-01): Oct 1 00:00
+    # is UTC-4, Nov 1 00:00 already UTC-5 (TradingView check, 2026-10-09)
+    mf = month_file(tmp_path / "DAT_MT_GBPUSD_M1_202610.csv")
+    assert mf.utc_start == datetime(2026, 10, 1, 4, tzinfo=UTC)
+    assert mf.utc_end == datetime(2026, 11, 1, 5, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    ("local", "utc"),
+    [
+        # US summer time, Europe not yet: UTC-5. The user's TradingView check: XAUUSD 5m
+        # 2026-03-18 14:00 UTC (O 4878.655, H 4887.310, L 4872.340, C 4884.035 on OANDA)
+        ("2026.03.18,09:00", "2026-03-18 14:00"),
+        ("2026.10.28,09:00", "2026-10-28 14:00"),  # Europe back on winter time, the US not
+        ("2026.03.27,09:00", "2026-03-27 14:00"),  # Friday before Europe's change
+        ("2026.03.30,09:00", "2026-03-30 13:00"),  # Monday after: both on summer time
+        ("2026.10.23,09:00", "2026-10-23 13:00"),  # Friday before Europe's change back
+        ("2026.11.02,09:00", "2026-11-02 14:00"),  # both on winter time
+    ],
+)
+def test_clock_changes_on_europes_dates(tmp_path, local, utc):
+    frame = parse_histdata_mt(write(tmp_path, "a.csv", [f"{local},1.30,1.31,1.29,1.305,0"]))
+    assert frame["ts"][0] == pd.Timestamp(utc, tz="UTC")
 
 
 @pytest.mark.parametrize(
     "local",
-    ["2026.11.01,01:30", "2026.03.08,02:30"],  # repeated hour (fall back), skipped hour (spring)
+    # Europe's change at 01:00 UTC Sunday = Saturday 20:00 on this clock (FX closed):
+    # repeated hour (back to winter time), skipped hour (to summer time)
+    ["2026.10.24,20:30", "2026.03.28,20:30"],
 )
-def test_minute_on_a_dst_change_night_stops_the_import(tmp_path, local):
+def test_minute_in_europes_change_hour_stops_the_import(tmp_path, local):
     path = write(tmp_path, "a.csv", [f"{local},1.30,1.31,1.29,1.305,0"])
-    with pytest.raises(HistdataError, match="DST"):
+    with pytest.raises(HistdataError, match="summer time change"):
         parse_histdata_mt(path)
 
 
