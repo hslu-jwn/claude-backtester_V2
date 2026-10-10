@@ -1015,8 +1015,14 @@ in its results reported).
      no-lookahead), `tests/ui/test_breaker_overlay.py`; strategy 1's EQ tests run without
      breakers, plus a test that the breaker wins a same-candle tie with the EQ (strategy 1's
      rule: the most recently formed, then the one nearest the close).
-  4. ☐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each
+  4. ◐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each
      on/off per backtest, in the settings (4.1) and presets.
+     Strategy 1 (2026-10-10): already had them: "Entry confluence types"
+     (`confluence_kinds`: FVG, OB, breaker since 8.2.3, BPR) plus `use_equilibrium` (its
+     spec names this switch), both in Settings › Confluences and saved with presets. Added
+     `test_each_confluence_type_can_be_switched_off` (`test_setup.py`: switching a type off
+     removes its entries, the others stay). Strategy 2 gets the same in its config (8.4).
+     On the chart, the Overlay types panel already switches each type on/off.
 - ☐ **8.3 4h candles in TradingView alignment + AM/PM window clock.** 4h candles closing
   at 02/06/10/14/18/22 ET (DST-aware), built from 1m, as an option next to the current
   UTC-aligned 4h (strategy 1 keeps its own); 1h on full hours. Window clock (ET, NY DST):

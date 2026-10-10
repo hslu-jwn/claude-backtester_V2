@@ -306,3 +306,22 @@ def test_no_lookahead_signals_never_depend_on_later_candles():
     for k in (300, 577, 900):
         part = run_tracker(ohlc[:k])
         assert part == [s for s in full if s.index < k]
+
+
+def test_each_confluence_type_can_be_switched_off():
+    """confluences.md › Confluence toggles: a type switched off never triggers an entry; the
+    other types still do. Seeds 2 and 5 give FVG, OB, breaker and EQ entries (BPRs take the
+    same path as OBs)."""
+    defaults, covered = SessionZoneSweepConfig(), set()
+    for seed in (2, 5):
+        ohlc = random_days(6, seed=seed)
+        kinds = {s.confluence.kind for s in run_tracker(ohlc)}
+        covered |= kinds
+        for kind in kinds:
+            if kind is ZoneKind.EQUILIBRIUM:
+                config = SessionZoneSweepConfig(use_equilibrium=False)
+            else:
+                config = SessionZoneSweepConfig(confluence_kinds=defaults.confluence_kinds - {kind})
+            left = {s.confluence.kind for s in run_tracker(ohlc, config)}
+            assert kind not in left and left, (seed, kind)
+    assert covered >= {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BREAKER, ZoneKind.EQUILIBRIUM}
