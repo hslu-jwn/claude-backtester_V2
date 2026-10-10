@@ -61,6 +61,8 @@ class TradeRecord:
     confluence: str
     reason: str
     parts: tuple[dict, ...]
+    take_profit_3: float | None = None  # strategy 2 (files before it: none)
+    tp2_share: float | None = None
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:
@@ -91,6 +93,8 @@ class TradeRecord:
             confluence=row.get("confluence") or confluence_from_reason(reason),
             reason=reason,
             parts=tuple(json.loads(parts) if isinstance(parts, str) else parts),
+            take_profit_3=_float(row.get("take_profit_3")),
+            tp2_share=_float(row.get("tp2_share")),
         )
 
 

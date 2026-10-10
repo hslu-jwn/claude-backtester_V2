@@ -3,17 +3,24 @@
 The engine calls `on_candle` once per closed base-timeframe candle with lookahead-safe views
 of every timeframe the strategy declared. A strategy returns orders in price terms
 (entry, SL, TP); the engine fills them and records results in R. An order may close in
-two parts: `tp1_share` of the position at `take_profit`, the rest at `take_profit_2`.
+two parts (`tp1_share` of the position at `take_profit`, the rest at `take_profit_2`) or
+three (`tp1_share`, `tp2_share`, the rest at `take_profit_3`). When a trade has closed,
+the engine calls `on_trade_closed(order.ref, result)` before the strategy's next
+`on_candle` (strategy 2: one open trade per setup, re-entries).
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from datetime import datetime
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
+
+if TYPE_CHECKING:
+    from backtester.engine.trade import TradeResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +35,9 @@ class Order:
     take_profit_2: float | None = None  # the rest of the position closes here
     tp1_share: float = 1.0  # share closed at TP1; < 1 only with a take_profit_2
     break_even_after_tp1: bool = False  # SL of the rest to break-even (with costs) after TP1
+    take_profit_3: float | None = None  # with a TP3: TP2 closes tp2_share, TP3 the rest
+    tp2_share: float | None = None
+    ref: object = None  # the strategy's handle, passed back in on_trade_closed
 
 
 class Strategy(ABC):
@@ -38,6 +48,9 @@ class Strategy(ABC):
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         """`now` = close time of the current base candle. A view is None until its first
         candle has closed."""
+
+    def on_trade_closed(self, ref: object, result: TradeResult) -> None:  # noqa: B027
+        """The trade of the order with `ref` has closed (all parts). Default: nothing."""
 
     def session_records(self, run_end: datetime | None = None) -> list[dict]:
         """What the strategy saw per session, JSON-ready, for the results file (ROADMAP

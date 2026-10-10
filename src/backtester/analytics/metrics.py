@@ -32,7 +32,10 @@ import math
 from collections.abc import Callable, Iterable, Sequence
 
 BREAK_EVEN_TOL = 1e-9
-TP_OUTCOMES = ("TP1 + TP2", "TP1, rest out", "TP (one target)", "no TP")
+TP_OUTCOMES = (
+    "TP1 + TP2", "TP1, rest out", "TP (one target)", "no TP", "TP1 + TP2 + TP3",
+    "TP1 + TP2, rest out",
+)  # fmt: skip
 LAST_MINUTES_TAG = "last_90m"  # strategy/session_zone_sweep (no import: analytics is shared)
 
 
@@ -123,12 +126,14 @@ def by_confluence(t) -> str:
 
 def tp_outcome(t) -> str:
     """Two targets: both hit, TP1 only (the rest closed at break-even / SL / end of data)
-    or none; one target: hit or not. `parts` as in trades.csv (dicts with a "reason")."""
+    or none; three: all, TP1 + TP2, TP1 only or none; one target: hit or not. `parts` as in trades.csv (dicts with a "reason")."""
     hits = sum(p["reason"] == "take_profit" for p in t.parts)
     if hits == 0:
         return TP_OUTCOMES[3]
     if t.take_profit_2 is None:
         return TP_OUTCOMES[2]
+    if t.take_profit_3 is not None and hits >= 2:  # three targets (strategy 2)
+        return TP_OUTCOMES[4] if hits >= 3 else TP_OUTCOMES[5]
     return TP_OUTCOMES[0] if hits >= 2 else TP_OUTCOMES[1]
 
 

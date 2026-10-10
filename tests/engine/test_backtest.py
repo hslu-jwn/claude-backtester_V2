@@ -452,3 +452,77 @@ def test_bad_two_tp_orders_raise():
         run([ENTRY, QUIET], two_tps(tp2=102.0), NO_SESSION_BE)
     with pytest.raises(ValueError, match="tp1_share"):
         run([ENTRY, QUIET], two_tps(share=1.0), NO_SESSION_BE)
+
+
+# --- three TPs (strategy-ny-indices.md › Take Profit) -----------------------------------
+
+
+def three_tps(tp3=105.0, be=True):
+    """Entry 100, 1R = 2: TP1 102.4 (1.2R), TP2 104 (2R), TP3 105 (2.5R), a third each."""
+    return {
+        0: [
+            {
+                "direction": LONG,
+                "stop_loss": 98.0,
+                "take_profit": 102.4,
+                "take_profit_2": 104.0,
+                "take_profit_3": tp3,
+                "tp1_share": 1 / 3,
+                "tp2_share": 1 / 3,
+                "break_even_after_tp1": be,
+            }
+        ]
+    }
+
+
+def test_three_tps_close_a_third_each():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 104.1, 101.0, 103.9), (103.9, 105.2, 103.5, 105.0)]
+    [t] = run(ohlc, three_tps(), NO_SESSION_BE)
+    assert [p.price for p in t.parts] == [102.4, 104.0, 105.0]
+    assert [p.share for p in t.parts] == pytest.approx([1 / 3, 1 / 3, 1 / 3])
+    assert t.r_gross == pytest.approx((1.2 + 2.0 + 2.5) / 3)
+    assert t.planned_r == pytest.approx((1.2 + 2.0 + 2.5) / 3)
+    assert (t.take_profit_3, t.tp2_share) == (105.0, pytest.approx(1 / 3))
+    assert t.break_even_time == DEFAULT_START + 2 * M5  # after TP1
+
+
+def test_three_tps_rest_at_break_even_after_tp2():
+    ohlc = [ENTRY, TP1_CANDLE, (102.2, 104.1, 101.0, 103.9), (103.9, 104.0, 99.9, 100.5)]
+    [t] = run(ohlc, three_tps(), NO_SESSION_BE)
+    assert [p.reason for p in t.parts] == [
+        ExitReason.TAKE_PROFIT,
+        ExitReason.TAKE_PROFIT,
+        ExitReason.BREAK_EVEN,
+    ]
+    assert t.r_gross == pytest.approx((1.2 + 2.0) / 3)
+
+
+def test_all_three_tps_in_one_candle():
+    [t] = run([ENTRY, (100.2, 105.5, 100.1, 105.2)], three_tps(), NO_SESSION_BE)
+    assert len(t.parts) == 3 and t.exit_reason is ExitReason.TAKE_PROFIT
+
+
+def test_bad_three_tp_orders_raise():
+    with pytest.raises(ValueError, match="TP3"):
+        run([ENTRY, QUIET], three_tps(tp3=103.0), NO_SESSION_BE)
+
+
+class Notified(Scripted):
+    """Records the trades the engine reports closed, with the order's `ref`."""
+
+    def __init__(self, script):
+        super().__init__(script)
+        self.closed = []
+
+    def on_trade_closed(self, ref, result):
+        self.closed.append((ref, result.exit_reason, self.seen[-1][0] if self.seen else None))
+
+
+def test_the_strategy_hears_when_its_trade_closed_before_its_next_candle():
+    script = {0: [{"direction": LONG, "stop_loss": 98.0, "take_profit": 102.0, "ref": "a"}]}
+    strategy = Notified(script)
+    series = build_series([ENTRY, QUIET, (100.2, 102.5, 100.1, 102.2), QUIET])
+    [t] = run_backtest(strategy, [series], NO_SESSION_BE)
+    # closed by candle 2: reported before on_candle for candle 2 (last seen: candle 1)
+    assert strategy.closed == [("a", ExitReason.TAKE_PROFIT, DEFAULT_START + 2 * M5)]
+    assert t.exit_time == DEFAULT_START + 3 * M5

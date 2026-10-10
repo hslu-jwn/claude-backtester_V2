@@ -10,8 +10,10 @@ result on the chart (entry and exit at the chart levels, no costs):
 Net R takes the fills (long: enter at ask = bid + spread, exit at bid; short: enter at bid,
 exit at ask) and the commission:  r_net = r_gross - spread_r - commission_r.
 
-Partial closes (strategy-session-zones.md › Take profit, two TPs): `tp1_share` of the
-position closes at TP1, the rest at TP2 (or SL / break-even / end of data). Each closed
+Partial closes (strategy-session-zones.md › Take profit, two TPs; strategy-ny-indices.md ›
+Take Profit, three): `tp1_share` of the position closes at TP1, `tp2_share` at TP2 when
+there is a TP3, the rest at the last TP (or SL / break-even / end of data). Several TPs
+inside one candle (no SL) are all filled. Each closed
 part is a `PartialExit`; the trade's R is the share-weighted sum of its parts, gross and
 net (spread and commission are paid once per unit, so they stay as for one exit).
 After TP1 the rest's SL may move to the break-even level (with costs): from the next
@@ -87,6 +89,8 @@ class TradeResult:
     take_profit_2: float | None = None
     tp1_share: float = 1.0
     parts: tuple[PartialExit, ...] = ()  # in the order they were closed
+    take_profit_3: float | None = None
+    tp2_share: float | None = None  # with a TP3
 
     @property
     def risk(self) -> float:
@@ -96,12 +100,32 @@ class TradeResult:
         return _sign(self.direction) * (price - self.entry) / self.risk
 
     @property
+    def targets(self) -> list[tuple[float, float]]:
+        """(price, share) of each TP."""
+        return tp_targets(
+            self.take_profit, self.take_profit_2, self.take_profit_3, self.tp1_share,
+            self.tp2_share,
+        )  # fmt: skip
+
+    @property
     def planned_r(self) -> float:
         """R if every TP is hit (share-weighted), on the chart."""
-        if self.take_profit_2 is None:
-            return self.r_at(self.take_profit)
-        share = self.tp1_share
-        return share * self.r_at(self.take_profit) + (1 - share) * self.r_at(self.take_profit_2)
+        return sum(share * self.r_at(price) for price, share in self.targets)
+
+
+def tp_targets(
+    tp1: float,
+    tp2: float | None,
+    tp3: float | None,
+    tp1_share: float,
+    tp2_share: float | None,
+) -> list[tuple[float, float]]:
+    """(price, share) of each TP; the last one takes the rest."""
+    if tp2 is None:
+        return [(tp1, 1.0)]
+    if tp3 is None:
+        return [(tp1, tp1_share), (tp2, 1.0 - tp1_share)]
+    return [(tp1, tp1_share), (tp2, tp2_share), (tp3, 1.0 - tp1_share - tp2_share)]
 
 
 @dataclass(slots=True)
@@ -125,6 +149,9 @@ class OpenTrade:
     take_profit_2: float | None = None
     tp1_share: float = 1.0
     break_even_after_tp1: bool = False
+    take_profit_3: float | None = None
+    tp2_share: float | None = None
+    ref: object = None  # Order.ref
     spread: float = 0.0  # added to a short's exit (fills at ask)
     break_even_time: datetime | None = None
     mae_r: float = 0.0
@@ -151,6 +178,13 @@ class OpenTrade:
     def tp1_done(self) -> bool:
         return bool(self.parts)
 
+    @property
+    def targets(self) -> list[tuple[float, float]]:
+        return tp_targets(
+            self.take_profit, self.take_profit_2, self.take_profit_3, self.tp1_share,
+            self.tp2_share,
+        )  # fmt: skip
+
     def r_at(self, price: float) -> float:
         return self.sign * (price - self.entry) / self.risk
 
@@ -168,8 +202,8 @@ class OpenTrade:
 
         Only this candle's OHLC is used. SL and a TP both inside the candle: SL first
         (conservative). A candle that opens beyond the SL (gap) fills at its open; one that
-        opens beyond a TP fills at the TP (never better than planned). TP1 and TP2 inside
-        one candle (no SL): both are filled.
+        opens beyond a TP fills at the TP (never better than planned). Several TPs inside
+        one candle (no SL): all are filled.
         """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
         if self.sign * (worst - self.stop_loss) <= 0:
@@ -177,15 +211,18 @@ class OpenTrade:
             reason = ExitReason.BREAK_EVEN if self.break_even_time else ExitReason.STOP_LOSS
             self._exit(self.open_share, candle, now, gap_fill, reason)
             return
+        targets = self.targets
         hit_tp1 = False
-        if not self.tp1_done and self._beyond(best, self.take_profit):
-            share = self.tp1_share if self.take_profit_2 is not None else self.open_share
-            self._exit(share, candle, now, self.take_profit, ExitReason.TAKE_PROFIT)
-            hit_tp1 = True
+        for i in range(len(self.parts), len(targets)):  # every part closed so far was a TP
+            price, share = targets[i]
+            if not self._beyond(best, price):
+                break
+            rest = i == len(targets) - 1
+            self._exit(
+                self.open_share if rest else share, candle, now, price, ExitReason.TAKE_PROFIT
+            )
+            hit_tp1 = hit_tp1 or i == 0
         if self.is_closed:
-            return
-        if self.tp1_done and self._beyond(best, self.take_profit_2):
-            self._exit(self.open_share, candle, now, self.take_profit_2, ExitReason.TAKE_PROFIT)
             return
         if hit_tp1 and self.break_even_after_tp1:
             self.move_to_break_even(now)
@@ -246,4 +283,6 @@ class OpenTrade:
             take_profit_2=self.take_profit_2,
             tp1_share=self.tp1_share if self.take_profit_2 is not None else 1.0,
             parts=tuple(self.parts),
+            take_profit_3=self.take_profit_3,
+            tp2_share=self.tp2_share,
         )

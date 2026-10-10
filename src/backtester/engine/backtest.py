@@ -96,7 +96,9 @@ class Backtest:
                 trade.track_excursion(candle)
                 trade.on_candle(candle, now)
                 if trade.is_closed:
-                    closed.append(self._result(trade))
+                    result = self._result(trade)
+                    closed.append(result)
+                    self._strategy.on_trade_closed(trade.ref, result)
                 else:
                     self._check_break_even(trade, candle, now)
                     still_open.append(trade)
@@ -136,6 +138,12 @@ class Backtest:
                 raise ValueError(f"TP2 {order.take_profit_2} not beyond TP1 {order.take_profit}")
             if not 0 < order.tp1_share < 1:
                 raise ValueError(f"tp1_share {order.tp1_share} must be in (0, 1) with a TP2")
+        if order.take_profit_3 is not None:
+            tp2 = order.take_profit_2
+            if tp2 is None or sign * (order.take_profit_3 - tp2) <= 0:
+                raise ValueError(f"TP3 {order.take_profit_3} not beyond TP2 {tp2}")
+            if not order.tp2_share or 1 - order.tp1_share - order.tp2_share <= 1e-12:
+                raise ValueError("tp1_share + tp2_share must leave a share for TP3")
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol)
         check = None
@@ -159,6 +167,9 @@ class Backtest:
             take_profit_2=order.take_profit_2,
             tp1_share=order.tp1_share if order.take_profit_2 is not None else 1.0,
             break_even_after_tp1=order.break_even_after_tp1,
+            take_profit_3=order.take_profit_3,
+            tp2_share=order.tp2_share if order.take_profit_3 is not None else None,
+            ref=order.ref,
             spread=spread,
         )
 

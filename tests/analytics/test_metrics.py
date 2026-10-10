@@ -171,6 +171,18 @@ def test_tp_outcomes():
         "TP1, rest out"
     )
     assert tp_outcome(record(**two, parts=tp_parts("stop_loss"))) == "no TP"
+    three = {**two, "take_profit_3": "104", "tp2_share": "0.3333"}
+    hits = ("take_profit",) * 3
+    assert tp_outcome(record(**three, parts=tp_parts(*hits))) == "TP1 + TP2 + TP3"
+    assert tp_outcome(record(**three, parts=tp_parts(*hits[:2], "break_even"))) == (
+        "TP1 + TP2, rest out"
+    )
+    assert tp_outcome(record(**three, parts=tp_parts("take_profit", "break_even"))) == (
+        "TP1, rest out"
+    )
+    r = record(**three)
+    assert (r.take_profit_3, r.tp2_share) == (104.0, 0.3333)
+    assert record().take_profit_3 is None  # files written before TP3 existed
 
 
 def test_splits_group_and_summarize_in_first_seen_order():
