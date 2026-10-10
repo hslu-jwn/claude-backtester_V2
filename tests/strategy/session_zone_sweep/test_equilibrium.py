@@ -33,6 +33,7 @@ from backtester.engine.costs import CostConfig
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.signals import SetupTracker
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
+from backtester.strategy.session_zone_sweep.targets import stop_loss
 
 LONG = Direction.BULLISH
 
@@ -106,6 +107,8 @@ def test_close_inside_the_discount_half_and_wick_below_the_low_keep_it_alive():
     [sig] = run_tracker(LONDON + deep)
     assert sig.confluence.kind is ZoneKind.EQUILIBRIUM and sig.close == 108.9
     assert sig.eq_deepest == 108.0
+    # the wick went below the leg low: SL beyond it, 108.0 - 10% x 0.1 = 107.99
+    assert stop_loss(sig, None, SessionZoneSweepConfig()) == pytest.approx(107.99)
 
 
 def test_close_below_the_leg_low_invalidates_it():

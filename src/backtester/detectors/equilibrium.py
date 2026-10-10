@@ -11,7 +11,8 @@ Described bullish, bearish mirrored:
   candle; validation starts with the next candle.
 - Stop loss (`equilibrium_stop_loss`): beyond the leg's low, buffer = 10% of the distance
   from the leg's low to the deepest wick into the EQ before the entry; toggle: beyond that
-  deepest wick instead, same buffer.
+  deepest wick instead, same buffer. A wick below the leg's low (no close, so the EQ is
+  still valid): always beyond that wick (user, 2026-10-10).
 
 `EquilibriumDetector` makes one EQ per BOS of its own swings (detectors/bos.py, via the
 sweep detector, so only real BOS) for the chart and strategies that use those BOS.
@@ -101,10 +102,12 @@ def deepest_wick(view: SeriesView, zone: ZoneBox) -> float | None:
 
 
 def equilibrium_stop_loss(zone: ZoneBox, deepest: float, config: EquilibriumConfig) -> float:
-    """Spec example (long): leg low 100, EQ 150, deepest wick 140 -> 96 (toggle: 136)."""
+    """Spec example (long): leg low 100, EQ 150, deepest wick 140 -> 96 (toggle: 136);
+    wick 95 below the low -> 94.5."""
     sign, low = _sign(zone.direction), zone.far
     distance = abs(deepest - low)
-    base = deepest if config.sl_at_deepest_wick else low
+    below_low = sign * (deepest - low) < 0
+    base = deepest if config.sl_at_deepest_wick or below_low else low
     return base - sign * config.sl_buffer * distance
 
 

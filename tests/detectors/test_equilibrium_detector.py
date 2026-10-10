@@ -127,6 +127,15 @@ def test_stop_loss_spec_example():
     assert equilibrium_stop_loss(z, 160.0, EquilibriumConfig(sl_buffer=0.0)) == 200.0
 
 
+def test_stop_loss_goes_beyond_a_wick_below_the_leg_low():
+    # user, 2026-10-10: a wick below the low (no close) keeps the EQ; the SL then goes
+    # beyond that wick: leg low 100, wick 95 -> distance 5 -> SL 94.5 (not 99.5)
+    z = equilibrium_box(BULL, 0, 100.0, 1, 200.0, created_at=None)
+    assert equilibrium_stop_loss(z, 95.0, EquilibriumConfig()) == pytest.approx(94.5)
+    z = equilibrium_box(BEAR, 0, 200.0, 1, 100.0, created_at=None)
+    assert equilibrium_stop_loss(z, 205.0, EquilibriumConfig()) == pytest.approx(205.5)
+
+
 def test_deepest_wick_counts_the_candles_after_the_bos_up_to_now():
     series = build_series(SWEEP_THEN_BOS + TAP_CONFIRM)
     _, bull = boxes(run(None, series=series))

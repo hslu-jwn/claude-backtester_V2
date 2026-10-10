@@ -61,6 +61,7 @@
 - **EQ as 3rd confluence** (zone = whole leg):
   - Default: SL beyond the swing extreme, buffer = 10% of the distance swing extreme → deepest wick into the EQ (before entry).
   - ⚙️ EQ-only toggle: SL beyond the deepest wick into the EQ instead, buffer = 10% of the same distance.
+  - A wick beyond the swing extreme (no close): SL beyond that wick (`confluences.md` › Equilibrium).
   - Example long: swing low 100, BoS high 200, 50% = 150, deepest wick 140 → distance 40 → default SL 96, toggle SL 136.
 - After TP1 is hit, the SL moves to break-even (incl. spread and fees) and stays there.
 

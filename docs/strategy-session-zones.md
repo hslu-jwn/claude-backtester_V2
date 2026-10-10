@@ -49,7 +49,7 @@
 ## Stop loss
 - Just below the entry confluence's low, plus a buffer ⚙️.
 - If the confluence is small (⚙️ height < 0.5 × ATR): SL goes below the BOS leg's low instead.
-- **EQ as entry confluence** (rule set by the user 2026-10-10, same as strategy 2): SL beyond the leg's low, buffer = ⚙️ 10% of the distance from the leg's low to the deepest wick into the EQ before the entry; ⚙️ EQ-only toggle: SL beyond that deepest wick instead (same buffer). See `confluences.md` › Equilibrium.
+- **EQ as entry confluence** (rule set by the user 2026-10-10, same as strategy 2): SL beyond the leg's low, buffer = ⚙️ 10% of the distance from the leg's low to the deepest wick into the EQ before the entry; ⚙️ EQ-only toggle: SL beyond that deepest wick instead (same buffer); a wick below the leg's low: always beyond that wick. See `confluences.md` › Equilibrium.
 - **SL size** (rules set by the user, 2026-10-07), measured in 5m ATR at the entry:
   - **Big SL:** the trade is still taken (smaller position, same risk; in R nothing changes), as long as the SL isn't unreasonable: setting `max_sl_atr_mult` (default off) skips trades whose SL is wider. The TP must then still be at a real level (› Take profit), never a far fixed R.
   - **Small SL:** widened to `min_sl_atr_mult` × ATR when it is tighter than that ("I widen a very small one, but if it's not necessary I leave it"); default **off** (no starting value, confirmed by the user 2026-10-07), to be swept.
