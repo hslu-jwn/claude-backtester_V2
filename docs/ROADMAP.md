@@ -1078,8 +1078,11 @@ in its results reported).
   Tests: `tests/strategy/ny_index_sweep/` (`test_parts.py`; `test_strategy.py`: every
   decision on a 20-day random walk checked against the rules, no lookahead with cut
   histories, entry-TF confluence off), `tests/engine/test_backtest.py` (three TPs, the
-  callback). No hand-built AM / PM day yet (multi-timeframe 1m fixtures; the audit test
-  stands in for it). Choices made while building (check them):
+  callback), `test_setup_steps.py` (each branch of the state machine on real 1m / 5m
+  candles with injected BoS events and zones: funnel, entry-TF confluence off, X-candle
+  limit, close-beyond setting, deeper wick, opposite BoS, tap timeout, tap only after the
+  BoS, nothing in the move, zones created by the BoS, next 3rd confluence, entry BoS after
+  the tap, opposite entry-TF BoS, re-entry after the trade, PM 15m replaces 5m). Choices made while building (check them):
   - Sweeps are seen on closed 1m candles against the sweep-TF swings confirmed before that
     1m candle opened. One setup per route waits for its BoS at a time (a deeper wick moves
     its extreme). AM: 1h and 4h levels together, one setup per wick; the most extreme
