@@ -19,3 +19,6 @@ results/
 # Secrets (broker API keys, MT5 credentials)
 .env
 *.secret
+
+# graphify knowledge graph (rebuild with /graphify . --update)
+graphify-out/
