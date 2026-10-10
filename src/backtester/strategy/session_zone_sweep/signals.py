@@ -5,7 +5,7 @@ Per closed 5m candle (`update(now, v5, v30)`):
 1. 5m detectors: structure (BOS / with-trend breaks, 5m trend), FVG, OB, BPR, ATR. An FVG
    is usable only if it points with the 5m trend after its candle 3 closed (no trend =
    not used); OBs and BPRs have no trend rule. With `use_equilibrium`: the equilibrium of
-   every 5m break's move (see `equilibrium_zone`), validated like a zone.
+   every 5m break's move (detectors/equilibrium.py), validated like a zone.
 2. Every 30m candle closed by now: session zones (`SessionZoneTracker`), then each live
    zone's setup (sweep, 30m reaction, flips). A setup that just got its 30m reaction
    looks back at the 5m breaks during that 30m candle.
@@ -16,14 +16,14 @@ setup only sees 30m candles of the session the zone is active in. At most one en
 direction per candle: if several setups trigger on the same candle, the first live zone's
 signal is used and all of them restart.
 
-Equilibrium entry (strategy-session-zones.md › Entry sequence step 4, confluences.md › Equilibrium):
-the leg runs from the break's leg extreme (long: the BOS leg's low) to the move's high: the
-highest wick from that low up to the candle that confirms the move's end, the first 5m swing
-high confirmed after the break candle (that swing itself can be lower, e.g. after a weekend
-gap). From that confirming candle on, the leg's lower
-half (0.5 level down to the low) is validated like a zone (zone.py): a wick below 0.5 taps
-it, a green close back above 0.5 confirms it, a close below the low invalidates it. Only
-the setup whose BOS made the leg may use it.
+Equilibrium entry (strategy-session-zones.md › Entry sequence step 4, confluences.md ›
+Equilibrium, reworked 2026-10-10): the leg runs from the break's leg extreme (long: the BOS
+leg's low, the lowest point the move started at) to the high wick of the break candle,
+fixed there. From the next candle on, the leg's lower half (0.5 level down to the low) is
+validated like a zone (zone.py): a wick below 0.5 taps it, a green close back above 0.5
+confirms it, a close below the low invalidates it. Only the setup whose BOS made the leg
+may use it. Its entry signal carries the deepest wick into it (`EntrySignal.eq_deepest`)
+for the EQ stop loss.
 
 For the results file (journal.py) every `update` also leaves what it saw on this candle:
 `session_zone_events` (zones formed, roles, breaks, expiries), `zone_transitions` (taps,
@@ -41,9 +41,9 @@ from backtester.core.models import Direction
 from backtester.core.series import SeriesView
 from backtester.detectors.atr import Atr
 from backtester.detectors.bpr import BalancedPriceRange, BprConfig, BprDetector
+from backtester.detectors.equilibrium import deepest_wick, equilibrium_box
 from backtester.detectors.fvg import FairValueGap, FvgDetector
 from backtester.detectors.order_block import OrderBlock, OrderBlockDetector
-from backtester.detectors.swings import SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneBook, ZoneBox, ZoneKind, ZoneState, ZoneTransition
 from backtester.sessions import Session, session_of
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -65,31 +65,6 @@ from backtester.strategy.session_zone_sweep.zones import (
 )
 
 ROLE_DIRECTION = {Role.SUPPORT: Direction.BULLISH, Role.RESISTANCE: Direction.BEARISH}
-# the swing that ends a break's move (a bullish move ends at a swing high)
-MOVE_END = {Direction.BULLISH: SwingKind.HIGH, Direction.BEARISH: SwingKind.LOW}
-
-
-def equilibrium_zone(view: SeriesView, b: StructureBreak, end: SwingPoint) -> ZoneBox:
-    """The discount half of `b`'s move (long: 0.5 level down to the leg's low), existing
-    from the candle that confirmed the move's end swing `end` (`view`'s current candle).
-    The move's high: the highest wick from the leg's low to that candle (short mirrored).
-    Spec: strategy-session-zones.md › Entry sequence (equilibrium entry)."""
-    candles = view.window(b.leg_index, end.confirmed_index + 1)
-    if b.direction is Direction.BULLISH:
-        far = max(c.high for c in candles)
-    else:
-        far = min(c.low for c in candles)
-    mid = (b.leg_extreme + far) / 2
-    top, bottom = (mid, b.leg_extreme) if b.direction is Direction.BULLISH else (b.leg_extreme, mid)
-    return ZoneBox(
-        ZoneKind.EQUILIBRIUM,
-        b.direction,
-        top,
-        bottom,
-        b.leg_index,
-        end.confirmed_index,
-        end.confirmed_at,
-    )
 
 
 @dataclass
@@ -133,7 +108,6 @@ class SetupTracker:
         self._live: dict[SessionZone, LiveZone] = {}
         self._usable: set[ZoneBox] = set()  # open confluences a setup may use
         self._recent: list[StructureBreak] = []  # 5m breaks of the last 30m
-        self._eq_waiting: list[StructureBreak] = []  # breaks whose move hasn't ended yet
         self._eq_book = ZoneBook(doji)
         self._eq_confirmed_before = False  # the last candle confirmed an equilibrium
         self._equilibrium: dict[tuple[int, Direction], ZoneBox] = {}  # by break, still open
@@ -180,8 +154,8 @@ class SetupTracker:
         return breaks, confirmed
 
     def _update_equilibria(self, v5: SeriesView, breaks: list[StructureBreak]) -> list[ZoneBox]:
-        """Validate the open equilibria with this candle, then add those whose move ended
-        with it. Returns the ones this candle confirmed."""
+        """Validate the open equilibria with this candle, then add those of this candle's
+        breaks (validated from the next candle on). Returns the ones this candle confirmed."""
         transitions = self._eq_book.on_candle(v5)
         self.zone_transitions += transitions
         confirmed = [t.zone for t in transitions if t.state is ZoneState.CONFIRMED]
@@ -192,17 +166,12 @@ class SetupTracker:
             still = {*self._eq_book.open_zones, *confirmed}
             self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
         self._eq_confirmed_before = bool(confirmed)
-        waiting = []
-        for b in self._eq_waiting:
-            kind = MOVE_END[b.direction]
-            end = next((s for s in self.structure.new_swings if s.kind is kind), None)
-            if end is None:
-                waiting.append(b)
-                continue
-            zone = equilibrium_zone(v5, b, end)
+        candle = v5.current
+        for b in breaks:
+            end = candle.high if b.direction is Direction.BULLISH else candle.low
+            zone = equilibrium_box(b.direction, b.leg_index, b.leg_extreme, b.index, end, b.at)
             self._eq_book.add(zone)
             self._equilibrium[(b.index, b.direction)] = zone
-        self._eq_waiting = waiting + breaks  # a move ends after its break candle
         return confirmed
 
     def equilibrium_of(self, b: StructureBreak) -> ZoneBox | None:
@@ -317,6 +286,9 @@ class SetupTracker:
                     v5.cursor,
                     now,
                     v5.current.close,
+                    deepest_wick(v5, confluence)
+                    if confluence.kind is ZoneKind.EQUILIBRIUM
+                    else None,
                 ),
             )
             setup.reset(not_before=now)

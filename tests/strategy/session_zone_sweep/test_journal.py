@@ -66,7 +66,8 @@ def test_other_candidates_of_the_setup_are_kept_unconfirmed():
     assert ob["end"] == "run_end" and ob["end_time"] is None
     # part of the setup only from its step 4: the 30m reaction at 13:30 (BOS was before)
     assert all(c["linked_at"] >= DAY + "13:30:00+00:00" for c in ny["confluences"])
-    assert ("equilibrium", 109.3, 108.1) in confluences  # the BOS move's discount half
+    # the BOS move's discount half: leg 108.1 (c) -> 109.1 (d's high, the BOS candle)
+    assert ("equilibrium", 108.6, 108.1) in confluences
 
 
 def test_a_rejected_signal_is_setup_confirmed_but_not_traded():

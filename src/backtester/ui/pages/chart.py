@@ -106,6 +106,7 @@ from backtester.settings import from_json
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
+    equilibrium_overlay,  # noqa: F401  (registers the Equilibrium overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
     session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)

@@ -99,13 +99,14 @@ class _Side:
 
 class SweepDetector(Detector[LiquiditySweep]):
     """Incremental: `update(view)` once per closed candle, in order. Runs its own BOS
-    detector on the same view (`bos`)."""
+    detector on the same view (`bos`); the current candle's BOS are in `breaks`."""
 
     def __init__(self, doji_max_body: float, config: SweepConfig | None = None):
         self.doji_max_body = doji_max_body
         self.config = config or SweepConfig()
         self.bos = BosDetector(SwingDetector(doji_max_body))
         self._sides = {d: _Side() for d in Direction}
+        self.breaks: list[BreakOfStructure] = []
 
     @classmethod
     def for_symbol(
@@ -116,7 +117,8 @@ class SweepDetector(Detector[LiquiditySweep]):
     def update(self, view: SeriesView) -> list[LiquiditySweep]:
         # the swing detector inside checks the call order (once per candle, in order)
         swings_before = len(self.bos.swings)
-        breaks = {b.direction: b for b in self.bos.update(view)}
+        self.breaks = self.bos.update(view)
+        breaks = {b.direction: b for b in self.breaks}
         new_swings = self.bos.swings[swings_before:]
         events = []
         for direction, side in self._sides.items():

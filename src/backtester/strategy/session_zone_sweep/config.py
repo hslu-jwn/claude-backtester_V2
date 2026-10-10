@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from backtester.core.models import Timeframe
 from backtester.detectors.atr import StrongMoveConfig
+from backtester.detectors.equilibrium import EquilibriumConfig
 from backtester.detectors.fvg import FvgConfig
 from backtester.detectors.order_block import OrderBlockConfig
 from backtester.detectors.swings import SwingConfig
@@ -43,6 +44,9 @@ class SessionZoneSweepConfig:
         {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BPR}
     )
     use_equilibrium: bool = True  # the BOS move's equilibrium is an entry confluence too
+    # EQ stop loss (› Stop loss, EQ): beyond the leg's low + 10% of its distance to the
+    # deepest wick into the EQ; toggle: beyond that wick instead
+    equilibrium: EquilibriumConfig = field(default_factory=EquilibriumConfig)
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction

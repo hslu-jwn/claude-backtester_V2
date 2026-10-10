@@ -34,6 +34,7 @@ from enum import Enum
 from backtester.core.models import Candle, Direction
 from backtester.core.series import SeriesView
 from backtester.detectors.bos import BROKEN_KIND, breaks
+from backtester.detectors.equilibrium import move_start
 from backtester.detectors.swings import SwingDetector, SwingPoint, is_doji
 from backtester.detectors.zone import ZoneBox
 from backtester.strategy.session_zone_sweep.zones import SessionZone
@@ -79,7 +80,7 @@ class StructureTracker:
             is_bos = direction is not self.trend
             if is_bos:
                 self.trend = direction
-            leg_index, leg_extreme = _leg(view, direction, swing.index)
+            leg_index, leg_extreme = move_start(view, direction, swing.index)
             closed_at = candle.ts + view.timeframe.duration
             out.append(
                 StructureBreak(
@@ -91,18 +92,6 @@ class StructureTracker:
                 if swing.kind is kind:
                     self._open[direction] = swing
         return out
-
-
-def _leg(view: SeriesView, direction: Direction, start: int) -> tuple[int, float]:
-    """(index, price) of the opposite extreme between the broken swing's wick candle and
-    the breaking candle: the low a bullish break started from."""
-    sign = _sign(direction)
-    best_i, best = start, None
-    for i, c in enumerate(view.window(start, view.cursor + 1), start):
-        wick = c.low if sign > 0 else c.high
-        if best is None or sign * wick < sign * best:
-            best_i, best = i, wick
-    return best_i, best
 
 
 class Step(Enum):
@@ -124,6 +113,7 @@ class EntrySignal:
     index: int  # 5m candle that confirmed the confluence
     at: datetime  # its close time = entry time
     close: float  # entry price
+    eq_deepest: float | None = None  # equilibrium entry: deepest wick into it up to the entry
 
 
 class Setup:

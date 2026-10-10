@@ -983,13 +983,26 @@ in its results reported).
        itself).
      - The detector still pairs a sweep with a BOS on its own timeframe; the AM's sweep on
        1h / 4h with the BOS on the setup TF is strategy 2's job (8.4).
-  2. ☐ **Equilibrium rework** (› Equilibrium): leg = swing low (after a sweep: the sweep
+  2. ◐ **Equilibrium rework** (› Equilibrium): leg = swing low (after a sweep: the sweep
      extreme) → the **high wick of the BOS candle**, fixed at the BOS candle (was: up to
      the first swing high after the BOS); tap = wick below 50%, confirm = green close
      back above, invalidate = close below the leg's low. EQ SL rule (beyond the leg's low,
      buffer ⚙ 10% of swing low → deepest wick into the EQ; ⚙ EQ-only toggle: beyond the
      deepest wick). **Changes strategy 1** (`strategy-session-zones.md › Entry sequence`,
      › Stop loss): its tests re-run and the change in its results reported.
+     Built (2026-10-10): `detectors/equilibrium.py` (was a stub): `equilibrium_box`,
+     `move_start` (moved from strategy 1's `setup.py`), `deepest_wick`,
+     `equilibrium_stop_loss`, `EquilibriumConfig` (`sl_buffer` 10%, `sl_at_deepest_wick`
+     off) and `EquilibriumDetector` (one EQ per real BOS; leg from the sweep extreme when the
+     BOS made a liquidity sweep, else from the start of the BOS move); overlay
+     "Equilibrium" (indigo, ★ / ✕ sub-entries). Strategy 1 (`signals.py`) builds its EQ at
+     the break candle from its own 5m breaks (the leg start is unchanged: the BOS leg's
+     low); `EntrySignal.eq_deepest`; `targets.stop_loss` uses the EQ rule (no ATR buffer,
+     no small-confluence rule for an EQ); settings `strategy.equilibrium.*` under Stop loss.
+     Tests: `tests/detectors/test_equilibrium_detector.py` (incl. no-lookahead),
+     `tests/strategy/session_zone_sweep/test_equilibrium.py` (new scenario),
+     `tests/ui/test_equilibrium_overlay.py`. The old rule (leg up to the first swing high
+     after the BOS, 3.3c) is replaced.
   3. ☐ **Breaker block** = step 2.7 (› Breaker block), built here; 2.7 is marked done
      with it.
   4. ☐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each

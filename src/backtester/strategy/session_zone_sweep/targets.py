@@ -30,6 +30,7 @@ from dataclasses import dataclass
 
 from backtester.core.models import Direction
 from backtester.core.series import SeriesView
+from backtester.detectors.equilibrium import equilibrium_stop_loss
 from backtester.detectors.order_block import OrderBlockDetector
 from backtester.detectors.swings import SwingDetector, SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneBox, ZoneState, ZoneTransition
@@ -127,6 +128,8 @@ class Rejected:
 
 
 def stop_loss(signal: EntrySignal, atr: float | None, config: SessionZoneSweepConfig) -> float:
+    if signal.eq_deepest is not None:  # equilibrium: its own rule, no ATR buffer
+        return equilibrium_stop_loss(signal.confluence, signal.eq_deepest, config.equilibrium)
     sign = _sign(signal.direction)
     atr_value = atr or 0.0  # no ATR yet (warm-up): no buffer, never "small"
     base = signal.bos.leg_extreme if is_small(signal, atr, config) else signal.confluence.far
@@ -134,9 +137,14 @@ def stop_loss(signal: EntrySignal, atr: float | None, config: SessionZoneSweepCo
 
 
 def is_small(signal: EntrySignal, atr: float | None, config: SessionZoneSweepConfig) -> bool:
-    """The entry confluence is small (height < k x ATR): the SL goes below the BOS leg."""
+    """The entry confluence is small (height < k x ATR): the SL goes below the BOS leg.
+    Never for an equilibrium (its SL is beyond the leg anyway)."""
     zone = signal.confluence
-    return atr is not None and zone.top - zone.bottom < config.small_confluence_atr_mult * atr
+    return (
+        signal.eq_deepest is None
+        and atr is not None
+        and zone.top - zone.bottom < config.small_confluence_atr_mult * atr
+    )
 
 
 def zone_levels(

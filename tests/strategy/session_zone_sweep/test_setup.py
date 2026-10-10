@@ -257,7 +257,8 @@ def test_no_sweep_no_entry():
 
 def test_fvgs_against_the_5m_trend_are_not_used():
     """The FVG forms before the 5m BOS (no 5m trend yet at its candle 3), is tapped and
-    confirmed after the BOS: no entry."""
+    confirmed after the BOS: no entry. (Equilibrium off: h also taps the BOS move's EQ,
+    108.1 -> 109.3, and i confirms it.)"""
     ny = [
         bar(108.3, 107.6, hi=108.4, lo=107.4),  # a: sweep (30m opens 108.3)
         *NY_SETUP[1:3],  # b, c: 5m swing high 108.8
@@ -268,7 +269,9 @@ def test_fvgs_against_the_5m_trend_are_not_used():
         bar(109.2, 108.9, hi=109.25, lo=108.58),  # h: taps the FVG
         bar(108.9, 109.1, lo=108.85, hi=109.15),  # i: confirms it
     ]
-    assert run_tracker(LONDON + ny) == []
+    assert run_tracker(LONDON + ny, SessionZoneSweepConfig(use_equilibrium=False)) == []
+    [eq] = run_tracker(LONDON + ny)
+    assert eq.confluence.kind is ZoneKind.EQUILIBRIUM
 
 
 def test_skip_tokyo_does_not_touch_a_new_york_setup():
