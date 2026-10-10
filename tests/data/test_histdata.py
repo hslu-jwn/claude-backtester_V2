@@ -283,3 +283,62 @@ def test_overlapping_periods_are_refused(tmp_path):
     b = write(tmp_path, "DAT_MT_XAUUSD_M1_202401.csv", YEAR_2024)
     with pytest.raises(HistdataError, match="overlap"):
         import_files([a, b], tmp_path / "cache")
+
+
+# --- indices and pair subfolders (2026-10-10) -----------------------------------------
+
+NAS_SEPT = [
+    "2026.09.02,09:30,29051.930000,29055.470000,28997.290000,29037.240000,0",  # 13:30 UTC
+]
+
+
+@pytest.mark.parametrize(("theirs", "ours"), [("NSXUSD", "NAS100"), ("SPXUSD", "US500")])
+def test_histdata_index_names_are_cached_under_ours(tmp_path, theirs, ours):
+    assert month_file(tmp_path / f"DAT_MT_{theirs}_M1_2023.csv").symbol == ours
+    path = write(tmp_path, f"DAT_MT_{theirs}_M1_202609.csv", NAS_SEPT)
+    (r,) = import_files([path], tmp_path / "cache")
+    assert r.symbol == ours
+    day = read_cached_day(cache_path(tmp_path / "cache", ours, date(2026, 9, 2)))
+    assert day["ts"].tolist() == [pd.Timestamp("2026-09-02 13:30", tz="UTC")]
+
+
+def test_index_daily_break_moves_with_golds_clock(tmp_path):
+    # The indices' break starts 16:15 New York. In the week only the US is on summer time
+    # histdata writes it at 15:15 (like gold's 17:00 close at 16:00); converted, both
+    # weeks give 16:15 NY = 20:15 UTC (summer time) / 21:15 UTC (winter).
+    lines = [
+        "2026.03.18,15:14,24400.0,24401.0,24399.0,24400.5,0",  # US-only summer time week
+        "2026.01.14,16:14,25400.0,25401.0,25399.0,25400.5,0",  # winter
+        "2026.07.15,16:14,26400.0,26401.0,26399.0,26400.5,0",  # US + EU summer time
+    ]
+    ts = parse_histdata_mt(write(tmp_path, "a.csv", lines))["ts"]
+    ny = [t.tz_convert("America/New_York").strftime("%H:%M") for t in ts]
+    assert ny == ["16:14", "16:14", "16:14"]
+
+
+def test_a_folder_of_pair_subfolders_and_single_files(tmp_path):
+    import zipfile
+
+    raw = tmp_path / "raw"
+    (raw / "XAUUSD").mkdir(parents=True)
+    (raw / "NAS100").mkdir()
+    with zipfile.ZipFile(raw / "XAUUSD" / "HISTDATA_COM_MT_XAUUSD_M1_2023.zip", "w") as z:
+        z.writestr("DAT_MT_XAUUSD_M1_2023.csv", "\n".join(YEAR_2023) + "\n")
+    write(raw / "XAUUSD", "DAT_MT_XAUUSD_M1_202401.csv", YEAR_2024)
+    write(raw / "NAS100", "DAT_MT_NSXUSD_M1_202609.csv", NAS_SEPT)
+    write(raw / "NAS100", "notes.txt", ["not a histdata file"])
+    nas, gold = import_files([raw], tmp_path / "cache")
+    assert (nas.symbol, gold.symbol) == ("NAS100", "XAUUSD")
+    assert date(2026, 9, 2) in nas.days_written and date(2024, 1, 1) in gold.days_written
+    # a single file in a subfolder still works on its own
+    (single,) = import_files([raw / "NAS100" / "DAT_MT_NSXUSD_M1_202609.csv"], tmp_path / "c2")
+    assert single.symbol == "NAS100"
+
+
+def test_the_same_file_flat_and_in_a_subfolder_is_refused(tmp_path):
+    raw = tmp_path / "raw"
+    (raw / "NAS100").mkdir(parents=True)
+    write(raw, "DAT_MT_NSXUSD_M1_202609.csv", NAS_SEPT)
+    write(raw / "NAS100", "DAT_MT_NSXUSD_M1_202609.csv", NAS_SEPT)
+    with pytest.raises(HistdataError, match="overlap"):
+        import_files([raw], tmp_path / "cache")

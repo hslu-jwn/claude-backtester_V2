@@ -27,7 +27,6 @@ from backtester.data.adapters.cache_adapter import (
     MissingCacheError,
     candles_from_frame,
 )
-from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import supported
 from backtester.data.sources import DEFAULT_SOURCES
 from backtester.detectors.atr import StrongMoveConfig, StrongMoveFilter
@@ -40,7 +39,7 @@ ATR_WARMUP_EXTRA = timedelta(days=4)
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("symbol", choices=sorted(POINT_FACTORS))
+    p.add_argument("symbol", choices=DEFAULT_SOURCES.symbols)
     p.add_argument("timeframe", choices=[tf.name for tf in Timeframe if supported(tf)])
     p.add_argument("start", type=datetime.fromisoformat, help="UTC, e.g. 2026-09-02T13:00")
     p.add_argument("end", type=datetime.fromisoformat, help="UTC, exclusive")

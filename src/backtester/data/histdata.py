@@ -1,9 +1,15 @@
 """Import histdata.com M1 files (MetaTrader format) into the Parquet cache.
 
     python -m backtester.data.histdata data/raw/histdata/
+    python -m backtester.data.histdata data/raw/histdata/NAS100/
     python -m backtester.data.histdata data/raw/histdata/DAT_MT_GBPUSD_M1_202609.csv
 
 Spec: ARCHITECTURE.md › Data sources › histdata.com.
+
+A folder is searched with its subfolders (`data/raw/histdata/<SYMBOL>/`, one per pair).
+histdata's index names are cached under ours (`SYMBOL_NAMES`: NSXUSD -> NAS100,
+SPXUSD -> US500); the indices use the same clock as forex and gold (their daily break
+moves with gold's in the US-only summer time weeks).
 
 One file per symbol and month, `DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, or per symbol and year
 for full past years, `DAT_MT_{SYMBOL}_M1_{YYYY}.csv`; either may come inside a zip file
@@ -52,6 +58,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from itertools import pairwise
 from pathlib import Path
+from types import MappingProxyType
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -65,6 +72,8 @@ EUROPE = ZoneInfo("Europe/London")  # the EU's summer time dates (all switch at 
 _HOUR = pd.Timedelta(hours=1)
 _FILE_NAME = re.compile(r"^DAT_MT_(?P<symbol>[A-Z0-9]+)_M1_(?P<period>\d{6}|\d{4})\.csv$")
 _RAW_COLUMNS = ["date", "time", "open", "high", "low", "close", "volume"]
+# histdata's symbol in the file name -> ours (the name used by the cache, chart, costs)
+SYMBOL_NAMES = MappingProxyType({"NSXUSD": "NAS100", "SPXUSD": "US500"})
 
 
 class HistdataError(ValueError):
@@ -133,22 +142,25 @@ def month_file(path: Path, member: str | None = None) -> MonthFile:
             f"{name}: expected a name like DAT_MT_GBPUSD_M1_202609.csv (month) "
             "or DAT_MT_GBPUSD_M1_2023.csv (year)"
         )
-    period = m["period"]
+    period, symbol = m["period"], SYMBOL_NAMES.get(m["symbol"], m["symbol"])
     if len(period) == 4:
-        return MonthFile(path, m["symbol"], date(int(period), 1, 1), True, member)
-    return MonthFile(path, m["symbol"], date(int(period[:4]), int(period[4:]), 1), False, member)
+        return MonthFile(path, symbol, date(int(period), 1, 1), True, member)
+    return MonthFile(path, symbol, date(int(period[:4]), int(period[4:]), 1), False, member)
 
 
 def files_in(path: Path) -> list[MonthFile]:
     """The histdata files a path stands for: a csv, a zip (its DAT_MT_ csv files) or a
-    folder (both kinds in it)."""
+    folder (both kinds in it and in its subfolders)."""
     path = Path(path)
     if path.is_dir():
         return [
             f
             for p in sorted(path.iterdir())
-            if p.suffix.lower() in (".csv", ".zip")
-            and p.name.upper().startswith(("DAT_MT_", "HISTDATA"))
+            if p.is_dir()
+            or (
+                p.suffix.lower() in (".csv", ".zip")
+                and p.name.upper().startswith(("DAT_MT_", "HISTDATA"))
+            )
             for f in files_in(p)
         ]
     if path.suffix.lower() == ".zip":

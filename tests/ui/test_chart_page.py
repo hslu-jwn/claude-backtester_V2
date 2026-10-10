@@ -97,6 +97,7 @@ def test_nothing_to_draw_gives_a_message(cache, inputs, expected):
 
 def test_price_digits_per_symbol():
     assert (price_digits("XAUUSD"), price_digits("GBPUSD"), price_digits("GBPJPY")) == (3, 5, 3)
+    assert (price_digits("NAS100"), price_digits("US500")) == (2, 2)
 
 
 def test_colors_come_from_the_config():

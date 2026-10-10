@@ -1,6 +1,7 @@
 """Trading costs in R: a fixed spread per symbol and a commission per lot.
 
-Spec: ROADMAP.md › 3.1. Candles are bid prices. Longs enter at ask (bid + spread) and exit
+Spec: ROADMAP.md › 3.1, risk-management.md › Costs. Candles are bid prices (histdata.com
+has no asks, so the spread is always this fixed setting). Longs enter at ask (bid + spread) and exit
 at bid; shorts enter at bid and exit at ask, so every round trip pays one spread. The
 commission is a dollar amount per lot (round turn), so in R it depends on the SL distance:
 
@@ -8,6 +9,9 @@ commission is a dollar amount per lot (round turn), so in R it depends on the SL
 
 The values are rough estimates (FTMO publishes no fixed spreads); both costs can be
 switched off so backtests can compare gross and net results.
+
+Slippage and swap are stored per symbol here (risk-management.md › Costs) but not yet
+applied: the account simulator (`risk/`, Phase 5) will use them.
 """
 
 from __future__ import annotations
@@ -23,6 +27,11 @@ class SymbolCosts:
     commission_per_lot: float  # USD per 1.0 lot, round turn
     contract_size: float  # units of the base asset per 1.0 lot (100 oz, 100,000 GBP)
     quote_to_usd: float = 1.0  # USD per 1 unit of the quote currency (fixed approximation)
+    # price units per market fill (entries and SL hits; TPs are limit orders), rough
+    # starting estimates to check against FTMO demo fills (risk-management.md › Costs)
+    slippage: float = 0.0
+    swap_long_per_lot: float = 0.0  # USD per 1.0 lot per night, until filled in from MT5
+    swap_short_per_lot: float = 0.0  # USD per 1.0 lot per night, until filled in from MT5
 
     @property
     def value_per_price_unit(self) -> float:
@@ -34,14 +43,24 @@ USDJPY_APPROX = 150.0  # GBPJPY pip value in USD goes through USDJPY; fixed sett
 
 DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     {
-        "XAUUSD": SymbolCosts(spread=0.25, commission_per_lot=6.0, contract_size=100),
-        "GBPUSD": SymbolCosts(spread=0.00003, commission_per_lot=5.0, contract_size=100_000),
+        "XAUUSD": SymbolCosts(
+            spread=0.25, commission_per_lot=6.0, contract_size=100, slippage=0.10
+        ),
+        "GBPUSD": SymbolCosts(
+            spread=0.00003, commission_per_lot=5.0, contract_size=100_000, slippage=0.00002
+        ),
         "GBPJPY": SymbolCosts(
             spread=0.010,
             commission_per_lot=5.0,
             contract_size=100_000,
             quote_to_usd=1 / USDJPY_APPROX,
+            slippage=0.003,
         ),
+        # Indices (user, 2026-10-10): spread estimates until FTMO's are measured, no
+        # commission or swap for now. contract_size only
+        # matters for the commission; check it with `data.mt5_info` before Phase 5.
+        "NAS100": SymbolCosts(spread=1.0, commission_per_lot=0.0, contract_size=1, slippage=1.0),
+        "US500": SymbolCosts(spread=0.5, commission_per_lot=0.0, contract_size=1, slippage=0.25),
     }
 )
 

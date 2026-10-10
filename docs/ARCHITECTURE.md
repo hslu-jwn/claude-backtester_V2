@@ -6,8 +6,9 @@ Each layer only imports from the layers above it in this list.
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
-2. **data/**: `DataAdapter` interface. Dukascopy M1 history is downloaded into a local
-   cache and resampled; backtests and the chart read the cache (`CacheAdapter`).
+2. **data/**: `DataAdapter` interface. histdata.com M1 files (downloaded by the user) are
+   imported into a local cache and resampled; backtests and the chart read the cache
+   (`CacheAdapter`). The Dukascopy downloader is kept but no longer used.
    `Mt5Adapter` for comparing with FTMO's feed and for live trading. Returns closed candles
    in UTC, oldest first.
 3. **detectors/**: incremental, timeframe-agnostic pattern detectors. Input: a `SeriesView`.
@@ -94,10 +95,14 @@ different settings, or fed the manual R log, without repeating detection.
 Every source has its own cache folder (`data/cache/dukascopy/`, `data/cache/histdata/`,
 same layout and columns). `data/sources.py` (`SymbolSources`) maps each symbol to the
 folder it is read from; the app, `data.check` and `data.show` all use it, so all symbols
-show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Dukascopy downloads paused).
+show in one app. **Decision (user, 2026-10-10): all history comes from histdata.com**;
+Dukascopy is no longer used (it didn't work for the user) and is no longer the default
+anywhere. Its code and cache folder are kept for now. Current mapping: XAUUSD, GBPUSD,
+GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per symbol in
+`PRICE_DIGITS`).
 `--cache-dir` on `data.check` / `data.show` overrides it for a single run.
 
-### Dukascopy (backtest history)
+### Dukascopy (not used since 2026-10-10; code kept)
 
 - Free historical data, M1 candles and ticks, many years back, timestamps in **UTC**,
   separate **bid** and **ask**.
@@ -128,14 +133,20 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
   is blocked: the run stops at once.
 - It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
 
-### histdata.com (XAUUSD, GBPUSD, GBPJPY while Dukascopy downloads are paused)
+### histdata.com (backtest history, every symbol)
 
 - M1 files in MetaTrader format, per month (`DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, the
   current year) or per year (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`, full past years), plain or
-  inside histdata's zip files, put in `data/raw/histdata/` by hand (history 2020-01 ..
-  2026-09 since 2026-10-09). Imported with `python -m backtester.data.histdata data/raw/histdata/`
-  into `data/cache/histdata/` (same layout and columns as the Dukascopy cache, own folder
-  so the sources never mix). `data/sources.py` reads all three symbols from there.
+  inside histdata's zip files, put in `data/raw/histdata/<SYMBOL>/` by hand, one subfolder
+  per pair (files directly in `data/raw/histdata/` work too; the same period twice is
+  refused). History 2020-01 .. 2026-09 since 2026-10-09. Imported with
+  `python -m backtester.data.histdata data/raw/histdata/` (searches the subfolders; a
+  single file, zip or pair folder works too) into `data/cache/histdata/` (same layout and
+  columns as the Dukascopy cache, own folder so the sources never mix). `data/sources.py`
+  reads every symbol from there.
+- **Symbol names:** histdata's index names are cached under ours (`histdata.SYMBOL_NAMES`):
+  `NSXUSD` → **NAS100**, `SPXUSD` → **US500**. Forex and gold keep their names. histdata
+  offers both indices from 2010 (year files 2010-2025, month files for 2026).
   XAUUSD histdata was compared with the Dukascopy cache on 2026-09-02..07: every M1
   candle identical (same minutes, OHLC within 0.001), so the switch changes nothing for
   those days. Differences to Dukascopy: no ask prices (spread unknown, NaN), and the
@@ -163,7 +174,16 @@ show in one app. Current mapping: XAUUSD, GBPUSD and GBPJPY → histdata.com (Du
   when FX is closed: a minute in the skipped or repeated hour stops the import. histdata's
   files skip the hour 23:00 UTC on the March Sunday and repeat (an exact copy) 00:00 UTC on
   the October one; checked against TradingView, the conversion is right (ROADMAP 0.3).
-- Bid only (ask columns empty, candle `spread` NaN). Volume is always 0 in the files and is
+- **Indices (NAS100, US500) use the same clock** (checked 2026-10-10 on the files): their
+  daily break starts at 16:15 on histdata's clock and moves to 15:15 in exactly the weeks
+  where only the US is on summer time, like gold's 17:00 close moves to 16:00. Converted,
+  the break is at **16:15-18:00 New York** in every week (105 min), the weekend **Fri
+  16:15 → Sun 18:00 New York**, US holidays close early at 13:00 / 13:15 New York.
+  TradingView check of a few candles: pending (ROADMAP 0.5). The data check's gap rules
+  for them: `check.SYMBOL_CONFIGS` (break up to 120 min, weekend up to 51 h for the US
+  DST-change weekend; confirmed by the user).
+- Bid only (ask columns empty, candle `spread` NaN): costs use a **fixed spread per
+  symbol** (`engine/costs.py`, risk-management.md › Costs). Volume is always 0 in the files and is
   stored as NaN (unknown). Non-trading minutes are **missing**, not flat filler, so the
   flat-zero-volume filter never drops a histdata minute.
 - Only UTC days fully inside the imported months are cached (a month runs from midnight of
@@ -252,6 +272,6 @@ color differs / is opposite, candles only one side has. FTMO's spread per UTC ho
 
 ## Build order
 
-See `docs/ROADMAP.md`. Phases: 0 historical data (Dukascopy) → 1 chart with replay → 2 confluences on the
+See `docs/ROADMAP.md`. Phases: 0 historical data (histdata.com) → 1 chart with replay → 2 confluences on the
 chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
 6 robustness → 7 live trading via MT5.

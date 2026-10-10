@@ -33,6 +33,8 @@ def test_default_reads_gold_from_dukascopy_and_gbp_pairs_from_histdata():
     assert DEFAULT_SOURCES.cache_dir("XAUUSD") == Path("data/cache/histdata")
     assert DEFAULT_SOURCES.cache_dir("GBPUSD") == Path("data/cache/histdata")
     assert DEFAULT_SOURCES.cache_dir("GBPJPY") == Path("data/cache/histdata")
+    assert DEFAULT_SOURCES.cache_dir("NAS100") == Path("data/cache/histdata")
+    assert DEFAULT_SOURCES.cache_dir("US500") == Path("data/cache/histdata")
 
 
 def test_symbols_with_cached_days_each_from_its_own_folder(sources):

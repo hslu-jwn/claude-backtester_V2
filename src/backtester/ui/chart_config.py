@@ -9,13 +9,12 @@ middle of the candle the session starts on.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import log10
 
 import pandas as pd
 
 from backtester.core.models import Timeframe
-from backtester.data.dukascopy import POINT_FACTORS
 from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary
+from backtester.data.sources import PRICE_DIGITS
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
 
@@ -101,8 +100,8 @@ DEFAULT_CONFIG = ChartConfig()
 
 
 def price_digits(symbol: str) -> int:
-    """Decimals of the quoted price (gold 3, GBPUSD 5, GBPJPY 3)."""
-    return round(log10(POINT_FACTORS[symbol])) if symbol in POINT_FACTORS else 5
+    """Decimals of the quoted price (gold 3, GBPUSD 5, GBPJPY 3, indices 2)."""
+    return PRICE_DIGITS.get(symbol, 5)
 
 
 SESSION_LABELS = {Session.TOKYO: "Tokyo", Session.LONDON: "London", Session.NEW_YORK: "NY"}

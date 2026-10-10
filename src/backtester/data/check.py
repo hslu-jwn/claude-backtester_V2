@@ -1,6 +1,7 @@
 """Data check report for the M1 cache.
 
     python -m backtester.data.check XAUUSD GBPUSD GBPJPY
+    python -m backtester.data.check NAS100 US500
     python -m backtester.data.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
     python -m backtester.data.check GBPUSD --cache-dir data/cache/dukascopy
 
@@ -19,8 +20,10 @@ Per symbol it prints:
 2. Gaps between traded minutes (after dropping flat zero-volume filler, exactly like the
    resampler). Gaps are classified by the 17:00 New York daily close they contain, so the
    rules hold in summer and winter without a holiday calendar:
-   - daily break: contains one close, short (gold: 17:00-18:00 NY)
-   - weekend: contains a Friday close (Fri 17:00 -> Sun 17:00/18:00 NY)
+   - daily break: contains one close, short (gold: 17:00-18:00 NY; indices NAS100 /
+     US500: 16:15-18:00 NY, `SYMBOL_CONFIGS`)
+   - weekend: contains a Friday close (Fri 17:00 -> Sun 17:00/18:00 NY; indices from
+     Fri 16:15)
    - weekend + holiday: same, but longer than a normal weekend
    - holiday, shortened day: contains a close, longer than a break, shorter than a day
      (early close / late open, e.g. US holidays)
@@ -51,10 +54,9 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, time, timedelta
 from enum import Enum
-from math import log10
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -62,9 +64,9 @@ import pandas as pd
 
 from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import CacheAdapter, day_ranges
-from backtester.data.dukascopy import POINT_FACTORS, read_cached_day
+from backtester.data.dukascopy import read_cached_day
 from backtester.data.resample import drop_flat_minutes, resample
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.data.sources import DEFAULT_SOURCES, PRICE_DIGITS, SymbolSources
 from backtester.detectors.swings import DOJI_RANGE_SHARE, SwingConfig, equivalent_doji_body
 
 NEW_YORK = ZoneInfo("America/New_York")
@@ -94,6 +96,17 @@ class DataCheckConfig:
 
 
 DEFAULT_CONFIG = DataCheckConfig()
+# Indices (histdata NSXUSD / SPXUSD; confirmed by the user, 2026-10-10): daily break
+# 16:15-18:00 New York (105 min; the first minutes after 18:00 are sometimes quiet, so up
+# to 120 min), weekend Fri 16:15 -> Sun 18:00 NY (49.75 h; 50.75 h on the weekend the US
+# leaves summer time, so up to 51 h).
+INDEX_CONFIG = replace(DEFAULT_CONFIG, daily_break_max_min=120, weekend_max_min=51 * 60)
+SYMBOL_CONFIGS = {"NAS100": INDEX_CONFIG, "US500": INDEX_CONFIG}
+
+
+def config_for(symbol: str) -> DataCheckConfig:
+    """The symbol's gap rules (`SYMBOL_CONFIGS`, else the forex / gold ones)."""
+    return SYMBOL_CONFIGS.get(symbol, DEFAULT_CONFIG)
 
 
 class GapKind(Enum):
@@ -540,7 +553,7 @@ def format_report(r: SymbolReport, config: DataCheckConfig = DEFAULT_CONFIG) -> 
 
 def _doji_lines(r: SymbolReport) -> list[str]:
     """Swing doji threshold section (confluences.md › Swing high / low)."""
-    digits = round(log10(POINT_FACTORS.get(r.symbol, 10**5)))
+    digits = PRICE_DIGITS.get(r.symbol, 5)
     config = SwingConfig().doji_max_body.get(r.symbol)
     return [
         f"Swing doji threshold (gold rule: {DOJI_RANGE_SHARE:.2%} of the median 5m range)",
@@ -587,7 +600,7 @@ def _fmt_finding(f: Finding, n: int, flag: bool) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("symbols", nargs="+", choices=sorted(POINT_FACTORS))
+    p.add_argument("symbols", nargs="+", choices=DEFAULT_SOURCES.symbols)
     p.add_argument("--start", type=date.fromisoformat, help="first day, YYYY-MM-DD (UTC)")
     p.add_argument("--end", type=date.fromisoformat, help="end day, exclusive (UTC)")
     p.add_argument(
@@ -604,8 +617,11 @@ def main(argv: list[str] | None = None) -> int:
 
     problems = False
     for symbol in args.symbols:
-        report = check_symbol(sources.cache_dir(symbol), symbol, args.start, args.end, args.spot)
-        print(format_report(report), end="\n\n", flush=True)
+        config = config_for(symbol)
+        report = check_symbol(
+            sources.cache_dir(symbol), symbol, args.start, args.end, args.spot, config
+        )
+        print(format_report(report, config), end="\n\n", flush=True)
         problems |= any(f.count for f in report.integrity) or bool(report.missing_days)
         problems |= any(g.kind is GapKind.UNEXPECTED for g in report.gaps)
     return 1 if problems else 0

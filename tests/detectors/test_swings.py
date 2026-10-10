@@ -161,6 +161,9 @@ def test_config_gold_default_gbp_pairs_scaled_others_need_a_value():
     # same share of the median 5m range as gold (histdata 2026-09-02..30)
     assert config.doji_threshold("GBPUSD") == pytest.approx(0.00028 * 0.065 / 4.255)
     assert config.doji_threshold("GBPJPY") == pytest.approx(0.066 * 0.065 / 4.255)
+    # indices: median over 2020-01..2026-09 (user's choice, 2026-10-10)
+    assert config.doji_threshold("NAS100") == pytest.approx(0.1767, abs=1e-4)
+    assert config.doji_threshold("US500") == pytest.approx(0.0384, abs=1e-4)
     with pytest.raises(KeyError, match="EURUSD"):
         config.doji_threshold("EURUSD")
     assert SwingConfig({"GBPUSD": 0.00002}).doji_threshold("GBPUSD") == 0.00002

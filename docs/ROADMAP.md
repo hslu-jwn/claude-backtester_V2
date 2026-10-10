@@ -10,9 +10,12 @@ Status: ☐ open · ◐ in progress · ☑ done (update this file when a step is
 
 ## Phase 0: Historical data
 
-FTMO's MT5 server only keeps about one month of 5m history, so **Dukascopy** is the source
-for backtest history (free, years of M1 data, UTC, bid and ask). MT5 is used to compare the
-recent month against FTMO's own feed, and later for live trading.
+FTMO's MT5 server only keeps about one month of 5m history, so another source is needed
+for backtest history. **Since 2026-10-10 (user's decision) all history comes from
+histdata.com** M1 files the user downloads into `data/raw/histdata/<SYMBOL>/` (bid only,
+spread a fixed setting). Dukascopy (0.1) didn't work for the user and is no longer used;
+its code is kept. MT5 is used to compare the recent month against FTMO's own feed, and
+later for live trading.
 Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
 - ☑ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
@@ -27,7 +30,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
   daily break shows as a gap like on TradingView.
   Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
-- ⏸ **Postponed: the full download.** Dukascopy is currently throttling the user's
+- ⏸ **Postponed, then dropped (2026-10-10): the full Dukascopy download.** Dukascopy was throttling the user's
   connection (HTTP 503 / timeouts on every request). 0.3 waits until the download works
   again; Phase 1 continues with the XAUUSD days already in the cache. Done for the next
   download: the downloader stops the whole run after 3 days in a row fail with
@@ -187,6 +190,43 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     prints FTMO's names and specs, the offsets per week, the deciding DST weeks and the
     rule. Then `data.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
     specs, the comparison and spread numbers (→ here, for the user's decision on 3.1).
+- ◐ **0.5 Index data: NAS100, US500** (user's request 2026-10-10, for strategy 2; data
+  side only, no strategy code). Built:
+  - `data/histdata.py`: a folder is searched with its subfolders
+    (`data/raw/histdata/<SYMBOL>/`), single files / zips still work; histdata's
+    `NSXUSD` / `SPXUSD` are cached as **NAS100** / **US500** (`SYMBOL_NAMES`).
+  - Clock: the indices use histdata's forex / gold clock (their 16:15 break moves to
+    15:15 on histdata's clock in the US-only summer time weeks, like gold's 17:00 close
+    to 16:00), so the existing conversion applies. **TradingView check pending**: the
+    user compares the candles below (FOREXCOM:NSXUSD / FOREXCOM:SPXUSD, M5, chart in
+    UTC; other feeds may be offset in price, the shape and timing must match).
+
+    | UTC | season | NAS100 O / H / L / C | US500 O / H / L / C |
+    |---|---|---|---|
+    | 2026-09-02 13:30 | US+EU summer | 29051.93 / 29055.47 / 28997.29 / 29037.24 | 7641.23 / 7641.74 / 7633.63 / 7640.38 |
+    | 2026-01-14 14:30 | winter | 25576.76 / 25624.69 / 25504.63 / 25616.72 | 6933.64 / 6941.35 / 6922.85 / 6940.15 |
+    | 2026-03-18 13:30 | US summer / EU winter | 24699.25 / 24729.03 / 24675.29 / 24715.14 | 6692.13 / 6699.50 / 6687.74 / 6696.25 |
+    | 2026-03-18 12:30 | ^ 1 h earlier | 24796.03 / 24796.03 / 24715.28 / 24736.08 | 6719.85 / 6719.85 / 6699.64 / 6703.40 |
+    | 2022-03-23 13:30 | US summer / EU winter | 14532.38 / 14547.90 / 14494.51 / 14508.16 | 4485.20 / 4489.45 / 4481.24 / 4483.45 |
+    | 2026-03-18 20:10 | last candle before the break | 24411.90 / 24418.31 / 24392.74 / 24399.05 | 6616.05 / 6616.40 / 6609.85 / 6611.04 |
+    | 2026-03-18 22:00 | first candle after it | 24402.76 / 24405.04 / 24378.75 / 24385.25 | 6618.35 / 6618.94 / 6611.45 / 6614.24 |
+
+  - `data.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
+    the user): daily break 16:15-18:00 New York (up to 120 min), weekend Fri 16:15 → Sun
+    18:00 NY (up to 51 h: the US DST-change weekend is 50.75 h). Over 2020-01-02 ..
+    2026-09-30 (files already in `data/raw/histdata/`, imported into a scratch cache):
+    integrity 0, bid range per year plausible (NAS100 6,636-30,797, US500 2,184-7,817),
+    unexpected gaps per year NAS100 25 / 2 / 3 / 515 / 50 / 16 / 12, US500 49 / 13 / 6 /
+    558 / 54 / 15 / 9 (2020-2026): 2023 = the histdata holes every symbol has; real halts
+    among the rest (limit-down nights 2020-03-09/16/18, CME outage 2025-11-28).
+  - Doji threshold (gold rule, user's choice: median over the full history): NAS100
+    median 5m range 11.57 → **0.1767**, US500 2.51 → **0.0384** (`MEDIAN_M5_RANGE`).
+    Dojis per year with it: NAS100 1.1-3.3%, US500 2.4-6.4%.
+  - Costs (`engine/costs.py`): fixed spread NAS100 1.0, US500 0.5 (user's estimates until
+    FTMO's are measured), commission and swap 0; slippage per fill for every symbol
+    (risk-management.md › Costs). Slippage and swap are stored, not yet applied (Phase 5).
+  - History: histdata has both indices from 2010. Downloaded: 2020-01 .. 2026-09.
+  Check: import, `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
 
 ## Phase 1: Chart (no lookahead)
 

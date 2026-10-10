@@ -10,7 +10,13 @@ import pytest
 from m1_frames import m1
 
 from backtester.data import check
-from backtester.data.check import DataCheckConfig, GapKind, classify_gap, daily_closes
+from backtester.data.check import (
+    DataCheckConfig,
+    GapKind,
+    classify_gap,
+    config_for,
+    daily_closes,
+)
 from backtester.data.dukascopy import _empty_cache_frame, cache_path
 from backtester.data.sources import SymbolSources
 
@@ -294,3 +300,36 @@ def test_doji_share_and_median_range_per_year_and_last_year_per_quarter():
     assert out.loc["2025", "candles"] == 2 and out.loc["2025", "median_range"] == 2.0
     assert out.loc["2025", "doji_share"] == 0.5 and out.loc["2026 Q1", "doji_share"] == 1.0
     assert out.loc["2026 Q3", "gold_rule"] == pytest.approx(6 * 0.065 / 4.255)
+
+
+# --- indices (NAS100 / US500, confirmed by the user 2026-10-10) -------------------------
+
+
+def index_kind(start: datetime, end: datetime) -> GapKind:
+    return classify_gap(start, end, set(), config_for("NAS100"))
+
+
+def test_index_daily_break_16_15_to_18_00_new_york():
+    # 105 min; a few quiet minutes after 18:00 still count (up to 120 min)
+    assert index_kind(utc(2026, 9, 2, 20, 15), utc(2026, 9, 2, 22)) is GapKind.DAILY_BREAK
+    assert index_kind(utc(2026, 1, 14, 21, 15), utc(2026, 1, 14, 23, 15)) is GapKind.DAILY_BREAK
+    assert index_kind(utc(2026, 9, 2, 20, 15), utc(2026, 9, 2, 22, 16)) is GapKind.SHORTENED_DAY
+    # with the forex / gold rules the same break would be a shortened day
+    assert kind(utc(2026, 9, 2, 20, 15), utc(2026, 9, 2, 22)) is GapKind.SHORTENED_DAY
+
+
+def test_index_weekend_including_the_us_dst_change_weekend():
+    # Fri 16:15 -> Sun 18:00 NY = 49.75 h
+    assert index_kind(utc(2026, 9, 4, 20, 15), utc(2026, 9, 6, 22)) is GapKind.WEEKEND
+    # the US leaves summer time on Sun 2026-11-01: 50.75 h, still a weekend
+    assert index_kind(utc(2026, 10, 30, 20, 15), utc(2026, 11, 1, 23)) is GapKind.WEEKEND
+    # Good Friday: closed Thu 16:15 -> Sun 18:00 NY
+    assert index_kind(utc(2026, 4, 2, 20, 15), utc(2026, 4, 5, 22)) is GapKind.WEEKEND_HOLIDAY
+
+
+def test_index_holiday_early_close_at_13_00_new_york():
+    assert index_kind(utc(2026, 1, 19, 18), utc(2026, 1, 19, 23)) is GapKind.SHORTENED_DAY
+
+
+def test_forex_and_gold_keep_their_rules():
+    assert config_for("XAUUSD") == CFG and config_for("GBPJPY") == CFG
