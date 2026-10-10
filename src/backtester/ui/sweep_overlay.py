@@ -1,9 +1,10 @@
 """Liquidity sweep overlay. Spec: ROADMAP.md › 2.11, confluences.md › Liquidity sweep.
 
-Per sweep: a thin magenta line at the swept swing's price, from that swing's extreme-wick
-candle to the sweeping candle, and a small marker on the sweeping wick with the hover text.
-If several swings were taken, the line goes to the most extreme of them and the hover lists
-all (display choice). It appears at the BOS candle that made it a sweep, not before.
+Per sweep (detector defaults: last 3 swings, BOS within 10 candles): a thin magenta line
+at the swept swing's price, from that swing's extreme-wick candle to the sweeping candle,
+and a small marker on the sweeping wick with the hover text. If several swings were taken,
+the line goes to the most extreme of them and the hover lists all (display choice). It
+appears at the BOS candle that made it a sweep, not before.
 """
 
 from __future__ import annotations
@@ -44,7 +45,8 @@ def hover_text(sweep: LiquiditySweep, digits: int) -> str:
         f"sweeping wick {sweep.extreme:.{digits}f} (candle {sweep.ts:%Y-%m-%d %H:%M} UTC)\n"
         f"took:\n{taken}\n"
         f"{bos.direction.value} BOS of {bos.price:.{digits}f}: candle closed "
-        f"{bos.confirmed_at:%Y-%m-%d %H:%M} UTC (sweep exists from here)"
+        f"{bos.confirmed_at:%Y-%m-%d %H:%M} UTC, {bos.confirmed_index - sweep.index} "
+        f"candles after the top (sweep exists from here)"
     )
 
 

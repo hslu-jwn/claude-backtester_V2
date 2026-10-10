@@ -57,7 +57,7 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 ## Liquidity sweep
 - **Idea** (user): liquidity causes reversals, a BOS shifts the market's structure, and FVGs and equilibrium are retracement patterns (e.g. once an OB has formed and price revisits it with pressure out of it, an FVG can be used to enter). The sweep is the liquidity part.
 - Described for a sweep of highs (it leads to a bearish BOS and a bearish OB), lows mirrored.
-- **Candidate:** a candle whose wick goes **above** one of the **last ⚙️ N confirmed swing highs** (default N = 3, counted on the sweep's timeframe; rule set by the user 2026-10-10, replaces "highs confirmed since the last BOS plus the broken one"). One tick above is enough, touching is no sweep. ⚙️ Whether a **close** above the level still counts (default: yes). The swing must be confirmed by an earlier candle than the sweeping one. The high need not be untouched, and the same high can be taken more than once.
+- **Candidate:** a candle whose wick goes **above** one of the **last ⚙️ N confirmed swing highs** (default N = 3, counted on the sweep's timeframe; rule set by the user 2026-10-10, replaces "highs confirmed since the last BOS plus the broken one"). One tick above is enough, touching is no sweep. ⚙️ Whether a **close** above the level still counts (default: yes). Off: a candle that closes above a high does not sweep that high (rule set by the user 2026-10-10); if such a candle goes above the candidate's high, the candidate is gone (price went above it before the BOS). The swing must be confirmed by an earlier candle than the sweeping one. The high need not be untouched, and the same high can be taken more than once.
 - **Several highs taken:** the swept level is the **furthest** one taken within the last N. Taking out more than N highs is still a sweep, with level #N (rule set by the user).
 - **No pools:** equal highs / liquidity pools are not used (rule set by the user).
 - **The candidate is the top of the move:** a later candle that goes above the candidate's high replaces it (it takes the same highs and more). A higher high is always "a kind of sweep" (user).
@@ -65,9 +65,9 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 - Which timeframe the BOS is on is the strategy's choice (strategy 2: the same timeframe as the sweep in the PM, the setup timeframe in the AM).
 - If the new high is followed by no BOS, the market is just in an uptrend: no sweep, no OB.
 - **Consequences and edge cases** (confirmed by the user, 2026-10-07):
-  - A bullish BOS candle always closes above the high it breaks, so it takes that high: every bearish BOS after a bullish one comes with a sweep (and an OB). Only the first BOS on a chart can come without one.
+  - A bullish BOS candle always closes above the high it breaks, so it takes that high (with the close setting on). A bearish BOS after a bullish one comes with a sweep only if it follows the top within the ⚙️ X candles (rule set by the user 2026-10-10; before, every one did).
   - A doji's wick can sweep (no doji exception here).
-  - Before the first BOS on a chart, every confirmed high counts.
+  - Before the first BOS on a chart, the same rule applies: the last ⚙️ N confirmed highs count (2026-10-10).
   - One candle can be both: if it wicks above the top and then closes below the low (bearish BOS), it is the sweeping candle and the BOS candle.
 - Timeframe-agnostic, like every detector. Strategy 1's session-zone sweep (a wick into a session zone) is the strategy's own rule and stays in `strategy/session_zone_sweep/`.
 - Example for the broken high: a bullish BOS closes above a swing high, price runs a bit higher and then reverses with a bearish BOS. The top took the broken high, so this is a liquidity sweep and forms an OB.

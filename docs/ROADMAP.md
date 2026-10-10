@@ -964,12 +964,25 @@ in its results reported).
   thresholds, cost estimates). Open: the user's TradingView check of the candles in 0.5.
 - ☐ **8.2 Detector updates** (`confluences.md`, 2026-10-10). One detector per sub-step,
   tests first incl. the no-lookahead test, each checked on the chart:
-  1. ☐ **Liquidity sweep rework** (`detectors/sweep.py`, › Liquidity sweep): candidate =
+  1. ◐ **Liquidity sweep rework** (`detectors/sweep.py`, › Liquidity sweep): candidate =
      a wick beyond one of the **last ⚙ N confirmed swings** (default 3; replaces "since
      the last BOS plus the broken one"), level = the furthest taken within N (#N when
      more are taken); ⚙ close beyond the level still counts (default yes); becomes a
      sweep only with a BOS **within ⚙ X candles** (default 10) of the extreme, a new
      extreme restarts the count. Overlay "Liquidity sweep" follows.
+     Built (2026-10-10): `detectors/sweep.py` `SweepConfig` (`lookback_swings` 3,
+     `bos_within` 10), hover shows "n candles after the top"; tests in
+     `tests/detectors/test_sweep.py`. Close setting `close_beyond_counts` (default on; off =
+     a candle closing beyond a level doesn't sweep it, user's choice 2026-10-10; a higher
+     candle that sweeps nothing drops the candidate).
+     Strategy 1 doesn't use this detector (its zone sweep is its own), so its results
+     can't change. Check (choices made while building):
+     - "Within X candles": BOS candle index − top index ≤ X (the top's own candle = 0).
+     - A top with no BOS in time is dropped; a later candle that takes one of the last N
+       swings starts a new candidate, even below the old top (it may be the BOS candle
+       itself).
+     - The detector still pairs a sweep with a BOS on its own timeframe; the AM's sweep on
+       1h / 4h with the BOS on the setup TF is strategy 2's job (8.4).
   2. ☐ **Equilibrium rework** (› Equilibrium): leg = swing low (after a sweep: the sweep
      extreme) → the **high wick of the BOS candle**, fixed at the BOS candle (was: up to
      the first swing high after the BOS); tap = wick below 50%, confirm = green close
