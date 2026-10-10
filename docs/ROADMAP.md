@@ -1123,6 +1123,27 @@ in its results reported).
   (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the
   strategy popover gets a second entry); session view: pick one AM or PM session and see
   sweep, BOS, 3rd confluence, entry confluence, SL / TPs. Visual step: the user checks it.
-- ☐ **8.7 First backtest on NAS100 / US500 + results.** `python -m backtester.run` with
+- ◐ **8.7 First backtest on NAS100 / US500 + results.** `python -m backtester.run` with
   strategy 2 on NAS100 + US500 over the cached history; results page split by AM / PM,
   best-time tag, route and confluence type; per-year table reported here.
+  **First full run (2026-10-11)** before the user's check of 8.4 / 8.5 and the open
+  questions (sweep of a level price is already far beyond; best-time toggle): `python -m
+  backtester.run NAS100 US500 --start 2020-01-01 --end 2026-09-30 --strategy
+  ny_index_sweep` (`results/20261010-224222_NAS100-US500`, ~45 min, workers ~1.8 GB):
+  1,658 trades, win rate 37.5%, **net R −61.2 (gross +29.6)**, average R:R planned 2.93,
+  max drawdown 79 R. NAS100 866 trades +16.7 R net, US500 792 trades −77.9 R net.
+
+  | year | all: trades / net R | NAS100 | US500 |
+  |---|---|---|---|
+  | 2020 | 250 / −47.6 | 136 / −10.1 | 114 / −37.5 |
+  | 2021 | 251 / −3.9 | 139 / −12.8 | 112 / +8.9 |
+  | 2022 | 278 / −6.3 | 136 / +3.2 | 142 / −9.4 |
+  | 2023 | 173 / +12.9 | 91 / +13.9 | 82 / −0.9 |
+  | 2024 | 246 / −15.8 | 136 / −9.1 | 110 / −6.7 |
+  | 2025 | 254 / −0.6 | 130 / +14.2 | 124 / −14.8 |
+  | 2026 | 206 / +0.1 | 98 / +17.4 | 108 / −17.4 |
+
+  Splits (net R per trade): AM 428 trades +0.001, PM 1,230 −0.050; route 5m/1m 1,442
+  −0.021, 15m/1m (PM) 162 −0.206, 15m/5m (AM) 54 +0.047; 3rd confluence breaker 1,228
+  −0.041, OB 214 +0.043, EQ 177 −0.077, FVG 39 −0.168; best time 139 +0.082, other
+  1,519 −0.048. Exits: SL 1,034, break-even 283, last TP 341.
