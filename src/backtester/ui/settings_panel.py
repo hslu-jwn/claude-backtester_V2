@@ -164,8 +164,8 @@ SECTION_HELP = {
         "same share of their median 5m range."
     ),
 }
-# choices not offered: breakers aren't built (ROADMAP 2.7), the equilibrium has its switch
-HIDDEN_OPTIONS = {"strategy.confluence_kinds": {"BREAKER", "EQUILIBRIUM"}}
+# choices not offered: the equilibrium has its own switch
+HIDDEN_OPTIONS = {"strategy.confluence_kinds": {"EQUILIBRIUM"}}
 
 
 def group_of(path: str) -> str:

@@ -43,10 +43,17 @@ G = bar(109.6, 108.9, hi=109.7, lo=108.5)
 H = bar(108.9, 109.3, lo=108.8, hi=109.4)
 EQ_SETUP = [*NY_SETUP[:4], E, F, G, H]
 EQ_ENTRY = NY_FIRST + 7
+# g also taps the breaker of d's BOS (b, 107.5 - 108.7) and h confirms it: the EQ tests run
+# without breakers (see test_a_breaker_confirmed_on_the_same_candle_wins)
+NO_BREAKER = frozenset({ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BPR})
+
+
+def cfg(**changes) -> SessionZoneSweepConfig:
+    return SessionZoneSweepConfig(confluence_kinds=NO_BREAKER, **changes)
 
 
 def test_entry_at_the_equilibrium_confirmation():
-    [sig] = run_tracker(LONDON + EQ_SETUP)
+    [sig] = run_tracker(LONDON + EQ_SETUP, cfg())
     assert sig.direction is LONG and sig.index == EQ_ENTRY and sig.close == 109.3
     c = sig.confluence
     assert c.kind is ZoneKind.EQUILIBRIUM
@@ -57,7 +64,7 @@ def test_entry_at_the_equilibrium_confirmation():
 
 
 def run_strategy(config=None):
-    strategy = SessionZoneSweep(scenario.SYMBOL, config)
+    strategy = SessionZoneSweep(scenario.SYMBOL, config or cfg())
     no_costs = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
     run_backtest(strategy, scenario.series(LONDON + EQ_SETUP), no_costs)
     [decision] = strategy.decisions
@@ -74,29 +81,38 @@ def test_strategy_order_sl_beyond_the_leg_low_with_the_eq_buffer():
 
 def test_eq_only_toggle_puts_the_sl_beyond_the_deepest_wick():
     eq = EquilibriumConfig(sl_at_deepest_wick=True)
-    order = run_strategy(SessionZoneSweepConfig(equilibrium=eq)).order
+    order = run_strategy(cfg(equilibrium=eq)).order
     assert order.stop_loss == pytest.approx(108.46)
 
 
 def test_the_atr_buffer_and_small_confluence_rule_do_not_apply_to_the_eq():
-    config = SessionZoneSweepConfig(sl_buffer_atr_mult=5.0, small_confluence_atr_mult=100.0)
+    config = cfg(sl_buffer_atr_mult=5.0, small_confluence_atr_mult=100.0)
     decision = run_strategy(config)
     assert decision.order.stop_loss == pytest.approx(108.06)
     assert decision.targets.sl_at_bos_leg is False
 
 
+def test_a_breaker_confirmed_on_the_same_candle_wins():
+    # default kinds include breakers: the breaker and the EQ of d's BOS are both made by d
+    # and confirmed by h; on that tie the one nearer the close is used (setup.py), 108.7
+    [sig] = run_tracker(LONDON + EQ_SETUP)
+    c = sig.confluence
+    assert (c.kind, c.bottom, c.top) == (ZoneKind.BREAKER, 107.5, 108.7)
+    assert c.start_index == NY_FIRST + 1 and sig.eq_deepest is None
+
+
 def test_use_equilibrium_off_means_no_entry():
-    assert run_tracker(LONDON + EQ_SETUP, SessionZoneSweepConfig(use_equilibrium=False)) == []
+    assert run_tracker(LONDON + EQ_SETUP, cfg(use_equilibrium=False)) == []
 
 
 def test_no_tap_or_red_close_does_not_confirm():
     # no wick below 108.6 at all: no entry
     no_tap = [*NY_SETUP[:4], E, F, bar(109.6, 109.5, hi=109.7, lo=109.3)]
     no_tap.append(bar(109.5, 109.8, lo=109.4, hi=109.9))
-    assert run_tracker(LONDON + no_tap) == []
+    assert run_tracker(LONDON + no_tap, cfg()) == []
     # g taps and closes above 108.6 but red; h red again: only a green close confirms
     red = [*NY_SETUP[:4], E, F, G, bar(108.9, 108.8, hi=109.0, lo=108.7)]
-    assert run_tracker(LONDON + red) == []
+    assert run_tracker(LONDON + red, cfg()) == []
 
 
 def test_close_inside_the_discount_half_and_wick_below_the_low_keep_it_alive():
@@ -104,7 +120,7 @@ def test_close_inside_the_discount_half_and_wick_below_the_low_keep_it_alive():
     # a close below the low invalidates
     deep = [*NY_SETUP[:4], E, F, bar(109.6, 108.3, hi=109.7, lo=108.0)]
     deep.append(bar(108.3, 108.9, lo=108.2, hi=109.0))
-    [sig] = run_tracker(LONDON + deep)
+    [sig] = run_tracker(LONDON + deep, cfg())
     assert sig.confluence.kind is ZoneKind.EQUILIBRIUM and sig.close == 108.9
     assert sig.eq_deepest == 108.0
     # the wick went below the leg low: SL beyond it, 108.0 - 10% x 0.1 = 107.99
@@ -116,7 +132,7 @@ def test_close_below_the_leg_low_invalidates_it():
     # back above 108.6 is no entry
     broken = [*NY_SETUP[:4], E, F, bar(109.6, 108.0, hi=109.7, lo=107.9)]
     broken.append(bar(108.0, 109.3, lo=107.95, hi=109.4))
-    assert run_tracker(LONDON + broken) == []
+    assert run_tracker(LONDON + broken, cfg()) == []
 
 
 # GBPUSD 2026-09-04 (Friday) 20:00 - 20:55, then Sunday 2026-09-06 21:00 - 21:25 after the
@@ -168,6 +184,6 @@ def test_no_lookahead_equilibrium_signal_only_at_its_confirmation():
     unchanged by candles appended after it."""
     ohlc = LONDON + EQ_SETUP
     for k in (NY_FIRST + 3, NY_FIRST + 6, NY_FIRST + 7):
-        assert run_tracker(ohlc[:k]) == []
-    full = run_tracker(ohlc)
-    assert run_tracker(ohlc + [doji(109.3)] * 20) == full
+        assert run_tracker(ohlc[:k], cfg()) == []
+    full = run_tracker(ohlc, cfg())
+    assert run_tracker(ohlc + [doji(109.3)] * 20, cfg()) == full

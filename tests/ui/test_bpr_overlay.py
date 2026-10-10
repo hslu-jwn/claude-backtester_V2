@@ -39,7 +39,7 @@ def drawn_at(replay, cursor, settings=DEFAULT_SETTINGS, keys=ALL):
 
 def test_bpr_in_the_panel_after_order_block_with_sub_entries():
     assert OVERLAYS["bpr"].label == "BPR"
-    assert list(OVERLAYS)[:5] == ["swings", "bos", "fvg", "ob", "bpr"]
+    assert list(OVERLAYS)[:6] == ["swings", "bos", "fvg", "ob", "breaker", "bpr"]
     values = [o["value"] for o in overlay_options(["bpr"])]
     i = values.index("bpr")
     assert values[i : i + 3] == ALL

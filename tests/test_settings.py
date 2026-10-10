@@ -37,7 +37,7 @@ def test_every_config_value_is_a_setting_with_the_spec_default():
         ("strategy.min_rr", "float", 1.2),
         ("strategy.max_sl_atr_mult", "optional_float", None),
         ("strategy.zone_timeframe", "enum", "M30"),
-        ("strategy.confluence_kinds", "enum_set", ["BPR", "FVG", "ORDER_BLOCK"]),
+        ("strategy.confluence_kinds", "enum_set", ["BPR", "BREAKER", "FVG", "ORDER_BLOCK"]),
         ("strategy.fvg.strong_move_filter", "bool", False),
         ("strategy.order_block.strong_move.atr_mult", "float", 2.0),
         ("strategy.swings.doji_max_body.XAUUSD", "float", 0.065),

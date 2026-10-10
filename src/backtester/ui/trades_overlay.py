@@ -363,6 +363,7 @@ def _confluences(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Draw
     kind_style = {
         ZoneKind.FVG: (cfg.fvg_color, cfg.fvg_fill_opacity),
         ZoneKind.ORDER_BLOCK: (cfg.ob_color, cfg.ob_fill_opacity),
+        ZoneKind.BREAKER: (cfg.breaker_color, cfg.breaker_fill_opacity),
         ZoneKind.BPR: (cfg.bpr_color, cfg.bpr_fill_opacity),
         ZoneKind.EQUILIBRIUM: (cfg.equilibrium_color, cfg.equilibrium_fill_opacity),
     }

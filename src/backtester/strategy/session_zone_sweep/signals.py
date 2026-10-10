@@ -4,7 +4,7 @@ Spec: strategy-session-zones.md › Entry sequence, › Invalidation & reset, �
 Per closed 5m candle (`update(now, v5, v30)`):
 1. 5m detectors: structure (BOS / with-trend breaks, 5m trend), FVG, OB, BPR, ATR. An FVG
    is usable only if it points with the 5m trend after its candle 3 closed (no trend =
-   not used); OBs and BPRs have no trend rule. With `use_equilibrium`: the equilibrium of
+   not used); OBs, breakers and BPRs have no trend rule. With `use_equilibrium`: the equilibrium of
    every 5m break's move (detectors/equilibrium.py), validated like a zone.
 2. Every 30m candle closed by now: session zones (`SessionZoneTracker`), then each live
    zone's setup (sweep, 30m reaction, flips). A setup that just got its 30m reaction
@@ -41,6 +41,7 @@ from backtester.core.models import Direction
 from backtester.core.series import SeriesView
 from backtester.detectors.atr import Atr
 from backtester.detectors.bpr import BalancedPriceRange, BprConfig, BprDetector
+from backtester.detectors.breaker import BreakerBlock, BreakerDetector
 from backtester.detectors.equilibrium import deepest_wick, equilibrium_box
 from backtester.detectors.fvg import FairValueGap, FvgDetector
 from backtester.detectors.order_block import OrderBlock, OrderBlockDetector
@@ -102,6 +103,9 @@ class SetupTracker:
         self._fvg = FvgDetector(doji, config.fvg)
         self._ob = OrderBlockDetector(doji, config.order_block)
         self._bpr = BprDetector(doji, BprConfig(config.fvg))
+        self._breaker = (
+            BreakerDetector(doji) if ZoneKind.BREAKER in config.confluence_kinds else None
+        )
         self._atr = Atr(config.strong_move.atr_period)
         self._zones = SessionZoneTracker(doji, config)
         self._zone_cursor = -1
@@ -135,7 +139,10 @@ class SetupTracker:
         self._recent = [b for b in self._recent if b.at > horizon] + breaks
         kinds = self.config.confluence_kinds
         confirmed = []
-        for e in [*self._fvg.update(v5), *self._ob.update(v5), *self._bpr.update(v5)]:
+        events = [*self._fvg.update(v5), *self._ob.update(v5), *self._bpr.update(v5)]
+        if self._breaker is not None:
+            events += self._breaker.update(v5)
+        for e in events:
             if isinstance(e, ZoneTransition):
                 self.zone_transitions.append(e)
                 if e.state is ZoneState.CONFIRMED and e.zone in self._usable:
@@ -147,7 +154,7 @@ class SetupTracker:
             elif isinstance(e, FairValueGap):
                 if self.structure.trend is e.direction:  # trend after candle 3
                     self._usable.add(e.zone)
-            elif isinstance(e, OrderBlock | BalancedPriceRange):
+            elif isinstance(e, OrderBlock | BreakerBlock | BalancedPriceRange):
                 self._usable.add(e.zone)
         if self.config.use_equilibrium:
             confirmed += self._update_equilibria(v5, breaks)

@@ -172,7 +172,7 @@ def test_results_folder(cache, tmp_path):
     assert settings["strategy"]["name"] == "session_zone_sweep"
     assert settings["strategy"]["min_rr"] == 1.2
     assert settings["strategy"]["zone_timeframe"] == "M30"
-    assert settings["strategy"]["confluence_kinds"] == ["BPR", "FVG", "ORDER_BLOCK"]
+    assert settings["strategy"]["confluence_kinds"] == ["BPR", "BREAKER", "FVG", "ORDER_BLOCK"]
     assert settings["strategy"]["swings"]["doji_max_body"]["GOLD"] == 0.065
     assert settings["engine"]["costs"]["symbols"]["GOLD"]["spread"] == 0.25
     assert settings["engine"]["sessions"]["london"]["zone"] == "Europe/London"

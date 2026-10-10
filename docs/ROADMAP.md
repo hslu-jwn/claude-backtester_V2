@@ -288,9 +288,9 @@ text with its state (active / tapped / confirmed / invalidated).
   candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
   is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
   OB yellow), overlapping boxes stack darker.
-- ☐ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
+- ◐ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
   Breaker block`: the last green run into the swing high a bullish BOS breaks, bearish
-  mirrored). Ready to build; built as part of 8.2 (8.2.3).
+  mirrored). Built as part of 8.2 (8.2.3, see there).
 - ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
   by the move (candles 1–3) that creates an overlapping FVG in the opposite direction
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
@@ -1003,8 +1003,18 @@ in its results reported).
      `tests/strategy/session_zone_sweep/test_equilibrium.py` (new scenario),
      `tests/ui/test_equilibrium_overlay.py`. The old rule (leg up to the first swing high
      after the BOS, 3.3c) is replaced.
-  3. ☐ **Breaker block** = step 2.7 (› Breaker block), built here; 2.7 is marked done
+  3. ◐ **Breaker block** = step 2.7 (› Breaker block), built here; 2.7 is marked done
      with it.
+     Built (2026-10-10): `detectors/breaker.py` (was a stub): `BreakerDetector` (one per
+     real BOS; range = `order_block.find_leg` with the other color: the green run back from
+     the broken high's green turn candle, dojis skipped, red ends it), `BreakerBlock`;
+     overlay "Breaker block" (orange, ★ / ✕, panel order 2.7). Strategy 1: breakers are now
+     a step-4 confluence and in the default `confluence_kinds` (spec: step 4 lists them;
+     they were only left out because they weren't built), selectable in the settings, drawn
+     orange by "↳ trade confluences". Tests: `tests/detectors/test_breaker.py` (incl.
+     no-lookahead), `tests/ui/test_breaker_overlay.py`; strategy 1's EQ tests run without
+     breakers, plus a test that the breaker wins a same-candle tie with the EQ (strategy 1's
+     rule: the most recently formed, then the one nearest the close).
   4. ☐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each
      on/off per backtest, in the settings (4.1) and presets.
 - ☐ **8.3 4h candles in TradingView alignment + AM/PM window clock.** 4h candles closing

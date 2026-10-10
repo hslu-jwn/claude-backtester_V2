@@ -70,6 +70,9 @@ class ChartConfig:
     ob_color: str = "#fbc02d"  # yellow
     ob_fill_opacity: float = 0.25
     ob_invalidated_opacity: float = 0.1
+    breaker_color: str = "#ff9800"  # orange
+    breaker_fill_opacity: float = 0.22
+    breaker_invalidated_opacity: float = 0.08
     bpr_color: str = "#9c27b0"  # purple
     bpr_fill_opacity: float = 0.22
     bpr_invalidated_opacity: float = 0.08

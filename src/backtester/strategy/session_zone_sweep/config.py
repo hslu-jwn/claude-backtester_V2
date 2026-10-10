@@ -38,10 +38,10 @@ class SessionZoneSweepConfig:
     # high while the 5m chart is already in the trade's direction
     entry_bos_with_trend: bool = False
 
-    # step 4: the confluence types that can trigger an entry (breakers are not built yet,
-    # ROADMAP 2.7)
+    # step 4: the confluence types that can trigger an entry (the equilibrium has its own
+    # switch below)
     confluence_kinds: frozenset[ZoneKind] = frozenset(
-        {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BPR}
+        {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BREAKER, ZoneKind.BPR}
     )
     use_equilibrium: bool = True  # the BOS move's equilibrium is an entry confluence too
     # EQ stop loss (› Stop loss, EQ): beyond the leg's low + 10% of its distance to the

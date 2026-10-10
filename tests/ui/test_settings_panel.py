@@ -38,7 +38,7 @@ def test_labels_and_choices():
     assert sp.label_of("strategy.swings.doji_max_body.GBPJPY") == "GBPJPY"
     assert sp.label_of("strategy.some_new_field") == "Some new field"  # fallback
     kinds = next(leaf for leaf in leaves() if leaf.path == "strategy.confluence_kinds")
-    assert sp.options_of(kinds) == ["FVG", "ORDER_BLOCK", "BPR"]  # no breaker / equilibrium
+    assert sp.options_of(kinds) == ["FVG", "ORDER_BLOCK", "BREAKER", "BPR"]  # EQ: own switch
     tf = next(leaf for leaf in leaves() if leaf.path == "strategy.zone_timeframe")
     assert "M30" in sp.options_of(tf) and "D1" in sp.options_of(tf)  # D / W since 4.0b
 

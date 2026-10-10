@@ -84,7 +84,7 @@ Rules set by the user (2026-10-07). Part of the strategy-1 UI, like the session 
 - **Sub-entry "↳ trade confluences"** (one switch, for all trades at once, rule set by the user): draws what led to each trade, in the **normal overlay colors** of each type:
   - the **session zone** that was swept (session-zone style);
   - the **5m BOS** of the setup (red BOS line from the broken swing to the BOS candle);
-  - the **entry confluence** (FVG green, OB yellow, BPR purple), from where it formed to the entry candle;
+  - the **entry confluence** (FVG green, OB yellow, breaker orange, BPR purple, equilibrium indigo), from where it formed to the entry candle;
   - the **BOS move's low** (short high for a short) when the SL was placed there because the confluence was small: a line at that price from its candle to the entry (display choice: thin dashed, neutral color, label "SL ref").
   - No markers for the sweep candle or the 30m reaction (rule set by the user).
 - **Replay** (no lookahead): a box appears at the close of the entry candle and grows candle by candle until TP / SL; its confluences appear with it.

@@ -48,7 +48,7 @@ def zone_boxes(drawings):
 
 def test_session_zones_in_the_panel_after_bpr_without_sub_entries():
     assert OVERLAYS["session_zones"].label == "Session zones"
-    assert list(OVERLAYS)[:6] == ["swings", "bos", "fvg", "ob", "bpr", "session_zones"]
+    assert list(OVERLAYS)[:7] == ["swings", "bos", "fvg", "ob", "breaker", "bpr", "session_zones"]
     assert OVERLAYS["session_zones"].parts == ()
 
 
