@@ -220,8 +220,9 @@ text with its state (active / tapped / confirmed / invalidated).
   candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
   is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
   OB yellow), overlapping boxes stack darker.
-- ☐ **2.7** Breaker block. ⏸ Postponed until the user clarifies breakers ("once it's
-  relevant", `confluences.md › Breaker block`). Build after 2.12.
+- ☐ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
+  Breaker block`: the last green run into the swing high a bullish BOS breaks, bearish
+  mirrored). Ready to build.
 - ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
   by the move (candles 1–3) that creates an overlapping FVG in the opposite direction
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)

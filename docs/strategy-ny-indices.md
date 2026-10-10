@@ -2,9 +2,7 @@
 
 **Instruments:** NAS100, US500. Long described, short mirrored. Detection rules (swing, BoS, trend, sweep, confluences, EQ) are in `confluences.md`. Defined with the user on 2026-10-09/10. Strategy logic goes in `strategy/ny_index_sweep/`.
 
-> ⚠ **Open questions (ask the user before building the affected parts):**
-> 1. **Breaker blocks** are not defined yet (`confluences.md` › Breaker block: waiting for the user). Until then BB is left out of the ranking.
-> 2. **Order blocks** use the first OB version (the new OB rules are on hold, `confluences.md` › Order block).
+> Note: **order blocks** use the first OB version (the new OB rules are on hold, `confluences.md` › Order block).
 
 ## General
 - **Windows (ET, NY DST)** ⚙️:
@@ -19,6 +17,7 @@
 - **BoS = a real BoS only** (`confluences.md` › Break of structure: only against the current trend of that timeframe; rule set by the user 2026-10-10, **no setting**). If the setup TF is already in the bias direction's trend when the sweep happens, a close above the swing high is no BoS and the setup does not continue. Same for the entry-TF BoS.
 - **Sweep:** › `confluences.md` › Liquidity sweep: wick beyond one of the last ⚙️ 3 swing lows/highs on the sweep TF, followed by a BoS in the bias direction within ⚙️ 10 sweep-TF candles (separate setting for AM and PM).
 - **3rd confluence:** the confluence of step 3. It must lie inside the BoS move (sweep extreme → BoS candle). A tap (wick) is enough.
+  - Confluences **created by that BoS** count as inside the move even if their candles are older: the breaker (move into the broken high) and the OB of the sweep (rule set by the user 2026-10-10). Same on the entry TF.
 - **Entry confluence:** formed in the entry-TF BoS move. Needs a tap AND a confirmed close beyond it (EQ too).
 - ⚙️ **Entry-TF confluence entry** (default ON). OFF = enter immediately at the close of the entry-TF BoS candle; no entry-TF confluence is needed. SL/TP rules stay the same (SL is based on the 3rd confluence).
 - **Confluence ranking** (strongest wins if several are tapped on the same candle): OB > BB > BPR > FVG > EQ. ⚙️ Each type can be switched on/off. Only confluences in the bias direction are used.

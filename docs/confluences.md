@@ -87,9 +87,14 @@ Described for a bearish OB (the user's example), bullish mirrored. Example: XAUU
 - **On the chart:** from the leg's first candle until the candle that closes beyond its far edge, up to the cursor while still valid. Every OB is **yellow**, whatever its direction (rule set by the user). Sub-entry ✕ for the invalidation only.
 
 ## Breaker block
-- ⏸ **Waiting for the user** ("I'll clarify once it's relevant"). The earlier rule (an OB invalidated by a later BOS becomes a breaker of the opposite bias) is no longer assumed.
-- First hint (user, 2026-10-06, not a rule yet): a breaker is usually the previous move up (all its candles, incl. wicks) before a BOS to the upside, and vice versa.
-- Decided already (rule set by the user): validation like all zones (› Validation), drawn from the breaking candle onward; every breaker is **orange** on the chart, whatever its direction.
+Rules set by the user on 2026-10-10 (replace "an invalidated OB becomes a breaker"). Described bullish, bearish mirrored.
+- **Created by every bullish BOS:** the BOS candle closes above the most recent swing high H (› Break of structure). The breaker is the **move up that formed H**.
+- **Range** = the **last unbroken run of green candles** into H, from the lowest wick to the highest wick of those green candles. Walking back from H, the first red candle ends the run and is excluded (a red candle inside the move would form a new swing low, so the move starts after it; rule set by the user). Dojis are skipped and their wicks don't count.
+- **Green candles only:** if the swing high's higher wick is on the red turn candle, that wick is not part of the zone; the zone ends at the green candle's high (rule set by the user).
+- **Bias:** bullish (price is expected to hold when it comes back down into it).
+- **Exists from** the close of the BOS candle; validation (› Validation) starts with the next candle.
+- Every breaker is **orange** on the chart, whatever its direction, drawn from the breaking candle onward.
+- An OB (first version) and a breaker can form at the same BOS and overlap; strategies decide by their ranking (strategy 2: OB > BB).
 
 ## Balanced price range (BPR)
 - Overlap of a bullish and a bearish FVG: an older FVG invalidated by the move that creates a newer FVG in the opposite direction. The older one's stored range is used.
