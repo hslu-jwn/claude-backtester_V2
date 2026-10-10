@@ -18,6 +18,7 @@ from backtester.analytics.metrics import by_period, by_year
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
+from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 
 
 def format_periods(trades) -> str:
@@ -79,7 +80,7 @@ class _Bar:
         pct = 100 * done // total if total else 100
         if pct != self._last:
             self._last = pct
-            print(f"\r{pct:3d}% ({done}/{total} 5m candles)", end="", file=sys.stderr, flush=True)
+            print(f"\r{pct:3d}% ({done}/{total} base candles)", end="", file=sys.stderr, flush=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -92,6 +93,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=RESULTS_DIR, help="results folder")
     parser.add_argument("--cache-dir", type=Path, default=None, help="read every symbol here")
     parser.add_argument("--preset", default=DEFAULT, help="settings preset (results/presets/)")
+    parser.add_argument(
+        "--strategy",
+        choices=("session_zone_sweep", "ny_index_sweep"),
+        default="session_zone_sweep",
+        help="strategy 1 (default) or strategy 2 (NAS100 / US500, spec defaults, no presets)",
+    )
     parser.add_argument("--presets-dir", type=Path, default=PRESETS_DIR, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
@@ -101,6 +108,10 @@ def main(argv: list[str] | None = None) -> int:
         preset = load_preset(args.preset, args.presets_dir)
     except PresetError as e:
         parser.error(str(e))
+    if args.strategy == "ny_index_sweep":
+        if args.preset != DEFAULT:
+            parser.error("presets are strategy 1 settings; strategy 2 runs with the spec defaults")
+        preset = replace(preset, strategy=NyIndexSweepConfig())
     warmup = args.warmup_days if args.warmup_days is not None else preset.warmup_days
     settings = replace(preset, warmup_days=warmup)
     result = run_backtests(symbols, args.start, args.end, settings, sources, _Bar(), args.workers)

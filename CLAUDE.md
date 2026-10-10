@@ -82,7 +82,7 @@ src/backtester/
                MT5 adapter, Dukascopy downloader (kept, unused)
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
-  strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2, planned)
+  strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2)
   engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
@@ -107,6 +107,7 @@ python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # pr
 python -m backtester.data.histdata data/raw/histdata/  # import histdata files (all pair subfolders) -> cache
 python -m backtester.data.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
+python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
 python -m backtester.data.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
 python -m backtester.data.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/

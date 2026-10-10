@@ -1050,7 +1050,7 @@ in its results reported).
     Sunday, markets closed) would move to 03:00; the data has no candles then.
   - Compare on TradingView after importing the indices into the main cache (0.5):
     NAS100 / US500 4h with "4h candles: New York" vs FOREXCOM:NSXUSD / SPXUSD 4h.
-- ☐ **8.4 Strategy 2 setup state machine** (`strategy/ny_index_sweep/`). Bias (AM: 4h
+- ◐ **8.4 Strategy 2 setup state machine** (`strategy/ny_index_sweep/`). Bias (AM: 4h
   trend, PM: 15m trend) and the AM route (1h = 4h trend → setup 5m / entry 1m, else 15m
   / 5m) read once before the window and frozen; only trades in the bias direction.
   Funnel: sweep (AM: 1h / 4h, registered at the wick, checked at the HTF close; PM: 15m /
@@ -1064,7 +1064,40 @@ in its results reported).
   the original BOS, window end kills untriggered setups, one open trade per setup,
   re-entries, ⚙ max trades per session per index (1). Hand-built scenario tests (an AM
   and a PM day), like strategy 1's `scenario.py`.
-- ☐ **8.5 Strategy 2 SL / TP** (› Stop Loss, › Take Profit). SL below the 3rd confluence
+  Open questions answered by the user on 2026-10-11 (spec updated): BoS = the most recent
+  swing high (a setting "last swing high before the sweep" comes later, not built), tap by
+  entry-TF wicks, inside the move by time, timeout, same sweep, no trend = no bias.
+  Built (2026-10-11), with 8.5: `strategy/ny_index_sweep/` (`config.py`
+  `NyIndexSweepConfig`, `frames.py` detectors per timeframe incl. untouched swings and
+  never-tapped zones, `setup.py` the state machine, `strategy.py` `NyIndexSweep`,
+  `targets.py`); engine: three TPs (`Order.take_profit_3`, `tp2_share`) and
+  `Strategy.on_trade_closed(ref, result)`; trades.csv `take_profit_3`, `tp2_share`;
+  runner `make_strategy`, NY 4h and 15m / 1h / 4h from the first cached day for strategy 2
+  (`full_history`, ~30 s start-up per symbol); `python -m backtester.run NAS100 US500
+  --start … --end … --strategy ny_index_sweep` (spec defaults, no presets; UI in 8.6).
+  Tests: `tests/strategy/ny_index_sweep/` (`test_parts.py`; `test_strategy.py`: every
+  decision on a 20-day random walk checked against the rules, no lookahead with cut
+  histories, entry-TF confluence off), `tests/engine/test_backtest.py` (three TPs, the
+  callback). No hand-built AM / PM day yet (multi-timeframe 1m fixtures; the audit test
+  stands in for it). Choices made while building (check them):
+  - Sweeps are seen on closed 1m candles against the sweep-TF swings confirmed before that
+    1m candle opened. One setup per route waits for its BoS at a time (a deeper wick moves
+    its extreme). AM: 1h and 4h levels together, one setup per wick; the most extreme
+    level taken decides the sweep TF (X-candle limit, close-beyond check).
+  - 3rd-confluence candidates: confluence-TF zones in the move, setup-TF breaker / OB
+    created by the BoS, and the EQ of the leg (on the setup TF). A candidate drops out
+    when a candle of its own timeframe closes beyond its far edge.
+  - Several tapped / confirmed on one candle, same kind: the one price reaches first.
+  - Entry candidates are validated from the candle after the entry-TF BoS (earlier taps
+    don't count). An opposite entry-TF BoS: back to step 5.
+  - A signal without an order (SL not beyond the entry, no TP, best time excluded) sends
+    the setup back to step 5 and doesn't count as a trade; max trades reached ends it.
+  - Tags: `am` / `pm`, `route_<setup>_<entry>`, `z3_<kind>`, `entry_<kind>`, `best_time`;
+    `confluence` in trades.csv = the 3rd confluence's kind.
+  - Strategy 2 switches off strategy 1's break-even at the next session start
+    (`Strategy.uses_session_break_even`); break-even only after TP1.
+  - Later setting (user, 2026-10-11): BoS against "the last swing high before the sweep".
+- ◐ **8.5 Strategy 2 SL / TP** (› Stop Loss, › Take Profit). SL below the 3rd confluence
   + ⚙ 10% of its height; ⚙ narrow-confluence threshold (0 = off) → sweep extreme; EQ SL
   rule (8.2.2). Rejection zones (AM: 1h + 4h, PM: 15m; untouched swing highs,
   unmitigated opposite FVG / OB / BB / BPR; higher TF wins when close; ⚙ 0.2R
@@ -1074,6 +1107,15 @@ in its results reported).
   1.618 / 2.0) or fixed R (1.2 / 1.5 / 1.8); zones running out after TP1 / TP2 →
   fallback levels; levels running out → the rest closes at the last TP. Engine: 3
   partial exits.
+  Built with 8.4 (`targets.py`). Choices made while building (check them):
+  - Narrow-confluence threshold in ATRs (14) of the 3rd confluence's timeframe; then the
+    SL goes below the sweep extreme with the same buffer (10% of the 3rd confluence).
+  - Rejection levels below 1.2R are dropped before clustering; the rest cluster as in
+    strategy 1 (chained, < 0.2R). Levels come from closed 15m / 1h / 4h candles; a high
+    is "touched" when a later wick reaches it (>=).
+  - Fallback levels must lie beyond the last TP and at or beyond 1.2R; fib from the sweep
+    extreme (0) to the setup-TF BoS candle's high (1). Two TPs: a third at TP1, the rest at
+    TP2; one TP: all of it.
 - ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Trades overlay for strategy 2
   (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the
   strategy popover gets a second entry); session view: pick one AM or PM session and see

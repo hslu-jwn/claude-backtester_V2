@@ -12,9 +12,9 @@ the engine calls `on_trade_closed(order.ref, result)` before the strategy's next
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
@@ -43,13 +43,15 @@ class Order:
 class Strategy(ABC):
     base_timeframe: Timeframe
     timeframes: tuple[Timeframe, ...]  # all timeframes the strategy needs, incl. base
+    # the engine's break-even at the next session start (strategy 1's rule)
+    uses_session_break_even: bool = True
 
     @abstractmethod
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         """`now` = close time of the current base candle. A view is None until its first
         candle has closed."""
 
-    def on_trade_closed(self, ref: object, result: TradeResult) -> None:  # noqa: B027
+    def on_trade_closed(self, ref: object, result: TradeResult) -> None:
         """The trade of the order with `ref` has closed (all parts). Default: nothing."""
 
     def session_records(self, run_end: datetime | None = None) -> list[dict]:

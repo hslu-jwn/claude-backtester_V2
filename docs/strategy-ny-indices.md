@@ -15,9 +15,14 @@
 - **Read once before the session (frozen):** the bias and, for the AM, the timeframe route. Only trades in the bias direction.
 - **Trend:** › `confluences.md` › Trend (defined only by BoS). No sideways state.
 - **BoS = a real BoS only** (`confluences.md` › Break of structure: only against the current trend of that timeframe; rule set by the user 2026-10-10, **no setting**). If the setup TF is already in the bias direction's trend when the sweep happens, a close above the swing high is no BoS and the setup does not continue. Same for the entry-TF BoS.
+- **Which swing high the BoS breaks:** the **most recent** confirmed swing high (`confluences.md` › Break of structure), also when a lower high formed between the sweep and the BoS (rule set by the user 2026-10-11; "the last swing high before the sweep" is to become a backtest setting later, ROADMAP 8.4).
 - **Sweep:** › `confluences.md` › Liquidity sweep: wick beyond one of the last ⚙️ 3 swing lows/highs on the sweep TF, followed by a BoS in the bias direction within ⚙️ 10 sweep-TF candles (separate setting for AM and PM).
+- **No trend yet** (rule set by the user 2026-10-11): no 4h trend (AM) or no 15m trend (PM) = no bias = no trades in that window. A 1h trend of "none" counts as "different from 4h" (→ 15m / 5m route). In practice only at the start of the data.
 - **3rd confluence:** the confluence of step 3. It must lie inside the BoS move (sweep extreme → BoS candle). A tap (wick) is enough.
-  - Confluences **created by that BoS** count as inside the move even if their candles are older: the breaker (move into the broken high) and the OB of the sweep (rule set by the user 2026-10-10). Same on the entry TF.
+  - **Inside the move = by time** (rule set by the user 2026-10-11): formed by candles from the sweep extreme up to and including the BoS candle. Price-wise it can never lie below the sweep extreme (a close there would be an opposite BoS and cancel the setup). Confluences formed **after** the BoS candle (while price keeps running before the retracement) do **not** count.
+  - Confluences **created by that BoS** count as inside the move even if their candles are older: the breaker (move into the broken high) and the OB of the sweep (rule set by the user 2026-10-10), and the EQ of the move. Same on the entry TF (entry-TF BoS move).
+  - **The tap** is any closed **entry-TF** candle (1m, or 5m on the 15m route) whose wick goes into the zone, after the BoS candle (rule set by the user 2026-10-11; like the AM HTF sweep, registered at the moment of the wick, not at the setup-TF close).
+  - **Order:** the entry-TF BoS candle closes at or after the tapping candle; the tapping candle itself may be the BoS candle.
 - **Entry confluence:** formed in the entry-TF BoS move. Needs a tap AND a confirmed close beyond it (EQ too).
 - ⚙️ **Entry-TF confluence entry** (default ON). OFF = enter immediately at the close of the entry-TF BoS candle; no entry-TF confluence is needed. SL/TP rules stay the same (SL is based on the 3rd confluence).
 - **Confluence ranking:** OB > BB > BPR > FVG > EQ. Only used when several confluences are **hit by the same candle**; if zones overlap but only one gets hit, that one counts even if it ranks lower (`confluences.md` › Overlapping confluences). ⚙️ Each type can be switched on/off. Only confluences in the bias direction are used.
@@ -27,6 +32,7 @@
 2. **Sweep** against the bias on 15m or 5m (bullish: a swing low gets swept).
 3. **BoS** in the bias direction on the same timeframe as the sweep: close above the last swing high before the sweep.
    - If a 5m setup is running and a 15m BoS forms from the same sweep, the 15m setup replaces it (new move, new 3rd confluences, counts on 15m). A trade already opened from the 5m setup keeps running.
+   - **Same sweep** (rule set by the user 2026-10-11): the 15m sweep extreme has the same price as the 5m sweep extreme, and the 5m sweeping candle lies inside the 15m sweeping candle.
 4. **3rd confluence:** on 5m, inside the BoS move (for EQ: the 15m leg if the BoS is on 15m). Wait for a tap.
 5. **1m BoS** in the bias direction: close above the previous 1m swing high.
 6. **1m confluence** formed in that 1m BoS move: tap, then a confirmed close beyond it.
@@ -36,7 +42,7 @@
 1. **Bias:** 4h trend before the window.
 2. **Route** (decided before the window, frozen): 1h trend same as 4h → setup TF 5m, entry TF 1m. Different → setup TF 15m, entry TF 5m.
 3. **HTF sweep** on 1h or 4h against the bias (bullish: one of the last 3 confirmed 1h/4h swing lows gets swept).
-   - Registered at the moment of the wick; at the HTF candle close it is checked that it is still a valid sweep.
+   - Registered at the moment of the wick; at the HTF candle close it is checked that it is still a valid sweep. The only check is the close-beyond setting (rule set by the user 2026-10-11): with the default (a close beyond still counts) nothing cancels at the close; with the setting off, a close beyond the swept level cancels the sweep and the setup built on it.
 4. **Setup TF:** BoS in the bias direction, then the 3rd confluence in that move. Wait for a tap.
 5. **Entry TF:** BoS in the bias direction.
 6. **Entry-TF confluence** formed in that move: tap, then a confirmed close beyond it.
@@ -53,7 +59,7 @@
 - **Re-entry:** allowed after any closed trade (SL, BE or TP) as long as the setup is still valid and the max trades per session isn't reached.
   - After a wick SL: re-enter via a new entry-TF BoS + confluence in the same 3rd confluence, or via the next 3rd confluence in the move.
   - SL/TPs are recalculated for each new entry.
-- **Timeout:** if the 3rd confluence isn't tapped within ⚙️ 25 setup-TF candles after the original BoS candle, the setup is cancelled. Re-entries keep counting from the original BoS.
+- **Timeout:** if the 3rd confluence isn't tapped within ⚙️ 25 setup-TF candles after the original BoS candle, the setup is cancelled. Re-entries keep counting from the original BoS. The tapping candle must close at most 25 setup-TF candles after the original BoS candle's close (rule set by the user 2026-10-11).
 
 ## Stop Loss
 - **Standard:** below the low of the 3rd confluence, plus a buffer of ⚙️ 10% of its height.
@@ -70,10 +76,11 @@
 - **Rejection zones:** untouched swing highs and unmitigated opposite confluences (FVG/OB/BB/BPR).
   - AM: 1h + 4h. PM: 15m.
   - Higher TF is stronger: when two zones are close together, the higher-TF one is used.
-  - Zones less than ⚙️ 0.2R apart count as one.
+  - Zones less than ⚙️ 0.2R apart count as one; within such a cluster the higher-TF zone's level is used.
+  - Untouched swing high = no later wick has reached it; unmitigated confluence = never tapped since it formed (as in strategy 1). The TP sits at the zone's near edge (bottom for a long). (Rules set by the user 2026-10-11.)
 - **TP1:** near edge of the first rejection zone ≥ 1.2R. Zones below 1.2R are ignored. No upper limit, so there is always a trade.
 - **TP2 / TP3:** the next rejection zones beyond TP1.
-- **ATH fallback** (price above the highest high of all downloaded data, no zones left). ⚙️ Mode:
+- **ATH fallback** (no rejection zone left above the entry / TP1 / TP2; the same as the entry being above the highest high of all data **before the entry**, no lookahead: below the all-time high there is always an untouched high above; rule set by the user 2026-10-11). ⚙️ Mode:
   - **Fib** (default): extension of the setup-TF BoS leg (sweep extreme = 0, BoS high = 1). Levels 1.382 / 1.5 / 1.618 / 2.0. TP1 = first level ≥ 1.2R, TP2/TP3 = the next levels.
   - **Fixed R:** TP1 = 1.2R, TP2 = 1.5R, TP3 = 1.8R.
   - If zones run out after TP1 or TP2, the remaining TPs use the fallback levels above the last TP.

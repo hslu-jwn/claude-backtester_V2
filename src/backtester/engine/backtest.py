@@ -147,7 +147,7 @@ class Backtest:
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol)
         check = None
-        if self._config.break_even_at_next_session:
+        if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
         return OpenTrade(
             symbol=symbol,

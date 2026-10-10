@@ -13,7 +13,7 @@ Spec: ROADMAP.md › 3.4. Per symbol:
    last close (`END_OF_DATA`, engine rule).
 Symbols run in parallel processes (one per symbol, up to `workers`); one symbol or
 `workers=1` runs in this process. The trades of all symbols are merged in entry time
-order. Progress: `progress(done, total)` in 5m candles over all symbols.
+order. Progress: `progress(done, total)` in base candles (5m for strategy 1, 1m for strategy 2) over all symbols.
 
 `write_results` writes `results/<run-id>/` (git-ignored):
 - `trades.csv`  one row per trade, all symbols, entry time order (`id` links sessions.json)
@@ -48,9 +48,13 @@ from backtester.analytics.metrics import summarize
 from backtester.core.models import Direction
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, warmup_start
+from backtester.data.resample import H4Alignment
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
+from backtester.strategy.base import Strategy
+from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
 
@@ -65,8 +69,22 @@ def _read_only(mapping: dict) -> MappingProxyType:
 copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
+def make_strategy(symbol: str, config) -> Strategy:
+    """The strategy a config belongs to: strategy 1 (session zone sweep) or strategy 2
+    (`NyIndexSweepConfig`, NY Open index sweep; command line only so far, ROADMAP 8.6)."""
+    if isinstance(config, NyIndexSweepConfig):
+        return NyIndexSweep(symbol, config)
+    return SessionZoneSweep(symbol, config)
+
+
+def strategy_name(config) -> str:
+    return "ny_index_sweep" if isinstance(config, NyIndexSweepConfig) else "session_zone_sweep"
+
+
 @dataclass(frozen=True, slots=True)
 class RunSettings:
+    # strategy 1's config (the settings panel is built from it); a NyIndexSweepConfig runs
+    # strategy 2 (`make_strategy`)
     strategy: SessionZoneSweepConfig = field(default_factory=SessionZoneSweepConfig)
     engine: EngineConfig = DEFAULT_ENGINE
     warmup_days: int = 14  # cached days loaded before the range (1h / 4H levels, ATR)
@@ -125,7 +143,8 @@ class _Job:
 
     @property
     def base_candles(self) -> int:
-        return len(next(s for s in self.series if s.timeframe is SessionZoneSweep.base_timeframe))
+        base = make_strategy(self.symbol, self.settings.strategy).base_timeframe
+        return len(next(s for s in self.series if s.timeframe is base))
 
 
 def _midnight(d: date) -> datetime:
@@ -148,13 +167,19 @@ def _load(
         notes.append(f"{symbol}: {last + timedelta(days=1)}..{end} not cached, left out")
     warm = warmup_start(cached, first, settings.warmup_days)
     adapter = sources.adapter(symbol)
-    strategy = SessionZoneSweep(symbol, settings.strategy)
+    strategy = make_strategy(symbol, settings.strategy)
+    h4 = getattr(strategy, "h4_alignment", H4Alignment.UTC)
+    history = cached_block(cached, first)[0]  # first day of the cached run around `first`
+    full = getattr(strategy, "full_history", ())
+    end = _midnight(last + timedelta(1))
     series = tuple(
         CandleSeries(
             symbol,
             tf,
             candles_from_frame(
-                adapter.fetch_frame(symbol, tf, _midnight(warm), _midnight(last + timedelta(1)))
+                adapter.fetch_frame(
+                    symbol, tf, _midnight(history if tf in full else warm), end, h4=h4
+                )
             ),
         )
         for tf in dict.fromkeys(strategy.timeframes)
@@ -166,7 +191,7 @@ def _load(
 
 
 def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
-    strategy = SessionZoneSweep(job.symbol, job.settings.strategy)
+    strategy = make_strategy(job.symbol, job.settings.strategy)
     trades = run_backtest(strategy, job.series, job.settings.engine, progress)
     start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
     sessions = [
@@ -378,7 +403,10 @@ def write_results(
             "warmup_days": result.settings.warmup_days,
             "cache_dirs": {s: result.sources.cache_dir(s) for s in result.symbols},
         },
-        "strategy": {"name": "session_zone_sweep", **jsonable(result.settings.strategy)},
+        "strategy": {
+            "name": strategy_name(result.settings.strategy),
+            **jsonable(result.settings.strategy),
+        },
         "engine": result.settings.engine,
     }
     summary = {
