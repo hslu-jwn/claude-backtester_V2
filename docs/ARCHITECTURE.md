@@ -274,4 +274,4 @@ color differs / is opposite, candles only one side has. FTMO's spread per UTC ho
 
 See `docs/ROADMAP.md`. Phases: 0 historical data (histdata.com) → 1 chart with replay → 2 confluences on the
 chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
-6 robustness → 7 live trading via MT5.
+6 robustness → 7 live trading via MT5 → 8 strategy 2 (NY Open index sweep).

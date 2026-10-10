@@ -290,7 +290,7 @@ text with its state (active / tapped / confirmed / invalidated).
   OB yellow), overlapping boxes stack darker.
 - ☐ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
   Breaker block`: the last green run into the swing high a bullish BOS breaks, bearish
-  mirrored). Ready to build.
+  mirrored). Ready to build; built as part of 8.2 (8.2.3).
 - ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
   by the move (candles 1–3) that creates an overlapping FVG in the opposite direction
   (`confluences.md › Balanced price range`). Overlay "BPR": purple box (both directions)
@@ -782,8 +782,47 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
 
 ## Phase 5: Risk & FTMO simulation
 
-`docs/risk-management.md`: sizer, account simulator, Monte Carlo, sweep, and the
-Risk & Prop Firm page. Also accepts the user's manual R log as a trade source.
+`docs/risk-management.md` (rewritten 2026-10-10): sizer, account simulator, Monte Carlo,
+sweep, and the Risk page. Input is an R trade list (a backtest run or the user's manual R
+log); nothing here re-runs detection. One strategy per run. The prop-firm field (FTMO
+phases, limits, pass probability; `risk-management.md › Prop-firm field`) comes later and
+has no step yet.
+
+- ☐ **5.1 RiskConfig + PositionSizer.** `risk/config.py` (`RiskConfig`: starting balance
+  100,000, risk per trade 1% of the current balance, per-symbol contract specs: value per
+  point, lot step, minimum lot; costs per symbol: spread, commission, swap, slippage),
+  `risk/sizer.py` (`PositionSizer`). Lots = risk $ ÷ (SL distance incl. costs × value per
+  point), rounded down to the lot step. Several TPs: each part rounded down, the
+  **remainder goes to TP1**; too small for all parts (< parts × minimum lot) → **fewer
+  TPs** (later TPs dropped, the last remaining one closes the rest); below one minimum lot
+  → skipped, "too small". The trade's R is recalculated from the lots actually used per
+  part. Spec: `risk-management.md › Account & sizing`, › Costs. Tests: hand-built cases
+  for rounding, remainder to TP1, 3 → 2 → 1 TPs, too small.
+- ☐ **5.2 AccountSimulator.** `risk/account_sim.py`: replays the R trades in time order,
+  candle by candle, no lookahead. Balance (closed trades) and equity incl. floating P/L
+  at each candle's worst point; costs (spread, commission, swap per night, slippage on
+  entries and SL hits); **personal daily stop** −2% of the day's starting balance, closed
+  + floating, day = midnight `Europe/Prague`, no new entries after it; **max open risk** 2%
+  (a trade counts full risk until its SL is at break-even, then 0) with **correlation
+  groups** (GBPJPY + GBPUSD on, NAS100 + US500 off); **drawdown scaling** (equity ≥ 4%
+  below its high → risk × 0.5, back as soon as it is less than 4% below). Skipped trades
+  listed with their reason. Output per `risk-management.md › Account simulator`
+  (equity / balance curve, return %, max drawdown % and $, longest drawdown, worst day,
+  per month, …). Needs the candles between entry and exit (floating P/L), read through
+  the cache, not stored in the trade list.
+- ☐ **5.3 Monte Carlo.** `risk/monte_carlo.py`: reshuffles the order of **whole trading
+  days** (⚙ 1,000 runs, seeded) and runs the AccountSimulator with the same settings on
+  each. Output: distribution of max drawdown and final balance (e.g. "95% of runs stay
+  below X% drawdown"), a fan of equity curves. Spec: `risk-management.md › Monte Carlo`.
+- ☐ **5.4 Risk sweep.** `risk/sweep.py`: grid over risk per trade (e.g. 0.25–1.5%), daily
+  stop (1–3%), max open risk, drawdown-scaling threshold and factor; per cell max drawdown,
+  return, Monte Carlo 95% drawdown. Spec: `risk-management.md › Risk sweep`.
+- ☐ **5.5 Risk page in the UI.** Dash page "Risk" (`risk-management.md › UI page`). Left
+  panel: trade source (a backtest run or the manual R log), starting balance, risk, costs
+  per symbol, daily stop, max open risk + correlation groups, drawdown scaling, Monte
+  Carlo runs. Main panel: equity curve with drawdown below, key numbers, skipped trades
+  with reasons, Monte Carlo fan + drawdown distribution, sweep heatmap. Visual step: the
+  user checks it in the app.
 
 ## Phase 6: Robustness (before trusting any result)
 
@@ -913,3 +952,68 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
     test orders" (or `python -m backtester.live.test_orders XAUUSD`) while the market is
     open; afterwards no position in the terminal's Trade tab, history shows 2 x 3 deals
     per symbol.
+
+## Phase 8: Strategy 2 (NY Open index sweep)
+
+`docs/strategy-ny-indices.md` (new 2026-10-10), detection rules in `confluences.md`.
+NAS100 and US500, AM and PM windows. Strategy logic only in `strategy/ny_index_sweep/`;
+detector changes stay shared and must keep strategy 1 working (its tests green, changes
+in its results reported).
+
+- ◐ **8.1 Index data: NAS100, US500.** Built as 0.5 (import, clock, data check, doji
+  thresholds, cost estimates). Open: the user's TradingView check of the candles in 0.5.
+- ☐ **8.2 Detector updates** (`confluences.md`, 2026-10-10). One detector per sub-step,
+  tests first incl. the no-lookahead test, each checked on the chart:
+  1. ☐ **Liquidity sweep rework** (`detectors/sweep.py`, › Liquidity sweep): candidate =
+     a wick beyond one of the **last ⚙ N confirmed swings** (default 3; replaces "since
+     the last BOS plus the broken one"), level = the furthest taken within N (#N when
+     more are taken); ⚙ close beyond the level still counts (default yes); becomes a
+     sweep only with a BOS **within ⚙ X candles** (default 10) of the extreme, a new
+     extreme restarts the count. Overlay "Liquidity sweep" follows.
+  2. ☐ **Equilibrium rework** (› Equilibrium): leg = swing low (after a sweep: the sweep
+     extreme) → the **high wick of the BOS candle**, fixed at the BOS candle (was: up to
+     the first swing high after the BOS); tap = wick below 50%, confirm = green close
+     back above, invalidate = close below the leg's low. EQ SL rule (beyond the leg's low,
+     buffer ⚙ 10% of swing low → deepest wick into the EQ; ⚙ EQ-only toggle: beyond the
+     deepest wick). **Changes strategy 1** (`strategy-session-zones.md › Entry sequence`,
+     › Stop loss): its tests re-run and the change in its results reported.
+  3. ☐ **Breaker block** = step 2.7 (› Breaker block), built here; 2.7 is marked done
+     with it.
+  4. ☐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each
+     on/off per backtest, in the settings (4.1) and presets.
+- ☐ **8.3 4h candles in TradingView alignment + AM/PM window clock.** 4h candles closing
+  at 02/06/10/14/18/22 ET (DST-aware), built from 1m, as an option next to the current
+  UTC-aligned 4h (strategy 1 keeps its own); 1h on full hours. Window clock (ET, NY DST):
+  AM 09:00–11:30 (open 09:30), PM 13:30–16:00 (open 14:00), best-time tags AM
+  09:50–10:10, PM 13:50–14:10; all ⚙. Tests around the March and November changes.
+- ☐ **8.4 Strategy 2 setup state machine** (`strategy/ny_index_sweep/`). Bias (AM: 4h
+  trend, PM: 15m trend) and the AM route (1h = 4h trend → setup 5m / entry 1m, else 15m
+  / 5m) read once before the window and frozen; only trades in the bias direction.
+  Funnel: sweep (AM: 1h / 4h, registered at the wick, checked at the HTF close; PM: 15m /
+  5m) → real BOS on the setup TF → 3rd confluence in the BOS move (incl. those created by
+  that BOS) tapped → entry-TF BOS → entry-TF confluence tapped + confirmed → entry at
+  that close (⚙ entry-TF confluence off: enter at the entry-TF BOS close). Ranking only
+  when several are hit by the same candle (OB > BB > BPR > FVG > EQ). PM: a 15m BOS from
+  the same sweep replaces a running 5m setup. Cancellations (opposite setup-TF BOS; ⚙
+  close beyond the swept level before our BOS), back to step 5 on an opposite entry-TF
+  BOS, next 3rd confluence when one is invalidated, timeout ⚙ 25 setup-TF candles from
+  the original BOS, window end kills untriggered setups, one open trade per setup,
+  re-entries, ⚙ max trades per session per index (1). Hand-built scenario tests (an AM
+  and a PM day), like strategy 1's `scenario.py`.
+- ☐ **8.5 Strategy 2 SL / TP** (› Stop Loss, › Take Profit). SL below the 3rd confluence
+  + ⚙ 10% of its height; ⚙ narrow-confluence threshold (0 = off) → sweep extreme; EQ SL
+  rule (8.2.2). Rejection zones (AM: 1h + 4h, PM: 15m; untouched swing highs,
+  unmitigated opposite FVG / OB / BB / BPR; higher TF wins when close; ⚙ 0.2R
+  clustering). 3 equal parts: TP1 = near edge of the first zone ≥ ⚙ 1.2R, TP2 / TP3 the
+  next zones; break-even incl. costs after TP1. ATH fallback (above the highest high of
+  all data before the entry): ⚙ fib extension of the setup-TF BOS leg (1.382 / 1.5 /
+  1.618 / 2.0) or fixed R (1.2 / 1.5 / 1.8); zones running out after TP1 / TP2 →
+  fallback levels; levels running out → the rest closes at the last TP. Engine: 3
+  partial exits.
+- ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Trades overlay for strategy 2
+  (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the
+  strategy popover gets a second entry); session view: pick one AM or PM session and see
+  sweep, BOS, 3rd confluence, entry confluence, SL / TPs. Visual step: the user checks it.
+- ☐ **8.7 First backtest on NAS100 / US500 + results.** `python -m backtester.run` with
+  strategy 2 on NAS100 + US500 over the cached history; results page split by AM / PM,
+  best-time tag, route and confluence type; per-year table reported here.
