@@ -20,6 +20,12 @@ midnight (weeks Sunday 00:00 to Sunday 00:00 UTC). Their `ts` is the candle's CL
 the timeframe's duration, so "closed at `ts + duration`" holds exactly (also on DST switch
 days, when a trading day isn't 24 hours); `calendar_label` gives the day a candle is named
 by on the chart (D: its trading day, W: the Monday of its week).
+
+4h candles are UTC-aligned by default (00:00, 04:00, ... UTC; strategy 1's overall trend).
+`H4Alignment.NEW_YORK` aligns them like TradingView for the US indices (strategy-ny-
+indices.md › General, ROADMAP 8.3): they close at 02:00, 06:00, 10:00, 14:00, 18:00 and
+22:00 New York time, following US DST, so in UTC they move by an hour twice a year and the
+18:00-22:00 ET candle runs over UTC midnight. `ts` is the open time as usual.
 """
 
 from __future__ import annotations
@@ -43,6 +49,28 @@ class DayBoundary(Enum):
 
 
 DEFAULT_BOUNDARY = DayBoundary.NEW_YORK_17
+
+
+class H4Alignment(Enum):
+    UTC = "UTC (00:00, 04:00, …)"
+    NEW_YORK = "New York (closes 02:00, 06:00, … ET)"  # TradingView for US indices
+
+
+_NY_H4_OFFSET = pd.Timedelta(hours=2)  # 4h buckets from 02:00 ET (00:00 ET + 2 h)
+
+
+def new_york_h4_open(ts: pd.Series) -> pd.Series:
+    """Open time (UTC) of the New York-aligned 4h candle each minute (UTC) belongs to.
+    A bucket start that doesn't exist (02:00 on the March DST Sunday, markets closed then)
+    is moved to 03:00."""
+    local = ts.dt.tz_convert(NEW_YORK).dt.tz_localize(None)
+    start = (local - _NY_H4_OFFSET).dt.floor("4h") + _NY_H4_OFFSET
+    return start.dt.tz_localize(NEW_YORK, nonexistent="shift_forward").dt.tz_convert("UTC")
+
+
+def spans_utc_days(timeframe: Timeframe, h4: H4Alignment) -> bool:
+    """Candles that can cover more than one UTC day: D, W and New York-aligned 4h."""
+    return timeframe in CALENDAR or (timeframe is Timeframe.H4 and h4 is H4Alignment.NEW_YORK)
 
 
 def supported(timeframe: Timeframe) -> bool:
@@ -94,12 +122,16 @@ def drop_flat_minutes(m1: pd.DataFrame) -> pd.DataFrame:
 
 
 def resample(
-    m1: pd.DataFrame, timeframe: Timeframe, boundary: DayBoundary = DEFAULT_BOUNDARY
+    m1: pd.DataFrame,
+    timeframe: Timeframe,
+    boundary: DayBoundary = DEFAULT_BOUNDARY,
+    h4: H4Alignment = H4Alignment.UTC,
 ) -> pd.DataFrame:
     """Aggregate cached M1 rows (already without flat minutes) into `timeframe` candles.
 
     Returns columns CANDLE_COLUMNS, oldest first, `ts` = candle open time (UTC); for D / W
-    the close minus the duration (see the module docstring), `boundary` = their day.
+    the close minus the duration (see the module docstring), `boundary` = their day, `h4` =
+    the alignment of 4h candles.
     """
     if not supported(timeframe):
         raise ValueError(f"{timeframe.name} cannot be resampled from UTC-aligned minutes")
@@ -111,6 +143,8 @@ def resample(
     frame = m1.sort_values("ts").assign(minute_spread=m1["ask_close"] - m1["bid_close"])
     if timeframe in CALENDAR:
         bucket = candle_close(frame["ts"], timeframe, boundary) - timeframe.duration
+    elif timeframe is Timeframe.H4 and h4 is H4Alignment.NEW_YORK:
+        bucket = new_york_h4_open(frame["ts"])
     else:
         bucket = frame["ts"].dt.floor(f"{timeframe.value}min")
     out = (

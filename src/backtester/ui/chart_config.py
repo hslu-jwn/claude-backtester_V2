@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from backtester.core.models import Timeframe
-from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary
+from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary, H4Alignment
 from backtester.data.sources import PRICE_DIGITS
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
@@ -24,6 +24,8 @@ class ChartConfig:
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
     # the day of D / W candles (ROADMAP 4.0b part 2; chart settings popover)
     day_boundary: DayBoundary = DEFAULT_BOUNDARY
+    # the chart's 4h candles (ROADMAP 8.3; the overall-trend 4H stays UTC-aligned, strategy 1)
+    h4_alignment: H4Alignment = H4Alignment.UTC
     # longer ranges get a message instead of the Trades overlay (strategy run time)
     trades_max_days: int = 183
     # ranges estimated (cached weekdays x candles per day) above this many times max_candles

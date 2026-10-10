@@ -97,7 +97,7 @@ from backtester.data.adapters.cache_adapter import (
     candles_from_frame,
     latest_run,
 )
-from backtester.data.resample import CALENDAR, DEFAULT_BOUNDARY, DayBoundary, supported
+from backtester.data.resample import CALENDAR, DEFAULT_BOUNDARY, DayBoundary, H4Alignment, supported
 from backtester.data.sources import SymbolSources, cached_block, warmup_start
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
@@ -177,6 +177,7 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
             _midnight(start),
             _midnight(end + timedelta(days=1)),
             config.day_boundary,
+            config.h4_alignment,
         )
     except MissingCacheError as e:
         return None, str(e)
@@ -401,18 +402,23 @@ def span_candles(span: dict, timeframe: Timeframe, config: ChartConfig = DEFAULT
 
 def chart_key(symbol, timeframe, start_date, end_date, config: ChartConfig = DEFAULT_CONFIG):
     """Identifies the loaded candles: payloads for another key are ignored by the browser.
-    D / W candles also depend on the day boundary."""
+    D / W candles also depend on the day boundary, 4h candles on their alignment."""
     key = f"{symbol}|{timeframe}|{start_date}|{end_date}"
     if timeframe in CALENDAR_NAMES and config.day_boundary is not DEFAULT_BOUNDARY:
         key += f"|{config.day_boundary.name}"
+    if timeframe == Timeframe.H4.name and config.h4_alignment is not H4Alignment.UTC:
+        key += f"|{config.h4_alignment.name}"
     return key
 
 
-def with_boundary(config: ChartConfig, boundary: str | None) -> ChartConfig:
-    """The chart config with the day boundary chosen in the chart settings."""
-    if not boundary or boundary not in DayBoundary.__members__:
-        return config
-    return replace(config, day_boundary=DayBoundary[boundary])
+def with_boundary(config: ChartConfig, boundary: str | None, h4: str | None = None) -> ChartConfig:
+    """The chart config with the day boundary and the 4h alignment chosen in the chart
+    settings."""
+    if boundary in DayBoundary.__members__:
+        config = replace(config, day_boundary=DayBoundary[boundary])
+    if h4 in H4Alignment.__members__:
+        config = replace(config, h4_alignment=H4Alignment[h4])
+    return config
 
 
 def overlay_settings(filters: Sequence[str] | None, strategy: str = "") -> OverlaySettings:
@@ -765,6 +771,15 @@ def layout(
                 id="chart-day-boundary",
                 options=[{"label": f"Day from {b.value}", "value": b.name} for b in DayBoundary],
                 value=DEFAULT_BOUNDARY.name,
+                clearable=False,
+                searchable=False,
+                persistence=True,
+            ),
+            html.Div("4h candles", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="chart-h4-alignment",
+                options=[{"label": a.value, "value": a.name} for a in H4Alignment],
+                value=H4Alignment.UTC.name,
                 clearable=False,
                 searchable=False,
                 persistence=True,
@@ -1136,12 +1151,13 @@ def register_callbacks(
         Input("chart-replay-mode", "data"),
         Input("chart-resync", "data"),
         Input("chart-day-boundary", "value"),
+        Input("chart-h4-alignment", "value"),
         State("chart-replay", "data"),
         State("chart-replay-span", "data"),
     )
-    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, boundary, replay_state,
-              span):  # fmt: skip
-        cfg = with_boundary(config, boundary)
+    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, boundary, h4,
+              replay_state, span):  # fmt: skip
+        cfg = with_boundary(config, boundary, h4)
         return base_payload(
             sources, symbol, timeframe, start_date, end_date, replay_state, span, cfg
         )
@@ -1156,11 +1172,13 @@ def register_callbacks(
         State("chart-filters", "value"),
         State("settings-current", "data"),
         State("chart-day-boundary", "value"),
+        State("chart-h4-alignment", "value"),
         prevent_initial_call=True,
     )
-    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store, boundary):
+    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store, boundary,
+                  h4):  # fmt: skip
         strategy = settings_panel.store_json(store)
-        cfg = with_boundary(config, boundary)
+        cfg = with_boundary(config, boundary, h4)
         payload = overlay_payload(
             sources, request, symbol, timeframe, start_date, end_date, filters, cfg, strategy
         )
@@ -1237,12 +1255,13 @@ def register_callbacks(
         State("chart-filters", "value"),
         State("settings-current", "data"),
         State("chart-day-boundary", "value"),
+        State("chart-h4-alignment", "value"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-10:-2]
-        strategy = settings_panel.store_json(args[-2])
-        cfg = with_boundary(config, args[-1])
+        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-11:-3]
+        strategy = settings_panel.store_json(args[-3])
+        cfg = with_boundary(config, args[-2], args[-1])
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, cfg)
         clicked = ctx.triggered[0]["value"] if action == "click" else None

@@ -5,10 +5,10 @@ Spec: ARCHITECTURE.md › Data sources › Dukascopy, ROADMAP.md › 0.2.
 Each requested UTC day is read from `{cache_dir}/{SYMBOL}/{YYYY}/{YYYY-MM-DD}.parquet`
 (written by `data/dukascopy.py`), flat zero-volume minutes are dropped and the rest is
 resampled (`data/resample.py`). Every intraday timeframe divides a day, so no candle spans
-two days. D and W candles (trading days, `DayBoundary`) span several UTC days: the cached
-days around the range are read too, a candle belongs to the range when it CLOSES in it,
-and a candle is only returned when every UTC day it covers is cached (no half candles at
-the edges of the cache).
+two days. D and W candles (trading days, `DayBoundary`) and New York-aligned 4h candles
+(`H4Alignment`) can span several UTC days: the cached days around the range are read too,
+a candle belongs to the range when it CLOSES in it, and a candle is only returned when
+every UTC day it covers is cached (no half candles at the edges of the cache).
 
 A day that was never downloaded raises `MissingCacheError`, so gaps in the cache are never
 silent. A day cached as empty (Dukascopy had no data) simply has no candles. Only past days
@@ -26,11 +26,12 @@ from backtester.core.models import Candle, Timeframe
 from backtester.data.adapters.base import DataAdapter
 from backtester.data.dukascopy import DEFAULT_CACHE_DIR, cache_path, read_cached_days
 from backtester.data.resample import (
-    CALENDAR,
     DEFAULT_BOUNDARY,
     DayBoundary,
+    H4Alignment,
     drop_flat_minutes,
     resample,
+    spans_utc_days,
     supported,
 )
 
@@ -55,9 +56,11 @@ class CacheAdapter(DataAdapter):
         start: datetime,
         end: datetime,
         boundary: DayBoundary = DEFAULT_BOUNDARY,
+        h4: H4Alignment = H4Alignment.UTC,
     ) -> pd.DataFrame:
         """Same candles as `fetch`, as a DataFrame with columns
-        ts, open, high, low, close, volume, spread. `boundary`: the day of D / W candles."""
+        ts, open, high, low, close, volume, spread. `boundary`: the day of D / W candles,
+        `h4`: the alignment of 4h candles."""
         if not supported(timeframe):
             raise ValueError(f"{timeframe.name} is not supported by the cache")
         start, end = _utc(start), _utc(end)
@@ -74,22 +77,22 @@ class CacheAdapter(DataAdapter):
                 f"{missing[-1] + timedelta(days=1)}"
             )
 
-        if timeframe in CALENDAR:
-            return self._calendar(symbol, timeframe, start, end, days, boundary)
+        if spans_utc_days(timeframe, h4):
+            return self._spanning(symbol, timeframe, start, end, days, boundary, h4)
         m1 = read_cached_days(paths)
         candles = resample(drop_flat_minutes(m1), timeframe)
         in_range = (candles["ts"] >= start) & (candles["ts"] < end)
         return candles[in_range].reset_index(drop=True)
 
-    def _calendar(self, symbol, timeframe, start, end, days, boundary) -> pd.DataFrame:
-        """D / W candles closing in (start, end] whose UTC days are all cached."""
+    def _spanning(self, symbol, timeframe, start, end, days, boundary, h4) -> pd.DataFrame:
+        """Candles closing in (start, end] whose UTC days are all cached (D, W, NY 4h)."""
         span = timeframe.duration + timedelta(days=1)  # a DST day is up to 25 hours
         around = _days(start - span, end + span)
         loaded = [d for d in around if cache_path(self.cache_dir, symbol, d).exists()]
         m1 = read_cached_days([cache_path(self.cache_dir, symbol, d) for d in loaded])
         if m1.empty:
             return resample(pd.DataFrame(), timeframe)
-        candles = resample(drop_flat_minutes(m1), timeframe, boundary)
+        candles = resample(drop_flat_minutes(m1), timeframe, boundary, h4)
         close = candles["ts"] + timeframe.duration
         cached = set(loaded)
         complete = [all(d in cached for d in _days(c - timeframe.duration, c)) for c in close]

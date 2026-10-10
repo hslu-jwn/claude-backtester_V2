@@ -1023,11 +1023,33 @@ in its results reported).
      `test_each_confluence_type_can_be_switched_off` (`test_setup.py`: switching a type off
      removes its entries, the others stay). Strategy 2 gets the same in its config (8.4).
      On the chart, the Overlay types panel already switches each type on/off.
-- ☐ **8.3 4h candles in TradingView alignment + AM/PM window clock.** 4h candles closing
+- ◐ **8.3 4h candles in TradingView alignment + AM/PM window clock.** 4h candles closing
   at 02/06/10/14/18/22 ET (DST-aware), built from 1m, as an option next to the current
   UTC-aligned 4h (strategy 1 keeps its own); 1h on full hours. Window clock (ET, NY DST):
   AM 09:00–11:30 (open 09:30), PM 13:30–16:00 (open 14:00), best-time tags AM
   09:50–10:10, PM 13:50–14:10; all ⚙. Tests around the March and November changes.
+  Built (2026-10-10):
+  - `data/resample.py` `H4Alignment` (UTC default, NEW_YORK), `new_york_h4_open`,
+    `spans_utc_days`; `CacheAdapter.fetch_frame(h4=…)` reads NY 4h candles like D / W
+    (they cross UTC midnight: candles closing in the range, only when every UTC day they
+    cover is cached). Chart settings popover: "4h candles" (UTC / New York); the overall-
+    trend 4H badge stays UTC (strategy 1). Tests: `tests/data/test_resample.py` (summer,
+    winter, March DST week), `tests/data/test_cache_adapter.py`,
+    `tests/ui/test_daily_weekly_chart.py`.
+  - 1h: UTC full hours are full New York hours too (whole-hour offsets), nothing to build.
+  - `strategy/ny_index_sweep/windows.py` (new strategy folder): `WindowConfig` /
+    `WindowTimes` (settings), `window_on`, `window_of`, `is_best_time`, `windows_between`.
+    Tests: `tests/strategy/ny_index_sweep/test_windows.py`.
+  Check (choices made while building):
+  - A candle belongs to the window it closes in, start < close <= end (as for sessions):
+    the 1m candle closing at 09:00 ET is before the AM window, the one closing at 11:30
+    its last.
+  - Best time: the entry time (the entry candle's close) within 09:50–10:10 /
+    13:50–14:10, both edges included.
+  - A NY 4h bucket starting at a time that doesn't exist (02:00 ET on the March DST
+    Sunday, markets closed) would move to 03:00; the data has no candles then.
+  - Compare on TradingView after importing the indices into the main cache (0.5):
+    NAS100 / US500 4h with "4h candles: New York" vs FOREXCOM:NSXUSD / SPXUSD 4h.
 - ☐ **8.4 Strategy 2 setup state machine** (`strategy/ny_index_sweep/`). Bias (AM: 4h
   trend, PM: 15m trend) and the AM route (1h = 4h trend → setup 5m / entry 1m, else 15m
   / 5m) read once before the window and frozen; only trades in the bias direction.

@@ -11,6 +11,7 @@ from m1_frames import m1
 from backtester.core.models import Timeframe
 from backtester.data.resample import (
     DayBoundary,
+    H4Alignment,
     calendar_label,
     drop_flat_minutes,
     resample,
@@ -244,3 +245,47 @@ def test_utc_midnight_option():
     assert calendar_label(ts("2026-09-13 00:00"), Timeframe.W1, DayBoundary.UTC) == (
         date(2026, 9, 14)
     )
+
+
+def h4(frame, alignment=H4Alignment.NEW_YORK):
+    out = resample(frame, Timeframe.H4, h4=alignment)
+    return [(t.to_pydatetime(), row.open, row.close) for t, row in zip(out.ts, out.itertuples())]
+
+
+def test_h4_new_york_closes_at_02_06_10_14_18_22_et_in_summer_and_winter():
+    # summer (EDT, UTC-4): candles open 18:00 / 22:00 / 02:00 ... ET = 22:00 / 02:00 / 06:00
+    # UTC; 21:59 UTC is the last minute of the 14:00-18:00 ET candle
+    summer = minutes("2026-09-02 21:59", "2026-09-02 22:00", "2026-09-03 01:59", "2026-09-03 02:00")
+    assert h4(summer) == [
+        (ts("2026-09-02 18:00"), 0, 0),  # 14:00-18:00 ET
+        (ts("2026-09-02 22:00"), 1, 2),  # 18:00-22:00 ET, over UTC midnight
+        (ts("2026-09-03 02:00"), 3, 3),  # 22:00-02:00 ET
+    ]
+    # winter (EST, UTC-5): the same ET hours are one hour later in UTC
+    winter = minutes("2026-01-14 22:59", "2026-01-14 23:00", "2026-01-15 14:59", "2026-01-15 15:00")
+    assert [c[0] for c in h4(winter)] == [
+        ts("2026-01-14 19:00"),  # 14:00 ET
+        ts("2026-01-14 23:00"),  # 18:00 ET
+        ts("2026-01-15 11:00"),  # 06:00 ET (closes 10:00 ET = 15:00 UTC)
+        ts("2026-01-15 15:00"),  # 10:00 ET
+    ]
+
+
+def test_h4_new_york_follows_the_dst_change():
+    # US DST starts Sunday 2026-03-08: Friday 03-06 13:00 ET = 18:00 UTC (EST), Monday
+    # 03-09 13:00 ET = 17:00 UTC (EDT); both are in the 10:00-14:00 ET candle
+    frame = minutes("2026-03-06 18:00", "2026-03-09 17:00")
+    assert [c[0] for c in h4(frame)] == [ts("2026-03-06 15:00"), ts("2026-03-09 14:00")]
+
+
+def test_h4_utc_alignment_is_unchanged_and_the_default():
+    frame = minutes("2026-09-02 21:59", "2026-09-02 22:00")
+    out = resample(frame, Timeframe.H4)
+    assert out.ts.tolist() == [ts("2026-09-02 20:00")]  # 20:00-00:00 UTC
+    assert resample(frame, Timeframe.H4, h4=H4Alignment.UTC).ts.tolist() == out.ts.tolist()
+
+
+def test_h4_alignment_only_changes_4h_candles():
+    frame = minutes("2026-09-02 21:59", "2026-09-02 22:00")
+    for tf in (Timeframe.M5, Timeframe.H1, Timeframe.D1):
+        assert resample(frame, tf, h4=H4Alignment.NEW_YORK).equals(resample(frame, tf))

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 from backtester.core.models import Candle, Timeframe
 from backtester.core.series import CandleSeries
-from backtester.data.resample import DayBoundary
+from backtester.data.resample import DayBoundary, H4Alignment
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG
 from backtester.ui.chart_data import ChartData
@@ -55,3 +55,15 @@ def test_the_day_boundary_is_part_of_the_key_of_d_and_w_only():
     assert chart.chart_key("XAUUSD", "D1", "2026-09-02", "2026-09-30", utc) == base + "|UTC"
     m5 = chart.chart_key("XAUUSD", "M5", "2026-09-02", "2026-09-30", utc)
     assert m5 == chart.chart_key("XAUUSD", "M5", "2026-09-02", "2026-09-30")
+
+
+def test_the_4h_alignment_is_part_of_the_key_of_4h_only():
+    ny = chart.with_boundary(DEFAULT_CONFIG, None, "NEW_YORK")
+    assert (
+        ny.h4_alignment is H4Alignment.NEW_YORK and ny.day_boundary is DEFAULT_CONFIG.day_boundary
+    )
+    assert chart.with_boundary(DEFAULT_CONFIG, None, "nonsense") is DEFAULT_CONFIG
+    assert chart.chart_key("NAS100", "H4", "a", "b", ny).endswith("|NEW_YORK")
+    assert chart.chart_key("NAS100", "H1", "a", "b", ny) == chart.chart_key(
+        "NAS100", "H1", "a", "b"
+    )

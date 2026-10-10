@@ -18,6 +18,7 @@ from backtester.data.adapters.cache_adapter import (
     latest_run,
 )
 from backtester.data.dukascopy import _empty_cache_frame, cache_path
+from backtester.data.resample import H4Alignment
 
 
 def write_day(cache_dir, day: date, frame: pd.DataFrame, symbol: str = "XAUUSD") -> None:
@@ -168,3 +169,21 @@ def test_latest_run_is_newest_block_of_consecutive_days():
     assert latest_run(days) == (d("2026-09-01"), d("2026-09-03"))
     assert latest_run([d("2020-01-01")]) == (d("2020-01-01"), d("2020-01-01"))
     assert latest_run([]) is None
+
+
+def test_new_york_4h_candles_span_utc_midnight_and_need_both_days(tmp_path):
+    # 09-01 .. 09-03 cached; the 18:00-22:00 ET candle opens 22:00 UTC and closes 02:00 UTC
+    for d in range(1, 4):
+        write_day(tmp_path, date(2026, 9, d), m1(("22:30", 100.0, 101.0, 99.0, 100.5, 1.0, 0.2),
+                                                   ("01:30", 100.5, 102.0, 100.0, 101.0, 1.0, 0.2),
+                                                   day=f"2026-09-0{d}"))  # fmt: skip
+    adapter = CacheAdapter(tmp_path)
+    found = adapter.fetch_frame("XAUUSD", Timeframe.H4, ts(1, 0), ts(4, 0), h4=H4Alignment.NEW_YORK)
+    opens = [t.to_pydatetime() for t in found.ts]
+    # 09-01 01:30 UTC is in the candle opening 08-31 22:00 (08-31 not cached): left out;
+    # 09-03 22:30 is in the candle closing 09-04 02:00 (09-04 not cached): left out
+    assert opens == [ts(1, 22), ts(2, 22)]
+    row = found.iloc[0]
+    assert (row.open, row.high, row.close) == (100.0, 102.0, 101.0)  # 22:30 + next day 01:30
+    utc_aligned = adapter.fetch_frame("XAUUSD", Timeframe.H4, ts(1, 0), ts(4, 0))
+    assert utc_aligned.ts.tolist()[0] == pd.Timestamp("2026-09-01 00:00", tz="UTC")
