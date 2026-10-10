@@ -17,7 +17,7 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
-- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, default **0** until the user fills them in from MT5/FTMO (current commission defaults: XAUUSD $6, GBP pairs $5; NAS100 / US500 **0**, swap 0 for all).
+- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6**, GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**; swap **0** for all.
 - ⚙️ **Slippage** in points per fill, applied to **entries and SL hits** (market fills); TPs are limit orders, no slippage. Defaults (rough starting estimates, to be checked against FTMO demo fills):
 
   | Symbol | Slippage per fill |
