@@ -94,7 +94,7 @@ Rules set by the user on 2026-10-10 (replace "an invalidated OB becomes a breake
 - **Bias:** bullish (price is expected to hold when it comes back down into it).
 - **Exists from** the close of the BOS candle; validation (› Validation) starts with the next candle.
 - Every breaker is **orange** on the chart, whatever its direction, drawn from the breaking candle onward.
-- An OB (first version) and a breaker can form at the same BOS and overlap; strategies decide by their ranking (strategy 2: OB > BB).
+- An OB (first version) and a breaker can form at the same BOS and overlap (› Overlapping confluences).
 
 ## Balanced price range (BPR)
 - Overlap of a bullish and a bearish FVG: an older FVG invalidated by the move that creates a newer FVG in the opposite direction. The older one's stored range is used.
@@ -114,6 +114,11 @@ Reworked with the user on 2026-10-10 (used by strategy 1 and strategy 2). Descri
 - **Tap:** a wick below the 50% line. **Confirmed:** a green candle closes back above the 50% (only needed where a strategy needs a confirmed confluence; a tap is enough where a strategy only waits for a tap). **Invalidated:** a **close** below the leg's swing low; a wick doesn't count.
 - Every sweep + BOS has an EQ, so it is the weakest confluence (ranking OB > BB > BPR > FVG > EQ) and ⚙️ can be switched off.
 - **Stop loss with EQ** (rule set by the user, used by both strategies): beyond the leg's swing low, buffer = ⚙️ 10% of the distance from the swing low to the **deepest wick into the EQ** before the entry. ⚙️ EQ-only toggle (default off): SL beyond that deepest wick instead, buffer = 10% of the same distance. Example: swing low 100, BOS high 200, EQ 150, deepest wick 140 → distance 40 → default SL 96, toggle SL 136.
+
+## Overlapping confluences
+Rule set by the user on 2026-10-10, for every strategy that ranks confluences.
+- Overlap alone decides nothing: **only confluences that were actually hit (tapped) count**. If zones overlap but price taps only one of them, that one is used, **even if it ranks lower**.
+- Only when **several are hit by the same candle** does the strategy's ranking pick one (strategy 2: OB > BB > BPR > FVG > EQ).
 
 ## Confluence toggles
 - ⚙️ Each confluence type (OB, breaker, BPR, FVG, EQ) can be switched on/off per backtest (rule set by the user), so results with and without a type can be compared.

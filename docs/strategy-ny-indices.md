@@ -20,7 +20,7 @@
   - Confluences **created by that BoS** count as inside the move even if their candles are older: the breaker (move into the broken high) and the OB of the sweep (rule set by the user 2026-10-10). Same on the entry TF.
 - **Entry confluence:** formed in the entry-TF BoS move. Needs a tap AND a confirmed close beyond it (EQ too).
 - ⚙️ **Entry-TF confluence entry** (default ON). OFF = enter immediately at the close of the entry-TF BoS candle; no entry-TF confluence is needed. SL/TP rules stay the same (SL is based on the 3rd confluence).
-- **Confluence ranking** (strongest wins if several are tapped on the same candle): OB > BB > BPR > FVG > EQ. ⚙️ Each type can be switched on/off. Only confluences in the bias direction are used.
+- **Confluence ranking:** OB > BB > BPR > FVG > EQ. Only used when several confluences are **hit by the same candle**; if zones overlap but only one gets hit, that one counts even if it ranks lower (`confluences.md` › Overlapping confluences). ⚙️ Each type can be switched on/off. Only confluences in the bias direction are used.
 
 ## PM Session
 1. **Bias:** 15m trend before the window.
