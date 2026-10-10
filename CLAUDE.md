@@ -18,6 +18,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 |---|---|
 | `docs/confluences.md` | Swings, trend, BOS, strong-move filter, zone validation, FVG, OB, breaker, BPR, equilibrium, SMT |
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
+| `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (Dukascopy, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
@@ -78,7 +79,7 @@ src/backtester/
   data/        DataAdapter interface, Dukascopy downloader, cache (data/cache/), MT5 adapter
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
-  strategy/    Strategy interface + session_zone_sweep/ (strategy 1)
+  strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2, planned)
   engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)

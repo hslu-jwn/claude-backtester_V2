@@ -57,9 +57,12 @@ Described for a bullish zone (price comes from above), bearish mirrored. Checkin
 ## Liquidity sweep
 - **Idea** (user): liquidity causes reversals, a BOS shifts the market's structure, and FVGs and equilibrium are retracement patterns (e.g. once an OB has formed and price revisits it with pressure out of it, an FVG can be used to enter). The sweep is the liquidity part.
 - Described for a sweep of highs (it leads to a bearish BOS and a bearish OB), lows mirrored.
-- **Candidate:** a candle whose wick goes **above** a confirmed swing high (touching is no sweep; a close above still counts, rule set by the user). Only highs **confirmed since the last BOS** count, i.e. inside the current uptrend, **plus the swing high that this BOS broke** (rules set by the user); the swing must be confirmed by an earlier candle than the sweeping one. The high need not be the most recent one, and the same high can be taken more than once.
+- **Candidate:** a candle whose wick goes **above** one of the **last ⚙️ N confirmed swing highs** (default N = 3, counted on the sweep's timeframe; rule set by the user 2026-10-10, replaces "highs confirmed since the last BOS plus the broken one"). One tick above is enough, touching is no sweep. ⚙️ Whether a **close** above the level still counts (default: yes). The swing must be confirmed by an earlier candle than the sweeping one. The high need not be untouched, and the same high can be taken more than once.
+- **Several highs taken:** the swept level is the **furthest** one taken within the last N. Taking out more than N highs is still a sweep, with level #N (rule set by the user).
+- **No pools:** equal highs / liquidity pools are not used (rule set by the user).
 - **The candidate is the top of the move:** a later candle that goes above the candidate's high replaces it (it takes the same highs and more). A higher high is always "a kind of sweep" (user).
-- **Only a BOS makes it a liquidity sweep** (rule set by the user): the candidate becomes a liquidity sweep when the next move down makes a **bearish BOS** (› Break of structure, so only against the trend) before price goes above the candidate's high. The sweep therefore **exists from the close of that BOS candle**, not from the sweeping candle (no lookahead: before the BOS nobody knows it was one). A lower high between the sweep and the BOS doesn't matter (rule set by the user).
+- **Only a BOS makes it a liquidity sweep** (rule set by the user): the candidate becomes a liquidity sweep when the next move down makes a **bearish BOS** (› Break of structure, so only against the trend) before price goes above the candidate's high, **within ⚙️ 10 candles of the sweep's timeframe**, counted from the candle that made the sweep extreme (the top). A new, higher extreme restarts the count (rule set by the user 2026-10-10; the limit is a separate setting per strategy session where a strategy needs it). The sweep therefore **exists from the close of that BOS candle**, not from the sweeping candle (no lookahead: before the BOS nobody knows it was one). A lower high between the sweep and the BOS doesn't matter (rule set by the user).
+- Which timeframe the BOS is on is the strategy's choice (strategy 2: the same timeframe as the sweep in the PM, the setup timeframe in the AM).
 - If the new high is followed by no BOS, the market is just in an uptrend: no sweep, no OB.
 - **Consequences and edge cases** (confirmed by the user, 2026-10-07):
   - A bullish BOS candle always closes above the high it breaks, so it takes that high: every bearish BOS after a bullish one comes with a sweep (and an OB). Only the first BOS on a chart can come without one.
@@ -98,10 +101,17 @@ Described for a bearish OB (the user's example), bullish mirrored. Example: XAUU
 - Further staleness rules, if any, are the strategy's.
 - **On the chart:** like the FVG: from the older FVG's candle 1 until the candle that confirms or invalidates it, up to the cursor while still open. Every BPR is **purple**, whatever its direction (rule set by the user).
 
-## Equilibrium (strategy 1 uses it as an entry confluence since 2026-10-07, see `strategy-session-zones.md` › Entry sequence)
-- 50% of the most recent swing leg: upper half = premium, lower half = discount.
-- Bullish confirmation: price retraces into discount, then a bullish candle closes back in premium.
-- Invalidated by a **close** below the leg's swing low; a wick below it doesn't count (rule set by the user, 2026-10-07).
+## Equilibrium (EQ)
+Reworked with the user on 2026-10-10 (used by strategy 1 and strategy 2). Described bullish, bearish mirrored.
+- **Leg:** from the swing low (after a liquidity sweep: the sweep extreme, wick) to the **high wick of the BOS candle**. The leg is **fixed** at the BOS candle; it does not grow if price runs further after it (rule set by the user).
+  - Without a sweep (e.g. an entry timeframe, strategy 1's 5m): from the lowest point the BOS move started at to the BOS candle's wick.
+- **EQ = the 50% level** of the leg. It works like the near edge of a zone (like an FVG's edge); the zone for stop-loss purposes is the **whole leg**.
+- **Tap:** a wick below the 50% line. **Confirmed:** a green candle closes back above the 50% (only needed where a strategy needs a confirmed confluence; a tap is enough where a strategy only waits for a tap). **Invalidated:** a **close** below the leg's swing low; a wick doesn't count.
+- Every sweep + BOS has an EQ, so it is the weakest confluence (ranking OB > BB > BPR > FVG > EQ) and ⚙️ can be switched off.
+- **Stop loss with EQ** (rule set by the user, used by both strategies): beyond the leg's swing low, buffer = ⚙️ 10% of the distance from the swing low to the **deepest wick into the EQ** before the entry. ⚙️ EQ-only toggle (default off): SL beyond that deepest wick instead, buffer = 10% of the same distance. Example: swing low 100, BOS high 200, EQ 150, deepest wick 140 → distance 40 → default SL 96, toggle SL 136.
+
+## Confluence toggles
+- ⚙️ Each confluence type (OB, breaker, BPR, FVG, EQ) can be switched on/off per backtest (rule set by the user), so results with and without a type can be compared.
 
 ## SMT divergence (future, needs multiple symbols)
 - Compare the latest swings of two correlated symbols at the same time. If one makes a stronger swing (HL) while the other makes a weaker one (LL), expect the weaker one to reverse and follow the stronger one.
