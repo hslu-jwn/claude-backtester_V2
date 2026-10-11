@@ -982,8 +982,10 @@ NAS100 and US500, AM and PM windows. Strategy logic only in `strategy/ny_index_s
 detector changes stay shared and must keep strategy 1 working (its tests green, changes
 in its results reported).
 
-- ◐ **8.1 Index data: NAS100, US500.** Built as 0.5 (import, clock, data check, doji
-  thresholds, cost estimates). Open: the user's TradingView check of the candles in 0.5.
+- ☑ **8.1 Index data: NAS100, US500.** Built as 0.5 (import, clock, data check, doji
+  thresholds, cost estimates). Clock confirmed by the user's TradingView check
+  (2026-10-11); cached 2018-01-02 .. 2026-09-30, so 2018-2019 give the ATH check and
+  warm-up for backtests from 2020-01-01.
 - ☐ **8.2 Detector updates** (`confluences.md`, 2026-10-10). One detector per sub-step,
   tests first incl. the no-lookahead test, each checked on the chart:
   1. ◐ **Liquidity sweep rework** (`detectors/sweep.py`, › Liquidity sweep): candidate =
