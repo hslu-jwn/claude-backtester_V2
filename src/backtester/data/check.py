@@ -78,10 +78,22 @@ _FIELDS = ("open", "high", "low", "close")
 
 
 @dataclass(frozen=True, slots=True)
+class BreakWindow:
+    """Trading hours that changed: before `until` (New York date) a gap lying inside
+    `start`-`end` New York (plus the break's quiet-minute tolerance) is a daily break."""
+
+    until: date
+    start: time
+    end: time
+
+
+@dataclass(frozen=True, slots=True)
 class DataCheckConfig:
     daily_close_ny: time = time(17, 0)  # FX/metals trading day ends 17:00 New York
     daily_break_max_min: int = 90  # longer gap around the close = shortened day
     weekend_max_min: int = 50 * 60  # gold Fri 17:00 -> Sun 18:00 NY is 49 h
+    old_breaks: tuple[BreakWindow, ...] = ()  # earlier trading hours, see BreakWindow
+    old_break_tolerance_min: int = 15  # quiet minutes after an old break's end still count
     min_unexpected_gap_min: int = 5  # shorter gaps without a close are only counted
     spread_outlier_factor: float = 10.0  # x median spread
     jump_outlier_factor: float = 20.0  # x median minute range (high - low)
@@ -100,7 +112,18 @@ DEFAULT_CONFIG = DataCheckConfig()
 # 16:15-18:00 New York (105 min; the first minutes after 18:00 are sometimes quiet, so up
 # to 120 min), weekend Fri 16:15 -> Sun 18:00 NY (49.75 h; 50.75 h on the weekend the US
 # leaves summer time, so up to 51 h).
-INDEX_CONFIG = replace(DEFAULT_CONFIG, daily_break_max_min=120, weekend_max_min=51 * 60)
+# Until 2018-12-14 histdata's index feed followed the old CME hours: halt 16:15-16:30 and
+# break 17:00-18:00 New York (expected, user 2026-10-11).
+OLD_CME_BREAKS = tuple(
+    BreakWindow(date(2018, 12, 15), a, b)
+    for a, b in ((time(16, 15), time(16, 30)), (time(17, 0), time(18, 0)))
+)
+INDEX_CONFIG = replace(
+    DEFAULT_CONFIG,
+    daily_break_max_min=120,
+    weekend_max_min=51 * 60,
+    old_breaks=OLD_CME_BREAKS,
+)
 SYMBOL_CONFIGS = {"NAS100": INDEX_CONFIG, "US500": INDEX_CONFIG}
 
 
@@ -182,6 +205,8 @@ def classify_gap(
     if days & missing_days:
         return GapKind.NOT_DOWNLOADED
     minutes = (end - start) / MINUTE
+    if minutes >= config.min_unexpected_gap_min and _inside_old_break(start, end, config):
+        return GapKind.DAILY_BREAK
     closes = daily_closes(start, end, config)
     if not closes:
         return GapKind.UNEXPECTED if minutes >= config.min_unexpected_gap_min else GapKind.SHORT
@@ -190,6 +215,19 @@ def classify_gap(
     if minutes <= config.daily_break_max_min:
         return GapKind.DAILY_BREAK
     return GapKind.SHORTENED_DAY if minutes < 24 * 60 else GapKind.CLOSED_DAY
+
+
+def _inside_old_break(start: datetime, end: datetime, config: DataCheckConfig) -> bool:
+    a, b = start.astimezone(NEW_YORK), end.astimezone(NEW_YORK)
+    tolerance = timedelta(minutes=config.old_break_tolerance_min)
+    for w in config.old_breaks:
+        if a.date() >= w.until or b.date() != a.date():
+            continue
+        w_start = datetime.combine(a.date(), w.start, NEW_YORK)
+        w_end = datetime.combine(a.date(), w.end, NEW_YORK) + tolerance
+        if w_start <= a and b <= w_end:
+            return True
+    return False
 
 
 def find_gaps(traded_ts: pd.Series, missing_days: set[date], config: DataCheckConfig) -> list[Gap]:

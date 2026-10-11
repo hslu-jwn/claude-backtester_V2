@@ -190,16 +190,16 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     prints FTMO's names and specs, the offsets per week, the deciding DST weeks and the
     rule. Then `data.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
     specs, the comparison and spread numbers (→ here, for the user's decision on 3.1).
-- ◐ **0.5 Index data: NAS100, US500** (user's request 2026-10-10, for strategy 2; data
+- ☑ **0.5 Index data: NAS100, US500** (user's request 2026-10-10, for strategy 2; data
   side only, no strategy code). Built:
   - `data/histdata.py`: a folder is searched with its subfolders
     (`data/raw/histdata/<SYMBOL>/`), single files / zips still work; histdata's
     `NSXUSD` / `SPXUSD` are cached as **NAS100** / **US500** (`SYMBOL_NAMES`).
   - Clock: the indices use histdata's forex / gold clock (their 16:15 break moves to
     15:15 on histdata's clock in the US-only summer time weeks, like gold's 17:00 close
-    to 16:00), so the existing conversion applies. **TradingView check pending**: the
-    user compares the candles below (FOREXCOM:NSXUSD / FOREXCOM:SPXUSD, M5, chart in
-    UTC; other feeds may be offset in price, the shape and timing must match).
+    to 16:00), so the existing conversion applies. Candles for the TradingView check
+    (M5, chart in UTC; other feeds may be offset in price, the shape and timing must
+    match):
 
     | UTC | season | NAS100 O / H / L / C | US500 O / H / L / C |
     |---|---|---|---|
@@ -210,6 +210,19 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     | 2022-03-23 13:30 | US summer / EU winter | 14532.38 / 14547.90 / 14494.51 / 14508.16 | 4485.20 / 4489.45 / 4481.24 / 4483.45 |
     | 2026-03-18 20:10 | last candle before the break | 24411.90 / 24418.31 / 24392.74 / 24399.05 | 6616.05 / 6616.40 / 6609.85 / 6611.04 |
     | 2026-03-18 22:00 | first candle after it | 24402.76 / 24405.04 / 24378.75 / 24385.25 | 6618.35 / 6618.94 / 6611.45 / 6614.24 |
+
+    **Checked by the user on TradingView (US500, 2026-10-11):** the clock is right.
+    TradingView's feed is a few points higher than histdata, by the same amount on every
+    value of a candle; the candle 1 h earlier is clearly different, so no hour shift.
+    NAS100 has the same break pattern minute for minute, so it uses the same clock (not
+    compared separately).
+
+    | UTC | TradingView O / H / L / C | TradingView − ours |
+    |---|---|---|
+    | 2026-03-18 12:30 | 6724.23 / 6724.30 / 6704.10 / 6707.85 | +4.38 / +4.45 / +4.46 / +4.45 |
+    | 2026-03-18 13:30 | 6700.60 / 6703.85 / 6691.98 / 6696.60 | +8.47 / +4.35 / +4.24 / +0.35 (range 11.87 vs 11.76) |
+    | 2026-09-02 12:30 | 7648.50 / 7649.25 / 7645.00 / 7646.00 | +8.37 / +8.38 / +8.14 / +8.39 |
+    | 2026-09-02 13:30 | 7649.00 / 7650.00 / 7642.25 / 7648.75 | +7.77 / +8.26 / +8.62 / +8.37 |
 
   - `data.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
     the user): daily break 16:15-18:00 New York (up to 120 min), weekend Fri 16:15 → Sun
@@ -225,8 +238,17 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   - Costs (`engine/costs.py`): fixed spread NAS100 1.0, US500 0.5 (user's estimates until
     FTMO's are measured), commission and swap 0; slippage per fill for every symbol
     (risk-management.md › Costs). Slippage and swap are stored, not yet applied (Phase 5).
-  - History: histdata has both indices from 2010. Downloaded: 2020-01 .. 2026-09.
-  Check: import, `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
+  - History: histdata has both indices from 2010. Downloaded and imported (2026-10-11):
+    2018-01 .. 2026-09 (cached 2018-01-02 .. 2026-09-30, 3,194 days; NAS100 2,951,165
+    minutes, US500 2,847,541). 2018-2019 hold the pre-2020 all-time highs (ATH check) and
+    warm-up, so backtests can start 2020-01-01. All raw files moved into
+    `data/raw/histdata/<SYMBOL>/` (NAS100 and US500 17 files, the others 15).
+  - **Old trading hours until 2018-12-14:** the index files follow the old CME hours, a
+    halt 16:15-16:30 and a break 17:00-18:00 New York (from 2018-12-17: 16:15-18:00).
+    Expected gaps (user, 2026-10-11): `check.OLD_CME_BREAKS` (`BreakWindow`, dated).
+    Unexpected gaps 2018 / 2019 after that: NAS100 18 / 7, US500 1,170 / 580; US500's
+    are almost all 5-10 min of no quotes at night (thin feed in those years).
+  Check: `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
 
 ## Phase 1: Chart (no lookahead)
 

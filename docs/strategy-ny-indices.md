@@ -105,4 +105,4 @@
 ## Open points
 - Strategy 1 keeps its zone sweep; EQ is now on there too, with the same EQ SL rules.
 - ATH fallback section might get a rework later (fine for now).
-- Data must reach back far enough before the backtest start for the ATH check (warm-up period). histdata.com has both indices from 2010; cached so far: 2020-01 .. 2026-09 (ROADMAP 0.5).
+- Data must reach back far enough before the backtest start for the ATH check (warm-up period). histdata.com has both indices from 2010; cached: 2018-01 .. 2026-09, so backtests can start 2020-01-01 with 2018-2019 as ATH and warm-up history (ROADMAP 0.5).

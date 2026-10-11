@@ -139,7 +139,7 @@ GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per sy
   current year) or per year (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`, full past years), plain or
   inside histdata's zip files, put in `data/raw/histdata/<SYMBOL>/` by hand, one subfolder
   per pair (files directly in `data/raw/histdata/` work too; the same period twice is
-  refused). History 2020-01 .. 2026-09 since 2026-10-09. Imported with
+  refused). History 2020-01 .. 2026-09 since 2026-10-09 (indices 2018-01 .. 2026-09). Imported with
   `python -m backtester.data.histdata data/raw/histdata/` (searches the subfolders; a
   single file, zip or pair folder works too) into `data/cache/histdata/` (same layout and
   columns as the Dukascopy cache, own folder so the sources never mix). `data/sources.py`
@@ -179,9 +179,11 @@ GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per sy
   where only the US is on summer time, like gold's 17:00 close moves to 16:00. Converted,
   the break is at **16:15-18:00 New York** in every week (105 min), the weekend **Fri
   16:15 → Sun 18:00 New York**, US holidays close early at 13:00 / 13:15 New York.
-  TradingView check of a few candles: pending (ROADMAP 0.5). The data check's gap rules
-  for them: `check.SYMBOL_CONFIGS` (break up to 120 min, weekend up to 51 h for the US
-  DST-change weekend; confirmed by the user).
+  Confirmed by the user's TradingView check of US500 (2026-10-11, ROADMAP 0.5; that feed
+  is a few points higher, timing identical). The data check's gap rules for them:
+  `check.SYMBOL_CONFIGS` (break up to 120 min, weekend up to 51 h for the US DST-change
+  weekend; until 2018-12-14 the old CME hours, halt 16:15-16:30 and break 17:00-18:00
+  New York; confirmed by the user).
 - Bid only (ask columns empty, candle `spread` NaN): costs use a **fixed spread per
   symbol** (`engine/costs.py`, risk-management.md › Costs). Volume is always 0 in the files and is
   stored as NaN (unknown). Non-trading minutes are **missing**, not flat filler, so the

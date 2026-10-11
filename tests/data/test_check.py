@@ -333,3 +333,19 @@ def test_index_holiday_early_close_at_13_00_new_york():
 
 def test_forex_and_gold_keep_their_rules():
     assert config_for("XAUUSD") == CFG and config_for("GBPJPY") == CFG
+
+
+def test_index_old_cme_hours_until_2018_12_14():
+    # 2018-06-05 (EDT): halt 16:15-16:30 NY and break 17:00-18:00 NY, also when the
+    # 17:00 minute still traded (break from 17:01)
+    assert index_kind(utc(2018, 6, 5, 20, 15), utc(2018, 6, 5, 20, 30)) is GapKind.DAILY_BREAK
+    assert index_kind(utc(2018, 6, 5, 21, 1), utc(2018, 6, 5, 22)) is GapKind.DAILY_BREAK
+    # winter: 2018-12-13 16:15 EST = 21:15 UTC
+    assert index_kind(utc(2018, 12, 13, 21, 15), utc(2018, 12, 13, 21, 30)) is GapKind.DAILY_BREAK
+    # from 2018-12-15 the old halt is unexpected again, and other hours always were
+    assert index_kind(utc(2019, 1, 8, 21, 15), utc(2019, 1, 8, 21, 30)) is GapKind.UNEXPECTED
+    assert index_kind(utc(2018, 6, 5, 14), utc(2018, 6, 5, 14, 15)) is GapKind.UNEXPECTED
+    # a quiet minute inside an old window stays a short gap
+    assert index_kind(utc(2018, 6, 5, 20, 20), utc(2018, 6, 5, 20, 21)) is GapKind.SHORT
+    # forex / gold have no old windows
+    assert kind(utc(2018, 6, 5, 20, 15), utc(2018, 6, 5, 20, 30)) is GapKind.UNEXPECTED
