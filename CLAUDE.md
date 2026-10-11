@@ -146,26 +146,33 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 - When done with a step, summarize what was built, what is still a stub, and any spec
   questions that came up.
 
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-
 ## Claude Code tools in this project
 
 graphify and ponytail are user-level skills (`~/.claude/skills`). They help; they never
 override the rules above.
 
-- **graphify is code-only.** The graph is built locally from the AST, with no API keys or LLM
-  backends. `docs/` is not in it, so trading rules always come from the specs, never from the
-  graph. The graph is approximate (inferred and missing edges): confirm in the source before
-  relying on an edge. `.graphifyignore` skips the vendored Lightweight Charts bundle.
-  `graphify-out/` is git-ignored; rebuild with `graphify update .`.
+### graphify (code map in `graphify-out/`)
+
+- **Orient with the graph, then read the source.** For "where/how is X done" questions run
+  `graphify query "<question>"`, `graphify explain "<symbol>"` or `graphify path "<A>" "<B>"`
+  first; they return a small subgraph instead of grep dumps. Add `--budget` or narrow the
+  question if the output says TRUNCATED. Skip the graph when you already know the exact
+  file and line to edit. Read `graphify-out/GRAPH_REPORT.md` only for whole-architecture
+  reviews.
+- **The graph is approximate** (inferred and missing edges). Confirm an edge in the source
+  before relying on it.
+- **Spec headings are in the graph, the rules are not.** The `.md` files (`docs/`, README,
+  CLAUDE.md) appear only as section-heading nodes, which is useful for finding the code
+  behind a spec section. Trading rules always come from reading `docs/` itself, never from
+  the graph.
+- **Keep it current:** after changing code, run `graphify update .` (local AST build, no API
+  keys, no cost). `.graphifyignore` skips the vendored Lightweight Charts bundle;
+  `graphify-out/` is git-ignored.
+- The PreToolUse hook in `.claude/settings.json` (`graphify hook-guard`) reminds you of
+  this before Bash/Grep/Read/Glob calls. It only reminds; it never blocks.
+
+### ponytail
+
 - **ponytail** (`/ponytail`) keeps changes small, but these rules win when they conflict:
   every tunable value still goes in a config dataclass with the spec default (no magic
   numbers), every detector still gets its no-lookahead test, and bullish/bearish stays one
