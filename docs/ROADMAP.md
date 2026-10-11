@@ -1005,6 +1005,12 @@ in its results reported).
        itself).
      - The detector still pairs a sweep with a BOS on its own timeframe; the AM's sweep on
        1h / 4h with the BOS on the setup TF is strategy 2's job (8.4).
+     Rule change (user, 2026-10-11): the wick must go beyond the **most extreme** of the
+     last N swings (sweep of highs: above the highest of the last 3), not just one of
+     them; the swept level is that most extreme swing. Built in `detectors/sweep.py` and
+     strategy 2's sweep registration (`strategy/ny_index_sweep/strategy.py`, per sweep
+     TF); tests updated. Check on the chart: no magenta sweep where an older, higher high
+     among the last 3 stayed untaken.
   2. ◐ **Equilibrium rework** (› Equilibrium): leg = swing low (after a sweep: the sweep
      extreme) → the **high wick of the BOS candle**, fixed at the BOS candle (was: up to
      the first swing high after the BOS); tap = wick below 50%, confirm = green close

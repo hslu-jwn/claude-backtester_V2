@@ -5,8 +5,8 @@ Spec: strategy-ny-indices.md › General, › PM Session, › AM Session, › Ru
 user's answers of 2026-10-11). Described for a long (bullish bias), short mirrored.
 `advance(ctx)` is called once per closed base (1m) candle inside the setup's window:
 
-1. SWEEP: a 1m wick went below one of the last N swing lows of the sweep timeframe
-   (strategy.py registers it). A deeper 1m wick moves the sweep extreme and restarts the
+1. SWEEP: a 1m wick went below the lowest of the last N swing lows of the sweep
+   timeframe (strategy.py registers it). A deeper 1m wick moves the sweep extreme and restarts the
    count. Cancelled when no setup-TF BoS comes within X sweep-TF candles of the extreme
    (counted from the close of the sweep-TF candle containing it), or, with the close-beyond
    setting off, when a sweep-TF candle closes below the swept level.

@@ -37,7 +37,7 @@ class NyIndexSweepConfig:
     max_trades_per_session: int = 1  # per window and index, every re-entry counts
 
     # sweep (confluences.md › Liquidity sweep)
-    sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
+    sweep_lookback: int = 3  # a wick beyond the most extreme of the last N swings of the sweep TF
     sweep_close_beyond_counts: bool = True  # off: a sweep-TF close beyond the level cancels
     bos_within_am: int = 10  # setup-TF BoS within X sweep-TF candles of the extreme
     bos_within_pm: int = 10

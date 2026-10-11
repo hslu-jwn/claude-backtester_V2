@@ -2,6 +2,9 @@
 
 Guidance for Claude Code working in this repository. Read this first, every session.
 
+**Always start every reply to the user with "Chef"** (the user's wish; e.g. "Chef, the
+tests pass."). No exceptions.
+
 ## What this is
 
 A Python backtester for rule-based price-action trading strategies (session zones, FVGs,

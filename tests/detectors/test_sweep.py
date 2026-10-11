@@ -181,9 +181,9 @@ FALLING = [
 ]
 
 
-def test_only_the_last_n_swings_count_and_the_level_is_the_furthest_of_them():
+def test_only_the_last_n_swings_count_and_the_level_is_the_highest_of_them():
     # candle 8 takes 12.0, 11.5, 11.3 and 11.1; with N = 3 only the last three count,
-    # so the swept level is 11.5 (#3), not 12.0 (spec: more than N taken -> level #N)
+    # so the swept level is 11.5 (the highest of the last 3), not 12.0
     sweeps = run(FALLING)
     assert summary(sweeps) == [(BULL, 6, 10.4, 10.6, 8), (BEAR, 8, 12.5, 11.5, 10)]
     assert [s.price for s in sweeps[1].swept] == [11.1, 11.3, 11.5]
@@ -201,7 +201,8 @@ def test_with_n_1_only_the_last_swing_counts():
     assert [len(s.swept) for s in sweeps] == [1, 1]
 
 
-def test_a_wick_beyond_only_an_older_swing_is_no_candidate():
+def test_a_wick_beyond_a_lower_one_of_the_last_n_swings_is_no_candidate():
+    # spec (2026-10-11): the wick must go beyond the highest of the last N highs
     ohlc = [
         *UP[:3],
         (10.5, 11.2, 10.4, 11.1),  # 3 green: wick 11.2 takes 11.0, bullish BOS of 11.0
@@ -211,12 +212,10 @@ def test_a_wick_beyond_only_an_older_swing_is_no_candidate():
     ]
     # candle 3 (top 11.2) is the candidate; candles 5 and 6 are no new top
     assert summary(run(ohlc)) == [(BEAR, 3, 11.2, 11.0, 6)]
-    # X = 2: candle 3 expires at candle 6; candle 6's wick 11.11 then takes 11.0, which
-    # is among the last 2 highs (11.0, 11.2): a sweep by the BOS candle itself
-    assert summary(run(ohlc, config=SweepConfig(lookback_swings=2, bos_within=2))) == [
-        (BEAR, 6, 11.11, 11.0, 6)
-    ]
-    # N = 1: the last high is 11.2, so a wick above the older 11.0 is no candidate
+    # X = 2: candle 3 expires at candle 6; candle 6's wick 11.11 is above 11.0 but not
+    # above 11.2, the highest of the last 2 highs: no sweep
+    assert run(ohlc, config=SweepConfig(lookback_swings=2, bos_within=2)) == []
+    # N = 1: the last high is 11.2, so a wick above the older 11.0 is no candidate either
     assert run(ohlc, config=SweepConfig(lookback_swings=1, bos_within=2)) == []
 
 
@@ -226,10 +225,9 @@ def test_the_bos_must_come_within_x_candles_of_the_top():
         (11.7, 11.75, 11.2, 11.3),  # 7 red: swing high 11.8
         (11.3, 11.35, 10.8, 10.85),  # 8 red: bearish BOS, 2 candles after the top (6)
     ]
-    # X = 1: candle 6's top expires; the BOS candle's own wick 11.35 is above 11.0 (still
-    # among the last 3 highs), so it is a sweep by the BOS candle itself
-    assert summary(run(ohlc, config=SweepConfig(bos_within=1))) == [(BEAR, 8, 11.35, 11.0, 8)]
-    assert summary(run(ohlc, config=SweepConfig(lookback_swings=2, bos_within=1))) == []
+    # X = 1: candle 6's top expires; the BOS candle's own wick 11.35 is above 11.0 but
+    # not above 11.8, the highest of the last 3 highs, so no sweep
+    assert run(ohlc, config=SweepConfig(bos_within=1)) == []
     assert summary(run(ohlc, config=SweepConfig(bos_within=2))) == [(BEAR, 6, 11.8, 11.5, 8)]
 
 
@@ -243,7 +241,7 @@ def test_a_new_extreme_restarts_the_count():
     assert summary(run(ohlc, config=SweepConfig(bos_within=1))) == [(BEAR, 8, 12.0, 11.8, 9)]
 
 
-def test_an_expired_top_lets_a_lower_wick_start_a_new_candidate():
+def test_an_expired_top_and_a_lower_wick_below_the_highest_high_is_no_sweep():
     ohlc = [
         *UP,
         (11.7, 11.75, 11.2, 11.3),  # 7 red: swing high 11.8 (top: candle 6)
@@ -252,8 +250,9 @@ def test_an_expired_top_lets_a_lower_wick_start_a_new_candidate():
         (11.3, 11.65, 11.28, 11.5),  # 10 green: wick 11.65 takes 11.6 (below the top 11.8)
         (11.5, 11.52, 11.0, 11.05),  # 11 red: bearish BOS of 11.25 (swing low @9-10)
     ]
-    # bos_within = 3: candle 6's top expires after candle 9, so candle 10 is the new top
-    assert summary(run(ohlc, config=SweepConfig(bos_within=3))) == [(BEAR, 10, 11.65, 11.6, 11)]
+    # bos_within = 3: candle 6's top expires after candle 9; candle 10 takes 11.6 but
+    # not 11.8 (the highest of the last 3 highs 11.5, 11.8, 11.6): no new candidate
+    assert run(ohlc, config=SweepConfig(bos_within=3)) == []
     # default 10: candle 6 is still the top, candle 10 is no new extreme
     assert summary(run(ohlc)) == [(BEAR, 6, 11.8, 11.5, 11)]
 
@@ -281,9 +280,10 @@ def test_close_beyond_off_a_higher_candle_that_sweeps_nothing_ends_the_candidate
         (11.3, 12.0, 11.25, 11.9),  # 8 green: above 11.75, but closes above every high
         (11.6, 11.65, 11.1, 11.15),  # 9 red: wick takes 11.5 only; bearish BOS of 11.2
     ]
-    # price went above candle 7's top, so candle 7 is no sweep; candle 9 is its own
+    # price went above candle 7's top, so candle 7 is no sweep; candle 9 takes 11.5 but
+    # not 11.8 (the highest of the last 3), so it is none either
     off = SweepConfig(close_beyond_counts=False)
-    assert summary(run(ohlc, config=off)) == [(BEAR, 9, 11.65, 11.5, 9)]
+    assert run(ohlc, config=off) == []
 
 
 def test_config_rejects_values_below_one_and_negative():

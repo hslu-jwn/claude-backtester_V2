@@ -149,14 +149,15 @@ class NyIndexSweep(Strategy):
         for route in ws.routes:
             if any(s.route is route and s.step is Step.SWEEP for s in ws.setups):
                 continue  # one setup per route waits for its BoS; setup.py moves its extreme
-            levels = [
-                (s, tf)
-                for tf in route.sweep_tfs
-                for s in self.frames[tf].last_swings(
+            # per sweep TF: the wick must go beyond the most extreme of its last N swings
+            # (confluences.md › Liquidity sweep, 2026-10-11); then it takes all of them
+            swept = []
+            for tf in route.sweep_tfs:
+                levels = self.frames[tf].last_swings(
                     SWEPT_KIND[d], self.config.sweep_lookback, confirmed_by=candle.ts
                 )
-            ]
-            swept = [(s, tf) for s, tf in levels if beyond(d, low, s.price)]
+                if levels and all(beyond(d, low, s.price) for s in levels):
+                    swept += [(s, tf) for s in levels]
             if not swept:
                 continue
             sign = 1 if d is Direction.BULLISH else -1

@@ -2,12 +2,13 @@
 
 Spec: confluences.md › Liquidity sweep.
 Described for a sweep of highs (bearish: it leads to a bearish BOS), lows mirrored:
-- Candidate: a candle whose wick goes ABOVE one of the last N confirmed swing highs
-  (`SweepConfig.lookback_swings`, default 3; touching is no sweep). A close above the
-  high still counts (`close_beyond_counts`, default on); off: a candle closing above a
-  high doesn't sweep that high. The swing must be confirmed by an earlier candle than
-  the sweeping one. The same high can be taken more than once. The swept level is the
-  furthest high taken among the last N (more than N taken: level #N).
+- Candidate: a candle whose wick goes ABOVE THE HIGHEST of the last N confirmed swing
+  highs (`SweepConfig.lookback_swings`, default 3; touching is no sweep). Going above
+  only a lower one of them is no sweep (rule set by the user 2026-10-11). A close above
+  the high still counts (`close_beyond_counts`, default on); off: a candle closing above
+  a high doesn't sweep that high, so a close above the highest one is no sweep. The
+  swings must be confirmed by an earlier candle than the sweeping one. The same high
+  can be taken more than once. The swept level is the highest of the last N.
 - The candidate is the top of the move: a later candle going above its high replaces it
   (it takes the same highs and more) and restarts the count below. With
   `close_beyond_counts` off such a candle may sweep nothing (it closed above every high);
@@ -17,10 +18,11 @@ Described for a sweep of highs (bearish: it leads to a bearish BOS), lows mirror
   `SweepConfig.bos_within` candles (default 10) after the top (same candle = 0). The
   sweep exists from the close of that BOS candle. A lower high in between doesn't matter.
 - With no BOS in time, there is no sweep: the candidate is dropped, and a later candle
-  taking one of the last N highs starts a new one, even below the old top.
+  going above the highest of the last N highs starts a new one, even below the old top.
 
 Edge cases (confirmed by the user, spec › Liquidity sweep):
-- A bullish BOS candle always closes above the high it breaks, so it is itself a candidate.
+- A bullish BOS candle always closes above the high it breaks, but it is only a candidate
+  if it also goes above the highest of the last N highs.
 - A doji's wick can sweep.
 - One candle can be both the sweeping candle and the BOS candle.
 """
@@ -52,7 +54,7 @@ def beyond(direction: Direction, price: float, level: float) -> bool:
 
 @dataclass(frozen=True, slots=True)
 class SweepConfig:
-    lookback_swings: int = 3  # N: a wick beyond one of the last N swings is a candidate
+    lookback_swings: int = 3  # N: a wick beyond the most extreme of the last N swings
     bos_within: int = 10  # X: the BOS must close at most X candles after the top
     close_beyond_counts: bool = True  # off: a candle closing beyond a level doesn't sweep it
 
@@ -71,12 +73,12 @@ class LiquiditySweep(Event):
     index: int  # the sweeping candle (the top of the move)
     ts: datetime  # open time of that candle
     extreme: float  # its wick (the top of the move)
-    swept: tuple[SwingPoint, ...]  # the swings it took among the last N, least to most extreme
+    swept: tuple[SwingPoint, ...]  # the swings it took (all of the last N), least to most extreme
     bos: BreakOfStructure  # the BOS that made it a sweep
 
     @property
     def swing(self) -> SwingPoint:
-        """The most extreme swing taken (the highest high for a sweep of highs)."""
+        """The swept level: the most extreme of the last N (the highest high)."""
         return self.swept[-1]
 
 
@@ -162,8 +164,12 @@ class SweepDetector(Detector[LiquiditySweep]):
             if beyond(direction, price, s.price)
             and (self.config.close_beyond_counts or not beyond(direction, candle.close, s.price))
         ]
-        if not swept:
-            side.candidate = None  # nothing swept; a top it went beyond is no sweep any more
+        sign = -1 if direction is Direction.BULLISH else 1
+        swept.sort(key=lambda s: sign * s.price)  # least to most extreme
+        top = max(side.levels, key=lambda s: sign * s.price, default=None)
+        if top is None or not swept or swept[-1].price != top.price:
+            # not beyond the most extreme of the last N: no sweep; a top it went beyond
+            # is no sweep any more
+            side.candidate = None
             return
-        swept.sort(key=lambda s: s.price, reverse=direction is Direction.BULLISH)
         side.candidate = _Candidate(view.cursor, candle.ts, price, tuple(swept))
