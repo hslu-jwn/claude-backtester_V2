@@ -90,6 +90,7 @@ Rules set by the user (2026-10-07). Part of the strategy-1 UI, like the session 
 - **Replay** (no lookahead): a box appears at the close of the entry candle and grows candle by candle until TP / SL; its confluences appear with it.
 
 ## Session inspection view (chart)
+> Provisional until ROADMAP 3.5 (strategy 1 is paused). Colors may change: the Session zones section above currently colors by active session; equilibrium also counts as a confluence here.
 How the user checks strategy 1 session by session. Part of the strategy-1 UI, so other
 strategies are not affected.
 - **Default chart is empty:** candles and session lines only, no zones, confluences or trades.

@@ -30,7 +30,7 @@
 ## PM Session
 1. **Bias:** 15m trend before the window.
 2. **Sweep** against the bias on 15m or 5m (bullish: a swing low gets swept).
-3. **BoS** in the bias direction on the same timeframe as the sweep: close above the last swing high before the sweep.
+3. **BoS** in the bias direction on the same timeframe as the sweep: close above the most recent confirmed swing high (see › General).
    - If a 5m setup is running and a 15m BoS forms from the same sweep, the 15m setup replaces it (new move, new 3rd confluences, counts on 15m). A trade already opened from the 5m setup keeps running.
    - **Same sweep** (rule set by the user 2026-10-11): the 15m sweep extreme has the same price as the 5m sweep extreme, and the 5m sweeping candle lies inside the 15m sweeping candle.
 4. **3rd confluence:** on 5m, inside the BoS move (for EQ: the 15m leg if the BoS is on 15m). Wait for a tap.
@@ -41,7 +41,7 @@
 ## AM Session
 1. **Bias:** 4h trend before the window.
 2. **Route** (decided before the window, frozen): 1h trend same as 4h → setup TF 5m, entry TF 1m. Different → setup TF 15m, entry TF 5m.
-3. **HTF sweep** on 1h or 4h against the bias (bullish: one of the last 3 confirmed 1h/4h swing lows gets swept).
+3. **HTF sweep** on 1h or 4h against the bias (bullish: the lowest of the last ⚙️ N confirmed 1h/4h swing lows gets swept; sweep rules are being reworked, `confluences.md` › Liquidity sweep).
    - Registered at the moment of the wick; at the HTF candle close it is checked that it is still a valid sweep. The only check is the close-beyond setting (rule set by the user 2026-10-11): with the default (a close beyond still counts) nothing cancels at the close; with the setting off, a close beyond the swept level cancels the sweep and the setup built on it.
 4. **Setup TF:** BoS in the bias direction, then the 3rd confluence in that move. Wait for a tap.
 5. **Entry TF:** BoS in the bias direction.
