@@ -56,13 +56,20 @@ class SwingConfig:
             }
         )
     )
+    # 0 = off (the fixed amounts above). > 0 (user, 2026-10-12): a doji is a body of at most
+    # this share of the candle's own range, on every timeframe and symbol (e.g. 0.1)
+    doji_range_share: float = 0.0
 
     def __post_init__(self) -> None:
+        if not 0 <= self.doji_range_share <= 1:
+            raise ValueError("doji_range_share must be between 0 and 1")
         for symbol, value in self.doji_max_body.items():
             if value < 0:
                 raise ValueError(f"doji_max_body for {symbol} must be >= 0")
 
     def doji_threshold(self, symbol: str) -> float:
+        if self.doji_range_share > 0:
+            return RangeShare(self.doji_range_share)
         if symbol not in self.doji_max_body:
             raise KeyError(
                 f"no doji threshold for {symbol}: set SwingConfig.doji_max_body "
@@ -86,7 +93,16 @@ class SwingPoint(Event):
     first_index: int  # first turn candle (the green one for a high); last = confirmed_index
 
 
+class RangeShare(float):
+    """A doji threshold that is a share of the candle's own range, not a price amount. A
+    float subclass so it travels through every `doji_max_body: float` unchanged."""
+
+    __slots__ = ()
+
+
 def is_doji(candle: Candle, max_body: float) -> bool:
+    if isinstance(max_body, RangeShare):
+        return candle.body <= max_body * (candle.high - candle.low)
     return candle.body <= max_body
 
 

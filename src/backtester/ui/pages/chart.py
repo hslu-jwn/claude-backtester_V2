@@ -457,6 +457,7 @@ def overlay_settings(
         ob_strong_move_filter="ob" in filters,
         strategy=strategy,
         doji_max_body=changed_doji(strategy),
+        doji_range_share=from_json(strategy).detectors.swings.doji_range_share if strategy else 0.0,
         sweep=sweep_config(sweep_tweak),
     )
 

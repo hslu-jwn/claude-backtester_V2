@@ -100,3 +100,15 @@ def test_doji_threshold_from_the_settings_menu():
     assert set(by_layer(drawings)) == {"swing high", "swing low"}
     drawings, messages = chart_overlays(replay, ["swings"], cursor=3, settings=settings)
     assert drawings == [] and messages == []
+
+
+def test_doji_range_share_from_the_settings_menu_reaches_the_overlay_detectors():
+    from backtester.detectors.swings import RangeShare
+    from backtester.settings import settings_from_values, to_json
+    from backtester.ui.pages.chart import overlay_settings
+
+    assert overlay_settings([], "").swing_config.doji_range_share == 0.0
+    strategy = to_json(settings_from_values({"strategy.swings.doji_range_share": 0.1}))
+    config = overlay_settings([], strategy).swing_config
+    assert config.doji_range_share == 0.1
+    assert isinstance(config.doji_threshold("NAS100"), RangeShare)

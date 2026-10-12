@@ -17,10 +17,12 @@ from backtester.core.series import CandleSeries
 from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import (
     DOJI_RANGE_SHARE,
+    RangeShare,
     SwingConfig,
     SwingDetector,
     SwingKind,
     equivalent_doji_body,
+    is_doji,
 )
 
 HIGH, LOW = SwingKind.HIGH, SwingKind.LOW
@@ -175,3 +177,54 @@ def test_config_gold_default_gbp_pairs_scaled_others_need_a_value():
 def test_equivalent_doji_body_scales_gold_by_typical_candle_range():
     assert equivalent_doji_body(4.255) == pytest.approx(0.065)
     assert equivalent_doji_body(0.0004) == pytest.approx(0.0004 * DOJI_RANGE_SHARE)
+
+
+# --- doji as a share of the candle's own range (user, 2026-10-12; spec › Swing high / low) ---
+
+
+def candle(o, h, low, c):
+    return build_series([(o, h, low, c)]).view(0).current
+
+
+def test_range_share_doji_is_a_body_up_to_that_share_of_the_candles_own_range():
+    share = RangeShare(0.10)
+    assert is_doji(candle(100.0, 110.0, 100.0, 101.0), share)  # body 1 = 10% of range 10
+    assert not is_doji(candle(100.0, 110.0, 100.0, 101.01), share)
+    assert is_doji(candle(100.0, 100.0, 100.0, 100.0), share)  # flat candle: no range, no body
+    # the same body is a doji in a long candle and a real candle in a short one
+    assert is_doji(candle(100.0, 160.0, 100.0, 105.0), share)
+    assert not is_doji(candle(100.0, 106.0, 100.0, 105.0), share)
+
+
+def test_a_plain_float_threshold_is_still_a_price_amount():
+    assert not is_doji(candle(100.0, 160.0, 100.0, 105.0), 0.065)
+    assert is_doji(candle(100.0, 160.0, 100.0, 100.05), 0.065)
+
+
+def test_config_range_share_replaces_the_fixed_amounts_when_set():
+    assert not isinstance(SwingConfig().doji_threshold("XAUUSD"), RangeShare)  # default: off
+    threshold = SwingConfig(doji_range_share=0.1).doji_threshold("XAUUSD")
+    assert isinstance(threshold, RangeShare) and threshold == 0.1
+    # a symbol without a fixed amount still has a threshold in this mode
+    assert SwingConfig(doji_range_share=0.1).doji_threshold("EURUSD") == 0.1
+
+
+def test_config_rejects_a_range_share_outside_zero_to_one():
+    with pytest.raises(ValueError):
+        SwingConfig(doji_range_share=-0.1)
+    with pytest.raises(ValueError):
+        SwingConfig(doji_range_share=1.5)
+
+
+def test_a_wide_thin_candle_is_skipped_by_swings_in_range_share_mode():
+    # the big green candle 2 is a doji by share (body 5 of range 100) but not by 0.065
+    ohlc = [
+        (100.0, 110.0, 99.0, 108.0),  # 0 green
+        (108.0, 109.0, 100.0, 101.0),  # 1 red: swing high 110 (wick of 0)
+        (101.0, 160.0, 60.0, 106.0),  # 2 body 5, range 100: doji by share
+        (106.0, 107.0, 95.0, 96.0),  # 3 red
+    ]
+    # fixed amount: candle 2 is a real candle, it makes a swing low 60 and a swing high 160
+    assert summary(run(ohlc)) == [(HIGH, 110.0, 0, 1), (LOW, 60.0, 2, 2), (HIGH, 160.0, 2, 3)]
+    # share: candle 2 is skipped with its huge wicks, only the first swing remains
+    assert summary(run(ohlc, doji=RangeShare(0.10))) == [(HIGH, 110.0, 0, 1)]

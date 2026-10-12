@@ -121,6 +121,10 @@ _GROUP_RULES = (
 )
 
 LABELS = {
+    "detectors.swings.doji_range_share": (
+        "Doji: body up to this share of the candle's own range (0 = off: use the price "
+        "amounts below)"
+    ),
     "strategy.max_trades_per_session": "Max trades per window and index",
     "strategy.sweep_lookback": "Sweep: last N swings",
     "strategy.sweep_close_beyond_counts": "Sweep: a close beyond counts",

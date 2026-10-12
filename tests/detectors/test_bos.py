@@ -16,7 +16,7 @@ from conftest import build_series
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.detectors.bos import BosDetector
-from backtester.detectors.swings import SwingDetector
+from backtester.detectors.swings import RangeShare, SwingDetector
 from backtester.detectors.trend import Trend, TrendDetector, trend_at
 
 BULL, BEAR = Direction.BULLISH, Direction.BEARISH
@@ -146,6 +146,15 @@ def test_a_doji_never_causes_a_bos():
     # body exactly at the threshold is still a doji; just above it breaks
     assert run([*BASE, (1.45, 1.55, 1.44, 1.515)]) == []
     assert summary(run([*BASE, (1.45, 1.55, 1.44, 1.5151)])) == [(BULL, 1.5, 3)]
+
+
+def test_range_share_doji_never_causes_a_bos_even_when_the_body_is_large_in_price():
+    # closes above 1.5 with a body of 0.2 in a candle of range 5 (4%): a doji by share
+    wide = (1.4, 4.0, -1.0, 1.6)
+    assert summary(run([*BASE, wide])) == [(BULL, 1.5, 3)]  # fixed amount 0.065: breaks
+    detector = BosDetector(SwingDetector(RangeShare(0.10)))
+    series = build_series([*BASE, wide])
+    assert [e for i in range(4) for e in detector.update(series.view(i))] == []
 
 
 def test_level_survives_a_doji_and_breaks_on_the_next_real_close():

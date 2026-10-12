@@ -56,6 +56,7 @@ class OverlaySettings:
     # doji thresholds changed in the settings menu (detectors.swings.doji_max_body), as
     # sorted (symbol, max body) pairs; every overlay's detectors use them (`swing_config`)
     doji_max_body: tuple[tuple[str, float], ...] = ()
+    doji_range_share: float = 0.0  # > 0: a doji is a body up to this share of its range
     # liquidity sweep rules being tried on the chart (the toolbar's Sweep menu); used by
     # the sweep overlay and by the equilibrium overlay, which is built on sweeps
     sweep: SweepConfig = field(default_factory=SweepConfig)
@@ -65,8 +66,11 @@ class OverlaySettings:
         """The spec's doji thresholds with the ones changed in the settings menu."""
         base = SwingConfig()
         if not self.doji_max_body:
-            return base
-        return SwingConfig(MappingProxyType({**base.doji_max_body, **dict(self.doji_max_body)}))
+            return SwingConfig(doji_range_share=self.doji_range_share)
+        return SwingConfig(
+            MappingProxyType({**base.doji_max_body, **dict(self.doji_max_body)}),
+            self.doji_range_share,
+        )
 
 
 DEFAULT_SETTINGS = OverlaySettings()
