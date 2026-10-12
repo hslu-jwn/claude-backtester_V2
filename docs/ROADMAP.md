@@ -29,7 +29,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   backtests use. Keep bid candles for the chart and the spread (ask − bid) per candle for
   costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
   daily break shows as a gap like on TradingView.
-  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
+  Check: `python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
 - ⏸ **Postponed, then dropped (2026-10-10): the full Dukascopy download.** Dukascopy was throttling the user's
   connection (HTTP 503 / timeouts on every request). 0.3 waits until the download works
   again; Phase 1 continues with the XAUUSD days already in the cache. Done for the next
@@ -51,8 +51,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Each symbol is read from its own source's cache (`data/sources.py`), no `--cache-dir` needed.
   Done: each pair's median 5m candle range is measured and its doji threshold set
   (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low);
-  `data.check` prints both.
-  Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
+  `tools.check` prints both.
+  Check: `python -m backtester.tools.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
   **Full history (2026-10-09, confirmed by the user).** The user downloaded histdata.com
@@ -76,7 +76,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   **2023-02-20 .. 2023-07-28: many weekdays have exactly 960 / 900 / 840 minutes**, i.e.
   whole hours missing in histdata's files (gold most, also the GBP pairs; see the data
   check below).
-  **Data check over the full history** (`python -m backtester.data.check XAUUSD GBPUSD
+  **Data check over the full history** (`python -m backtester.tools.check XAUUSD GBPUSD
   GBPJPY`, 50 s). Integrity: 0 for every check (no duplicate timestamps after the
   importer's merge, no broken candles, no price <= 0), nothing "not downloaded", bid
   price range per year plausible (gold 1,451-5,597, GBPUSD 1.03-1.42, GBPJPY 124-220).
@@ -180,15 +180,15 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     `tests/data/test_mt5_adapter.py` (US / EU / fixed clocks incl. the US-only summer time
     weeks, forming candle dropped, spread in price, server-time request window, nothing
     else imports MetaTrader5).
-  - `python -m backtester.data.mt5_info`: symbol names + specs, the clock measured per
-    week of MT5's H1 history against the cache (`data/mt5_compare.py`), saved to
+  - `python -m backtester.tools.mt5_info`: symbol names + specs, the clock measured per
+    week of MT5's H1 history against the cache (`tools/mt5_compare.py`), saved to
     `results/trading.json` (symbol names; the clock only when one rule predicts every week).
     Method: `ARCHITECTURE.md › MetaTrader 5`. Tests: `tests/data/test_mt5_info.py`.
-  - `python -m backtester.data.feed_compare`: the comparison and spread tables, written to
+  - `python -m backtester.tools.feed_compare`: the comparison and spread tables, written to
     `results/feed_compare/<time>/`. Tests: `tests/data/test_feed_compare.py`.
-  - Check (after the login is saved in Settings ⚙ → Trading): run `data.mt5_info`; it
+  - Check (after the login is saved in Settings ⚙ → Trading): run `tools.mt5_info`; it
     prints FTMO's names and specs, the offsets per week, the deciding DST weeks and the
-    rule. Then `data.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
+    rule. Then `tools.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
     specs, the comparison and spread numbers (→ here, for the user's decision on 3.1).
 - ☑ **0.5 Index data: NAS100, US500** (user's request 2026-10-10, for strategy 2; data
   side only, no strategy code). Built:
@@ -224,7 +224,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     | 2026-09-02 12:30 | 7648.50 / 7649.25 / 7645.00 / 7646.00 | +8.37 / +8.38 / +8.14 / +8.39 |
     | 2026-09-02 13:30 | 7649.00 / 7650.00 / 7642.25 / 7648.75 | +7.77 / +8.26 / +8.62 / +8.37 |
 
-  - `data.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
+  - `tools.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
     the user): daily break 16:15-18:00 New York (up to 120 min), weekend Fri 16:15 → Sun
     18:00 NY (up to 51 h: the US DST-change weekend is 50.75 h). Over 2020-01-02 ..
     2026-09-30 (files already in `data/raw/histdata/`, imported into a scratch cache):
@@ -248,7 +248,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     Expected gaps (user, 2026-10-11): `check.OLD_CME_BREAKS` (`BreakWindow`, dated).
     Unexpected gaps 2018 / 2019 after that: NAS100 18 / 7, US500 1,170 / 580; US500's
     are almost all 5-10 min of no quotes at night (thin feed in those years).
-  Check: `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
+  Check: `python -m backtester.tools.check NAS100 US500`, chart NAS100 / US500 M5.
 
 ## Cleanup backlog and status notes (2026-10-12, agreed with the user)
 
@@ -287,7 +287,7 @@ session view (3.5) is separate. Overlays draw a small marker on the
 text with its state (active / tapped / confirmed / invalidated).
 
 - ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
-  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
+  Check: `python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
 - ☑ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
   the candle with the extreme wick, a thin line at the swing price over the turn candles
   (first turn candle to the confirming candle) ending in a dot on the confirming candle (hover).

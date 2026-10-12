@@ -1,9 +1,9 @@
 """FTMO's MT5 feed vs the histdata cache, and FTMO's spreads. Spec: ROADMAP.md › 0.4.
 
-    python -m backtester.data.feed_compare [XAUUSD GBPUSD GBPJPY]
+    python -m backtester.tools.feed_compare [XAUUSD GBPUSD GBPJPY]
 
 Needs the server clock and symbol names in `results/trading.json`
-(`python -m backtester.data.mt5_info` first). Per symbol and timeframe (M1, M5, M30, H1),
+(`python -m backtester.tools.mt5_info` first). Per symbol and timeframe (M1, M5, M30, H1),
 over the days both MT5's history and the cache have:
 
 - time alignment: the shift of MT5's candle times that matches the cache best (0 when the
@@ -32,7 +32,11 @@ import pandas as pd
 from backtester.cli import utf8_output
 from backtester.core.models import Timeframe
 from backtester.data.adapters.mt5_adapter import Mt5Adapter
-from backtester.data.mt5_compare import (
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
+from backtester.live.trading_settings import SYMBOLS, load_trading_settings
+from backtester.paths import RESULTS_DIR
+from backtester.tools.mt5_compare import (
     COMPARE_TIMEFRAMES,
     best_shift,
     cached_frame,
@@ -40,10 +44,6 @@ from backtester.data.mt5_compare import (
     on_days,
     spread_by_hour,
 )
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
-from backtester.live.trading_settings import SYMBOLS, load_trading_settings
-from backtester.runner import RESULTS_DIR
 
 OUT_DIR = RESULTS_DIR / "feed_compare"
 SPREAD_TIMEFRAMES = (Timeframe.M1, Timeframe.M5)
@@ -159,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     settings = load_trading_settings()
     if settings.server_clock is None:
-        print("The server clock is not measured yet: run python -m backtester.data.mt5_info")
+        print("The server clock is not measured yet: run python -m backtester.tools.mt5_info")
         return 1
     try:
         credentials = load_credentials(settings.platform)

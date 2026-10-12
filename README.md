@@ -26,7 +26,7 @@ them (`pip install -e ".[data]"`, see `docs/ARCHITECTURE.md` › Data sources):
 
 ```bash
 python -m backtester.data.histdata data/raw/histdata/
-python -m backtester.data.check XAUUSD GBPUSD GBPJPY NAS100 US500
+python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500
 python -m backtester.ui.app
 ```
 

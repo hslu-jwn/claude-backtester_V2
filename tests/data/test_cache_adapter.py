@@ -9,7 +9,6 @@ import pytest
 from m1_frames import m1
 
 from backtester.core.models import Candle, Timeframe
-from backtester.data import show
 from backtester.data.adapters.cache_adapter import (
     CacheAdapter,
     MissingCacheError,
@@ -19,6 +18,7 @@ from backtester.data.adapters.cache_adapter import (
 )
 from backtester.data.cache import cache_path, empty_cache_frame
 from backtester.data.resample import H4Alignment
+from backtester.tools import show
 
 
 def write_day(cache_dir, day: date, frame: pd.DataFrame, symbol: str = "XAUUSD") -> None:

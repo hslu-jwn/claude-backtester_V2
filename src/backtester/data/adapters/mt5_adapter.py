@@ -8,7 +8,7 @@ The adapter needs a connected terminal (`live/connection.py` `session`).
 - **Server time → UTC.** MT5 bar times are the broker's server wall clock written as if it
   were UTC. `ServerClock` says how that clock relates to UTC: server time = local time in
   an IANA `zone` + `shift_hours` (e.g. `America/New_York` + 7 h: UTC+2 in winter, UTC+3 while
-  New York has summer time). The rule is measured, never assumed (`data/mt5_info.py`).
+  New York has summer time). The rule is measured, never assumed (`tools/mt5_info.py`).
 - **Only closed candles:** a bar whose UTC close time is after `now` is dropped (the
   forming one).
 - **Spread:** MT5's per-bar spread in points × the symbol's point, in price units
@@ -149,7 +149,7 @@ class Mt5Adapter(DataAdapter):
     ):
         if clock is None:
             raise ValueError(
-                "the server time rule is not known yet: run python -m backtester.data.mt5_info"
+                "the server time rule is not known yet: run python -m backtester.tools.mt5_info"
             )
         self.mt5 = mt5
         self.clock = clock

@@ -48,7 +48,7 @@ from backtester.live.orders import (
     retcode_text,
 )
 from backtester.live.trading_settings import TradingSettings, load_trading_settings
-from backtester.runner import RESULTS_DIR
+from backtester.paths import RESULTS_DIR
 
 LOG_DIR = RESULTS_DIR / "live" / "test_orders"
 SL_TP_SHARE = 0.003  # SL / TP distance: 0.3% of the price, at least 3 x the stops level

@@ -154,8 +154,8 @@ def test_nothing_else_imports_metatrader5():
     modules = [
         "backtester.ui.app",
         "backtester.run",
-        "backtester.data.mt5_info",
-        "backtester.data.feed_compare",
+        "backtester.tools.mt5_info",
+        "backtester.tools.feed_compare",
         "backtester.live.test_orders",
         "backtester.ui.trading_panel",
     ]

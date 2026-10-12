@@ -2,7 +2,12 @@
 
 ## Layers
 
-Each layer only imports from the layers above it in this list. Exception: `data/mt5_info.py` and `data/feed_compare.py` use `live/` (the MT5 command-line tools).
+Each layer only imports from the layers above it in this list (`tests/test_layers.py` checks it
+on the imports; `paths.py` and `cli.py` are util modules that import nothing). Outside the
+layers is the app level: `runner.py`, `run.py`, `presets.py`, `settings.py`, `ui/` and the
+command-line tools in `tools/` (data check / show, MT5 info, feed comparison). They may import
+any layer; no layer imports them. A strategy names `engine.trade.TradeResult` only as a type
+hint (`TYPE_CHECKING`).
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
@@ -25,7 +30,7 @@ Each layer only imports from the layers above it in this list. Exception: `data/
    and parameter sweeps. Spec: `risk-management.md`.
 9. **live/**: platform connection (MT5), the login in the Windows Credential Manager,
    trading settings, demo-locked order functions (Phase 7). Only the MT5 command-line
-   tools in `data/` (`mt5_info`, `feed_compare`) read its settings and connect through it.
+   tools in `tools/` (`mt5_info`, `feed_compare`) read its settings and connect through it.
 10. **ui/**: Dash app with a TradingView Lightweight Charts chart in the browser. Reads
    results; never contains trading logic. See "How the chart gets its data" below.
 
@@ -109,12 +114,12 @@ different settings, or fed the manual R log, without repeating detection.
 
 Every source has its own cache folder (`data/cache/histdata/`, same layout and columns,
 `data/cache.py`). `data/sources.py` (`SymbolSources`) maps each symbol to the folder it is
-read from; the app, `data.check` and `data.show` all use it, so all symbols show in one app.
+read from; the app, `tools.check` and `tools.show` all use it, so all symbols show in one app.
 **Decision (user, 2026-10-10): all history comes from histdata.com.** Dukascopy didn't work
 for the user and its downloader was removed (ROADMAP C.1, 2026-10-12). Current mapping:
 XAUUSD, GBPUSD, GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per
 symbol in `PRICE_DIGITS`).
-`--cache-dir` on `data.check` / `data.show` overrides it for a single run.
+`--cache-dir` on `tools.check` / `tools.show` overrides it for a single run.
 
 ### histdata.com (backtest history, every symbol)
 
@@ -215,7 +220,7 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
 - Symbol names can differ by broker (suffixes like `.r`): `TradingSettings.symbols` maps
   ours to the server's.
 
-**Server time → UTC: how the rule is found** (`python -m backtester.data.mt5_info`)
+**Server time → UTC: how the rule is found** (`python -m backtester.tools.mt5_info`)
 
 1. Per week of MT5's **H1 history** (server weeks), the whole-hour offset −12..+14 h whose
    shifted bar times meet the histdata cache's H1 candles with the smallest median
@@ -232,9 +237,9 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
    tick at most 5 minutes old (only while the market trades).
 
 **Rule found for the FTMO server: not measured yet** (the terminal wasn't logged in on
-2026-10-09). It is written here after the first run of `data.mt5_info`.
+2026-10-09). It is written here after the first run of `tools.mt5_info`.
 
-**Feed comparison** (`python -m backtester.data.feed_compare`, ROADMAP 0.4): per symbol
+**Feed comparison** (`python -m backtester.tools.feed_compare`, ROADMAP 0.4): per symbol
 and timeframe (M1, M5, M30, H1), over the days both MT5's history and the cache have:
 best time shift (multiples of the timeframe within ±3 h; 0 when the clock is right),
 average |difference| of O/H/L/C (price and % of the median candle range), how often the

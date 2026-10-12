@@ -14,7 +14,6 @@ import pytest
 from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import CacheAdapter, MissingCacheError
 from backtester.data.cache import COLUMNS, cache_path, read_cached_day
-from backtester.data.check import check_symbol
 from backtester.data.histdata import (
     HistdataError,
     import_files,
@@ -22,6 +21,7 @@ from backtester.data.histdata import (
     parse_histdata_mt,
 )
 from backtester.data.resample import drop_flat_minutes
+from backtester.tools.check import check_symbol
 
 
 def write(tmp_path, name: str, lines: list[str]):

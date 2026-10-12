@@ -31,7 +31,7 @@ DOJI_REFERENCE_SYMBOL = "XAUUSD"
 DOJI_RANGE_SHARE = 0.065 / 4.255
 
 # Median 5m candle range (high - low) the other pairs' defaults come from, measured with
-# `python -m backtester.data.check` (histdata.com): GBP pairs 2026-09-02..30, indices
+# `python -m backtester.tools.check` (histdata.com): GBP pairs 2026-09-02..30, indices
 # over 2020-01-02..2026-09-30 (user's choice, 2026-10-10).
 MEDIAN_M5_RANGE = MappingProxyType(
     {"GBPUSD": 0.00028, "GBPJPY": 0.066, "NAS100": 11.57, "US500": 2.51}

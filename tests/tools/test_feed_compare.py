@@ -10,8 +10,8 @@ from fake_mt5 import FakeMt5
 
 from backtester.core.models import Timeframe
 from backtester.data.adapters.mt5_adapter import Mt5Adapter, ServerClock
-from backtester.data.feed_compare import compare_symbol, compare_table, spread_report
-from backtester.data.mt5_compare import best_shift, compare_frames, spread_by_hour
+from backtester.tools.feed_compare import compare_symbol, compare_table, spread_report
+from backtester.tools.mt5_compare import best_shift, compare_frames, spread_by_hour
 
 T0 = datetime(2026, 9, 16, 10, tzinfo=UTC)
 M5 = timedelta(minutes=5)

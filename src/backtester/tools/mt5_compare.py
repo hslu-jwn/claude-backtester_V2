@@ -1,7 +1,7 @@
 """Comparing FTMO's MT5 feed with the histdata cache. Spec: ROADMAP.md › 0.4.
 
-Pure functions on DataFrames (no MetaTrader5 import), used by `data/mt5_info.py` (server
-clock, symbols) and `data/feed_compare.py` (feed comparison, spreads):
+Pure functions on DataFrames (no MetaTrader5 import), used by `tools/mt5_info.py` (server
+clock, symbols) and `tools/feed_compare.py` (feed comparison, spreads):
 
 - `weekly_offsets`: per week, the whole-hour offset (server time − UTC) that lines MT5's
   bars up with the cache's best (smallest median |close difference|).

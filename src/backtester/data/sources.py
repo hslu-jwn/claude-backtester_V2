@@ -2,7 +2,7 @@
 
 Every source keeps its own cache folder (same layout and columns, `data/cache.py`), so
 sources never mix. `SymbolSources` maps each symbol to one of these folders; the chart,
-`data.check` and `data.show` all read through it, so every symbol can be shown in one app.
+`tools.check` and `tools.show` all read through it, so every symbol can be shown in one app.
 
 Default: every symbol from histdata.com (user, 2026-10-10; the Dukascopy downloader was
 removed, ROADMAP C.1). To read a symbol from another folder, change `DEFAULT_SOURCES`.

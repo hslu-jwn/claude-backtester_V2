@@ -1,9 +1,9 @@
 """Data check report for the M1 cache.
 
-    python -m backtester.data.check XAUUSD GBPUSD GBPJPY
-    python -m backtester.data.check NAS100 US500
-    python -m backtester.data.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
-    python -m backtester.data.check GBPUSD --cache-dir data/cache/histdata
+    python -m backtester.tools.check XAUUSD GBPUSD GBPJPY
+    python -m backtester.tools.check NAS100 US500
+    python -m backtester.tools.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
+    python -m backtester.tools.check GBPUSD --cache-dir data/cache/histdata
 
 Each symbol is read from its source's cache (`data/sources.py`); `--cache-dir` reads all
 given symbols from one folder instead.

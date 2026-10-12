@@ -27,12 +27,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
 from backtester.detectors.swings import SwingKind
-from backtester.engine.trade import TradeResult
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, beyond, candle_open, wick
@@ -44,6 +44,9 @@ from backtester.strategy.ny_index_sweep.windows import (
     is_best_time,
     window_of,
 )
+
+if TYPE_CHECKING:
+    from backtester.engine.trade import TradeResult  # only the callback's type
 
 M1, M5, M15, H1, H4 = Timeframe.M1, Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4
 SWEPT_KIND = {Direction.BULLISH: SwingKind.LOW, Direction.BEARISH: SwingKind.HIGH}

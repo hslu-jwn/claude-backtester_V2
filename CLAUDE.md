@@ -87,6 +87,7 @@ src/backtester/
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
   live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
+  tools/       Command-line tools: data check / show, MT5 info, feed comparison (app level)
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -103,14 +104,14 @@ pytest                          # all tests
 pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
 python -m backtester.ui.app     # start the Dash app (once implemented)
-python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
+python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 python -m backtester.data.histdata data/raw/histdata/  # import histdata files (all pair subfolders) -> cache
-python -m backtester.data.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
+python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
-python -m backtester.data.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
-python -m backtester.data.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
+python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
+python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
 python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accounts only
 ```
 

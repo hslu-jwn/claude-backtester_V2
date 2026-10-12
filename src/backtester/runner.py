@@ -52,13 +52,12 @@ from backtester.data.resample import H4Alignment
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
+from backtester.paths import RESULTS_DIR
 from backtester.strategy.base import Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
-
-RESULTS_DIR = Path("results")
 
 
 def _read_only(mapping: dict) -> MappingProxyType:

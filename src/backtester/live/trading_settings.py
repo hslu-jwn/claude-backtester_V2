@@ -2,7 +2,7 @@
 
 Saved in `results/trading.json` (git-ignored with results/): platform, terminal path, the
 broker's symbol names (our name → the server's, e.g. a suffix) and the measured server
-clock (`data/mt5_info.py`). Login, password and server are NOT here: they are only in the
+clock (`tools/mt5_info.py`). Login, password and server are NOT here: they are only in the
 Windows Credential Manager (`live/credentials.py`).
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.data.adapters.mt5_adapter import ServerClock
-from backtester.runner import RESULTS_DIR
+from backtester.paths import RESULTS_DIR
 
 TRADING_FILE = RESULTS_DIR / "trading.json"
 PLATFORMS = ("MT5",)  # others later

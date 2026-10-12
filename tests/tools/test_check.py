@@ -9,16 +9,16 @@ import pandas as pd
 import pytest
 from m1_frames import m1
 
-from backtester.data import check
 from backtester.data.cache import cache_path, empty_cache_frame
-from backtester.data.check import (
+from backtester.data.sources import SymbolSources
+from backtester.tools import check
+from backtester.tools.check import (
     DataCheckConfig,
     GapKind,
     classify_gap,
     config_for,
     daily_closes,
 )
-from backtester.data.sources import SymbolSources
 
 CFG = DataCheckConfig()
 
