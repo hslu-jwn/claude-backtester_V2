@@ -8,11 +8,12 @@ import sys
 from backtester.cli import utf8_output
 
 
+def cp1252_stream() -> io.TextIOWrapper:
+    return io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="\n")
+
+
 def test_switches_streams_to_utf8_and_replaces_what_cannot_be_encoded(monkeypatch):
-    out = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="
-")
-    err = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="
-")
+    out, err = cp1252_stream(), cp1252_stream()
     monkeypatch.setattr(sys, "stdout", out)
     monkeypatch.setattr(sys, "stderr", err)
     utf8_output()
