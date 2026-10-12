@@ -1,6 +1,6 @@
 """FTMO's MT5 feed vs the histdata cache, and FTMO's spreads. Spec: ROADMAP.md › 0.4.
 
-    python -m backtester.tools.feed_compare [XAUUSD GBPUSD GBPJPY]
+    python -m backtester.tools.feed_compare [XAUUSD ... US500]  (default: every symbol)
 
 Needs the server clock and symbol names in `results/trading.json`
 (`python -m backtester.tools.mt5_info` first). Per symbol and timeframe (M1, M5, M30, H1),

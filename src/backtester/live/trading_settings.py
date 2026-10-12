@@ -15,11 +15,12 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.data.adapters.mt5_adapter import ServerClock
+from backtester.data.sources import PRICE_DIGITS
 from backtester.paths import RESULTS_DIR
 
 TRADING_FILE = RESULTS_DIR / "trading.json"
 PLATFORMS = ("MT5",)  # others later
-SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY")
+SYMBOLS = tuple(PRICE_DIGITS)  # every backtest symbol (data/sources.py)
 
 
 @dataclass(frozen=True)

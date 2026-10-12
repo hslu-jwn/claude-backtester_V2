@@ -1,6 +1,6 @@
 """FTMO's symbol names and specs, and the server clock. Spec: ROADMAP.md › 0.4.
 
-    python -m backtester.tools.mt5_info [XAUUSD GBPUSD GBPJPY] [--no-save]
+    python -m backtester.tools.mt5_info [XAUUSD ... US500] [--no-save]  (default: every symbol)
 
 Connects with the login saved in Settings ⚙ → Trading (or the account the running
 terminal is logged in to), then:

@@ -160,3 +160,13 @@ def test_known_servers_from_the_terminal_folders(tmp_path):
         "Broker-Live2",
     ]
     assert known_servers("", tmp_path / "nowhere") == []
+
+
+def test_trading_symbols_are_all_the_backtest_symbols():
+    """One symbol list: the MT5 settings cover every symbol the data layer knows (incl. the
+    two indices NAS100 / US500)."""
+    from backtester.data.sources import PRICE_DIGITS
+    from backtester.live.trading_settings import SYMBOLS, TradingSettings
+
+    assert set(SYMBOLS) == set(PRICE_DIGITS) == {"XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"}
+    assert dict(TradingSettings().symbols) == {s: s for s in SYMBOLS}
