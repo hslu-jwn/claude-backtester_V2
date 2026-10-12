@@ -209,5 +209,6 @@ access; the user may supply the research). They help; they never override the ru
   for mechanical edits and searches (`/model opusplan` splits plan/work automatically).
 - **Where to work:** the cloud has no market data (git-ignored) and no browser view of the
   app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
-- **New strategies** must be one new folder under `strategy/` plus a registry entry
-  (ROADMAP C.3); universal settings are shared, strategy-specific ones live in its config.
+- **New strategies** must be one new folder under `strategy/` (copy `strategy/_template/`, its README has the steps)
+  plus one entry in `strategy/registry.py` (ROADMAP C.3); strategy-specific settings live in
+  its config, costs and warm-up are the shared `RunSettings`.
