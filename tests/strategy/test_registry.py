@@ -104,3 +104,12 @@ def test_template_folder_has_a_readme_with_the_steps():
     text = (STRATEGY_DIR / "_template" / "README.md").read_text(encoding="utf8")
     for needle in ("registry.py", "docs/", "no-lookahead", "tests/strategy/"):
         assert needle in text
+
+
+def test_run_settings_accept_every_registered_config():
+    """`runner.StrategyConfig` (RunSettings.strategy's type) lists each registered config."""
+    from typing import get_args
+
+    from backtester.runner import StrategyConfig
+
+    assert set(get_args(StrategyConfig)) == {s.config_cls for s in registry.REGISTRY.values()}
