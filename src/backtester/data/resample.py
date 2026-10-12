@@ -1,9 +1,9 @@
-"""Build higher-timeframe candles from cached M1 rows (Dukascopy or histdata.com).
+"""Build higher-timeframe candles from cached M1 rows (histdata.com).
 
-Spec: ARCHITECTURE.md › Data sources › Dukascopy, ROADMAP.md › 0.2.
+Spec: ARCHITECTURE.md › Data sources › histdata.com, ROADMAP.md › 0.2.
 
-1. Flat zero-volume minutes (Dukascopy's filler for the daily break, weekends and holidays)
-   are dropped, so those periods become gaps like on TradingView.
+1. Flat zero-volume minutes (a feed's filler for the daily break, weekends and holidays;
+   histdata has none) are dropped, so those periods become gaps like on TradingView.
 2. The remaining minutes are grouped into UTC-aligned buckets (`ts` floored to the
    timeframe). A bucket with no minutes left produces no candle; a partly filled bucket keeps
    its regular open time, and its close time stays `ts + timeframe.duration`.

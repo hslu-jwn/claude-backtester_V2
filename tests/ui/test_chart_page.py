@@ -11,7 +11,7 @@ from datetime import UTC, date, datetime
 import pytest
 from m1_frames import m1
 
-from backtester.data.dukascopy import _empty_cache_frame, cache_path
+from backtester.data.cache import cache_path, empty_cache_frame
 from backtester.data.sources import SymbolSources
 from backtester.ui.chart_config import ChartConfig, price_digits
 from backtester.ui.pages.chart import base_payload, chart_settings
@@ -44,7 +44,7 @@ def cache(tmp_path):
             day="2026-09-02",
         ),
     )
-    write_day(tmp_path, "2026-09-03", _empty_cache_frame())
+    write_day(tmp_path, "2026-09-03", empty_cache_frame())
     return SymbolSources({"XAUUSD": tmp_path})
 
 
@@ -68,10 +68,10 @@ def test_end_day_is_inclusive_and_flat_minutes_are_dropped(cache):
     assert payload["range"] is None  # not in replay: the browser shows all candles
 
 
-def test_range_with_a_day_never_downloaded_shows_the_error_and_no_chart(cache):
+def test_range_with_a_day_never_imported_shows_the_error_and_no_chart(cache):
     payload, message = base_payload(cache, "XAUUSD", "M5", "2026-09-02", "2026-09-04")
     assert payload is None
-    assert "2026-09-04" in message and "backtester.data.download" in message
+    assert "2026-09-04" in message and "backtester.data.histdata" in message
 
 
 def test_too_many_candles_asks_for_a_shorter_range(cache):

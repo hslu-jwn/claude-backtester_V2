@@ -1,4 +1,4 @@
-"""Builder for hand-written M1 cache frames (same columns as a cached Dukascopy day)."""
+"""Builder for hand-written M1 cache frames (same columns as a cached day, `data/cache.py`)."""
 
 from __future__ import annotations
 

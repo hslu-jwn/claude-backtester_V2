@@ -10,7 +10,7 @@ next. Showing / hiding overlays, sub-entries and session lines happens in the br
 
 Pick symbol (every symbol of `SymbolSources` with cached days, each read from its own
 source's cache, `data/sources.py`), timeframe and a date range (UTC days, both
-inclusive, limited to cached days). A range touching a day that was never downloaded shows
+inclusive, limited to cached days). A range touching a day that was never imported shows
 the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
 Zooming or panning is the library's; the price axis fits the visible candles.
 

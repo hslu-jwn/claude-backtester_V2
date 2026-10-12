@@ -26,7 +26,7 @@ import scenario
 from scenario import LONDON, NY_SETUP, TO_TARGET, doji
 
 from backtester.data.adapters.cache_adapter import MissingCacheError
-from backtester.data.dukascopy import cache_path
+from backtester.data.cache import cache_path
 from backtester.data.sources import SymbolSources
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.backtest import EngineConfig

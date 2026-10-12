@@ -30,7 +30,7 @@ python -m backtester.data.check XAUUSD GBPUSD GBPJPY NAS100 US500
 python -m backtester.ui.app
 ```
 
-Dukascopy is no longer used (its downloader is kept). MetaTrader 5 (FTMO) is used for feed
+Dukascopy is no longer used (its downloader was removed). MetaTrader 5 (FTMO) is used for feed
 comparison and later live trading: `pip install -e ".[mt5]"` (Windows only); the login is
 entered in the app (Settings ⚙ → Trading) and kept in the Windows Credential Manager, never
 in a file. Data files are not committed.

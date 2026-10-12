@@ -9,7 +9,7 @@ order blocks, BOS, liquidity sweeps). It replays historical candles one at a tim
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
 account results (balance, drawdown, Monte Carlo; the FTMO / prop-firm field comes later). Results are shown in a Dash web app with a
 TradingView Lightweight Charts chart. History comes from histdata.com M1 files the user downloads into `data/raw/histdata/`
-(Dukascopy is no longer used; its code is kept); MetaTrader 5 (FTMO) for feed comparison and
+(Dukascopy is no longer used and was removed); MetaTrader 5 (FTMO) for feed comparison and
 later live trading. Symbols: XAUUSD, GBPUSD, GBPJPY (strategy 1), NAS100, US500 (strategy 2).
 
 ## Specs are the source of truth
@@ -22,7 +22,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
-| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5; Dukascopy unused) |
+| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
@@ -78,8 +78,8 @@ Every detector needs a test proving this (see Testing).
 ```
 src/backtester/
   core/        Candle, Timeframe, Direction, CandleSeries/SeriesView, multi-timeframe clock
-  data/        DataAdapter interface, histdata.com importer, cache (data/cache/histdata/),
-               MT5 adapter, Dukascopy downloader (kept, unused)
+  data/        DataAdapter interface, histdata.com importer, cache (data/cache/histdata/,
+               helpers in data/cache.py), MT5 adapter
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
   strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2)

@@ -9,7 +9,7 @@ import pytest
 from m1_frames import m1
 
 from backtester.core.models import Timeframe
-from backtester.data.dukascopy import cache_path
+from backtester.data.cache import cache_path
 from backtester.data.sources import SymbolSources
 from backtester.detectors.trend import TrendConfig
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig

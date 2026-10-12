@@ -14,12 +14,12 @@ FTMO's MT5 server only keeps about one month of 5m history, so another source is
 for backtest history. **Since 2026-10-10 (user's decision) all history comes from
 histdata.com** M1 files the user downloads into `data/raw/histdata/<SYMBOL>/` (bid only,
 spread a fixed setting). Dukascopy (0.1) didn't work for the user and is no longer used;
-its code is kept. MT5 is used to compare the recent month against FTMO's own feed, and
+its code was removed (C.1). MT5 is used to compare the recent month against FTMO's own feed, and
 later for live trading.
 Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
-- ☑ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
-  `python -m backtester.data.download XAUUSD 2020-01-01 2026-10-01`.
+- ☑ **0.1 Dukascopy downloader + cache (removed 2026-10-12, C.1; history only).**
+  `data/dukascopy.py` + command `python -m backtester.data.download`.
   Downloads M1 **bid and ask** candles day by day, saves them to `data/cache/` (Parquet),
   skips days already downloaded (so an interrupted download can resume), waits briefly
   between requests. Symbols: XAUUSD, GBPUSD, GBPJPY. Tests use saved sample files, not the
@@ -254,7 +254,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
 - **Strategy 1 is paused** (user): its ◐ steps stay as they are, its tests stay green.
 - **"Done" = the user marks a step done**; a done step can be reopened for rework.
-- ☐ **C.1 Remove Dukascopy** (code, its test and fixture). First move `read_cached_days` (still the parquet reader of the histdata cache) into the data layer. Test-first.
+- ☑ **C.1 Remove Dukascopy** (2026-10-12): the cache helpers moved to `data/cache.py` (`COLUMNS`, `cache_path`, `read_cached_day(s)`, `empty_cache_frame`, `write_atomic`, `DEFAULT_CACHE_DIR` = histdata cache, test `tests/data/test_cache.py`); `dukascopy.py`, `download.py`, their test and the `.bi5` fixtures are gone. `CacheAdapter()` without argument now reads the histdata cache (it used to point at the Dukascopy folder). The "day missing" message names `python -m backtester.data.histdata`. Backtests byte-identical (trades.csv, both strategies).
 - ☐ **C.2 Windows-only MT5 path test:** skip `tests/live/test_connection.py::test_known_servers_from_the_terminal_folders` on non-Windows so cloud runs are green.
 - ☐ **C.3 Strategy registry + template folder** so a new strategy is one new folder (replaces the special case in `runner.make_strategy`); settings: universal ones shared, extra ones per strategy for the UI.
 - Known, left as is: `strategy.strong_move.atr_mult` is unused and hidden in the settings; the results trade list uses Dash's deprecated `DataTable` (works).
@@ -878,7 +878,7 @@ has no step yet.
   - `strategy/session_zone_sweep/journal.py`: only the confluence records not ended yet
     are looked at per candle (all were); `signals.py`: the equilibria are only filtered
     after a transition (was every candle).
-  - `data/dukascopy.py` `read_cached_days`: the day files of a range are read in one go
+  - `data/cache.py` `read_cached_days` (then in `dukascopy.py`): the day files of a range are read in one go
     (pyarrow dataset), 9x faster than one by one (2,464 files: 7.2 s → 0.8 s).
   - Found on the way: the order of confluences inside a session record in sessions.json
     changed from run to run (same content; FVG and BPR made by the same candle came from

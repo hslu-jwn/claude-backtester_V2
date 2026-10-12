@@ -10,6 +10,7 @@ import pytest
 from m1_frames import m1
 
 from backtester.data import check
+from backtester.data.cache import cache_path, empty_cache_frame
 from backtester.data.check import (
     DataCheckConfig,
     GapKind,
@@ -17,7 +18,6 @@ from backtester.data.check import (
     config_for,
     daily_closes,
 )
-from backtester.data.dukascopy import _empty_cache_frame, cache_path
 from backtester.data.sources import SymbolSources
 
 CFG = DataCheckConfig()
@@ -190,7 +190,7 @@ def cache(tmp_path):
     for d in ("2026-09-01", "2026-09-02"):
         write_day(tmp_path, date.fromisoformat(d), full_day(d))
     write_day(tmp_path, date(2026, 9, 4), full_day("2026-09-04", break_utc=(21, 24)))
-    write_day(tmp_path, date(2026, 9, 5), _empty_cache_frame())
+    write_day(tmp_path, date(2026, 9, 5), empty_cache_frame())
     return tmp_path
 
 

@@ -3,7 +3,7 @@
 Spec: ROADMAP.md › 3.4. Per symbol:
 1. Days: the requested UTC days [start, end]. Uncached days at the start or the end of the
    range are left out (noted in the summary); a missing day in between is an error
-   (`MissingCacheError`, with the download command).
+   (`MissingCacheError`, with the import command).
 2. Warm-up: up to `RunSettings.warmup_days` cached days right before the first day are
    loaded too (fewer if the cache has a gap), so detectors, zones, ATR and the 1h / 4H
    levels have history. Trades entered in the warm-up are dropped, as are sessions that

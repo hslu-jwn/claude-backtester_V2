@@ -36,8 +36,7 @@ unpacking. One minute per line:
   only drops flat minutes with volume exactly 0) never removes a histdata minute, not even
   a real quiet minute with O = H = L = C.
 
-The cache has the same layout and columns as the Dukascopy one (`data/dukascopy.py`), but
-lives in its own folder (`data/cache/histdata/` by default) so the two sources never mix.
+The cache layout and columns are in `data/cache.py` (`data/cache/histdata/` by default).
 A month file covers UTC from midnight of the 1st on that clock (04:00 UTC in European
 summer time, 05:00 otherwise) to midnight of the next month's 1st (a year file: 1 January to the next
 1 January, 05:00 UTC), so only UTC days fully inside the imported periods are written
@@ -63,9 +62,14 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from backtester.data.dukascopy import _COLUMNS, _empty_cache_frame, _write_atomic, cache_path
+from backtester.data.cache import (
+    COLUMNS,
+    DEFAULT_CACHE_DIR,
+    cache_path,
+    empty_cache_frame,
+    write_atomic,
+)
 
-DEFAULT_HISTDATA_CACHE_DIR = Path("data/cache/histdata")
 # histdata's clock: New York's standard offset, + Europe's summer time (module docstring)
 NEW_YORK = ZoneInfo("America/New_York")
 EUROPE = ZoneInfo("Europe/London")  # the EU's summer time dates (all switch at 01:00 UTC)
@@ -188,7 +192,7 @@ def parse_histdata_mt(text_or_path, month_file_: MonthFile | None = None) -> pd.
         dtype={"date": str, "time": str},
     )
     if raw.empty:
-        return _empty_cache_frame()
+        return empty_cache_frame()
     local = pd.to_datetime(raw["date"] + " " + raw["time"], format="%Y.%m.%d %H:%M")
     ts = histdata_to_utc(local)
     o, h, lo, c = (raw[f].astype("float64") for f in ("open", "high", "low", "close"))
@@ -236,17 +240,17 @@ def merge_duplicate_minutes(frame: pd.DataFrame) -> pd.DataFrame:
                     "bid_high": "max",
                     "bid_low": "min",
                     "bid_close": "last",
-                    **{c: "first" for c in _COLUMNS if c.startswith("ask_") or c == "bid_volume"},
+                    **{c: "first" for c in COLUMNS if c.startswith("ask_") or c == "bid_volume"},
                 }
             )
             .reset_index()
         )
-    out = frame.sort_values("ts", ignore_index=True)[_COLUMNS]
+    out = frame.sort_values("ts", ignore_index=True)[COLUMNS]
     out.attrs["merged_minutes"] = merged
     return out
 
 
-def import_files(paths: Iterable[Path], cache_dir: Path = DEFAULT_HISTDATA_CACHE_DIR):
+def import_files(paths: Iterable[Path], cache_dir: Path = DEFAULT_CACHE_DIR):
     """Import month / year files, csv or zip (any symbols); one ImportResult per symbol."""
     by_symbol: dict[str, list[MonthFile]] = {}
     for path in paths:
@@ -275,10 +279,10 @@ def import_symbol(symbol: str, files: list[MonthFile], cache_dir: Path) -> Impor
             continue
         rows = by_day.get(day)
         if rows is None or rows.empty:
-            _write_atomic(_empty_cache_frame(), cache_path(cache_dir, symbol, day))
+            write_atomic(empty_cache_frame(), cache_path(cache_dir, symbol, day))
             empty.append(day)
             continue
-        _write_atomic(rows.reset_index(drop=True), cache_path(cache_dir, symbol, day))
+        write_atomic(rows.reset_index(drop=True), cache_path(cache_dir, symbol, day))
         written.append(day)
         minutes += len(rows)
     return ImportResult(symbol, written, empty, partial, minutes, merged)
@@ -340,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("paths", nargs="+", type=Path, help="DAT_MT_*_M1_*.csv / .zip files or folders")
-    p.add_argument("--cache-dir", type=Path, default=DEFAULT_HISTDATA_CACHE_DIR)
+    p.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
     args = p.parse_args(argv)
     if not any(files_in(p_) for p_ in args.paths):
         p.error("no DAT_MT_*_M1_* files found")

@@ -1,17 +1,17 @@
-"""Read candles from the local Dukascopy M1 cache, resampled to any supported timeframe.
+"""Read candles from the local M1 cache, resampled to any supported timeframe.
 
-Spec: ARCHITECTURE.md › Data sources › Dukascopy, ROADMAP.md › 0.2.
+Spec: ARCHITECTURE.md › Data sources › histdata.com, ROADMAP.md › 0.2.
 
 Each requested UTC day is read from `{cache_dir}/{SYMBOL}/{YYYY}/{YYYY-MM-DD}.parquet`
-(written by `data/dukascopy.py`), flat zero-volume minutes are dropped and the rest is
+(written by `data/histdata.py`, see `data/cache.py`), flat zero-volume minutes are dropped and the rest is
 resampled (`data/resample.py`). Every intraday timeframe divides a day, so no candle spans
 two days. D and W candles (trading days, `DayBoundary`) and New York-aligned 4h candles
 (`H4Alignment`) can span several UTC days: the cached days around the range are read too,
 a candle belongs to the range when it CLOSES in it, and a candle is only returned when
 every UTC day it covers is cached (no half candles at the edges of the cache).
 
-A day that was never downloaded raises `MissingCacheError`, so gaps in the cache are never
-silent. A day cached as empty (Dukascopy had no data) simply has no candles. Only past days
+A day that was never imported raises `MissingCacheError`, so gaps in the cache are never
+silent. A day cached as empty (the source had no data) simply has no candles. Only past days
 are ever cached, so every candle returned is closed.
 """
 
@@ -24,7 +24,7 @@ import pandas as pd
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data.adapters.base import DataAdapter
-from backtester.data.dukascopy import DEFAULT_CACHE_DIR, cache_path, read_cached_days
+from backtester.data.cache import DEFAULT_CACHE_DIR, cache_path, read_cached_days
 from backtester.data.resample import (
     DEFAULT_BOUNDARY,
     DayBoundary,
@@ -37,7 +37,7 @@ from backtester.data.resample import (
 
 
 class MissingCacheError(LookupError):
-    """Requested days are not in the cache. Download them first."""
+    """Requested days are not in the cache. Import them first (`data.histdata`)."""
 
 
 class CacheAdapter(DataAdapter):
@@ -73,8 +73,8 @@ class CacheAdapter(DataAdapter):
         if missing:
             raise MissingCacheError(
                 f"{symbol}: {len(missing)} day(s) not in {self.cache_dir}: {day_ranges(missing)}. "
-                f"Run: python -m backtester.data.download {symbol} {missing[0]} "
-                f"{missing[-1] + timedelta(days=1)}"
+                f"Import the histdata.com files: python -m backtester.data.histdata "
+                f"data/raw/histdata/ (first missing day: {missing[0]})"
             )
 
         if spans_utc_days(timeframe, h4):
