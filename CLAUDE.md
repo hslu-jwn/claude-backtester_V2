@@ -98,7 +98,7 @@ docs/          Specs (source of truth)
 
 ```bash
 python -m venv .venv            # then activate it (.venv\Scripts\activate on Windows)
-pip install -e ".[dev,ui,data]"
+pip install -e ".[dev,ui,data,risk]"
 pytest                          # all tests
 pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
@@ -168,7 +168,8 @@ override the rules above.
 - **Keep it current:** after changing code, run `graphify update .` (local AST build, no API
   keys, no cost). `.graphifyignore` skips the vendored Lightweight Charts bundle;
   `graphify-out/` is git-ignored.
-- The PreToolUse hook in `.claude/settings.json` (`graphify hook-guard`) reminds you of
+- The PreToolUse hook in `.claude/settings.json` (`graphify hook-guard`, Windows path of the
+  user's PC, it fails harmlessly in the cloud) reminds you of
   this before Bash/Grep/Read/Glob calls. It only reminds; it never blocks.
 
 ### ponytail

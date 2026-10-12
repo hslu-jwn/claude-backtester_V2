@@ -15,7 +15,7 @@ git clone https://github.com/hslu-jwn/backtester-claude.git
 cd backtester-claude
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (macOS/Linux: source .venv/bin/activate)
-pip install -e ".[dev,ui]"
+pip install -e ".[dev,ui,data,risk]"
 pytest
 ```
 
