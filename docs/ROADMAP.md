@@ -250,6 +250,15 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     are almost all 5-10 min of no quotes at night (thin feed in those years).
   Check: `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
 
+## Cleanup backlog and status notes (2026-10-12, agreed with the user)
+
+- **Strategy 1 is paused** (user): its ◐ steps stay as they are, its tests stay green.
+- **"Done" = the user marks a step done**; a done step can be reopened for rework.
+- ☐ **C.1 Remove Dukascopy** (code, its test and fixture). First move `read_cached_days` (still the parquet reader of the histdata cache) into the data layer. Test-first.
+- ☐ **C.2 Windows-only MT5 path test:** skip `tests/live/test_connection.py::test_known_servers_from_the_terminal_folders` on non-Windows so cloud runs are green.
+- ☐ **C.3 Strategy registry + template folder** so a new strategy is one new folder (replaces the special case in `runner.make_strategy`); settings: universal ones shared, extra ones per strategy for the UI.
+- Known, left as is: `strategy.strong_move.atr_mult` is unused and hidden in the settings; the results trade list uses Dash's deprecated `DataTable` (works).
+
 ## Phase 1: Chart (no lookahead)
 
 - ☑ **1.1 Dash chart page.** Candlesticks from the cache. Pick symbol, timeframe and date
