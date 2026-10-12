@@ -25,3 +25,4 @@ graphify-out/
 
 # Stray files from Windows paths glued into a name
 CUsers*
+C*Users*claude-notify-signals*  # the same with a private-use character after C
