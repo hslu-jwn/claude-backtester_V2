@@ -15,6 +15,7 @@ from pathlib import Path
 
 from backtester.runner import RESULTS_DIR, RunSettings
 from backtester.settings import SettingsError, from_dict, to_dict
+from backtester.strategy.registry import default_config
 
 PRESETS_DIR = RESULTS_DIR / "presets"
 DEFAULT = "Default"
@@ -62,14 +63,27 @@ def _find(name: str, folder: Path) -> Path | None:
     return None
 
 
-def list_presets(folder: Path = PRESETS_DIR) -> list[str]:
-    """The preset names: Default first, then the saved ones by name."""
-    return [DEFAULT, *sorted(_files(folder), key=str.lower)]
+def _strategy_of(path: Path) -> str:
+    """The strategy a preset file is for (files from before strategy 2: strategy 1)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data["settings"]["strategy"].get("name", "session_zone_sweep")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return "session_zone_sweep"
 
 
-def load_preset(name: str, folder: Path = PRESETS_DIR) -> RunSettings:
+def list_presets(folder: Path = PRESETS_DIR, strategy: str | None = None) -> list[str]:
+    """The preset names: Default first, then the saved ones by name; only the presets of
+    `strategy` when given."""
+    files = _files(folder)
+    names = [n for n, path in files.items() if strategy in (None, _strategy_of(path))]
+    return [DEFAULT, *sorted(names, key=str.lower)]
+
+
+def load_preset(name: str, folder: Path = PRESETS_DIR, strategy: str | None = None) -> RunSettings:
+    """The preset's settings; "Default" is the spec defaults of `strategy` (default: 1)."""
     if _is_default(name):
-        return RunSettings()
+        return RunSettings(strategy=default_config(strategy or "session_zone_sweep"))
     path = _find(name, folder)
     if path is None:
         raise PresetError(f"no preset {name!r}")

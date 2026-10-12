@@ -56,7 +56,7 @@ class Deps:
 
 def _clock_text(settings: TradingSettings) -> str:
     if settings.server_clock is None:
-        return "Server time: not measured yet (python -m backtester.data.mt5_info)."
+        return "Server time: not measured yet (python -m backtester.tools.mt5_info)."
     note = f" ({settings.server_clock_note})" if settings.server_clock_note else ""
     return f"Server time = {settings.server_clock.label}{note}."
 
@@ -211,7 +211,7 @@ def layout() -> html.Div:
             html.Div("Symbols on the server", className="st-section"),
             html.Div(
                 "The broker's name for each symbol (e.g. with a suffix). "
-                "python -m backtester.data.mt5_info finds them.",
+                "python -m backtester.tools.mt5_info finds them.",
                 className="st-help st-section-help",
             ),
             *[_row(symbol, _input(f"tr-sym-{symbol}")) for symbol in SYMBOLS],

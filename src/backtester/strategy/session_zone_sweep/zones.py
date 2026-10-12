@@ -42,7 +42,7 @@ from enum import Enum
 from backtester.core.models import Candle
 from backtester.core.series import SeriesView
 from backtester.detectors.base import Detector, Event
-from backtester.detectors.swings import SwingDetector, SwingKind, SwingPoint, is_doji
+from backtester.detectors.swings import SwingConfig, SwingDetector, SwingKind, SwingPoint, is_doji
 from backtester.sessions import Session, SessionInstance, next_session_start, session_of
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 
@@ -152,10 +152,13 @@ class SessionZoneTracker(Detector[SessionZoneEvent]):
 
     @classmethod
     def for_symbol(
-        cls, symbol: str, config: SessionZoneSweepConfig | None = None
+        cls,
+        symbol: str,
+        config: SessionZoneSweepConfig | None = None,
+        swings: SwingConfig | None = None,
     ) -> SessionZoneTracker:
         config = config or SessionZoneSweepConfig()
-        return cls(config.swings.doji_threshold(symbol), config)
+        return cls((swings or SwingConfig()).doji_threshold(symbol), config)
 
     def update(self, view: SeriesView) -> list[SessionZoneEvent]:
         if view.timeframe is not self.config.zone_timeframe:

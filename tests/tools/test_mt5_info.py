@@ -9,9 +9,9 @@ import pandas as pd
 import pytest
 from fake_mt5 import FakeMt5
 
-from backtester.data import mt5_info
 from backtester.data.adapters.mt5_adapter import ServerClock
-from backtester.data.mt5_compare import (
+from backtester.tools import mt5_info
+from backtester.tools.mt5_compare import (
     cached_runs,
     discriminating_weeks,
     fit_clock,

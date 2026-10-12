@@ -1,9 +1,9 @@
 """Data check report for the M1 cache.
 
-    python -m backtester.data.check XAUUSD GBPUSD GBPJPY
-    python -m backtester.data.check NAS100 US500
-    python -m backtester.data.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
-    python -m backtester.data.check GBPUSD --cache-dir data/cache/dukascopy
+    python -m backtester.tools.check XAUUSD GBPUSD GBPJPY
+    python -m backtester.tools.check NAS100 US500
+    python -m backtester.tools.check XAUUSD --start 2024-01-01 --spot 2026-09-02T13:30
+    python -m backtester.tools.check GBPUSD --cache-dir data/cache/histdata
 
 Each symbol is read from its source's cache (`data/sources.py`); `--cache-dir` reads all
 given symbols from one folder instead.
@@ -11,7 +11,7 @@ given symbols from one folder instead.
 Bid-only sources without filler minutes (histdata.com) skip the checks that need asks
 (bid without ask, spread outliers) or filler (1440 rows per day file).
 
-Spec: ROADMAP.md › 0.3, ARCHITECTURE.md › Data sources › Dukascopy.
+Spec: ROADMAP.md › 0.3, ARCHITECTURE.md › Data sources › histdata.com.
 
 Per symbol it prints:
 
@@ -64,7 +64,7 @@ import pandas as pd
 
 from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import CacheAdapter, day_ranges
-from backtester.data.dukascopy import read_cached_day
+from backtester.data.cache import read_cached_day
 from backtester.data.resample import drop_flat_minutes, resample
 from backtester.data.sources import DEFAULT_SOURCES, PRICE_DIGITS, SymbolSources
 from backtester.detectors.swings import DOJI_RANGE_SHARE, SwingConfig, equivalent_doji_body
@@ -465,8 +465,8 @@ def check_symbol(
     if raw.empty:
         return report
 
-    # Only sources that fill every minute (Dukascopy: flat zero-volume filler) have 1440
-    # rows per day; histdata.com leaves non-trading minutes out (volume unknown = NaN).
+    # A source that fills every minute (flat zero-volume filler, volume 0) has 1440 rows per
+    # day; histdata.com leaves non-trading minutes out (volume unknown = NaN).
     filled = raw["bid_volume"].notna().groupby(file_day.to_numpy()).any()
     rows_per_file = Counter(file_day)
     short_files = [str(d) for d, k in rows_per_file.items() if k != 24 * 60 and filled[d]]
@@ -521,7 +521,7 @@ def format_report(r: SymbolReport, config: DataCheckConfig = DEFAULT_CONFIG) -> 
     n = config.examples
     lines = [f"===== {r.symbol} =====", ""]
     if not r.cached_days:
-        return "\n".join([*lines, "No cached days. Download first."])
+        return "\n".join([*lines, "No cached days. Import first."])
 
     lines += [
         "Coverage",

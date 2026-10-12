@@ -33,6 +33,7 @@ from functools import cache, lru_cache
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
 from backtester.runner import RunSettings, jsonable
+from backtester.strategy.registry import REGISTRY, strategy_name
 
 HIDDEN = frozenset({"engine.sessions", "strategy.strong_move.atr_mult"})
 
@@ -107,6 +108,8 @@ def _kind(hint) -> tuple[str, tuple[str, ...]]:
     if get_origin(hint) is frozenset:
         (member,) = get_args(hint)
         return "enum_set", tuple(m.name for m in member)
+    if get_origin(hint) is tuple and get_args(hint) == (float, ...):
+        return "float_list", ()
     if isinstance(hint, type) and issubclass(hint, Enum):
         return "enum", tuple(m.name for m in hint)
     simple = {bool: "bool", int: "int", float: "float", str: "text", time: "time"}
@@ -122,12 +125,16 @@ def to_form(value) -> Any:
         return sorted(v.name for v in value)
     if isinstance(value, time):
         return value.strftime("%H:%M")
+    if isinstance(value, tuple):
+        return list(value)
     return value
 
 
 def _walk(value, hint, path: str, help_: str, out: list[Leaf]) -> None:
     if path in HIDDEN:
         return
+    if is_dataclass(value) and not isinstance(value, type):
+        hint = type(value)  # e.g. `strategy`: strategy 1's or strategy 2's config
     if is_dataclass(hint):
         hints, comments = get_type_hints(hint), field_comments(hint)
         for f in fields(hint):
@@ -163,6 +170,15 @@ def _convert(hint, value, path: str):
         return None if value in (None, "") else _convert(inner, value, path)
     if is_dataclass(hint):
         return _build(hint, value, path)
+    if get_origin(hint) in (Union, types.UnionType) and all(
+        is_dataclass(a) for a in get_args(hint)
+    ):
+        return _build(_strategy_class(value, path), value, path)
+    if get_origin(hint) is tuple and get_args(hint) == (float, ...):
+        try:
+            return tuple(float(v) for v in value)
+        except (TypeError, ValueError) as e:
+            raise SettingsError(f"numbers needed, got {value!r}", path) from e
     if _is_mapping(hint):
         _, value_hint = get_args(hint)
         return types.MappingProxyType(
@@ -189,6 +205,16 @@ def _convert(hint, value, path: str):
     return str(value)
 
 
+def _strategy_class(data: Any, path: str) -> type:
+    """The config class of the strategy named in `data["name"]` (default: strategy 1)."""
+    name = data.get("name", "session_zone_sweep") if isinstance(data, Mapping) else None
+    try:
+        return REGISTRY[name].config_cls
+    except KeyError:
+        known = ", ".join(REGISTRY)
+        raise SettingsError(f"unknown strategy {name!r} (known: {known})", f"{path}.name") from None
+
+
 def _build(cls, data: Mapping, path: str = ""):
     if not isinstance(data, Mapping):
         raise SettingsError(f"expected a group of settings, got {data!r}", path or None)
@@ -209,12 +235,32 @@ def _build(cls, data: Mapping, path: str = ""):
 
 
 def to_dict(settings: RunSettings) -> dict:
-    return jsonable(settings)
+    data = jsonable(settings)
+    data["strategy"] = {"name": strategy_name(settings.strategy), **data["strategy"]}
+    return data
+
+
+# Settings of the shared detector group; before ROADMAP C.3 they were inside `strategy`.
+_MOVED = ("swings", "fvg", "order_block", "equilibrium")
+
+
+def _migrate(data: Mapping) -> Mapping:
+    """Old JSON (presets, settings of runs) -> the current form: `strategy.fvg` etc. move
+    to `detectors.fvg`. A group already under `detectors` wins."""
+    strategy = data.get("strategy") if isinstance(data, Mapping) else None
+    if not isinstance(strategy, Mapping) or not any(k in strategy for k in _MOVED):
+        return data
+    moved = {k: strategy[k] for k in _MOVED if k in strategy}
+    detectors = data.get("detectors")
+    merged = {**moved, **(detectors if isinstance(detectors, Mapping) else {})}
+    rest = {k: v for k, v in strategy.items() if k not in _MOVED}
+    return {**data, "strategy": rest, "detectors": merged}
 
 
 def from_dict(data: Mapping) -> RunSettings:
-    """RunSettings from its nested JSON form; missing values keep their defaults."""
-    return _build(RunSettings, data)
+    """RunSettings from its nested JSON form; missing values keep their defaults. Old
+    forms (detector settings inside `strategy`) are migrated."""
+    return _build(RunSettings, _migrate(data))
 
 
 def to_json(settings: RunSettings) -> str:
@@ -234,6 +280,9 @@ def settings_from_values(values: Mapping[str, Any], base: RunSettings | None = N
     data = to_dict(base or RunSettings())
     known = {leaf.path for leaf in leaves(base)}
     for path, value in values.items():
+        head, _, tail = path.partition(".")
+        if head == "strategy" and tail.split(".")[0] in _MOVED:  # menu state of an old version
+            path = f"detectors.{tail}"
         if path not in known:
             continue
         *parents, name = path.split(".")
@@ -242,4 +291,7 @@ def settings_from_values(values: Mapping[str, Any], base: RunSettings | None = N
             node = node[p]
         node[name] = value
     settings = from_dict(data)
-    return replace(settings, engine=replace(settings.engine, sessions=settings.strategy.sessions))
+    sessions = getattr(settings.strategy, "sessions", None)  # strategy 1's session starts
+    if sessions is None:
+        return settings
+    return replace(settings, engine=replace(settings.engine, sessions=sessions))

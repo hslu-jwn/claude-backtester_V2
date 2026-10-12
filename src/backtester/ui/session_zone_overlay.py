@@ -74,7 +74,7 @@ class ChartZoneEvent(Event):
 def detect_session_zones(
     replay: Replay, settings: OverlaySettings = DEFAULT_SETTINGS, config=DEFAULT_CONFIG
 ) -> list[ChartZoneEvent]:
-    strategy = SessionZoneSweepConfig(swings=settings.swing_config)
+    strategy = SessionZoneSweepConfig()
     zone_tf, shown = strategy.zone_timeframe, replay.timeframe
     if not config.session_zone_min_timeframe.value <= shown.value <= zone_tf.value:
         raise OverlayUnavailable(
@@ -82,7 +82,7 @@ def detect_session_zones(
             f" to {zone_tf.name} charts"
         )
     try:
-        tracker = SessionZoneTracker.for_symbol(replay.symbol, strategy)
+        tracker = SessionZoneTracker.for_symbol(replay.symbol, strategy, settings.swing_config)
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
 

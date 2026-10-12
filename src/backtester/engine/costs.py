@@ -58,7 +58,7 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
         ),
         # Indices (user, 2026-10-10): spread estimates until FTMO's are measured, no
         # commission or swap for now. contract_size only
-        # matters for the commission; check it with `data.mt5_info` before Phase 5.
+        # matters for the commission; check it with `tools.mt5_info` before Phase 5.
         "NAS100": SymbolCosts(spread=1.0, commission_per_lot=0.0, contract_size=1, slippage=1.0),
         "US500": SymbolCosts(spread=0.5, commission_per_lot=0.0, contract_size=1, slippage=0.25),
     }

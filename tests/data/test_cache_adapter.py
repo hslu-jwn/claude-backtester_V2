@@ -9,7 +9,6 @@ import pytest
 from m1_frames import m1
 
 from backtester.core.models import Candle, Timeframe
-from backtester.data import show
 from backtester.data.adapters.cache_adapter import (
     CacheAdapter,
     MissingCacheError,
@@ -17,8 +16,9 @@ from backtester.data.adapters.cache_adapter import (
     cached_days,
     latest_run,
 )
-from backtester.data.dukascopy import _empty_cache_frame, cache_path
+from backtester.data.cache import cache_path, empty_cache_frame
 from backtester.data.resample import H4Alignment
+from backtester.tools import show
 
 
 def write_day(cache_dir, day: date, frame: pd.DataFrame, symbol: str = "XAUUSD") -> None:
@@ -42,7 +42,7 @@ def cache(tmp_path):
             ("23:07", 101.5, 101.9, 101.3, 101.4, 1.0, 0.3),
         ),
     )
-    write_day(tmp_path, date(2026, 9, 3), _empty_cache_frame())
+    write_day(tmp_path, date(2026, 9, 3), empty_cache_frame())
     return tmp_path
 
 
@@ -145,20 +145,19 @@ def test_show_prints_candles_with_extra_time_zone(cache, capsys):
 def test_show_reports_missing_days(cache, capsys):
     code = show.main(["XAUUSD", "M5", "2026-09-04", "2026-09-05", "--cache-dir", str(cache)])
     assert code == 1
-    assert (
-        "python -m backtester.data.download XAUUSD 2026-09-04 2026-09-05" in capsys.readouterr().out
-    )
+    out = capsys.readouterr().out
+    assert "python -m backtester.data.histdata" in out and "2026-09-04" in out
 
 
 def test_available_symbols_lists_only_symbols_with_cached_days(cache):
     (cache / "GBPUSD" / "2026").mkdir(parents=True)  # folder without any cached day
-    write_day(cache, date(2026, 9, 2), _empty_cache_frame(), symbol="GBPJPY")
+    write_day(cache, date(2026, 9, 2), empty_cache_frame(), symbol="GBPJPY")
     assert available_symbols(cache) == ["GBPJPY", "XAUUSD"]
     assert available_symbols(cache / "nowhere") == []
 
 
 def test_cached_days_sorted_and_empty_days_count(cache):
-    write_day(cache, date(2025, 12, 31), _empty_cache_frame())
+    write_day(cache, date(2025, 12, 31), empty_cache_frame())
     assert cached_days("XAUUSD", cache) == [date(2025, 12, 31), date(2026, 9, 2), date(2026, 9, 3)]
     assert cached_days("GBPUSD", cache) == []
 

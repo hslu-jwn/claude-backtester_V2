@@ -3,7 +3,7 @@
 Spec: ROADMAP.md › 3.4. Per symbol:
 1. Days: the requested UTC days [start, end]. Uncached days at the start or the end of the
    range are left out (noted in the summary); a missing day in between is an error
-   (`MissingCacheError`, with the download command).
+   (`MissingCacheError`, with the import command).
 2. Warm-up: up to `RunSettings.warmup_days` cached days right before the first day are
    loaded too (fewer if the cache has a gap), so detectors, zones, ATR and the 1h / 4H
    levels have history. Trades entered in the warm-up are dropped, as are sessions that
@@ -48,17 +48,14 @@ from backtester.analytics.metrics import summarize
 from backtester.core.models import Direction
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
-from backtester.data.resample import H4Alignment
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
+from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
-from backtester.strategy.base import Strategy
+from backtester.paths import RESULTS_DIR
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
-from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
+from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
-from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
-
-RESULTS_DIR = Path("results")
 
 
 def _read_only(mapping: dict) -> MappingProxyType:
@@ -69,23 +66,17 @@ def _read_only(mapping: dict) -> MappingProxyType:
 copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
-def make_strategy(symbol: str, config) -> Strategy:
-    """The strategy a config belongs to: strategy 1 (session zone sweep) or strategy 2
-    (`NyIndexSweepConfig`, NY Open index sweep; command line only so far, ROADMAP 8.6)."""
-    if isinstance(config, NyIndexSweepConfig):
-        return NyIndexSweep(symbol, config)
-    return SessionZoneSweep(symbol, config)
-
-
-def strategy_name(config) -> str:
-    return "ny_index_sweep" if isinstance(config, NyIndexSweepConfig) else "session_zone_sweep"
+# every registered strategy's config (tests/strategy/test_registry.py keeps this in step)
+StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig
 
 
 @dataclass(frozen=True, slots=True)
 class RunSettings:
-    # strategy 1's config (the settings panel is built from it); a NyIndexSweepConfig runs
-    # strategy 2 (`make_strategy`)
-    strategy: SessionZoneSweepConfig = field(default_factory=SessionZoneSweepConfig)
+    # the config of the strategy to run (`strategy/registry.py` maps it to the strategy);
+    # the settings panel is built from it. Default: strategy 1
+    strategy: StrategyConfig = field(default_factory=SessionZoneSweepConfig)
+    # swings, FVG, order block, equilibrium: one group for every strategy
+    detectors: DetectorSettings = field(default_factory=DetectorSettings)
     engine: EngineConfig = DEFAULT_ENGINE
     warmup_days: int = 14  # cached days loaded before the range (1h / 4H levels, ATR)
 
@@ -143,7 +134,9 @@ class _Job:
 
     @property
     def base_candles(self) -> int:
-        base = make_strategy(self.symbol, self.settings.strategy).base_timeframe
+        base = make_strategy(
+            self.symbol, self.settings.strategy, self.settings.detectors
+        ).base_timeframe
         return len(next(s for s in self.series if s.timeframe is base))
 
 
@@ -167,10 +160,10 @@ def _load(
         notes.append(f"{symbol}: {last + timedelta(days=1)}..{end} not cached, left out")
     warm = warmup_start(cached, first, settings.warmup_days)
     adapter = sources.adapter(symbol)
-    strategy = make_strategy(symbol, settings.strategy)
-    h4 = getattr(strategy, "h4_alignment", H4Alignment.UTC)
+    strategy = make_strategy(symbol, settings.strategy, settings.detectors)
+    h4 = strategy.h4_alignment
     history = cached_block(cached, first)[0]  # first day of the cached run around `first`
-    full = getattr(strategy, "full_history", ())
+    full = strategy.full_history
     end = _midnight(last + timedelta(1))
     series = tuple(
         CandleSeries(
@@ -191,7 +184,7 @@ def _load(
 
 
 def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
-    strategy = make_strategy(job.symbol, job.settings.strategy)
+    strategy = make_strategy(job.symbol, job.settings.strategy, job.settings.detectors)
     trades = run_backtest(strategy, job.series, job.settings.engine, progress)
     start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
     sessions = [
@@ -407,6 +400,7 @@ def write_results(
             "name": strategy_name(result.settings.strategy),
             **jsonable(result.settings.strategy),
         },
+        "detectors": result.settings.detectors,
         "engine": result.settings.engine,
     }
     summary = {

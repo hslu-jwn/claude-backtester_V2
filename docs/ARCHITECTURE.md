@@ -2,13 +2,18 @@
 
 ## Layers
 
-Each layer only imports from the layers above it in this list. Exception: `data/mt5_info.py` and `data/feed_compare.py` use `live/` (the MT5 command-line tools).
+Each layer only imports from the layers above it in this list (`tests/test_layers.py` checks it
+on the imports; `paths.py` and `cli.py` are util modules that import nothing). Outside the
+layers is the app level: `runner.py`, `run.py`, `presets.py`, `settings.py`, `ui/` and the
+command-line tools in `tools/` (data check / show, MT5 info, feed comparison). They may import
+any layer; no layer imports them. A strategy names `engine.trade.TradeResult` only as a type
+hint (`TYPE_CHECKING`).
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
 2. **data/**: `DataAdapter` interface. histdata.com M1 files (downloaded by the user) are
    imported into a local cache and resampled; backtests and the chart read the cache
-   (`CacheAdapter`). The Dukascopy downloader is kept but no longer used.
+   (`CacheAdapter`, parquet reader and writer helpers in `data/cache.py`).
    `Mt5Adapter` for comparing with FTMO's feed and for live trading. Returns closed candles
    in UTC, oldest first.
 3. **detectors/**: incremental, timeframe-agnostic pattern detectors. Input: a `SeriesView`.
@@ -25,7 +30,7 @@ Each layer only imports from the layers above it in this list. Exception: `data/
    and parameter sweeps. Spec: `risk-management.md`.
 9. **live/**: platform connection (MT5), the login in the Windows Credential Manager,
    trading settings, demo-locked order functions (Phase 7). Only the MT5 command-line
-   tools in `data/` (`mt5_info`, `feed_compare`) read its settings and connect through it.
+   tools in `tools/` (`mt5_info`, `feed_compare`) read its settings and connect through it.
 10. **ui/**: Dash app with a TradingView Lightweight Charts chart in the browser. Reads
    results; never contains trading logic. See "How the chart gets its data" below.
 
@@ -54,8 +59,11 @@ result)` before the next `on_candle` (strategy 2: one open trade per setup, re-e
 The break-even at the next session start (step 2) is strategy 1's rule: a strategy with
 `uses_session_break_even = False` (strategy 2) skips it.
 
-`runner.py` picks the strategy from its config (`make_strategy`: a `NyIndexSweepConfig`
-runs strategy 2) and loads every declared timeframe from the cache: the base and lower
+`runner.py` picks the strategy from its config (`strategy/registry.py`: `make_strategy` looks
+the config class up in the registry, `StrategySpec` per strategy; a new strategy is one folder,
+started from `strategy/_template/`, plus one registry entry). `RunSettings` holds the shared
+detector settings (`detectors`: swings, FVG, order block, equilibrium), the engine and the
+warm-up; a strategy config holds only that strategy's own settings. The runner loads every declared timeframe from the cache: the base and lower
 timeframes from the warm-up start, the strategy's `full_history` timeframes (strategy 2:
 15m, 1h, 4h, for untouched highs and never-tapped zones as TP levels) from the first cached
 day, 4h in the strategy's `h4_alignment` (strategy 2: New York, `data/resample.py`
@@ -107,46 +115,14 @@ different settings, or fed the manual R log, without repeating detection.
 
 ## Data sources
 
-Every source has its own cache folder (`data/cache/dukascopy/`, `data/cache/histdata/`,
-same layout and columns). `data/sources.py` (`SymbolSources`) maps each symbol to the
-folder it is read from; the app, `data.check` and `data.show` all use it, so all symbols
-show in one app. **Decision (user, 2026-10-10): all history comes from histdata.com**;
-Dukascopy is no longer used (it didn't work for the user) and is no longer the default
-anywhere. Its code and cache folder are kept for now. Current mapping: XAUUSD, GBPUSD,
-GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per symbol in
-`PRICE_DIGITS`).
-`--cache-dir` on `data.check` / `data.show` overrides it for a single run.
-
-### Dukascopy (not used since 2026-10-10; code kept)
-
-- Free historical data, M1 candles and ticks, many years back, timestamps in **UTC**,
-  separate **bid** and **ask**.
-- Raw files are LZMA-compressed binary (`.bi5`). URL paths use **zero-based months**
-  (January = `00`). Prices are stored as integers and must be divided by a per-symbol
-  point factor (e.g. JPY pairs and gold differ from other FX pairs). Field order in candle
-  files may not be OHLC. **Verify factor and field order against a known candle**, never
-  assume. A maintained library (Python, or the `dukascopy-node` CLI) may be used instead
-  of a hand-written parser if it is simpler; ask the user if it adds a Node dependency.
-- Daily M1 files contain **every minute of the day, weekends included**. Minutes without
-  trading are filled with flat candles (O = H = L = C, volume 0): gold's daily break
-  (21:00–21:59 UTC in summer), the weekend (Fri 21:00 → Sun 22:00 UTC in summer, so
-  Saturday is entirely flat) and holidays. Missing or empty files can still occur. The cache keeps them raw. **When resampling, these flat zero-volume minutes
-  are dropped, so the charts and backtests show the break as a gap, like TradingView.**
-  A higher-timeframe candle with no remaining minutes does not exist.
-- Resample M1 → 5m/30m/1h ourselves so every timeframe comes from the same data.
-  Candles are bucketed by UTC-floored open time and built from **bid** prices. A partly
-  filled bucket (e.g. the hour the break starts) keeps its regular open and close time.
-  Each candle's `spread` is the **mean of the per-minute close spreads** (ask − bid) over
-  its remaining minutes. D1 / W1 are built from M1 on the 17:00 New York day (ROADMAP 4.0b), not on UTC days.
-- `CacheAdapter` (`data/adapters/cache_adapter.py`) raises an error for any requested day
-  that was never downloaded, so gaps in the cache are never silent. A day Dukascopy had no
-  data for is cached as empty and simply has no candles.
-- The server answers **HTTP 503** when it is busy or throttling; the downloader retries with
-  a growing wait, and a rerun picks up any day that still failed. After 3 days in a row
-  fail with 503s / timeouts (`DukascopyConfig.max_unavailable_days_in_row`), the whole run
-  stops and suggests a larger `--delay` (default 2 s per request). **HTTP 429** means the IP
-  is blocked: the run stops at once.
-- It is Dukascopy's feed, not FTMO's: small price differences are expected (see 0.4).
+Every source has its own cache folder (`data/cache/histdata/`, same layout and columns,
+`data/cache.py`). `data/sources.py` (`SymbolSources`) maps each symbol to the folder it is
+read from; the app, `tools.check` and `tools.show` all use it, so all symbols show in one app.
+**Decision (user, 2026-10-10): all history comes from histdata.com.** Dukascopy didn't work
+for the user and its downloader was removed (ROADMAP C.1, 2026-10-12). Current mapping:
+XAUUSD, GBPUSD, GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per
+symbol in `PRICE_DIGITS`).
+`--cache-dir` on `tools.check` / `tools.show` overrides it for a single run.
 
 ### histdata.com (backtest history, every symbol)
 
@@ -157,12 +133,12 @@ GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per sy
   refused). History 2020-01 .. 2026-09 since 2026-10-09 (indices 2018-01 .. 2026-09). Imported with
   `python -m backtester.data.histdata data/raw/histdata/` (searches the subfolders; a
   single file, zip or pair folder works too) into `data/cache/histdata/` (same layout and
-  columns as the Dukascopy cache, own folder so the sources never mix). `data/sources.py`
+  columns, own folder). `data/sources.py`
   reads every symbol from there.
 - **Symbol names:** histdata's index names are cached under ours (`histdata.SYMBOL_NAMES`):
   `NSXUSD` → **NAS100**, `SPXUSD` → **US500**. Forex and gold keep their names. histdata
   offers both indices from 2010 (year files 2010-2025, month files for 2026).
-  XAUUSD histdata was compared with the Dukascopy cache on 2026-09-02..07: every M1
+  XAUUSD histdata was compared with the (since removed) Dukascopy cache on 2026-09-02..07: every M1
   candle identical (same minutes, OHLC within 0.001), so the switch changes nothing for
   those days. Differences to Dukascopy: no ask prices (spread unknown, NaN), and the
   September 2026 files have **no rows for Friday 2026-09-25** (all three pairs).
@@ -247,7 +223,7 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
 - Symbol names can differ by broker (suffixes like `.r`): `TradingSettings.symbols` maps
   ours to the server's.
 
-**Server time → UTC: how the rule is found** (`python -m backtester.data.mt5_info`)
+**Server time → UTC: how the rule is found** (`python -m backtester.tools.mt5_info`)
 
 1. Per week of MT5's **H1 history** (server weeks), the whole-hour offset −12..+14 h whose
    shifted bar times meet the histdata cache's H1 candles with the smallest median
@@ -264,9 +240,9 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
    tick at most 5 minutes old (only while the market trades).
 
 **Rule found for the FTMO server: not measured yet** (the terminal wasn't logged in on
-2026-10-09). It is written here after the first run of `data.mt5_info`.
+2026-10-09). It is written here after the first run of `tools.mt5_info`.
 
-**Feed comparison** (`python -m backtester.data.feed_compare`, ROADMAP 0.4): per symbol
+**Feed comparison** (`python -m backtester.tools.feed_compare`, ROADMAP 0.4): per symbol
 and timeframe (M1, M5, M30, H1), over the days both MT5's history and the cache have:
 best time shift (multiples of the timeframe within ±3 h; 0 when the clock is right),
 average |difference| of O/H/L/C (price and % of the median candle range), how often the

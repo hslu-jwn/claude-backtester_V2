@@ -18,7 +18,7 @@ from backtester.analytics.metrics import by_period, by_year
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
-from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.strategy.registry import REGISTRY, default_config, strategy_name
 
 
 def format_periods(trades) -> str:
@@ -95,9 +95,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--preset", default=DEFAULT, help="settings preset (results/presets/)")
     parser.add_argument(
         "--strategy",
-        choices=("session_zone_sweep", "ny_index_sweep"),
+        choices=tuple(REGISTRY),
         default="session_zone_sweep",
-        help="strategy 1 (default) or strategy 2 (NAS100 / US500, spec defaults, no presets)",
+        help="session_zone_sweep (strategy 1, default) or ny_index_sweep (strategy 2: NAS100 / "
+        "US500, spec defaults, no presets)",
     )
     parser.add_argument("--presets-dir", type=Path, default=PRESETS_DIR, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
@@ -108,10 +109,12 @@ def main(argv: list[str] | None = None) -> int:
         preset = load_preset(args.preset, args.presets_dir)
     except PresetError as e:
         parser.error(str(e))
-    if args.strategy == "ny_index_sweep":
+    if args.strategy != strategy_name(preset.strategy):  # presets hold strategy 1's settings
         if args.preset != DEFAULT:
-            parser.error("presets are strategy 1 settings; strategy 2 runs with the spec defaults")
-        preset = replace(preset, strategy=NyIndexSweepConfig())
+            parser.error(
+                f"presets are strategy 1 settings; {args.strategy} runs with the spec defaults"
+            )
+        preset = replace(preset, strategy=default_config(args.strategy))
     warmup = args.warmup_days if args.warmup_days is not None else preset.warmup_days
     settings = replace(preset, warmup_days=warmup)
     result = run_backtests(symbols, args.start, args.end, settings, sources, _Bar(), args.workers)

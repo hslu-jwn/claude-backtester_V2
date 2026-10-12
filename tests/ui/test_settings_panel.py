@@ -22,7 +22,7 @@ def widgets(**changes):
 def test_every_setting_has_a_group_in_the_order_asked_for():
     groups = sp.grouped(leaves())
     assert sp.OTHER not in groups
-    assert list(groups) == list(sp.GROUPS)
+    assert list(groups) == [g for g in sp.GROUPS if g != "Windows"]  # strategy 2's group
     assert [leaf.path for leaf in groups["Session zones"]] == [
         "strategy.zone_timeframe",
         "strategy.zone_kill",
@@ -35,7 +35,7 @@ def test_every_setting_has_a_group_in_the_order_asked_for():
 def test_labels_and_choices():
     assert sp.label_of("strategy.zone_kill_breaks") == "Breaks that kill a zone"
     assert sp.label_of("engine.costs.symbols.GBPUSD.spread") == "Spread (price)"
-    assert sp.label_of("strategy.swings.doji_max_body.GBPJPY") == "GBPJPY"
+    assert sp.label_of("detectors.swings.doji_max_body.GBPJPY") == "GBPJPY"
     assert sp.label_of("strategy.some_new_field") == "Some new field"  # fallback
     kinds = next(leaf for leaf in leaves() if leaf.path == "strategy.confluence_kinds")
     assert sp.options_of(kinds) == ["FVG", "ORDER_BLOCK", "BREAKER", "BPR"]  # EQ: own switch
@@ -156,7 +156,7 @@ def test_doji_threshold_is_first_in_detectors_with_one_explanation():
     """User (2026-10-09): the doji threshold wasn't visible (it was below the fold)."""
     detectors = sp.grouped(leaves())["Detectors"]
     doji = [leaf.path for leaf in detectors[:3]]
-    assert doji == [f"strategy.swings.doji_max_body.{s}" for s in ("XAUUSD", "GBPUSD", "GBPJPY")]
-    body = str(sp._group_body("Detectors", detectors, True))
+    assert doji == [f"detectors.swings.doji_max_body.{s}" for s in ("XAUUSD", "GBPUSD", "GBPJPY")]
+    body = str(sp._group_body("Detectors", [(leaf.path, leaf) for leaf in detectors], True))
     assert body.count("Used by every detector") == 1
     assert body.index("Doji threshold") < body.index("FVG")

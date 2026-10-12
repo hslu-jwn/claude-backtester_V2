@@ -250,3 +250,15 @@ def test_the_settings_panel_settings_reach_the_trades_overlay():
     assert e.trade.r_net == pytest.approx(e.trade.r_gross)
     tiny_sl = settings_from_values({"strategy.max_sl_atr_mult": 0.01})  # every SL too wide
     assert detect_trades(replay, OverlaySettings(strategy=to_json(tiny_sl)), sources) == []
+
+
+def test_strategy_2_settings_say_the_overlay_is_not_there_yet():
+    from backtester.runner import RunSettings
+    from backtester.settings import to_json
+    from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+    from backtester.ui.overlays import OverlayUnavailable
+
+    sources = FakeSources(FULL)
+    ny = OverlaySettings(strategy=to_json(RunSettings(strategy=NyIndexSweepConfig())))
+    with pytest.raises(OverlayUnavailable, match="strategy 2"):
+        detect_trades(sources.chart(), ny, sources)

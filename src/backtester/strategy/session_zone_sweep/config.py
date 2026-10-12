@@ -10,10 +10,6 @@ from dataclasses import dataclass, field
 
 from backtester.core.models import Timeframe
 from backtester.detectors.atr import StrongMoveConfig
-from backtester.detectors.equilibrium import EquilibriumConfig
-from backtester.detectors.fvg import FvgConfig
-from backtester.detectors.order_block import OrderBlockConfig
-from backtester.detectors.swings import SwingConfig
 from backtester.detectors.zone import ZoneKind
 from backtester.sessions import DEFAULT_SESSIONS, SessionConfig
 
@@ -21,11 +17,8 @@ from backtester.sessions import DEFAULT_SESSIONS, SessionConfig
 @dataclass(frozen=True, slots=True)
 class SessionZoneSweepConfig:
     # 5m ATR for the SL / TP sizes (its period; the strong-move filter settings are per
-    # FVG / OB below)
+    # FVG / OB in `RunSettings.detectors`, which also holds the swings and the equilibrium)
     strong_move: StrongMoveConfig = field(default_factory=StrongMoveConfig)
-    fvg: FvgConfig = field(default_factory=FvgConfig)  # strong-move filter default off
-    order_block: OrderBlockConfig = field(default_factory=OrderBlockConfig)  # filter on
-    swings: SwingConfig = field(default_factory=SwingConfig)  # doji threshold per symbol
     sessions: SessionConfig = DEFAULT_SESSIONS  # session starts, each in its city's time
 
     # session zones (strategy-session-zones.md › Session zones, › Zone flips)
@@ -44,9 +37,6 @@ class SessionZoneSweepConfig:
         {ZoneKind.FVG, ZoneKind.ORDER_BLOCK, ZoneKind.BREAKER, ZoneKind.BPR}
     )
     use_equilibrium: bool = True  # the BOS move's equilibrium is an entry confluence too
-    # EQ stop loss (› Stop loss, EQ): beyond the leg's low + 10% of its distance to the
-    # deepest wick into the EQ; toggle: beyond that wick instead
-    equilibrium: EquilibriumConfig = field(default_factory=EquilibriumConfig)
 
     # stop loss
     sl_buffer_atr_mult: float = 0.0  # TBD: buffer below the confluence, as ATR fraction

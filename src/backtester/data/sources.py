@@ -1,13 +1,11 @@
 """Which cache each symbol is read from. Spec: ARCHITECTURE.md › Data sources.
 
-Every source keeps its own cache folder (same layout and columns, `data/dukascopy.py`), so
+Every source keeps its own cache folder (same layout and columns, `data/cache.py`), so
 sources never mix. `SymbolSources` maps each symbol to one of these folders; the chart,
-`data.check` and `data.show` all read through it, so every symbol can be shown in one app.
+`tools.check` and `tools.show` all read through it, so every symbol can be shown in one app.
 
-Default: every symbol from histdata.com (user, 2026-10-10: Dukascopy is no longer used).
-The XAUUSD days already in the Dukascopy cache stay there, unused; histdata matched them
-exactly (2026-09-02..07, every M1 candle). The Dukascopy code is kept; to read a symbol
-from it again, change `DEFAULT_SOURCES`.
+Default: every symbol from histdata.com (user, 2026-10-10; the Dukascopy downloader was
+removed, ROADMAP C.1). To read a symbol from another folder, change `DEFAULT_SOURCES`.
 """
 
 from __future__ import annotations
@@ -19,7 +17,7 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.data.adapters.cache_adapter import CacheAdapter, cached_days
-from backtester.data.histdata import DEFAULT_HISTDATA_CACHE_DIR
+from backtester.data.cache import DEFAULT_CACHE_DIR
 
 
 @dataclass(frozen=True)
@@ -65,7 +63,7 @@ class SymbolSources:
 # writes the indices with 3 decimals; MT5 index CFDs quote 2.
 PRICE_DIGITS = MappingProxyType({"XAUUSD": 3, "GBPUSD": 5, "GBPJPY": 3, "NAS100": 2, "US500": 2})
 
-DEFAULT_SOURCES = SymbolSources({symbol: DEFAULT_HISTDATA_CACHE_DIR for symbol in PRICE_DIGITS})
+DEFAULT_SOURCES = SymbolSources({symbol: DEFAULT_CACHE_DIR for symbol in PRICE_DIGITS})
 
 
 def warmup_start(cached: set[date], start: date, max_days: int) -> date:

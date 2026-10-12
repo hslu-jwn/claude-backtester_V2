@@ -1,7 +1,7 @@
 """Print resampled candles from the cache, to compare them with another chart.
 
-    python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00
-    python -m backtester.data.show XAUUSD H1 2026-09-02 2026-09-03 --tz Etc/GMT-3
+    python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00
+    python -m backtester.tools.show XAUUSD H1 2026-09-02 2026-09-03 --tz Etc/GMT-3
 
 START/END are UTC (END exclusive). `--tz` adds a column with the open time in another time
 zone, e.g. MT5 server time (`Etc/GMT-3` = UTC+3; note the inverted sign in Etc/ names).

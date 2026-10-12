@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from m1_frames import m1
 
-from backtester.data.dukascopy import cache_path
+from backtester.data.cache import cache_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.ui.pages.chart import base_payload
 

@@ -30,8 +30,9 @@ from dataclasses import dataclass
 
 from backtester.core.models import Direction
 from backtester.core.series import SeriesView
-from backtester.detectors.equilibrium import equilibrium_stop_loss
-from backtester.detectors.order_block import OrderBlockDetector
+from backtester.detectors.equilibrium import EquilibriumConfig, equilibrium_stop_loss
+from backtester.detectors.order_block import OrderBlockConfig, OrderBlockDetector
+from backtester.detectors.settings import DEFAULT_DETECTORS
 from backtester.detectors.swings import SwingDetector, SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneBox, ZoneState, ZoneTransition
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -59,8 +60,10 @@ class Level:
 class UnmitigatedOrderBlocks:
     """Order blocks never tapped so far. `update(view)` once per closed candle, in order."""
 
-    def __init__(self, doji_max_body: float, config: SessionZoneSweepConfig):
-        self._ob = OrderBlockDetector(doji_max_body, config.order_block)
+    def __init__(
+        self, doji_max_body: float, order_block: OrderBlockConfig = DEFAULT_DETECTORS.order_block
+    ):
+        self._ob = OrderBlockDetector(doji_max_body, order_block)
         self.zones: list[ZoneBox] = []
 
     def update(self, view: SeriesView) -> None:
@@ -83,9 +86,11 @@ class ObstacleTracker:
     """1h reversal levels: untouched swings and unmitigated OBs. `update(view)` once per
     closed 1h candle, in order."""
 
-    def __init__(self, doji_max_body: float, config: SessionZoneSweepConfig):
+    def __init__(
+        self, doji_max_body: float, order_block: OrderBlockConfig = DEFAULT_DETECTORS.order_block
+    ):
         self._swings = SwingDetector(doji_max_body)
-        self._obs = UnmitigatedOrderBlocks(doji_max_body, config)
+        self._obs = UnmitigatedOrderBlocks(doji_max_body, order_block)
         self._untouched: list[SwingPoint] = []
 
     def update(self, view: SeriesView) -> None:
@@ -127,9 +132,14 @@ class Rejected:
     reason: str
 
 
-def stop_loss(signal: EntrySignal, atr: float | None, config: SessionZoneSweepConfig) -> float:
+def stop_loss(
+    signal: EntrySignal,
+    atr: float | None,
+    config: SessionZoneSweepConfig,
+    equilibrium: EquilibriumConfig = DEFAULT_DETECTORS.equilibrium,
+) -> float:
     if signal.eq_deepest is not None:  # equilibrium: its own rule, no ATR buffer
-        return equilibrium_stop_loss(signal.confluence, signal.eq_deepest, config.equilibrium)
+        return equilibrium_stop_loss(signal.confluence, signal.eq_deepest, equilibrium)
     sign = _sign(signal.direction)
     atr_value = atr or 0.0  # no ATR yet (warm-up): no buffer, never "small"
     base = signal.bos.leg_extreme if is_small(signal, atr, config) else signal.confluence.far
@@ -210,9 +220,10 @@ def targets(
     obstacles: ObstacleTracker,
     limits: UnmitigatedOrderBlocks,
     config: SessionZoneSweepConfig,
+    equilibrium: EquilibriumConfig = DEFAULT_DETECTORS.equilibrium,
 ) -> Targets | Rejected:
     sign, entry = _sign(signal.direction), signal.close
-    sl = stop_loss(signal, atr, config)
+    sl = stop_loss(signal, atr, config, equilibrium)
     if sign * (entry - sl) <= 0:
         return Rejected("SL not beyond the entry")  # can't happen for a valid setup
     widened = False

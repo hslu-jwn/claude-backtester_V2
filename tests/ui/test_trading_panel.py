@@ -34,7 +34,9 @@ def deps(tmp_path, store=None, mt5=None):
 def test_load_with_nothing_saved(tmp_path):
     out = trading_action("load", {}, deps(tmp_path))
     assert out["fields"]["login"] == "" and out["fields"]["server"] == ""
-    assert out["fields"]["symbols"] == {"XAUUSD": "XAUUSD", "GBPUSD": "GBPUSD", "GBPJPY": "GBPJPY"}
+    assert out["fields"]["symbols"] == {
+        s: s for s in ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
+    }
     assert out["password_placeholder"] == PASSWORD_NONE
     assert "not measured yet" in out["clock"]
 
@@ -51,6 +53,8 @@ def test_save_puts_secrets_only_in_the_credential_store(tmp_path):
         "XAUUSD": "XAUUSD.x",
         "GBPUSD": "GBPUSD",
         "GBPJPY": "GBPJPY",
+        "NAS100": "NAS100",
+        "US500": "US500",
     }
 
     loaded = trading_action("load", {}, deps(tmp_path, store))

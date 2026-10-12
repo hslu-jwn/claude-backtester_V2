@@ -10,7 +10,7 @@ next. Showing / hiding overlays, sub-entries and session lines happens in the br
 
 Pick symbol (every symbol of `SymbolSources` with cached days, each read from its own
 source's cache, `data/sources.py`), timeframe and a date range (UTC days, both
-inclusive, limited to cached days). A range touching a day that was never downloaded shows
+inclusive, limited to cached days). A range touching a day that was never imported shows
 the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
 Zooming or panning is the library's; the price axis fits the visible candles.
 
@@ -103,6 +103,7 @@ from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
 from backtester.settings import from_json
+from backtester.strategy.registry import REGISTRY
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
@@ -438,7 +439,7 @@ def changed_doji(strategy: str) -> tuple[tuple[str, float], ...]:
     if not strategy:
         return ()
     spec = SwingConfig().doji_max_body
-    chosen = from_json(strategy).strategy.swings.doji_max_body
+    chosen = from_json(strategy).detectors.swings.doji_max_body
     return tuple(sorted((s, v) for s, v in chosen.items() if spec.get(s) != v))
 
 
@@ -628,7 +629,7 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
 
 
 QUICK_RANGES = ("1M", "3M", "6M", "YTD", "1Y", "All")
-STRATEGIES = [{"label": "Strategy 1 · Session zone sweep", "value": "session_zone_sweep"}]
+STRATEGIES = [{"label": spec.label, "value": name} for name, spec in REGISTRY.items()]
 
 
 def timeframe_label(name: str) -> str:

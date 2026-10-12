@@ -14,6 +14,7 @@ from conftest import build_series
 
 from backtester.core.models import Candle, Timeframe
 from backtester.core.series import CandleSeries
+from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import (
     DOJI_RANGE_SHARE,
     SwingConfig,
@@ -21,7 +22,6 @@ from backtester.detectors.swings import (
     SwingKind,
     equivalent_doji_body,
 )
-from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 
 HIGH, LOW = SwingKind.HIGH, SwingKind.LOW
 
@@ -169,7 +169,7 @@ def test_config_gold_default_gbp_pairs_scaled_others_need_a_value():
     assert SwingConfig({"GBPUSD": 0.00002}).doji_threshold("GBPUSD") == 0.00002
     with pytest.raises(ValueError):
         SwingConfig({"XAUUSD": -1.0})
-    assert SessionZoneSweepConfig().swings == config
+    assert DetectorSettings().swings == config  # the shared default (RunSettings.detectors)
 
 
 def test_equivalent_doji_body_scales_gold_by_typical_candle_range():

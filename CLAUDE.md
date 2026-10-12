@@ -9,7 +9,7 @@ order blocks, BOS, liquidity sweeps). It replays historical candles one at a tim
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
 account results (balance, drawdown, Monte Carlo; the FTMO / prop-firm field comes later). Results are shown in a Dash web app with a
 TradingView Lightweight Charts chart. History comes from histdata.com M1 files the user downloads into `data/raw/histdata/`
-(Dukascopy is no longer used; its code is kept); MetaTrader 5 (FTMO) for feed comparison and
+(Dukascopy is no longer used and was removed); MetaTrader 5 (FTMO) for feed comparison and
 later live trading. Symbols: XAUUSD, GBPUSD, GBPJPY (strategy 1), NAS100, US500 (strategy 2).
 
 ## Specs are the source of truth
@@ -22,7 +22,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
-| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5; Dukascopy unused) |
+| `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
@@ -78,8 +78,8 @@ Every detector needs a test proving this (see Testing).
 ```
 src/backtester/
   core/        Candle, Timeframe, Direction, CandleSeries/SeriesView, multi-timeframe clock
-  data/        DataAdapter interface, histdata.com importer, cache (data/cache/histdata/),
-               MT5 adapter, Dukascopy downloader (kept, unused)
+  data/        DataAdapter interface, histdata.com importer, cache (data/cache/histdata/,
+               helpers in data/cache.py), MT5 adapter
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
   strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2)
@@ -87,6 +87,7 @@ src/backtester/
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
   live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
+  tools/       Command-line tools: data check / show, MT5 info, feed comparison (app level)
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -103,14 +104,14 @@ pytest                          # all tests
 pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
 python -m backtester.ui.app     # start the Dash app (once implemented)
-python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
+python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 python -m backtester.data.histdata data/raw/histdata/  # import histdata files (all pair subfolders) -> cache
-python -m backtester.data.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
+python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
-python -m backtester.data.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
-python -m backtester.data.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
+python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
+python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
 python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accounts only
 ```
 
@@ -208,8 +209,10 @@ access; the user may supply the research). They help; they never override the ru
   for mechanical edits and searches (`/model opusplan` splits plan/work automatically).
 - **Where to work:** the cloud has no market data (git-ignored) and no browser view of the
   app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
-- **New strategies** must be one new folder under `strategy/` plus a registry entry
-  (ROADMAP C.3); universal settings are shared, strategy-specific ones live in its config.
+- **New strategies** must be one new folder under `strategy/` (copy `strategy/_template/`, its README has the steps)
+  plus one entry in `strategy/registry.py` (ROADMAP C.3); strategy-specific settings live in
+  its config; swings / FVG / OB / equilibrium (`RunSettings.detectors`), costs and warm-up
+  are shared.
 
 ## Session protocol (user does no file work)
 

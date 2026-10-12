@@ -1,6 +1,6 @@
 """FTMO's symbol names and specs, and the server clock. Spec: ROADMAP.md › 0.4.
 
-    python -m backtester.data.mt5_info [XAUUSD GBPUSD GBPJPY] [--no-save]
+    python -m backtester.tools.mt5_info [XAUUSD ... US500] [--no-save]  (default: every symbol)
 
 Connects with the login saved in Settings ⚙ → Trading (or the account the running
 terminal is logged in to), then:
@@ -28,7 +28,13 @@ import pandas as pd
 from backtester.cli import utf8_output
 from backtester.core.models import Timeframe
 from backtester.data.adapters.mt5_adapter import EPOCH, Mt5Adapter, ServerClock
-from backtester.data.mt5_compare import (
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.live.trading_settings import (
+    SYMBOLS,
+    load_trading_settings,
+    save_trading_settings,
+)
+from backtester.tools.mt5_compare import (
     cached_frame,
     discriminating_weeks,
     fit_clock,
@@ -38,12 +44,6 @@ from backtester.data.mt5_compare import (
     symbol_specs,
     tick_age,
     weekly_offsets,
-)
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.live.trading_settings import (
-    SYMBOLS,
-    load_trading_settings,
-    save_trading_settings,
 )
 
 CLOCK_TIMEFRAME = Timeframe.H1

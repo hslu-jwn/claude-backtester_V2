@@ -82,7 +82,7 @@ class Obs4h:
 
 def sized(config, atr=1.0, sig=None, limits=None):
     """targets() for the default signal: entry 102, SL 100 (2 x ATR 1.0), no levels."""
-    obstacles = ObstacleTracker(0.065, config)
+    obstacles = ObstacleTracker(0.065)
     return targets(sig or signal(), atr, [], obstacles, limits or Obs4h(), config)
 
 
@@ -201,7 +201,7 @@ def test_zone_levels_are_the_near_edges_of_opposite_role_zones_beyond_the_entry(
 
 # --- 1h levels and 4H OBs -----------------------------------------------------------------
 
-NO_FILTER = SessionZoneSweepConfig(order_block=OrderBlockConfig(strong_move_filter=False))
+NO_FILTER = OrderBlockConfig(strong_move_filter=False)
 
 
 def feed(tracker, ohlc):

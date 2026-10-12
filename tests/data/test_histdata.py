@@ -13,8 +13,7 @@ import pytest
 
 from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import CacheAdapter, MissingCacheError
-from backtester.data.check import check_symbol
-from backtester.data.dukascopy import _COLUMNS, cache_path, read_cached_day
+from backtester.data.cache import COLUMNS, cache_path, read_cached_day
 from backtester.data.histdata import (
     HistdataError,
     import_files,
@@ -22,6 +21,7 @@ from backtester.data.histdata import (
     parse_histdata_mt,
 )
 from backtester.data.resample import drop_flat_minutes
+from backtester.tools.check import check_symbol
 
 
 def write(tmp_path, name: str, lines: list[str]):
@@ -51,7 +51,7 @@ def test_new_york_time_is_utc_minus_4_in_summer_and_minus_5_in_winter(tmp_path):
 
 def test_same_columns_as_dukascopy_cache_bid_only_volume_unknown(tmp_path):
     frame = parse_histdata_mt(write(tmp_path, "a.csv", SEPT[:1]))
-    assert list(frame.columns) == _COLUMNS
+    assert list(frame.columns) == COLUMNS
     row = frame.iloc[0]
     assert (row.bid_open, row.bid_high, row.bid_low, row.bid_close) == (
         1.35405,

@@ -613,3 +613,7 @@ body {
 .tr-result:empty {
   display: none;
 }
+
+.st-row.st-hidden {
+  display: none;
+}

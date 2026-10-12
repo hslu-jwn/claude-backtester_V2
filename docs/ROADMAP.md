@@ -14,12 +14,12 @@ FTMO's MT5 server only keeps about one month of 5m history, so another source is
 for backtest history. **Since 2026-10-10 (user's decision) all history comes from
 histdata.com** M1 files the user downloads into `data/raw/histdata/<SYMBOL>/` (bid only,
 spread a fixed setting). Dukascopy (0.1) didn't work for the user and is no longer used;
-its code is kept. MT5 is used to compare the recent month against FTMO's own feed, and
+its code was removed (C.1). MT5 is used to compare the recent month against FTMO's own feed, and
 later for live trading.
 Details and pitfalls: `ARCHITECTURE.md › Data sources`.
 
-- ☑ **0.1 Dukascopy downloader + cache.** `data/dukascopy.py` + command
-  `python -m backtester.data.download XAUUSD 2020-01-01 2026-10-01`.
+- ☑ **0.1 Dukascopy downloader + cache (removed 2026-10-12, C.1; history only).**
+  `data/dukascopy.py` + command `python -m backtester.data.download`.
   Downloads M1 **bid and ask** candles day by day, saves them to `data/cache/` (Parquet),
   skips days already downloaded (so an interrupted download can resume), waits briefly
   between requests. Symbols: XAUUSD, GBPUSD, GBPJPY. Tests use saved sample files, not the
@@ -29,7 +29,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   backtests use. Keep bid candles for the chart and the spread (ask − bid) per candle for
   costs. Drop flat zero-volume minutes first (`ARCHITECTURE.md › Data sources`), so the
   daily break shows as a gap like on TradingView.
-  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
+  Check: `python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00`.
 - ⏸ **Postponed, then dropped (2026-10-10): the full Dukascopy download.** Dukascopy was throttling the user's
   connection (HTTP 503 / timeouts on every request). 0.3 waits until the download works
   again; Phase 1 continues with the XAUUSD days already in the cache. Done for the next
@@ -51,8 +51,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   Each symbol is read from its own source's cache (`data/sources.py`), no `--cache-dir` needed.
   Done: each pair's median 5m candle range is measured and its doji threshold set
   (`detectors/swings.py › equivalent_doji_body`, spec: confluences.md › Swing high / low);
-  `data.check` prints both.
-  Check: `python -m backtester.data.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
+  `tools.check` prints both.
+  Check: `python -m backtester.tools.check XAUUSD GBPUSD GBPJPY`. Gaps are classified by the
   17:00 New York daily close they contain (daily break, weekend, holiday shortened/closed,
   not downloaded, unexpected), so no holiday calendar is needed.
   **Full history (2026-10-09, confirmed by the user).** The user downloaded histdata.com
@@ -76,7 +76,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   **2023-02-20 .. 2023-07-28: many weekdays have exactly 960 / 900 / 840 minutes**, i.e.
   whole hours missing in histdata's files (gold most, also the GBP pairs; see the data
   check below).
-  **Data check over the full history** (`python -m backtester.data.check XAUUSD GBPUSD
+  **Data check over the full history** (`python -m backtester.tools.check XAUUSD GBPUSD
   GBPJPY`, 50 s). Integrity: 0 for every check (no duplicate timestamps after the
   importer's merge, no broken candles, no price <= 0), nothing "not downloaded", bid
   price range per year plausible (gold 1,451-5,597, GBPUSD 1.03-1.42, GBPJPY 124-220).
@@ -153,7 +153,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   now. The GBP pairs' thresholds (a few points, prices on the same scale over the years)
   give 1.8-4.5% in every period.
   **User (2026-10-09): the doji threshold is a detector setting with a changeable number.**
-  It is one per symbol (Settings › Detectors › Doji threshold, `strategy.swings.
+  It is one per symbol (Settings › Detectors › Doji threshold, `detectors.swings.
   doji_max_body`, saved in presets). Backtests already used it; now the chart overlays do
   too (swings, BOS + trend, sweeps, FVG, OB, BPR, session zones: `OverlaySettings.
   doji_max_body` / `swing_config`). The spec defaults are unchanged (gold 0.065).
@@ -180,15 +180,15 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     `tests/data/test_mt5_adapter.py` (US / EU / fixed clocks incl. the US-only summer time
     weeks, forming candle dropped, spread in price, server-time request window, nothing
     else imports MetaTrader5).
-  - `python -m backtester.data.mt5_info`: symbol names + specs, the clock measured per
-    week of MT5's H1 history against the cache (`data/mt5_compare.py`), saved to
+  - `python -m backtester.tools.mt5_info`: symbol names + specs, the clock measured per
+    week of MT5's H1 history against the cache (`tools/mt5_compare.py`), saved to
     `results/trading.json` (symbol names; the clock only when one rule predicts every week).
     Method: `ARCHITECTURE.md › MetaTrader 5`. Tests: `tests/data/test_mt5_info.py`.
-  - `python -m backtester.data.feed_compare`: the comparison and spread tables, written to
+  - `python -m backtester.tools.feed_compare`: the comparison and spread tables, written to
     `results/feed_compare/<time>/`. Tests: `tests/data/test_feed_compare.py`.
-  - Check (after the login is saved in Settings ⚙ → Trading): run `data.mt5_info`; it
+  - Check (after the login is saved in Settings ⚙ → Trading): run `tools.mt5_info`; it
     prints FTMO's names and specs, the offsets per week, the deciding DST weeks and the
-    rule. Then `data.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
+    rule. Then `tools.feed_compare`. Open: the rule found (→ ARCHITECTURE), the symbol
     specs, the comparison and spread numbers (→ here, for the user's decision on 3.1).
 - ☑ **0.5 Index data: NAS100, US500** (user's request 2026-10-10, for strategy 2; data
   side only, no strategy code). Built:
@@ -224,7 +224,7 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     | 2026-09-02 12:30 | 7648.50 / 7649.25 / 7645.00 / 7646.00 | +8.37 / +8.38 / +8.14 / +8.39 |
     | 2026-09-02 13:30 | 7649.00 / 7650.00 / 7642.25 / 7648.75 | +7.77 / +8.26 / +8.62 / +8.37 |
 
-  - `data.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
+  - `tools.check NAS100 US500`: gap rules per symbol (`check.SYMBOL_CONFIGS`, confirmed by
     the user): daily break 16:15-18:00 New York (up to 120 min), weekend Fri 16:15 → Sun
     18:00 NY (up to 51 h: the US DST-change weekend is 50.75 h). Over 2020-01-02 ..
     2026-09-30 (files already in `data/raw/histdata/`, imported into a scratch cache):
@@ -248,15 +248,18 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
     Expected gaps (user, 2026-10-11): `check.OLD_CME_BREAKS` (`BreakWindow`, dated).
     Unexpected gaps 2018 / 2019 after that: NAS100 18 / 7, US500 1,170 / 580; US500's
     are almost all 5-10 min of no quotes at night (thin feed in those years).
-  Check: `python -m backtester.data.check NAS100 US500`, chart NAS100 / US500 M5.
+  Check: `python -m backtester.tools.check NAS100 US500`, chart NAS100 / US500 M5.
 
 ## Cleanup backlog and status notes (2026-10-12, agreed with the user)
 
 - **Strategy 1 is paused** (user): its ◐ steps stay as they are, its tests stay green.
 - **"Done" = the user marks a step done**; a done step can be reopened for rework.
-- ☐ **C.1 Remove Dukascopy** (code, its test and fixture). First move `read_cached_days` (still the parquet reader of the histdata cache) into the data layer. Test-first.
-- ☐ **C.2 Windows-only MT5 path test:** skip `tests/live/test_connection.py::test_known_servers_from_the_terminal_folders` on non-Windows so cloud runs are green.
-- ☐ **C.3 Strategy registry + template folder** so a new strategy is one new folder (replaces the special case in `runner.make_strategy`); settings: universal ones shared, extra ones per strategy for the UI.
+- ◐ **C.1 Remove Dukascopy** (built 2026-10-12, waiting for the user's OK): the cache helpers moved to `data/cache.py` (`COLUMNS`, `cache_path`, `read_cached_day(s)`, `empty_cache_frame`, `write_atomic`, `DEFAULT_CACHE_DIR` = histdata cache, test `tests/data/test_cache.py`); `dukascopy.py`, `download.py`, their test and the `.bi5` fixtures are gone. `CacheAdapter()` without argument now reads the histdata cache (it used to point at the Dukascopy folder). The "day missing" message names `python -m backtester.data.histdata`. Backtests byte-identical (trades.csv, both strategies).
+- ◐ **C.2 Windows-only MT5 path test** (built 2026-10-12): `test_known_servers_from_the_terminal_folders` is skipped off Windows; `test_nothing_else_imports_metatrader5` now passes `PYTHONPATH=src` to its subprocess, so it no longer needs `pip install -e`.
+- ◐ **C.3 Strategy registry + template folder** (2026-10-12): `strategy/registry.py` (`StrategySpec`, `REGISTRY`, `make_strategy`, `strategy_name`, `default_config`) replaces the `isinstance` special case in the runner; `run.py --strategy` takes its names; `Strategy` now declares `h4_alignment` / `full_history` (the runner used `getattr`); `strategy/_template/` (config, strategy, README with the steps), tests `tests/strategy/test_registry.py`. Backtests byte-identical. **Shared detectors (2026-10-12, user's yes):** `swings`, `fvg`, `order_block`, `equilibrium` moved out of both strategy configs into `RunSettings.detectors` (`detectors/settings.py` `DetectorSettings`; paths `detectors.fvg.*` etc.); a strategy takes `(symbol, config, detectors)`. Old preset / settings JSON with them under `strategy` is migrated on load (`settings._migrate`). Backtests byte-identical. `confluence_kinds` stays per strategy (different defaults). **Open:** a settings menu / presets for strategy 2 (8.6).
+- ◐ **C.4 Layer fixes** (2026-10-12): `data/check.py`, `show.py`, `feed_compare.py`, `mt5_info.py`, `mt5_compare.py` moved to `tools/` (commands: `python -m backtester.tools.<name>`); `paths.py` holds `RESULTS_DIR` (live/ no longer imports the runner); strategy 2 names `TradeResult` only under `TYPE_CHECKING`; `tests/test_layers.py` checks every import against the layer order. `CsvAdapter` (unused, untested) deleted. `live.trading_settings.SYMBOLS` is now every backtest symbol (NAS100, US500 added).
+- **Cleanup audit (2026-10-12), decided:** `overlay_drawings` (ui/overlays.py) and `selected_overlays` (ui/pages/chart.py) are only called by tests, but those tests are the reference for what the chart page does, so they stay. `RETCODE_DONE_PARTIAL` and `delete_credentials` stay (documented MT5 code, a "forget login" function). Not done: splitting `ui/pages/chart.py` (1,393 lines) and `tools/check.py` (669 lines).
+- **Test baseline for the cleanup:** 817 passed, 2 skipped (the `.bi5` fixtures, now removed); end state 921 passed. Golden check: `trades.csv` of strategy 1 (XAUUSD, GBPJPY) and strategy 2 (NAS100 / US500 from copied data) over 2026-04-01..05-15 byte-identical before and after.
 - Known, left as is: `strategy.strong_move.atr_mult` is unused and hidden in the settings; the results trade list uses Dash's deprecated `DataTable` (works).
 
 ## Phase 1: Chart (no lookahead)
@@ -287,7 +290,7 @@ session view (3.5) is separate. Overlays draw a small marker on the
 text with its state (active / tapped / confirmed / invalidated).
 
 - ☑ **2.1** ATR + strong-move filter (no overlay; used by the others).
-  Check: `python -m backtester.data.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
+  Check: `python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00 --atr 14`.
 - ☑ **2.2** Swing highs / lows. Overlay: ▼ orange at a swing high / ▲ cyan at a swing low on
   the candle with the extreme wick, a thin line at the swing price over the turn candles
   (first turn candle to the confirming candle) ending in a dot on the confirming candle (hover).
@@ -878,7 +881,7 @@ has no step yet.
   - `strategy/session_zone_sweep/journal.py`: only the confluence records not ended yet
     are looked at per candle (all were); `signals.py`: the equilibria are only filtered
     after a transition (was every candle).
-  - `data/dukascopy.py` `read_cached_days`: the day files of a range are read in one go
+  - `data/cache.py` `read_cached_days` (then in `dukascopy.py`): the day files of a range are read in one go
     (pyarrow dataset), 9x faster than one by one (2,464 files: 7.2 s → 0.8 s).
   - Found on the way: the order of confluences inside a session record in sessions.json
     changed from run to run (same content; FVG and BPR made by the same candle came from
@@ -1039,7 +1042,7 @@ in its results reported).
      "Equilibrium" (indigo, ★ / ✕ sub-entries). Strategy 1 (`signals.py`) builds its EQ at
      the break candle from its own 5m breaks (the leg start is unchanged: the BOS leg's
      low); `EntrySignal.eq_deepest`; `targets.stop_loss` uses the EQ rule (no ATR buffer,
-     no small-confluence rule for an EQ); settings `strategy.equilibrium.*` under Stop loss.
+     no small-confluence rule for an EQ); settings `detectors.equilibrium.*` (before C.3 `strategy.equilibrium.*`) under Stop loss.
      Tests: `tests/detectors/test_equilibrium_detector.py` (incl. no-lookahead),
      `tests/strategy/session_zone_sweep/test_equilibrium.py` (new scenario),
      `tests/ui/test_equilibrium_overlay.py`. The old rule (leg up to the first swing high
@@ -1183,7 +1186,8 @@ in its results reported).
   - Fallback levels must lie beyond the last TP and at or beyond 1.2R; fib from the sweep
     extreme (0) to the setup-TF BoS candle's high (1). Two TPs: a third at TP1, the rest at
     TP2; one TP: all of it.
-- ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Also: strategy 2 in the
+- ◐ **8.6 Chart: strategy 2 trades + AM/PM session view.** **8.6a built (2026-10-12, user's "3"; waiting for the user's check):** the strategy popover lists both strategies (`strategy/registry.py`); picking one switches the settings panel (its own fields and groups, a new "Windows" group for strategy 2; `engine.break_even_at_next_session` is not shown for strategy 2), the presets (one list per strategy, "Default" = that strategy's defaults; a preset file records `strategy.name`) and the backtest button (runs the picked strategy). `RunSettings.strategy` is either config, the JSON carries `strategy.name`, the store `settings-current` carries `strategy`, float lists (`fib_levels`, `fixed_r_levels`) are comma-separated numbers. `strategy.confluence_kinds` has one widget per strategy (different defaults; strategy 1 hides EQUILIBRIUM). The Trades overlay says it is strategy 1 only for now. **Still open: 8.6b** Trades overlay for strategy 2 (3 TPs, route / entry / confluence hover), **8.6c** AM/PM session view and the Sessions button for strategy 2. Check 8.6a: `python -m backtester.ui.app`, strategy popover → Strategy 2: Settings… shows its fields; change a value, save a preset, switch back to Strategy 1 (its preset list has no strategy 2 presets); Run backtest with NAS100 / US500 for a short range.
+  Original text: Also: strategy 2 in the
   strategy popover and the settings panel (`NyIndexSweepConfig`: the window start / end per
   session, user 2026-10-11), the backtest button running it, Trades overlay with TP3. Trades overlay for strategy 2
   (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the

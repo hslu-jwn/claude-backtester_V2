@@ -27,12 +27,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
+from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import SwingKind
-from backtester.engine.trade import TradeResult
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, beyond, candle_open, wick
@@ -44,6 +45,9 @@ from backtester.strategy.ny_index_sweep.windows import (
     is_best_time,
     window_of,
 )
+
+if TYPE_CHECKING:
+    from backtester.engine.trade import TradeResult  # only the callback's type
 
 M1, M5, M15, H1, H4 = Timeframe.M1, Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4
 SWEPT_KIND = {Direction.BULLISH: SwingKind.LOW, Direction.BEARISH: SwingKind.HIGH}
@@ -76,11 +80,17 @@ class NyIndexSweep(Strategy):
     full_history = (M15, H1, H4)
     uses_session_break_even = False  # break-even only after TP1
 
-    def __init__(self, symbol: str, config: NyIndexSweepConfig | None = None):
+    def __init__(
+        self,
+        symbol: str,
+        config: NyIndexSweepConfig | None = None,
+        detectors: DetectorSettings | None = None,
+    ):
         self.symbol = symbol
         self.config = config = config or NyIndexSweepConfig()
-        self.doji_max_body = doji = config.swings.doji_threshold(symbol)
-        fvg, ob, atr = config.fvg, config.order_block, config.atr_period
+        self.detectors = detectors = detectors or DetectorSettings()
+        self.doji_max_body = doji = detectors.swings.doji_threshold(symbol)
+        fvg, ob, atr = detectors.fvg, detectors.order_block, config.atr_period
         self.frames = {
             M1: Frame(M1, doji, fvg, ob),
             M5: Frame(M5, doji, fvg, ob, atr_period=atr),
@@ -209,7 +219,7 @@ class NyIndexSweep(Strategy):
             rejected = "best-time trades excluded"
             setup.trade_closed(signal.at)
         else:
-            result = targets(signal, self.frames, cfg)
+            result = targets(signal, self.frames, cfg, self.detectors.equilibrium)
             if isinstance(result, Rejected):
                 rejected = result.reason
                 setup.trade_closed(signal.at)
