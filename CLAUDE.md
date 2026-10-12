@@ -210,3 +210,20 @@ access; the user may supply the research). They help; they never override the ru
   app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
 - **New strategies** must be one new folder under `strategy/` plus a registry entry
   (ROADMAP C.3); universal settings are shared, strategy-specific ones live in its config.
+
+## Session protocol (user does no file work)
+
+- **Start** (user says "Continue." or names a task): `git pull`, read `docs/HANDOFF.md`, this file and
+  the ROADMAP entry of the task, run the tests as a baseline, then say in max 10 lines what you will do
+  (plan, test cases, files, models) and ask all open questions at once. Then work test-first.
+- **During:** when the user says ok / fine / yes, it is final: write it into the repo in the same
+  commit (rule -> `docs/` with "(rule set by the user, <date>)"; accepted issue -> ROADMAP line
+  "accepted by the user <date>"; postponed/declined -> likewise). Never ask about it again.
+- **End** (user says "End." / "Finish." / ends the chat): the user accepts everything done so far.
+  Do all of it yourself: full tests + ruff (report failures honestly, record them as known issues),
+  mark the finished steps ☑ in the ROADMAP, write all decisions and accepted points into `docs/`,
+  rewrite `docs/HANDOFF.md` (last session, accepted, open, next step), commit, push, make sure
+  `git status` is clean, run `graphify update .` if available. In the cloud, unpushed work is lost.
+- **Reply at the end** (max 10 lines): done, not done, recorded decisions, next step, how to check,
+  and the exact first prompt for the next chat (normally just `Continue.`).
+
