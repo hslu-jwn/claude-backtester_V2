@@ -1186,7 +1186,8 @@ in its results reported).
   - Fallback levels must lie beyond the last TP and at or beyond 1.2R; fib from the sweep
     extreme (0) to the setup-TF BoS candle's high (1). Two TPs: a third at TP1, the rest at
     TP2; one TP: all of it.
-- ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Also: strategy 2 in the
+- ◐ **8.6 Chart: strategy 2 trades + AM/PM session view.** **8.6a built (2026-10-12, user's "3"; waiting for the user's check):** the strategy popover lists both strategies (`strategy/registry.py`); picking one switches the settings panel (its own fields and groups, a new "Windows" group for strategy 2; `engine.break_even_at_next_session` is not shown for strategy 2), the presets (one list per strategy, "Default" = that strategy's defaults; a preset file records `strategy.name`) and the backtest button (runs the picked strategy). `RunSettings.strategy` is either config, the JSON carries `strategy.name`, the store `settings-current` carries `strategy`, float lists (`fib_levels`, `fixed_r_levels`) are comma-separated numbers. `strategy.confluence_kinds` has one widget per strategy (different defaults; strategy 1 hides EQUILIBRIUM). The Trades overlay says it is strategy 1 only for now. **Still open: 8.6b** Trades overlay for strategy 2 (3 TPs, route / entry / confluence hover), **8.6c** AM/PM session view and the Sessions button for strategy 2. Check 8.6a: `python -m backtester.ui.app`, strategy popover → Strategy 2: Settings… shows its fields; change a value, save a preset, switch back to Strategy 1 (its preset list has no strategy 2 presets); Run backtest with NAS100 / US500 for a short range.
+  Original text: Also: strategy 2 in the
   strategy popover and the settings panel (`NyIndexSweepConfig`: the window start / end per
   session, user 2026-10-11), the backtest button running it, Trades overlay with TP3. Trades overlay for strategy 2
   (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the
