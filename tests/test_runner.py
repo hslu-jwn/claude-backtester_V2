@@ -28,6 +28,7 @@ from scenario import LONDON, NY_SETUP, TO_TARGET, doji
 from backtester.data.adapters.cache_adapter import MissingCacheError
 from backtester.data.cache import cache_path
 from backtester.data.sources import SymbolSources
+from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.backtest import EngineConfig
 from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
@@ -45,7 +46,8 @@ from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 FULL = LONDON + NY_SETUP + TO_TARGET
 MON, TUE, WED = date(2026, 1, 5), date(2026, 1, 6), date(2026, 1, 7)
 SETTINGS = RunSettings(  # read-only mappings like the defaults (pickled for the workers)
-    strategy=SessionZoneSweepConfig(
+    strategy=SessionZoneSweepConfig(),
+    detectors=DetectorSettings(
         swings=SwingConfig(doji_max_body=MappingProxyType({"XAUUSD": 0.065, "GOLD": 0.065}))
     ),
     engine=EngineConfig(
@@ -173,7 +175,7 @@ def test_results_folder(cache, tmp_path):
     assert settings["strategy"]["min_rr"] == 1.2
     assert settings["strategy"]["zone_timeframe"] == "M30"
     assert settings["strategy"]["confluence_kinds"] == ["BPR", "BREAKER", "FVG", "ORDER_BLOCK"]
-    assert settings["strategy"]["swings"]["doji_max_body"]["GOLD"] == 0.065
+    assert settings["detectors"]["swings"]["doji_max_body"]["GOLD"] == 0.065
     assert settings["engine"]["costs"]["symbols"]["GOLD"]["spread"] == 0.25
     assert settings["engine"]["sessions"]["london"]["zone"] == "Europe/London"
 

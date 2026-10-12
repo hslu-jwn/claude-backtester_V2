@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
+from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.base import Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
@@ -26,7 +27,7 @@ class StrategySpec:
     name: str  # the folder name under strategy/, `--strategy`, results settings.json
     label: str  # for menus
     config_cls: type  # frozen dataclass with the spec defaults
-    strategy_cls: type[Strategy]  # called as strategy_cls(symbol, config)
+    strategy_cls: type[Strategy]  # called as strategy_cls(symbol, config, detectors)
 
 
 _SPECS = (
@@ -49,9 +50,11 @@ def spec_for_config(config: object) -> StrategySpec:
     raise TypeError(f"no registered strategy for a {type(config).__name__} config")
 
 
-def make_strategy(symbol: str, config: object) -> Strategy:
-    """The strategy the config belongs to."""
-    return spec_for_config(config).strategy_cls(symbol, config)
+def make_strategy(
+    symbol: str, config: object, detectors: DetectorSettings | None = None
+) -> Strategy:
+    """The strategy the config belongs to, with the shared detector settings."""
+    return spec_for_config(config).strategy_cls(symbol, config, detectors)
 
 
 def strategy_name(config: object) -> str:

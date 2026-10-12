@@ -97,7 +97,7 @@ def run_strategy(
     start = datetime.combine(first_day, time(), UTC)
     end = datetime.combine(last_day + timedelta(days=1), time(), UTC)
     adapter = sources.adapter(symbol)
-    strategy = SessionZoneSweep(symbol, settings.strategy)
+    strategy = SessionZoneSweep(symbol, settings.strategy, settings.detectors)
     series = {
         tf: CandleSeries(
             symbol, tf, candles_from_frame(adapter.fetch_frame(symbol, tf, start, end))

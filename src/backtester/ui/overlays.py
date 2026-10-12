@@ -52,7 +52,7 @@ class OverlaySettings:
     # the strategy settings (ROADMAP 4.1) as canonical JSON (backtester/settings.py
     # `to_json`; "" = spec defaults); only overlays with `strategy_settings` get it
     strategy: str = ""
-    # doji thresholds changed in the settings menu (strategy.swings.doji_max_body), as
+    # doji thresholds changed in the settings menu (detectors.swings.doji_max_body), as
     # sorted (symbol, max body) pairs; every overlay's detectors use them (`swing_config`)
     doji_max_body: tuple[tuple[str, float], ...] = ()
 

@@ -27,7 +27,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from backtester.core.models import Direction, Timeframe
-from backtester.detectors.equilibrium import equilibrium_stop_loss
+from backtester.detectors.equilibrium import EquilibriumConfig, equilibrium_stop_loss
+from backtester.detectors.settings import DEFAULT_DETECTORS
 from backtester.detectors.zone import ZoneKind
 from backtester.strategy.ny_index_sweep.config import AthMode, NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame
@@ -66,11 +67,14 @@ def _sign(direction: Direction) -> int:
 
 
 def stop_loss(
-    signal: Signal, frames: dict[Timeframe, Frame], config: NyIndexSweepConfig
+    signal: Signal,
+    frames: dict[Timeframe, Frame],
+    config: NyIndexSweepConfig,
+    equilibrium: EquilibriumConfig = DEFAULT_DETECTORS.equilibrium,
 ) -> tuple[float, str]:
     box, sign = signal.z3.box, _sign(signal.direction)
     if box.kind is ZoneKind.EQUILIBRIUM:
-        return equilibrium_stop_loss(box, signal.deepest, config.equilibrium), "equilibrium"
+        return equilibrium_stop_loss(box, signal.deepest, equilibrium), "equilibrium"
     height = box.top - box.bottom
     buffer = sign * config.sl_buffer * height
     atr = frames[signal.z3.tf].atr() if config.narrow_confluence_atr_mult > 0 else None
@@ -158,10 +162,13 @@ def fallback_levels(
 
 
 def targets(
-    signal: Signal, frames: dict[Timeframe, Frame], config: NyIndexSweepConfig
+    signal: Signal,
+    frames: dict[Timeframe, Frame],
+    config: NyIndexSweepConfig,
+    equilibrium: EquilibriumConfig = DEFAULT_DETECTORS.equilibrium,
 ) -> Targets | Rejected:
     sign = _sign(signal.direction)
-    sl, sl_from = stop_loss(signal, frames, config)
+    sl, sl_from = stop_loss(signal, frames, config, equilibrium)
     if sign * (signal.close - sl) <= 0:
         return Rejected("SL not beyond the entry (closed back below the 3rd confluence)")
     tps = take_profits(signal, sl, frames, config)

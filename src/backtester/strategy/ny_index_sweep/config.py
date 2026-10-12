@@ -8,10 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from backtester.detectors.equilibrium import EquilibriumConfig
-from backtester.detectors.fvg import FvgConfig
-from backtester.detectors.order_block import OrderBlockConfig
-from backtester.detectors.swings import SwingConfig
 from backtester.detectors.zone import ZoneKind
 from backtester.strategy.ny_index_sweep.windows import WindowConfig
 
@@ -50,7 +46,6 @@ class NyIndexSweepConfig:
     # stop loss (› Stop Loss)
     sl_buffer: float = 0.10  # share of the 3rd confluence's height beyond its far edge
     narrow_confluence_atr_mult: float = 0.0  # > 0: narrower 3rd confluence -> SL at sweep
-    equilibrium: EquilibriumConfig = field(default_factory=EquilibriumConfig)
 
     # take profit (› Take Profit)
     cluster_r: float = 0.2  # rejection zones closer than this count as one
@@ -59,10 +54,7 @@ class NyIndexSweepConfig:
     fib_levels: tuple[float, ...] = (1.382, 1.5, 1.618, 2.0)
     fixed_r_levels: tuple[float, ...] = (1.2, 1.5, 1.8)
 
-    # detectors
-    swings: SwingConfig = field(default_factory=SwingConfig)  # doji threshold per symbol
-    fvg: FvgConfig = field(default_factory=FvgConfig)  # strong-move filter default off
-    order_block: OrderBlockConfig = field(default_factory=OrderBlockConfig)  # first version
+    # swings, FVG, order block and equilibrium: `RunSettings.detectors` (shared)
     atr_period: int = 14  # for the narrow-confluence threshold
 
     def __post_init__(self) -> None:

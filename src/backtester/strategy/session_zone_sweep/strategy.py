@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 
 from backtester.core.models import Timeframe
 from backtester.core.series import SeriesView
+from backtester.detectors.settings import DetectorSettings
 from backtester.sessions import session_of
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -48,19 +49,25 @@ class Decision:
 class SessionZoneSweep(Strategy):
     base_timeframe = Timeframe.M5
 
-    def __init__(self, symbol: str, config: SessionZoneSweepConfig | None = None):
+    def __init__(
+        self,
+        symbol: str,
+        config: SessionZoneSweepConfig | None = None,
+        detectors: DetectorSettings | None = None,
+    ):
         self.symbol = symbol
         self.config = config = config or SessionZoneSweepConfig()
+        self.detectors = detectors = detectors or DetectorSettings()
         self.timeframes = (
             Timeframe.M5,
             config.zone_timeframe,
             config.obstacle_timeframe,
             config.limit_timeframe,
         )
-        self.setups = SetupTracker(symbol, config)
+        self.setups = SetupTracker(symbol, config, detectors)
         doji = self.setups.doji_max_body
-        self.obstacles = ObstacleTracker(doji, config)
-        self.limits = UnmitigatedOrderBlocks(doji, config)
+        self.obstacles = ObstacleTracker(doji, detectors.order_block)
+        self.limits = UnmitigatedOrderBlocks(doji, detectors.order_block)
         self._cursors = {config.obstacle_timeframe: -1, config.limit_timeframe: -1}
         self.decisions: list[Decision] = []
         self.journal = SessionJournal()
@@ -100,7 +107,15 @@ class SessionZoneSweep(Strategy):
     def _order(self, signal: EntrySignal, now: datetime) -> Order | None:
         state = self.setups.state
         zones = [(lz.role, lz.zone.top, lz.zone.bottom) for lz in state.live_zones]
-        found = targets(signal, state.atr, zones, self.obstacles, self.limits, self.config)
+        found = targets(
+            signal,
+            state.atr,
+            zones,
+            self.obstacles,
+            self.limits,
+            self.config,
+            self.detectors.equilibrium,
+        )
         if isinstance(found, Rejected):
             self.decisions.append(Decision(signal, None, None, found.reason))
             return None

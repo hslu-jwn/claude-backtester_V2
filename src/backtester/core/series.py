@@ -44,7 +44,7 @@ class SeriesView:
     Any access past the cursor raises LookaheadError.
     """
 
-    __slots__ = ("_series", "_cursor")
+    __slots__ = ("_cursor", "_series")
 
     def __init__(self, series: CandleSeries, cursor: int):
         self._series = series

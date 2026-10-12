@@ -45,6 +45,7 @@ from backtester.detectors.breaker import BreakerBlock, BreakerDetector
 from backtester.detectors.equilibrium import deepest_wick, equilibrium_box
 from backtester.detectors.fvg import FairValueGap, FvgDetector
 from backtester.detectors.order_block import OrderBlock, OrderBlockDetector
+from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.zone import ZoneBook, ZoneBox, ZoneKind, ZoneState, ZoneTransition
 from backtester.sessions import Session, session_of
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -95,14 +96,20 @@ class SignalState:
 
 
 class SetupTracker:
-    def __init__(self, symbol: str, config: SessionZoneSweepConfig | None = None):
+    def __init__(
+        self,
+        symbol: str,
+        config: SessionZoneSweepConfig | None = None,
+        detectors: DetectorSettings | None = None,
+    ):
         self.config = config = config or SessionZoneSweepConfig()
-        doji = config.swings.doji_threshold(symbol)
+        self.detectors = detectors = detectors or DetectorSettings()
+        doji = detectors.swings.doji_threshold(symbol)
         self.doji_max_body = doji
         self.structure = StructureTracker(doji)
-        self._fvg = FvgDetector(doji, config.fvg)
-        self._ob = OrderBlockDetector(doji, config.order_block)
-        self._bpr = BprDetector(doji, BprConfig(config.fvg))
+        self._fvg = FvgDetector(doji, detectors.fvg)
+        self._ob = OrderBlockDetector(doji, detectors.order_block)
+        self._bpr = BprDetector(doji, BprConfig(detectors.fvg))
         self._breaker = (
             BreakerDetector(doji) if ZoneKind.BREAKER in config.confluence_kinds else None
         )

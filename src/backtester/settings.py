@@ -212,9 +212,27 @@ def to_dict(settings: RunSettings) -> dict:
     return jsonable(settings)
 
 
+# Settings of the shared detector group; before ROADMAP C.3 they were inside `strategy`.
+_MOVED = ("swings", "fvg", "order_block", "equilibrium")
+
+
+def _migrate(data: Mapping) -> Mapping:
+    """Old JSON (presets, settings of runs) -> the current form: `strategy.fvg` etc. move
+    to `detectors.fvg`. A group already under `detectors` wins."""
+    strategy = data.get("strategy") if isinstance(data, Mapping) else None
+    if not isinstance(strategy, Mapping) or not any(k in strategy for k in _MOVED):
+        return data
+    moved = {k: strategy[k] for k in _MOVED if k in strategy}
+    detectors = data.get("detectors")
+    merged = {**moved, **(detectors if isinstance(detectors, Mapping) else {})}
+    rest = {k: v for k, v in strategy.items() if k not in _MOVED}
+    return {**data, "strategy": rest, "detectors": merged}
+
+
 def from_dict(data: Mapping) -> RunSettings:
-    """RunSettings from its nested JSON form; missing values keep their defaults."""
-    return _build(RunSettings, data)
+    """RunSettings from its nested JSON form; missing values keep their defaults. Old
+    forms (detector settings inside `strategy`) are migrated."""
+    return _build(RunSettings, _migrate(data))
 
 
 def to_json(settings: RunSettings) -> str:
@@ -234,6 +252,9 @@ def settings_from_values(values: Mapping[str, Any], base: RunSettings | None = N
     data = to_dict(base or RunSettings())
     known = {leaf.path for leaf in leaves(base)}
     for path, value in values.items():
+        head, _, tail = path.partition(".")
+        if head == "strategy" and tail.split(".")[0] in _MOVED:  # menu state of an old version
+            path = f"detectors.{tail}"
         if path not in known:
             continue
         *parents, name = path.split(".")

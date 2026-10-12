@@ -74,7 +74,7 @@ _GROUP_RULES = (
     ("strategy.small_confluence_atr_mult", "Stop loss"),
     ("strategy.max_sl_atr_mult", "Stop loss"),
     ("strategy.min_sl_atr_mult", "Stop loss"),
-    ("strategy.equilibrium.", "Stop loss"),
+    ("detectors.equilibrium.", "Stop loss"),
     ("strategy.strong_move.", "Stop loss"),
     ("engine.break_even_at_next_session", "Stop loss"),
     ("strategy.tp_cap_r", "Take profit"),
@@ -94,9 +94,9 @@ _GROUP_RULES = (
     ("strategy.include_last_minutes_trades", "Sessions & filters"),
     ("strategy.skip_tokyo", "Sessions & filters"),
     ("strategy.friday_ny_carries_to_monday_tokyo", "Sessions & filters"),
-    ("strategy.fvg.", "Detectors"),
-    ("strategy.order_block.", "Detectors"),
-    ("strategy.swings.", "Detectors"),
+    ("detectors.fvg.", "Detectors"),
+    ("detectors.order_block.", "Detectors"),
+    ("detectors.swings.", "Detectors"),
     ("engine.costs.", "Costs"),
     ("warmup_days", "Backtest"),
 )
@@ -109,8 +109,8 @@ LABELS = {
     "strategy.small_confluence_atr_mult": "Small confluence (× ATR)",
     "strategy.max_sl_atr_mult": "Max SL size (× ATR)",
     "strategy.min_sl_atr_mult": "Min SL size (× ATR)",
-    "strategy.equilibrium.sl_buffer": "EQ SL buffer (share of leg low → deepest wick)",
-    "strategy.equilibrium.sl_at_deepest_wick": "EQ SL beyond the deepest wick",
+    "detectors.equilibrium.sl_buffer": "EQ SL buffer (share of leg low → deepest wick)",
+    "detectors.equilibrium.sl_at_deepest_wick": "EQ SL beyond the deepest wick",
     "strategy.strong_move.atr_period": "ATR period (5m)",
     "engine.break_even_at_next_session": "Break-even at the next session",
     "strategy.tp_cap_r": "TP cap (R)",
@@ -146,18 +146,18 @@ LEAF_LABELS = {  # by the last part of the path
     "quote_to_usd": "Quote currency → USD",
 }
 SECTIONS = {
-    "strategy.fvg.": "FVG",
-    "strategy.order_block.": "Order block",
-    "strategy.swings.doji_max_body.": "Doji threshold (max body, price units)",
+    "detectors.fvg.": "FVG",
+    "detectors.order_block.": "Order block",
+    "detectors.swings.doji_max_body.": "Doji threshold (max body, price units)",
     "strategy.sessions.tokyo.": "Tokyo",
     "strategy.sessions.london.": "London",
     "strategy.sessions.new_york.": "New York",
 }
 # shown first in their group (the doji threshold is used by every detector)
-FIRST_IN_GROUP = ("strategy.swings.doji_max_body.",)
+FIRST_IN_GROUP = ("detectors.swings.doji_max_body.",)
 # one explanation under the section heading instead of the same help on every row
 SECTION_HELP = {
-    "strategy.swings.doji_max_body.": (
+    "detectors.swings.doji_max_body.": (
         "Max |close − open| of a doji / thin candle, per symbol, in price units. Used by "
         "every detector (swings, BOS, sweeps, FVG, OB, BPR, session zones) in backtests "
         "and on the chart. Gold's 0.065 is set by the user; the pairs' defaults are the "
@@ -188,7 +188,7 @@ def section_of(path: str) -> str:
 def label_of(path: str) -> str:
     if path in LABELS:
         return LABELS[path]
-    if path.startswith("strategy.swings.doji_max_body."):
+    if path.startswith("detectors.swings.doji_max_body."):
         return path.rsplit(".", 1)[1]
     last = path.rsplit(".", 1)[1]
     return LEAF_LABELS.get(last, last.replace("_", " ").capitalize())

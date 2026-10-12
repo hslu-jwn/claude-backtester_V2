@@ -27,6 +27,7 @@ from test_setup import run_tracker
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.detectors.equilibrium import EquilibriumConfig
+from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.zone import ZoneKind
 from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
@@ -63,8 +64,8 @@ def test_entry_at_the_equilibrium_confirmation():
     assert sig.eq_deepest == 108.5  # g's wick
 
 
-def run_strategy(config=None):
-    strategy = SessionZoneSweep(scenario.SYMBOL, config or cfg())
+def run_strategy(config=None, detectors=None):
+    strategy = SessionZoneSweep(scenario.SYMBOL, config or cfg(), detectors)
     no_costs = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
     run_backtest(strategy, scenario.series(LONDON + EQ_SETUP), no_costs)
     [decision] = strategy.decisions
@@ -81,7 +82,7 @@ def test_strategy_order_sl_beyond_the_leg_low_with_the_eq_buffer():
 
 def test_eq_only_toggle_puts_the_sl_beyond_the_deepest_wick():
     eq = EquilibriumConfig(sl_at_deepest_wick=True)
-    order = run_strategy(cfg(equilibrium=eq)).order
+    order = run_strategy(detectors=DetectorSettings(equilibrium=eq)).order
     assert order.stop_loss == pytest.approx(108.46)
 
 

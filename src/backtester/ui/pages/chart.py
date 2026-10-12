@@ -438,7 +438,7 @@ def changed_doji(strategy: str) -> tuple[tuple[str, float], ...]:
     if not strategy:
         return ()
     spec = SwingConfig().doji_max_body
-    chosen = from_json(strategy).strategy.swings.doji_max_body
+    chosen = from_json(strategy).detectors.swings.doji_max_body
     return tuple(sorted((s, v) for s, v in chosen.items() if spec.get(s) != v))
 
 

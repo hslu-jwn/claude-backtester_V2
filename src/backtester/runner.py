@@ -49,6 +49,7 @@ from backtester.core.models import Direction
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
+from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
@@ -69,6 +70,8 @@ class RunSettings:
     # strategy 1's config (the settings panel is built from it); any registered strategy's
     # config runs that strategy (`strategy/registry.py`)
     strategy: SessionZoneSweepConfig = field(default_factory=SessionZoneSweepConfig)
+    # swings, FVG, order block, equilibrium: one group for every strategy
+    detectors: DetectorSettings = field(default_factory=DetectorSettings)
     engine: EngineConfig = DEFAULT_ENGINE
     warmup_days: int = 14  # cached days loaded before the range (1h / 4H levels, ATR)
 
@@ -126,7 +129,9 @@ class _Job:
 
     @property
     def base_candles(self) -> int:
-        base = make_strategy(self.symbol, self.settings.strategy).base_timeframe
+        base = make_strategy(
+            self.symbol, self.settings.strategy, self.settings.detectors
+        ).base_timeframe
         return len(next(s for s in self.series if s.timeframe is base))
 
 
@@ -150,7 +155,7 @@ def _load(
         notes.append(f"{symbol}: {last + timedelta(days=1)}..{end} not cached, left out")
     warm = warmup_start(cached, first, settings.warmup_days)
     adapter = sources.adapter(symbol)
-    strategy = make_strategy(symbol, settings.strategy)
+    strategy = make_strategy(symbol, settings.strategy, settings.detectors)
     h4 = strategy.h4_alignment
     history = cached_block(cached, first)[0]  # first day of the cached run around `first`
     full = strategy.full_history
@@ -174,7 +179,7 @@ def _load(
 
 
 def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
-    strategy = make_strategy(job.symbol, job.settings.strategy)
+    strategy = make_strategy(job.symbol, job.settings.strategy, job.settings.detectors)
     trades = run_backtest(strategy, job.series, job.settings.engine, progress)
     start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
     sessions = [
@@ -390,6 +395,7 @@ def write_results(
             "name": strategy_name(result.settings.strategy),
             **jsonable(result.settings.strategy),
         },
+        "detectors": result.settings.detectors,
         "engine": result.settings.engine,
     }
     summary = {
