@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 
 import pytest
 from fake_keyring import FakeKeyring
@@ -144,6 +145,7 @@ def test_scrub_longest_first():
     assert scrub("nothing", None) == "nothing"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows paths in origin.txt")
 def test_known_servers_from_the_terminal_folders(tmp_path):
     terminal = tmp_path / "MetaQuotes" / "Terminal" / "ABC123"
     for name in ("Broker-Demo", "Broker-Live2", "Custom", "Default", "signals"):

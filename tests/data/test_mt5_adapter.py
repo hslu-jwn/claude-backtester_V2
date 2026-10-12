@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fake_mt5 import FakeMt5
@@ -162,5 +164,9 @@ def test_nothing_else_imports_metatrader5():
         f"for m in {modules!r}: importlib.import_module(m)\n"
         "print('ok')"
     )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
+    src = Path(__file__).resolve().parents[2] / "src"  # works without `pip install -e`
+    env = {**os.environ, "PYTHONPATH": str(src)}
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False, env=env
+    )
     assert out.stdout.strip() == "ok", out.stderr
