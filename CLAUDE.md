@@ -7,7 +7,7 @@ Guidance for Claude Code working in this repository. Read this first, every sess
 A Python backtester for rule-based price-action trading strategies (session zones, FVGs,
 order blocks, BOS, liquidity sweeps). It replays historical candles one at a time, detects
 patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
-account results for an **FTMO $100k challenge**. Results are shown in a Dash web app with a
+account results (balance, drawdown, Monte Carlo; the FTMO / prop-firm field comes later). Results are shown in a Dash web app with a
 TradingView Lightweight Charts chart. History comes from histdata.com M1 files the user downloads into `data/raw/histdata/`
 (Dukascopy is no longer used; its code is kept); MetaTrader 5 (FTMO) for feed comparison and
 later live trading. Symbols: XAUUSD, GBPUSD, GBPJPY (strategy 1), NAS100, US500 (strategy 2).

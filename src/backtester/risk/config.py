@@ -1,4 +1,5 @@
-"""RiskConfig: risk per trade, personal daily stop, max open risk, correlation groups,
-drawdown and near-target scaling, per-symbol spread / commission / swap.
-Spec: risk-management.md › Risk guidelines, Components 1. TODO: implement.
+"""RiskConfig: starting balance, risk per trade, personal daily stop, max open risk,
+correlation groups, drawdown scaling, per-symbol contract specs and costs (spread,
+commission, swap, slippage). Spec: risk-management.md › Account & sizing, Components 1.
+TODO: implement.
 """

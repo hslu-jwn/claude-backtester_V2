@@ -2,7 +2,7 @@
 
 ## Layers
 
-Each layer only imports from the layers above it in this list.
+Each layer only imports from the layers above it in this list. Exception: `data/mt5_info.py` and `data/feed_compare.py` use `live/` (the MT5 command-line tools).
 
 1. **core/**: value types (`Candle`, `Timeframe`, `Direction`), `CandleSeries` (engine-private
    full history), `SeriesView` (lookahead-safe window), `HigherTimeframeClock`.
@@ -137,7 +137,7 @@ GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price decimals per sy
   Candles are bucketed by UTC-floored open time and built from **bid** prices. A partly
   filled bucket (e.g. the hour the break starts) keeps its regular open and close time.
   Each candle's `spread` is the **mean of the per-minute close spreads** (ask − bid) over
-  its remaining minutes. D1 is not built (a UTC day is not the trading day).
+  its remaining minutes. D1 / W1 are built from M1 on the 17:00 New York day (ROADMAP 4.0b), not on UTC days.
 - `CacheAdapter` (`data/adapters/cache_adapter.py`) raises an error for any requested day
   that was never downloaded, so gaps in the cache are never silent. A day Dukascopy had no
   data for is cached as empty and simply has no candles.

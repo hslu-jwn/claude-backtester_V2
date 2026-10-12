@@ -1,3 +1,4 @@
-"""Risk sweep: grid over settings (e.g. risk 0.25-1.5% x daily stop 1-3%) ranked by
-Monte Carlo pass rate. TODO: implement.
+"""Risk sweep: grid over risk per trade, daily stop, max open risk, drawdown scaling;
+per cell max drawdown, return and Monte Carlo 95% drawdown. Spec: risk-management.md › Risk
+sweep. TODO: implement.
 """

@@ -1,4 +1,4 @@
-"""Monte Carlo: reshuffle whole trading days (not single trades).
-Outputs pass rate, fail rate (daily vs. max loss), median days to pass, drawdown
-distribution. TODO: implement.
+"""Monte Carlo: reshuffle whole trading days (not single trades), simulate the account for
+each order. Outputs the distribution of max drawdown and final balance and a fan of equity
+curves. Spec: risk-management.md › Monte Carlo. TODO: implement.
 """

@@ -1,5 +1,5 @@
-"""Account simulator: replays trades in time order, candle by candle.
-Equity includes floating P/L at the worst point of each candle (no lookahead), handles the
-daily reset with open trades, applies personal rules, reports pass/fail + reason + day.
-TODO: implement.
+"""Account simulator: replays the R trades in time order, candle by candle, no lookahead.
+Balance (closed trades) and equity incl. floating P/L at each candle's worst point; costs,
+personal daily stop, max open risk with correlation groups, drawdown scaling; skipped trades
+listed with their reason. Spec: risk-management.md › Account simulator. TODO: implement.
 """

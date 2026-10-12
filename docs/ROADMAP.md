@@ -42,8 +42,8 @@ Details and pitfalls: `ARCHITECTURE.md › Data sources`.
   TradingView or MT5** (remember MT5 shows server time, usually UTC+2/+3).
   Gold's price scaling is already verified (0.1); **GBPUSD and GBPJPY are not yet**: check
   their point factors here (GBPUSD ≈ 1.2–1.4, GBPJPY ≈ 180–210) and add a real sample
-  file test for each, like the XAUUSD one. The current GBP sample files in
-  `tests/data/fixtures/` are Dukascopy "TooManyRequests" replies, not data: download them again.
+  file test for each, like the XAUUSD one. Only the XAUUSD sample file
+  exists in `tests/data/fixtures/` (the GBP ones were removed; a real GBP sample is still open).
   Meanwhile GBPUSD / GBPJPY September 2026 come from histdata.com:
   `python -m backtester.data.histdata data/raw/histdata/` → `data/cache/histdata/`
   (New York standard time, one hour later while Europe is on summer time; verified against
@@ -310,7 +310,7 @@ text with its state (active / tapped / confirmed / invalidated).
   candle, state), sub-entries ★ / ✕. Panel switch "OB strong-move filter". Zone drawing
   is shared (`ui/zone_overlay.py`): one color per zone type in both directions (FVG green,
   OB yellow), overlapping boxes stack darker.
-- ◐ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
+- ☑ **2.7** Breaker block. Rules defined by the user on 2026-10-10 (`confluences.md ›
   Breaker block`: the last green run into the swing high a bullish BOS breaks, bearish
   mirrored). Built as part of 8.2 (8.2.3, see there).
 - ☑ **2.8** BPR. `detectors/bpr.py`, built on the FVG detector: an older FVG invalidated
@@ -389,7 +389,7 @@ text with its state (active / tapped / confirmed / invalidated).
   - Confluence: a bullish FVG / OB / BPR that came into existence at or after the BOS
     leg's low (lowest low between the broken swing's wick candle and the BOS candle), not
     yet confirmed or invalidated, confirmed (zone.py validation) by a candle after the
-    BOS candle. Taps before step 4 count. Breakers are left out (not built, 2.7).
+    BOS candle. Taps before step 4 count. Breakers have been a confluence since 8.2.3.
   - FVG trend rule only for FVGs; OBs and BPRs have none.
   - Cancel: only a real opposite 5m BOS cancels (also with `entry_bos_with_trend` on).
   - After an entry the zone's setup restarts at the sweep; only 30m candles closing after
@@ -676,7 +676,7 @@ bar. Light theme like the screenshot. After a run the results page (3.6) opens.
   - Not shown: `strategy.strong_move.atr_mult` (nothing reads it; the strong-move
     multipliers are per FVG / OB) and the engine's session starts (they always follow the
     strategy's session starts, one setting for both).
-  - Entry confluence types offer FVG / OB / BPR only (breakers aren't built, the
+  - Entry confluence types offer FVG / OB / BPR only (breakers were added in 8.2.3, the
     equilibrium has its own switch); timeframes only those the data layer supports.
   - Help texts are the source comments (some improved); labels are set in
     `settings_panel.py` (new fields fall back to their name).
@@ -845,10 +845,18 @@ has no step yet.
   Carlo runs. Main panel: equity curve with drawdown below, key numbers, skipped trades
   with reasons, Monte Carlo fan + drawdown distribution, sweep heatmap. Visual step: the
   user checks it in the app.
+- ☐ **5.6 Prop-firm field** (user, 2026-10-12, possible addition, after 5.5): presets for several prop firms, not only FTMO (rules editable), so that after a backtest the probability of passing any of them can be estimated (`risk-management.md` › Prop-firm field, `risk/prop_rules.py`). To be specified with the user before building.
 
 ## Phase 6: Robustness (before trusting any result)
 
-- ☐ **6.1** Parameter sweeps over the backtest options.
+- ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
+  1. The user marks which settings take part (per strategy) and gives values or ranges; the settings come from the strategy's config (universal settings the same for all strategies, extra ones per strategy).
+  2. A runner builds the grid (random search for big grids), runs the backtests in parallel (reusing `runner.py`) and writes every result to `results/sim/<id>/` (resumable; may take hours).
+  3. Ranking by **max net R** (user), with a minimum trade count against lucky settings; other metrics shown next to it.
+  4. Overfitting guard (user: yes): tune on one period, report the best settings on a later, untouched period (see 6.2); the number of variants tried is stored (`backtest-evaluation-research` skill).
+  5. The best settings are saved as a preset (`results/presets/`) and shown after the run.
+  6. Settings of a Simulator result can be loaded on the chart (Trades overlay) to check them visually.
+  Open: sweep settings join only after the sweep rework (`confluences.md` › Liquidity sweep).
 - ☐ **6.2** In-sample / out-of-sample split: tune settings on one period, judge them only on
   a later period the tuning never saw. Walk-forward later.
 - ☑ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
@@ -917,10 +925,10 @@ has no step yet.
   34.6%, net R −2,950.4 (gross −825.3), max drawdown 2,955 R, profit factor 0.75. The
   first run (above, before the fix) differs little: the ~3 shifted weeks a year.
 
-## Phase 7: Live trading via MT5 (much later)
+## Phase 7: Live trading via MT5 (much later; not before 6.1 is done)
 
 Demo account first, then FTMO. Same strategy code, fed by closed candles only.
-`execution/` module with `order_send`, a kill switch, the FTMO limits from `risk/`
+`live/` module (execution part) with `order_send`, a kill switch, the FTMO limits from `risk/`
 enforced before every order, and a log of every decision. Not before Phases 3–6 show a
 stable edge.
 
@@ -986,7 +994,7 @@ in its results reported).
   thresholds, cost estimates). Clock confirmed by the user's TradingView check
   (2026-10-11); cached 2018-01-02 .. 2026-09-30, so 2018-2019 give the ATH check and
   warm-up for backtests from 2020-01-01.
-- ☐ **8.2 Detector updates** (`confluences.md`, 2026-10-10). One detector per sub-step,
+- ◐ **8.2 Detector updates** (`confluences.md`, 2026-10-10). One detector per sub-step,
   tests first incl. the no-lookahead test, each checked on the chart:
   1. ◐ **Liquidity sweep rework** (`detectors/sweep.py`, › Liquidity sweep): candidate =
      a wick beyond one of the **last ⚙ N confirmed swings** (default 3; replaces "since
