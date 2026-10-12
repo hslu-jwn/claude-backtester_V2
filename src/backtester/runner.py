@@ -48,16 +48,12 @@ from backtester.analytics.metrics import summarize
 from backtester.core.models import Direction
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
-from backtester.data.resample import H4Alignment
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
-from backtester.strategy.base import Strategy
-from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
-from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
+from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
-from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
 
 
 def _read_only(mapping: dict) -> MappingProxyType:
@@ -68,22 +64,10 @@ def _read_only(mapping: dict) -> MappingProxyType:
 copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
-def make_strategy(symbol: str, config) -> Strategy:
-    """The strategy a config belongs to: strategy 1 (session zone sweep) or strategy 2
-    (`NyIndexSweepConfig`, NY Open index sweep; command line only so far, ROADMAP 8.6)."""
-    if isinstance(config, NyIndexSweepConfig):
-        return NyIndexSweep(symbol, config)
-    return SessionZoneSweep(symbol, config)
-
-
-def strategy_name(config) -> str:
-    return "ny_index_sweep" if isinstance(config, NyIndexSweepConfig) else "session_zone_sweep"
-
-
 @dataclass(frozen=True, slots=True)
 class RunSettings:
-    # strategy 1's config (the settings panel is built from it); a NyIndexSweepConfig runs
-    # strategy 2 (`make_strategy`)
+    # strategy 1's config (the settings panel is built from it); any registered strategy's
+    # config runs that strategy (`strategy/registry.py`)
     strategy: SessionZoneSweepConfig = field(default_factory=SessionZoneSweepConfig)
     engine: EngineConfig = DEFAULT_ENGINE
     warmup_days: int = 14  # cached days loaded before the range (1h / 4H levels, ATR)
@@ -167,9 +151,9 @@ def _load(
     warm = warmup_start(cached, first, settings.warmup_days)
     adapter = sources.adapter(symbol)
     strategy = make_strategy(symbol, settings.strategy)
-    h4 = getattr(strategy, "h4_alignment", H4Alignment.UTC)
+    h4 = strategy.h4_alignment
     history = cached_block(cached, first)[0]  # first day of the cached run around `first`
-    full = getattr(strategy, "full_history", ())
+    full = strategy.full_history
     end = _midnight(last + timedelta(1))
     series = tuple(
         CandleSeries(

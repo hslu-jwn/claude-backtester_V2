@@ -59,8 +59,9 @@ result)` before the next `on_candle` (strategy 2: one open trade per setup, re-e
 The break-even at the next session start (step 2) is strategy 1's rule: a strategy with
 `uses_session_break_even = False` (strategy 2) skips it.
 
-`runner.py` picks the strategy from its config (`make_strategy`: a `NyIndexSweepConfig`
-runs strategy 2) and loads every declared timeframe from the cache: the base and lower
+`runner.py` picks the strategy from its config (`strategy/registry.py`: `make_strategy` looks
+the config class up in the registry, `StrategySpec` per strategy; a new strategy is one folder,
+started from `strategy/_template/`, plus one registry entry) and loads every declared timeframe from the cache: the base and lower
 timeframes from the warm-up start, the strategy's `full_history` timeframes (strategy 2:
 15m, 1h, 4h, for untouched highs and never-tapped zones as TP levels) from the first cached
 day, 4h in the strategy's `h4_alignment` (strategy 2: New York, `data/resample.py`

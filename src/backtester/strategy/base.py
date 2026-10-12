@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
+from backtester.data.resample import H4Alignment
 
 if TYPE_CHECKING:
     from backtester.engine.trade import TradeResult
@@ -45,6 +46,10 @@ class Strategy(ABC):
     timeframes: tuple[Timeframe, ...]  # all timeframes the strategy needs, incl. base
     # the engine's break-even at the next session start (strategy 1's rule)
     uses_session_break_even: bool = True
+    # how the runner loads 4h candles for this strategy (strategy 2: New York-aligned)
+    h4_alignment: H4Alignment = H4Alignment.UTC
+    # timeframes loaded from the first cached day instead of the warm-up start
+    full_history: tuple[Timeframe, ...] = ()
 
     @abstractmethod
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
