@@ -99,6 +99,7 @@ from backtester.data.adapters.cache_adapter import (
 )
 from backtester.data.resample import CALENDAR, DEFAULT_BOUNDARY, DayBoundary, H4Alignment, supported
 from backtester.data.sources import SymbolSources, cached_block, warmup_start
+from backtester.detectors.sweep import SweepConfig
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
@@ -422,15 +423,41 @@ def with_boundary(config: ChartConfig, boundary: str | None, h4: str | None = No
     return config
 
 
-def overlay_settings(filters: Sequence[str] | None, strategy: str = "") -> OverlaySettings:
+# Temporary tweaker (user, 2026-10-12): liquidity sweep rules tried on the chart. Values of
+# the toolbar's Sweep menu: the equal-high tolerance in ATR ("none": one of the last N).
+SWEEP_TOLERANCES = (
+    ("none", "One of the last N (current)"),
+    ("0", "Most extreme of last N (0)"),
+    ("0.1", "Same height: 0.1 ATR"),
+    ("0.25", "Same height: 0.25 ATR"),
+    ("0.5", "Same height: 0.5 ATR"),
+    ("1", "Same height: 1 ATR"),
+    ("2", "Same height: 2 ATR"),
+)
+
+
+def sweep_config(tweak: dict | None) -> SweepConfig:
+    """The sweep rules chosen in the toolbar's Sweep menu ({"tol": str, "two": bool})."""
+    tweak = tweak or {}
+    tol = tweak.get("tol", "none")
+    return SweepConfig(
+        equal_tolerance_atr=None if tol == "none" else float(tol),
+        two_closes_cancel=bool(tweak.get("two")),
+    )
+
+
+def overlay_settings(
+    filters: Sequence[str] | None, strategy: str = "", sweep_tweak: dict | None = None
+) -> OverlaySettings:
     """The chart's detector switches + the strategy settings (canonical JSON, "" = spec
-    defaults; `settings_panel.store_json`)."""
+    defaults; `settings_panel.store_json`) + the sweep rules being tried."""
     filters = filters or []
     return OverlaySettings(
         fvg_strong_move_filter="fvg" in filters,
         ob_strong_move_filter="ob" in filters,
         strategy=strategy,
         doji_max_body=changed_doji(strategy),
+        sweep=sweep_config(sweep_tweak),
     )
 
 
@@ -526,6 +553,7 @@ def overlay_payload(
     filters,
     config: ChartConfig = DEFAULT_CONFIG,
     strategy: str = "",
+    sweep_tweak: dict | None = None,
 ) -> dict | None:
     """Full drawings of the requested overlay types at the browser's cursor, or None if
     the request is for other candles than the ones selected now."""
@@ -534,7 +562,7 @@ def overlay_payload(
     replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None or not 0 <= request["cursor"] < len(replay):
         return None
-    data = chart_data(replay, overlay_settings(filters, strategy), sources, config)
+    data = chart_data(replay, overlay_settings(filters, strategy, sweep_tweak), sources, config)
     return {
         **data.full(request["types"], request["cursor"]),
         "key": request["key"],
@@ -553,6 +581,7 @@ def replay_delta(
     filters,
     config: ChartConfig = DEFAULT_CONFIG,
     strategy: str = "",
+    sweep_tweak: dict | None = None,
 ) -> dict | None:
     """Delta from what the browser shows (`view`: key, cursor, loaded types) to `cursor`."""
     if not view or view.get("key") != key or view.get("cursor") is None:
@@ -560,7 +589,7 @@ def replay_delta(
     frm = view["cursor"]
     if not 0 <= frm < len(replay):
         return None
-    data = chart_data(replay, overlay_settings(filters, strategy), sources, config)
+    data = chart_data(replay, overlay_settings(filters, strategy, sweep_tweak), sources, config)
     return {**data.delta(view.get("types") or [], frm, cursor), "key": key}
 
 
@@ -811,6 +840,33 @@ def layout(
             ),
         ],
     )
+    sweep_tweak = _popover(
+        "pop-sweep",
+        "Liquidity sweep (temporary)",
+        [
+            html.Div("Same-height high counts as the level", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="chart-sweep-tol",
+                options=[{"label": label, "value": v} for v, label in SWEEP_TOLERANCES],
+                value="none",
+                clearable=False,
+                searchable=False,
+                persistence=True,
+            ),
+            dcc.Checklist(
+                id="chart-sweep-two",
+                options=[{"label": "Two closes beyond: no sweep", "value": "on"}],
+                value=[],
+                persistence=True,
+                className="tb-check",
+            ),
+            html.Div(
+                "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
+                "and Equilibrium overlays.",
+                className="tb-pop-note",
+            ),
+        ],
+    )
     strategy = _popover(
         "pop-strategy",
         "Strategy",
@@ -884,6 +940,20 @@ def layout(
             ),
             html.Div(
                 [_icon_button("tb-strategy", "strategy", "Strategy", "pop-strategy"), strategy],
+                className="tb-anchor",
+            ),
+            html.Div(
+                [
+                    html.Button(
+                        "Sweep",
+                        id="tb-sweep",
+                        title="Liquidity sweep rules (temporary tweaker)",
+                        className="tb-btn",
+                        n_clicks=0,
+                        **{"data-pop": "pop-sweep"},
+                    ),
+                    sweep_tweak,
+                ],
                 className="tb-anchor",
             ),
             _icon_button("chart-replay-toggle", "replay", "Bar replay (on / off)"),
@@ -991,6 +1061,7 @@ def layout(
             html.Div([html.Div(id="chart-lwc"), replay_bar], className="tb-chart"),
             bottom,
             dcc.Store(id="chart-config", data=chart_settings(config)),
+            dcc.Store(id="chart-sweep-tweak"),
             dcc.Store(id="chart-base"),
             dcc.Store(id="chart-base-done"),
             dcc.Store(id="chart-need"),
@@ -1174,15 +1245,17 @@ def register_callbacks(
         State("settings-current", "data"),
         State("chart-day-boundary", "value"),
         State("chart-h4-alignment", "value"),
+        State("chart-sweep-tweak", "data"),
         prevent_initial_call=True,
     )
     def _overlays(request, symbol, timeframe, start_date, end_date, filters, store, boundary,
-                  h4):  # fmt: skip
+                  h4, sweep_tweak):  # fmt: skip
         strategy = settings_panel.store_json(store)
         cfg = with_boundary(config, boundary, h4)
         payload = overlay_payload(
-            sources, request, symbol, timeframe, start_date, end_date, filters, cfg, strategy
-        )
+            sources, request, symbol, timeframe, start_date, end_date, filters, cfg, strategy,
+            sweep_tweak,
+        )  # fmt: skip
         return payload if payload is not None else no_update
 
     app.clientside_callback(
@@ -1200,6 +1273,7 @@ def register_callbacks(
         Input("chart-sessions", "value"),
         Input("chart-base-done", "data"),
         Input("settings-current", "data"),
+        Input("chart-sweep-tweak", "data"),
     )
     app.clientside_callback(
         ClientsideFunction("chart", "overlays"),
@@ -1257,12 +1331,14 @@ def register_callbacks(
         State("settings-current", "data"),
         State("chart-day-boundary", "value"),
         State("chart-h4-alignment", "value"),
+        State("chart-sweep-tweak", "data"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-11:-3]
-        strategy = settings_panel.store_json(args[-3])
-        cfg = with_boundary(config, args[-2], args[-1])
+        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-12:-4]
+        strategy = settings_panel.store_json(args[-4])
+        cfg = with_boundary(config, args[-3], args[-2])
+        sweep_tweak = args[-1]
         action = _REPLAY_ACTIONS.get(ctx.triggered_id, "data")
         replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, cfg)
         clicked = ctx.triggered[0]["value"] if action == "click" else None
@@ -1277,7 +1353,9 @@ def register_callbacks(
         if stepping and replay is not None and new["now"] != state["now"]:
             cursor = replay.cursor_at(datetime.fromisoformat(new["now"]))
             key = chart_key(symbol, timeframe, start_date, end_date, cfg)
-            found = replay_delta(sources, view, replay, cursor, key, filters, cfg, strategy)
+            found = replay_delta(
+                sources, view, replay, cursor, key, filters, cfg, strategy, sweep_tweak
+            )
             if found is not None:
                 delta, message = found, replay_message(replay, cursor)
         # only what changed, so a replay step re-renders nothing but the chart and message
@@ -1294,6 +1372,14 @@ def register_callbacks(
             {**controls_style, "display": "flex" if new["on"] else "none"} if on else no_update,
             ("tb-btn active" if new["on"] else "tb-btn") if on else no_update,
         )
+
+    @app.callback(
+        Output("chart-sweep-tweak", "data"),
+        Input("chart-sweep-tol", "value"),
+        Input("chart-sweep-two", "value"),
+    )
+    def _sweep_tweak(tol, two):
+        return {"tol": tol, "two": bool(two)}
 
     @app.callback(
         Output("chart-overlay-types", "options"),

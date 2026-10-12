@@ -10,6 +10,7 @@ from __future__ import annotations
 from conftest import build_series
 from overlay_helpers import by_layer, chart_overlays, hovers, lines, points
 
+from backtester.detectors.sweep import SweepConfig
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG
 from backtester.ui.overlays import OVERLAYS
@@ -55,3 +56,13 @@ def test_magenta_line_from_the_highest_swept_swing_to_the_sweeping_candle():
     assert "Bearish liquidity sweep of highs" in text
     assert "high 11.500" in text and "high 11.000" in text  # every swept high listed
     assert "bearish BOS of 10.900" in text
+
+
+def test_toolbar_sweep_tweak_becomes_the_overlay_settings_sweep_config():
+    from backtester.ui.pages.chart import overlay_settings, sweep_config
+
+    assert sweep_config(None) == SweepConfig()  # nothing chosen: today's rules
+    assert sweep_config({"tol": "none", "two": False}) == SweepConfig()
+    chosen = sweep_config({"tol": "0.25", "two": True})
+    assert chosen.equal_tolerance_atr == 0.25 and chosen.two_closes_cancel
+    assert overlay_settings([], "", {"tol": "0", "two": False}).sweep.equal_tolerance_atr == 0.0

@@ -37,6 +37,7 @@ from types import MappingProxyType
 
 from backtester.core.models import Timeframe
 from backtester.detectors.base import Detector, Event
+from backtester.detectors.sweep import SweepConfig
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
@@ -55,6 +56,9 @@ class OverlaySettings:
     # doji thresholds changed in the settings menu (detectors.swings.doji_max_body), as
     # sorted (symbol, max body) pairs; every overlay's detectors use them (`swing_config`)
     doji_max_body: tuple[tuple[str, float], ...] = ()
+    # liquidity sweep rules being tried on the chart (the toolbar's Sweep menu); used by
+    # the sweep overlay and by the equilibrium overlay, which is built on sweeps
+    sweep: SweepConfig = field(default_factory=SweepConfig)
 
     @property
     def swing_config(self) -> SwingConfig:

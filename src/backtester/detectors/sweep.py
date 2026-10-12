@@ -19,6 +19,16 @@ Described for a sweep of highs (bearish: it leads to a bearish BOS), lows mirror
 - With no BOS in time, there is no sweep: the candidate is dropped, and a later candle
   taking one of the last N highs starts a new one, even below the old top.
 
+Reworked rules (user, 2026-10-12, all off by default until the user settles them on the chart):
+- `equal_tolerance_atr` not None: a candle is a candidate only if its wick is beyond the
+  required level: the least extreme of the last N highs lying within the tolerance (in
+  ATR of this timeframe, known before the candle) of the most extreme one. 0 is the spec's
+  "the most extreme of the last N must be taken", inf is "one of the last N" (None, the
+  default, is that too). While the ATR is not known the tolerance is 0.
+- `two_closes_cancel`: two consecutive closes beyond the swept level (dojis skipped, they
+  neither count nor break the streak) make it a breakout, not a sweep: the candidate is
+  dropped and the levels both closes are beyond are no longer sweepable.
+
 Edge cases (confirmed by the user, spec › Liquidity sweep):
 - A bullish BOS candle always closes above the high it breaks, so it is itself a candidate.
 - A doji's wick can sweep.
@@ -27,14 +37,22 @@ Edge cases (confirmed by the user, spec › Liquidity sweep):
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 
 from backtester.core.models import Candle, Direction
 from backtester.core.series import SeriesView
+from backtester.detectors.atr import Atr
 from backtester.detectors.base import Detector, Event
 from backtester.detectors.bos import BosDetector, BreakOfStructure
-from backtester.detectors.swings import SwingConfig, SwingDetector, SwingKind, SwingPoint
+from backtester.detectors.swings import (
+    SwingConfig,
+    SwingDetector,
+    SwingKind,
+    SwingPoint,
+    is_doji,
+)
 
 # The swing kind a sweep of each direction takes (a bearish sweep takes highs).
 SWEPT_KIND = {Direction.BEARISH: SwingKind.HIGH, Direction.BULLISH: SwingKind.LOW}
@@ -55,8 +73,16 @@ class SweepConfig:
     lookback_swings: int = 3  # N: a wick beyond one of the last N swings is a candidate
     bos_within: int = 10  # X: the BOS must close at most X candles after the top
     close_beyond_counts: bool = True  # off: a candle closing beyond a level doesn't sweep it
+    # None: one of the last N is enough; else the tolerance (x ATR) of the "same height" rule
+    equal_tolerance_atr: float | None = None
+    atr_period: int = 14  # ATR the tolerance is measured in
+    two_closes_cancel: bool = False  # two closes beyond the level: breakout, not a sweep
 
     def __post_init__(self) -> None:
+        if self.equal_tolerance_atr is not None and self.equal_tolerance_atr < 0:
+            raise ValueError("equal_tolerance_atr must be >= 0")
+        if self.atr_period < 1:
+            raise ValueError("atr_period must be >= 1")
         if self.lookback_swings < 1:
             raise ValueError("lookback_swings must be >= 1")
         if self.bos_within < 0:
@@ -105,6 +131,7 @@ class SweepDetector(Detector[LiquiditySweep]):
         self.doji_max_body = doji_max_body
         self.config = config or SweepConfig()
         self.bos = BosDetector(SwingDetector(doji_max_body))
+        self._atr = Atr(self.config.atr_period)
         self._sides = {d: _Side() for d in Direction}
         self.breaks: list[BreakOfStructure] = []
 
@@ -116,6 +143,8 @@ class SweepDetector(Detector[LiquiditySweep]):
 
     def update(self, view: SeriesView) -> list[LiquiditySweep]:
         # the swing detector inside checks the call order (once per candle, in order)
+        atr_before = self._atr.current  # known at the previous close
+        self._atr.update(view)
         swings_before = len(self.bos.swings)
         self.breaks = self.bos.update(view)
         breaks = {b.direction: b for b in self.breaks}
@@ -125,7 +154,9 @@ class SweepDetector(Detector[LiquiditySweep]):
             c = side.candidate
             if c is not None and view.cursor - c.index > self.config.bos_within:
                 side.candidate = None  # no BOS in time: no sweep from this top
-            self._take(view, direction, side)
+            self._take(view, direction, side, atr_before)
+            if self.config.two_closes_cancel:
+                self._cancel_breakout(view, direction, side)
             bos = breaks.get(direction)
             if bos is not None:
                 if side.candidate is not None:
@@ -150,7 +181,46 @@ class SweepDetector(Detector[LiquiditySweep]):
                     side.levels = [*side.levels, swing][-self.config.lookback_swings :]
         return events
 
-    def _take(self, view: SeriesView, direction: Direction, side: _Side) -> None:
+    def _required(
+        self, direction: Direction, levels: list[SwingPoint], atr: float | None
+    ) -> SwingPoint | None:
+        """The level a wick must be beyond: the least extreme level within the tolerance
+        of the most extreme one (`equal_tolerance_atr`)."""
+        if not levels:
+            return None
+        multiple = self.config.equal_tolerance_atr or 0.0
+        tolerance = 0.0 if atr is None else (math.inf if math.isinf(multiple) else multiple * atr)
+        sign = 1 if direction is Direction.BEARISH else -1
+        top = max(s.price * sign for s in levels)
+        group = [s for s in levels if top - s.price * sign <= tolerance]
+        return min(group, key=lambda s: s.price * sign)
+
+    def _cancel_breakout(self, view: SeriesView, direction: Direction, side: _Side) -> None:
+        """Two consecutive (non-doji) closes beyond the swept level: no sweep, the levels
+        both closes are beyond are accepted and drop out."""
+        c = side.candidate
+        if c is None:
+            return
+        level = c.swept[-1].price
+        closes: list[float] = []
+        for i in range(view.cursor, -1, -1):
+            candle = view[i]
+            if is_doji(candle, self.doji_max_body):
+                continue
+            if not beyond(direction, candle.close, level):
+                return
+            closes.append(candle.close)
+            if len(closes) == 2:
+                break
+        else:
+            return
+        accepted = min(closes) if direction is Direction.BEARISH else max(closes)
+        side.levels = [s for s in side.levels if not beyond(direction, accepted, s.price)]
+        side.candidate = None
+
+    def _take(
+        self, view: SeriesView, direction: Direction, side: _Side, atr: float | None = None
+    ) -> None:
         """Make the current candle the candidate if it is the new top and took a level."""
         candle = view.current
         price = wick(direction, candle)
@@ -162,6 +232,10 @@ class SweepDetector(Detector[LiquiditySweep]):
             if beyond(direction, price, s.price)
             and (self.config.close_beyond_counts or not beyond(direction, candle.close, s.price))
         ]
+        if swept and self.config.equal_tolerance_atr is not None:
+            required = self._required(direction, side.levels, atr)
+            if required not in swept:
+                swept = []
         if not swept:
             side.candidate = None  # nothing swept; a top it went beyond is no sweep any more
             return

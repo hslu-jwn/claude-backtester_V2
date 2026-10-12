@@ -30,7 +30,9 @@ def detect_equilibria(
     replay: Replay, settings: OverlaySettings = DEFAULT_SETTINGS
 ) -> list[Equilibrium | ZoneTransition]:
     try:
-        detector = EquilibriumDetector.for_symbol(replay.symbol, settings.swing_config)
+        detector = EquilibriumDetector.for_symbol(
+            replay.symbol, settings.swing_config, settings.sweep
+        )
     except KeyError as e:
         raise OverlayUnavailable(e.args[0]) from e
     return run_detector(detector, replay)

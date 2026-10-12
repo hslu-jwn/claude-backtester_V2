@@ -724,14 +724,14 @@
 
       /* Selection (overlay switch, types, filters, sessions) or a new base: show / hide
          what is loaded and request what is missing. */
-      select(overlays, types, filters, sessions, base, settings) {
+      select(overlays, types, filters, sessions, base, settings, sweep) {
         S.overlaysOn = !!(overlays && overlays.length);
         const sel = types || [];
         S.selected = new Set(sel.filter((v) => !v.includes(".")));
         S.parts = new Set(sel.filter((v) => v.includes(".")));
         S.showSessions = !!(sessions && sessions.length);
         // drawings depend on the detector switches and the strategy settings (Trades)
-        const f = JSON.stringify([filters || [], (settings && settings.key) || ""]);
+        const f = JSON.stringify([filters || [], (settings && settings.key) || "", sweep || null]);
         if (f !== S.filters) { clearDrawings(); S.filters = f; view(); }
         showBadges();
         invalidate();

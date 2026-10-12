@@ -286,11 +286,143 @@ def test_close_beyond_off_a_higher_candle_that_sweeps_nothing_ends_the_candidate
     assert summary(run(ohlc, config=off)) == [(BEAR, 9, 11.65, 11.5, 9)]
 
 
+# --- equal-high tolerance and "two closes beyond" (user, 2026-10-12; spec › Liquidity sweep) ---
+# After UP[:6] the last highs are 11.0 and 11.5 (0.5 apart). ATR period 1 makes the ATR
+# known before candle 6 the true range of candle 5: 0.35.
+EQUAL = [
+    *UP[:6],
+    (11.1, 11.3, 11.05, 11.25),  # 6 green: wick 11.3 takes 11.0 but not 11.5
+    (11.25, 11.28, 10.7, 10.75),  # 7 red: closes below the low 10.9 -> bearish BOS
+]
+
+
+def mirror(ohlc, k=40.0):
+    """The same candles upside down (highs <-> lows); prices become k - price."""
+    return [(k - o, k - lo, k - hi, k - c) for o, hi, lo, c in ohlc]
+
+
+# bos_within = 2: the top at candle 3 (it took 11.0) has expired when candle 6 comes
+def tolerance(atr_multiple, **kw):
+    return SweepConfig(equal_tolerance_atr=atr_multiple, atr_period=1, bos_within=2, **kw)
+
+
+def test_default_is_any_of_the_last_n_so_the_lower_high_is_swept():
+    assert summary(run(EQUAL, config=SweepConfig(bos_within=2))) == [(BEAR, 6, 11.3, 11.0, 7)]
+
+
+def test_tolerance_zero_needs_the_most_extreme_of_the_last_n():
+    assert run(EQUAL, config=tolerance(0.0)) == []
+
+
+def test_a_high_within_the_tolerance_of_the_highest_counts_as_the_level():
+    # 11.5 - 11.0 = 0.5 <= 2 x 0.35
+    assert summary(run(EQUAL, config=tolerance(2.0))) == [(BEAR, 6, 11.3, 11.0, 7)]
+
+
+def test_a_high_beyond_the_tolerance_does_not_count():
+    # 0.5 > 1 x 0.35: 11.0 is a lower high, 11.5 is still ahead
+    assert run(EQUAL, config=tolerance(1.0)) == []
+
+
+def test_infinite_tolerance_is_any_of_the_last_n():
+    any_of_n = run(EQUAL, config=SweepConfig(bos_within=2))
+    assert any_of_n and run(EQUAL, config=tolerance(float("inf"))) == any_of_n
+
+
+def test_tolerance_is_zero_while_the_atr_is_not_known_yet():
+    config = SweepConfig(equal_tolerance_atr=100.0, bos_within=2)  # ATR(14) needs 14 candles
+    assert run(EQUAL, config=config) == []
+
+
+def test_a_wick_beyond_the_most_extreme_is_a_sweep_with_any_tolerance():
+    assert summary(
+        run(UP[:6] + [(11.2, 11.8, 11.1, 11.7), (11.7, 11.75, 10.7, 10.8)], config=tolerance(0.0))
+    ) == [(BEAR, 6, 11.8, 11.5, 7)]
+
+
+def test_tolerance_works_mirrored_for_lows():
+    (sweep,) = run(mirror(EQUAL), config=tolerance(2.0))
+    assert summary([sweep]) == [(BULL, 6, 40.0 - 11.3, 40.0 - 11.0, 7)]
+    assert run(mirror(EQUAL), config=tolerance(1.0)) == []
+
+
+# Candle 6 closes 11.7 beyond 11.5 and 11.0; what follows decides.
+TWO = SweepConfig(two_closes_cancel=True)
+
+
+def test_two_closes_beyond_the_level_are_no_sweep_but_a_breakout():
+    ohlc = [
+        *UP,
+        (11.7, 11.9, 11.6, 11.85),  # 7 green: second close beyond 11.5
+        (11.85, 11.9, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    assert summary(run(ohlc)) == [(BEAR, 7, 11.9, 11.5, 8)]  # without the rule
+    assert run(ohlc, config=TWO) == []
+
+
+def test_a_doji_does_not_count_as_a_close_and_does_not_break_the_streak():
+    ohlc = [
+        *UP,
+        (11.7, 11.95, 11.65, 11.72),  # 7 doji (body 0.02) closing beyond: ignored
+        (11.72, 11.9, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    assert summary(run(ohlc, config=TWO)) == [(BEAR, 7, 11.95, 11.5, 8)]
+    ohlc[-1:-1] = [(11.72, 11.9, 11.7, 11.85)]  # a real candle closing beyond follows
+    ohlc[-1] = (11.85, 11.9, 10.8, 10.85)
+    assert run(ohlc, config=TWO) == []
+
+
+def test_a_close_back_below_the_level_keeps_it_a_sweep():
+    ohlc = [
+        *UP,
+        (11.7, 11.9, 11.2, 11.3),  # 7 red: top 11.9, closes below 11.5
+        (11.3, 11.35, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    assert summary(run(ohlc, config=TWO)) == [(BEAR, 7, 11.9, 11.5, 8)]
+
+
+def test_a_wick_above_with_a_close_below_then_one_close_beyond_is_still_a_sweep():
+    ohlc = [
+        *UP[:6],
+        (11.2, 11.8, 11.1, 11.45),  # 6 green: wick above 11.5, closes below it
+        (11.45, 11.6, 11.4, 11.55),  # 7 green: one close beyond 11.5 (no new top)
+        (11.55, 11.58, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    assert summary(run(ohlc, config=TWO)) == [(BEAR, 6, 11.8, 11.5, 8)]
+
+
+def test_two_closes_work_mirrored_for_lows():
+    ohlc = [
+        *UP,
+        (11.7, 11.9, 11.6, 11.85),
+        (11.85, 11.9, 10.8, 10.85),
+    ]
+    assert run(mirror(ohlc), config=TWO) == []
+    assert run(mirror(ohlc))[0].direction is BULL
+
+
+def test_the_breakout_no_longer_counts_its_levels_as_sweepable():
+    # after the breakout (candles 6, 7) the highs 11.0 / 11.5 are accepted; a later wick
+    # above 11.5 must not make a sweep of them when a BOS follows
+    ohlc = [
+        *UP,
+        (11.7, 11.9, 11.6, 11.85),  # 7 second close beyond: breakout
+        (11.85, 11.88, 11.6, 11.7),  # 8 red, swing high 11.9 confirmed
+        (11.7, 11.89, 11.65, 11.75),  # 9 wick 11.89 above 11.5, below 11.9
+        (11.75, 11.8, 10.7, 10.75),  # 10 red: bearish BOS of 10.9
+    ]
+    assert run(ohlc, config=TWO) == []
+
+
 def test_config_rejects_values_below_one_and_negative():
     with pytest.raises(ValueError):
         SweepConfig(lookback_swings=0)
     with pytest.raises(ValueError):
         SweepConfig(bos_within=-1)
+    with pytest.raises(ValueError):
+        SweepConfig(equal_tolerance_atr=-0.1)
+    with pytest.raises(ValueError):
+        SweepConfig(atr_period=0)
 
 
 def random_walk(n=800, seed=11):
@@ -306,7 +438,12 @@ def random_walk(n=800, seed=11):
 
 @pytest.mark.parametrize(
     "config",
-    [SweepConfig(), SweepConfig(lookback_swings=1, bos_within=2, close_beyond_counts=False)],
+    [
+        SweepConfig(),
+        SweepConfig(lookback_swings=1, bos_within=2, close_beyond_counts=False),
+        SweepConfig(equal_tolerance_atr=0.5, two_closes_cancel=True),
+        SweepConfig(equal_tolerance_atr=0.0, atr_period=3, two_closes_cancel=True),
+    ],
 )
 def test_no_lookahead_events_only_at_their_bos_candle_and_never_rewritten(config):
     series = random_walk()
