@@ -103,6 +103,7 @@ from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
 from backtester.runner import BackgroundRun, RunSettings, start_run
 from backtester.settings import from_json
+from backtester.strategy.registry import REGISTRY
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
@@ -628,7 +629,7 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
 
 
 QUICK_RANGES = ("1M", "3M", "6M", "YTD", "1Y", "All")
-STRATEGIES = [{"label": "Strategy 1 · Session zone sweep", "value": "session_zone_sweep"}]
+STRATEGIES = [{"label": spec.label, "value": name} for name, spec in REGISTRY.items()]
 
 
 def timeframe_label(name: str) -> str:

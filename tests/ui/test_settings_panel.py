@@ -157,6 +157,6 @@ def test_doji_threshold_is_first_in_detectors_with_one_explanation():
     detectors = sp.grouped(leaves())["Detectors"]
     doji = [leaf.path for leaf in detectors[:3]]
     assert doji == [f"detectors.swings.doji_max_body.{s}" for s in ("XAUUSD", "GBPUSD", "GBPJPY")]
-    body = str(sp._group_body("Detectors", detectors, True))
+    body = str(sp._group_body("Detectors", [(leaf.path, leaf) for leaf in detectors], True))
     assert body.count("Used by every detector") == 1
     assert body.index("Doji threshold") < body.index("FVG")

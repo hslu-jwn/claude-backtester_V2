@@ -186,3 +186,33 @@ def test_loading_a_preset_applies_it_in_its_strategy(tmp_path):
     out = sp.form_update({"load": "ny first"}, widgets_for(S2), None, folder=tmp_path, strategy=S2)
     assert out["widgets"]["strategy.min_tp1_r"] == 1.4 and out["preset"] == "ny first"
     assert sp.store_settings(out["store"]).strategy.min_tp1_r == 1.4
+
+
+# --- the widgets of the Dash callback -----------------------------------------------------
+
+
+def test_only_the_widgets_of_the_shown_strategy_are_read():
+    ids = ["warmup_days", "strategy.zone_kill", "strategy.min_tp1_r", "strategy.confluence_kinds",
+           f"{S2}:strategy.confluence_kinds"]  # fmt: skip
+    values = [14, ["on"], 1.5, ["FVG"], ["ORDER_BLOCK", "EQUILIBRIUM"]]
+    s1 = sp.panel_widgets(ids, values, S1)
+    assert s1 == {"warmup_days": 14, "strategy.zone_kill": ["on"],
+                  "strategy.confluence_kinds": ["FVG"]}  # fmt: skip
+    s2 = sp.panel_widgets(ids, values, S2)
+    assert s2 == {"warmup_days": 14, "strategy.min_tp1_r": 1.5,
+                  "strategy.confluence_kinds": ["ORDER_BLOCK", "EQUILIBRIUM"]}  # fmt: skip
+    assert sp.panel_widgets(ids, values, S1, picked=S2) == s2  # the dropdown just changed
+
+
+def test_rows_of_the_other_strategy_are_hidden_and_marks_follow_the_shown_strategy():
+    ids = ["strategy.zone_kill", "strategy.min_tp1_r", f"{S2}:strategy.confluence_kinds"]
+    classes = sp.row_classes(ids, [False, True, True], ["strategy.min_tp1_r"], None)
+    assert classes == ["st-row st-hidden", "st-row st-changed", "st-row"]
+    err = sp.row_classes(ids, [False, True, True], [], "strategy.confluence_kinds")
+    assert err[2] == "st-row st-error"  # an error names the settings path, not the widget id
+
+
+def test_the_page_lists_the_strategies_of_the_registry():
+    from backtester.ui.pages import chart
+
+    assert [s["value"] for s in chart.STRATEGIES] == [S1, S2]

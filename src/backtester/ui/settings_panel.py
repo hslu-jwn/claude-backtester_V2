@@ -554,19 +554,24 @@ def preset_controls() -> list:
 # --- layout ----------------------------------------------------------------------------
 
 
-def _widget(leaf: Leaf):
-    id_ = {"type": "st-field", "path": leaf.path}
+def _widget(leaf: Leaf, widget_path: str):
+    id_ = {"type": "st-field", "path": widget_path}
+    owner = widget_path.partition(":")[0] if ":" in widget_path else DEFAULT_STRATEGY
     if leaf.kind == "bool":
         return dcc.Checklist(
             id=id_, options=[{"label": "", "value": "on"}], value=[], className="st-switch"
         )
     if leaf.kind == "enum":
         return dcc.Dropdown(
-            id=id_, options=options_of(leaf), clearable=False, searchable=False, className="st-dd"
+            id=id_,
+            options=options_of(leaf, owner),
+            clearable=False,
+            searchable=False,
+            className="st-dd",
         )
     if leaf.kind == "enum_set":
-        return dcc.Checklist(id=id_, options=options_of(leaf), value=[], className="st-set")
-    if leaf.kind in ("time", "text"):
+        return dcc.Checklist(id=id_, options=options_of(leaf, owner), value=[], className="st-set")
+    if leaf.kind in ("time", "text", "float_list"):
         return dcc.Input(id=id_, type="text", debounce=True, className="st-input")
     optional = leaf.kind.startswith("optional_")
     return dcc.Input(
@@ -590,7 +595,7 @@ def _default_text(leaf: Leaf) -> str:
     return f"{value:g}" if isinstance(value, float) else str(value)
 
 
-def _row(leaf: Leaf) -> html.Div:
+def _row(leaf: Leaf, widget_path: str) -> html.Div:
     return html.Div(
         [
             html.Div(
@@ -602,16 +607,16 @@ def _row(leaf: Leaf) -> html.Div:
                 ],
                 className="st-text",
             ),
-            html.Div(_widget(leaf), className="st-control"),
+            html.Div(_widget(leaf, widget_path), className="st-control"),
             html.Button(
                 "↺",
-                id={"type": "st-reset", "path": leaf.path},
+                id={"type": "st-reset", "path": widget_path},
                 title=f"Reset to default ({_default_text(leaf)})",
                 className="st-reset",
                 n_clicks=0,
             ),
         ],
-        id={"type": "st-row", "path": leaf.path},
+        id={"type": "st-row", "path": widget_path},
         className="st-row",
     )
 
@@ -621,6 +626,7 @@ def _section_help_of(path: str) -> str:
 
 
 def grouped(leaf_list: Sequence[Leaf]) -> dict[str, list[Leaf]]:
+    """The leaves by group, in `GROUPS` order, empty groups left out."""
     out: dict[str, list[Leaf]] = {g: [] for g in (*GROUPS, OTHER)}
     for leaf in leaf_list:
         out[group_of(leaf.path)].append(leaf)
@@ -629,16 +635,16 @@ def grouped(leaf_list: Sequence[Leaf]) -> dict[str, list[Leaf]]:
     return {g: ls for g, ls in out.items() if ls}
 
 
-def _group_body(group: str, leaf_list: list[Leaf], shown: bool) -> html.Div:
+def _group_body(group: str, fields: list[tuple[str, Leaf]], shown: bool) -> html.Div:
     children, section = [], ""
-    for leaf in leaf_list:
+    for widget_path, leaf in fields:
         s = section_of(leaf.path)
         if s and s != section:
             children.append(html.Div(s, className="st-section"))
             if help_ := _section_help_of(leaf.path):
                 children.append(html.Div(help_, className="st-help st-section-help"))
         section = s
-        children.append(_row(leaf))
+        children.append(_row(leaf, widget_path))
     return html.Div(
         children,
         id={"type": "st-group-body", "group": group},
@@ -646,18 +652,31 @@ def _group_body(group: str, leaf_list: list[Leaf], shown: bool) -> html.Div:
     )
 
 
+def _fields_by_group() -> dict[str, list[tuple[str, Leaf]]]:
+    """Every widget of the panel (all strategies) by group, in each strategy's field
+    order; rows a strategy does not use are hidden by class (`row_classes`)."""
+    out: dict[str, list[tuple[str, Leaf]]] = {}
+    for widget_path, leaf, _ in panel_fields():
+        out.setdefault(group_of(leaf.path), []).append((widget_path, leaf))
+    for group_fields in out.values():  # stable: the doji thresholds first
+        group_fields.sort(key=lambda f: not f[1].path.startswith(FIRST_IN_GROUP))
+    return {g: out[g] for g in (*GROUPS, OTHER) if g in out}
+
+
+def title_of(strategy: str) -> str:
+    return f"{REGISTRY[strategy].label} · Settings"
+
+
 def layout() -> html.Div:
     """The modal (hidden until a button with data-modal="st-modal" opens it)."""
-    groups = grouped(leaves())
-    first = next(iter(groups))
+    groups = _fields_by_group()
+    first = next(iter(grouped(strategy_leaves(DEFAULT_STRATEGY))))
     return html.Div(
         html.Div(
             [
                 html.Div(
                     [
-                        html.Div(
-                            "Strategy 1 · Session zone sweep · Settings", className="st-title"
-                        ),
+                        html.Div(title_of(DEFAULT_STRATEGY), id="st-title", className="st-title"),
                         html.Button("✕", className="st-close", **{"data-modal-close": "st-modal"}),
                     ],
                     className="st-head",
@@ -667,7 +686,7 @@ def layout() -> html.Div:
                     [
                         dcc.RadioItems(
                             id="st-group",
-                            options=list(groups),
+                            options=list(grouped(strategy_leaves(DEFAULT_STRATEGY))),
                             value=first,
                             className="st-nav",
                         ),
@@ -703,6 +722,37 @@ def layout() -> html.Div:
     )
 
 
+def _picked(args) -> str | None:
+    """The strategy the strategy popover was just changed to, if that was the trigger."""
+    return args[4] if ctx.triggered_id == "chart-strategy" else None
+
+
+def panel_widgets(
+    widget_paths: Sequence[str], values: Sequence[Any], strategy: str, picked: str | None = None
+) -> dict[str, Any]:
+    """{settings path: widget value} of the widgets that belong to the strategy now shown
+    (`picked`, else `strategy`)."""
+    owners = {wp: o for wp, _, o in panel_fields()}
+    active = picked or strategy
+    return {
+        real_path(wp): v
+        for wp, v in zip(widget_paths, values, strict=True)
+        if active in owners.get(wp, ())
+    }
+
+
+def row_classes(
+    widget_paths: Sequence[str], mine: Sequence[bool], changed: Sequence[str], error: str | None
+) -> list[str]:
+    return [
+        "st-row"
+        + ("" if own else " st-hidden")
+        + (" st-changed" if real_path(wp) in changed and own else "")
+        + (" st-error" if real_path(wp) == error and own else "")
+        for wp, own in zip(widget_paths, mine, strict=True)
+    ]
+
+
 def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
     app.clientside_callback(
         """function (group, ids) {
@@ -723,32 +773,45 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         Output("bt-preset", "options"),
         Output("bt-preset", "value"),
         Output("bt-preset-note", "children"),
+        Output("st-group", "options"),
+        Output("st-group", "value"),
+        Output("st-title", "children"),
         Input({"type": "st-field", "path": ALL}, "value"),
         Input({"type": "st-reset", "path": ALL}, "n_clicks"),
         Input("st-reset-all", "n_clicks"),
         Input("st-preset", "value"),
         Input("bt-preset", "value"),
+        Input("chart-strategy", "value"),
         *[Input(f"st-{action}", "n_clicks") for action in PRESET_ACTIONS],
         State("st-name", "value"),
         State("settings-current", "data"),
+        State("st-group", "value"),
     )
     def _settings(values, *args):
-        name, store = args[-2:]
-        paths = [item["id"]["path"] for item in ctx.inputs_list[0]]
-        widgets = dict(zip(paths, values, strict=True))
-        result = form_update(_trigger(), widgets, store, name=name, folder=presets_dir)
+        name, store, group = args[-3:]
+        widget_paths = [item["id"]["path"] for item in ctx.inputs_list[0]]
+        strategy = store_strategy(store)
+        result = form_update(
+            _trigger(), panel_widgets(widget_paths, values, strategy, _picked(args)), store,
+            name=name, folder=presets_dir, strategy=strategy,
+        )  # fmt: skip
+        now = result["store"]["strategy"] if result["store"] is not None else strategy
+        if _picked(args) and result["store"] is None and not result["error"]:
+            now = _picked(args)  # picked and unchanged: the same as the store's
+        owners = {wp: o for wp, _, o in panel_fields()}
+        mine = [now in owners.get(wp, ()) for wp in widget_paths]
         error_path = result["error"][0] if result["error"] else None
-        classes = [
-            "st-row"
-            + (" st-changed" if p in result["changed"] else "")
-            + (" st-error" if p == error_path else "")
-            for p in paths
-        ]
+        classes = row_classes(widget_paths, mine, result["changed"], error_path)
         new = result["widgets"]
         options = preset_options(result["presets"])
         note = "Modified, not saved (see Settings…)." if result["modified"] else ""
+        groups = list(grouped(strategy_leaves(now)))
+        shown = [
+            no_update if new is None or not own else new.get(real_path(wp), no_update)
+            for wp, own in zip(widget_paths, mine, strict=True)
+        ]
         return (
-            [new[p] for p in paths] if new is not None else [no_update] * len(paths),
+            shown,
             classes,
             result["store"] if result["store"] is not None else no_update,
             status_text(result),
@@ -757,7 +820,20 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
             options,
             result["preset"],
             note,
+            groups,
+            group if group in groups else groups[0],
+            title_of(now),
         )
+
+    @app.callback(
+        Output("chart-strategy", "value"),
+        Input("settings-current", "data"),
+        State("chart-strategy", "value"),
+    )
+    def _strategy_of_store(store, shown):
+        """The strategy popover follows the store (a page load, a strategy 2 preset)."""
+        name = store_strategy(store)
+        return no_update if name == shown else name
 
 
 def _trigger():
@@ -769,6 +845,8 @@ def _trigger():
         return "reset-all"
     if tid in ("st-preset", "bt-preset"):
         return {"load": ctx.triggered[0]["value"]}
+    if tid == "chart-strategy":
+        return {"strategy": ctx.triggered[0]["value"]}
     if isinstance(tid, str) and tid.removeprefix("st-") in PRESET_ACTIONS:
         return tid.removeprefix("st-")
     if isinstance(tid, Mapping) and tid.get("type") == "st-reset":

@@ -55,6 +55,7 @@ from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
 from backtester.runner import RunSettings
 from backtester.settings import from_json
+from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
 from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
 from backtester.ui.drawing import Box, Drawing, Hover, Label, Line
@@ -173,6 +174,11 @@ def detect_trades(
 ) -> list[ChartTrade]:
     if sources is None:
         raise OverlayUnavailable("needs the chart's data sources")
+    if not isinstance(from_json(settings.strategy).strategy, SessionZoneSweepConfig):
+        raise OverlayUnavailable(
+            "Trades: only for strategy 1 so far (strategy 2's overlay is ROADMAP 8.6); "
+            "the backtest runs strategy 2"
+        )
     candles = list(replay.view(len(replay) - 1))
     opens = [c.ts for c in candles]
     duration = replay.timeframe.duration
