@@ -5,18 +5,18 @@
 > Note: **order blocks** use the first OB version (the new OB rules are on hold, `confluences.md` › Order block).
 
 ## General
-- **Windows (ET, NY DST)** ⚙️:
+- **Windows (ET, NY DST)** ⚙️, one per session, each with its own start and end time in the settings (rule set by the user 2026-10-11). Default: **30 minutes before until 2 hours after the session open**:
   - AM: open 09:30 → window 09:00–11:30
   - PM: open 14:00 → window 13:30–16:00
-- The whole setup, from sweep to entry, must happen inside the window. Untriggered setups die at window end. Open trades keep running (no force close).
-- Best time AM 09:50–10:10 and PM 13:50–14:10: trades are tagged, with an include/exclude toggle.
+- The whole setup, from sweep to entry, must happen inside the window (always on). Untriggered setups die at window end. Open trades keep running (no force close).
+- The earlier "best time" (AM 09:50–10:10, PM 13:50–14:10, trades tagged with an include/exclude toggle) is **replaced** by these window settings (user, 2026-10-11): to trade only 09:50–10:10, set the AM window to that. **Code not updated yet** (ROADMAP 8.4: the `best_time` tag and `include_best_time_trades` are still in the code).
 - ⚙️ Max trades per session per index (default 1). Counted separately for NAS100 and US500. Every re-entry counts.
 - **Candles:** 1h on full hours; 4h closing at 02/06/10/14/18/22 ET (TradingView alignment, built from 1m data); all other timeframes standard.
 - **Read once before the session (frozen):** the bias and, for the AM, the timeframe route. Only trades in the bias direction.
 - **Trend:** › `confluences.md` › Trend (defined only by BoS). No sideways state.
 - **BoS = a real BoS only** (`confluences.md` › Break of structure: only against the current trend of that timeframe; rule set by the user 2026-10-10, **no setting**). If the setup TF is already in the bias direction's trend when the sweep happens, a close above the swing high is no BoS and the setup does not continue. Same for the entry-TF BoS.
 - **Which swing high the BoS breaks:** the **most recent** confirmed swing high (`confluences.md` › Break of structure), also when a lower high formed between the sweep and the BoS (rule set by the user 2026-10-11; "the last swing high before the sweep" is to become a backtest setting later, ROADMAP 8.4).
-- **Sweep:** › `confluences.md` › Liquidity sweep: wick beyond one of the last ⚙️ 3 swing lows/highs on the sweep TF, followed by a BoS in the bias direction within ⚙️ 10 sweep-TF candles (separate setting for AM and PM).
+- **Sweep:** › `confluences.md` › Liquidity sweep: wick beyond the **most extreme of the last ⚙️ 3** swing lows/highs on the sweep TF (rule set by the user 2026-10-11; was "one of the last 3"; code not updated yet), followed by a BoS in the bias direction within ⚙️ 10 sweep-TF candles (separate setting for AM and PM).
 - **No trend yet** (rule set by the user 2026-10-11): no 4h trend (AM) or no 15m trend (PM) = no bias = no trades in that window. A 1h trend of "none" counts as "different from 4h" (→ 15m / 5m route). In practice only at the start of the data.
 - **3rd confluence:** the confluence of step 3. It must lie inside the BoS move (sweep extreme → BoS candle). A tap (wick) is enough.
   - **Inside the move = by time** (rule set by the user 2026-10-11): formed by candles from the sweep extreme up to and including the BoS candle. Price-wise it can never lie below the sweep extreme (a close there would be an opposite BoS and cancel the setup). Confluences formed **after** the BoS candle (while price keeps running before the retracement) do **not** count.
@@ -87,9 +87,10 @@
   - If the levels run out, the remaining parts close at the last available TP (e.g. TP2 closes ⅔).
 
 ## Backtest options (⚙️)
-- Trading windows (AM/PM) and best-time tag (toggle)
+- Trading windows: start and end per session (AM 09:00–11:30, PM 13:30–16:00 = open −30 min to open +2 h); the whole setup inside
 - Max trades per session per index (1)
-- Sweep: lookback N swings (3), close beyond the level allowed (yes), BoS within X sweep-TF candles (10, separate for AM/PM)
+- Sweep: lookback N swings (3, the most extreme of them must be taken), close beyond the level allowed (yes), BoS within X sweep-TF candles (10, separate for AM/PM)
+- Later: BoS against "the last swing high before the sweep" instead of the most recent one (user, 2026-10-11)
 - 3rd-confluence timeout (25 setup-TF candles)
 - Confluence types on/off (OB, BB, BPR, FVG, EQ)
 - Entry-TF confluence entry (ON; OFF = enter at the entry-TF BoS close)

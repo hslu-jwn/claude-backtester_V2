@@ -15,7 +15,9 @@ Each layer only imports from the layers above it in this list.
    Output: events stamped with their confirming candle. Spec: `confluences.md`.
 4. **sessions.py**: maps UTC timestamps to Tokyo / London / New York sessions (DST-aware).
 5. **strategy/**: combines detectors across timeframes into setups and trade signals in price
-   terms (entry, SL, TP). Strategy 1: `session_zone_sweep/`. Spec: `strategy-session-zones.md`.
+   terms (entry, SL, TP). Strategy 1: `session_zone_sweep/` (spec `strategy-session-zones.md`,
+   base 5m). Strategy 2: `ny_index_sweep/` (spec `strategy-ny-indices.md`, base 1m, 5m / 15m /
+   1h / New York-aligned 4h, AM / PM windows).
 6. **engine/**: the backtest loop. Owns the `CandleSeries`, steps time, hands out views,
    opens and closes trades, and records each closed trade with its result in **R**.
 7. **analytics/**: statistics on R trade lists.
@@ -30,7 +32,7 @@ Each layer only imports from the layers above it in this list.
 ## How a backtest steps through time
 
 ```
-for each base-timeframe candle i (5m for strategy 1), oldest first:
+for each base-timeframe candle i (5m for strategy 1, 1m for strategy 2), oldest first:
     now   = close time of candle i
     v5    = series_5m.view(i)
     v30   = clock_30m.view_at(now)     # only fully closed 30m candles
@@ -45,6 +47,19 @@ for each base-timeframe candle i (5m for strategy 1), oldest first:
 
 `engine/backtest.py` (`run_backtest`) implements this loop on top of `Replay`; trades are
 `engine/trade.py` (`TradeResult`: gross and net R), costs `engine/costs.py` (`CostConfig`).
+An order closes in up to three parts (`take_profit`, `take_profit_2`, `take_profit_3` with
+`tp1_share` / `tp2_share`; strategy 1 uses two, strategy 2 three), break-even after TP1 if
+asked. When a trade has closed, the engine calls `strategy.on_trade_closed(order.ref,
+result)` before the next `on_candle` (strategy 2: one open trade per setup, re-entries).
+The break-even at the next session start (step 2) is strategy 1's rule: a strategy with
+`uses_session_break_even = False` (strategy 2) skips it.
+
+`runner.py` picks the strategy from its config (`make_strategy`: a `NyIndexSweepConfig`
+runs strategy 2) and loads every declared timeframe from the cache: the base and lower
+timeframes from the warm-up start, the strategy's `full_history` timeframes (strategy 2:
+15m, 1h, 4h, for untouched highs and never-tapped zones as TP levels) from the first cached
+day, 4h in the strategy's `h4_alignment` (strategy 2: New York, `data/resample.py`
+`H4Alignment`; these candles cross UTC midnight and are read like D / W candles).
 
 `engine/replay.py` (`Replay`) gives the views for a cursor (`v5` and, via the clocks, `v30`/`v1h`).
 The chart replay (ROADMAP 1.2) draws from it, so it shows exactly what the engine sees.

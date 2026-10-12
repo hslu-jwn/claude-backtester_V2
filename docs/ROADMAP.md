@@ -1039,6 +1039,13 @@ in its results reported).
      no-lookahead), `tests/ui/test_breaker_overlay.py`; strategy 1's EQ tests run without
      breakers, plus a test that the breaker wins a same-candle tie with the EQ (strategy 1's
      rule: the most recently formed, then the one nearest the close).
+  Status (2026-10-11): 8.2.1 – 8.2.4 built, the user checks them on the chart later
+  (Liquidity sweep, Equilibrium, Breaker block overlays).
+  **Rule change after 8.2.1 (user, 2026-10-11, code not updated):** a sweep needs a wick
+  beyond the **most extreme of the last N** swings, not one of them (`confluences.md` ›
+  Liquidity sweep). To do: `detectors/sweep.py` (`_take`: candidate only when the wick is
+  beyond the most extreme of the last N; level = that swing), its tests, strategy 2's
+  `_register_sweeps`.
   4. ◐ **Confluence toggles** (› Confluence toggles): OB, breaker, BPR, FVG, EQ each
      on/off per backtest, in the settings (4.1) and presets.
      Strategy 1 (2026-10-10): already had them: "Entry confluence types"
@@ -1052,6 +1059,12 @@ in its results reported).
   UTC-aligned 4h (strategy 1 keeps its own); 1h on full hours. Window clock (ET, NY DST):
   AM 09:00–11:30 (open 09:30), PM 13:30–16:00 (open 14:00), best-time tags AM
   09:50–10:10, PM 13:50–14:10; all ⚙. Tests around the March and November changes.
+  **Changed by the user (2026-10-11):** the best-time tag and its include / exclude toggle
+  are replaced by the window settings: start and end per session, default 30 min before
+  until 2 h after the open (= the windows above), the whole setup inside, always on
+  (`strategy-ny-indices.md` › General). To do (code not updated): drop `best_time` /
+  `include_best_time_trades` / `WindowTimes.best_start|best_end` / `is_best_time`, keep
+  start / end as the settings (UI with 8.6).
   Built (2026-10-10):
   - `data/resample.py` `H4Alignment` (UTC default, NEW_YORK), `new_york_h4_open`,
     `spans_utc_days`; `CacheAdapter.fetch_frame(h4=…)` reads NY 4h candles like D / W
@@ -1124,6 +1137,16 @@ in its results reported).
   - Strategy 2 switches off strategy 1's break-even at the next session start
     (`Strategy.uses_session_break_even`); break-even only after TP1.
   - Later setting (user, 2026-10-11): BoS against "the last swing high before the sweep".
+  **Open after the first run (2026-10-11 / 12), code not updated yet (user: no code
+  changes for now):**
+  1. Sweep: the most extreme of the last N swings must be taken (8.2.1 note above).
+     Example that showed it: NAS100 2026-09-24 AM short "swept" a 4h high at 29,669 with
+     price around 30,200.
+  2. Windows instead of the best-time tag (8.3 note above); the `best_time` tag and
+     `include_best_time_trades` go away.
+  3. Strategy 2 settings in the settings panel and presets (windows per session and the
+     rest of `NyIndexSweepConfig`), with 8.6.
+  Then re-run 8.7.
 - ◐ **8.5 Strategy 2 SL / TP** (› Stop Loss, › Take Profit). SL below the 3rd confluence
   + ⚙ 10% of its height; ⚙ narrow-confluence threshold (0 = off) → sweep extreme; EQ SL
   rule (8.2.2). Rejection zones (AM: 1h + 4h, PM: 15m; untouched swing highs,
@@ -1143,15 +1166,18 @@ in its results reported).
   - Fallback levels must lie beyond the last TP and at or beyond 1.2R; fib from the sweep
     extreme (0) to the setup-TF BoS candle's high (1). Two TPs: a third at TP1, the rest at
     TP2; one TP: all of it.
-- ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Trades overlay for strategy 2
+- ☐ **8.6 Chart: strategy 2 trades + AM/PM session view.** Also: strategy 2 in the
+  strategy popover and the settings panel (`NyIndexSweepConfig`: the window start / end per
+  session, user 2026-10-11), the backtest button running it, Trades overlay with TP3. Trades overlay for strategy 2
   (3 TPs); the Sessions button shows the AM/PM windows when strategy 2 is chosen (the
   strategy popover gets a second entry); session view: pick one AM or PM session and see
   sweep, BOS, 3rd confluence, entry confluence, SL / TPs. Visual step: the user checks it.
 - ◐ **8.7 First backtest on NAS100 / US500 + results.** `python -m backtester.run` with
   strategy 2 on NAS100 + US500 over the cached history; results page split by AM / PM,
   best-time tag, route and confluence type; per-year table reported here.
-  **First full run (2026-10-11)** before the user's check of 8.4 / 8.5 and the open
-  questions (sweep of a level price is already far beyond; best-time toggle): `python -m
+  **First full run (2026-10-11)**, before the user's check of 8.4 / 8.5 and before the
+  rule changes above (sweep: most extreme of the last N; best-time tag replaced by the
+  window settings), so it is to be re-run after them: `python -m
   backtester.run NAS100 US500 --start 2020-01-01 --end 2026-09-30 --strategy
   ny_index_sweep` (`results/20261010-224222_NAS100-US500`, ~45 min, workers ~1.8 GB):
   1,658 trades, win rate 37.5%, **net R −61.2 (gross +29.6)**, average R:R planned 2.93,
