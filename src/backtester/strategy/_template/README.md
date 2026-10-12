@@ -4,7 +4,8 @@
    list it in CLAUDE.md. Ambiguous rule: ask, never guess.
 2. **Copy this folder** to `strategy/<name>/` (the folder name is the strategy's name) and
    rename `TemplateConfig` / `TemplateStrategy`.
-3. **Config:** every tunable value is a field of the frozen config dataclass with the
+3. **Config:** swings, FVG, order block and equilibrium are shared (`detectors`, passed to
+   the strategy's constructor); every other tunable value is a field of the frozen config dataclass with the
    spec's default and a trailing comment (the settings menu takes its help text from it).
 4. **Strategy:** `base_timeframe`, `timeframes`, `on_candle(now, views)` returning
    `Order`s in price terms (entry, SL, TP). Optional class attributes (strategy/base.py):

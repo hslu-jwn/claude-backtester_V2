@@ -61,7 +61,9 @@ The break-even at the next session start (step 2) is strategy 1's rule: a strate
 
 `runner.py` picks the strategy from its config (`strategy/registry.py`: `make_strategy` looks
 the config class up in the registry, `StrategySpec` per strategy; a new strategy is one folder,
-started from `strategy/_template/`, plus one registry entry) and loads every declared timeframe from the cache: the base and lower
+started from `strategy/_template/`, plus one registry entry). `RunSettings` holds the shared
+detector settings (`detectors`: swings, FVG, order block, equilibrium), the engine and the
+warm-up; a strategy config holds only that strategy's own settings. The runner loads every declared timeframe from the cache: the base and lower
 timeframes from the warm-up start, the strategy's `full_history` timeframes (strategy 2:
 15m, 1h, 4h, for untouched highs and never-tapped zones as TP levels) from the first cached
 day, 4h in the strategy's `h4_alignment` (strategy 2: New York, `data/resample.py`

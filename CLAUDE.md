@@ -211,4 +211,5 @@ access; the user may supply the research). They help; they never override the ru
   app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
 - **New strategies** must be one new folder under `strategy/` (copy `strategy/_template/`, its README has the steps)
   plus one entry in `strategy/registry.py` (ROADMAP C.3); strategy-specific settings live in
-  its config, costs and warm-up are the shared `RunSettings`.
+  its config; swings / FVG / OB / equilibrium (`RunSettings.detectors`), costs and warm-up
+  are shared.
