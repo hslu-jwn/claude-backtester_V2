@@ -116,7 +116,10 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 
 ## Testing
 
-- Write the test before or with the code. A feature is done when its tests pass.
+- **Test first (user's rule, stricter than before):** before new code is written or existing
+  code changes, write a test file with the critical cases (edge cases, extreme values, faulty
+  data), then work through them one by one. Never weaken a test afterwards to make it pass.
+  A feature is done when its tests pass and the user has marked it done (it can be reopened).
 - Use small **hand-built candle fixtures** (`tests/conftest.py` → `make_candles`) where the
   correct answer is obvious and written in the test, e.g. "the swing high is confirmed at
   candle 4 with price 1.2050".
@@ -148,8 +151,9 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 
 ## Claude Code tools in this project
 
-graphify and ponytail are user-level skills (`~/.claude/skills`). They help; they never
-override the rules above.
+graphify is a user-level tool on the user's PC. The project skills are in `.claude/skills/`:
+`ponytail`, `ponytail-review`, `backtester-testing`, `backtest-evaluation-research` (needs web
+access; the user may supply the research). They help; they never override the rules above.
 
 ### graphify (code map in `graphify-out/`)
 
@@ -179,5 +183,30 @@ override the rules above.
   numbers), every detector still gets its no-lookahead test, and bullish/bearish stays one
   code path.
 - **Before each commit:** run `/ponytail-review` on the change and fix the "Must fix" items.
-- **Occasionally:** `/ponytail-audit` for a whole-repo report. It only reports; turn its
+- **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
+
+## Status (2026-10-12)
+
+| Part | Status |
+|---|---|
+| Data (histdata.com, 5 symbols, 2018/2020-2026), chart, replay, overlays, settings, presets, results page | built, checked by the user |
+| Strategy 1 (session zone sweep) | built, **paused** by the user; full run 2020-2026 negative (ROADMAP 6.3) |
+| Strategy 2 (NY Open index sweep) | built, first run −61 R net (+30 gross); sweep rework and window settings pending |
+| Liquidity sweep rules | **being reworked iteratively** with the user (`confluences.md`); do not change the code without his go |
+| Risk / FTMO (Phase 5) | stubs only |
+| Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
+| MT5 | connection and demo test orders built, never run against FTMO |
+
+## Working agreement with the user
+
+- Address the user as "Chef", answer in English, short and concrete; explain a new concept in
+  one line. Ask all open questions together, numbered. Never assume; on any doubt or conflict
+  (also for CLAUDE.md, code, tests, config) ask before changing anything.
+- Small commits on the session's feature branch; no PR unless asked.
+- **Models:** Opus for architecture and hard logic, Sonnet for implementation, a cheaper model
+  for mechanical edits and searches (`/model opusplan` splits plan/work automatically).
+- **Where to work:** the cloud has no market data (git-ignored) and no browser view of the
+  app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
+- **New strategies** must be one new folder under `strategy/` plus a registry entry
+  (ROADMAP C.3); universal settings are shared, strategy-specific ones live in its config.
