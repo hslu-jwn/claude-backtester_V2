@@ -25,9 +25,14 @@ Reworked rules (user, 2026-10-12, all off by default until the user settles them
   ATR of this timeframe, known before the candle) of the most extreme one. 0 is the spec's
   "the most extreme of the last N must be taken", inf is "one of the last N" (None, the
   default, is that too). While the ATR is not known the tolerance is 0.
-- `two_closes_cancel`: two consecutive closes beyond the swept level (dojis skipped, they
-  neither count nor break the streak) make it a breakout, not a sweep: the candidate is
-  dropped and the levels both closes are beyond are no longer sweepable.
+- `two_closes_cancel`: `cancel_closes` (2) consecutive closes beyond the swept level
+  (dojis skipped, they neither count nor break the streak) make it a breakout, not a
+  sweep: the candidate is dropped and the levels the closes are beyond are no longer
+  sweepable. `cancel_wick_first`: only the newest candle of the streak must close beyond,
+  the older ones need just their wick beyond ("one wick, one close").
+- `bos_before_top`: the BOS must break a swing made before the top candle (the structure
+  the move up was built on); a break of the top candle's own low or of a later low is
+  ignored and the candidate waits for another BOS (or expires).
 
 Edge cases (confirmed by the user, spec › Liquidity sweep):
 - A bullish BOS candle always closes above the high it breaks, so it is itself a candidate.
@@ -76,13 +81,20 @@ class SweepConfig:
     # None: one of the last N is enough; else the tolerance (x ATR) of the "same height" rule
     equal_tolerance_atr: float | None = None
     atr_period: int = 14  # ATR the tolerance is measured in
-    two_closes_cancel: bool = False  # two closes beyond the level: breakout, not a sweep
+    two_closes_cancel: bool = False  # closes beyond the level: breakout, not a sweep
+    cancel_closes: int = 2  # how many consecutive closes beyond make it a breakout
+    # the older candles of that streak need only their wick beyond, the newest a close
+    cancel_wick_first: bool = False
+    # the BOS must break a swing made before the top, not the top candle's own low or later
+    bos_before_top: bool = False
 
     def __post_init__(self) -> None:
         if self.equal_tolerance_atr is not None and self.equal_tolerance_atr < 0:
             raise ValueError("equal_tolerance_atr must be >= 0")
         if self.atr_period < 1:
             raise ValueError("atr_period must be >= 1")
+        if self.cancel_closes < 1:
+            raise ValueError("cancel_closes must be >= 1")
         if self.lookback_swings < 1:
             raise ValueError("lookback_swings must be >= 1")
         if self.bos_within < 0:
@@ -159,8 +171,10 @@ class SweepDetector(Detector[LiquiditySweep]):
                 self._cancel_breakout(view, direction, side)
             bos = breaks.get(direction)
             if bos is not None:
-                if side.candidate is not None:
-                    c = side.candidate
+                c = side.candidate
+                if c is not None and self.config.bos_before_top and bos.swing.index >= c.index:
+                    continue  # breaks a swing made at or after the top: not the structure
+                if c is not None:
                     events.append(
                         LiquiditySweep(
                             bos.confirmed_index,
@@ -196,21 +210,26 @@ class SweepDetector(Detector[LiquiditySweep]):
         return min(group, key=lambda s: s.price * sign)
 
     def _cancel_breakout(self, view: SeriesView, direction: Direction, side: _Side) -> None:
-        """Two consecutive (non-doji) closes beyond the swept level: no sweep, the levels
-        both closes are beyond are accepted and drop out."""
+        """`cancel_closes` consecutive (non-doji) candles beyond the swept level, the newest
+        closing beyond it: no sweep, the levels the closes are beyond are accepted and drop
+        out. With `cancel_wick_first` the older candles need only their wick beyond."""
         c = side.candidate
         if c is None:
             return
         level = c.swept[-1].price
-        closes: list[float] = []
+        counted, closes = 0, []
         for i in range(view.cursor, -1, -1):
             candle = view[i]
             if is_doji(candle, self.doji_max_body):
                 continue
-            if not beyond(direction, candle.close, level):
+            closed = beyond(direction, candle.close, level)
+            wick_only = self.config.cancel_wick_first and counted > 0
+            if not (beyond(direction, wick(direction, candle), level) if wick_only else closed):
                 return
-            closes.append(candle.close)
-            if len(closes) == 2:
+            counted += 1
+            if closed:
+                closes.append(candle.close)
+            if counted == self.config.cancel_closes:
                 break
         else:
             return

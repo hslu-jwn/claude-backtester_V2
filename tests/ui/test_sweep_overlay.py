@@ -62,7 +62,11 @@ def test_toolbar_sweep_tweak_becomes_the_overlay_settings_sweep_config():
     from backtester.ui.pages.chart import overlay_settings, sweep_config
 
     assert sweep_config(None) == SweepConfig()  # nothing chosen: today's rules
-    assert sweep_config({"tol": "none", "two": False}) == SweepConfig()
-    chosen = sweep_config({"tol": "0.25", "two": True})
+    assert sweep_config({"tol": "none", "cancel": "off", "n": 3}) == SweepConfig()
+    chosen = sweep_config({"tol": "0.25", "cancel": "c2"})
     assert chosen.equal_tolerance_atr == 0.25 and chosen.two_closes_cancel
-    assert overlay_settings([], "", {"tol": "0", "two": False}).sweep.equal_tolerance_atr == 0.0
+    assert chosen.cancel_closes == 2 and not chosen.cancel_wick_first
+    wick = sweep_config({"cancel": "w3", "n": 5, "top": True})
+    assert (wick.cancel_closes, wick.cancel_wick_first) == (3, True)
+    assert wick.lookback_swings == 5 and wick.bos_before_top
+    assert overlay_settings([], "", {"tol": "0", "cancel": "off"}).sweep.equal_tolerance_atr == 0.0

@@ -436,13 +436,31 @@ SWEEP_TOLERANCES = (
 )
 
 
+# breakout filter choices: value -> (label, SweepConfig fields)
+SWEEP_CANCELS = {
+    "off": ("No breakout filter (current)", {}),
+    "c2": ("2 closes beyond: no sweep", {"two_closes_cancel": True}),
+    "c3": ("3 closes beyond: no sweep", {"two_closes_cancel": True, "cancel_closes": 3}),
+    "w2": (
+        "1 wick + 1 close beyond: no sweep",
+        {"two_closes_cancel": True, "cancel_wick_first": True},
+    ),
+    "w3": (
+        "2 wicks + 1 close beyond: no sweep",
+        {"two_closes_cancel": True, "cancel_wick_first": True, "cancel_closes": 3},
+    ),
+}
+
+
 def sweep_config(tweak: dict | None) -> SweepConfig:
-    """The sweep rules chosen in the toolbar's Sweep menu ({"tol": str, "two": bool})."""
+    """The sweep rules chosen in the toolbar's Sweep menu ({"n", "tol", "cancel", "top"})."""
     tweak = tweak or {}
     tol = tweak.get("tol", "none")
     return SweepConfig(
+        lookback_swings=int(tweak.get("n", SweepConfig().lookback_swings)),
         equal_tolerance_atr=None if tol == "none" else float(tol),
-        two_closes_cancel=bool(tweak.get("two")),
+        bos_before_top=bool(tweak.get("top")),
+        **SWEEP_CANCELS.get(tweak.get("cancel", "off"), SWEEP_CANCELS["off"])[1],
     )
 
 
@@ -854,16 +872,34 @@ def layout(
                 searchable=False,
                 persistence=True,
             ),
+            html.Div("Breakout filter", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="chart-sweep-cancel",
+                options=[{"label": label, "value": k} for k, (label, _) in SWEEP_CANCELS.items()],
+                value="off",
+                clearable=False,
+                searchable=False,
+                persistence=True,
+            ),
+            html.Div("Highs / lows that count (last N swings)", className="tb-pop-sub"),
+            dcc.Dropdown(
+                id="chart-sweep-n",
+                options=[{"label": f"Last {n} swings", "value": n} for n in range(1, 6)],
+                value=SweepConfig().lookback_swings,
+                clearable=False,
+                searchable=False,
+                persistence=True,
+            ),
             dcc.Checklist(
-                id="chart-sweep-two",
-                options=[{"label": "Two closes beyond: no sweep", "value": "on"}],
+                id="chart-sweep-top",
+                options=[{"label": "BOS must break structure from before the top", "value": "on"}],
                 value=[],
                 persistence=True,
                 className="tb-check",
             ),
             html.Div(
                 "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
-                "and Equilibrium overlays.",
+                "and Equilibrium overlays. Defaults = the current rules.",
                 className="tb-pop-note",
             ),
         ],
@@ -1377,10 +1413,12 @@ def register_callbacks(
     @app.callback(
         Output("chart-sweep-tweak", "data"),
         Input("chart-sweep-tol", "value"),
-        Input("chart-sweep-two", "value"),
+        Input("chart-sweep-cancel", "value"),
+        Input("chart-sweep-n", "value"),
+        Input("chart-sweep-top", "value"),
     )
-    def _sweep_tweak(tol, two):
-        return {"tol": tol, "two": bool(two)}
+    def _sweep_tweak(tol, cancel, n, top):
+        return {"tol": tol, "cancel": cancel, "n": n, "top": bool(top)}
 
     @app.callback(
         Output("chart-overlay-types", "options"),

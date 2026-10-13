@@ -414,6 +414,76 @@ def test_the_breakout_no_longer_counts_its_levels_as_sweepable():
     assert run(ohlc, config=TWO) == []
 
 
+# --- three closes, "one wick + one close" and a BOS that breaks structure from before the
+# top (user, 2026-10-13; spec › Liquidity sweep) ---
+
+
+def test_three_closes_beyond_are_needed_when_the_setting_says_so():
+    two_closes = [*UP, (11.7, 11.9, 11.6, 11.85), (11.85, 11.9, 10.8, 10.85)]
+    three = SweepConfig(two_closes_cancel=True, cancel_closes=3)
+    assert run(two_closes, config=TWO) == []
+    assert summary(run(two_closes, config=three)) == [(BEAR, 7, 11.9, 11.5, 8)]
+    three_closes = [
+        *UP,
+        (11.7, 11.9, 11.6, 11.85),  # 7 second close beyond
+        (11.85, 11.97, 11.8, 11.95),  # 8 third close beyond
+        (11.9, 11.92, 10.8, 10.85),  # 9 red: bearish BOS
+    ]
+    assert run(three_closes, config=three) == []
+
+
+def test_wick_first_one_wick_candle_then_one_close_beyond_is_a_breakout():
+    ohlc = [
+        *UP[:6],
+        (11.2, 11.8, 11.1, 11.45),  # 6 green: wick above 11.5, closes below it
+        (11.45, 11.6, 11.4, 11.55),  # 7 green: closes beyond 11.5
+        (11.55, 11.58, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    assert summary(run(ohlc, config=TWO)) == [(BEAR, 6, 11.8, 11.5, 8)]  # two closes: sweep
+    wick = SweepConfig(two_closes_cancel=True, cancel_wick_first=True)
+    assert run(ohlc, config=wick) == []
+    assert run(mirror(ohlc), config=wick) == []
+
+
+def test_wick_first_still_needs_the_newest_candle_to_close_beyond():
+    ohlc = [
+        *UP[:6],
+        (11.2, 11.8, 11.1, 11.45),  # 6 wick above 11.5, closes below
+        (11.45, 11.6, 11.3, 11.4),  # 7 wick above 11.5 again, closes below
+        (11.4, 11.45, 10.8, 10.85),  # 8 red: bearish BOS
+    ]
+    wick = SweepConfig(two_closes_cancel=True, cancel_wick_first=True)
+    assert summary(run(ohlc, config=wick)) == [(BEAR, 6, 11.8, 11.5, 8)]
+
+
+# After the top (candle 6) a swing low 11.2 forms (candle 7, confirmed 8) and is broken by
+# candle 9: a break of a low made after the top, not of the structure that built the move.
+LATE_LOW = [
+    *UP,
+    (11.7, 11.75, 11.2, 11.3),  # 7 red: swing high 11.8; its low 11.2
+    (11.3, 11.6, 11.25, 11.55),  # 8 green: swing low 11.2 confirmed
+    (11.55, 11.58, 11.0, 11.05),  # 9 red: closes below 11.2 -> bearish BOS of 11.2
+    (11.05, 11.1, 10.5, 10.6),  # 10 red: below 10.9, but 11.2 was the latest low
+]
+
+
+def test_bos_before_top_ignores_a_break_of_a_low_made_after_the_top():
+    assert summary(run(LATE_LOW)) == [(BEAR, 6, 11.8, 11.5, 9)]
+    assert run(LATE_LOW, config=SweepConfig(bos_before_top=True)) == []
+
+
+def test_bos_before_top_keeps_a_break_of_the_low_that_started_the_move():
+    ohlc = [*UP, (11.7, 11.75, 10.7, 10.8)]  # 7 red: closes below the low 10.9 (@4)
+    both = [(BEAR, 6, 11.8, 11.5, 7)]
+    assert summary(run(ohlc)) == both
+    assert summary(run(ohlc, config=SweepConfig(bos_before_top=True))) == both
+
+
+def test_bos_before_top_works_mirrored_for_lows():
+    assert run(mirror(LATE_LOW), config=SweepConfig(bos_before_top=True)) == []
+    assert summary(run(mirror(LATE_LOW)))[0][0] is BULL
+
+
 def test_config_rejects_values_below_one_and_negative():
     with pytest.raises(ValueError):
         SweepConfig(lookback_swings=0)
@@ -423,6 +493,8 @@ def test_config_rejects_values_below_one_and_negative():
         SweepConfig(equal_tolerance_atr=-0.1)
     with pytest.raises(ValueError):
         SweepConfig(atr_period=0)
+    with pytest.raises(ValueError):
+        SweepConfig(cancel_closes=0)
 
 
 def random_walk(n=800, seed=11):
@@ -443,6 +515,8 @@ def random_walk(n=800, seed=11):
         SweepConfig(lookback_swings=1, bos_within=2, close_beyond_counts=False),
         SweepConfig(equal_tolerance_atr=0.5, two_closes_cancel=True),
         SweepConfig(equal_tolerance_atr=0.0, atr_period=3, two_closes_cancel=True),
+        SweepConfig(two_closes_cancel=True, cancel_closes=3, cancel_wick_first=True),
+        SweepConfig(bos_before_top=True),
     ],
 )
 def test_no_lookahead_events_only_at_their_bos_candle_and_never_rewritten(config):
