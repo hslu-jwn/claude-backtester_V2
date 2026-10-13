@@ -1107,6 +1107,20 @@ in its results reported).
     Sunday, markets closed) would move to 03:00; the data has no candles then.
   - Compare on TradingView after importing the indices into the main cache (0.5):
     NAS100 / US500 4h with "4h candles: New York" vs FOREXCOM:NSXUSD / SPXUSD 4h.
+- ☑ **8.2.5 Liquidity sweep rework and research (user, 2026-10-12 / 13; accepted at "End.").**
+  Built, all **off by default**: equal-high tolerance (`equal_tolerance_atr`, N swings 1-5),
+  breakout filter (`two_closes_cancel`, `cancel_closes` 2 / 3, `cancel_wick_first`),
+  `bos_before_top`, doji as a share of the candle's range (`SwingConfig.doji_range_share`);
+  temporary **Sweep** menu in the chart toolbar; the same options in strategy 2's config
+  (Settings › Entry). Tools: `tools/sweep_study.py` (35,000 sweeps, outcome per rule),
+  `analytics/sweep_quality.py`, `tools/strategy2_sweep_grid.py`, `tools/strategy2_explore.py`
+  (entry time, AM / PM, window size, exit structures). Results (spec: `confluences.md` ›
+  Liquidity sweep, `strategy-ny-indices.md` › Backtest options): sweeps are a coin flip after
+  the BOS on every rule, with or without the trend; strategy 2 2023-26 base -3.4 R net
+  (+42.7 gross), 2020-22 about -50 R in the wide window; the window cut 30 min before to 90
+  after (+39 R in 2023-26) and "breakout 2 closes" (+53 R) did **not** hold on 2020-22
+  (-21 R, -34 R). No rule change adopted; defaults unchanged. Open: decide the next idea
+  (cost filter, new edge sources, the user's own rules; see HANDOFF).
 - ◐ **8.4 Strategy 2 setup state machine** (`strategy/ny_index_sweep/`). Bias (AM: 4h
   trend, PM: 15m trend) and the AM route (1h = 4h trend → setup 5m / entry 1m, else 15m
   / 5m) read once before the window and frozen; only trades in the bias direction.
