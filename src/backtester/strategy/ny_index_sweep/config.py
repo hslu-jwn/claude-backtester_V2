@@ -35,6 +35,18 @@ class NyIndexSweepConfig:
     # sweep (confluences.md › Liquidity sweep)
     sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
     sweep_close_beyond_counts: bool = True  # off: a sweep-TF close beyond the level cancels
+    # off: a wick beyond one of the last N swings is enough (today's rule). On: the most
+    # extreme of the last N must be taken, or one within `sweep_equal_tolerance_atr` x ATR
+    # (sweep TF) below it ("equal highs"; 0 = the most extreme only)
+    sweep_equal_highs: bool = False
+    sweep_equal_tolerance_atr: float = 0.0
+    # breakout filter (confluences.md > Liquidity sweep): this many consecutive sweep-TF
+    # candles (dojis skipped) closing beyond the level cancel the setup. 0 = off, 2 / 3.
+    # `wick_first`: the older candles of that streak need only their wick beyond.
+    sweep_breakout_closes: int = 0
+    sweep_breakout_wick_first: bool = False
+    # the setup-TF BoS must break a swing made before the sweep extreme's candle
+    bos_before_top: bool = False
     bos_within_am: int = 10  # setup-TF BoS within X sweep-TF candles of the extreme
     bos_within_pm: int = 10
     tap_timeout: int = 25  # 3rd confluence tapped within X setup-TF candles of the BoS
@@ -62,6 +74,8 @@ class NyIndexSweepConfig:
             raise ValueError("max_trades_per_session must be >= 1")
         if self.sweep_lookback < 1:
             raise ValueError("sweep_lookback must be >= 1")
+        if self.sweep_equal_tolerance_atr < 0 or self.sweep_breakout_closes < 0:
+            raise ValueError("sweep_equal_tolerance_atr and sweep_breakout_closes must be >= 0")
         if min(self.bos_within_am, self.bos_within_pm, self.tap_timeout) < 0:
             raise ValueError("bos_within_* and tap_timeout must be >= 0")
         if self.sl_buffer < 0 or self.narrow_confluence_atr_mult < 0:

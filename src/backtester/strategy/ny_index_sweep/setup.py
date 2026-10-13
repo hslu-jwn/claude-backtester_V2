@@ -45,7 +45,7 @@ from enum import Enum
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.detectors.bos import BreakOfStructure
 from backtester.detectors.equilibrium import equilibrium_box, move_start
-from backtester.detectors.swings import SwingPoint
+from backtester.detectors.swings import SwingPoint, is_doji
 from backtester.detectors.zone import ZoneKind, ZoneState, ZoneValidator
 from backtester.strategy.ny_index_sweep.config import RANKING, NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, Zone, beyond, candle_open, wick
@@ -122,6 +122,7 @@ class Setup:
     deepest: float | None = None  # deepest base wick after the BoS candle
     trades: int = 0
     ended: str = ""  # why the setup ended (DONE)
+    accepted: tuple[SwingPoint, ...] = ()  # levels a breakout accepted (strategy.py drops them)
 
     @property
     def level(self) -> float:
@@ -167,12 +168,17 @@ class Setup:
         low = wick(d, ctx.candle)
         if beyond(d, low, self.extreme):
             self.extreme, self.extreme_ts = low, ctx.candle.ts
+        sweep_frame = ctx.frames[self.sweep_tf]
+        if cfg.sweep_breakout_closes and sweep_frame.closed and self._breakout(ctx, sweep_frame):
+            return
         setup_frame = ctx.frames[self.route.setup_tf]
         bos = next((b for b in setup_frame.breaks if b.direction is d), None)
         if bos is not None and bos.confirmed_at >= self.extreme_ts + BASE.duration:
-            self._on_bos(ctx, bos)
-            return
-        sweep_frame = ctx.frames[self.sweep_tf]
+            if cfg.bos_before_top and bos.swing.index >= setup_frame.index_at(self.extreme_ts):
+                bos = None  # breaks a swing made by or after the extreme's candle: not it
+            if bos is not None:
+                self._on_bos(ctx, bos)
+                return
         if (
             not cfg.sweep_close_beyond_counts
             and sweep_frame.closed
@@ -185,6 +191,30 @@ class Setup:
         )
         if ctx.now >= deadline:
             self.end("no setup-TF BoS in time")
+
+    def _breakout(self, ctx: Context, frame: Frame) -> bool:
+        """`sweep_breakout_closes` consecutive sweep-TF candles (dojis skipped) beyond the
+        swept level, the newest closing beyond it (older ones: only the wick, with
+        `sweep_breakout_wick_first`). Ends the setup and remembers the accepted levels."""
+        d, cfg, level = self.direction, ctx.config, self.level
+        view, closes = frame.view, []
+        for i in range(view.cursor, -1, -1):
+            candle = view[i]
+            if is_doji(candle, ctx.doji_max_body):
+                continue
+            closed = beyond(d, candle.close, level)
+            wick_only = cfg.sweep_breakout_wick_first and closes
+            if not (beyond(d, wick(d, candle), level) if wick_only else closed):
+                return False
+            closes.append(candle.close)
+            if len(closes) == cfg.sweep_breakout_closes:
+                break
+        else:
+            return False
+        accepted = max(closes) if d is Direction.BULLISH else min(closes)
+        self.accepted = tuple(s for s in self.swept if beyond(d, accepted, s.price))
+        self.end(f"breakout: {len(closes)} sweep-TF closes beyond the swept level")
+        return True
 
     def _on_bos(self, ctx: Context, bos: BreakOfStructure) -> None:
         d, frames, cfg = self.direction, ctx.frames, ctx.config

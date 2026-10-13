@@ -33,7 +33,7 @@ from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
 from backtester.detectors.settings import DetectorSettings
-from backtester.detectors.swings import SwingKind
+from backtester.detectors.swings import SwingKind, SwingPoint
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, beyond, candle_open, wick
@@ -95,12 +95,13 @@ class NyIndexSweep(Strategy):
             M1: Frame(M1, doji, fvg, ob),
             M5: Frame(M5, doji, fvg, ob, atr_period=atr),
             M15: Frame(M15, doji, fvg, ob, tp_levels=True, atr_period=atr),
-            H1: Frame(H1, doji, fvg, ob, tp_levels=True),
-            H4: Frame(H4, doji, fvg, ob, tp_levels=True),
+            H1: Frame(H1, doji, fvg, ob, tp_levels=True, atr_period=atr),
+            H4: Frame(H4, doji, fvg, ob, tp_levels=True, atr_period=atr),
         }
         self.window: WindowState | None = None
         self.decisions: list[Decision] = []
         self.ended: list[Setup] = []  # every setup that ended, for inspection
+        self._accepted: set[SwingPoint] = set()  # levels a breakout accepted: not sweepable
 
     # --- engine interface --------------------------------------------------------------
 
@@ -166,7 +167,12 @@ class NyIndexSweep(Strategy):
                     SWEPT_KIND[d], self.config.sweep_lookback, confirmed_by=candle.ts
                 )
             ]
+            levels = [(s, tf) for s, tf in levels if s not in self._accepted]
             swept = [(s, tf) for s, tf in levels if beyond(d, low, s.price)]
+            if swept and self.config.sweep_equal_highs:
+                required = self._required_level(d, levels)
+                if required not in swept:
+                    swept = []
             if not swept:
                 continue
             sign = 1 if d is Direction.BULLISH else -1
@@ -182,6 +188,18 @@ class NyIndexSweep(Strategy):
                     candle.ts,
                 )
             )
+
+    def _required_level(
+        self, d: Direction, levels: list[tuple[SwingPoint, Timeframe]]
+    ) -> tuple[SwingPoint, Timeframe]:
+        """`sweep_equal_highs`: the least extreme level within the tolerance (x ATR of the
+        sweep TF, 0 while unknown) of the most extreme one."""
+        sign = 1 if d is Direction.BEARISH else -1  # most extreme: highest high / lowest low
+        top_swing, top_tf = max(levels, key=lambda p: sign * p[0].price)
+        atr = self.frames[top_tf].atr()
+        tolerance = self.config.sweep_equal_tolerance_atr * (atr or 0.0)
+        group = [p for p in levels if sign * (top_swing.price - p[0].price) <= tolerance]
+        return min(group, key=lambda p: sign * p[0].price)
 
     def _replace_5m_setups(self, ws: WindowState, setup: Setup) -> None:
         """PM: a 15m setup's BoS ends the 5m setups of the same sweep."""
@@ -204,6 +222,8 @@ class NyIndexSweep(Strategy):
         done = [s for s in ws.setups if s.step is Step.DONE]
         if done:
             self.ended += done
+            for s in done:
+                self._accepted.update(s.accepted)
             ws.setups = [s for s in ws.setups if s.step is not Step.DONE]
 
     # --- orders ------------------------------------------------------------------------

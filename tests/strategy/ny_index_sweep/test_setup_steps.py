@@ -308,3 +308,142 @@ def test_pm_15m_bos_replaces_the_5m_setup_of_the_same_sweep():
     strategy._replace_5m_setups(ws, s15)
     assert s5.ended == "replaced by the 15m setup of the same sweep"
     assert other.step is Step.SWEEP and s15.step is Step.BOS
+
+
+# --- sweep rules tried with the user (2026-10-13): breakout filter, BOS before the top, the
+# equal-high tolerance. All off by default, so the tests above are unchanged. ---
+
+FLAT = (99.0, 99.0, 98.0, 98.6)  # a 1m candle closing 98.6, below the swept low 99.0
+
+
+def breakout(closes: int, wick_first: bool = False) -> NyIndexSweepConfig:
+    return NyIndexSweepConfig(
+        confluence_kinds=NO_EQ.confluence_kinds,
+        sweep_breakout_closes=closes,
+        sweep_breakout_wick_first=wick_first,
+    )
+
+
+def closes_below(*minutes: int) -> dict:
+    """Every 1m candle of the given 5m candles closes at 98.6 (the 5m candle closes below)."""
+    out = {0: BASE[0]}
+    for m in minutes:
+        out.update({m * 5 + k: FLAT for k in range(5)})
+    return out
+
+
+def test_breakout_two_sweep_tf_closes_beyond_the_level_end_the_setup():
+    both = closes_below(0, 1)  # 5m candles 0 and 1 close below 99.0
+    m1, frames, setup = harness(both, setup_events={minute(15): [bos(LONG, 100.3, 2, minute(15))]})
+    drive(m1, frames, setup, breakout(2), until=minute(10))
+    assert setup.step is Step.DONE and setup.ended.startswith("breakout")
+    m1, frames, setup = harness(both, setup_events={minute(15): [bos(LONG, 100.3, 2, minute(15))]})
+    drive(m1, frames, setup, until=minute(16))  # off: nothing cancels, the BoS comes
+    assert setup.step is Step.BOS
+
+
+def test_breakout_needs_the_consecutive_closes():
+    # candle 0 closes below, candle 1 closes back above (quiet 100.1): one close only
+    m1, frames, setup = harness(closes_below(0), setup_events={})
+    drive(m1, frames, setup, breakout(2), until=minute(10))
+    assert setup.step is Step.SWEEP
+
+
+def test_breakout_three_closes_are_not_met_by_two():
+    m1, frames, setup = harness(closes_below(0, 1), setup_events={})
+    drive(m1, frames, setup, breakout(3), until=minute(15))
+    assert setup.step is Step.SWEEP
+    m1, frames, setup = harness(closes_below(0, 1, 2), setup_events={})
+    drive(m1, frames, setup, breakout(3), until=minute(15))
+    assert setup.step is Step.DONE
+
+
+def test_breakout_wick_first_the_sweeping_candle_needs_only_its_wick():
+    # 5m candle 0: wick 98.0 below 99.0 but closes 100.1 (above); candle 1 closes 98.6
+    one = {**BASE, **{5 + k: FLAT for k in range(5)}}
+    m1, frames, setup = harness(one, setup_events={})
+    drive(m1, frames, setup, breakout(2), until=minute(10))
+    assert setup.step is Step.SWEEP  # two closes beyond are needed
+    m1, frames, setup = harness(one, setup_events={})
+    drive(m1, frames, setup, breakout(2, wick_first=True), until=minute(10))
+    assert setup.step is Step.DONE and setup.ended.startswith("breakout")
+
+
+def test_breakout_dojis_are_skipped():
+    # the 5m candle 1 is a doji (open 99.0, close 98.95); candles 0 and 2 close below
+    doji = {5 + k: (99.0, 99.0, 98.9, 98.95) for k in range(5)}
+    m1, frames, setup = harness({**closes_below(0, 2), **doji}, setup_events={})
+    drive(m1, frames, setup, breakout(2), until=minute(15))
+    assert setup.step is Step.DONE
+
+
+def test_the_breakout_remembers_the_levels_it_accepted():
+    m1, frames, setup = harness(closes_below(0, 1), setup_events={})
+    drive(m1, frames, setup, breakout(2), until=minute(10))
+    assert [s.price for s in setup.accepted] == [99.0]
+
+
+def harness_late_extreme(swing_index: int):
+    """The extreme is at minute 10 (5m candle 2); the 5m BoS at t0+15 breaks a swing high
+    made by 5m candle `swing_index`."""
+    overrides = {10: (99.5, 99.6, 98.0, 99.4)}
+    events = {minute(15): [bos(LONG, 100.3, 2, minute(15), swing_index)]}
+    late = zone(M5, 99.2, 98.8, 2, 2, minute(15), minute(10))  # formed in the move
+    m1, frames, setup = harness(overrides, setup_events=events, zones=(late,))
+    setup.extreme_ts = minute(10)
+    return m1, frames, setup
+
+
+def test_bos_before_top_ignores_a_bos_of_a_swing_made_at_or_after_the_extreme_candle():
+    config = NyIndexSweepConfig(confluence_kinds=NO_EQ.confluence_kinds, bos_before_top=True)
+    m1, frames, setup = harness_late_extreme(swing_index=2)  # made by the extreme's own candle
+    drive(m1, frames, setup, config, until=minute(16))
+    assert setup.step is Step.SWEEP
+    m1, frames, setup = harness_late_extreme(swing_index=1)  # made before it
+    drive(m1, frames, setup, config, until=minute(16))
+    assert setup.step is Step.BOS
+    m1, frames, setup = harness_late_extreme(swing_index=2)
+    drive(m1, frames, setup, until=minute(16))  # off: the BoS counts
+    assert setup.step is Step.BOS
+
+
+class StubFrame:
+    """Just what `_register_sweeps` asks of a frame."""
+
+    def __init__(self, lows, atr=None):
+        self.lows, self._atr = lows, atr
+
+    def last_swings(self, kind, n, confirmed_by):
+        return self.lows[-n:]
+
+    def atr(self):
+        return self._atr
+
+
+def registered(low, config, lows, atr):
+    from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
+
+    strategy = NyIndexSweep("NAS100", config)
+    strategy.frames[M5] = StubFrame(lows, atr)
+    ws = WindowState(WINDOW, LONG, (ROUTE,))
+    candle = Candle(minute(0), 99.0, 99.5, low, 99.2)
+    strategy._register_sweeps(Context(minute(1), candle, strategy.frames, config, DOJI), ws)
+    return ws.setups
+
+
+def test_equal_highs_off_one_of_the_last_n_is_enough():
+    lows = [swing(SwingKind.LOW, 98.0, 1, minute(-9)), swing(SwingKind.LOW, 98.4, 2, minute(-5))]
+    (setup,) = registered(98.3, NyIndexSweepConfig(), lows, 1.0)
+    assert [s.price for s in setup.swept] == [98.4]
+
+
+def test_equal_highs_the_most_extreme_must_be_taken_unless_within_the_tolerance():
+    lows = [swing(SwingKind.LOW, 98.0, 1, minute(-9)), swing(SwingKind.LOW, 98.4, 2, minute(-5))]
+    strict = NyIndexSweepConfig(sweep_equal_highs=True, sweep_equal_tolerance_atr=0.0)
+    assert registered(98.3, strict, lows, 1.0) == []
+    near = NyIndexSweepConfig(sweep_equal_highs=True, sweep_equal_tolerance_atr=0.5)
+    (setup,) = registered(98.3, near, lows, 1.0)  # 98.4 is within 0.5 x ATR 1.0 of 98.0
+    assert [s.price for s in setup.swept] == [98.4]
+    assert registered(98.3, near, lows, 0.1) == []  # tolerance 0.05: 98.4 is too far
+    assert registered(98.3, near, lows, None) == []  # no ATR yet: tolerance 0
+    assert len(registered(97.9, strict, lows, 1.0)) == 1  # beyond the most extreme

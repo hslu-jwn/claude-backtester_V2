@@ -158,3 +158,22 @@ def test_entry_tf_confluence_off_enters_at_the_entry_tf_bos_close(week):
     assert strategy.decisions
     for d in strategy.decisions:
         assert d.signal.entry_zone is None and d.signal.at == d.signal.entry_bos.confirmed_at
+
+
+def test_sweep_options_on_still_give_decisions_without_lookahead(week):
+    # equal-high tolerance, breakout filter (wick first) and BoS-before-top all on
+    config = NyIndexSweepConfig(
+        sweep_equal_highs=True,
+        sweep_equal_tolerance_atr=0.5,
+        sweep_breakout_closes=2,
+        sweep_breakout_wick_first=True,
+        bos_before_top=True,
+    )
+    m1, base, _ = week
+    strategy, _ = run(m1, config=config)
+    assert strategy.decisions and len(strategy.ended) > 0
+    assert len(strategy.decisions) <= len(base.decisions) * 2  # sanity, not a rule
+    cut = START + timedelta(days=8, hours=17)
+    short, _ = run([c for c in m1 if c.ts + M1.duration <= cut], cut, config)
+    full = summary(strategy.decisions)
+    assert summary(short.decisions) == [x for x in full if x[0] <= cut]
