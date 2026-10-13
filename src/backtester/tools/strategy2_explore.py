@@ -242,20 +242,27 @@ def report(entries: list[Entry], args) -> str:
                     }
                 )
     L += table(rows) + [""]
-    L += ["## 3. Exit structure (default window 30 min before to 120 after, max trades 1)", ""]
-    es = pick(base, 30, 120)
+    L += [
+        f"## 3. Exit structure (window {args.before} min before to {args.after} after, max trades 1)",
+        "",
+    ]
+    es = pick(base, args.before, args.after)
     L += table([{"exit": ex, **stats(es, ex)} for ex in EXITS]) + [""]
     L += ["## 4. Sweep rule variants x exit (same window)", ""]
     rows = []
     for v in variants:
-        es = pick([e for e in entries if e.variant == v], 30, 120)
+        es = pick([e for e in entries if e.variant == v], args.before, args.after)
         for ex in ("3 parts + BE (today)", "TP1 only", "2R only"):
             rows.append({"sweep variant": v, "exit": ex, **stats(es, ex)})
     L += table(rows) + [""]
-    L += ["## 5. Halves (is it stable?) - base variant, default window", ""]
+    L += [f"## 5. Halves (is it stable?) - base variant, window {args.before}/{args.after}", ""]
     rows = []
-    for label, a, b in (("2023-2024", 2023, 2024), ("2025-2026", 2025, 2026)):
-        part = [e for e in pick(base, 30, 120) if a <= e.at.year <= b]
+    years = sorted({e.at.year for e in base})
+    for label, a, b in (
+        (f"{years[0]}-{years[len(years) // 2 - 1]}", years[0], years[len(years) // 2 - 1]),
+        (f"{years[len(years) // 2]}-{years[-1]}", years[len(years) // 2], years[-1]),
+    ):
+        part = [e for e in pick(base, args.before, args.after) if a <= e.at.year <= b]
         for ex in ("3 parts + BE (today)", "TP1 only", "2R only"):
             rows.append({"period": label, "exit": ex, **stats(part, ex)})
     L += table(rows) + [""]
@@ -274,6 +281,8 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("report")
     r.add_argument("--out", type=Path, default=OUT)
     r.add_argument("--base-variant", default="base")
+    r.add_argument("--before", type=int, default=30, help="minutes before the open (sections 3-5)")
+    r.add_argument("--after", type=int, default=120, help="minutes after the open (sections 3-5)")
     args = p.parse_args(argv)
     if args.cmd == "collect":
         print(collect(args.symbol, args.variant, args.start, args.end, args.out))
