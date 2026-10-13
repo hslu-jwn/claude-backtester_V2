@@ -17,29 +17,57 @@ from __future__ import annotations
 import argparse
 import csv
 import statistics
+from bisect import bisect_right
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from backtester.analytics.sweep_quality import SweepOutcome, sweep_outcome
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import MissingCacheError, candles_from_frame
+from backtester.data.resample import DEFAULT_BOUNDARY, H4Alignment
 from backtester.data.sources import DEFAULT_SOURCES
 from backtester.detectors.atr import Atr
+from backtester.detectors.bos import BosDetector
 from backtester.detectors.sweep import SweepConfig, SweepDetector
-from backtester.detectors.swings import SwingConfig
+from backtester.detectors.swings import SwingConfig, SwingDetector
+from backtester.detectors.trend import Trend, TrendDetector
 from backtester.paths import RESULTS_DIR
 
 OUT_DIR = RESULTS_DIR / "sweep_study"
 BASE = "base"
+NY = ZoneInfo("America/New_York")
+# NY Open windows (ET), strategy 2 defaults: 30 min before to 2 h after the open
+WINDOWS = {"AM": (time(9, 0), time(11, 30)), "PM": (time(13, 30), time(16, 0))}
+INDICES = ("NAS100", "US500")
+HTF_WARMUP = timedelta(days=120)  # history before the span for the higher-timeframe trend
 # timeframe -> (start, end) UTC: shorter spans for the fast timeframes (run time)
 SPANS = {
     "M5": ("2026-04-01", "2026-10-01"),
     "M30": ("2025-01-01", "2026-10-01"),
     "H1": ("2024-01-01", "2026-10-01"),
     "H4": ("2020-01-02", "2026-10-01"),
+}
+
+
+# which sweeps a scope holds (trend alignment, NY Open windows; 4h sweeps have no 4h trend)
+SCOPES = {
+    "with 4h trend": lambda r: r.trend4h == "with",
+    "against 4h trend": lambda r: r.trend4h == "against",
+    "idx AM window, with 4h": lambda r: r.window == "AM" and r.trend4h == "with",
+    "idx AM window, against 4h": lambda r: r.window == "AM" and r.trend4h == "against",
+    "idx PM window, with 15m": lambda r: r.window == "PM" and r.trend15m == "with",
+    "idx PM window, against 15m": lambda r: r.window == "PM" and r.trend15m == "against",
+    "idx 5m window, with trend": lambda r: (
+        r.timeframe == "M5"
+        and (
+            (r.window == "AM" and r.trend4h == "with")
+            or (r.window == "PM" and r.trend15m == "with")
+        )
+    ),
 }
 
 
@@ -118,6 +146,10 @@ class Scored:
     adv_atr: float
     drift_atr: float
     features: tuple = ()  # (name, value) pairs: what the sweep looked like (for buckets)
+    trend4h: str = "none"  # "with" / "against" / "none": 4h trend before the BOS candle
+    trend15m: str = "none"
+    window: str = ""  # "AM" / "PM": the BOS candle closed inside a NY Open window (indices)
+    year: int = 0
 
 
 def load(symbol: str, timeframe: str, start: str, end: str) -> CandleSeries | None:
@@ -131,11 +163,45 @@ def load(symbol: str, timeframe: str, start: str, end: str) -> CandleSeries | No
     return CandleSeries(symbol, tf, candles_from_frame(frame)) if len(frame) else None
 
 
-def score_variant(series: CandleSeries, atr: list[float | None], v: Variant, horizon: int):
+class TrendLookup:
+    """The trend of a higher timeframe at a given moment, from candles closed by then."""
+
+    def __init__(self, series: CandleSeries):
+        threshold = SwingConfig().doji_threshold(series.symbol)
+        det = TrendDetector(BosDetector(SwingDetector(threshold)))
+        dur = series.timeframe.duration
+        self._closes = [c.ts + dur for c in series.view(len(series) - 1)]
+        self._trend = []
+        for i in range(len(series)):
+            det.update(series.view(i))
+            self._trend.append(det.trend)
+
+    def at(self, now: datetime) -> Trend:
+        i = bisect_right(self._closes, now) - 1
+        return self._trend[i] if i >= 0 else Trend.NONE
+
+
+def alignment(trend: Trend, direction: str) -> str:
+    """A sweep's BOS goes in `direction`: "with" the higher-timeframe trend or "against"."""
+    if trend is Trend.NONE:
+        return "none"
+    return "with" if (trend is Trend.UP) == (direction == "bullish") else "against"
+
+
+def window_of(close: datetime) -> str:
+    t = close.astimezone(NY).time()
+    return next((name for name, (a, b) in WINDOWS.items() if a <= t < b), "")
+
+
+def score_variant(
+    series: CandleSeries, atr: list[float | None], v: Variant, horizon: int, htf: dict | None = None
+):
     detector = SweepDetector.for_symbol(
         series.symbol, SwingConfig(doji_range_share=v.doji_share), v.sweep
     )
     candles = list(series.view(len(series) - 1))
+    dur = series.timeframe.duration
+    htf = htf or {}
     out = []
     for i in range(len(series)):
         for e in detector.update(series.view(i)):
@@ -144,6 +210,8 @@ def score_variant(series: CandleSeries, atr: list[float | None], v: Variant, hor
             if res is None or not a:
                 continue
             key = (series.symbol, series.timeframe.name, e.direction.value, e.confirmed_index)
+            opened = candles[e.confirmed_index].ts  # trend known before the BOS candle
+            closed = opened + dur
             out.append(
                 Scored(
                     key, series.timeframe.name, res, e.direction.value, res.risk / a,
@@ -155,8 +223,30 @@ def score_variant(series: CandleSeries, atr: list[float | None], v: Variant, hor
                         ("level_age_candles", e.index - e.swing.index),
                         ("BOS_delay_candles", e.confirmed_index - e.index),
                     ),
+                    alignment(htf["4h"].at(opened), e.direction.value) if "4h" in htf else "none",
+                    alignment(htf["15m"].at(opened), e.direction.value) if "15m" in htf else "none",
+                    window_of(closed) if series.symbol in INDICES else "",
+                    closed.year,
                 )
             )  # fmt: skip
+    return out
+
+
+def load_trends(symbol: str, tf: str) -> dict:
+    """4h (TradingView alignment) and 15m trend lookups; none for timeframes at or above them."""
+    start = datetime.fromisoformat(SPANS[tf][0]) - HTF_WARMUP
+    end = datetime.fromisoformat(SPANS[tf][1])
+    out = {}
+    for name, htf_tf, align in (
+        ("4h", "H4", H4Alignment.NEW_YORK),
+        ("15m", "M15", H4Alignment.UTC),
+    ):
+        if Timeframe[tf].value >= Timeframe[htf_tf].value:
+            continue
+        frame = DEFAULT_SOURCES.adapter(symbol).fetch_frame(
+            symbol, Timeframe[htf_tf], start, end, DEFAULT_BOUNDARY, align
+        )
+        out[name] = TrendLookup(CandleSeries(symbol, Timeframe[htf_tf], candles_from_frame(frame)))
     return out
 
 
@@ -195,9 +285,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timeframes", nargs="+", default=list(SPANS), choices=list(SPANS))
     p.add_argument("--horizon", type=int, default=20, help="candles looked at after the sweep")
     p.add_argument("--out", type=Path, default=OUT_DIR)
+    p.add_argument(
+        "--start", help="first day for every timeframe (default: SPANS), e.g. 2020-01-02"
+    )
+    p.add_argument("--only", nargs="+", metavar="VARIANT", help="run only these variant names")
     args = p.parse_args(argv)
 
-    vs = variants()
+    vs = [v for v in variants() if not args.only or v.name == BASE or v.name in args.only]
+    if args.start:
+        for tf in SPANS:
+            SPANS[tf] = (args.start, SPANS[tf][1])
     scored: dict[str, list[Scored]] = defaultdict(list)
     for tf in args.timeframes:
         for symbol in args.symbols:
@@ -206,19 +303,27 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{symbol} {tf}: no data, skipped")
                 continue
             atr = atr_values(series)
+            htf = load_trends(symbol, tf)
             print(f"{symbol} {tf}: {len(series):,} candles", flush=True)
             for v in vs:
-                scored[v.name] += score_variant(series, atr, v, args.horizon)
+                scored[v.name] += score_variant(series, atr, v, args.horizon, htf)
 
     args.out.mkdir(parents=True, exist_ok=True)
     rows = []
     for v in vs:
-        for tf in [*args.timeframes, "ALL", "bearish", "bullish"]:
-            sel = [
-                r for r in scored[v.name]
-                if tf == "ALL" or tf in (r.timeframe, r.direction)
-            ]  # fmt: skip
+        for tf in [*args.timeframes, "ALL", "bearish", "bullish", *SCOPES]:
+            pick = SCOPES.get(tf) or (
+                lambda r, tf=tf: tf == "ALL" or tf in (r.timeframe, r.direction)
+            )
+            sel = [r for r in scored[v.name] if pick(r)]
             rows.append({"variant": v.name, "timeframe": tf, **stats(sel)})
+    years = sorted({r.year for rs in scored.values() for r in rs})
+    for v in vs:  # the with-trend scopes year by year: is it stable?
+        for name, pick in SCOPES.items():
+            for y in years:
+                sel = [r for r in scored[v.name] if pick(r) and r.year == y]
+                if sel:
+                    rows.append({"variant": v.name, "timeframe": f"{name} | {y}", **stats(sel)})
     write_csv(args.out / "summary.csv", rows)
 
     base = {r.key: r for r in scored[BASE]}
