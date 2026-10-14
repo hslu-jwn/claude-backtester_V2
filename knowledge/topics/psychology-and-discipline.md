@@ -44,3 +44,14 @@ Mostly not backtestable. Turned into execution and risk rules where possible.
   interventions are logged and measured against the system.
 - Douglas's claim that a loss brings you "closer to a win" holds only if the edge is real and trades
   are independent; otherwise it is the gambler's fallacy.
+
+## From Volman, Aziz and Coulling
+- Volman: sit on the sidelines ~90 % of the time; take every *valid* setup and skip the rest without regret;
+  a skipped trade stays skipped; review decisions after the session, not during; re-enter right after a
+  stop-out if the setup re-forms; don't watch P/L in a trade.
+- Aziz: a good day is a rule-following day; hide the P/L; stop when stressed; trade a written plan with
+  if-then statements made before the open; simulator for 3 months first.
+- Coulling: a signal means "get ready", not "enter"; patience.
+- All three are discretionary and say so: Volman calls his edge "a personal perception", Coulling says
+  her method cannot be automated, Aziz says mechanical systems lose. Coding their rules is our
+  interpretation and must be tested, not assumed.

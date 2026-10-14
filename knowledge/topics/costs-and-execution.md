@@ -25,3 +25,17 @@ Sources: K = Kaufman *TSM* ch. 1, 8, 16, 21-23; H = Hougaard.
 - Spreads are much lower today than in 1999 (DAX 0.9 pt vs 6-8), yet retail failure rates are
   unchanged (H). Costs are not the main reason traders fail; behaviour is.
 - Reversals (stop-and-reverse) pay the spread twice; separate exits from entries (K ch.23).
+
+## Scalping arithmetic (Volman)
+- Volman's EURUSD economics: spread 1 pip = 10 % of the 10-pip target; risk 6-7 pip; break-even win rate
+  about 41 % at +10 / -7 (spread included). The trade starts at -1 pip, so a 10-pip target needs 11 pips of
+  chart travel (V ch.14).
+- A fixed 10/10 bracket does not carry over: estimates (to measure on our data) put the spread at
+  20-35 % of a 10-pip target on GBPJPY and XAUUSD. Scale the target in ATR and require
+  target >= 10 x spread, i.e. target = max(2.5-5 x M1 ATR(14), 10 x spread); skip when spread/target
+  > 0.10-0.15. → I-45 (cost-to-target filter, also HANDOFF open point 3)
+- Stop orders hit at market slip 1-1.5 pip in fast markets; news spreads widen up to 10 pip (V ch.1, 8).
+  Avoid releases or model wide spreads.
+- Histdata M1 has **no volume** (column always 0, checked 2026-10-14) and no tick spread. M1 bars are
+  about 2x coarser than Volman's 70-tick bars (~30 s in active hours), so signal-bar/entry-bar details
+  inside one M1 bar are lost; SL-first applies.

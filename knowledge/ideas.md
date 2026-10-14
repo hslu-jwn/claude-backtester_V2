@@ -4,8 +4,10 @@ Testable ideas from the books, merged and de-duplicated. **Nothing here is a tra
 becomes a rule only when the user picks it, it is written into a `docs/` spec and tested (CLAUDE.md ›
 Specs are the source of truth). When an idea is tested, set its status and link the ROADMAP step.
 
-Sources: K = Kaufman *TSM* (page), D = Douglas (chapter), H = Hougaard (chapter). Evidence in the books
-is mostly **gross of costs** on 1990-2011 futures, or anecdotal. ★ = most promising for our data.
+Sources: K = Kaufman *TSM* (page), D = Douglas (chapter), H = Hougaard (chapter), V = Volman
+*Forex Price Action Scalping* (chapter), A = Aziz *How to Day Trade for a Living* (chapter/setup),
+C = Coulling *Volume Price Analysis* (chapter). Evidence in the books
+is mostly **gross of costs** on 1990-2011 futures, or anecdotal (V, A, C give no statistics at all). ★ = most promising for our data.
 
 Our data: M1 histdata, XAUUSD, GBPUSD, GBPJPY, NAS100, US500, 2018/2020-2026, price only, costs =
 spread + commission + swap, results in R, FTMO limits (5 % daily, 10 % total).
@@ -18,12 +20,12 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | ID | Idea | Type | Symbols / TF | Swap | Source | Status |
 |---|---|---|---|---|---|---|
 | T-01 | Robustness report: plateau heat map, % profitable combos, halves t-test, shock days, 3 cost levels | tooling | all | – | K ch.21 | open |
-| I-22 | "Book of Truths" report: R by hour, weekday, Friday, month-end | tooling | all | – | H | open |
+| I-22 | "Book of Truths" report: R by hour, weekday, Friday, month-end, Aziz windows | tooling | all | – | H; A ch.7 | open |
 | I-01 ★ | Noise / regime study: ER per symbol, timeframe, half | study | all, 15m-1d | – | K ch.1, 17, 20, 23 | open |
 | I-02 | Trend-quality gate (ER, regression r, strength osc.) on strategies 2 and 4 | filter | all | – | K p.10-14, 275, 408 | open |
 | I-09 ★ | Open / gap / trend-day statistics on indices | study | NAS100, US500 | none | K ch.15-16, H | open |
 | I-17 | Time-of-day drift by session | study | XAUUSD, FX | none | K p.689-699 | open |
-| I-07 ★ | Volatility-scaled opening range breakout | signal | indices, gold; 5-15m | none | K p.759-764 | open |
+| I-07 ★ | Volatility-scaled opening range breakout | signal | indices, gold; 5-15m | none | K p.759-764; A ORB | open |
 | I-08 ★ | ORB only after inside / NR4 day or low vol | filter+signal | all; 5-15m | none | K p.759-764 | open |
 | I-16 ★ | Intraday volatility-shock fade | signal | gold, indices; 5-30m | none | K p.775-777, 626-634 | open |
 | I-03 ★ | RSI(2) mean reversion | signal | indices (1h-1d) | 0-1 night | K p.389-390 | open |
@@ -38,27 +40,41 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-19 | Gustafson 4-down-closes long | signal | indices; 1h-1d | 1-8 nights | K p.1010 | open |
 | I-20 | NAS100/US500 ratio stress (pairs) | signal | NAS100+US500 | both legs | K p.583-612 | open |
 | I-23 | Coded chart patterns (rectangle, double top, H&S) | signal | all; 1h-1d | yes | K p.176-178 | open |
-| I-30 | Round numbers and daily pivots | signal | all; 5-15m | none | K p.81, 143, 167 | open |
+| I-30 | Round numbers and daily pivots (also as target/skip layer) | signal+filter | all; 1-15m | none | K p.81, 143, 167; V ch.7-15; A | open |
 | I-31 | Value area (Market Profile from M1) | filter+signal | all | none | K p.822-830 | open |
 | I-32 | Bollinger-in-Keltner squeeze breakout | signal | all; 15m-4h | some | K p.330 | open |
 | I-04 | Low-vol entry filter, high-vol / shock exit with re-entry | filter+exit | trend systems | – | K p.861-866, 992 | open |
 | I-06 | Wait-for-pullback window, scale in over bars | entry mgmt | any signal | – | K p.1076-1079 | open |
 | I-24 | Scale out in thirds; minimum 3:1 target gate | exit mgmt | any signal | – | D ch.11 | open |
 | I-25 | Press winners: ATR pyramiding / add on new highs | exit mgmt | any signal | – | H; K p.1080-1084, 229 | open |
-| I-26 | Drawdown-scaled risk; 20-loser check vs FTMO | risk | R lists | – | K p.231; D ch.11 | open |
+| I-26 | Drawdown-scaled risk; 20-loser check; daily give-back stop | risk | R lists | – | K p.231; D ch.11; A ch.7 | open |
 | I-27 | Volatility-targeted sizing | risk | R lists | – | K p.1046-1054, 1142 | open |
 | I-21 | Hourly / seasonal volatility sizing, skip low-range hours | risk | all | – | K p.453-454, 561 | open |
 | I-28 | Streak dependence test; equity-curve filter | risk/study | R lists | – | D ch.5; K p.1086 | open |
 | I-29 | Carry: hold the positive-swap side with a trend/stop guard | signal | GBPJPY etc. | earns | K p.596-599 | open |
+| I-33 ★ | Compression block/range break with EMA squeeze and tension | signal | all; M1-M5 (15m for zones) | none | V ch.10-13; C ch.7 | open |
+| I-34 | Zone duration vs breakout move size (cause and effect) | study/filter | all | – | C ch.4, 7 | open |
+| I-35 | Second break (W/M) at the 20 EMA, micro pullback | signal | FX, gold; M1-M3 | none | V ch.7-9 | open |
+| I-36 ★ | Tipping-point exit module; breakeven vs no breakeven A/B | exit mgmt | any entry | – | V ch.14; A; C ch.8 | open |
+| I-37 ★ | Free-path-to-target skip filter | filter | any entry | – | V ch.15; A rule 5 | open |
+| I-38 | Session-mean (VWAP proxy) hold / rejection | signal | indices; 5m | none | A VWAP | open |
+| I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7 | open |
+| I-40 | Exhaustion reversal: 5+ candles, RSI extreme, at a level | signal | indices, gold; 5m | none | A reversal | open |
+| I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | open |
+| I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |
+| I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | open |
+| I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | blocked: no volume in histdata |
+| I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14 | open |
 
 ## Suggested order (Claude's proposal, the user decides)
 1. **Tooling first** (T-01, I-22): every later test then reports robustness the Kaufman way.
 2. **Cheap studies** (I-01, I-09, I-17): find *where* there is structure (which symbol, timeframe,
    session, half) before building a strategy. Hours of work, no new strategy folder.
-3. **Day-trade strategies without swap** (I-07/I-08 ORB family, I-16 shock fade, then I-03 RSI(2),
-   I-05 pullback). These avoid the swap problem that killed strategy 4 and fit the noisy indices.
-4. **Management and risk layers** (I-25, I-24, I-26, I-27) on the best candidate only: they reshape
-   an edge, they cannot create one.
+3. **Day-trade strategies without swap** (I-07/I-08 ORB family, I-33 compression break, I-16 shock
+   fade, then I-03 RSI(2), I-05 pullback). These avoid the swap problem that killed strategy 4 and fit
+   the noisy indices. Apply I-45 (cost-to-target) and I-37 (free path) as filters from the start.
+4. **Management and risk layers** (I-36, I-25, I-24, I-26, I-27) on the best candidate only: they
+   reshape an edge, they cannot create one.
 
 ## Details
 
@@ -108,7 +124,9 @@ k·ATR(n), short when < O − k·ATR(n); one reversal allowed or none; stop at t
 session end (before 17:00 New York). k ∈ {0.5, 0.75, 1, 1.5, 2}, n = bars per day. Source: K
 p.759-764, Table 16.8 (crude 5m PF 1.07-1.18 on 480-740 trades, gross); S&P fixed-point ORB was mostly
 negative. Fit: good, no swap; spread is the main cost. Differs: strategy 2 faded the opening sweep;
-this follows the break.
+this follows the break. Aziz adds: opening range of 5/15/30 min, trade only if the range is much
+smaller than the daily ATR (try range < 0.1-0.3 × ATR(14) daily), exit on the first opposite 5-min
+extreme when no level target exists.
 
 ### I-08 ★ ORB after inside / narrow-range day or low volatility
 Only on days after an inside day, an NR4/NR7 day, or when 6-day vol < 100-day vol. Entry: stop orders
@@ -200,7 +218,9 @@ break; target = pattern height −20 %; stop on the other side. Source: K p.176-
 
 ### I-30 Round numbers and daily pivots
 Levels: round numbers (gold 10/50, FX 00/50, indices 100/500) and prior-day P, R1, S1, R2, S2. Test
-breakout orders a small offset beyond the level vs fades at the level. Source: K p.81, 143, 167, 687.
+breakout orders a small offset beyond the level vs fades at the level. Volman's use as a layer: skip
+a small setup when a round number sits inside the target distance; a round number 1.0-1.5 × target
+beyond a break helps ("vacuum"). Source: K p.81, 143, 167, 687; V ch.7, 11, 15; A S/R setup.
 
 ### I-31 Value area from M1
 Prior session's time-at-price distribution; value area = central ~70 %. Follow breaks out of the
@@ -240,7 +260,8 @@ positions in the engine and the FTMO daily guard. Fits trend days (I-09) best.
 ### I-26 Drawdown-scaled risk and the 20-loser check
 Cut risk by a step for each x % drawdown from the equity peak, restore slowly (Turtles: 20 % per 10 %,
 restore 10 % per 6.7 %; finer steps for FTMO's 10 % limit). Plus: size so that 20 straight losses
-stay inside the 10 % limit. Source: K p.231; D ch.11. Pure `risk/` work on R lists.
+stay inside the 10 % limit. Plus Aziz: stop for the day after giving back 30 % of the day's profit;
+2-3 trades a day. Source: K p.231; D ch.11; A ch.7. Pure `risk/` work on R lists.
 
 ### I-27 Volatility-targeted sizing
 Risk per trade = r % / (k·ATR) (what our R model already does) plus an account-level scale = target vol
@@ -262,3 +283,85 @@ inconsistent). If no dependence, flat fractional risk is justified.
 Hold the direction that earns swap (e.g. long GBPJPY if FTMO's rate is positive), size by volatility,
 with a trend filter or an x·ATR drawdown exit; rebalance monthly. Source: K p.596-599 (forward bias;
 violent unwinds). The only idea that earns swap; unwinds (2008, 2020, Aug 2024) threaten the 10 % limit.
+
+### I-33 ★ Compression block / range break with EMA squeeze
+Box: the last 10-40 bars (M1-M5) with total height ≤ m × ATR and ≥ 2-3 equal highs (lows) on the break
+side (tolerance 1 pip or 0.1 × ATR). Tension: the last 2-6 bars small (range ≤ 0.3-0.5 × ATR) and hugging
+the barrier, bars between the 20 EMA and the barrier; direction = EMA slope / higher lows inside the box.
+Entry: stop order 1 tick beyond the barrier. Stop: box extreme or last higher low + spread, capped.
+Target: about 1.4R (Volman's 10 vs 7) or ATR-scaled. Skip: false break (price ran straight from the other
+barrier), tease (no squeeze), break into a near round number / cluster (I-37). Coulling's zone version
+on 15m-1h: zone from 3-bar pivots, entry on a *close* beyond, stop on the far side. Source: V ch.10-13,
+C ch.7-8. Evidence: charts only. Fit: good, fully codeable, intraday; spread decides (I-45).
+
+### I-34 Zone duration vs move size
+For every detected congestion zone record duration (bars), height, number of touches; measure the move
+after the break (MFE in zone heights and R over 5/10/20 bars). Does a longer zone give a bigger move
+(Wyckoff cause and effect)? If yes, use as a filter or to scale targets for I-33. Source: C ch.4, 7, 11.
+
+### I-35 Second break at the 20 EMA
+Trend: EMA(20) slope and most recent bars on one side. Pullback to the EMA; a first break of a signal
+bar in trend direction fails (no new extreme within 1-3 bars, pullback extreme holds within 1 pip);
+second signal bar broken → enter 1 tick beyond; stop beyond the pullback extreme; reject if the second
+entry is far beyond the first (no retest). Volman's preferred setup. M1 only roughly matches his
+~30-second bars. Source: V ch.9 (also DD ch.7, FB ch.8). Fit: FX/gold active hours; cost-critical.
+
+### I-36 ★ Tipping-point exit module
+Exit overlay for any entry: stop 1 tick beyond the setup; no breakeven; trail only after a pullback that
+tested a prior level or the EMA *and* a later bar took out that pullback bar's extreme; exit when a
+bar trades through the stop; fixed target. Compare with: fixed stop, breakeven at +1R, half off at the
+first target + breakeven (Aziz), ATR trail, 3-bar pivot trail (Coulling). Run on a random-entry
+baseline as well, to separate exit edge from entry edge. Source: V ch.14, A ch.7, C ch.8.
+
+### I-37 ★ Free-path-to-target filter
+For any candidate entry find the nearest opposing obstacle (cluster of bars, equal highs/lows, prior
+day/session high or low, round number) within the target distance; skip if it is closer than
+x × target. Also skip after a spike without buildup into a prior extreme. Aziz's version: skip if the
+next level gives less than 2:1, never tighten the stop. Test on strategies 2-4 entries and on I-33.
+Source: V ch.15, A rule 5. Cheap with the swing detector.
+
+### I-38 Session-mean (VWAP proxy) hold / rejection (indices)
+Anchored mean of typical price from 09:30 New York. After 15 min: long when price pulls back to the
+mean from above and a 5-min close holds above; short on a failed test from below. Stop: 5-min close
+through the mean + buffer; target prior-day close / high / low or 2R; half at 1R + breakeven (optional).
+Source: A VWAP strategy. Later: true tick-volume VWAP from MT5 (I-44) as A/B.
+
+### I-39 Previous-close magnet on gap days
+Gap = 09:30 open vs 16:00 New York close. If the gap ≥ x × ATR and price fails at the session mean in
+the gap direction after 15 min, trade back toward the prior close (target = prior close); stop beyond
+the mean or the opening range; time stop 11:30 or 15:00. Also the opposite (gap continuation). Shares
+statistics with I-09. Source: A red-to-green.
+
+### I-40 Exhaustion reversal
+M5: ≥ 5 (or 4) same-colour candles, RSI(14) > 90 / < 10 (calibrate: 80/20), price at a prior-day
+high/low or round number; then an indecision or opposite candle; enter on the first candle making a
+new high (after a fall) / new low (after a rise); stop at the extreme; target the session mean / 20 EMA
+/ next level; exit after 3-4 flat bars. Source: A reversal setups. Overlaps with I-16 (shock fade).
+
+### I-41 Wick rejection at a zone; spring / upthrust
+Hammer / shooting star (wick ≥ k × body and ≥ m × ATR) at a zone edge (I-33 zones), with the
+higher-timeframe bias; or a brief break of the range edge that returns inside with a narrow bar, entry
+on the close back above the range middle. Source: C ch.5-6, 11. Low prior: it is close to the sweeps of
+failed strategies 1-2; test only as a cheap variant on non-session zones.
+
+### I-42 Breakout retest / role reversal
+After a range break (I-33), wait for price to return to the broken barrier without closing back
+inside; enter on the break of the signal bar in the breakout direction; stop behind the last arch of
+the range. Compare with entering on the break itself. Source: V ch.13 (ARB), C ch.7.
+
+### I-43 M1 path-length activity proxy
+For each 5m-1h bar compute the sum of its M1 ranges (path length) and the number of direction changes
+as a stand-in for activity. Test Coulling's anomalies: high activity + small net range at swing
+extremes (absorption) vs wide range on low activity. Not real volume; once MT5 tick volume exists,
+check how well it correlates. Source: C ch.4.
+
+### I-44 Volume rules (blocked)
+Relative tick volume per bar (quantiles of the last N bars, per time of day): breakout valid only on
+high and rising volume; climax = 2+ wick bars on ultra-high volume at the end of a range; test bars =
+narrow, low volume at the range edge; true VWAP. Needs MT5 history with tick volume (histdata has none).
+Plan: A/B against the price-only versions (I-33, I-38, I-41). Source: C ch.5-7, 10; A.
+
+### I-45 ★ Cost-to-target filter
+For any entry compute spread (plus commission) / target distance; skip when > 0.10-0.15. Volman's own
+economics: 1 pip spread on a 10 pip target. Target scaled as max(2.5-5 × M1 ATR(14), 10 × spread).
+Source: V ch.1, 14. Same idea as HANDOFF open point 3 (cost filter) and I-21.

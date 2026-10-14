@@ -61,3 +61,15 @@ Sources: K = Kaufman *TSM* ch. 3-4, 9, 11, 13-14, 16, 18, 22; H = Hougaard.
 - Retail FX clients win 61-62 % of trades but lose overall: avg win ~43 pips vs avg loss ~78-83 pips
   (H, 43 M-trade study). Win rate alone means nothing.
 - Hougaard's own statistics: 39 % winners, 13 % breakeven, still profitable through asymmetry.
+
+## From Aziz and Volman
+- **Exhaustion reversal (Aziz):** 5 or more consecutive 5-min candles one way, 5-min RSI > 90 (< 10),
+  at a daily level, then an indecision or opposite candle; enter on the first candle making a new
+  high (bottom) / new low (top); stop at the extreme; target the session mean, 9/20 EMA or the next
+  level; exit if it goes flat. RSI 90 on M5 is rare on index CFDs; thresholds need calibration. → I-40
+- **Session mean (VWAP proxy, Aziz):** above it buyers control, below sellers; long on a held
+  pullback to it, short on a rejection from below; stop on a 5-min close through it. Without volume use
+  the session-anchored mean of typical price; MT5 tick volume later. → I-38
+- **IRB boomerang (Volman ch.12):** inside a range at least ~20 pip wide, a small block at a barrier is
+  traded away from the barrier; needs ~10 pip of free path.
+- **Spikes without buildup** tend to retrace fully to their origin (V ch.15). Fits I-16.

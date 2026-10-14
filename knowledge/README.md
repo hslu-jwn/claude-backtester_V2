@@ -28,6 +28,7 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | [position-sizing-and-risk.md](topics/position-sizing-and-risk.md) | Sizing methods, vol targeting, risk of ruin, FTMO angle |
 | [costs-and-execution.md](topics/costs-and-execution.md) | Spread, slippage, swap, gross vs net |
 | [psychology-and-discipline.md](topics/psychology-and-discipline.md) | Probability mindset, execution rules |
+| [volume-and-wyckoff.md](topics/volume-and-wyckoff.md) | Wyckoff laws, effort vs result, campaign cycle, VWAP; volume not in our data yet |
 
 ## Books read
 | Short | Book | Notes | Character |
@@ -35,9 +36,12 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | K | Perry J. Kaufman, *Trading Systems and Methods*, 5th ed. (Wiley 2013) | [ch. 1-7](books/kaufman-tsm-ch1-7.md), [8-13](books/kaufman-tsm-ch8-13.md), [14-20](books/kaufman-tsm-ch14-20.md), [21-24](books/kaufman-tsm-ch21-24.md) | Reference work on systems and testing; most results gross of costs, 1990-2011 futures |
 | D | Mark Douglas, *Trading in the Zone* (2000) | [notes](books/douglas-trading-in-the-zone.md) | Psychology; probability mindset, execution discipline; no tested rules |
 | H | Tom Hougaard, *Best Loser Wins* (2022) | [notes](books/hougaard-best-loser-wins.md) | Psychology of an index day trader; pyramiding, no targets; claims unverified |
+| V | Bob Volman, *Forex Price Action Scalping* (2011) | [part 1](books/volman-forex-scalping-part1.md) (setups), [part 2](books/volman-forex-scalping-part2.md) (exits, skips, sizing) | EURUSD 70-tick scalping, 20 EMA, 10-pip target; discretionary, no statistics |
+| A | Andrew Aziz, *How to Day Trade for a Living* | [notes](books/aziz-how-to-day-trade.md) | US stock day-trading setups (ORB, VWAP, reversal, prev. close); discretionary, no statistics |
+| C | Anna Coulling, *A Complete Guide to Volume Price Analysis* (2013) | [notes](books/coulling-volume-price-analysis.md) | Wyckoff-style volume reading; needs volume (not in histdata); no statistics |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
-(Douglas and Hougaard texts have no page numbers).
+(Douglas, Hougaard, Aziz and Coulling texts have no page numbers; Volman is cited by chapter).
 
 ## What the books say about our results so far
 - **Strategy 4 (trend following) failing on indices is expected:** equity indices are the noisiest
@@ -47,6 +51,11 @@ Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H
   of profitable parameter combos (≥ 70 %), sibling markets and halves, never the best cell (K ch.21).
 - **SMC tools (strategies 1-3) have no support in these books.** Kaufman and Hougaard both warn that
   pattern reading is mostly hindsight and that candlestick/Fibonacci claims fail mechanical tests.
+- **The three practitioner books (V, A, C) are discretionary and give no statistics.** Their value is
+  precise intraday rule ideas (compression breakouts, ORB with a range/ATR filter, session mean,
+  previous-close magnet, exhaustion reversal) and exit/skip rules (tipping point, free path, never
+  tighten a stop for the ratio). Volman's 10-pip brackets only work if spread ≤ ~10 % of the target.
+- **Volume:** our histdata has none; volume ideas wait for MT5 tick volume (I-44).
 - **Swap pushes us toward day trades** (ORB, shock fade, time-of-day, midday rules) or short holds
   (RSI(2)), which also suit the noisy indices.
 

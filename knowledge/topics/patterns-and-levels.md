@@ -49,3 +49,20 @@ Sources: K = Kaufman *TSM* ch. 3-5, 15, 18; H = Hougaard.
 - Our SMC tools (FVG, OB, BOS, sweeps) are a family of swing/level patterns. The books give no
   evidence for them specifically; strategies 1-3 built on them failed. Treat any new pattern idea with
   the same skepticism and test it mechanically.
+
+## From Volman, Aziz and Coulling
+- **Round numbers (V):** 00 and 50 levels (and 20-steps as light guides) act as magnets and barriers;
+  EURUSD often moves in 20-pip steps; don't trade a small setup straight into a near round number; a
+  round number 10-13 pip beyond a break helps the target. For gold use $5/$10, indices 50/100 points. → I-30
+- **Equal highs/lows** need rounding to whole pips (or an ATR tolerance) to be detected (V ch.2).
+- **Aziz S/R:** horizontal levels only, from daily wicks/extremes, near the current price; a level is a
+  zone; more touches = stronger; enter on an indecision candle at the level, stop on a 5-min close
+  beyond, target the next level. Named candle patterns and diagonal trend lines rejected as subjective.
+- **Coulling candles:** hammer / shooting star / long-legged doji / hanging man, graded by volume; the
+  wick is the first thing to read; repeated wicks at one level (2-3 within a few bars) matter more.
+  Price-only proxy: wick length vs ATR, bar range vs average. → I-41
+- **Coulling pivots:** 3-bar pivot (middle bar has a higher high *and* higher low than its neighbours,
+  or a lower low and lower high); a pivot high followed by a pivot low defines a congestion zone.
+- **Triangles / triple tops (C ch.11):** rising triangle (flat ceiling, higher lows) = break up; falling
+  = break down; pennant = direction unknown. Single chart examples only.
+- See [volume-and-wyckoff.md](volume-and-wyckoff.md) for accumulation/distribution, tests and climaxes.

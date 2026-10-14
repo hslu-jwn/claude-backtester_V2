@@ -10,7 +10,7 @@ Write ONLY your notes file (path given in your task). Do not touch any repo file
 
 ## Project context
 - Backtester replays historical M1 candles (histdata.com) for XAUUSD, GBPUSD, GBPJPY (FX/gold) and
-  NAS100, US500 (indices), years 2018/2020-2026. Can resample to any timeframe (1m..1d). No volume,
+  NAS100, US500 (indices), years 2018/2020-2026. Can resample to any timeframe (1m..1d). No volume (histdata volume column is always 0; MT5 tick volume only later),
   no open interest, no order book, no futures term structure, no options data. Spread + commission +
   swap (overnight financing) costs are modeled. Trades are simulated in R multiples (risk units).
 - Target: pass / trade FTMO prop-firm accounts (max daily loss 5%, max total loss 10%, profit targets).

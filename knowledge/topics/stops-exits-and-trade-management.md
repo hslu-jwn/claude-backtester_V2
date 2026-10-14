@@ -58,3 +58,22 @@ Sources: K = Kaufman *TSM* ch. 5, 8, 16, 20, 22-23; D = Douglas; H = Hougaard.
   not supported yet; both would be new engine features (management layer, still in R).
 - Intrabar order: if SL and TP are in one candle, SL is assumed first (invariant #1). This matters for
   scale-out tests with near targets.
+
+## From the scalping and day-trading books (Volman, Aziz, Coulling)
+- **Tipping point (V ch.14):** the stop is the chart level that, traded through by one pip, makes the
+  trade invalid; exit at market at once. Initial stop 1 pip beyond the setup; risk = setup height + ~3 pip
+  (break on each side + spread); average real stop 6-7 pip against a fixed 10-pip target. → I-36
+- **No breakeven stop** (Volman calls it a cardinal sin; entry levels are often retested). Trail only after a
+  "technical feat": a pullback that tested a prior level or the 20 EMA, followed by a bar taking out the
+  pullback bar's extreme; then lift the stop behind that pullback. More than half of the trades that reach
+  the target go through a serious pullback first (V ch.14).
+- **Opposite view (Aziz):** take half at the first target and move the stop to breakeven. Breakeven vs no
+  breakeven is a direct A/B test. → I-36, I-24
+- **Never tighten a stop to improve the reward/risk ratio; skip the trade instead** (Aziz rule 5;
+  V ch.13-14: skip if the technical stop is more than 10 pip away). Our tests must apply the same skip.
+- **Aziz:** minimum 2:1 to the next level; stop at a structural close (VWAP, EMA, level); exit on the first
+  opposite 5-min extreme; time stop: a reversal trade that goes flat for a few minutes is closed.
+- **Coulling (C ch.8):** trail with the 3-bar pivot sequence (exit when a pivot high fails to exceed the
+  previous one, or price closes below the last pivot low).
+- **Free path to target (V ch.15):** skip when clusters, prior highs/lows or a round number sit inside
+  the target distance. → I-37

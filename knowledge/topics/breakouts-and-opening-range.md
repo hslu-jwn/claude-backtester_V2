@@ -51,3 +51,26 @@ Sources: K = Kaufman *TSM* ch. 3, 5, 15-16, 20; H = Hougaard.
 - Spread is the main cost; use k ≥ 1 so the stop distance is many spreads wide.
 - Session opens must come from `sessions.py` (DST-aware). Index CFDs trade almost 24 h; the "open"
   is the cash open 09:30 New York.
+
+## Compression breakouts (Volman, Coulling)
+Sources: V = Volman *Forex Price Action Scalping* (chapter), C = Coulling *Volume Price Analysis* (chapter).
+- **Block / range break (V ch.10-13):** a tight box with several equal highs (or lows) on the break side;
+  enter 1 pip beyond the barrier. The claimed quality factor is **pre-breakout tension**: 2-6 tiny bars
+  hugging the barrier and price squeezed between the 20 EMA and the barrier, the EMA "pushing the bars
+  out of the box". Trade only the side of the underlying pressure (higher lows inside the box = long). → I-33
+- **Two traps (V ch.11):** *false break* = price runs straight from the other barrier and breaks at once,
+  no buildup → skip; *tease* = a poke from the middle or from the EMA without a squeeze → skip. If a
+  break gets no follow-through within 1-2 bars it is likely to fail (V ch.12).
+- **Second chance (ARB, V ch.13):** after a break, a small cluster on or around the broken barrier, or a
+  pullback into the barrier zone, gives a re-entry; stop behind the last arch of the range. → I-42
+- **Coulling (C ch.7-8):** congestion zone from 3-bar pivots; a breakout counts only with a clean
+  *close* beyond the zone; the broken ceiling becomes the floor (retest entry); stop on the far side.
+  Wyckoff's "cause and effect": a longer congestion gives a longer move afterwards. → I-33, I-34, I-42
+- Volman: ranges outnumber trends about 4 to 1 (his estimate); Coulling: ~70 % sideways; Kaufman: ~80 %.
+- None of these books gives statistics; all evidence is hand-picked charts.
+
+## ORB in Aziz (US stocks, *How to Day Trade for a Living*)
+- Opening range = first 5 min (he now prefers 15 or 30); trade the first break after the range closes;
+  **only if the range is much smaller than the daily ATR** (skip when the range is close to the ATR);
+  stop at a VWAP close; target = next daily level, else exit on the first opposite 5-min extreme.
+  Mid/large caps only; on the indices this means event days. → I-07 (adds the range/ATR filter)

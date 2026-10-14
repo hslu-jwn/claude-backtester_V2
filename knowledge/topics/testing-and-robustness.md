@@ -114,3 +114,14 @@ Derived from K ch.21-24 (full version with page refs: `books/kaufman-tsm-ch21-24
 
 See also: [costs-and-execution.md](costs-and-execution.md), [position-sizing-and-risk.md](position-sizing-and-risk.md),
 `.claude/skills/backtest-evaluation-research` (online research on the same question).
+
+## Discretionary books: how to read them
+- Volman, Aziz and Coulling give **no statistics at all** (no win rates, samples or costs); every example
+  is a hand-picked chart. Treat their rules as hypotheses.
+- Their real "edge" sits in judgement filters (chart resistance, squeeze quality, "holds support",
+  "high volume"). When coding them: fixed numeric thresholds in a config, pre-declared, and check for
+  lookahead (equal highs, "first pullback of a new trend" and the surge origin are easy to define with
+  hindsight).
+- Good use: A/B tests that isolate one claim (breakeven vs no breakeven, with vs without the tension
+  filter, price-only vs tick-volume version), and exit modules on a random-entry baseline to separate
+  exit edge from entry edge (Volman notes, idea B).

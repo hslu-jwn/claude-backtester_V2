@@ -58,3 +58,16 @@ it becomes a strategy.
 - Day trades closed before 17:00 New York pay no swap.
 - Hougaard's self-audit ("Book of Truths"): split every strategy's R by hour, weekday, Friday,
   month-end. Make this a standard report for every run. → I-22
+
+## From the day-trading books
+- **Aziz (US stocks):** the open 9:30-11:00 New York is the best window (most size); midday 11:00-15:00
+  the worst; the last hour trends with the professionals. Wait 10-15 min after the open before VWAP
+  trades; the first 5 minutes are chaos. Flat before the close. → I-22 (split R by these windows)
+- **Previous-close magnet (Aziz "red-to-green"):** on gap days price is drawn toward the prior close;
+  enter from the session mean or a level, target the prior close. On index CFDs the "gap" is the
+  09:30 open vs the 16:00 New York close of the cash session. → I-39, linked to I-09
+- **Volman (EURUSD):** the Asian session prints long, clean ranges (2 h or more); the US lunch hour forms
+  readable ranges around round numbers that often break when traders return; avoid major releases (NFP,
+  rate decisions): bars print 10x faster, levels evaporate, spreads widen.
+- **Coulling:** the first bar at the cash open on low volume is often a probe ("trap"); in 24 h FX the
+  open equals the previous close, so FX has no gap signal.

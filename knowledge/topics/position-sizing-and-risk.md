@@ -58,3 +58,11 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
   quickly. Any pyramiding test must include the daily-loss guard.
 - Carry unwinds (2008, 2020, Aug 2024) are violent; a carry-earning position can breach the 10 %
   limit (K p.596-599).
+
+## From the day-trading books
+- **Aziz:** max 2 % per trade (1 % conservative), size = risk / stop distance, minimum 2:1, 2-3 trades a
+  day, scale only into winners, never average down, never hold overnight; **give-back rule:** stop for
+  the day once 30 % of the morning's profit is lost. → I-26
+- **Volman (ch.16):** fixed fraction of 1-2 % on the stop, recomputed once a day; same size for every
+  valid setup (no "quality" sizing); one position at a time; ignore new setups while in a trade.
+- Both are far too large for FTMO's limits: use 0.25-0.5 % per trade with a daily stop.

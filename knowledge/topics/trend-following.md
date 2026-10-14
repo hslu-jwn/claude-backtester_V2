@@ -50,3 +50,13 @@ momentum, KAMA and Dunnigan; it failed with FTMO swap and was unstable across ha
 - Holding days to weeks means swap; with FTMO rates XAUUSD longs cost about $61 per lot per night
   (ROADMAP 10.4). Prefer variants with less time in market (two-trend, pullback entry) and report swap
   in R separately.
+
+## Micro-timeframe pullbacks (Volman, Aziz)
+- **Volman's with-trend setups on a 70-tick chart + 20 EMA:** DD (2+ small dojis at the EMA after a
+  40-60 % diagonal pullback, enter 1 pip beyond their trend-side extreme), FB (first pullback after a
+  violent surge, rarely taken), **SB (second break: the first break fails, W/M at the EMA, enter on the
+  second signal bar; his preferred setup)**. EMA 15-25 all work; the EMA is a guide, not support.
+  "Trend equals trend": the move after a pullback mimics the move before. → I-35
+- **Aziz 9 EMA ride:** from ~11:00 New York, price consolidating above a rising 9 EMA; buy near the EMA,
+  exit on the first 5-min close on the other side. Probably weak in noise but cheap to test.
+- Both are intraday, so no swap; costs per trade are the problem (see costs topic).
