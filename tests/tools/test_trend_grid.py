@@ -5,9 +5,10 @@ Evaluation (ROADMAP 10.3)."""
 from __future__ import annotations
 
 import csv
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 
+import pandas as pd
 import pytest
 
 from backtester.core.models import Direction, Timeframe
@@ -15,14 +16,27 @@ from backtester.strategy.trend_following.config import Signal
 from backtester.tools import trend_grid
 from backtester.tools.trend_grid import (
     avg_holding_hours,
+    family_key,
+    grid_rows,
     half_rows,
     load_swap_file,
+    robustness_row,
     summary_row,
     swap_rates_note,
     variant_name,
     variants,
     year_rows,
 )
+from backtester.tools.trend_grid import (
+    load_shocks as real_load_shocks,
+)
+
+
+@pytest.fixture(autouse=True)
+def no_real_shock_data(monkeypatch):
+    """The smoke runs must not read the real cache for the daily shock bars."""
+    monkeypatch.setattr(trend_grid, "load_shocks", lambda *a, **k: ({}, ""))
+
 
 ALL_TF = [Timeframe.M15, Timeframe.M30, Timeframe.H1, Timeframe.H4, Timeframe.D1]
 ALL_SIGNALS = [Signal.BREAKOUT, Signal.SMA, Signal.KAMA]
@@ -299,3 +313,140 @@ def test_smoke_run_csv_has_the_swap_columns(tmp_path, monkeypatch):
     assert float(row["sum_r_net"]) == pytest.approx(0.8)
     assert float(row["sum_r_ex_swap"]) == pytest.approx(0.9)
     assert float(row["avg_r_ex_swap"]) == pytest.approx(0.9)
+
+
+# --- robustness report (ROADMAP 6.4) ------------------------------------------------------
+
+
+def test_family_key_groups_one_signal_and_timeframe_in_parameter_order():
+    cfgs = variants([Signal.BREAKOUT, Signal.SMA], [Timeframe.H4], sweep=True)
+    fam = {}
+    for c in cfgs:
+        key, order = family_key(c)
+        fam.setdefault(key, []).append(order)
+    assert fam["H4 breakout"] == [20, 55, 100]
+    assert fam["H4 sma"] == [20, 50, 100, 200]
+    assert fam["H4 sma band 0.5"] == [50, 200]
+    assert fam["H4 sma band 1"] == [50, 200]
+
+
+def test_family_key_of_a_signal_without_parameter():
+    (cfg,) = variants([Signal.DUNNIGAN], [Timeframe.D1], sweep=True)
+    assert family_key(cfg) == ("D1 dunnigan", 0)
+
+
+def test_robustness_row_has_the_measures_and_the_group():
+    trades = [trade(year=2021, r_gross=1.0, r_net=0.8), trade(year=2024, r_gross=-0.5, r_net=-0.7)]
+    row = robustness_row("H4 sma 50", "XAUUSD", trades, {})
+    assert row["variant"] == "H4 sma 50" and row["symbol"] == "XAUUSD"
+    assert row["trades"] == 2
+    assert row["net_r"] == pytest.approx(0.1)
+    assert row["net_r_without_best"] == pytest.approx(-0.7)
+    assert row["net_r_stressed"] == pytest.approx(1.0 - 1.5 * 0.2 + -0.5 - 1.5 * 0.2)
+    assert row["half_first_net_r"] == pytest.approx(0.8)
+    assert row["half_second_net_r"] == pytest.approx(-0.7)
+
+
+def test_grid_rows_stats_and_plateau_per_family_and_for_all_variants():
+    entries = [  # (family, order, variant, group sum of net R)
+        ("H4 breakout", 20, "H4 breakout 20", 5.0),
+        ("H4 breakout", 55, "H4 breakout 55", 4.0),
+        ("H4 breakout", 100, "H4 breakout 100", -9.0),
+        ("H4 sma", 50, "H4 sma 50", 1.0),
+        ("H4 sma", 20, "H4 sma 20", -1.0),
+    ]
+    rows = {r["family"]: r for r in grid_rows(entries)}
+    b = rows["H4 breakout"]
+    assert b["n"] == 3 and b["profitable_share"] == pytest.approx(2 / 3)
+    assert b["robust"] is False  # 0.67 < 0.70
+    assert b["plateau_variant"] == "H4 breakout 20"  # smoothed 4.5 / 0 / -2.5
+    s = rows["H4 sma"]  # sorted by order: 20 (-1) then 50 (+1): smoothed 0 / 0 -> first
+    assert s["n"] == 2 and s["plateau_variant"] == "H4 sma 20"
+    allrow = rows["ALL VARIANTS"]
+    assert allrow["n"] == 5
+    assert allrow["mean"] == pytest.approx(0.0)
+    assert allrow["plateau_variant"] == ""
+
+
+def test_smoke_run_writes_robustness_and_grid_files(tmp_path, monkeypatch, capsys):
+    def fake_run(symbols, start, end, settings, *args, **kwargs):
+        trades = (trade(year=2021, r_net=1.0), trade(year=2024, r_net=-0.5))
+        return SimpleNamespace(
+            trades=trades, runs={s: SimpleNamespace(trades=trades) for s in symbols}
+        )
+
+    monkeypatch.setattr(trend_grid, "run_backtests", fake_run)
+    out = tmp_path / "g"
+    argv = ["--symbols", "XAUUSD", "--timeframes", "H4", "--signals", "breakout",
+            "--breakout-periods", "20", "55", "--out", str(out)]  # fmt: skip
+    assert trend_grid.main(argv) == 0
+    with (out / "robustness.csv").open(encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert {r["variant"] for r in rows} == {"H4 breakout 20", "H4 breakout 55"}
+    assert {r["symbol"] for r in rows} == {"ALL", "XAUUSD"}
+    assert "net_r_stressed" in rows[0] and "welch_t" in rows[0]
+    with (out / "grid.csv").open(encoding="utf-8") as f:
+        grid = {r["family"]: r for r in csv.DictReader(f)}
+    assert set(grid) == {"H4 breakout", "ALL VARIANTS"}
+    assert grid["H4 breakout"]["n"] == "2"
+    assert "robust" in capsys.readouterr().out.lower()
+
+
+def test_shock_note_is_printed_and_shock_columns_added(tmp_path, monkeypatch, capsys):
+    exit_day = date(2021, 3, 3)  # the fake trades exit 48 h after 2021-03-01
+    monkeypatch.setattr(
+        trend_grid, "load_shocks", lambda *a, **k: ({"XAUUSD": {exit_day}}, "shock days: 1")
+    )
+
+    def fake_run(symbols, start, end, settings, *args, **kwargs):
+        trades = (trade(year=2021, r_net=1.0),)
+        return SimpleNamespace(
+            trades=trades, runs={s: SimpleNamespace(trades=trades) for s in symbols}
+        )
+
+    monkeypatch.setattr(trend_grid, "run_backtests", fake_run)
+    argv = ["--symbols", "XAUUSD", "--timeframes", "H4", "--signals", "sma", "--no-sweep",
+            "--out", str(tmp_path)]  # fmt: skip
+    assert trend_grid.main(argv) == 0
+    with (tmp_path / "robustness.csv").open(encoding="utf-8") as f:
+        row = next(csv.DictReader(f))
+    assert row["shock_days_with_trades"] == "1"
+    assert float(row["net_r_without_shocks"]) == pytest.approx(0.0)
+    assert "shock days: 1" in capsys.readouterr().out
+
+
+def _frame(n_quiet=10):
+    ts = pd.date_range("2026-01-01 22:00", periods=n_quiet + 1, freq="D", tz="UTC")
+    high = [100.5] * n_quiet + [102.0]
+    low = [99.5] * n_quiet + [98.0]  # last bar: range 4 = 4 x the quiet mean 1
+    return pd.DataFrame({"ts": ts, "high": high, "low": low, "close": [100.0] * (n_quiet + 1)})
+
+
+def test_load_shocks_dates_a_bar_by_its_close_and_notes_unreadable_symbols(monkeypatch):
+    calls = []
+
+    def fetch_frame(symbol, timeframe, start, end, **kw):
+        calls.append((symbol, timeframe))
+        return _frame()
+
+    def adapter(symbol):
+        if symbol == "BROKEN":
+            raise KeyError(symbol)
+        return SimpleNamespace(fetch_frame=fetch_frame)
+
+    cached = [date(2025, 12, 20) + timedelta(days=i) for i in range(50)]
+    fake = SimpleNamespace(cached_days=lambda s: cached, adapter=adapter)
+    monkeypatch.setattr(trend_grid, "DEFAULT_SOURCES", fake)
+    shocks, note = real_load_shocks(["XAUUSD", "BROKEN"], date(2026, 1, 1), date(2026, 1, 31))
+    # the 11th bar opens 2026-01-11 22:00 UTC and closes on the 12th
+    assert shocks == {"XAUUSD": {date(2026, 1, 12)}}
+    assert calls == [("XAUUSD", Timeframe.D1)]
+    assert "XAUUSD 1" in note and "BROKEN (KeyError)" in note
+
+
+def test_load_shocks_symbol_without_cached_days_is_a_note(monkeypatch):
+    fake = SimpleNamespace(cached_days=lambda s: [], adapter=lambda s: None)
+    monkeypatch.setattr(trend_grid, "DEFAULT_SOURCES", fake)
+    shocks, note = real_load_shocks(["US500"], date(2026, 1, 1), date(2026, 1, 31))
+    assert shocks == {}
+    assert "US500" in note and "not available" in note

@@ -936,14 +936,22 @@ has no step yet.
   (`results/20261009-135418_XAUUSD-GBPUSD-GBPJPY`, 7.5 min): 17,742 trades, win rate
   34.6%, net R −2,950.4 (gross −825.3), max drawdown 2,955 R, profit factor 0.75. The
   first run (above, before the fix) differs little: the ~3 shifted weeks a year.
-- ☐ **6.4 Robustness report** (knowledge base T-01; user, 2026-10-14). `analytics/robustness.py`, pure
-  functions on trade lists, first used in `tools/trend_grid`, later by the Simulator (6.1): share of
-  profitable variants, mean / st.dev / mean − 1 sd of net R over the grid, neighbour-smoothed grid and
-  plateau centre, Welch t-test of trade R between the halves 2020-22 / 2023-26, shock days (daily range
-  > 3.5 × ATR(10)) with P/L with and without them, stressed costs (the whole cost per trade, spread +
-  commission + swap = gross − net, × 1.5, no re-run), kurtosis flag (> 7), result without the best trade.
-  Defaults are Kaufman's (`knowledge/topics/testing-and-robustness.md`), all in a config dataclass
-  (accepted by the user 2026-10-14).
+- ☐ **6.4 Robustness report** (knowledge base T-01; user, 2026-10-14). **Built 2026-10-14, waiting for the
+  user's check.** `analytics/robustness.py` (pure functions on trade lists and grids, config
+  `RobustnessConfig`, defaults Kaufman's, accepted by the user): share of profitable variants and
+  `robust` at >= 70 %, mean / sample st.dev / mean − 1 sd of net R over a grid, neighbour-smoothed
+  series / grid and the plateau variant, Welch's t of the trade R of the halves 2020-22 / 2023-26
+  (`|t| >= 2` = they differ), kurtosis of the daily R (days with a closing trade; normal 3, flag > 7),
+  net R without the best trade, stressed net R (each trade's cost `r_gross − r_net`, spread +
+  commission + swap, × 1.5; swap income not scaled; no re-run), shock days (true range of a daily bar
+  > 3.5 × the mean true range of the 10 days before; trades belong to the UTC date they exit on;
+  more than half of the shock days with a closing trade profitable = risk understated). Used by
+  `python -m backtester.tools.trend_grid`: new `robustness.csv` (variant × symbol group) and `grid.csv`
+  (per signal × timeframe family and over all variants), a printed family table, and `--no-shocks`.
+  Tests: `tests/analytics/test_robustness.py`, `tests/tools/test_trend_grid.py`. The Strategy
+  Simulator (6.1) reuses the functions. Check: `python -m backtester.tools.trend_grid --symbols
+  XAUUSD NAS100 --timeframes D1 H4 --signals breakout sma --out results/trend_check2` and look at
+  `grid.csv` / the family table.
 - ☐ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14): groupings by entry hour, weekday,
   Friday, first / last 3 trading days of the month, and New York windows Open 9:30-11:00 / Midday
   11:00-15:00 / Close 15:00-16:00, for `by_period` / `split` and the run report.

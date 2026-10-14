@@ -12,6 +12,12 @@ only the spec defaults. Everything else is the spec default. Every variant is a 
 backtest with the same data and costs. Written to `<out>/summary.csv` (variant x symbol
 group), `<out>/by_year.csv` and `<out>/split.csv` (2020-22 against 2023-26: a variant counts
 only when neighbouring parameters and both periods agree), and printed as a table.
+`<out>/robustness.csv` (variant x symbol group: net R without the best trade, with costs x 1.5,
+the two halves with Welch's t, kurtosis of the daily R, shock days) and `<out>/grid.csv` (per
+signal x timeframe family and over all variants: share of profitable variants, mean, st.dev,
+mean - 1 sd, robust at >= 70 %, and the plateau variant of the neighbour-smoothed net R) come
+from `analytics/robustness.py` (ROADMAP 6.4; knowledge/topics/testing-and-robustness.md).
+`--no-shocks` skips reading the daily bars for the shock days.
 Research only: it changes no setting.
 
 The indicators' history comes from the strategy (`Strategy.min_warmup_days`), so a run that
@@ -32,20 +38,28 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from backtester.analytics.metrics import by_period, by_year, summarize
+from backtester.analytics.robustness import (
+    RobustnessConfig,
+    grid_stats,
+    plateau_index,
+    shock_dates,
+    trade_robustness,
+)
 from backtester.core.models import Timeframe
+from backtester.data.sources import DEFAULT_SOURCES
 from backtester.engine.costs import CostConfig
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.trend_following.config import TIMEFRAMES, Signal, TrendFollowingConfig
 
 SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
-FIRST_HALF_END_YEAR = 2022  # in sample: up to and including this year
+FIRST_HALF_END_YEAR = RobustnessConfig().first_half_end_year  # in sample: up to this year
 HALVES = ("2020-22", "2023-26")
 # the spec's parameter sweep (strategy-trend-following.md › Evaluation)
 SWEEP_BREAKOUT = (20, 55, 100)
@@ -236,6 +250,118 @@ def year_rows(variant: str, trades: Sequence) -> list[dict]:
     return rows
 
 
+ALL_VARIANTS = "ALL VARIANTS"
+SHOCK_WARMUP_DAYS = 30  # calendar days before the run for the mean true range
+
+
+def family_key(config: TrendFollowingConfig) -> tuple[str, float]:
+    """(family, order): the variants that differ only in the swept parameter share a family
+    and are ordered by it; the banded SMA is a family per band, ordered by period."""
+    prefix = f"{config.timeframe.name} {config.signal.value}"
+    if config.signal is Signal.SMA and config.sma_band_atr > 0:
+        return f"{prefix} band {config.sma_band_atr:g}", config.sma_period
+    field = SWEPT_FIELD[config.signal]
+    return prefix, 0 if field is None else getattr(config, field)
+
+
+def robustness_row(
+    variant: str,
+    group: str,
+    trades: Sequence,
+    shocks: Mapping[str, set[date]] | None,
+    config: RobustnessConfig | None = None,
+) -> dict:
+    return {
+        "variant": variant,
+        "symbol": group,
+        **trade_robustness(trades, config, shocks or None),
+    }
+
+
+def grid_rows(
+    entries: Sequence[tuple[str, float, str, float]], config: RobustnessConfig | None = None
+) -> list[dict]:
+    """Per family and over all variants: `entries` are (family, order, variant, net R of the
+    ALL group). The variants of a family are taken in parameter order for the smoothing."""
+    families: dict[str, list[tuple[float, str, float]]] = {}
+    for family, order, variant, net in entries:
+        families.setdefault(family, []).append((order, variant, net))
+    rows = []
+    for family, items in families.items():
+        items.sort(key=lambda x: x[0])
+        values = [net for _, _, net in items]
+        best = plateau_index(values)
+        rows.append(
+            {
+                "family": family,
+                **grid_stats(values, config),
+                "plateau_variant": "" if best is None else items[best][1],
+            }
+        )
+    rows.append(
+        {
+            "family": ALL_VARIANTS,
+            **grid_stats([e[3] for e in entries], config),
+            "plateau_variant": "",
+        }
+    )
+    return rows
+
+
+def _midnight(d: date) -> datetime:
+    return datetime(d.year, d.month, d.day, tzinfo=UTC)
+
+
+def load_shocks(
+    symbols: Sequence[str], start: date, end: date, config: RobustnessConfig | None = None
+) -> tuple[dict[str, set[date]], str]:
+    """({symbol: shock dates}, note). Daily bars from the cache (a bar is dated the day it
+    closes); a symbol that cannot be read is left out and the note says so."""
+    cfg = config or RobustnessConfig()
+    shocks: dict[str, set[date]] = {}
+    parts, failed = [], []
+    for symbol in symbols:
+        try:
+            cached = set(DEFAULT_SOURCES.cached_days(symbol))
+            first = start - timedelta(days=SHOCK_WARMUP_DAYS)
+            days = [d for d in cached if first <= d <= end]
+            if not days:
+                raise ValueError("no cached days")
+            frame = DEFAULT_SOURCES.adapter(symbol).fetch_frame(
+                symbol,
+                Timeframe.D1,
+                _midnight(min(days)),
+                _midnight(max(days) + timedelta(days=1)),
+            )
+            bars = [
+                ((ts + timedelta(days=1)).date(), hi, lo, cl)
+                for ts, hi, lo, cl in zip(
+                    frame["ts"].dt.to_pydatetime(),
+                    frame["high"],
+                    frame["low"],
+                    frame["close"],
+                    strict=True,
+                )
+            ]
+            found = {d for d in shock_dates(bars, cfg) if d >= start}
+            shocks[symbol] = found
+            parts.append(f"{symbol} {len(found)}")
+        except Exception as e:  # noqa: BLE001 - research tool: an unreadable cache is a note
+            failed.append(f"{symbol} ({type(e).__name__})")
+    note = (
+        f"shock days (daily range > {cfg.shock_range_atr:g} x the mean of the "
+        f"{cfg.shock_atr_period} days before): " + (", ".join(parts) or "none")
+    )
+    if failed:
+        note += "; not available: " + ", ".join(failed)
+    return shocks, note
+
+
+def summary_net(summary: Sequence[dict], variant: str) -> float:
+    """Net R (with swap) of the ALL group of `variant` in the summary rows."""
+    return next(r["sum_r_net"] for r in summary if r["variant"] == variant and r["symbol"] == "ALL")
+
+
 def _fmt(value: float | None, spec: str) -> str:
     return "-" if value is None else format(value, spec)
 
@@ -260,6 +386,21 @@ def print_table(summary: list[dict], split: list[dict]) -> None:
         )
 
 
+def print_grid(rows: list[dict]) -> None:
+    print(
+        f"\n{'family':22}{'n':>4}{'profit%':>8}{'mean':>8}{'std':>8}{'mean-sd':>9}"
+        f"{'robust':>8}  plateau variant"
+    )
+    for r in rows:
+        share = None if r["profitable_share"] is None else r["profitable_share"] * 100
+        print(
+            f"{r['family']:22}{r['n']:>4}{_fmt(share, '.0f'):>8}{_fmt(r['mean'], '+.1f'):>8}"
+            f"{_fmt(r['std'], '.1f'):>8}{_fmt(r['adjusted'], '+.1f'):>9}"
+            f"{'yes' if r['robust'] else 'no':>8}  {r['plateau_variant']}"
+        )
+    print("(net R of the ALL group per variant; robust = at least 70 % of the variants profitable)")
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--start", type=date.fromisoformat, default=date(2020, 1, 1))
@@ -279,6 +420,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sma-band-periods", nargs="+", type=int, default=list(SWEEP_SMA_BAND_PERIODS))
     p.add_argument("--swap-file", type=Path, default=None,
                    help='JSON {symbol: {"long": usd_per_lot_night, "short": ..., "triple_weekday": 0-6}}')  # fmt: skip
+    p.add_argument("--no-shocks", action="store_true",
+                   help="do not read the daily bars for the shock days")  # fmt: skip
     p.add_argument("--out", type=Path, default=RESULTS_DIR / "trend_grid")
     args = p.parse_args(argv)
 
@@ -298,7 +441,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.swap_file is not None:
         engine = replace(engine, costs=load_swap_file(args.swap_file, engine.costs))
     args.out.mkdir(parents=True, exist_ok=True)
-    summary, years, split = [], [], []
+    rcfg = RobustnessConfig()
+    shocks, shock_note = (
+        ({}, "") if args.no_shocks else load_shocks(symbols, args.start, args.end, rcfg)
+    )
+    summary, years, split, robust, entries = [], [], [], [], []
     for config in configs:
         name = variant_name(config)
         result = run_backtests(
@@ -309,12 +456,21 @@ def main(argv: list[str] | None = None) -> int:
         for group, trades in sets.items():
             summary.append(summary_row(name, group, trades))
             split += half_rows(name, group, trades)
+            robust.append(robustness_row(name, group, trades, shocks, rcfg))
+        family, order = family_key(config)
+        entries.append((family, order, name, summary_net(summary, name)))
         years += year_rows(name, result.trades)
         write_csv(args.out / "summary.csv", summary)
         write_csv(args.out / "by_year.csv", years)
         write_csv(args.out / "split.csv", split)
+        write_csv(args.out / "robustness.csv", robust)
+    grid = grid_rows(entries, rcfg)
+    write_csv(args.out / "grid.csv", grid)
     print_table(summary, split)
+    print_grid(grid)
     print(swap_rates_note(engine.costs, symbols))
+    if shock_note:
+        print(shock_note)
     print(f"written to {args.out}")
     return 0
 
