@@ -8,7 +8,9 @@ result on the chart (entry and exit at the chart levels, no costs):
     long:  r_gross = (exit - entry) / risk        short: mirrored
 
 Net R takes the fills (long: enter at ask = bid + spread, exit at bid; short: enter at bid,
-exit at ask) and the commission:  r_net = r_gross - spread_r - commission_r.
+exit at ask) and the commission:  r_net = r_gross - spread_r - commission_r + swap_r.
+`swap_r` (engine/costs.py: nights across the 17:00 New York rollover, signed: negative =
+cost) is part of net R only, never of gross.
 
 Partial closes (strategy-session-zones.md › Take profit, two TPs; strategy-ny-indices.md ›
 Take Profit, three): `tp1_share` of the position closes at TP1, `tp2_share` at TP2 when
@@ -92,6 +94,7 @@ class TradeResult:
     parts: tuple[PartialExit, ...] = ()  # in the order they were closed
     take_profit_3: float | None = None
     tp2_share: float | None = None  # with a TP3
+    swap_r: float = 0.0  # already inside r_net (negative = cost)
 
     @property
     def risk(self) -> float:
@@ -263,7 +266,7 @@ class OpenTrade:
         if not self.is_closed:
             self._exit(self.open_share, candle, now, price, reason)
 
-    def result(self, commission_r: float) -> TradeResult:
+    def result(self, commission_r: float, swap_r: float = 0.0) -> TradeResult:
         if not self.is_closed:
             raise ValueError("the trade is still open")
         last = self.parts[-1]
@@ -282,7 +285,7 @@ class OpenTrade:
             exit_fill=last.fill,
             exit_reason=last.reason,
             r_gross=sum(p.share * p.r_gross for p in self.parts),
-            r_net=sum(p.share * p.r_fills for p in self.parts) - commission_r,
+            r_net=sum(p.share * p.r_fills for p in self.parts) - commission_r + swap_r,
             spread_r=self.spread / self.risk,
             commission_r=commission_r,
             break_even_time=self.break_even_time,
@@ -297,4 +300,5 @@ class OpenTrade:
             parts=tuple(self.parts),
             take_profit_3=self.take_profit_3,
             tp2_share=self.tp2_share,
+            swap_r=swap_r,
         )

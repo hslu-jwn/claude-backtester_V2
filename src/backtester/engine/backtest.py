@@ -222,4 +222,9 @@ class Backtest:
             trade.move_to_break_even(now)
 
     def _result(self, trade: OpenTrade) -> TradeResult:
-        return trade.result(self._config.costs.commission_r(trade.symbol, trade.risk))
+        costs = self._config.costs
+        swap_r = costs.swap_r(
+            trade.symbol, trade.direction, trade.risk, trade.entry_time,
+            [(p.share, p.time) for p in trade.parts],
+        )  # fmt: skip
+        return trade.result(costs.commission_r(trade.symbol, trade.risk), swap_r)

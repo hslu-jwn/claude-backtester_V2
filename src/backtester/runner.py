@@ -304,7 +304,7 @@ TRADE_COLUMNS = (
     "entry_fill", "initial_stop", "take_profit", "take_profit_2", "take_profit_3",
     "tp1_share", "tp2_share", "planned_rr",
     "exit_time", "exit_candle", "exit_price", "exit_fill", "exit_reason", "r_gross", "r_net",
-    "spread_r", "commission_r", "break_even_time", "break_even_stop", "mae_r", "mfe_r",
+    "spread_r", "commission_r", "swap_r", "break_even_time", "break_even_stop", "mae_r", "mfe_r",
     "tags", "confluence", "reason", "parts",
 )  # fmt: skip
 
