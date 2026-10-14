@@ -91,6 +91,8 @@ _GROUP_RULES = (
     ("strategy.signal", "Entry"),
     ("strategy.breakout_period", "Entry"),
     ("strategy.sma_period", "Entry"),
+    ("strategy.sma_band_atr", "Entry"),
+    ("strategy.momentum_period", "Entry"),
     ("strategy.kama_er_period", "Entry"),
     ("strategy.kama_fast", "Entry"),
     ("strategy.kama_slow", "Entry"),

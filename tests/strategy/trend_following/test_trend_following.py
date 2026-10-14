@@ -257,3 +257,113 @@ def test_appending_future_candles_never_changes_orders_already_given(config):
         part = run(WAVES[:cut], **config)
         known = [t for t in whole if t.entry_time <= DEFAULT_START + cut * H4.duration]
         assert [key(t) for t in part] == [key(t) for t in known], cut
+
+
+# --- momentum, Dunnigan, SMA band (ROADMAP 10.4) ---------------------------------------------
+
+MOM = {"signal": Signal.MOMENTUM, "momentum_period": 2, "atr_period": 3}
+DUN = {"signal": Signal.DUNNIGAN, "atr_period": 3}
+DUN_ROWS = [
+    (9.5, 10, 9, 9.5), (10.5, 11, 10, 10.5), (11.5, 12, 11, 11.5), (11, 11.5, 10.5, 11),
+    (10.5, 11, 10, 10.5), (10.7, 11.2, 10.2, 10.7), (11, 12.4, 10.5, 12.3),
+    (12.3, 12.6, 12.0, 12.5),
+]  # fmt: skip
+
+
+def test_momentum_long_enters_at_the_first_positive_change_and_keeps_the_position():
+    [t] = run(from_closes([10.0, 10.0, 10.5, 10.6, 10.7]), **MOM)
+    assert t.direction is LONG and t.entry == 10.5
+    assert t.entry_candle == DEFAULT_START + 2 * H4.duration
+    assert t.exit_reason is ExitReason.END_OF_DATA
+
+
+def test_momentum_short_is_the_mirror_and_zero_change_gives_no_trade():
+    [t] = run(mirror(from_closes([10.0, 10.0, 10.5, 10.6, 10.7])), **MOM)
+    assert t.direction is SHORT and t.entry == pytest.approx(9.5)
+    assert run(from_closes([10.0] * 6), **MOM) == []
+
+
+def test_momentum_reverses_when_the_change_turns_negative():
+    long, short = run(from_closes([10.0, 10.0, 10.5, 10.6, 10.2, 9.9]), **MOM)
+    # idx4: 10.2 - 10.5 < 0 -> reverse at 10.2; the long's stop 10.5 - 3 x ATR is not touched
+    assert long.exit_reason is ExitReason.SIGNAL and long.exit_price == 10.2
+    assert short.direction is SHORT and short.entry == 10.2
+
+
+def test_dunnigan_trades_the_two_candle_hh_hl_with_close_above_the_swing_top():
+    [t] = run(DUN_ROWS, **DUN)
+    assert t.direction is LONG and t.entry == 12.3
+    assert t.entry_candle == DEFAULT_START + 6 * H4.duration
+
+
+def test_dunnigan_short_is_the_mirror():
+    [t] = run(mirror(DUN_ROWS), **DUN)
+    assert t.direction is SHORT and t.entry == pytest.approx(20 - 12.3)
+
+
+BAND = {"signal": Signal.SMA, "sma_period": 3, "atr_period": 3}
+BAND_CLOSES = [10.0, 10.0, 10.0, 10.3, 12.0, 12.1]
+
+
+def test_sma_band_zero_is_the_plain_cross():
+    [t] = run(from_closes(BAND_CLOSES), **BAND)
+    assert t.entry == 10.3 and t.entry_candle == DEFAULT_START + 3 * H4.duration
+    assert run(from_closes(BAND_CLOSES), **BAND, sma_band_atr=0.0)[0].entry == 10.3
+
+
+def test_sma_band_shifts_the_cross_a_plain_cross_inside_the_band_gives_no_event():
+    # candle 3: SMA 10.1 + 1 x ATR 0.2667 = 10.367 > close 10.3 -> inside the band, no event;
+    # candle 4: SMA 10.7667 + 0.7778 = 11.544 < close 12 -> beyond the band -> long at 12
+    [t] = run(from_closes(BAND_CLOSES), **BAND, sma_band_atr=1.0)
+    assert t.direction is LONG and t.entry == 12.0
+    assert t.entry_candle == DEFAULT_START + 4 * H4.duration
+
+
+def test_sma_band_short_is_the_mirror():
+    [t] = run(mirror(from_closes(BAND_CLOSES)), **BAND, sma_band_atr=1.0)
+    assert t.direction is SHORT and t.entry == pytest.approx(8.0)
+
+
+def test_sma_band_gives_no_event_while_the_previous_atr_is_unknown():
+    closes = from_closes([10.0, 10.0, 10.5, 10.5])
+    cfg = {"signal": Signal.SMA, "sma_period": 2, "atr_period": 3}
+    assert run(closes, **cfg)[0].entry == 10.5  # plain cross at candle 2
+    assert run(closes, **cfg, sma_band_atr=0.5) == []  # ATR exists at 2, the one before not
+
+
+def test_new_config_defaults_and_validation():
+    c = TrendFollowingConfig()
+    assert (c.momentum_period, c.sma_band_atr) == (20, 0.0)
+    for bad in ({"momentum_period": 0}, {"sma_band_atr": -0.1}):
+        with pytest.raises(ValueError):
+            TrendFollowingConfig(**bad)
+
+
+def test_warm_up_candles_of_the_new_signals():
+    def need(**c):
+        return TrendFollowing("TEST", TrendFollowingConfig(**c)).warmup_candles
+
+    assert need(signal=Signal.MOMENTUM, momentum_period=252) == 252
+    assert need(signal=Signal.DUNNIGAN, atr_period=3) == 10  # DUNNIGAN_WARMUP_CANDLES
+    assert need(signal=Signal.DUNNIGAN) == 19  # the default ATR(20) is longer
+    assert need(signal=Signal.SMA, sma_period=50, sma_band_atr=0.5) == 50
+    assert need(signal=Signal.SMA, sma_period=20, sma_band_atr=0.5, atr_period=50) == 50
+    assert need(signal=Signal.SMA, sma_period=20, atr_period=50) == 49  # plain: as before
+
+
+DUN_WAVES = [*DUN_ROWS, (12.5, 12.6, 9.0, 9.5), (9.5, 9.6, 9.0, 9.2), (9.2, 11.9, 9.1, 11.8)]
+
+
+@pytest.mark.parametrize(
+    ("config", "ohlc"),
+    [(MOM, WAVES), (DUN, DUN_WAVES), ({**BAND, "sma_band_atr": 0.5}, WAVES)],
+    ids=["momentum", "dunnigan", "sma-band"],
+)
+def test_new_signals_appending_future_candles_never_changes_orders_already_given(config, ohlc):
+    whole = run(ohlc, **config)
+    assert whole
+    key = lambda t: (t.direction, t.entry, t.initial_stop, t.entry_candle)
+    for cut in range(1, len(ohlc) + 1):
+        part = run(ohlc[:cut], **config)
+        known = [t for t in whole if t.entry_time <= DEFAULT_START + cut * H4.duration]
+        assert [key(t) for t in part] == [key(t) for t in known], cut

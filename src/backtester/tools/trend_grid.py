@@ -5,7 +5,8 @@
     python -m backtester.tools.trend_grid --no-sweep --start 2026-08-01 --end 2026-08-31
 
 Variants = signal x timeframe, each with the spec's parameter sweep (breakout 20 / 55 /
-100, SMA 20 / 50 / 100 / 200, KAMA filter 0.0 / 0.1 / 0.5; the spec default is one of the
+100, SMA 20 / 50 / 100 / 200, SMA 50 and 200 with band 0.5 / 1.0 ATR, momentum 5 / 20 / 63 /
+252, Dunnigan without parameters, KAMA filter 0.0 / 0.1 / 0.5; the spec default is one of the
 values, so the plain signal x timeframe variants are inside the sweep). `--no-sweep` runs
 only the spec defaults. Everything else is the spec default. Every variant is a full
 backtest with the same data and costs. Written to `<out>/summary.csv` (variant x symbol
@@ -41,9 +42,14 @@ HALVES = ("2020-22", "2023-26")
 SWEEP_BREAKOUT = (20, 55, 100)
 SWEEP_SMA = (20, 50, 100, 200)
 SWEEP_KAMA_FILTER = (0.0, 0.1, 0.5)
-SWEPT_FIELD = {
+SWEEP_MOMENTUM = (5, 20, 63, 252)
+SWEEP_SMA_BAND_PERIODS = (50, 200)
+SWEEP_SMA_BANDS = (0.5, 1.0)
+SWEPT_FIELD = {  # None: the signal has no parameter
     Signal.BREAKOUT: "breakout_period",
     Signal.SMA: "sma_period",
+    Signal.MOMENTUM: "momentum_period",
+    Signal.DUNNIGAN: None,
     Signal.KAMA: "kama_filter",
 }
 SWAP_NOTE = (
@@ -67,23 +73,46 @@ def variants(
     breakout: Sequence[int] = SWEEP_BREAKOUT,
     sma: Sequence[int] = SWEEP_SMA,
     kama_filters: Sequence[float] = SWEEP_KAMA_FILTER,
+    momentum: Sequence[int] = SWEEP_MOMENTUM,
+    sma_bands: Sequence[float] = SWEEP_SMA_BANDS,
+    sma_band_periods: Sequence[int] = SWEEP_SMA_BAND_PERIODS,
 ) -> list[TrendFollowingConfig]:
     """One config per timeframe x signal x swept parameter value (the spec default only
-    without `sweep`)."""
-    values = {Signal.BREAKOUT: breakout, Signal.SMA: sma, Signal.KAMA: kama_filters}
+    without `sweep`). With the sweep the SMA also runs banded: each band period x band."""
+    values = {
+        Signal.BREAKOUT: breakout,
+        Signal.SMA: sma,
+        Signal.MOMENTUM: momentum,
+        Signal.DUNNIGAN: (None,),
+        Signal.KAMA: kama_filters,
+    }
     out = []
     for tf in timeframes:
         for signal in signals:
             base = TrendFollowingConfig(timeframe=tf, signal=signal)
             field = SWEPT_FIELD[signal]
-            for value in values[signal] if sweep else (getattr(base, field),):
-                out.append(replace(base, **{field: value}))
+            if not sweep:
+                out.append(base)
+                continue
+            for value in values[signal]:
+                out.append(base if field is None else replace(base, **{field: value}))
+            if signal is Signal.SMA:
+                out += [
+                    replace(base, sma_period=period, sma_band_atr=band)
+                    for period in sma_band_periods
+                    for band in sma_bands
+                ]
     return out
 
 
 def variant_name(config: TrendFollowingConfig) -> str:
-    param = getattr(config, SWEPT_FIELD[config.signal])
-    return f"{config.timeframe.name} {config.signal.value} {param:g}"
+    field = SWEPT_FIELD[config.signal]
+    name = f"{config.timeframe.name} {config.signal.value}"
+    if field is not None:
+        name += f" {getattr(config, field):g}"
+    if config.signal is Signal.SMA and config.sma_band_atr > 0:
+        name += f" b{config.sma_band_atr:g}"
+    return name
 
 
 def avg_holding_hours(trades: Sequence) -> float | None:
@@ -182,6 +211,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--breakout-periods", nargs="+", type=int, default=list(SWEEP_BREAKOUT))
     p.add_argument("--sma-periods", nargs="+", type=int, default=list(SWEEP_SMA))
     p.add_argument("--kama-filters", nargs="+", type=float, default=list(SWEEP_KAMA_FILTER))
+    p.add_argument("--momentum-periods", nargs="+", type=int, default=list(SWEEP_MOMENTUM))
+    p.add_argument("--sma-bands", nargs="+", type=float, default=list(SWEEP_SMA_BANDS),
+                   help="ATR band widths of the banded SMA variants")  # fmt: skip
+    p.add_argument("--sma-band-periods", nargs="+", type=int, default=list(SWEEP_SMA_BAND_PERIODS))
     p.add_argument("--out", type=Path, default=RESULTS_DIR / "trend_grid")
     args = p.parse_args(argv)
 
@@ -192,6 +225,9 @@ def main(argv: list[str] | None = None) -> int:
         breakout=args.breakout_periods,
         sma=args.sma_periods,
         kama_filters=args.kama_filters,
+        momentum=args.momentum_periods,
+        sma_bands=args.sma_bands,
+        sma_band_periods=args.sma_band_periods,
     )
     symbols = [s.upper() for s in args.symbols]
     args.out.mkdir(parents=True, exist_ok=True)

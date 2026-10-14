@@ -16,6 +16,8 @@ TIMEFRAMES = (Timeframe.M15, Timeframe.M30, Timeframe.H1, Timeframe.H4, Timefram
 class Signal(Enum):
     BREAKOUT = "breakout"  # close beyond the highest high / lowest low of the previous N candles
     SMA = "sma"  # close crosses the SMA(N) of closes
+    MOMENTUM = "momentum"  # close minus the close N candles ago keeps its sign
+    DUNNIGAN = "dunnigan"  # two HH+HL candles and a close beyond the last swing top / bottom
     KAMA = "kama"  # Kaufman adaptive moving average rises / falls by more than the filter
 
 
@@ -25,6 +27,8 @@ class TrendFollowingConfig:
     signal: Signal = Signal.BREAKOUT
     breakout_period: int = 20  # breakout: previous N candles (current excluded)
     sma_period: int = 50  # sma: SMA of the closes over N candles
+    sma_band_atr: float = 0.0  # sma: line = SMA -/+ this x ATR (0 = the plain cross)
+    momentum_period: int = 20  # momentum: compare the close with the close N candles ago
     kama_er_period: int = 10  # kama: efficiency ratio over this many candles
     kama_fast: int = 2  # kama: fast smoothing period
     kama_slow: int = 30  # kama: slow smoothing period
@@ -40,6 +44,10 @@ class TrendFollowingConfig:
             raise ValueError("breakout_period must be >= 1")
         if self.sma_period < 2:
             raise ValueError("sma_period must be >= 2")
+        if self.sma_band_atr < 0:
+            raise ValueError("sma_band_atr must be >= 0")
+        if self.momentum_period < 1:
+            raise ValueError("momentum_period must be >= 1")
         if self.kama_er_period < 1:
             raise ValueError("kama_er_period must be >= 1")
         if self.kama_fast < 1 or self.kama_slow <= self.kama_fast:

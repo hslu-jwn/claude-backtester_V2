@@ -24,6 +24,7 @@ from backtester.tools.trend_grid import (
 
 ALL_TF = [Timeframe.M15, Timeframe.M30, Timeframe.H1, Timeframe.H4, Timeframe.D1]
 ALL_SIGNALS = [Signal.BREAKOUT, Signal.SMA, Signal.KAMA]
+NEW_SIGNALS = [Signal.MOMENTUM, Signal.DUNNIGAN]
 
 
 def trade(
@@ -44,10 +45,13 @@ def trade(
 def test_default_grid_is_signal_x_timeframe_with_the_spec_parameter_sweep():
     configs = variants(ALL_SIGNALS, ALL_TF, sweep=True)
     names = [variant_name(c) for c in configs]
-    assert len(names) == len(set(names)) == 5 * (3 + 4 + 3)  # per timeframe: 10 parameter sets
+    assert len(names) == len(set(names)) == 5 * (3 + 4 + 4 + 3)  # per timeframe: 14 sets
     h4 = [c for c in configs if c.timeframe is Timeframe.H4]
     assert sorted(c.breakout_period for c in h4 if c.signal is Signal.BREAKOUT) == [20, 55, 100]
-    assert sorted(c.sma_period for c in h4 if c.signal is Signal.SMA) == [20, 50, 100, 200]
+    plain = [c for c in h4 if c.signal is Signal.SMA and c.sma_band_atr == 0]
+    assert sorted(c.sma_period for c in plain) == [20, 50, 100, 200]
+    banded = {(c.sma_period, c.sma_band_atr) for c in h4 if c.sma_band_atr > 0}
+    assert banded == {(50, 0.5), (50, 1.0), (200, 0.5), (200, 1.0)}
     assert sorted(c.kama_filter for c in h4 if c.signal is Signal.KAMA) == [0.0, 0.1, 0.5]
 
 
@@ -130,3 +134,40 @@ def test_smoke_run_writes_the_three_csv_files(tmp_path, monkeypatch, capsys):
     assert {r["symbol"] for r in rows} == {"ALL", "XAUUSD"}
     text = capsys.readouterr().out
     assert "H4 breakout 20" in text and "swap" in text.lower()
+
+
+def test_new_signals_are_swept_as_in_the_spec_with_readable_names():
+    configs = variants(NEW_SIGNALS, [Timeframe.H4], sweep=True)
+    assert [variant_name(c) for c in configs] == [
+        "H4 momentum 5", "H4 momentum 20", "H4 momentum 63", "H4 momentum 252", "H4 dunnigan",
+    ]  # fmt: skip
+    sma = [c for c in variants([Signal.SMA], [Timeframe.H4]) if c.sma_band_atr > 0]
+    assert [variant_name(c) for c in sma] == [
+        "H4 sma 50 b0.5", "H4 sma 50 b1", "H4 sma 200 b0.5", "H4 sma 200 b1",
+    ]  # fmt: skip
+
+
+def test_without_sweep_the_new_signals_run_at_their_defaults():
+    configs = variants([*ALL_SIGNALS, *NEW_SIGNALS], [Timeframe.H4], sweep=False)
+    assert [variant_name(c) for c in configs] == [
+        "H4 breakout 20", "H4 sma 50", "H4 kama 0.1", "H4 momentum 20", "H4 dunnigan",
+    ]  # fmt: skip
+    assert all(c.sma_band_atr == 0 for c in configs)
+
+
+def test_cli_signals_filter_accepts_the_new_names(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(symbols, start, end, settings, *args, **kwargs):
+        calls.append(settings.strategy)
+        return SimpleNamespace(trades=(), runs={s: SimpleNamespace(trades=()) for s in symbols})
+
+    monkeypatch.setattr(trend_grid, "run_backtests", fake_run)
+    argv = ["--symbols", "XAUUSD", "--timeframes", "H1", "--signals", "momentum", "dunnigan",
+            "--momentum-periods", "5", "63", "--out", str(tmp_path)]  # fmt: skip
+    assert trend_grid.main(argv) == 0
+    assert [(c.signal, c.momentum_period) for c in calls] == [
+        (Signal.MOMENTUM, 5),
+        (Signal.MOMENTUM, 63),
+        (Signal.DUNNIGAN, 20),
+    ]

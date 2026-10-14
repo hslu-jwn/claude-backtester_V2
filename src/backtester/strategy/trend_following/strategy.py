@@ -26,7 +26,13 @@ from backtester.detectors.atr import Atr
 from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.trend_following.config import Signal, TrendFollowingConfig
-from backtester.strategy.trend_following.indicators import Kama, RollingChannel, Sma
+from backtester.strategy.trend_following.indicators import (
+    DunniganSwings,
+    Kama,
+    Momentum,
+    RollingChannel,
+    Sma,
+)
 
 if TYPE_CHECKING:
     from backtester.engine.trade import TradeResult
@@ -35,6 +41,9 @@ if TYPE_CHECKING:
 # plus a margin for holidays and thin weeks
 CALENDAR_PER_TRADING_DAY = 1.5
 WARMUP_MARGIN_DAYS = 3
+# Dunnigan swings need a few swings of history before a swing top / bottom exists; the signal
+# itself waits for the first real swing, so this only sizes the data loaded before the run
+DUNNIGAN_WARMUP_CANDLES = 10
 
 
 class TrendFollowing(Strategy):
@@ -55,6 +64,9 @@ class TrendFollowing(Strategy):
         self._sma = Sma(config.sma_period)
         self._prev_close: float | None = None
         self._prev_sma: float | None = None
+        self._prev_atr: float | None = None
+        self._momentum = Momentum(config.momentum_period)
+        self._dunnigan = DunniganSwings()
         self._kama = Kama(
             config.kama_er_period,
             config.kama_fast,
@@ -73,9 +85,14 @@ class TrendFollowing(Strategy):
         """Closed candles needed before the first order is possible (candles counted
         from 0: the first order can come at the candle with this index)."""
         c = self.config
+        # SMA(N) exists at N - 1, the cross needs the one before; with a band the ATR and
+        # the one before it must exist too (ATR exists at atr_period - 1)
+        sma = max(c.sma_period, c.atr_period) if c.sma_band_atr > 0 else c.sma_period
         signal = {
             Signal.BREAKOUT: c.breakout_period,
-            Signal.SMA: c.sma_period,  # SMA(N) exists at N - 1, the cross needs the one before
+            Signal.SMA: sma,
+            Signal.MOMENTUM: c.momentum_period,
+            Signal.DUNNIGAN: DUNNIGAN_WARMUP_CANDLES,
             Signal.KAMA: c.kama_er_period + c.kama_filter_period,
         }[c.signal]
         return max(signal, c.atr_period - 1)
@@ -90,7 +107,7 @@ class TrendFollowing(Strategy):
         view = views[self.base_timeframe]
         candle = view.current
         atr = self._atr.update(view)
-        event = self._event(candle)  # the indicators take every candle in, in order
+        event = self._event(candle, atr)  # the indicators take every candle in, in order
         if event is None or atr is None or atr <= 0 or event is self._position:
             return []
         if self._position is not None:
@@ -120,16 +137,23 @@ class TrendFollowing(Strategy):
 
     # --- signals -----------------------------------------------------------------------
 
-    def _event(self, candle: Candle) -> Direction | None:
+    def _event(self, candle: Candle, atr: float | None) -> Direction | None:
         signal = self.config.signal
         # every indicator is fed every candle, whatever the signal
         channel = self._channel.update(candle)
         sma = self._sma.update(candle.close)
         self._kama.update(candle.close)
-        prev_close, prev_sma = self._prev_close, self._prev_sma
-        self._prev_close, self._prev_sma = candle.close, sma
+        momentum = self._momentum.update(candle.close)
+        dunnigan = self._dunnigan.update(candle)
+        prev_close, prev_sma, prev_atr = self._prev_close, self._prev_sma, self._prev_atr
+        self._prev_close, self._prev_sma, self._prev_atr = candle.close, sma, atr
         if signal is Signal.KAMA:
             return self._kama.signal
+        if signal is Signal.MOMENTUM:
+            return momentum
+        if signal is Signal.DUNNIGAN:
+            return dunnigan
+        band = self.config.sma_band_atr
         for direction in (Direction.BULLISH, Direction.BEARISH):
             sign = 1 if direction is Direction.BULLISH else -1
             if signal is Signal.BREAKOUT:
@@ -139,6 +163,12 @@ class TrendFollowing(Strategy):
                 if sign * (candle.close - level) > 0:
                     return direction
             elif sma is not None and prev_sma is not None and prev_close is not None:
-                if sign * (prev_close - prev_sma) <= 0 and sign * (candle.close - sma) > 0:
+                if band > 0 and (atr is None or prev_atr is None):
+                    return None  # the band needs the ATR now and at the previous candle
+                shift, prev_shift = (
+                    (sign * band * atr, sign * band * prev_atr) if band > 0 else (0, 0)
+                )
+                line, prev_line = sma + shift, prev_sma + prev_shift
+                if sign * (prev_close - prev_line) <= 0 and sign * (candle.close - line) > 0:
                     return direction
         return None

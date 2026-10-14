@@ -8,7 +8,13 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from backtester.core.models import Candle, Direction
-from backtester.strategy.trend_following.indicators import Kama, RollingChannel, Sma
+from backtester.strategy.trend_following.indicators import (
+    DunniganSwings,
+    Kama,
+    Momentum,
+    RollingChannel,
+    Sma,
+)
 
 LONG, SHORT = Direction.BULLISH, Direction.BEARISH
 T0 = datetime(2026, 1, 5, tzinfo=UTC)
@@ -100,3 +106,109 @@ def test_kama_change_equal_to_the_filter_is_no_signal():
     for c in (10.0, 10.0, 10.0, 10.0, 10.0, 10.0):
         k.update(c)
     assert k.signal is None  # KAMA - KAMA[1] = 0 is not > 0
+
+
+# --- momentum and Dunnigan swings (ROADMAP 10.4) -------------------------------------------
+
+
+def test_momentum_is_the_sign_of_close_minus_close_n_ago_and_repeats():
+    m = Momentum(2)
+    out = [m.update(c) for c in [10, 10, 11, 12, 9, 9, 8]]
+    # idx2: 11-10=+1, idx3: 12-10=+2 (repeat), idx4: 9-11=-2, idx5: 9-12=-3, idx6: 8-9=-1
+    assert out == [None, None, LONG, LONG, SHORT, SHORT, SHORT]
+
+
+def test_momentum_exactly_zero_gives_no_event():
+    m = Momentum(2)
+    assert [m.update(c) for c in [10, 11, 10, 11]] == [None, None, None, None]
+
+
+def test_momentum_needs_n_plus_one_closes_and_rejects_period_below_1():
+    m = Momentum(3)
+    assert [m.update(c) for c in [1, 2, 3]] == [None, None, None]
+    assert m.update(4) is LONG
+    with pytest.raises(ValueError):
+        Momentum(0)
+
+
+def feed(swings, rows):
+    """rows of (high, low[, close]); returns the event of every candle."""
+    return [swings.update(candle(i, *r)) for i, r in enumerate(rows)]
+
+
+UP_THEN_DOWN = [(10, 9), (11, 10), (12, 11), (11.5, 10.5)]
+
+
+def test_dunnigan_downswing_starts_when_high_and_low_are_below_the_highest_candle():
+    s = DunniganSwings()
+    feed(s, UP_THEN_DOWN[:3])
+    assert s.upswing is True and s.swing_top is None  # the first upswing has no top yet
+    s.update(candle(3, 11.5, 10.5))
+    assert s.upswing is False and s.swing_top == 12  # the highest candle (12, 11) is the top
+
+
+def test_dunnigan_inside_candle_changes_nothing():
+    s = DunniganSwings()
+    feed(s, [*UP_THEN_DOWN, (11.4, 10.6)])  # inside (11.5, 10.5)
+    assert s.upswing is False and s.swing_top == 12
+    s.update(candle(5, 11.3, 10.7))  # inside again
+    assert s.upswing is False
+
+
+def test_dunnigan_outside_candle_keeps_the_swing_and_only_raises_the_top():
+    s = DunniganSwings()
+    feed(s, [(10, 9), (11, 10), (12, 11), (12.5, 10.5)])  # outside (12, 11)
+    assert s.upswing is True
+    s.update(candle(4, 12.2, 10.8))  # low above the outside candle's 10.5: no turn
+    assert s.upswing is True and s.swing_top is None
+    s.update(candle(5, 12.2, 10.2))  # both below (12.5, 10.5) -> downswing, top 12.5
+    assert s.upswing is False and s.swing_top == 12.5
+
+
+def test_dunnigan_upswing_records_the_swing_bottom_and_a_later_top_replaces_the_old():
+    s = DunniganSwings()
+    feed(s, [*UP_THEN_DOWN, (11.0, 10.0)])  # lowest candle of the downswing (11, 10)
+    assert s.swing_bottom is None
+    s.update(candle(5, 11.2, 10.2))  # both above (11, 10): upswing, bottom 10
+    assert s.upswing is True and s.swing_bottom == 10
+    feed(s, [(13, 12), (12.5, 11.5)])  # new high 13, then a turn: top 13 replaces 12
+    assert s.swing_top == 13
+
+
+def test_dunnigan_no_state_before_the_first_decisive_candle():
+    s = DunniganSwings()
+    feed(s, [(10, 9), (9.5, 9.5)])  # second candle inside the first: still undecided
+    assert s.upswing is None
+
+
+LONG_ROWS = [*UP_THEN_DOWN, (11.0, 10.0), (11.2, 10.2), (12.4, 10.5, 12.3)]
+
+
+def test_dunnigan_long_needs_two_hh_hl_candles_and_a_close_above_the_swing_top():
+    events = feed(DunniganSwings(), LONG_ROWS)
+    assert events[:6] == [None] * 6 and events[6] is LONG
+
+
+def test_dunnigan_repeats_while_the_conditions_hold():
+    events = feed(DunniganSwings(), [*LONG_ROWS, (13, 11, 12.9)])
+    assert events[6] is LONG and events[7] is LONG
+
+
+@pytest.mark.parametrize(
+    "rows",
+    [
+        [*UP_THEN_DOWN, (11.0, 10.0), (11.2, 10.2), (12.4, 10.5, 11.9)],  # close not above 12
+        [*UP_THEN_DOWN, (11.0, 10.0), (11.2, 10.2), (12.4, 10.1, 12.3)],  # last low is lower
+        [*UP_THEN_DOWN, (11.0, 10.0), (10.9, 10.2), (12.4, 10.5, 12.3)],  # prior high is lower
+        [(10, 9), (11, 10), (12, 11), (13, 12, 13)],  # HH+HL twice but no swing top exists
+    ],
+    ids=["close-below-top", "no-higher-low", "no-higher-high", "no-swing-top"],
+)
+def test_dunnigan_each_missing_part_gives_no_event(rows):
+    assert feed(DunniganSwings(), rows)[-1] is None
+
+
+def test_dunnigan_short_is_the_mirror_of_the_long():
+    rows = [(20 - r[1], 20 - r[0], *[20 - x for x in r[2:]]) for r in LONG_ROWS]
+    events = feed(DunniganSwings(), rows)
+    assert events[:6] == [None] * 6 and events[6] is SHORT
