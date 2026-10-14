@@ -952,9 +952,15 @@ has no step yet.
   Simulator (6.1) reuses the functions. Check: `python -m backtester.tools.trend_grid --symbols
   XAUUSD NAS100 --timeframes D1 H4 --signals breakout sma --out results/trend_check2` and look at
   `grid.csv` / the family table.
-- ☐ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14): groupings by entry hour, weekday,
-  Friday, first / last 3 trading days of the month, and New York windows Open 9:30-11:00 / Midday
-  11:00-15:00 / Close 15:00-16:00, for `by_period` / `split` and the run report.
+- ☐ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14). **Built 2026-10-14, waiting for the
+  user's check.** `analytics/metrics.py`: four new split keys, listed with the others on the results page
+  (Performance tab) and usable in `split` / `by_period`; time groups are listed in time order: **Hour
+  (UTC)** of the entry ("08:00 UTC"), **Weekday** ("1 Mon" … "7 Sun", Friday is its own row), **Month
+  part** (first 3 / last 3 weekdays of the entry month, no holiday calendar; "mid" otherwise; the first
+  part wins where they overlap), **NY window** (New York time of the entry, DST by city: Open 9:30-11:00,
+  Midday 11:00-15:00, Close 15:00-16:00, else "Outside cash hours"; the window times are the Aziz
+  windows, constants `NY_WINDOWS`). Tests: `tests/analytics/test_time_splits.py`. Check: open a run
+  on the results page and look at the four new tables under Performance.
 - ☐ **6.6 MT5 history check** (user, 2026-10-14): how many years of M1 with tick volume and spread FTMO's
   MT5 serves. **First check 2026-10-14** (read-only, FTMO-Demo): the terminal's "Max bars in chart" is
   100,000, so only ~3.5 months of M1 come back (2026-07-06 .. 2026-10-14); every bar has tick volume and

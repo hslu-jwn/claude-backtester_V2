@@ -21,15 +21,20 @@ summary.json) and `TradeRecord`s read back from trades.csv (the results page).
 - longest losing / winning streak: most losses (wins) in a row in exit time order; a
   break-even ends a streak.
 
-`split` groups trades by a key (`by_symbol`, `by_session`, …) and summarizes each group;
+`split` groups trades by a key (`by_symbol`, `by_session`, …) and summarizes each group
+(first-seen order, or the key's own `rank` order for the time keys `by_hour`, `by_weekday`,
+`by_month_part`, `by_ny_window`, ROADMAP 6.5);
 `by_period` gives per year / quarter (ROADMAP 6.3) the summary of all trades and of each
 symbol; `equity_curve` and `r_histogram` feed the results page's charts.
 """
 
 from __future__ import annotations
 
+import calendar
 import math
 from collections.abc import Callable, Iterable, Sequence
+from datetime import time as day_time
+from zoneinfo import ZoneInfo
 
 BREAK_EVEN_TOL = 1e-9
 TP_OUTCOMES = (
@@ -142,6 +147,81 @@ def by_tag(t) -> str:
     return "last 1.5h" if LAST_MINUTES_TAG in t.tags else "other"
 
 
+# --- time splits (ROADMAP 6.5; knowledge base I-22) -------------------------------------
+# Windows of the New York cash session (Aziz): Open / Midday / Close. A trade is in the
+# window of its entry time in New York (DST follows the city); anything else is outside.
+
+NY_ZONE = ZoneInfo("America/New_York")
+NY_WINDOWS = (
+    ("Open", day_time(9, 30), day_time(11, 0)),
+    ("Midday", day_time(11, 0), day_time(15, 0)),
+    ("Close", day_time(15, 0), day_time(16, 0)),
+)
+NY_OUTSIDE = "Outside cash hours"
+NY_ORDER = (*(w[0] for w in NY_WINDOWS), NY_OUTSIDE)
+MONTH_EDGE_DAYS = 3  # first / last this many weekdays of the month
+MONTH_PARTS = ("first 3 days", "mid", "last 3 days")
+WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+MAX_WEEKDAY = 4  # Friday; datetime.weekday()
+
+
+def _ranked(rank: Callable[[str], object]):
+    """Mark a split key with the order its groups are listed in (`split` sorts by it)."""
+
+    def mark(fn: Callable) -> Callable:
+        fn.rank = rank  # type: ignore[attr-defined]
+        return fn
+
+    return mark
+
+
+@_ranked(str)
+def by_hour(t) -> str:
+    """The UTC hour of the entry (entry candle close), "08:00 UTC"."""
+    return f"{t.entry_time:%H}:00 UTC"
+
+
+@_ranked(str)
+def by_weekday(t) -> str:
+    """The UTC weekday of the entry, numbered so it sorts Monday first ("3 Wed")."""
+    d = t.entry_time.weekday()
+    return f"{d + 1} {WEEKDAY_NAMES[d]}"
+
+
+def _weekdays_in_month(year: int, month: int) -> list[int]:
+    days_in_month = calendar.monthrange(year, month)[1]
+    return [
+        d for d in range(1, days_in_month + 1) if calendar.weekday(year, month, d) <= MAX_WEEKDAY
+    ]
+
+
+@_ranked(MONTH_PARTS.index)
+def by_month_part(t) -> str:
+    """ "first 3 days" / "last 3 days" of the entry's month counted in weekdays (no holiday
+    calendar), "mid" otherwise. A weekend day counts the weekdays before / after it. The
+    first part wins where they overlap."""
+    e = t.entry_time
+    weekdays = _weekdays_in_month(e.year, e.month)
+    before = sum(d <= e.day for d in weekdays)
+    after = sum(d >= e.day for d in weekdays)
+    if before <= MONTH_EDGE_DAYS:
+        return MONTH_PARTS[0]
+    if after <= MONTH_EDGE_DAYS:
+        return MONTH_PARTS[2]
+    return MONTH_PARTS[1]
+
+
+@_ranked(NY_ORDER.index)
+def by_ny_window(t) -> str:
+    """ "Open" 9:30-11:00, "Midday" 11:00-15:00, "Close" 15:00-16:00 New York time of the
+    entry; otherwise "Outside cash hours"."""
+    local = t.entry_time.astimezone(NY_ZONE).time()
+    for name, start, end in NY_WINDOWS:
+        if start <= local < end:
+            return name
+    return NY_OUTSIDE
+
+
 SPLITS: dict[str, Callable] = {
     "Symbol": by_symbol,
     "Session": by_session,
@@ -149,6 +229,10 @@ SPLITS: dict[str, Callable] = {
     "Confluence": by_confluence,
     "TP outcome": tp_outcome,
     "Tag": by_tag,
+    "Hour (UTC)": by_hour,
+    "Weekday": by_weekday,
+    "Month part": by_month_part,
+    "NY window": by_ny_window,
 }
 
 
@@ -178,11 +262,14 @@ def by_period(trades: Sequence, key: Callable = by_year) -> dict[str, dict]:
 
 
 def split(trades: Sequence, key: Callable) -> dict[str, dict]:
-    """{group: summarize(its trades)}, groups in first-seen order (entry order)."""
+    """{group: summarize(its trades)}, groups in first-seen order (entry order), or sorted
+    by the key's `rank` (the time keys)."""
     groups: dict[str, list] = {}
     for t in trades:
         groups.setdefault(key(t), []).append(t)
-    return {k: summarize(v) for k, v in groups.items()}
+    rank = getattr(key, "rank", None)
+    names = sorted(groups, key=rank) if rank else list(groups)
+    return {k: summarize(groups[k]) for k in names}
 
 
 # --- charts ----------------------------------------------------------------------------

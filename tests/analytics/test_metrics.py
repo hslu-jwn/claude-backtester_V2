@@ -196,7 +196,10 @@ def test_splits_group_and_summarize_in_first_seen_order():
     assert list(split(trades, by_session)) == ["tokyo", "london", "none"]
     assert list(split(trades, by_direction)) == ["long", "short"]
     assert list(split(trades, by_tag)) == ["last 1.5h", "other"]
-    assert set(SPLITS) == {"Symbol", "Session", "Long / short", "Confluence", "TP outcome", "Tag"}
+    assert set(SPLITS) == {
+        "Symbol", "Session", "Long / short", "Confluence", "TP outcome", "Tag",
+        "Hour (UTC)", "Weekday", "Month part", "NY window",
+    }  # fmt: skip
 
 
 def test_old_files_without_a_confluence_column_take_it_from_the_reason():
