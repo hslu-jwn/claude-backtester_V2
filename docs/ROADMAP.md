@@ -1300,3 +1300,22 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
 - ☐ **10.4 Signals from the book (5th ed. pp. 152-154, 329-332).** `momentum`, `dunnigan` (Ruggiero's
   Dunnigan trend), `sma_band_atr` (MPTDI-style band); sweep with Kaufman's classic periods. Tests first,
   then the grid again.
+
+  **Book-signal grid (2026-10-14, `trend_grid --signals sma momentum dunnigan --sma-periods 50 200`, 5 symbols,
+  2020-01-01 to 2026-09-30, swap rates still 0: net = net ex-swap).** Sum R net (2020-22 / 2023-26):
+
+  | variant | trades | avg R net | sum R net | 20-22 | 23-26 | per symbol |
+  |---|---|---|---|---|---|---|
+  | 1h sma 50 band 1.0 ATR | 4,596 | +0.044 | +201 | +145 | +56 | XAU +78, GJ +65, NAS +93, GU -14, US500 -21 |
+  | 30m sma 50 band 1.0 | 9,618 | +0.012 | +118 | +73 | +46 | XAU +193, GU -128 |
+  | 1h sma 50 band 0.5 | 6,521 | +0.018 | +116 | +135 | -19 | |
+  | 4h momentum 5 | 10,731 | +0.008 | +81 | +62 | +19 | 4 of 5 positive |
+  | 1d momentum 252 / sma 200 band | 77-160 | +0.37 to +0.66 | +51 to +59 | ~+2 | ~+50 | too few trades, mostly 2023-26 |
+  | dunnigan (all timeframes) | 356-31k | -0.05 to +0.01 | -1,279 to +40 | mixed | mixed | no edge |
+  | momentum 15m-1h, sma without band 15m-30m | | negative | | | | costs |
+
+  Reading: the band (book p. 329) helps everywhere: fewer trades, higher average, smaller drawdown. 1h sma 50
+  with a 1.0 ATR band is the first variant positive in both halves on 3 of 5 symbols, but its neighbours
+  (band 0.5, sma 200) are not positive in 2023-26, so not yet stable. Dunnigan's trend (pp. 152-154) has no
+  edge. Swap still to add (MT5 not connected yet). CSVs: `results/trend_grid_book/`.
+
