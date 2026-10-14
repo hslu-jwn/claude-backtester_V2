@@ -1339,3 +1339,11 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   XAUUSD longs (-$61 / night) eat the gold trend that carried the gross results. Only 1d sma 200 and momentum 252
   stay slightly positive, with 77-243 trades, negative in 2020-22. No robust edge. CSVs: `results/trend_grid_swap/`.
 
+  **Robustness check (2026-10-14, user asked): 1h sma with band on XAUUSD + GBPJPY + NAS100, FTMO swap.**
+  SMA 40 / 50 / 60 x band 0.75 / 1.0 / 1.25: all 9 positive with swap together (+13 to +107 R, 2,243-3,573 trades,
+  max DD 45-79 R); sma 50 band 1.0 best (+107 R, 2020-22 +69 / 2023-26 +38, max DD 47 R). Per symbol not stable:
+  XAUUSD loses in 2020-22 in 7 of 9 and wins in 2023-26 in all 9 (gold trend); GBPJPY wins in 2020-22 in all 9 and
+  loses in 2023-26 in 6 of 9; NAS100 mixed. The total is positive because different symbols carry different
+  periods, and the 3 symbols were chosen after seeing the results. +107 R over 81 months = about 1.3 R / month
+  against a 47 R drawdown. CSVs: `results/trend_check/`.
+
