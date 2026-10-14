@@ -58,6 +58,9 @@ class NyIndexSweepConfig:
     include_best_time_trades: bool = True  # off: trades tagged "best time" are not taken
     max_trades_per_session: int = 1  # per window and index, every re-entry counts
     trend_filter: TrendFilterConfig = field(default_factory=TrendFilterConfig)
+    # close open trades before the 17:00 New York rollover (no swap); off by default
+    close_before_rollover: bool = False
+    rollover_close_minutes: int = 1  # at the first 1m close at or after 17:00 ET minus this
 
     # sweep (confluences.md › Liquidity sweep)
     sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
@@ -99,6 +102,8 @@ class NyIndexSweepConfig:
     def __post_init__(self) -> None:
         if self.max_trades_per_session < 1:
             raise ValueError("max_trades_per_session must be >= 1")
+        if self.rollover_close_minutes < 1:
+            raise ValueError("rollover_close_minutes must be >= 1 (17:00 itself is the rollover)")
         if self.sweep_lookback < 1:
             raise ValueError("sweep_lookback must be >= 1")
         if self.sweep_equal_tolerance_atr < 0 or self.sweep_breakout_closes < 0:

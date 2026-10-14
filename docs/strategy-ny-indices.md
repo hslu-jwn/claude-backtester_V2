@@ -104,6 +104,11 @@
   no trades. ⚙️ `timeframe` 1h (15m / 1h / 4h; 4h New York-aligned as the rest of strategy 2), `sma_period` 50,
   `band_atr` 1.0, `atr_period` 20 (Wilder) — strategy 4's best variant (ROADMAP 10.4). A signal against the filter is
   rejected like an excluded best-time trade: it counts no trade and the setup stays valid for a later entry.
+- ⚙️ **Close before the rollover** (user, 2026-10-14: test closing strategy-2 trades before the 17:00 New York rollover so
+  they pay no swap; details chosen by Claude). `close_before_rollover`, **off by default**. On: a trade still open at the
+  first 1m close at or after 17:00 ET − ⚙️ `rollover_close_minutes` (default 1, i.e. the close at 16:59 ET) of a New York
+  date, and entered before that time, closes at that close (exit reason `signal`, all remaining parts). If data is
+  missing there, it closes at the next 1m close (it then pays that night).
 - Later: BoS against "the last swing high before the sweep" instead of the most recent one (user, 2026-10-11)
 - 3rd-confluence timeout (25 setup-TF candles)
 - Confluence types on/off (OB, BB, BPR, FVG, EQ)

@@ -48,6 +48,9 @@ class SessionConfig:
 
 
 DEFAULT_SESSIONS = SessionConfig()
+# daily swap rollover = FTMO server midnight (risk-management.md › Costs › Swap in the engine)
+ROLLOVER_ZONE = ZoneInfo("America/New_York")
+ROLLOVER_TIME = time(17, 0)
 _TRADING_WEEKDAYS = range(5)  # Monday..Friday in the session's own city
 _FRIDAY = 4
 

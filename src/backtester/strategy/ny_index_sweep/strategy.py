@@ -21,13 +21,15 @@ Spec: strategy-ny-indices.md. Base timeframe 1m; 5m, 15m, 1h and New York-aligne
    `max_trades_per_session` entries, or the entry is in the best time and
    `include_best_time_trades` is off, or the trend filter (if on) points the other way
    (trend_filter.py; the setup stays valid). `decisions` keeps every signal and what happened.
+6. `close_before_rollover`: trades still open at 17:00 ET minus `rollover_close_minutes`
+   close at that 1m close (`exits`), so they pay no swap.
 Trades in R only. TP1 / TP2 / TP3 a third each; break-even with costs after TP1.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
@@ -35,6 +37,7 @@ from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
 from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import SwingKind, SwingPoint
+from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 from backtester.strategy.base import Order, Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, beyond, candle_open, wick
@@ -107,12 +110,16 @@ class NyIndexSweep(Strategy):
         self.decisions: list[Decision] = []
         self.ended: list[Setup] = []  # every setup that ended, for inspection
         self._accepted: set[SwingPoint] = set()  # levels a breakout accepted: not sweepable
+        self._open: list[tuple[Setup, datetime]] = []  # (ref, entry time) of each open trade
+        self._to_close: list[Setup] = []
 
     # --- engine interface --------------------------------------------------------------
 
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         for tf in (H4, H1, M15, M5, M1):
             self.frames[tf].update(views[tf])
+        if self.config.close_before_rollover:
+            self._close_before_rollover(now)
         if self.trend_filter is not None:
             self.trend_filter.update(views[self.config.trend_filter.timeframe])
         candle = views[M1].current
@@ -135,7 +142,22 @@ class NyIndexSweep(Strategy):
 
     def on_trade_closed(self, ref: object, result: TradeResult) -> None:
         if isinstance(ref, Setup):
+            self._open = [(s, t) for s, t in self._open if s is not ref]
             ref.trade_closed(result.exit_time)
+
+    def exits(self) -> list[object]:
+        out, self._to_close = self._to_close, []
+        return out
+
+    def _close_before_rollover(self, now: datetime) -> None:
+        """Open trades entered before today's cutoff (17:00 ET minus the setting) close at
+        the first close at or after it (spec › Close before the rollover)."""
+        day = now.astimezone(ROLLOVER_ZONE).date()
+        cutoff = datetime.combine(day, ROLLOVER_TIME, ROLLOVER_ZONE) - timedelta(
+            minutes=self.config.rollover_close_minutes
+        )
+        if now >= cutoff:
+            self._to_close += [ref for ref, entry in self._open if entry < cutoff]
 
     # --- windows, sweeps -------------------------------------------------------------
 
@@ -257,6 +279,7 @@ class NyIndexSweep(Strategy):
             else:
                 found = result
                 order = self._make_order(ws, signal, result, best)
+                self._open.append((setup, signal.at))
                 ws.trades += 1
         self.decisions.append(Decision(signal, order, found, rejected))
         return order

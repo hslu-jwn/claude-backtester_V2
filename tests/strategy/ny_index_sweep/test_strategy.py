@@ -9,7 +9,8 @@ The walk: 1m candles Monday to Friday around the clock (NAS100 doji threshold), 
 from __future__ import annotations
 
 import random
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -17,6 +18,7 @@ from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
+from backtester.engine.trade import ExitReason
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig, TrendFilterConfig
 from backtester.strategy.ny_index_sweep.frames import beyond, candle_open
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
@@ -236,3 +238,53 @@ def test_no_lookahead_with_the_trend_filter(filtered):
     cut = START + timedelta(days=12, hours=17)
     short, _ = run([c for c in m1 if c.ts + M1.duration <= cut], cut, FILTERED)
     assert summary(short.decisions) == [x for x in full if x[0] <= cut]
+
+
+# --- close before the rollover (spec › Backtest options › Close before the rollover) ------
+
+NEW_YORK = ZoneInfo("America/New_York")
+SWAP = EngineConfig(
+    costs=CostConfig(spread_enabled=False, commission_enabled=False),  # swap on (defaults)
+    break_even_at_next_session=False,
+)
+
+
+def run_swap(m1, config=None):
+    strategy = NyIndexSweep("NAS100", config)
+    return strategy, run_backtest(strategy, series(m1), SWAP)
+
+
+@pytest.fixture(scope="module")
+def rollover(week):
+    m1, _, _ = week
+    _, base = run_swap(m1)
+    _, closed = run_swap(m1, NyIndexSweepConfig(close_before_rollover=True))
+    return base, closed
+
+
+def cutoff(t, minutes=1):
+    local = t.astimezone(NEW_YORK)
+    return datetime.combine(local.date(), time(17, 0), NEW_YORK) - timedelta(minutes=minutes)
+
+
+def test_close_before_rollover_no_trade_pays_swap(rollover):
+    base, closed = rollover
+    assert any(t.swap_r != 0 for t in base)  # the walk has trades held overnight
+    assert closed and all(t.swap_r == 0 for t in closed)
+
+
+def test_close_before_rollover_exits_at_the_1659_close_of_the_entry_day(rollover):
+    base, closed = rollover
+    assert len(closed) == len(base)  # the windows end at 16:00: no re-entry is possible
+    for b, c in zip(base, closed, strict=True):
+        assert (b.entry_time, b.direction, b.entry) == (c.entry_time, c.direction, c.entry)
+        if b.exit_time < cutoff(b.entry_time):
+            assert c == b  # closed before 16:59 anyway: unchanged
+        else:
+            assert c.exit_reason is ExitReason.SIGNAL
+            assert c.exit_time == cutoff(b.entry_time).astimezone(UTC)
+
+
+def test_rollover_close_minutes_must_be_at_least_one():
+    with pytest.raises(ValueError):
+        NyIndexSweepConfig(close_before_rollover=True, rollover_close_minutes=0)

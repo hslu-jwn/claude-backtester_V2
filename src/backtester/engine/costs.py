@@ -24,14 +24,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from types import MappingProxyType
-from zoneinfo import ZoneInfo
 
 from backtester.core.models import Direction
+from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 
-ROLLOVER_ZONE = ZoneInfo("America/New_York")
-ROLLOVER_TIME = time(17, 0)  # FTMO server midnight
 ROLLOVER_WEEKDAYS = range(5)  # New York Mon-Fri; no rollover on Saturday / Sunday dates
 WEDNESDAY = 2  # datetime.weekday(): Monday = 0
 SWAP_TRIPLE_NIGHTS = 3
