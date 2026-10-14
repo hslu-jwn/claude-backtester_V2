@@ -936,6 +936,30 @@ has no step yet.
   (`results/20261009-135418_XAUUSD-GBPUSD-GBPJPY`, 7.5 min): 17,742 trades, win rate
   34.6%, net R −2,950.4 (gross −825.3), max drawdown 2,955 R, profit factor 0.75. The
   first run (above, before the fix) differs little: the ~3 shifted weeks a year.
+- ☐ **6.4 Robustness report** (knowledge base T-01; user, 2026-10-14). `analytics/robustness.py`, pure
+  functions on trade lists, first used in `tools/trend_grid`, later by the Simulator (6.1): share of
+  profitable variants, mean / st.dev / mean − 1 sd of net R over the grid, neighbour-smoothed grid and
+  plateau centre, Welch t-test of trade R between the halves 2020-22 / 2023-26, shock days (daily range
+  > 3.5 × ATR(10)) with P/L with and without them, stressed costs (the whole cost per trade, spread +
+  commission + swap = gross − net, × 1.5, no re-run), kurtosis flag (> 7), result without the best trade.
+  Defaults are Kaufman's (`knowledge/topics/testing-and-robustness.md`), all in a config dataclass
+  (accepted by the user 2026-10-14).
+- ☐ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14): groupings by entry hour, weekday,
+  Friday, first / last 3 trading days of the month, and New York windows Open 9:30-11:00 / Midday
+  11:00-15:00 / Close 15:00-16:00, for `by_period` / `split` and the run report.
+- ☐ **6.6 MT5 history check** (user, 2026-10-14): how many years of M1 with tick volume and spread FTMO's
+  MT5 serves. **First check 2026-10-14** (read-only, FTMO-Demo): the terminal's "Max bars in chart" is
+  100,000, so only ~3.5 months of M1 come back (2026-07-06 .. 2026-10-14); every bar has tick volume and
+  spread. The user raises the limit (MT5 › Tools › Options › Charts › Max bars in chart = Unlimited,
+  restart), then check again. Median spreads of those 3.5 months against our fixed `SymbolCosts.spread`
+  (+ slippage): XAUUSD 0.42 (0.25 + 0.10), GBPUSD 0.2 pip (0.3 + 0.2), GBPJPY 1.6 pip (1.0 + 0.3),
+  US100.cash 1.45 (NAS100 1.0 + 1.0), US500.cash 0.60 (0.5 + 0.25). Spreads are nearly flat over the day
+  except the server-midnight bar (17:00 New York rollover: GBPUSD ~6.7 pip, GBPJPY ~21 pip) and slightly
+  higher gold spreads in Asia. Changing the defaults is the user's call.
+- ☐ **6.7 Spread by hour of day in the cost model** (user, 2026-10-14): spread table per symbol × hour
+  (from 6.6), plus the rollover bar, optional news markup; replaces the fixed spread when given. Needed
+  before the first day-trade strategy (knowledge base I-07, I-33, I-45). Volume rules (I-44) only after
+  6.6 shows enough tick-volume history, and only as an A/B against the price-only versions.
 
 ## Phase 7: Live trading via MT5 (much later; not before 6.1 is done)
 
@@ -1347,3 +1371,17 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   periods, and the 3 symbols were chosen after seeing the results. +107 R over 81 months = about 1.3 R / month
   against a 47 R drawdown. CSVs: `results/trend_check/`.
 
+
+## Phase 11: Research studies from the knowledge base (user, 2026-10-14)
+
+One-off research tools on cached data; they change no setting and no strategy. Ideas and sources:
+`knowledge/ideas.md`. Order agreed with the user 2026-10-14: robustness report (6.4) and time split (6.5)
+first, then these studies, then day-trade strategies without swap (ORB I-07/I-08, compression break I-33)
+with the cost-to-target (I-45) and free-path (I-37) filters.
+
+- ☐ **11.1 Noise / regime study** (I-01): efficiency ratio per symbol, timeframe (15m-1d), year and half;
+  does noise explain strategy 4's split halves?
+- ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39): gap fill by size, first 30 min vs
+  rest of day per half, share of trend days, share of day extremes in the first 90 min, last-hour new high,
+  Friday / month-end.
+- ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (I-17).
