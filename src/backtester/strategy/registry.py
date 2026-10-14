@@ -22,6 +22,8 @@ from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
+from backtester.strategy.trend_following.config import TrendFollowingConfig
+from backtester.strategy.trend_following.strategy import TrendFollowing
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +43,10 @@ _SPECS = (
         "ny_index_sweep", "Strategy 2 · NY Open index sweep", NyIndexSweepConfig, NyIndexSweep
     ),
     StrategySpec("no_wick", "Strategy 3 · No-wick candle in the trend", NoWickConfig, NoWick),
+    StrategySpec(
+        "trend_following", "Strategy 4 · Trend following (Kaufman)",
+        TrendFollowingConfig, TrendFollowing,
+    ),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

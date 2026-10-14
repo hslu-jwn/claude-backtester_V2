@@ -57,6 +57,7 @@ from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
+from backtester.strategy.trend_following.config import TrendFollowingConfig
 
 
 def _read_only(mapping: dict) -> MappingProxyType:
@@ -68,7 +69,7 @@ copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
 # every registered strategy's config (tests/strategy/test_registry.py keeps this in step)
-StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig | NoWickConfig
+StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig | NoWickConfig | TrendFollowingConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,9 +160,10 @@ def _load(
         notes.append(f"{symbol}: {start}..{first - timedelta(days=1)} not cached, left out")
     if last < end:
         notes.append(f"{symbol}: {last + timedelta(days=1)}..{end} not cached, left out")
-    warm = warmup_start(cached, first, settings.warmup_days)
     adapter = sources.adapter(symbol)
     strategy = make_strategy(symbol, settings.strategy, settings.detectors)
+    # the strategy's indicators may need more history than the setting (strategy 4)
+    warm = warmup_start(cached, first, max(settings.warmup_days, strategy.min_warmup_days))
     h4 = strategy.h4_alignment
     history = cached_block(cached, first)[0]  # first day of the cached run around `first`
     full = strategy.full_history

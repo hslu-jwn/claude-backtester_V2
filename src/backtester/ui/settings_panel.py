@@ -72,6 +72,7 @@ _GROUP_RULES = (
     ("strategy.entry_bos_with_trend", "Entry"),
     ("strategy.max_trades_per_session", "Entry"),
     ("strategy.sweep_lookback", "Entry"),
+    ("strategy.stop_atr_mult", "Stop loss"),
     ("strategy.sweep_close_beyond_counts", "Entry"),
     ("strategy.sweep_equal_highs", "Entry"),
     ("strategy.sweep_equal_tolerance_atr", "Entry"),
@@ -87,6 +88,14 @@ _GROUP_RULES = (
     ("strategy.entry_mode", "Entry"),
     ("strategy.max_wick_share", "Entry"),
     ("strategy.order_expiry_candles", "Entry"),
+    ("strategy.signal", "Entry"),
+    ("strategy.breakout_period", "Entry"),
+    ("strategy.sma_period", "Entry"),
+    ("strategy.kama_er_period", "Entry"),
+    ("strategy.kama_fast", "Entry"),
+    ("strategy.kama_slow", "Entry"),
+    ("strategy.kama_filter", "Entry"),
+    ("strategy.kama_filter_period", "Entry"),
     ("strategy.rr", "Take profit"),
     ("strategy.windows.", "Windows"),
     ("strategy.include_best_time_trades", "Windows"),
@@ -235,6 +244,7 @@ DEFAULT_STRATEGY = "session_zone_sweep"
 UNUSED = {
     "ny_index_sweep": {"engine.break_even_at_next_session"},
     "no_wick": {"engine.break_even_at_next_session"},
+    "trend_following": {"engine.break_even_at_next_session"},
 }
 
 

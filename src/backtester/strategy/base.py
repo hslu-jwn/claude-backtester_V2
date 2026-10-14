@@ -54,6 +54,9 @@ class Strategy(ABC):
     uses_session_break_even: bool = True
     # how the runner loads 4h candles for this strategy (strategy 2: New York-aligned)
     h4_alignment: H4Alignment = H4Alignment.UTC
+    # calendar days of history the strategy needs before the first run day (indicators);
+    # the runner loads at least this many (strategy 4: SMA 200 on 1d needs ~300)
+    min_warmup_days: int = 0
     # timeframes loaded from the first cached day instead of the warm-up start
     full_history: tuple[Timeframe, ...] = ()
 

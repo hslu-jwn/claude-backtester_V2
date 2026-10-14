@@ -25,6 +25,7 @@ sys.path.append(str(Path(__file__).parent / "strategy" / "session_zone_sweep"))
 import scenario
 from scenario import LONDON, NY_SETUP, TO_TARGET, doji
 
+from backtester.core.models import Timeframe
 from backtester.data.adapters.cache_adapter import MissingCacheError
 from backtester.data.cache import cache_path
 from backtester.data.sources import SymbolSources
@@ -42,6 +43,7 @@ from backtester.runner import (
     write_results,
 )
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
+from backtester.strategy.trend_following.config import TrendFollowingConfig
 
 FULL = LONDON + NY_SETUP + TO_TARGET
 MON, TUE, WED = date(2026, 1, 5), date(2026, 1, 6), date(2026, 1, 7)
@@ -128,6 +130,17 @@ def test_warm_up_days_run_but_their_trades_and_sessions_are_dropped(cache):
     assert all(s["trading_date"] != "2026-01-05" for s in run.sessions)
     no_warmup = run_backtests(["XAUUSD"], TUE, TUE, replace(SETTINGS, warmup_days=0), cache)
     assert no_warmup.runs["XAUUSD"].warmup_from == TUE
+
+
+def test_a_strategy_can_ask_for_more_warm_up_days_than_the_setting(cache):
+    """Strategy 4 needs its indicator history (`Strategy.min_warmup_days`), setting is 0."""
+    folder = Path(cache.cache_dir("XAUUSD"))
+    write_day(folder, "XAUUSD", TUE, [doji(112.8)] * 12)
+    settings = replace(SETTINGS, strategy=TrendFollowingConfig(timeframe=Timeframe.M15))
+    result = run_backtests(["XAUUSD"], TUE, TUE, replace(settings, warmup_days=0), cache)
+    assert result.runs["XAUUSD"].warmup_from == MON  # 0 days set, the strategy asked for more
+    result = run_backtests(["XAUUSD"], TUE, TUE, replace(SETTINGS, warmup_days=0), cache)
+    assert result.runs["XAUUSD"].warmup_from == TUE  # strategy 1 asks for none
 
 
 def test_progress_reports_5m_candles_up_to_the_total(cache):
