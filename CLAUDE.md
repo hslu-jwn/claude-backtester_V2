@@ -21,6 +21,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/confluences.md` | Swings, trend, BOS, strong-move filter, zone validation, FVG, OB, breaker, BPR, equilibrium, SMT |
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
+| `docs/strategy-no-wick.md` | Strategy 3: no-wick candle in the trend (timeframes, trend source, entry modes, SL at swing, 1R), backtest options |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |

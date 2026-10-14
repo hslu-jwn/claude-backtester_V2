@@ -97,8 +97,8 @@ def main(argv: list[str] | None = None) -> int:
         "--strategy",
         choices=tuple(REGISTRY),
         default="session_zone_sweep",
-        help="session_zone_sweep (strategy 1, default) or ny_index_sweep (strategy 2: NAS100 / "
-        "US500, spec defaults, no presets)",
+        help="session_zone_sweep (strategy 1, default), ny_index_sweep (strategy 2: NAS100 / "
+        "US500) or no_wick (strategy 3); spec defaults, no presets",
     )
     parser.add_argument("--presets-dir", type=Path, default=PRESETS_DIR, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)

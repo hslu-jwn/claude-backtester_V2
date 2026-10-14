@@ -16,6 +16,8 @@ from types import MappingProxyType
 
 from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.base import Strategy
+from backtester.strategy.no_wick.config import NoWickConfig
+from backtester.strategy.no_wick.strategy import NoWick
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -38,6 +40,7 @@ _SPECS = (
     StrategySpec(
         "ny_index_sweep", "Strategy 2 · NY Open index sweep", NyIndexSweepConfig, NyIndexSweep
     ),
+    StrategySpec("no_wick", "Strategy 3 · No-wick candle in the trend", NoWickConfig, NoWick),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

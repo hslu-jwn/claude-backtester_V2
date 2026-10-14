@@ -53,6 +53,7 @@ from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
+from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
@@ -67,7 +68,7 @@ copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
 # every registered strategy's config (tests/strategy/test_registry.py keeps this in step)
-StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig
+StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig | NoWickConfig
 
 
 @dataclass(frozen=True, slots=True)

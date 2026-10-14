@@ -232,6 +232,13 @@ class OpenTrade:
                     self.open_share, candle, now, self.break_even_level, ExitReason.BREAK_EVEN
                 )
 
+    def on_fill_candle(self, candle: Candle, now: datetime) -> None:
+        """The candle a limit order filled in: the order of events inside it is unknown, so
+        only the SL counts (SL first); a TP reached in it is not counted."""
+        worst = candle.low if self.sign > 0 else candle.high
+        if self.sign * (worst - self.stop_loss) <= 0:
+            self._exit(self.open_share, candle, now, self.stop_loss, ExitReason.STOP_LOSS)
+
     def move_to_break_even(self, now: datetime) -> None:
         if self.break_even_time is None:
             self.stop_loss = self.break_even_level

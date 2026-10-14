@@ -526,3 +526,63 @@ def test_the_strategy_hears_when_its_trade_closed_before_its_next_candle():
     # closed by candle 2: reported before on_candle for candle 2 (last seen: candle 1)
     assert strategy.closed == [("a", ExitReason.TAKE_PROFIT, DEFAULT_START + 2 * M5)]
     assert t.exit_time == DEFAULT_START + 3 * M5
+
+
+# --- limit fills (strategy 3: orders filled at their level inside a later candle) --------
+
+
+class LimitAt(Strategy):
+    """At base cursor `at`, emit one limit order (filled at `entry`, inside this candle)."""
+
+    base_timeframe = Timeframe.M5
+    timeframes = (Timeframe.M5,)
+
+    def __init__(self, at, direction, entry, stop_loss, take_profit):
+        self._args = (at, direction, entry, stop_loss, take_profit)
+
+    def on_candle(self, now, views):
+        at, direction, entry, stop_loss, take_profit = self._args
+        if views[Timeframe.M5].cursor != at:
+            return []
+        return [Order(direction, entry, stop_loss, take_profit, limit_fill=True)]
+
+
+def run_limit(ohlc, *args):
+    return run_backtest(LimitAt(*args), [build_series(ohlc)], NO_COSTS)
+
+
+def test_limit_order_fills_at_its_level_not_at_the_close():
+    # candle 1 trades down to 99.0 and closes at 100.4: filled at 99.0, 1R = 1.0
+    [t] = run_limit(
+        [ENTRY, (100.0, 100.5, 99.0, 100.4), (100.4, 101.2, 100.3, 101.1)],
+        1,
+        LONG,
+        99.0,
+        98.0,
+        100.0,
+    )
+    assert t.entry == 99.0 and t.entry_candle == DEFAULT_START + M5
+    assert t.entry_time == DEFAULT_START + 2 * M5  # close of the fill candle
+    assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.0)
+
+
+def test_stop_inside_the_fill_candle_is_a_loss_and_a_tp_there_is_not_counted():
+    [sl] = run_limit([ENTRY, (100.0, 100.5, 97.5, 98.5)], 1, LONG, 99.0, 98.0, 100.0)
+    assert sl.exit_reason is ExitReason.STOP_LOSS and sl.r_gross == pytest.approx(-1.0)
+    assert sl.exit_candle == DEFAULT_START + M5
+    # the fill candle also reaches the TP (high 100.9 >= 100.0): not counted, still open
+    [t] = run_limit([ENTRY, (100.0, 100.9, 99.0, 100.5)], 1, LONG, 99.0, 98.0, 100.0)
+    assert t.exit_reason is ExitReason.END_OF_DATA
+
+
+def test_short_limit_is_mirrored():
+    [t] = run_limit(
+        [ENTRY, (100.0, 101.0, 99.6, 99.8), (99.8, 99.9, 98.8, 99.0)], 1, SHORT, 101.0, 102.0, 100.0
+    )
+    assert t.entry == 101.0 and t.exit_reason is ExitReason.TAKE_PROFIT
+    assert t.r_gross == pytest.approx(1.0)
+
+
+def test_limit_level_outside_the_candle_raises():
+    with pytest.raises(ValueError, match="limit"):
+        run_limit([ENTRY, (100.0, 100.5, 99.5, 100.2)], 1, LONG, 99.0, 98.0, 100.0)

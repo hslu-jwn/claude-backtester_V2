@@ -82,6 +82,12 @@ _GROUP_RULES = (
     ("strategy.bos_within_pm", "Entry"),
     ("strategy.tap_timeout", "Entry"),
     ("strategy.entry_tf_confluence", "Entry"),
+    ("strategy.timeframe", "Entry"),
+    ("strategy.trend_source", "Entry"),
+    ("strategy.entry_mode", "Entry"),
+    ("strategy.max_wick_share", "Entry"),
+    ("strategy.order_expiry_candles", "Entry"),
+    ("strategy.rr", "Take profit"),
     ("strategy.windows.", "Windows"),
     ("strategy.include_best_time_trades", "Windows"),
     ("strategy.confluence_kinds", "Confluences"),
@@ -226,7 +232,10 @@ HIDDEN_OPTIONS = {("session_zone_sweep", "strategy.confluence_kinds"): {"EQUILIB
 DEFAULT_STRATEGY = "session_zone_sweep"
 # settings a strategy does not use (shown for no widget): strategy 2 has no break-even at
 # the next session start (`Strategy.uses_session_break_even`)
-UNUSED = {"ny_index_sweep": {"engine.break_even_at_next_session"}}
+UNUSED = {
+    "ny_index_sweep": {"engine.break_even_at_next_session"},
+    "no_wick": {"engine.break_even_at_next_session"},
+}
 
 
 def group_of(path: str) -> str:

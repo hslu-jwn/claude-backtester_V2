@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class Order:
     direction: Direction
-    entry: float  # filled at the close of the current base candle
+    entry: float  # filled at the close of the current base candle (or see `limit_fill`)
     stop_loss: float
     take_profit: float  # TP1 (the whole position when take_profit_2 is None)
     tags: frozenset[str] = field(default_factory=frozenset)  # e.g. {"last_1.5h"}
@@ -39,6 +39,9 @@ class Order:
     take_profit_3: float | None = None  # with a TP3: TP2 closes tp2_share, TP3 the rest
     tp2_share: float | None = None
     ref: object = None  # the strategy's handle, passed back in on_trade_closed
+    # a limit order that traded at `entry` inside the current candle (low <= entry <= high):
+    # filled at `entry`, not at the close. In its fill candle only the SL counts.
+    limit_fill: bool = False
 
 
 class Strategy(ABC):

@@ -27,7 +27,7 @@ STRATEGY_DIR = Path(registry.__file__).parent
 
 
 def test_registered_names_and_order():
-    assert list(registry.REGISTRY) == ["session_zone_sweep", "ny_index_sweep"]
+    assert list(registry.REGISTRY) == ["session_zone_sweep", "ny_index_sweep", "no_wick"]
 
 
 def test_names_are_the_folder_names():

@@ -1232,3 +1232,36 @@ in its results reported).
   −0.021, 15m/1m (PM) 162 −0.206, 15m/5m (AM) 54 +0.047; 3rd confluence breaker 1,228
   −0.041, OB 214 +0.043, EQ 177 −0.077, FVG 39 −0.168; best time 139 +0.082, other
   1,519 −0.048. Exits: SL 1,034, break-even 283, last TP 341.
+
+## Phase 9: Strategy 3 (no-wick candle in the trend)
+
+Rules set by the user 2026-10-13, spec `strategy-no-wick.md`. Plain 1:1, one folder `strategy/no_wick/`.
+
+- ◐ **9.1 Build and compare.** Spec, tests first (`tests/strategy/no_wick/`, limit fills in
+  `tests/engine/test_backtest.py`), engine support for limit fills (`Order.limit_fill`, SL first in the
+  fill candle), strategy + config, registry entry, `python -m backtester.tools.no_wick_grid`
+  (entry timeframe 5m / 15m / 30m / 1h x trend higher / same x entry close / body_end / middle, 2020-22
+  against 2023-26). Results recorded here after the user has looked at them.
+
+  **First full grid (2026-10-13, `python -m backtester.tools.no_wick_grid`, 5 symbols, 2020-01-01 to
+  2026-09-30, spec defaults: sl_buffer 10%, rr 1, expiry 6, wick share 0).** Every one of the 24 variants
+  is negative, gross as well as net, in both halves (2020-22 and 2023-26):
+
+  | timeframe / trend / entry | trades | win % | gross R | net R |
+  |---|---|---|---|---|
+  | 5m higher close | 116,835 | 47.2 | -4,759 | -37,178 |
+  | 15m higher close | 23,795 | 48.5 | -780 | -4,111 |
+  | 15m same close | 29,251 | 48.8 | -841 | -4,358 |
+  | 30m higher close | 9,260 | 49.4 | -231 | -1,120 |
+  | 1h higher close | 3,701 | 49.6 | -61 | -308 |
+  | 1h same close | 4,499 | 49.3 | -84 | -343 |
+  | 15m higher middle | 20,803 | 45.2 | -1,947 | -5,333 |
+  | 15m higher body_end | 14,585 | 33.6 | -4,327 | -21,312 |
+  | 1h higher body_end | 2,225 | 34.3 | -722 | -2,684 |
+
+  Reading: the entry itself has no edge (gross about -0.02 to -0.03 R per trade on `close`), and the
+  stops are tight, so costs take about 0.1 to 0.14 R per trade on 5m / 15m. Higher timeframes lose
+  less per trade only because costs are a smaller share of the stop. `body_end` is by far the worst
+  (win rate 33-36%): the limit fills exactly when price comes back through the candle's open, the
+  stop is close, and the SL-first rule in the fill candle is conservative. Trend source (higher
+  vs same) makes no difference. Full CSVs: `results/no_wick_grid/` (git-ignored).

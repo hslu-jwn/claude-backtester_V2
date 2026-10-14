@@ -13,7 +13,9 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
    the SL moves there from the next candle on; otherwise the original SL stays for good.
 3. `strategy.on_candle(now, views)`; views of every declared timeframe, higher ones only
    with candles closed at `now`. The strategy owns and updates its detectors itself.
-4. New orders are filled at candle i's close and managed from candle i + 1.
+4. New orders are filled at candle i's close and managed from candle i + 1. A limit order
+   (`Order.limit_fill`) is filled at its level inside candle i; in that candle only its SL
+   counts (SL first, a TP there is not counted), then it is managed from candle i + 1.
 
 Trades still open after the last candle are closed at its close (END_OF_DATA).
 Output: closed trades in R, in entry order. `progress(done, total)` (optional) is called
@@ -105,7 +107,15 @@ class Backtest:
             open_trades = still_open
             views = self._views(cursor, view)
             for order in self._strategy.on_candle(now, views):
-                open_trades.append(self._fill(order, candle, now))
+                trade = self._fill(order, candle, now)
+                if order.limit_fill:
+                    trade.on_fill_candle(candle, now)
+                if trade.is_closed:
+                    result = self._result(trade)
+                    closed.append(result)
+                    self._strategy.on_trade_closed(trade.ref, result)
+                else:
+                    open_trades.append(trade)
         if open_trades:
             last = replay.view(len(replay) - 1).current
             now = replay.close_time(len(replay) - 1)
@@ -124,9 +134,13 @@ class Backtest:
         return views
 
     def _fill(self, order: Order, candle: Candle, now: datetime) -> OpenTrade:
-        """Enter at the close of the current base candle (spec: "enter at that close")."""
-        entry = candle.close
-        if not math.isclose(order.entry, entry):
+        """Enter at the close of the current base candle (spec: "enter at that close"), or
+        for a limit order at its level, which the candle must have traded through."""
+        entry = order.entry if order.limit_fill else candle.close
+        if order.limit_fill:
+            if not candle.low <= entry <= candle.high:
+                raise ValueError(f"limit entry {entry} outside the candle at {now}")
+        elif not math.isclose(order.entry, entry):
             raise ValueError(f"order entry {order.entry} is not the candle close {entry} at {now}")
         sign = 1 if order.direction is Direction.BULLISH else -1
         if sign * (entry - order.stop_loss) <= 0:
