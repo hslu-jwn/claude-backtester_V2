@@ -1237,7 +1237,7 @@ in its results reported).
 
 Rules set by the user 2026-10-13, spec `strategy-no-wick.md`. Plain 1:1, one folder `strategy/no_wick/`.
 
-- ◐ **9.1 Build and compare.** Spec, tests first (`tests/strategy/no_wick/`, limit fills in
+- ☑ **9.1 Build and compare** (accepted by the user 2026-10-14, strategy dropped, no variant has an edge). Spec, tests first (`tests/strategy/no_wick/`, limit fills in
   `tests/engine/test_backtest.py`), engine support for limit fills (`Order.limit_fill`, SL first in the
   fill candle), strategy + config, registry entry, `python -m backtester.tools.no_wick_grid`
   (entry timeframe 5m / 15m / 30m / 1h x trend higher / same x entry close / body_end / middle, 2020-22
