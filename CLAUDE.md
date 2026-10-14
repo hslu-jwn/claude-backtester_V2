@@ -27,6 +27,13 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
 
+**Knowledge base (background, not rules):** `knowledge/` holds what the trading books in
+`00_Literature/Trading` teach: `README.md` (index, how to add a book), `topics/` (synthesis per
+subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (strategy
+idea backlog with IDs I-xx / T-xx and status). Use it when designing or judging a strategy. An idea
+becomes a rule only when the user picks it and it is written into a `docs/` spec. Update an idea's
+status when it is tested.
+
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
   a trading rule. Quote the spec line you are unsure about.
 - If the user changes a rule, update the spec in `docs/` in the same commit as the code.
