@@ -19,7 +19,8 @@ Spec: strategy-ny-indices.md. Base timeframe 1m; 5m, 15m, 1h and New York-aligne
    one); their trades keep running.
 5. Signals become orders (targets.py) unless the window already had
    `max_trades_per_session` entries, or the entry is in the best time and
-   `include_best_time_trades` is off. `decisions` keeps every signal and what happened.
+   `include_best_time_trades` is off, or the trend filter (if on) points the other way
+   (trend_filter.py; the setup stays valid). `decisions` keeps every signal and what happened.
 Trades in R only. TP1 / TP2 / TP3 a third each; break-even with costs after TP1.
 """
 
@@ -39,6 +40,7 @@ from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.frames import Frame, beyond, candle_open, wick
 from backtester.strategy.ny_index_sweep.setup import Context, Route, Setup, Signal, Step
 from backtester.strategy.ny_index_sweep.targets import Rejected, Targets, targets
+from backtester.strategy.ny_index_sweep.trend_filter import TrendFilter
 from backtester.strategy.ny_index_sweep.windows import (
     TradingWindow,
     Window,
@@ -98,6 +100,9 @@ class NyIndexSweep(Strategy):
             H1: Frame(H1, doji, fvg, ob, tp_levels=True, atr_period=atr),
             H4: Frame(H4, doji, fvg, ob, tp_levels=True, atr_period=atr),
         }
+        self.trend_filter = (
+            TrendFilter(config.trend_filter) if config.trend_filter.enabled else None
+        )
         self.window: WindowState | None = None
         self.decisions: list[Decision] = []
         self.ended: list[Setup] = []  # every setup that ended, for inspection
@@ -108,6 +113,8 @@ class NyIndexSweep(Strategy):
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         for tf in (H4, H1, M15, M5, M1):
             self.frames[tf].update(views[tf])
+        if self.trend_filter is not None:
+            self.trend_filter.update(views[self.config.trend_filter.timeframe])
         candle = views[M1].current
         self._update_window(now)
         ws = self.window
@@ -237,6 +244,10 @@ class NyIndexSweep(Strategy):
             setup.end(rejected)
         elif best and not cfg.include_best_time_trades:
             rejected = "best-time trades excluded"
+            setup.trade_closed(signal.at)
+        elif self.trend_filter is not None and signal.direction is not self.trend_filter.direction:
+            trend = self.trend_filter.direction
+            rejected = f"against the trend filter ({trend.value if trend else 'no trend yet'})"
             setup.trade_closed(signal.at)
         else:
             result = targets(signal, self.frames, cfg, self.detectors.equilibrium)

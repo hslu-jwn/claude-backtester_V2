@@ -50,6 +50,42 @@ class Sma:
         return self._sum / self.period if len(self._closes) == self.period else None
 
 
+class SmaBandCross:
+    """Close crossing SMA(N) shifted by `band_atr` x ATR (+ for longs, - for shorts).
+
+    Spec: strategy-trend-following.md › Trend signal (`sma`, SMA band). Long when the
+    previous close was at or below the previous line and this close is above this line;
+    mirrored for shorts. With a band, the ATR of this and the previous candle must be known.
+    Also strategy 2's trend filter (strategy-ny-indices.md › Trend filter).
+    """
+
+    def __init__(self, period: int, band_atr: float = 0.0):
+        if period < 2:
+            raise ValueError("period must be >= 2")
+        if band_atr < 0:
+            raise ValueError("band_atr must be >= 0")
+        self.band_atr = band_atr
+        self._sma = Sma(period)
+        self._prev: tuple[float, float, float | None] | None = None  # close, SMA, ATR
+
+    def update(self, close: float, atr: float | None) -> Direction | None:
+        sma = self._sma.update(close)
+        prev, self._prev = self._prev, (close, sma, atr) if sma is not None else None
+        if sma is None or prev is None:
+            return None
+        prev_close, prev_sma, prev_atr = prev
+        band = self.band_atr
+        if band > 0 and (atr is None or prev_atr is None):
+            return None
+        for direction in (Direction.BULLISH, Direction.BEARISH):
+            sign = 1 if direction is Direction.BULLISH else -1
+            line = sma + (sign * band * atr if band > 0 else 0)
+            prev_line = prev_sma + (sign * band * prev_atr if band > 0 else 0)
+            if sign * (prev_close - prev_line) <= 0 and sign * (close - line) > 0:
+                return direction
+        return None
+
+
 class Kama:
     """Kaufman's adaptive moving average with the change filter.
 

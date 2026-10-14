@@ -17,9 +17,10 @@ from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
-from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig, TrendFilterConfig
 from backtester.strategy.ny_index_sweep.frames import beyond, candle_open
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
+from backtester.strategy.ny_index_sweep.trend_filter import TrendFilter
 from backtester.strategy.ny_index_sweep.windows import Window
 
 M1, M5, M15, H1, H4 = Timeframe.M1, Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4
@@ -176,4 +177,62 @@ def test_sweep_options_on_still_give_decisions_without_lookahead(week):
     cut = START + timedelta(days=8, hours=17)
     short, _ = run([c for c in m1 if c.ts + M1.duration <= cut], cut, config)
     full = summary(strategy.decisions)
+    assert summary(short.decisions) == [x for x in full if x[0] <= cut]
+
+
+# --- trend filter (spec › Backtest options › Trend filter) -------------------------------
+
+FILTERED = NyIndexSweepConfig(trend_filter=TrendFilterConfig(enabled=True))
+
+
+def filter_direction_at(m1, at, cfg=FILTERED.trend_filter):
+    """The filter trend from the filter-TF candles closed by `at`, computed on its own."""
+    tf = cfg.timeframe
+    closed = [c for c in aggregate(m1, tf) if c.ts + tf.duration <= at]
+    f = TrendFilter(cfg)
+    if closed:
+        f.update(CandleSeries("NAS100", tf, closed).view(len(closed) - 1))
+    return f.direction
+
+
+@pytest.fixture(scope="module")
+def filtered(week):
+    m1, _, _ = week
+    strategy, trades = run(m1, config=FILTERED)
+    return m1, strategy, trades
+
+
+def test_trend_filter_takes_only_signals_in_the_filter_direction(filtered):
+    m1, strategy, trades = filtered
+    taken = rejected = 0
+    for d in strategy.decisions:
+        want = filter_direction_at(m1, d.signal.at)
+        if d.signal.direction is not want:
+            assert d.order is None and "trend filter" in d.rejected
+            rejected += 1
+        elif d.order is not None:
+            taken += 1
+    assert taken >= 1 and rejected >= 1  # the walk exercises both sides
+    assert len(trades) == taken
+
+
+def test_trend_filter_rejection_counts_no_trade_and_keeps_the_setup(filtered):
+    _, strategy, _ = filtered
+    for d in strategy.decisions:
+        if "trend filter" in d.rejected:
+            assert "trend filter" not in (d.signal.setup.ended or "")  # never ends it
+
+
+def test_trend_filter_off_changes_nothing(week):
+    m1, base, _ = week
+    off = NyIndexSweepConfig(trend_filter=TrendFilterConfig(enabled=False, sma_period=7))
+    strategy, _ = run(m1, config=off)
+    assert summary(strategy.decisions) == summary(base.decisions)
+
+
+def test_no_lookahead_with_the_trend_filter(filtered):
+    m1, strategy, _ = filtered
+    full = summary(strategy.decisions)
+    cut = START + timedelta(days=12, hours=17)
+    short, _ = run([c for c in m1 if c.ts + M1.duration <= cut], cut, FILTERED)
     assert summary(short.decisions) == [x for x in full if x[0] <= cut]

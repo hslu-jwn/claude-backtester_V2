@@ -31,7 +31,7 @@ from backtester.strategy.trend_following.indicators import (
     Kama,
     Momentum,
     RollingChannel,
-    Sma,
+    SmaBandCross,
 )
 
 if TYPE_CHECKING:
@@ -61,10 +61,7 @@ class TrendFollowing(Strategy):
         self.timeframes = (config.timeframe,)
         self._atr = Atr(config.atr_period)
         self._channel = RollingChannel(config.breakout_period)
-        self._sma = Sma(config.sma_period)
-        self._prev_close: float | None = None
-        self._prev_sma: float | None = None
-        self._prev_atr: float | None = None
+        self._sma_cross = SmaBandCross(config.sma_period, config.sma_band_atr)
         self._momentum = Momentum(config.momentum_period)
         self._dunnigan = DunniganSwings()
         self._kama = Kama(
@@ -141,34 +138,22 @@ class TrendFollowing(Strategy):
         signal = self.config.signal
         # every indicator is fed every candle, whatever the signal
         channel = self._channel.update(candle)
-        sma = self._sma.update(candle.close)
+        sma_cross = self._sma_cross.update(candle.close, atr)
         self._kama.update(candle.close)
         momentum = self._momentum.update(candle.close)
         dunnigan = self._dunnigan.update(candle)
-        prev_close, prev_sma, prev_atr = self._prev_close, self._prev_sma, self._prev_atr
-        self._prev_close, self._prev_sma, self._prev_atr = candle.close, sma, atr
+        if signal is Signal.SMA:
+            return sma_cross
         if signal is Signal.KAMA:
             return self._kama.signal
         if signal is Signal.MOMENTUM:
             return momentum
         if signal is Signal.DUNNIGAN:
             return dunnigan
-        band = self.config.sma_band_atr
-        for direction in (Direction.BULLISH, Direction.BEARISH):
+        if channel is None:  # breakout
+            return None
+        for direction, level in ((Direction.BULLISH, channel[0]), (Direction.BEARISH, channel[1])):
             sign = 1 if direction is Direction.BULLISH else -1
-            if signal is Signal.BREAKOUT:
-                if channel is None:
-                    return None
-                level = channel[0] if sign > 0 else channel[1]
-                if sign * (candle.close - level) > 0:
-                    return direction
-            elif sma is not None and prev_sma is not None and prev_close is not None:
-                if band > 0 and (atr is None or prev_atr is None):
-                    return None  # the band needs the ATR now and at the previous candle
-                shift, prev_shift = (
-                    (sign * band * atr, sign * band * prev_atr) if band > 0 else (0, 0)
-                )
-                line, prev_line = sma + shift, prev_sma + prev_shift
-                if sign * (prev_close - prev_line) <= 0 and sign * (candle.close - line) > 0:
-                    return direction
+            if sign * (candle.close - level) > 0:
+                return direction
         return None

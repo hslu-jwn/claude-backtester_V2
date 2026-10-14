@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from backtester.core.models import Timeframe
 from backtester.detectors.zone import ZoneKind
 from backtester.strategy.ny_index_sweep.windows import WindowConfig
 
@@ -26,11 +27,37 @@ class AthMode(Enum):
     FIXED_R = "fixed_r"
 
 
+FILTER_TIMEFRAMES = (Timeframe.M15, Timeframe.H1, Timeframe.H4)
+
+
+@dataclass(frozen=True, slots=True)
+class TrendFilterConfig:
+    """Trade only in the direction of the last SMA-band cross (strategy 4's `sma` signal)
+    on `timeframe` (spec › Backtest options › Trend filter). Off by default."""
+
+    enabled: bool = False
+    timeframe: Timeframe = Timeframe.H1  # 15m / 1h / 4h (New York-aligned as in strategy 2)
+    sma_period: int = 50
+    band_atr: float = 1.0  # line = SMA +/- this x ATR (0 = the plain cross)
+    atr_period: int = 20  # Wilder ATR of the filter timeframe
+
+    def __post_init__(self) -> None:
+        if self.timeframe not in FILTER_TIMEFRAMES:
+            raise ValueError("trend filter timeframe must be 15m, 1h or 4h")
+        if self.sma_period < 2:
+            raise ValueError("trend filter sma_period must be >= 2")
+        if self.band_atr < 0:
+            raise ValueError("trend filter band_atr must be >= 0")
+        if self.atr_period < 1:
+            raise ValueError("trend filter atr_period must be >= 1")
+
+
 @dataclass(frozen=True, slots=True)
 class NyIndexSweepConfig:
     windows: WindowConfig = field(default_factory=WindowConfig)  # AM / PM, best time
     include_best_time_trades: bool = True  # off: trades tagged "best time" are not taken
     max_trades_per_session: int = 1  # per window and index, every re-entry counts
+    trend_filter: TrendFilterConfig = field(default_factory=TrendFilterConfig)
 
     # sweep (confluences.md › Liquidity sweep)
     sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
