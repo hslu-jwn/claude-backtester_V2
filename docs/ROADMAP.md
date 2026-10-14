@@ -1393,8 +1393,37 @@ One-off research tools on cached data; they change no setting and no strategy. I
 first, then these studies, then day-trade strategies without swap (ORB I-07/I-08, compression break I-33)
 with the cost-to-target (I-45) and free-path (I-37) filters.
 
-- ☐ **11.1 Noise / regime study** (I-01): efficiency ratio per symbol, timeframe (15m-1d), year and half;
-  does noise explain strategy 4's split halves?
+- ☐ **11.1 Noise / regime study** (I-01). **Built and run 2026-10-14, waiting for the user's check.**
+  `analytics/noise.py` (efficiency ratio ER(n) = |close − close n bars ago| / sum of the n bar moves,
+  from closed bars only; rank correlation; seeded random-walk reference) and `python -m
+  backtester.tools.noise_study` (per symbol × timeframe M15-D1 × n 10 / 20 / 60 × year / half /
+  all → `results/noise_study/noise.csv`; with `results/trend_grid/split.csv` also
+  `vs_strategy4.csv` and `vs_strategy4_stats.csv`: per symbol × timeframe × half the mean ER next to
+  strategy 4's gross R per trade over that timeframe's variants). Tests `tests/analytics/test_noise.py`,
+  `tests/tools/test_noise_study.py`. **Result (2020-01-02 .. 2026-09-29, 5 symbols):**
+  - **All markets are almost random-walk noisy.** Random-walk reference ER: 0.319 (n 10), 0.227 (n 20),
+    0.133 (n 60). ER(20) per symbol on M15 / H1 / H4 / D1: XAUUSD 0.228 / 0.247 / 0.257 / 0.236,
+    GBPUSD 0.224 / 0.242 / 0.244 / 0.222, GBPJPY 0.222 / 0.240 / 0.241 / 0.223, NAS100 0.244 / 0.270 /
+    0.270 / 0.242, US500 0.240 / 0.263 / 0.261 / 0.243. FX on M15 and GBPUSD / GBPJPY on D1 are at or
+    below the random walk; gold and the indices are slightly above, H1-H4 the least noisy timeframes.
+  - **Kaufman's "indices are the noisiest" does not hold on this data**: NAS100 / US500 have the highest
+    ER here (0.24-0.27); a plausible reason is the strong upward drift 2020-26 (ER counts drift as
+    efficiency) and CFD data instead of futures 2000-2012. Not a statement about trend following on
+    indices: strategy 4 on indices still failed (ROADMAP 10).
+  - **Halves:** ER changed little (first → second half, n 20: XAUUSD H4 0.248 → 0.265, GBPJPY H4 0.248 →
+    0.235, GBPUSD D1 0.227 → 0.217, US500 D1 0.236 → 0.248). Noise rose slightly in the FX pairs on
+    H4 / D1 and fell in gold and the indices.
+  - **Does noise explain strategy 4's halves?** Partly, in direction, not in size. Over 50 symbol ×
+    timeframe × half cells the level correlates with gross R per trade (rank correlation +0.39, t 2.9)
+    and the change between the halves correlates strongly over 25 pairs (+0.59, t 3.5): where ER rose,
+    gross R per trade rose. By tercile of ER: the noisiest third (ER 0.217-0.235, the random-walk level)
+    −0.010 R per trade gross, the two less noisy thirds +0.015 R per trade gross, before spread and swap
+    (about 0.1 R per trade on the fast timeframes, ROADMAP 10). So noise decides the sign of the raw
+    signal but the signal is far too small to pay costs. Caveats: ER and strategy 4 both measure
+    trendiness of the same prices (partly circular), cells share trades, few cells.
+  - **Consequence:** the ER gate (I-02) can only select the better part of a signal that has no net edge;
+    do not expect it to rescue strategy 4. It is a diagnostic and a possible filter for a better base
+    signal. Open for the user: keep I-02 on the list, or drop it.
 - ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39): gap fill by size, first 30 min vs
   rest of day per half, share of trend days, share of day extremes in the first 90 min, last-hour new high,
   Friday / month-end.

@@ -21,7 +21,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 |---|---|---|---|---|---|---|
 | T-01 | Robustness report: plateau heat map, % profitable combos, halves t-test, shock days, 3 cost levels | tooling | all | – | K ch.21 | open |
 | I-22 | "Book of Truths" report: R by hour, weekday, Friday, month-end, Aziz windows | tooling | all | – | H; A ch.7 | open |
-| I-01 ★ | Noise / regime study: ER per symbol, timeframe, half | study | all, 15m-1d | – | K ch.1, 17, 20, 23 | open |
+| I-01 ★ | Noise / regime study: ER per symbol, timeframe, half | study | all, 15m-1d | – | K ch.1, 17, 20, 23 | done 2026-10-14 (ROADMAP 11.1): all markets near random-walk noise, indices not noisier; ER explains the sign of strategy 4's gross R, not enough to pay costs |
 | I-02 | Trend-quality gate (ER, regression r, strength osc.) on strategies 2 and 4 | filter | all | – | K p.10-14, 275, 408 | open |
 | I-09 ★ | Open / gap / trend-day statistics on indices | study | NAS100, US500 | none | K ch.15-16, H | open |
 | I-17 | Time-of-day drift by session | study | XAUUSD, FX | none | K p.689-699 | open |
