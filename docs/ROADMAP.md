@@ -1272,12 +1272,12 @@ Requested by the user 2026-10-14 (Kaufman, *Trading Systems and Methods*, pp. 15
 the pages could not be read, so the rules in `strategy-trend-following.md` were chosen by Claude
 (user's instruction to answer open questions itself). One folder `strategy/trend_following/`.
 
-- ☐ **10.1 Engine: exit on signal, no take profit.** A strategy can close an open trade at the current
+- ☑ **10.1 Engine: exit on signal, no take profit.** (10.1-10.4 accepted by the user 2026-10-14 with "End."; swap in the engine and `--swap-file` added in the same session; strategy 4 parked, drop / keep as a filter is his open decision) A strategy can close an open trade at the current
   candle's close (exit reason `signal`); an order may have no TP. Tests first in `tests/engine/`.
-- ☐ **10.2 Build strategy 4.** Signals `breakout` / `sma` / `kama`, ATR protective stop, stop-and-reverse,
+- ☑ **10.2 Build strategy 4.** Signals `breakout` / `sma` / `kama`, ATR protective stop, stop-and-reverse,
   timeframes 15m / 30m / 1h / 4h / 1d. Tests first (`tests/strategy/trend_following/`), no-lookahead test,
   registry entry.
-- ☐ **10.3 Compare.** `python -m backtester.tools.trend_grid`: signal x timeframe x parameter sweep,
+- ☑ **10.3 Compare.** `python -m backtester.tools.trend_grid`: signal x timeframe x parameter sweep,
   5 symbols, 2020-22 vs 2023-26, gross / net (swap not modelled). Results recorded here.
 
   **First full grid (2026-10-14, `python -m backtester.tools.trend_grid`, 5 symbols, 2020-01-01 to
@@ -1297,7 +1297,7 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   XAUUSD (the 2024-26 gold trend) and the indices; GBPUSD / GBPJPY are flat or negative. 1d has only
   60-250 trades in 6.75 years, too few to trust. Net results on 4h / 1d are optimistic by the missing
   swap. Not yet a robust edge. Full CSVs: `results/trend_grid/` (git-ignored).
-- ☐ **10.4 Signals from the book (5th ed. pp. 152-154, 329-332).** `momentum`, `dunnigan` (Ruggiero's
+- ☑ **10.4 Signals from the book (5th ed. pp. 152-154, 329-332).** `momentum`, `dunnigan` (Ruggiero's
   Dunnigan trend), `sma_band_atr` (MPTDI-style band); sweep with Kaufman's classic periods. Tests first,
   then the grid again.
 

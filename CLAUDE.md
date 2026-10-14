@@ -22,6 +22,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
 | `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
 | `docs/strategy-no-wick.md` | Strategy 3: no-wick candle in the trend (timeframes, trend source, entry modes, SL at swing, 1R), backtest options |
+| `docs/strategy-trend-following.md` | Strategy 4: trend following after Kaufman (breakout / SMA + band / momentum / KAMA / Dunnigan, ATR stop, stop-and-reverse, no TP) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
@@ -188,7 +189,7 @@ access; the user may supply the research). They help; they never override the ru
 - **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
 
-## Status (2026-10-14)
+## Status (2026-10-14, end of session)
 
 | Part | Status |
 |---|---|
@@ -197,6 +198,8 @@ access; the user may supply the research). They help; they never override the ru
 | Strategy 2 (NY Open index sweep) | built; 2023-26 −3.4 R net (+42.7 gross), 2020-22 about −50 R; sweep, window and exit variants all within noise and not stable out of sample (ROADMAP 8.2.5); sweep options exist, off by default |
 | Strategy 3 (no-wick candle in the trend) | built 2026-10-13; all 24 variants (5m-1h, higher / same trend, close / body_end / middle) negative gross and net 2020-26 (ROADMAP 9.1); dropped by the user |
 | Liquidity sweep rules | reworked with the user 2026-10-12/13: options built (tolerance, 2/3 closes, wick+close, BoS before top, doji share), off by default, temporary Sweep menu on the chart; no rule adopted (study: no rule changes sweep quality); do not change defaults without his go |
+| Strategy 4 (trend following, Kaufman) | built 2026-10-14 (ROADMAP 10); with FTMO swap no variant is robust (best 1h sma 50 + 1 ATR band: +107 R on 3 picked symbols, each symbol positive in one half only); **parked**, drop or use as a filter is the user's call |
+| Swap | in the engine (17:00 New York rollover, triple day, net R only, `swap_r`); default rates still 0, FTMO rates of 2026-10-14 in `results/ftmo_swap_2026-10-14.json` via `trend_grid --swap-file`; making them default is the user's call |
 | Risk / FTMO (Phase 5) | stubs only |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
 | MT5 | connection and demo test orders built, never run against FTMO |
