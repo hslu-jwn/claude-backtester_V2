@@ -1265,3 +1265,17 @@ Rules set by the user 2026-10-13, spec `strategy-no-wick.md`. Plain 1:1, one fol
   (win rate 33-36%): the limit fills exactly when price comes back through the candle's open, the
   stop is close, and the SL-first rule in the fill candle is conservative. Trend source (higher
   vs same) makes no difference. Full CSVs: `results/no_wick_grid/` (git-ignored).
+
+## Phase 10: Strategy 4 (trend following, Kaufman style)
+
+Requested by the user 2026-10-14 (Kaufman, *Trading Systems and Methods*, pp. 152-154 and Appendix B);
+the pages could not be read, so the rules in `strategy-trend-following.md` were chosen by Claude
+(user's instruction to answer open questions itself). One folder `strategy/trend_following/`.
+
+- ☐ **10.1 Engine: exit on signal, no take profit.** A strategy can close an open trade at the current
+  candle's close (exit reason `signal`); an order may have no TP. Tests first in `tests/engine/`.
+- ☐ **10.2 Build strategy 4.** Signals `breakout` / `sma` / `kama`, ATR protective stop, stop-and-reverse,
+  timeframes 15m / 30m / 1h / 4h / 1d. Tests first (`tests/strategy/trend_following/`), no-lookahead test,
+  registry entry.
+- ☐ **10.3 Compare.** `python -m backtester.tools.trend_grid`: signal x timeframe x parameter sweep,
+  5 symbols, 2020-22 vs 2023-26, gross / net (swap not modelled). Results recorded here.
