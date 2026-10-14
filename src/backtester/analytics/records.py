@@ -46,10 +46,10 @@ class TradeRecord:
     entry_candle: datetime
     entry: float
     initial_stop: float
-    take_profit: float
+    take_profit: float | None  # None: no take profit
     take_profit_2: float | None
     tp1_share: float
-    planned_r: float
+    planned_r: float | None
     exit_time: datetime
     exit_price: float
     exit_reason: str
@@ -78,10 +78,10 @@ class TradeRecord:
             entry_candle=_time(row["entry_candle"]),
             entry=float(row["entry"]),
             initial_stop=float(row["initial_stop"]),
-            take_profit=float(row["take_profit"]),
+            take_profit=_float(row.get("take_profit")),
             take_profit_2=_float(row.get("take_profit_2")),
             tp1_share=float(row.get("tp1_share") or 1.0),
-            planned_r=float(row["planned_rr"]),
+            planned_r=_float(row.get("planned_rr")),
             exit_time=_time(row["exit_time"]),
             exit_price=float(row["exit_price"]),
             exit_reason=row["exit_reason"],

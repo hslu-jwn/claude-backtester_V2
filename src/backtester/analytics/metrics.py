@@ -96,7 +96,7 @@ def summarize(trades: Sequence) -> dict:
         "avg_win_r": _mean(win_r),
         "avg_loss_r": _mean(loss_r),
         "profit_factor": sum(win_r) / -sum(loss_r) if loss_r else None,
-        "avg_rr": sum(t.planned_r for t in trades) / n if n else None,
+        "avg_rr": _mean([t.planned_r for t in trades if t.planned_r is not None]),
         "max_drawdown_r_gross": max_drawdown(per_exit_time(trades, "r_gross")),
         "max_drawdown_r_net": max_drawdown(per_exit_time(trades, "r_net")),
         "longest_losing_streak": longest_streak((t.r_net for t in ordered), -1),

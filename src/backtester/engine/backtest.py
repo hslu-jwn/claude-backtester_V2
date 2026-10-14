@@ -13,6 +13,9 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
    the SL moves there from the next candle on; otherwise the original SL stays for good.
 3. `strategy.on_candle(now, views)`; views of every declared timeframe, higher ones only
    with candles closed at `now`. The strategy owns and updates its detectors itself.
+3b. `strategy.exits()`: the open trades whose `Order.ref` it names close at this candle's
+   close (ExitReason.SIGNAL, costs as for any exit); `on_trade_closed` runs for each BEFORE
+   the new orders are filled (stop-and-reverse, strategy 4). Unknown refs are ignored.
 4. New orders are filled at candle i's close and managed from candle i + 1. A limit order
    (`Order.limit_fill`) is filled at its level inside candle i; in that candle only its SL
    counts (SL first, a TP there is not counted), then it is managed from candle i + 1.
@@ -106,7 +109,9 @@ class Backtest:
                     still_open.append(trade)
             open_trades = still_open
             views = self._views(cursor, view)
-            for order in self._strategy.on_candle(now, views):
+            orders = self._strategy.on_candle(now, views)
+            open_trades = self._signal_exits(open_trades, candle, now, closed)
+            for order in orders:
                 trade = self._fill(order, candle, now)
                 if order.limit_fill:
                     trade.on_fill_candle(candle, now)
@@ -127,6 +132,24 @@ class Backtest:
         closed.sort(key=lambda t: t.entry_time)
         return closed
 
+    def _signal_exits(
+        self, open_trades: list[OpenTrade], candle: Candle, now: datetime, closed: list
+    ) -> list[OpenTrade]:
+        """Close the trades the strategy asked for (`Strategy.exits`) at this close."""
+        refs = self._strategy.exits()
+        if not refs:
+            return open_trades
+        keep = []
+        for trade in open_trades:
+            if trade.ref is not None and trade.ref in refs:
+                trade.close_all(candle, now, candle.close, ExitReason.SIGNAL)
+                result = self._result(trade)
+                closed.append(result)
+                self._strategy.on_trade_closed(trade.ref, result)
+            else:
+                keep.append(trade)
+        return keep
+
     def _views(self, cursor: int, view: SeriesView) -> dict[Timeframe, SeriesView | None]:
         views: dict[Timeframe, SeriesView | None] = {self._replay.timeframe: view}
         for tf in self._higher:
@@ -145,7 +168,10 @@ class Backtest:
         sign = 1 if order.direction is Direction.BULLISH else -1
         if sign * (entry - order.stop_loss) <= 0:
             raise ValueError(f"{order.direction.value} SL {order.stop_loss} not beyond {entry}")
-        if sign * (order.take_profit - entry) <= 0:
+        if order.take_profit is None:
+            if order.take_profit_2 is not None:
+                raise ValueError("TP2 without a TP1")
+        elif sign * (order.take_profit - entry) <= 0:
             raise ValueError(f"{order.direction.value} TP {order.take_profit} not beyond {entry}")
         if order.take_profit_2 is not None:
             if sign * (order.take_profit_2 - order.take_profit) <= 0:

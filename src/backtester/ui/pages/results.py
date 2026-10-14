@@ -442,6 +442,7 @@ EXIT_LABELS = {
     "stop_loss": "SL",
     "break_even": "Break-even",
     "end_of_data": "End of data",
+    "signal": "Signal",
 }
 
 
@@ -457,7 +458,7 @@ def trade_table_rows(trades: list[TradeRecord]) -> list[dict]:
                 "direction": "Long" if t.direction == "long" else "Short",
                 "entry": round(t.entry, digits),
                 "sl": round(t.initial_stop, digits),
-                "tp1": round(t.take_profit, digits),
+                "tp1": None if t.take_profit is None else round(t.take_profit, digits),
                 "tp2": None if t.take_profit_2 is None else round(t.take_profit_2, digits),
                 "r_gross": round(t.r_gross, 3),
                 "r_net": round(t.r_net, 3),

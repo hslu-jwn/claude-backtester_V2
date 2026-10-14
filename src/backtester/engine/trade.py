@@ -40,6 +40,7 @@ class ExitReason(Enum):
     TAKE_PROFIT = "take_profit"
     BREAK_EVEN = "break_even"  # the SL after its move to the break-even level was hit
     END_OF_DATA = "end_of_data"  # still open at the last candle: closed at its close
+    SIGNAL = "signal"  # the strategy asked for the exit (`Strategy.exits`): closed at the close
 
 
 def _sign(direction: Direction) -> int:
@@ -69,7 +70,7 @@ class TradeResult:
     entry: float  # chart (bid) price: the entry candle's close
     entry_fill: float  # long: ask, short: bid
     initial_stop: float
-    take_profit: float  # TP1 (the whole position when take_profit_2 is None)
+    take_profit: float | None  # TP1 (the whole position when take_profit_2 is None); None: no TP
     exit_time: datetime  # the last part's
     exit_candle: datetime
     exit_price: float  # chart (bid) price
@@ -108,19 +109,23 @@ class TradeResult:
         )  # fmt: skip
 
     @property
-    def planned_r(self) -> float:
-        """R if every TP is hit (share-weighted), on the chart."""
+    def planned_r(self) -> float | None:
+        """R if every TP is hit (share-weighted), on the chart. None without a TP."""
+        if not self.targets:
+            return None
         return sum(share * self.r_at(price) for price, share in self.targets)
 
 
 def tp_targets(
-    tp1: float,
+    tp1: float | None,
     tp2: float | None,
     tp3: float | None,
     tp1_share: float,
     tp2_share: float | None,
 ) -> list[tuple[float, float]]:
-    """(price, share) of each TP; the last one takes the rest."""
+    """(price, share) of each TP; the last one takes the rest. No TP1: no targets."""
+    if tp1 is None:
+        return []
     if tp2 is None:
         return [(tp1, 1.0)]
     if tp3 is None:
@@ -140,7 +145,7 @@ class OpenTrade:
     entry_fill: float
     initial_stop: float
     stop_loss: float  # current SL (may move to the break-even level once)
-    take_profit: float  # TP1
+    take_profit: float | None  # TP1; None: no take profit
     break_even_check: datetime | None  # next session start; None once checked or if off
     break_even_level: float  # where a hit is 0R net: entry + spread + commission (long)
     tags: frozenset[str] = field(default_factory=frozenset)
@@ -254,7 +259,7 @@ class OpenTrade:
         )
 
     def close_all(self, candle: Candle, now: datetime, price: float, reason: ExitReason) -> None:
-        """Close what is still open (end of data)."""
+        """Close what is still open (end of data, or a signal exit at the close)."""
         if not self.is_closed:
             self._exit(self.open_share, candle, now, price, reason)
 

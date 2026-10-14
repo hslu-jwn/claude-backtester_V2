@@ -74,6 +74,7 @@ EXIT_LABELS = {
     ExitReason.STOP_LOSS: "SL",
     ExitReason.BREAK_EVEN: "break-even",
     ExitReason.END_OF_DATA: "end of data",
+    ExitReason.SIGNAL: "signal exit",
 }
 
 
@@ -253,6 +254,8 @@ def _r(value: float) -> str:
 
 
 def rr_label(t: TradeResult) -> str:
+    if t.take_profit is None:
+        return "no TP"
     if t.take_profit_2 is None:
         return f"R:R {t.r_at(t.take_profit):.2f}"
     return f"R:R {t.r_at(t.take_profit):.2f} / {t.r_at(t.take_profit_2):.2f}"
@@ -269,7 +272,9 @@ def hover_text(e: ChartTrade, ctx: OverlayContext) -> str:
             f" · {signal.confluence.kind.value.upper().replace('_', ' ')} · "
             f"{SESSION_LABELS[zone.formed_in.session]} {zone.side.value} zone"
         )
-    if t.take_profit_2 is None:
+    if t.take_profit is None:
+        tps = "no TP"
+    elif t.take_profit_2 is None:
         tps = f"TP {t.take_profit:.{d}f} · R:R {t.planned_r:.2f}"
     else:
         tps = (
@@ -323,6 +328,8 @@ def draw_trades(events: Sequence[ChartTrade], ctx: OverlayContext) -> list[Drawi
         t = e.trade
         x0, x1 = e.entry_x, min(e.exit_x, ctx.cursor)  # grows with the cursor in replay
         far_tp = t.take_profit if t.take_profit_2 is None else t.take_profit_2
+        if far_tp is None:  # no take profit: the target box is the exit's distance so far
+            far_tp = t.exit_price if e.exit_x <= ctx.cursor else t.entry
         profit.append(
             Box(
                 x0,
