@@ -1279,3 +1279,22 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   registry entry.
 - ☐ **10.3 Compare.** `python -m backtester.tools.trend_grid`: signal x timeframe x parameter sweep,
   5 symbols, 2020-22 vs 2023-26, gross / net (swap not modelled). Results recorded here.
+
+  **First full grid (2026-10-14, `python -m backtester.tools.trend_grid`, 5 symbols, 2020-01-01 to
+  2026-09-30, stop 3 x ATR(20), swap not modelled).** Net R (sum), with the 2020-22 / 2023-26 halves:
+
+  | variant | trades | win % | avg R net | sum R net | 20-22 | 23-26 |
+  |---|---|---|---|---|---|---|
+  | 15m / 30m, all signals | 2.8k-113k | 13-32 | -0.04 to +0.02 | mostly negative | mixed | negative |
+  | 1h breakout 100 | 1,434 | 23.2 | +0.075 | +107 | +66 | +41 (XAUUSD +115, others ~0) |
+  | 4h sma 50 / 100 / 200 | 1.7k-3.6k | 15-20 | +0.015 | +27 to +57 | mixed | small + |
+  | 1d breakout 55 / 100 | 84 / 60 | 30 | +0.43 / +0.62 | +36 / +37 | +7 / +2 | +29 / +35 |
+  | 1d sma 100 / 200 | 345 / 243 | 21 / 14 | +0.11 / +0.21 | +37 / +51 | +2 / +1 | +35 / +50 |
+  | 1d kama 0 / 0.1 / 0.5 | 338-1,137 | 29-33 | +0.01 to +0.03 | +4 to +28 | mixed | mixed |
+
+  Reading: trend following loses on 15m / 30m (costs, chop) and turns slightly positive from 4h up, more
+  so with slower settings (the neighbours agree). But the gain sits almost only in 2023-26 and mostly in
+  XAUUSD (the 2024-26 gold trend) and the indices; GBPUSD / GBPJPY are flat or negative. 1d has only
+  60-250 trades in 6.75 years, too few to trust. Net results on 4h / 1d are optimistic by the missing
+  swap. Not yet a robust edge. Full CSVs: `results/trend_grid/` (git-ignored).
+

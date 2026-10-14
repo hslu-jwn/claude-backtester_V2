@@ -4,11 +4,14 @@ Requested by the user 2026-10-14: "the trend following strategy in *Trading Syst
 (Perry Kaufman), pages 152-154, Appendix B pages 329-332", to be tried on different timeframes. The
 user asked Claude to answer the open questions itself.
 
-**Source status:** the cited pages could not be read (no public copy; the page numbers depend on the
-edition and were not found in any table of contents). The rules below are therefore Kaufman's
-**standard, widely published trend systems**, chosen by Claude 2026-10-14, **not checked against the
-book's pages**. Only the KAMA formula (10 / 2 / 30) is confirmed by secondary sources. If the user
-supplies the edition or photos of the pages, this spec is corrected first and the code follows.
+**Source status (updated 2026-10-14):** the user later supplied the 5th edition (2013). There,
+pages 152-154 are **not** trend vs mean reversion: they are chapter 4 (Charting Systems), *Dunnigan
+and the Thrust Method*: swing direction from higher highs + higher lows, Dunnigan's buy patterns and
+thrust, the One-Way Formula, and Ruggiero's programmable "Dunnigan trend" (uptrend = two consecutive
+candles with both a higher high and a higher low, confirmed by price moving above the high of the
+current downtrend; mirrored). The 5th edition has no Appendix B (its appendices are numbered 1-6) and
+pages 329-332 could not be read before the file was gone. The rules below remain Kaufman's standard
+trend systems chosen by Claude; a `dunnigan` signal is a possible addition (ask the user).
 
 Folder `strategy/trend_following/`, config `TrendFollowingConfig`, registry name `trend_following`.
 Indicators here are new and only this strategy uses them, so they live in the strategy folder.
