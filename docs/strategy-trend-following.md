@@ -81,9 +81,8 @@ timeframe. 4h and 1d candles are UTC-aligned.
 
 ## Costs
 
-Spread and commission as for every strategy. **Swap is not modelled yet** (`swap_*_per_lot` = 0
-until filled from MT5). Trend trades hold for days, so net results on 4h / 1d are optimistic by the
-swap; this is noted with every result.
+Spread, commission and **swap** (risk-management.md › Costs). Trend trades hold for days, so every
+result is reported with and without swap.
 
 ## Evaluation ("Appendix B": performance measurement and parameter sensitivity)
 
