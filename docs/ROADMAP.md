@@ -1319,3 +1319,23 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   (band 0.5, sma 200) are not positive in 2023-26, so not yet stable. Dunnigan's trend (pp. 152-154) has no
   edge. Swap still to add (MT5 not connected yet). CSVs: `results/trend_grid_book/`.
 
+  **Full grid with FTMO swap (2026-10-14, `trend_grid --swap-file results/ftmo_swap_2026-10-14.json`).** Rates read
+  from MT5 2026-10-14 (USD per lot per night; long / short): XAUUSD -61.27 / -4.20, GBPUSD -5.77 / -4.48, GBPJPY
+  +2.04 / -13.85 (triple Wednesday), NAS100 -6.91 / +0.34, US500 -1.22 / -0.46 (triple Friday). Today's rates applied
+  to 2020-26 (rates near zero in 2020-21, so swap is overstated there). Sum R net with swap | without swap:
+
+  | variant | trades | with swap | without | 20-22 / 23-26 (with swap) |
+  |---|---|---|---|---|
+  | 1h sma 50 band 1.0 | 4,596 | -13 | +201 | +43 / -57 |
+  | 30m sma 50 band 1.0 | 9,618 | -187 | +118 | -72 / -115 |
+  | 1h breakout 100 | 1,434 | -71 | +107 | -21 / -49 |
+  | 4h momentum 5 | 10,731 | -32 | +81 | +9 / -41 |
+  | 4h sma 50 | 3,582 | -57 | +57 | -6 / -52 |
+  | 1d sma 200 (plain / band 0.5 / 1.0) | 243 / 115 / 77 | +10 / +10 / +10 | +51 | about -11 / +21 |
+  | 1d momentum 252 | 160 | +13 | +59 | -11 / +24 |
+  | every other variant | | negative | | |
+
+  Reading: with swap no variant on 15m-4h is positive. Swap costs 0.03-0.2 R per trade, more the longer the hold;
+  XAUUSD longs (-$61 / night) eat the gold trend that carried the gross results. Only 1d sma 200 and momentum 252
+  stay slightly positive, with 77-243 trades, negative in 2020-22. No robust edge. CSVs: `results/trend_grid_swap/`.
+
