@@ -18,8 +18,8 @@ The indicators' history comes from the strategy (`Strategy.min_warmup_days`), so
 starts at the first cached day has fewer warm-up candles than that (D1 with SMA 200 trades
 from about October of the first year). Net R includes the swap
 (engine/costs.py: 17:00 New York rollovers); `sumR ex-swap` = net without it, computed per
-trade as r_net - swap_r (no second run). The swap rates are 0 until filled from MT5; give real
-ones with `--swap-file rates.json`:
+trade as r_net - swap_r (no second run). The default swap rates are FTMO's of 2026-10-14
+(engine/costs.py); give other ones with `--swap-file rates.json`:
 
     {"XAUUSD": {"long": -12.5, "short": 4.0, "triple_weekday": 2}, ...}
 
@@ -97,7 +97,7 @@ def swap_rates_note(costs: CostConfig, symbols: Sequence[str]) -> str:
     """Which swap rates the run used."""
     used = {s: costs.symbols[s] for s in symbols if s in costs.symbols}
     if not any(c.swap_long_per_lot or c.swap_short_per_lot for c in used.values()):
-        return "swap rates are 0 until filled from MT5 (--swap-file); net = net ex-swap"
+        return "swap rates are 0 (--swap-file to set them); net = net ex-swap"
     parts = [
         f"{s} long {c.swap_long_per_lot:g} short {c.swap_short_per_lot:g} "
         f"triple weekday {c.swap_triple_weekday}"

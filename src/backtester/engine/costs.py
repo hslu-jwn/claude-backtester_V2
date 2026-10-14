@@ -72,8 +72,8 @@ class SymbolCosts:
     # price units per market fill (entries and SL hits; TPs are limit orders), rough
     # starting estimates to check against FTMO demo fills (risk-management.md › Costs)
     slippage: float = 0.0
-    swap_long_per_lot: float = 0.0  # USD per 1.0 lot per night, until filled in from MT5
-    swap_short_per_lot: float = 0.0  # USD per 1.0 lot per night, until filled in from MT5
+    swap_long_per_lot: float = 0.0  # USD per 1.0 lot per night (negative = cost)
+    swap_short_per_lot: float = 0.0  # USD per 1.0 lot per night (negative = cost)
     # New York weekday of the rollover that counts 3 nights (MT5 swap_rollover3days)
     swap_triple_weekday: int = WEDNESDAY
 
@@ -84,14 +84,28 @@ class SymbolCosts:
 
 
 USDJPY_APPROX = 150.0  # GBPJPY pip value in USD goes through USDJPY; fixed setting
+FRIDAY = 4
+
+# Swap: FTMO's MT5 rates of 2026-10-14 (USD per lot per night, ROADMAP 10.4), the default
+# since the user's decision of 2026-10-14. Today's rates, also applied to older years.
 
 DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     {
         "XAUUSD": SymbolCosts(
-            spread=0.25, commission_per_lot=6.0, contract_size=100, slippage=0.10
+            spread=0.25,
+            commission_per_lot=6.0,
+            contract_size=100,
+            slippage=0.10,
+            swap_long_per_lot=-61.27,
+            swap_short_per_lot=-4.20,
         ),
         "GBPUSD": SymbolCosts(
-            spread=0.00003, commission_per_lot=5.0, contract_size=100_000, slippage=0.00002
+            spread=0.00003,
+            commission_per_lot=5.0,
+            contract_size=100_000,
+            slippage=0.00002,
+            swap_long_per_lot=-5.77,
+            swap_short_per_lot=-4.48,
         ),
         "GBPJPY": SymbolCosts(
             spread=0.010,
@@ -99,12 +113,30 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
             contract_size=100_000,
             quote_to_usd=1 / USDJPY_APPROX,
             slippage=0.003,
+            swap_long_per_lot=2.04,
+            swap_short_per_lot=-13.85,
         ),
         # Indices (user, 2026-10-10): spread estimates until FTMO's are measured, no
-        # commission or swap for now. contract_size only
-        # matters for the commission; check it with `tools.mt5_info` before Phase 5.
-        "NAS100": SymbolCosts(spread=1.0, commission_per_lot=0.0, contract_size=1, slippage=1.0),
-        "US500": SymbolCosts(spread=0.5, commission_per_lot=0.0, contract_size=1, slippage=0.25),
+        # commission. contract_size 1 = $1 per point per lot (FTMO .cash indices); check it
+        # with `tools.mt5_info` before Phase 5. Triple swap on Friday.
+        "NAS100": SymbolCosts(
+            spread=1.0,
+            commission_per_lot=0.0,
+            contract_size=1,
+            slippage=1.0,
+            swap_long_per_lot=-6.912,
+            swap_short_per_lot=0.339,
+            swap_triple_weekday=FRIDAY,
+        ),
+        "US500": SymbolCosts(
+            spread=0.5,
+            commission_per_lot=0.0,
+            contract_size=1,
+            slippage=0.25,
+            swap_long_per_lot=-1.2218,
+            swap_short_per_lot=-0.4575,
+            swap_triple_weekday=FRIDAY,
+        ),
     }
 )
 
@@ -113,7 +145,7 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
 class CostConfig:
     spread_enabled: bool = True  # off: no spread on fills (gross = net apart from commission)
     commission_enabled: bool = True  # off: no commission
-    swap_enabled: bool = True  # off: swap_r is 0 (rates are 0 until filled from MT5 anyway)
+    swap_enabled: bool = True  # off: swap_r is 0
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
 
     def for_symbol(self, symbol: str) -> SymbolCosts:

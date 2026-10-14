@@ -20,7 +20,24 @@ from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
 def test_spread_and_slippage_defaults(symbol, spread, slippage):
     costs = DEFAULT_SYMBOL_COSTS[symbol]
     assert costs.spread == spread and costs.slippage == pytest.approx(slippage)
-    assert costs.swap_long_per_lot == costs.swap_short_per_lot == 0
+
+
+@pytest.mark.parametrize(
+    ("symbol", "long", "short", "triple"),
+    [
+        ("XAUUSD", -61.27, -4.20, 2),
+        ("GBPUSD", -5.77, -4.48, 2),
+        ("GBPJPY", 2.04, -13.85, 2),
+        ("NAS100", -6.912, 0.339, 4),
+        ("US500", -1.2218, -0.4575, 4),
+    ],
+)
+def test_swap_defaults_are_ftmo_rates_of_2026_10_14(symbol, long, short, triple):
+    # rule set by the user 2026-10-14: FTMO's MT5 rates are the default (ROADMAP 10.4 table)
+    costs = DEFAULT_SYMBOL_COSTS[symbol]
+    assert costs.swap_long_per_lot == pytest.approx(long)
+    assert costs.swap_short_per_lot == pytest.approx(short)
+    assert costs.swap_triple_weekday == triple
 
 
 @pytest.mark.parametrize("symbol", ["NAS100", "US500"])

@@ -219,10 +219,11 @@ def test_swap_file_overrides_symbol_costs_and_keeps_the_rest(tmp_path):
     )  # fmt: skip
     assert gold.spread == DEFAULT_SYMBOL_COSTS["XAUUSD"].spread  # the rest is untouched
     us = cfg.symbols["US500"]  # partial entry: missing keys keep the current value
-    assert us.swap_long_per_lot == -1 and us.swap_short_per_lot == 0
+    assert us.swap_long_per_lot == -1
+    assert us.swap_short_per_lot == DEFAULT_SYMBOL_COSTS["US500"].swap_short_per_lot
     assert us.swap_triple_weekday == DEFAULT_SYMBOL_COSTS["US500"].swap_triple_weekday
     assert cfg.symbols["NAS100"] == DEFAULT_SYMBOL_COSTS["NAS100"]
-    assert DEFAULT_SYMBOL_COSTS["XAUUSD"].swap_long_per_lot == 0  # defaults not mutated
+    assert DEFAULT_SYMBOL_COSTS["XAUUSD"].swap_long_per_lot == -61.27  # defaults not mutated
 
 
 @pytest.mark.parametrize(
@@ -245,11 +246,14 @@ def test_swap_file_rejects_bad_content(tmp_path, content):
 
 
 def test_swap_rates_note_says_zero_or_lists_the_rates():
+    from dataclasses import replace
+
     from backtester.engine.costs import CostConfig
 
-    base = CostConfig()
-    assert "0 until filled from MT5" in swap_rates_note(base, ["XAUUSD", "US500"])
-    from dataclasses import replace
+    zero = {s: replace(c, swap_long_per_lot=0.0, swap_short_per_lot=0.0)
+            for s, c in CostConfig().symbols.items()}  # fmt: skip
+    base = CostConfig(symbols=zero)
+    assert "swap rates are 0" in swap_rates_note(base, ["XAUUSD", "US500"])
 
     gold = replace(base.symbols["XAUUSD"], swap_long_per_lot=-12.5, swap_short_per_lot=4.0)
     note = swap_rates_note(replace(base, symbols={**base.symbols, "XAUUSD": gold}), ["XAUUSD"])
@@ -273,11 +277,11 @@ def test_cli_swap_file_reaches_the_backtests_and_swap_enabled_stays_on(
     assert trend_grid.main(argv) == 0
     assert seen[0].symbols["XAUUSD"].swap_long_per_lot == -9 and seen[0].swap_enabled
     assert "-9" in capsys.readouterr().out
-    # without the option: the default rates (0) and the note about MT5
+    # without the option: the default rates (FTMO 2026-10-14), listed in the note
     seen.clear()
     assert trend_grid.main(argv[:-4] + ["--out", str(tmp_path / "o2")]) == 0
-    assert seen[0].symbols["XAUUSD"].swap_long_per_lot == 0
-    assert "swap rates are 0 until filled from MT5" in capsys.readouterr().out
+    assert seen[0].symbols["XAUUSD"].swap_long_per_lot == -61.27
+    assert "-61.27" in capsys.readouterr().out
 
 
 def test_smoke_run_csv_has_the_swap_columns(tmp_path, monkeypatch):

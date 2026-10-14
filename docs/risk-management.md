@@ -17,14 +17,18 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
-- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6**, GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**; swap **0** for all.
+- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6**, GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**.
+  Swap defaults = FTMO's MT5 rates of 2026-10-14 (rule set by the user, 2026-10-14), USD per lot per night, long / short:
+  XAUUSD **-61.27 / -4.20**, GBPUSD **-5.77 / -4.48**, GBPJPY **+2.04 / -13.85** (triple Wednesday), NAS100 **-6.912 / +0.339**,
+  US500 **-1.2218 / -0.4575** (triple Friday). Today's rates are applied to every year, so swap is overstated in 2020-21
+  (rates near zero then).
 - **Swap in the engine** (user asked for swap costs 2026-10-14; details chosen by Claude): a position open
   across the daily **rollover at 17:00 America/New_York** (FTMO server midnight) pays one night of swap
   (long or short rate, USD per 1.0 lot per night, negative = cost); on the symbol's ⚙️ `swap_triple_weekday`
   (from MT5 `swap_rollover3days`, default Wednesday) it counts 3 nights. In R:
   swap_R = nights' swap per lot / (SL distance x value of a 1.0 price move per lot). It changes **net R
   only** (gross = chart prices) and is reported as `swap_r` per trade. ⚙️ `swap_enabled` (CostConfig) switches it
-  off so results can be shown with and without swap. Rates come from FTMO via `tools.mt5_info`; until then 0.
+  off so results can be shown with and without swap. Rates come from FTMO via `tools.mt5_info` (defaults above).
 - ⚙️ **Slippage** in points per fill, applied to **entries and SL hits** (market fills); TPs are limit orders, no slippage. Defaults (rough starting estimates, to be checked against FTMO demo fills):
 
   | Symbol | Slippage per fill |

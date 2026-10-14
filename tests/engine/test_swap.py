@@ -204,12 +204,8 @@ def test_swap_is_added_to_spread_and_commission_in_net():
     assert t.commission_r == pytest.approx(commission_r) and t.spread_r == pytest.approx(spread_r)
 
 
-def test_default_rates_are_zero_so_nothing_changes():
-    from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
-
-    assert all(
-        c.swap_long_per_lot == c.swap_short_per_lot == 0 for c in DEFAULT_SYMBOL_COSTS.values()
-    )
+def test_symbol_without_cost_settings_has_no_swap():
+    # the default rates are FTMO's since 2026-10-14 (test_costs.py); this symbol has none
     t = run(
         utc(2026, 1, 5, 20), 24, cost=CostConfig(spread_enabled=False, commission_enabled=False)
     )
