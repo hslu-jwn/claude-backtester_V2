@@ -1384,6 +1384,35 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   loses in 2023-26 in 6 of 9; NAS100 mixed. The total is positive because different symbols carry different
   periods, and the 3 symbols were chosen after seeing the results. +107 R over 81 months = about 1.3 R / month
   against a 47 R drawdown. CSVs: `results/trend_check/`.
+- ☐ **10.5 Strategy 4 as a trend filter for strategy 2** (user, 2026-10-14: "keep it as a filter"). **Built 2026-10-14,
+  waiting for the user's check.** `NyIndexSweepConfig.trend_filter` (off by default; spec: strategy-ny-indices.md ›
+  Trend filter): signals only in the direction of the last SMA ± band x ATR cross (strategy 4's `sma` signal, shared
+  class `SmaBandCross`). Same session: FTMO swap rates of 2026-10-14 made the default costs (user, 2026-10-14).
+
+  **Result (2026-10-14, NAS100 + US500, 2020-01-01 to 2026-09-30, FTMO swap now in net).** Sum R; ex-swap = net
+  without swap; halves = net with swap:
+
+  | variant | trades | gross | net ex-swap | net | 20-22 / 23-26 | max DD |
+  |---|---|---|---|---|---|---|
+  | no filter | 1,662 | +29.2 | -61.6 | -135.4 | -89.9 / -45.5 | 141 |
+  | 1h sma 50 band 1.0 | 1,028 | -0.6 | -53.5 | -104.2 | -48.8 / -55.4 | 105 |
+  | 1h sma 40 / 60, band 1.0 | 1,044 / 1,018 | +5.4 / +8.8 | -48.7 / -44.8 | -99.2 / -95.5 | | 101 / 97 |
+  | 1h sma 50, band 0.5 / 1.5 | 1,059 / 995 | +43.5 / +12.3 | -12.4 / -40.3 | -64.9 / -87.1 | | 69 / 90 |
+  | 4h sma 50 band 1.0 | 891 | -20.1 | -67.9 | -112.9 | -39.7 / -73.2 | 114 |
+  | 15m sma 50 band 1.0 | 1,097 | +63.1 | +6.4 | -46.4 | -44.6 / -1.8 | 67 |
+
+  Reading: the 1h filter removes about 38% of the trades but not the losing ones: gross per trade falls (+0.018 ->
+  0.000 R). Net improves only because fewer trades pay costs. 15m is the best (+6 R ex-swap) but strategy 2's PM
+  bias already is the 15m trend, and it is still -46 R with swap; one trade's R varies about +-1.6, so ~1,000 trades
+  have a noise of about +-50 R. **No filter variant gives an edge.** New finding: **swap costs strategy 2 -74 R** (654
+  of 1,662 trades are held over the 17:00 New York rollover, NAS100 longs -$6.9 / lot / night against stops of a few
+  points), more than spread + commission (0.055 R per trade, about -91 R). CSVs and trade lists: `results/s2_trend_filter/`.
+
+  **Cost filter, studied on the trade lists (not built; Phase 11 plans it as I-45):** skipping trades whose spread +
+  commission is above X R of the stop. No filter run: X = 0.10 R keeps 1,453 trades, net ex-swap -61.6 -> +1.0
+  (20-22 -58.3 -> -14.6, 23-26 -3.4 -> +15.6), net with swap -64.4; X = 0.08 / 0.06 / 0.05: +1.1 / -14.3 / +5.7 ex-swap.
+  Not monotonic and inside the noise; it does not turn strategy 2 positive with swap. Re-entries a skipped trade would
+  allow are not modelled in this study.
 
 
 ## Phase 11: Research studies from the knowledge base (user, 2026-10-14)
