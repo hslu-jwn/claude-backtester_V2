@@ -1297,4 +1297,6 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   XAUUSD (the 2024-26 gold trend) and the indices; GBPUSD / GBPJPY are flat or negative. 1d has only
   60-250 trades in 6.75 years, too few to trust. Net results on 4h / 1d are optimistic by the missing
   swap. Not yet a robust edge. Full CSVs: `results/trend_grid/` (git-ignored).
-
+- ☐ **10.4 Signals from the book (5th ed. pp. 152-154, 329-332).** `momentum`, `dunnigan` (Ruggiero's
+  Dunnigan trend), `sma_band_atr` (MPTDI-style band); sweep with Kaufman's classic periods. Tests first,
+  then the grid again.

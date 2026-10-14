@@ -4,14 +4,21 @@ Requested by the user 2026-10-14: "the trend following strategy in *Trading Syst
 (Perry Kaufman), pages 152-154, Appendix B pages 329-332", to be tried on different timeframes. The
 user asked Claude to answer the open questions itself.
 
-**Source status (updated 2026-10-14):** the user later supplied the 5th edition (2013). There,
-pages 152-154 are **not** trend vs mean reversion: they are chapter 4 (Charting Systems), *Dunnigan
-and the Thrust Method*: swing direction from higher highs + higher lows, Dunnigan's buy patterns and
-thrust, the One-Way Formula, and Ruggiero's programmable "Dunnigan trend" (uptrend = two consecutive
-candles with both a higher high and a higher low, confirmed by price moving above the high of the
-current downtrend; mirrored). The 5th edition has no Appendix B (its appendices are numbered 1-6) and
-pages 329-332 could not be read before the file was gone. The rules below remain Kaufman's standard
-trend systems chosen by Claude; a `dunnigan` signal is a possible addition (ask the user).
+**Source status (updated 2026-10-14, user supplied the 5th edition, 2013):**
+- **pp. 152-154** (ch. 4, Charting Systems): *Dunnigan and the Thrust Method*. Swings by higher highs +
+  higher lows, Dunnigan's buy patterns and thrust, the One-Way Formula, and Ruggiero's programmable
+  "Dunnigan trend" -> signal `dunnigan` below.
+- **pp. 329-332** (ch. 8, Trend Systems; the 5th edition has no Appendix B, its appendices are numbered
+  1-6): (a) acting on the next open instead of the close gave better prices 75% of the time but lower total
+  profit, because fast breakouts that never come back are missed -> we keep entry at the close; (b) a band
+  around the trend line gives fewer, more reliable but later signals and a bigger risk per trade ->
+  option `sma_band_atr`; (c) the calculation period matters more than the trend method; classic periods
+  3, 5, 20-23, 63 and 252 days -> used in the sweep; (d) the simplest trend system: long while the n-day
+  change is positive, short while negative -> signal `momentum`; (e) Taylor's MPTDI: moving average with
+  a volatility-dependent entry band, a stop fixed at entry, and an opposite signal that exits and reverses
+  -> the same position model as below.
+- breakout, sma and kama remain Kaufman's standard trend systems chosen by Claude. Details the pages
+  leave open were decided by Claude (user's instruction 2026-10-14) and are marked *(Claude)*.
 
 Folder `strategy/trend_following/`, config `TrendFollowingConfig`, registry name `trend_following`.
 Indicators here are new and only this strategy uses them, so they live in the strategy folder.
@@ -30,8 +37,20 @@ All values use only closed candles of the strategy timeframe. "Previous N" exclu
 |---|---|---|---|
 | `breakout` (default) | close > highest high of the previous N candles | close < lowest low of the previous N candles | `breakout_period` 20 |
 | `sma` | close crosses above SMA(N) of closes (previous close ≤ previous SMA, current close > current SMA) | mirrored | `sma_period` 50 |
+| `momentum` | close − close N candles ago > 0 | < 0 | `momentum_period` 20 |
+| `dunnigan` | the last two candles each made a higher high **and** a higher low than the candle before, and the close is above the last swing top | mirrored | none |
 | `kama` | KAMA rises by more than the filter: KAMA − KAMA[1] > f | KAMA − KAMA[1] < −f | `kama_er_period` 10, `kama_fast` 2, `kama_slow` 30, `kama_filter` 0.1 |
 
+- **SMA band** (⚙️ `sma_band_atr`, default 0 = plain cross): with b > 0 the line is SMA + b × ATR for longs
+  and SMA − b × ATR for shorts (ATR as for the stop); the cross rule is applied to that line *(Claude:
+  ATR instead of MPTDI's fixed point steps)*.
+- **Momentum:** the event repeats on every candle while the change keeps its sign (like `breakout`);
+  a change of exactly 0 gives no event.
+- **Dunnigan swings (p. 152):** in an upswing, a candle whose high **and** low are both below the high and
+  low of the upswing's highest candle starts a downswing; the upswing's highest high is a **swing top**
+  (mirrored: downswing -> upswing, lowest low = **swing bottom**). Inside and outside candles never change
+  the swing. Ruggiero's confirmation "above the high of the current downtrend" is read as: close above the
+  most recent swing top *(Claude)*. No event before the first swing top / bottom exists.
 - **KAMA:** ER = \|close − close[n]\| / Σ\|close[i] − close[i−1]\| over n candles (0 if the sum is 0);
   SC = (ER·(2/(fast+1) − 2/(slow+1)) + 2/(slow+1))²; KAMA = KAMA[1] + SC·(close − KAMA[1]), seeded
   with the close of candle n. Filter f = `kama_filter` × the standard deviation of the last 20 KAMA
@@ -70,7 +89,8 @@ swap; this is noted with every result.
 
 Grid tool `python -m backtester.tools.trend_grid`: every signal × timeframe on the 5 symbols, gross
 and net, 2020-22 vs 2023-26, plus a small parameter sweep per signal (breakout 20 / 55 / 100, SMA
-20 / 50 / 100 / 200, KAMA filter 0.0 / 0.1 / 0.5) to check that the result is not one lucky
+20 / 50 / 100 / 200, SMA 50 and 200 with band 0.5 / 1.0 ATR, momentum 5 / 20 / 63 / 252, KAMA filter
+0.0 / 0.1 / 0.5, dunnigan without parameters) to check that the result is not one lucky
 parameter. Reported per variant: trades, win rate, avg R gross / net, sum R, profit factor, max
 drawdown in R, avg holding time. A variant counts only if neighbouring parameters and both periods
 agree.
