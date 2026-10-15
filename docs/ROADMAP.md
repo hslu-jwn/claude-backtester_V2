@@ -1574,5 +1574,10 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   clock checked for the downloaded years (against histdata where both exist).
 - ☐ **11.6 Gap fade out of sample** (user, 2026-10-15): the same 36 variants on FTMO's NAS100 / US500 history
   2017-12..2019-12 (never seen by 11.4), fixed spread and spread table.
+  **Result 2026-10-15:** FTMO has only daily index bars before 2021-09 (M1 from 2021-09-14), so the test ran on
+  histdata 2018-2019 instead (never seen by 11.4; fixed spread, no spread table for those years): default
+  -22.1 R gross, -59.4 R net / 747 trades (-0.080 R/trade); 11.4's best variant (stop 0.75, exit 12:00) -7.3 R
+  gross, -54.9 R net; 6 of 36 variants net positive, mean -22.7 R. On FTMO's own feed 2021-09..2026-09 the
+  default is +13.9 R net / 1836 trades (+0.008 R/trade, histdata same window +28.7 R). **Out of sample: no edge.**
 - ☐ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
   before and trade it in that year; report the chained out-of-sample net R against the default variant.

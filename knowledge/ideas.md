@@ -58,7 +58,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-36 ★ | Tipping-point exit module; breakeven vs no breakeven A/B | exit mgmt | any entry | – | V ch.14; A; C ch.8 | open |
 | I-37 ★ | Free-path-to-target skip filter | filter | any entry | – | V ch.15; A rule 5 | open |
 | I-38 | Session-mean (VWAP proxy) hold / rejection | signal | indices; 5m | none | A VWAP | open |
-| I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7 | tested 2026-10-15 (ROADMAP 11.4, strategy 5 `gap_fade`): **weak positive**, default +55 R net / 2374 trades (+0.023 R/trade), both halves positive (2023-26 weaker), 27/36 variants net positive, survives costs x1.5 and best trade removed; needs out-of-sample confirmation |
+| I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7 | tested 2026-10-15 (ROADMAP 11.4, strategy 5 `gap_fade`): **weak positive**, default +55 R net / 2374 trades (+0.023 R/trade), both halves positive (2023-26 weaker), 27/36 variants net positive, survives costs x1.5 and best trade removed; **failed out of sample** (ROADMAP 11.6): 2018-19 default -22 R gross / -59 R net, 6 of 36 variants positive; no edge |
 | I-40 | Exhaustion reversal: 5+ candles, RSI extreme, at a level | signal | indices, gold; 5m | none | A reversal | open |
 | I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | open |
 | I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |
