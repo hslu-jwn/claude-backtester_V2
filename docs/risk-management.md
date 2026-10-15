@@ -157,6 +157,14 @@ clear verdict.
   day so far minus, for each open trade, the risk x max(1, -r_net). Conservative (pass rate a bit too low).
   Output per risk: pass probability (both phases), fails split daily / max loss, median days to pass,
   P(funded account lost within ⚙️ **126** trading days).
+  Implementation details (chosen by Claude 2026-10-15, `risk/monte_carlo.py`): max drawdown on the closed balance
+  after every trade, fan / worst day / months on day-end balances; only full 21-day months; a trade exiting on a
+  weekend moves to the next weekday; reaching a limit counts as a breach, daily loss checked before max loss;
+  a phase passes at the first exit with the target reached and >= 4 trade days; each phase and the funded account
+  start fresh, a new attempt starts the next day; unfinished attempts at the data end are not counted; the
+  funded loss rate counts only accounts lost or watched the full 126 days. **Known gap:** a trade open across
+  midnight Prague counts only from the start of its exit day, not on its entry day (daily loss slightly
+  undercounted for overnight trades; none for the gap fade).
 - **B. Random entries** (12.1): ⚙️ 1,000 runs. Gap fade: the same gap days with the same stop and exit, a coin
   flip per day between fading and following the gap (follow = the fade trade mirrored: same distances, the
   other direction). Other strategies: random entry times inside the strategy's own window with its own stop and
