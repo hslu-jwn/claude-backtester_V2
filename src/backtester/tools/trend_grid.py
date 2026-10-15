@@ -54,6 +54,7 @@ from backtester.analytics.robustness import (
 from backtester.core.models import Timeframe
 from backtester.data.sources import DEFAULT_SOURCES
 from backtester.engine.costs import CostConfig
+from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.trend_following.config import TIMEFRAMES, Signal, TrendFollowingConfig
@@ -420,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sma-band-periods", nargs="+", type=int, default=list(SWEEP_SMA_BAND_PERIODS))
     p.add_argument("--swap-file", type=Path, default=None,
                    help='JSON {symbol: {"long": usd_per_lot_night, "short": ..., "triple_weekday": 0-6}}')  # fmt: skip
+    p.add_argument("--spread-table", type=Path, default=None,
+                   help="spread by year and hour (tools/spread_table.py JSON); default: fixed spread")  # fmt: skip
     p.add_argument("--no-shocks", action="store_true",
                    help="do not read the daily bars for the shock days")  # fmt: skip
     p.add_argument("--out", type=Path, default=RESULTS_DIR / "trend_grid")
@@ -440,6 +443,10 @@ def main(argv: list[str] | None = None) -> int:
     engine = RunSettings().engine
     if args.swap_file is not None:
         engine = replace(engine, costs=load_swap_file(args.swap_file, engine.costs))
+    if args.spread_table is not None:
+        table = SpreadTable.from_dict(json.loads(args.spread_table.read_text(encoding="utf-8")))
+        engine = replace(engine, costs=replace(engine.costs, spread_table=table))
+        print(f"spread table: {table.stat} by year and New York hour, {table.note}")
     args.out.mkdir(parents=True, exist_ok=True)
     rcfg = RobustnessConfig()
     shocks, shock_note = (

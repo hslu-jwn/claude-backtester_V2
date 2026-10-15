@@ -28,6 +28,7 @@ from datetime import datetime, timedelta
 from types import MappingProxyType
 
 from backtester.core.models import Direction
+from backtester.engine.spread_table import SpreadTable
 from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 
 ROLLOVER_WEEKDAYS = range(5)  # New York Mon-Fri; no rollover on Saturday / Sunday dates
@@ -148,6 +149,8 @@ class CostConfig:
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
     # cost filter: orders with spread + commission above this many R are not filled; 0 = off
     max_cost_r: float = 0.0
+    # spread by year and hour of day (ROADMAP 6.7); None: the fixed `SymbolCosts.spread`
+    spread_table: SpreadTable | None = None
 
     def __post_init__(self) -> None:
         if self.max_cost_r < 0:
@@ -159,14 +162,20 @@ class CostConfig:
         except KeyError:
             raise KeyError(f"no cost settings for {symbol}; add it to CostConfig.symbols") from None
 
-    def spread(self, symbol: str) -> float:
-        """Spread applied to fills (0 when switched off)."""
+    def spread(self, symbol: str, at: datetime | None = None) -> float:
+        """Spread applied to fills (0 when switched off). With a `spread_table` and a time
+        `at` it is the table's spread of that time; where the table has no value (or no
+        time is given) it is the fixed `SymbolCosts.spread`."""
         if not self.spread_enabled:
             return 0.0
+        if self.spread_table is not None and at is not None:
+            value = self.spread_table.spread_at(symbol, at)
+            if value is not None:
+                return value
         return self.for_symbol(symbol).spread
 
-    def spread_r(self, symbol: str, risk: float) -> float:
-        return self.spread(symbol) / risk
+    def spread_r(self, symbol: str, risk: float, at: datetime | None = None) -> float:
+        return self.spread(symbol, at) / risk
 
     def commission_price(self, symbol: str) -> float:
         """Commission as a price distance per lot (0 when switched off)."""
@@ -175,10 +184,10 @@ class CostConfig:
         costs = self.for_symbol(symbol)
         return costs.commission_per_lot / costs.value_per_price_unit
 
-    def break_even_offset(self, symbol: str) -> float:
+    def break_even_offset(self, symbol: str, at: datetime | None = None) -> float:
         """Distance from the entry (chart price) to the break-even stop, so a hit there
         ends at 0R after spread and commission (strategy-session-zones.md › Stop loss)."""
-        return self.spread(symbol) + self.commission_price(symbol)
+        return self.spread(symbol, at) + self.commission_price(symbol)
 
     def commission_r(self, symbol: str, risk: float) -> float:
         """Commission in R for an SL distance of `risk` (price units)."""
@@ -187,11 +196,11 @@ class CostConfig:
         costs = self.for_symbol(symbol)
         return costs.commission_per_lot / (risk * costs.value_per_price_unit)
 
-    def too_expensive(self, symbol: str, risk: float) -> bool:
+    def too_expensive(self, symbol: str, risk: float, at: datetime | None = None) -> bool:
         """Cost filter: spread + commission in R above `max_cost_r` (never when it is 0)."""
         if not self.max_cost_r:
             return False
-        cost = self.spread_r(symbol, risk) + self.commission_r(symbol, risk)
+        cost = self.spread_r(symbol, risk, at) + self.commission_r(symbol, risk)
         return cost > self.max_cost_r + COST_FILTER_TOLERANCE
 
     def swap_r(

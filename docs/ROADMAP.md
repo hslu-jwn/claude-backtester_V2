@@ -979,10 +979,37 @@ has no step yet.
   reach further back. Not yet exported or compared with the histdata cache; the spread over the years is a
   historical server value and differs from today's (gold median 0.22 over the years against 0.42 in the last
   3.5 months): the spread table (6.7) must be built per year as well as per hour.
-- ☐ **6.7 Spread by hour of day in the cost model** (user, 2026-10-14): spread table per symbol × hour
-  (from 6.6), plus the rollover bar, optional news markup; replaces the fixed spread when given. Needed
-  before the first day-trade strategy (knowledge base I-07, I-33, I-45). Volume rules (I-44) only after
-  6.6 shows enough tick-volume history, and only as an A/B against the price-only versions.
+- ☐ **6.7 Spread by year and hour of day in the cost model** (user, 2026-10-14). **Built and run 2026-10-15,
+  waiting for the user's check; off by default.** `engine/spread_table.py` (`SpreadTable`: spread per symbol,
+  New York year and New York clock hour, nearest year with the hour, later year on a tie, None -> fixed
+  spread), `CostConfig.spread_table` (None = the fixed `SymbolCosts.spread`; `spread`, `spread_r`,
+  `break_even_offset`, `too_expensive` take the time; the engine passes the entry candle's close time, so one
+  spread of the entry time is charged for the round trip as before), hidden in the settings menu but kept in
+  the settings JSON (`runner.jsonable`, `settings._convert`), `python -m backtester.tools.spread_table`
+  (reads the running terminal's M1 history, writes `data/spreads/ftmo_spread_median.json`, `..._p90.json`,
+  `coverage.csv`; git-ignored data, 40 KB) and `trend_grid --spread-table PATH`. Tests:
+  `tests/engine/test_spread_table.py`, `tests/tools/test_spread_table_tool.py`, `tests/test_settings.py`,
+  `tests/tools/test_trend_grid.py`. Not done: a news mark-up (no calendar), exit-time spread for shorts.
+  **Result (FTMO demo M1 2015-2026; server clock NY + 7 h, 920 of 948 weeks):**
+  - **The spread moved over the years more than over the day.** Median over NY 9-15, price units: XAUUSD
+    0.42 (2015) .. 0.15 (2020) .. 0.07 (2021) .. 0.07 (2023) .. 0.16 (2024) .. 0.23 (2025) .. 0.42 (2026), fixed
+    model 0.25. NAS100 0.6 (2021-22) .. 0.7-1.45 (2023-26), fixed 1.0 (all hours 1.4-1.6 since 2023). US500 0.28-0.55,
+    fixed 0.5. GBPJPY 0.005-0.008 (2020-23) .. 0.012-0.016 (2024-26), fixed 0.010. GBPUSD 2e-5 .. 6e-5
+    (2022-26), fixed 3e-5.
+  - **Suspicious old years:** GBPUSD 2020-21 has a median of 5 pips at all hours (0.0005) and GBPJPY
+    2015-17 and 2019 3.5 pips: probably how the old bars were recorded, not real trading costs. Treat
+    values before 2022 with care; the table is better trusted for 2022-26.
+  - **Hour of day (2026):** FX flat within about 15 % apart from the rollover hour NY 17 (GBPUSD 6.4 pip,
+    GBPJPY 20 pip against 0.2 / 1.4 pip by day); gold 0.40-0.48 all day (0.52 at 18:00); NAS100 1.45 in the
+    cash session and 1.6-1.85 outside; US500 0.55-0.60. In 2024 the indices were much tighter in the US
+    session (NAS100 0.8 against 2.2 at night). The 90th percentile is 1.0-1.1 x the median for the
+    indices, 1.3-1.5 x for gold / GBPJPY, 2 x for GBPUSD.
+  - **Effect on a run** (strategy 4 breakout 20, M15, 2023-26, XAUUSD / NAS100 / US500 / GBPJPY, 8,899
+    trades, gross unchanged): net R −451 with the fixed spread, −545 with the table (XAUUSD +19, NAS100
+    −19, US500 −4, GBPJPY −90).
+  - **Decisions for the user:** (1) use the table by default (changes the net R of every strategy), or
+    keep it as an option; (2) trust the years before 2022, or start the table in 2022 and use the
+    fixed spread before.
 
 ## Phase 7: Live trading via MT5 (much later; not before 6.1 is done)
 

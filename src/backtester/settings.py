@@ -32,10 +32,13 @@ from enum import Enum
 from functools import cache, lru_cache
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
+from backtester.engine.spread_table import SpreadTable
 from backtester.runner import RunSettings, jsonable
 from backtester.strategy.registry import REGISTRY, strategy_name
 
-HIDDEN = frozenset({"engine.sessions", "strategy.strong_move.atr_mult"})
+HIDDEN = frozenset(
+    {"engine.sessions", "strategy.strong_move.atr_mult", "engine.costs.spread_table"}
+)  # the spread table is built by tools/spread_table.py, not edited in the menu
 
 
 class SettingsError(ValueError):
@@ -168,6 +171,11 @@ def _convert(hint, value, path: str):
     inner = _optional(hint)
     if inner is not None:
         return None if value in (None, "") else _convert(inner, value, path)
+    if hint is SpreadTable:
+        try:
+            return SpreadTable.from_dict(value)
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
+            raise SettingsError(f"invalid spread table ({e})", path) from e
     if is_dataclass(hint):
         return _build(hint, value, path)
     if get_origin(hint) in (Union, types.UnionType) and all(

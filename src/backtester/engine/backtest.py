@@ -114,7 +114,7 @@ class Backtest:
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
                 trade = self._fill(order, candle, now)
-                if self._config.costs.too_expensive(trade.symbol, trade.risk):
+                if self._config.costs.too_expensive(trade.symbol, trade.risk, trade.entry_time):
                     self._strategy.on_order_skipped(order.ref, now)
                     continue
                 if order.limit_fill:
@@ -189,7 +189,7 @@ class Backtest:
             if not order.tp2_share or 1 - order.tp1_share - order.tp2_share <= 1e-12:
                 raise ValueError("tp1_share + tp2_share must leave a share for TP3")
         symbol = self._replay.symbol
-        spread = self._config.costs.spread(symbol)
+        spread = self._config.costs.spread(symbol, now)
         check = None
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
@@ -204,7 +204,7 @@ class Backtest:
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
-            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol),
+            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol, now),
             tags=order.tags,
             reason=order.reason,
             confluence=order.confluence,

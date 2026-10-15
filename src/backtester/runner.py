@@ -51,6 +51,7 @@ from backtester.data.adapters.cache_adapter import candles_from_frame
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
 from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
+from backtester.engine.spread_table import SpreadTable
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.no_wick.config import NoWickConfig
@@ -282,6 +283,8 @@ def _run_parallel(
 def jsonable(value):
     """Settings and records as JSON values: dataclasses -> dicts of their fields, enums ->
     their name, sets -> sorted lists, times -> ISO strings."""
+    if isinstance(value, SpreadTable):
+        return value.to_dict()  # integer year / hour keys written as text, read back as int
     if is_dataclass(value) and not isinstance(value, type):
         return {f.name: jsonable(getattr(value, f.name)) for f in fields(value)}
     if isinstance(value, Enum):

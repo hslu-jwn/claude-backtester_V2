@@ -132,3 +132,47 @@ def test_a_runs_settings_json_loads_back():
     data = json.loads(json.dumps(to_dict(RunSettings())))
     assert from_dict(data) == RunSettings()
     assert from_dict({"strategy": {"min_rr": 1.5}}).strategy.min_rr == 1.5
+
+
+# --- the spread table (ROADMAP 6.7) is part of the costs but not of the menu ---------------------
+
+
+def _with_table():
+    from dataclasses import replace
+
+    from backtester.engine.spread_table import SpreadTable
+
+    table = SpreadTable(
+        values={"XAUUSD": {2025: {9: 0.2, 10: 0.21}, 2026: {9: 0.4}}}, stat="p90", note="test"
+    )
+    settings = RunSettings()
+    costs = replace(settings.engine.costs, spread_table=table)
+    return replace(settings, engine=replace(settings.engine, costs=costs)), table
+
+
+def test_default_settings_have_no_spread_table():
+    assert RunSettings().engine.costs.spread_table is None
+    assert from_json(to_json(RunSettings())).engine.costs.spread_table is None
+
+
+def test_a_spread_table_survives_the_json_round_trip_with_integer_keys():
+    settings, table = _with_table()
+    back = from_json(to_json(settings))
+    assert back.engine.costs.spread_table == table
+    assert back.engine.costs.spread_table.values["XAUUSD"][2026][9] == 0.4  # int keys again
+    assert back == settings
+
+
+def test_the_spread_table_is_not_a_menu_setting():
+    settings, _ = _with_table()
+    paths = [leaf.path for leaf in leaves(settings)]
+    assert not [p for p in paths if "spread_table" in p]
+    assert "engine.costs.max_cost_r" in paths
+
+
+def test_a_bad_spread_table_in_a_preset_is_a_settings_error():
+    settings, _ = _with_table()
+    data = to_dict(settings)
+    data["engine"]["costs"]["spread_table"]["values"]["XAUUSD"]["2025"]["9"] = -1
+    with pytest.raises(SettingsError):
+        from_dict(data)

@@ -53,6 +53,10 @@ session ends after this one, it may rewrite this file: merge both sections inste
 2. MT5 history (6.6): **done 2026-10-15**: `MaxBars` set to Unlimited in common.ini by Claude (backup next to it),
    MT5 restarted; FTMO serves M1 with tick volume and spread from 2015-16 (FX, gold) and 2017-12 (indices).
    Next: export it (read-only) for the spread table 6.7 and for volume A/B tests (I-44).
+   **6.7 built 2026-10-15 (spread table, off by default; see its ROADMAP entry):** decide whether it becomes
+   the default and from which year. Known issue: `tools/mt5_info` ends silently at "== Server clock" when it
+   measures the whole history (and a symbol without H1 bars stops it); the clock rule NY + 7 h was measured
+   by Claude on 2020-2026 with the tool's own functions (not saved to results/trading.json).
 3. Next steps in the agreed order: 11.3 time-of-day drift (XAUUSD / FX), 6.7 spread by hour of day in the cost
    model, then day-trade strategies (ORB I-07/I-08, compression break I-33, gap fade I-39) with the cost-to-target
    filter (I-45) and the free-path filter (I-37). Each strategy: spec in `docs/` first.

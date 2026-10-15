@@ -450,3 +450,28 @@ def test_load_shocks_symbol_without_cached_days_is_a_note(monkeypatch):
     shocks, note = real_load_shocks(["US500"], date(2026, 1, 1), date(2026, 1, 31))
     assert shocks == {}
     assert "US500" in note and "not available" in note
+
+
+def test_cli_spread_table_reaches_the_backtests_and_default_has_none(tmp_path, monkeypatch, capsys):
+    import json
+
+    from backtester.engine.spread_table import SpreadTable
+
+    seen = []
+
+    def fake_run(symbols, start, end, settings, *args, **kwargs):
+        seen.append(settings.engine.costs.spread_table)
+        return SimpleNamespace(trades=(), runs={s: SimpleNamespace(trades=()) for s in symbols})
+
+    monkeypatch.setattr(trend_grid, "run_backtests", fake_run)
+    table = SpreadTable(values={"XAUUSD": {2026: {9: 0.45}}}, stat="median", note="test")
+    f = tmp_path / "spread.json"
+    f.write_text(json.dumps(table.to_dict()), encoding="utf-8")
+    argv = ["--symbols", "XAUUSD", "--timeframes", "H4", "--signals", "breakout", "--no-sweep",
+            "--out", str(tmp_path / "o")]  # fmt: skip
+    assert trend_grid.main(argv + ["--spread-table", str(f)]) == 0
+    assert seen[0] == table
+    assert "spread table" in capsys.readouterr().out.lower()
+    seen.clear()
+    assert trend_grid.main(argv[:-1] + [str(tmp_path / "o2")]) == 0
+    assert seen[0] is None
