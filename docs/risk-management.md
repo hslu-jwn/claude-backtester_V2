@@ -132,11 +132,12 @@ clear verdict.
   **NO EDGE** otherwise:
   1. mean net R per trade > 0 with t = mean / (sd / sqrt(n)) ≥ ⚙️ **2**;
   2. net R above ⚙️ **95 %** of the random-entry runs (kind B);
-  3. both halves (2020-22 / 2023-26, `RobustnessConfig.first_half_end_year`) net positive;
+  3. both halves of the run's own period (split at the middle date of start..end; rule set by the user,
+     2026-10-15) net positive;
   4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);
   5. net R positive without the best trade;
   6. median net R of the random-fill runs (kind C) > 0.
-  Details (chosen by Claude 2026-10-15, `analytics/verdict.py`, to be confirmed by the user): a check without
+  Details (`analytics/verdict.py`; n/a rule confirmed by the user 2026-10-15): a check without
   input (e.g. random entries for a strategy without a baseline yet) is n/a, listed and named in the reason, and
   counts neither as pass nor fail; t ≥ 2 and percentile ≥ 95 pass at equality, the net checks need > 0; the
   random-path warning (kind D) is raised when a symbol's mean net R per trade on the random paths is above 0, a

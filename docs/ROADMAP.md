@@ -1632,4 +1632,4 @@ changes results, defaults changed only with the user's go.
   halves check fails by construction, every trade in the first half); random entries 97.5th percentile, costs x1.5
   +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
   29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
-  Open: halves split for runs not spanning 2020-26 (user to decide).
+  Halves split at the middle of the run's period (user, 2026-10-15); n/a checks count neither way (user, 2026-10-15).
