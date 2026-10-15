@@ -90,6 +90,15 @@ _GROUP_RULES = (
     ("strategy.timeframe", "Entry"),
     ("strategy.trend_source", "Entry"),
     ("strategy.entry_mode", "Entry"),
+    ("strategy.range_minutes", "Entry"),
+    ("strategy.band_atr", "Entry"),
+    ("strategy.entry_window_minutes", "Entry"),
+    ("strategy.max_reversals", "Entry"),
+    ("strategy.target_r", "Take profit"),
+    ("strategy.max_range_atr", "Sessions & filters"),
+    ("strategy.narrow_day_filter", "Sessions & filters"),
+    ("strategy.min_rel_volume", "Sessions & filters"),
+    ("strategy.volume_lookback", "Sessions & filters"),
     ("strategy.max_wick_share", "Entry"),
     ("strategy.order_expiry_candles", "Entry"),
     ("strategy.signal", "Entry"),
@@ -247,6 +256,12 @@ SECTIONS = {
     "strategy.sessions.tokyo.": "Tokyo",
     "strategy.sessions.london.": "London",
     "strategy.sessions.new_york.": "New York",
+    "strategy.sessions.us_index.": "US indices",
+    "strategy.sessions.frankfurt_index.": "GER40 / EU50 (Frankfurt)",
+    "strategy.sessions.london_index.": "UK100 (London)",
+    "strategy.sessions.tokyo_index.": "JP225 (Tokyo)",
+    "strategy.sessions.fx_metal.london.": "FX and metals: London",
+    "strategy.sessions.fx_metal.new_york.": "FX and metals: New York",
 }
 # shown first in their group (the doji threshold is used by every detector)
 FIRST_IN_GROUP = ("detectors.swings.doji_max_body.",)
@@ -269,6 +284,7 @@ UNUSED = {
     "no_wick": {"engine.break_even_at_next_session"},
     "trend_following": {"engine.break_even_at_next_session"},
     "gap_fade": {"engine.break_even_at_next_session"},
+    "opening_range": {"engine.break_even_at_next_session"},
 }
 
 

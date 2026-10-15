@@ -57,6 +57,7 @@ from backtester.paths import RESULTS_DIR
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.strategy.opening_range.config import OpeningRangeConfig
 from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.trend_following.config import TrendFollowingConfig
@@ -77,6 +78,7 @@ StrategyConfig = (
     | NoWickConfig
     | TrendFollowingConfig
     | GapFadeConfig
+    | OpeningRangeConfig
 )
 
 

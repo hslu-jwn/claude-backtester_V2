@@ -122,6 +122,53 @@ Kept in the base backtest (rule set by the user).
 - Reshuffles the order of **whole trading days** (not single trades, so bad days stay realistic) ⚙️ **1,000** times (default) and simulates the account for each order with the same settings.
 - **Output:** distribution of max drawdown and final balance, e.g. "in 95% of the runs the max drawdown stays below X%", a fan of simulated equity curves. Main use: choosing a safe risk %.
 
+### Monte Carlo report (ROADMAP 12.7; rules set by the user, 2026-10-15)
+One HTML report per backtest run (`python -m backtester.tools.monte_carlo <run-id>` ->
+`results/<run-id>/monte_carlo/report.html`), built from the run's trade list (R). All four kinds of Monte Carlo
+(`knowledge/topics/backtest-frameworks.md`), every random draw seeded (⚙️ seed **42**). It ends every test with a
+clear verdict.
+
+- **Verdict** (first thing in the report): **EDGE** when all six checks pass, **WEAK** when one or two fail,
+  **NO EDGE** otherwise:
+  1. mean net R per trade > 0 with t = mean / (sd / sqrt(n)) ≥ ⚙️ **2**;
+  2. net R above ⚙️ **95 %** of the random-entry runs (kind B);
+  3. both halves (2020-22 / 2023-26, `RobustnessConfig.first_half_end_year`) net positive;
+  4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);
+  5. net R positive without the best trade;
+  6. median net R of the random-fill runs (kind C) > 0.
+- **A. Day reshuffle** (the Monte Carlo above): ⚙️ **1,000** runs. A "day" = a weekday of the run's period
+  (midnight to midnight `Europe/Prague`; days without trades included, so days and months are real calendar
+  lengths); trades belong to their exit day and keep their order and times inside it. Account per run: start
+  ⚙️ **100,000 USD**, risk ⚙️ **0.5 / 1 / 1.5 %** of the current balance per trade, shown **side by side**
+  (user: try different risks side by side); P/L = r_net x risk $. Simplification until the account simulator
+  (5.2): no lot rounding, no personal daily stop, max open risk or drawdown scaling.
+  - **Fan chart** (like a stock-price Monte Carlo chart, user 2026-10-15): the balance of ⚙️ **20** highlighted
+    runs over the days, the 5 / 50 / 95 % bands of all runs behind them, best and worst end marked, the real
+    order as a bold line.
+  - **Numbers** per risk: final balance and gain on 100k (5 / 50 / 95 %), average gain per month in % (mean and
+    median; a month = ⚙️ **21** trading days), share of profitable months, max drawdown (median and 95 %),
+    P(max drawdown > 10 %), longest drawdown in days, worst day, longest losing streak, profit factor, win
+    rate, expectancy, trades per month.
+- **FTMO 2-Step** on each reshuffled run (rules in › Prop-firm field): Phase 1 +10 %, Phase 2 +5 %, daily loss
+  5 % and max loss 10 % (static) of the initial balance, at least 4 trading days (days with a trade). Attempts
+  follow each other along the run (a new attempt starts the day after the last one ended, fresh balance).
+  **Daily loss approximation** (user, 2026-10-15): the R list has no floating P/L, so a trade still open counts
+  as if at its stop: the day's worst point is checked at every entry and exit of the day as closed P/L of the
+  day so far minus, for each open trade, the risk x max(1, -r_net). Conservative (pass rate a bit too low).
+  Output per risk: pass probability (both phases), fails split daily / max loss, median days to pass,
+  P(funded account lost within ⚙️ **126** trading days).
+- **B. Random entries** (12.1): ⚙️ 1,000 runs. Gap fade: the same gap days with the same stop and exit, a coin
+  flip per day between fading and following the gap (follow = the fade trade mirrored: same distances, the
+  other direction). Other strategies: random entry times inside the strategy's own window with its own stop and
+  exit (built when a strategy needs it). Random baseline on non-gap days: dropped (user, 2026-10-15). Output:
+  percentile of the strategy's net R, mean and 5 / 95 % of the random runs.
+- **C. Random fills** (12.6): ⚙️ 1,000 runs; each market fill (entry, stop exit) gets an extra slippage drawn
+  uniform from 0 to ⚙️ **2** x the symbol's slippage setting, in R of the trade's stop distance. Output: net R
+  5 / 50 / 95 %.
+- **D. Random price paths**: ⚙️ **20** seeded random-walk M1 paths per symbol with the symbol's real volatility
+  per hour of day, ⚙️ **2** years each, run through the same strategy and costs. Expected: net R per trade about
+  minus the mean cost; clearly more is reported as a warning (bug or lookahead), not as an edge.
+
 ### Risk sweep (`risk/sweep.py`)
 - A grid over the settings to compare results (max drawdown, return, Monte Carlo 95% drawdown).
 - Sweepable: risk per trade (e.g. 0.25–1.5%), daily stop (1–3%), **max open risk** (rule set by the user), drawdown-scaling threshold and factor.

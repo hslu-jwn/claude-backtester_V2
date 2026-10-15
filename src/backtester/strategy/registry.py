@@ -22,6 +22,8 @@ from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.no_wick.strategy import NoWick
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
+from backtester.strategy.opening_range.config import OpeningRangeConfig
+from backtester.strategy.opening_range.strategy import OpeningRange
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
 from backtester.strategy.trend_following.config import TrendFollowingConfig
@@ -50,6 +52,9 @@ _SPECS = (
         TrendFollowingConfig, TrendFollowing,
     ),
     StrategySpec("gap_fade", "Strategy 5 · Gap fade (index open)", GapFadeConfig, GapFade),
+    StrategySpec(
+        "opening_range", "Strategy 6 · Opening-range breakout", OpeningRangeConfig, OpeningRange
+    ),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})
