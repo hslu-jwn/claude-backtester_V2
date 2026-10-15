@@ -22,7 +22,8 @@ def widgets(**changes):
 def test_every_setting_has_a_group_in_the_order_asked_for():
     groups = sp.grouped(leaves())
     assert sp.OTHER not in groups
-    assert list(groups) == [g for g in sp.GROUPS if g != "Windows"]  # strategy 2's group
+    only_other = {"Windows", "Cash session", "Gap filter", "Exit"}  # strategies 2 and 5
+    assert list(groups) == [g for g in sp.GROUPS if g not in only_other]
     assert [leaf.path for leaf in groups["Session zones"]] == [
         "strategy.zone_timeframe",
         "strategy.zone_kill",

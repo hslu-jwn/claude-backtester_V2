@@ -39,7 +39,7 @@ def widgets_for(strategy, **changes):
 
 
 def test_every_setting_of_every_strategy_has_a_group():
-    for name in (S1, S2, S3, S4):
+    for name in (S1, S2, S3, S4, S5):
         groups = sp.grouped(sp.strategy_leaves(name))
         assert sp.OTHER not in groups, (name, groups.get(sp.OTHER))
         assert set(groups) <= set(sp.GROUPS)
