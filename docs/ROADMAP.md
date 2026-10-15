@@ -1472,7 +1472,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
     trendiness of the same prices (partly circular), cells share trades, few cells.
   - **Consequence:** the ER gate (I-02) can only select the better part of a signal that has no net edge;
     do not expect it to rescue strategy 4. It is a diagnostic and a possible filter for a better base
-    signal. Open for the user: keep I-02 on the list, or drop it.
+    signal. **I-02 dropped by the user 2026-10-15.**
 - ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39): gap fill by size, first 30 min vs
   rest of day per half, share of trend days, share of day extremes in the first 90 min, last-hour new high,
   Friday / month-end.
