@@ -16,15 +16,33 @@ weekday; in R, net only:
 
     swap_R = nights x swap per lot / (SL distance x value of a 1.0 price move per lot)
 
+Percentage fees (risk-management.md › Costs, rule set by the user 2026-10-15): a symbol can
+charge its commission as a share of the notional per side (`commission_pct_per_side`, entry
+and exit notional at their fill prices) and its swap as a share of the notional per year per
+night (`swap_*_pct_year`, notional at the entry price). Lots and contract size cancel, so in R:
+
+    commission_R = pct x (entry + sum(share x exit fill)) / SL distance
+    swap_R       = nights x pct_year / 365 x entry / SL distance
+
+Binance funding (`SymbolCosts.funding`, rates from `data/cache/binance_funding/<SYM>.csv`):
+every funding timestamp t with entry_time < t <= exit_time pays rate x notional (longs pay a
+positive rate, shorts receive it); notional approximated at the entry price:
+
+    funding_R = - sign x sum(share x sum(rates while open)) x entry / SL distance
+
 Slippage is stored per symbol here but not yet applied: the account simulator (`risk/`,
 Phase 5) will use it.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+import csv
+from bisect import bisect_right
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from functools import lru_cache
+from pathlib import Path
 from types import MappingProxyType
 
 from backtester.core.models import Direction
@@ -34,6 +52,8 @@ from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 ROLLOVER_WEEKDAYS = range(5)  # New York Mon-Fri; no rollover on Saturday / Sunday dates
 WEDNESDAY = 2  # datetime.weekday(): Monday = 0
 SWAP_TRIPLE_NIGHTS = 3
+DAYS_PER_YEAR = 365  # percentage swap is quoted per year, charged per night
+FUNDING_DIR = Path("data/cache/binance_funding")
 COST_FILTER_TOLERANCE = 1e-12  # floating point: a cost equal to the limit is filled
 
 
@@ -64,6 +84,43 @@ def rollover_nights(
 
 
 @dataclass(frozen=True, slots=True)
+class FundingSeries:
+    """Funding rates of one perpetual future: sorted UTC timestamps and the rate of each."""
+
+    times: tuple[datetime, ...]
+    rates: tuple[float, ...]
+
+    def __post_init__(self) -> None:
+        if len(self.times) != len(self.rates):
+            raise ValueError("funding times and rates differ in length")
+
+    def rate_sum(self, entry_time: datetime, exit_time: datetime) -> float:
+        """Sum of the rates with entry_time < timestamp <= exit_time (position open then)."""
+        lo = bisect_right(self.times, entry_time)
+        hi = bisect_right(self.times, exit_time)
+        return sum(self.rates[lo:hi]) if hi > lo else 0.0
+
+
+def funding_from_rows(rows: Iterable[tuple[datetime, float]]) -> FundingSeries:
+    ordered = sorted(rows)
+    return FundingSeries(tuple(t for t, _ in ordered), tuple(r for _, r in ordered))
+
+
+@lru_cache(maxsize=16)
+def load_funding(path: Path) -> FundingSeries:
+    """`binance_funding/<SYM>.csv` (calc_time UTC, last_funding_rate) -> FundingSeries."""
+    with path.open(newline="", encoding="utf-8") as f:
+        rows = [
+            (
+                datetime.fromisoformat(r["calc_time"]).replace(tzinfo=UTC),
+                float(r["last_funding_rate"]),
+            )
+            for r in csv.DictReader(f)
+        ]
+    return funding_from_rows(rows)
+
+
+@dataclass(frozen=True, slots=True)
 class SymbolCosts:
     spread: float  # ask - bid in price units
     commission_per_lot: float  # USD per 1.0 lot, round turn
@@ -76,6 +133,11 @@ class SymbolCosts:
     swap_short_per_lot: float = 0.0  # USD per 1.0 lot per night (negative = cost)
     # New York weekday of the rollover that counts 3 nights (MT5 swap_rollover3days)
     swap_triple_weekday: int = WEDNESDAY
+    # percentage costs (0 = off); the fraction is of the notional, e.g. 0.0005 = 0.05 %
+    commission_pct_per_side: float = 0.0  # per side, on top of commission_per_lot
+    swap_long_pct_year: float = 0.0  # per year, charged per night (negative = cost)
+    swap_short_pct_year: float = 0.0
+    funding: bool = False  # Binance perpetual funding from data/cache/binance_funding
 
     @property
     def value_per_price_unit(self) -> float:
@@ -85,8 +147,13 @@ class SymbolCosts:
 
 USDJPY_APPROX = 150.0  # GBPJPY pip value in USD goes through USDJPY; fixed setting
 FRIDAY = 4
-BINANCE_TAKER_FEE = 0.0005  # placeholder: 0.05 % per side (ROADMAP 11.9)
-BINANCE_REFERENCE_PRICE = MappingProxyType({"BTCUSDT": 100_000.0, "ETHUSDT": 4_000.0})  # placeholder
+# Percentage fees (rule set by the user, 2026-10-15; FTMO values to be confirmed with the first
+# demo trade's deal history; risk-management.md › Costs): FTMO metals 0.0014 % round turn,
+# FTMO crypto 0.065 % round turn and -30 % per year swap, Binance USD-M taker 0.05 % per side.
+FTMO_METAL_COMMISSION_PCT_SIDE = 0.000007
+FTMO_CRYPTO_COMMISSION_PCT_SIDE = 0.000325
+FTMO_CRYPTO_SWAP_PCT_YEAR = -0.30
+BINANCE_TAKER_FEE = 0.0005
 
 # Swap: FTMO's MT5 rates of 2026-10-14 (USD per lot per night, ROADMAP 10.4), the default
 # since the user's decision of 2026-10-14. Today's rates, also applied to older years.
@@ -95,7 +162,8 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     {
         "XAUUSD": SymbolCosts(
             spread=0.25,
-            commission_per_lot=6.0,
+            commission_per_lot=0.0,  # was $6 per lot until 2026-10-15
+            commission_pct_per_side=FTMO_METAL_COMMISSION_PCT_SIDE,
             contract_size=100,
             slippage=0.10,
             swap_long_per_lot=-61.27,
@@ -153,7 +221,7 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
         "USDCAD": SymbolCosts(0.00003, 5.0, 100_000, 0.7047, slippage=0.000015, swap_long_per_lot=0.4792, swap_short_per_lot=-8.4426),
         "USDCHF": SymbolCosts(0.00005, 5.0, 100_000, 1.2088, slippage=0.000025, swap_long_per_lot=1.5715, swap_short_per_lot=-16.2468),
         "EURJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00632, slippage=0.0045, swap_long_per_lot=1.328, swap_short_per_lot=-7.6199),
-        "XAGUSD": SymbolCosts(0.049, 6.0, 5000, slippage=0.0245, swap_long_per_lot=-68.05, swap_short_per_lot=0.30),
+        "XAGUSD": SymbolCosts(0.049, 0.0, 5000, slippage=0.0245, commission_pct_per_side=FTMO_METAL_COMMISSION_PCT_SIDE, swap_long_per_lot=-68.05, swap_short_per_lot=0.30),
         "GER40": SymbolCosts(1.53, 0.0, 1, 1.1211, slippage=0.765, swap_long_per_lot=-5.0571, swap_short_per_lot=-0.0511, swap_triple_weekday=FRIDAY),
         "UK100": SymbolCosts(1.45, 0.0, 1, 1.3271, slippage=0.725, swap_long_per_lot=-3.2063, swap_short_per_lot=0.148, swap_triple_weekday=FRIDAY),
         "JP225": SymbolCosts(10.0, 0.0, 10, 0.00632, slippage=5.0, swap_long_per_lot=-0.5683, swap_short_per_lot=-0.1894, swap_triple_weekday=FRIDAY),
@@ -164,14 +232,20 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
         "US30": SymbolCosts(2.28, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
         "US2000": SymbolCosts(0.93, 0.0, 1, slippage=0.465, swap_long_per_lot=-0.5735, swap_short_per_lot=-0.0172, swap_triple_weekday=FRIDAY),
         "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
-        "BTCUSD": SymbolCosts(1.0, 0.0, 1, slippage=0.5, swap_triple_weekday=FRIDAY),
-        "ETHUSD": SymbolCosts(0.6, 0.0, 10, slippage=0.3, swap_triple_weekday=FRIDAY),
-        # --- PLACEHOLDER, to be confirmed by the user (ROADMAP 11.9): Binance futures ---
-        # taker fee 0.05 % per side as dollars per 1.0 lot (1 coin) at a fixed reference price
-        # (a percentage of notional is not modelled); spread 0; funding (data/cache/binance_funding)
-        # not applied yet, so swap 0.
-        "BTCUSDT": SymbolCosts(0.0, 2 * BINANCE_TAKER_FEE * BINANCE_REFERENCE_PRICE["BTCUSDT"], 1),
-        "ETHUSDT": SymbolCosts(0.0, 2 * BINANCE_TAKER_FEE * BINANCE_REFERENCE_PRICE["ETHUSDT"], 1),
+        "BTCUSD": SymbolCosts(
+            1.0, 0.0, 1, slippage=0.5, swap_triple_weekday=FRIDAY,
+            commission_pct_per_side=FTMO_CRYPTO_COMMISSION_PCT_SIDE,
+            swap_long_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR, swap_short_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR,
+        ),
+        "ETHUSD": SymbolCosts(
+            0.6, 0.0, 10, slippage=0.3, swap_triple_weekday=FRIDAY,
+            commission_pct_per_side=FTMO_CRYPTO_COMMISSION_PCT_SIDE,
+            swap_long_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR, swap_short_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR,
+        ),
+        # Binance USD-M futures, regular user (2026-10-15): market fill = taker 0.05 % per side
+        # of the notional, no spread, funding every 8 h from data/cache/binance_funding.
+        "BTCUSDT": SymbolCosts(0.0, 0.0, 1, commission_pct_per_side=BINANCE_TAKER_FEE, funding=True),
+        "ETHUSDT": SymbolCosts(0.0, 0.0, 1, commission_pct_per_side=BINANCE_TAKER_FEE, funding=True),
     }
 )  # fmt: skip
 
@@ -184,6 +258,9 @@ class CostConfig:
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
     # cost filter: orders with spread + commission above this many R are not filled; 0 = off
     max_cost_r: float = 0.0
+    funding_enabled: bool = True  # off: funding_r is 0
+    # funding rates by symbol; None: read data/cache/binance_funding/<SYM>.csv when needed
+    funding: Mapping[str, FundingSeries] | None = None
     # spread by year and hour of day (ROADMAP 6.7); None: the fixed `SymbolCosts.spread`
     spread_table: SpreadTable | None = None
 
@@ -212,30 +289,54 @@ class CostConfig:
     def spread_r(self, symbol: str, risk: float, at: datetime | None = None) -> float:
         return self.spread(symbol, at) / risk
 
-    def commission_price(self, symbol: str) -> float:
-        """Commission as a price distance per lot (0 when switched off)."""
+    def commission_price(self, symbol: str, price: float = 0.0) -> float:
+        """Round-turn commission as a price distance per lot (0 when switched off). A
+        percentage commission needs the `price` (both sides at it)."""
         if not self.commission_enabled:
             return 0.0
         costs = self.for_symbol(symbol)
-        return costs.commission_per_lot / costs.value_per_price_unit
+        fixed = costs.commission_per_lot / costs.value_per_price_unit
+        return fixed + self._pct_price(costs, price, price)
 
-    def break_even_offset(self, symbol: str, at: datetime | None = None) -> float:
+    @staticmethod
+    def _pct_price(costs: SymbolCosts, entry: float, exit_price: float) -> float:
+        if not costs.commission_pct_per_side:
+            return 0.0
+        if entry <= 0:
+            raise ValueError("a percentage commission needs the entry price")
+        return costs.commission_pct_per_side * (entry + exit_price)
+
+    def break_even_offset(
+        self, symbol: str, at: datetime | None = None, price: float = 0.0
+    ) -> float:
         """Distance from the entry (chart price) to the break-even stop, so a hit there
         ends at 0R after spread and commission (strategy-session-zones.md › Stop loss)."""
-        return self.spread(symbol, at) + self.commission_price(symbol)
+        return self.spread(symbol, at) + self.commission_price(symbol, price)
 
-    def commission_r(self, symbol: str, risk: float) -> float:
-        """Commission in R for an SL distance of `risk` (price units)."""
+    def commission_r(
+        self,
+        symbol: str,
+        risk: float,
+        entry: float = 0.0,
+        exits: Iterable[tuple[float, float]] | None = None,
+    ) -> float:
+        """Commission in R for an SL distance of `risk` (price units). `entry` and `exits`
+        ((share, fill price) per closed part) are the notional prices of a percentage
+        commission; without `exits` the exit notional is taken at the entry price."""
         if not self.commission_enabled:
             return 0.0
         costs = self.for_symbol(symbol)
-        return costs.commission_per_lot / (risk * costs.value_per_price_unit)
+        fixed = costs.commission_per_lot / costs.value_per_price_unit
+        exit_notional = entry if exits is None else sum(share * px for share, px in exits)
+        return (fixed + self._pct_price(costs, entry, exit_notional)) / risk
 
-    def too_expensive(self, symbol: str, risk: float, at: datetime | None = None) -> bool:
+    def too_expensive(
+        self, symbol: str, risk: float, at: datetime | None = None, entry: float = 0.0
+    ) -> bool:
         """Cost filter: spread + commission in R above `max_cost_r` (never when it is 0)."""
         if not self.max_cost_r:
             return False
-        cost = self.spread_r(symbol, risk, at) + self.commission_r(symbol, risk)
+        cost = self.spread_r(symbol, risk, at) + self.commission_r(symbol, risk, entry)
         return cost > self.max_cost_r + COST_FILTER_TOLERANCE
 
     def swap_r(
@@ -245,21 +346,59 @@ class CostConfig:
         risk: float,
         entry_time: datetime,
         exits: Iterable[tuple[float, datetime]],
+        entry: float = 0.0,
     ) -> float:
         """Swap in R (negative = cost, positive = credit), added to net R only.
 
         `exits` = (share, exit_time) of each closed part: every part pays the nights between
         the trade's entry and ITS OWN exit time, for its own share of the position. A symbol
         without cost settings has no swap (the spread would already have failed the run).
+        A percentage swap (per year, per night) uses the notional at the `entry` price.
         """
         costs = self.symbols.get(symbol)
         if not self.swap_enabled or costs is None:
             return 0.0
-        rate = (
-            costs.swap_long_per_lot if direction is Direction.BULLISH else costs.swap_short_per_lot
-        )
+        long = direction is Direction.BULLISH
+        rate = costs.swap_long_per_lot if long else costs.swap_short_per_lot
+        pct = costs.swap_long_pct_year if long else costs.swap_short_pct_year
         nights = sum(
             share * rollover_nights(entry_time, at, costs.swap_triple_weekday)
             for share, at in exits
         )
-        return nights * rate / (risk * costs.value_per_price_unit)
+        usd = nights * rate / (risk * costs.value_per_price_unit)
+        if not pct:
+            return usd
+        if entry <= 0:
+            raise ValueError("a percentage swap needs the entry price")
+        return usd + nights * pct / DAYS_PER_YEAR * entry / risk
+
+    def funding_series(self, symbol: str) -> FundingSeries | None:
+        """Funding rates of `symbol`; None for symbols without funding."""
+        costs = self.symbols.get(symbol)
+        if not self.funding_enabled or costs is None or not costs.funding:
+            return None
+        if self.funding is not None and symbol in self.funding:
+            return self.funding[symbol]
+        path = FUNDING_DIR / f"{symbol}.csv"
+        if not path.is_file():
+            raise FileNotFoundError(f"no funding rates for {symbol}: {path} (download Binance data)")
+        return load_funding(path)
+
+    def funding_r(
+        self,
+        symbol: str,
+        direction: Direction,
+        risk: float,
+        entry_time: datetime,
+        exits: Sequence[tuple[float, datetime]],
+        entry: float,
+    ) -> float:
+        """Funding in R (negative = paid), added to net R only. Every part pays the funding
+        timestamps between the trade's entry and ITS OWN exit, for its share; longs pay a
+        positive rate, shorts receive it; notional approximated at the entry price."""
+        series = self.funding_series(symbol)
+        if series is None:
+            return 0.0
+        sign = 1 if direction is Direction.BULLISH else -1
+        rates = sum(share * series.rate_sum(entry_time, at) for share, at in exits)
+        return -sign * rates * entry / risk

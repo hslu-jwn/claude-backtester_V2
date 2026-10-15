@@ -17,7 +17,7 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
-- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6**, GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**.
+- ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6** (replaced 2026-10-15 by FTMO's percentage fee, see *Real fees* below), GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**.
   Swap defaults = FTMO's MT5 rates of 2026-10-14 (rule set by the user, 2026-10-14), USD per lot per night, long / short:
   XAUUSD **-61.27 / -4.20**, GBPUSD **-5.77 / -4.48**, GBPJPY **+2.04 / -13.85** (triple Wednesday), NAS100 **-6.912 / +0.339**,
   US500 **-1.2218 / -0.4575** (triple Friday). Today's rates are applied to every year, so swap is overstated in 2020-21
@@ -35,8 +35,8 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   triple weekday from `swap_rollover3days` (FX / metals Wednesday, indices / energy / crypto Friday). **Spread** = median of the bar
   spreads of the last 60 cached FTMO days (`data/cache/mt5`), no per-time spread; **slippage** = half the spread (rough, like the others).
   **Commission is not in `symbol_info`**: FX majors / crosses **$5**, XAGUSD **$6** are assumptions (as GBPUSD / XAUUSD), indices, energy,
-  DXY, NATGAS **0**, BTCUSD / ETHUSD 0 (FTMO charges crypto as a percentage; not modelled), all to be confirmed by the user.
-  BTCUSD / ETHUSD swap is a percentage-per-year mode in MT5 (-30 %): **0 here**, needs a price-proportional swap model.
+  DXY, NATGAS **0**, all to be confirmed by the user. XAGUSD's $6, BTCUSD / ETHUSD's 0 and their swap 0 were replaced on 2026-10-15
+  by the percentage model of *Real fees* below.
 
   | Symbol | Spread | Contract | Quote to USD | Swap long / short | Triple |
   |---|---|---|---|---|---|
@@ -52,12 +52,36 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   | USOIL / UKOIL | 0.075 / 0.069 | 100 | 1 | +4.966 / -22.54, +6.097 / -27.582 | Fri |
   | NATGAS | 0.06 | 1,000 | 1 | -5.84 / +1.27 | Fri |
   | DXY | 0.018 | 100 | 1 | -2.337 / +0.118 | Fri |
-  | BTCUSD / ETHUSD | 1.0 / 0.6 | 1 / 10 | 1 | 0 / 0 (see above) | Fri |
+  | BTCUSD / ETHUSD | 1.0 / 0.6 | 1 / 10 | 1 | percentage, -30 % per year, both sides (see *Real fees*) | Fri |
 
-  **PLACEHOLDER, to be confirmed by the user (ROADMAP 11.9): Binance futures BTCUSDT / ETHUSDT.** Taker fee **0.05 % per side** entered
-  as dollars per lot (1 coin) at a fixed reference price (BTC 100,000 -> $100 round turn, ETH 4,000 -> $4); this is wrong in years with
-  other prices because a percentage of the notional is not modelled. Spread 0, swap 0 (funding from `data/cache/binance_funding` is not
-  applied yet). Do not trust crypto net R until the user has confirmed or replaced these values.
+- **Real fees: FTMO and Binance** (rule set by the user, 2026-10-15: "integrate FTMO's real fees and Binance's fees for crypto and show
+  them"). Commission and swap can now also be a **percentage of the notional**, and Binance funding is a third cost. Everything is in R,
+  net only (gross = chart prices); lots and contract size cancel, so only prices and the SL distance matter:
+
+  commission_R = `commission_pct_per_side` x (entry + sum(share x exit fill)) / SL distance (+ the fixed USD part as before)
+  swap_R = nights x `swap_*_pct_year` / 365 x entry / SL distance (+ the USD part as before; triple day as before)
+  funding_R = - sign x sum(share x sum of the funding rates with entry < timestamp <= exit of that part) x entry / SL distance
+  (sign +1 long, -1 short: longs pay a positive rate, shorts receive it; notional approximated at the entry price)
+
+  | Symbol group | Commission | Swap | Funding |
+  |---|---|---|---|
+  | FX (GBPUSD, GBPJPY, EUR/AUD/NZD/USD crosses) | $5 per 1.0 lot round turn ($2.50 per side), unchanged | USD per lot, unchanged | no |
+  | **XAUUSD, XAGUSD** | **0.0014 % of notional round turn** (0.0007 % per side). Was $6 per lot for both until 2026-10-15. | USD per lot, unchanged | no |
+  | Indices, energy, DXY, NATGAS | none, unchanged | USD per lot, unchanged | no |
+  | **BTCUSD, ETHUSD (FTMO)** | **0.065 % round turn (0.0325 % per side)** | **-30 % per year of notional per night, long and short** (MT5 percentage mode; was 0) | no |
+  | **BTCUSDT, ETHUSDT (Binance USD-M)** | **taker 0.05 % per side** (a market fill is a taker; maker would be 0.02 %). Replaces the old fixed-price placeholder. | none | **every 8 h from `data/cache/binance_funding/<SYM>.csv`**, applied at each timestamp a position is open; spread 0 |
+
+  Example, SL distance 1 ATR (numbers are illustrative, long, entry = exit price, round trip, no swap night): XAUUSD at 3,000 with ATR 15:
+  0.000007 x 6,000 / 15 = **0.0028 R**. BTCUSD at 100,000 with ATR 1,500: 0.000325 x 200,000 / 1,500 = **0.043 R** (+ 0.3 / 365 x 100,000 / 1,500 =
+  0.055 R per night held). BTCUSDT at 100,000 with ATR 1,500: 0.0005 x 200,000 / 1,500 = **0.067 R** (+ funding: a typical 0.01 % per 8 h = 3 x 0.0001 x
+  100,000 / 1,500 = 0.02 R per day long).
+  **To be confirmed with the first demo trade's deal history** (FTMO values only; the numbers come from third-party sources that agree, FTMO's own
+  page did not load). Sources, read 2026-10-15: https://ctrader.com/prop-firms/ftmo, https://propvator.com/blog/ftmo-trading-conditions/ (FTMO),
+  https://www.binance.com/en/support/articles/360033544231 (Binance USD-M fee schedule, regular user). The crypto swap sign / value per symbol is
+  read from the terminal's `symbol_info` (`swap_mode`, `swap_long`, `swap_short`) and set when checked. Funding uses the entry price as notional (not the
+  mark price at the timestamp); a funding symbol without its CSV raises an error instead of silently using 0. Shown: `commission_r`, `swap_r` and
+  `funding_r` per trade in `trades.csv` (all inside `r_net`), and the results page's performance summary has the rows spread / commission / swap /
+  funding (R, negative = cost). `CostConfig.funding_enabled` switches funding off; the percentage fees follow `commission_enabled` and `swap_enabled`.
 - ⚙️ **Cost filter** (user, 2026-10-14: build it in the engine, off by default; details chosen by Claude; knowledge base
   I-45 cost-to-target): `CostConfig.max_cost_r`, default **0 = off**. An order whose spread + commission in R at its fill
   (spread / SL distance + commission as a price distance / SL distance; only the costs that are switched on; no swap, no

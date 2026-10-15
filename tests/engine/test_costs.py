@@ -84,14 +84,12 @@ def test_commission_of_the_new_symbols():
         assert DEFAULT_SYMBOL_COSTS[symbol].commission_per_lot == 0.0
 
 
-def test_binance_placeholder_costs_are_marked_and_flat():
+def test_binance_costs_are_percentage_fees_and_funding():
+    # details in test_percentage_costs.py (0.05 % taker per side of the notional, funding)
     for symbol in ("BTCUSDT", "ETHUSDT"):
         costs = DEFAULT_SYMBOL_COSTS[symbol]
-        assert costs.spread == 0.0 and costs.swap_long_per_lot == costs.swap_short_per_lot == 0.0
-        assert costs.contract_size == 1
-    # 0.05 % taker fee per side at the reference price: 2 x 0.0005 x 100,000 per BTC
-    assert DEFAULT_SYMBOL_COSTS["BTCUSDT"].commission_per_lot == pytest.approx(100.0)
-    assert DEFAULT_SYMBOL_COSTS["ETHUSDT"].commission_per_lot == pytest.approx(4.0)
+        assert costs.spread == 0.0 and costs.contract_size == 1 and costs.funding
+        assert costs.commission_pct_per_side == pytest.approx(0.0005)
 
 
 def test_existing_five_symbols_are_unchanged():

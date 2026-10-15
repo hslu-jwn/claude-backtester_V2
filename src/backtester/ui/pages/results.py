@@ -270,6 +270,24 @@ SUMMARY_ROWS = (
 )
 
 
+COST_ROWS = (
+    ("Cost: spread", "spread"),
+    ("Cost: commission", "commission"),
+    ("Cost: swap", "swap"),
+    ("Cost: funding", "funding"),
+)
+
+
+def cost_totals(trades: list[TradeRecord]) -> dict[str, float]:
+    """Costs in R summed over the trades, signed like their effect on net R (cost < 0)."""
+    return {
+        "spread": -sum(t.spread_r for t in trades),
+        "commission": -sum(t.commission_r for t in trades),
+        "swap": sum(t.swap_r for t in trades),
+        "funding": sum(t.funding_r for t in trades),
+    }
+
+
 def summary_table(trades: list[TradeRecord]) -> html.Table:
     """TradingView's performance summary: one row per metric, columns All / Long / Short."""
     columns = [
@@ -285,6 +303,16 @@ def summary_table(trades: list[TradeRecord]) -> html.Table:
         cls = tone(value) if fmt is fmt_r and "drawdown" not in key else ""
         return html.Td(fmt(value), className=cls)
 
+    subsets = [
+        trades,
+        [t for t in trades if t.direction == "long"],
+        [t for t in trades if t.direction == "short"],
+    ]
+    totals = [cost_totals(sub) for sub in subsets]
+    cost_rows = [
+        html.Tr([html.Td(label)] + [html.Td(fmt_r(c[key]), className=tone(c[key])) for c in totals])
+        for label, key in COST_ROWS
+    ]
     return html.Table(
         [
             html.Thead(html.Tr([html.Th("")] + [html.Th(title) for title, _ in columns])),
@@ -293,6 +321,7 @@ def summary_table(trades: list[TradeRecord]) -> html.Table:
                     html.Tr([html.Td(label)] + [cell(s, key, fmt) for _, s in columns])
                     for label, key, fmt in SUMMARY_ROWS
                 ]
+                + cost_rows
             ),
         ],
         className="rs-table rs-summary",

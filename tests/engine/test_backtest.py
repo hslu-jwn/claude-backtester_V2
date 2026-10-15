@@ -5,6 +5,7 @@ Spec: ROADMAP.md › 3.1, strategy-session-zones.md › Stop loss, CLAUDE.md ›
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from itertools import pairwise
 
@@ -15,7 +16,7 @@ from backtester.core.errors import LookaheadError
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.engine.backtest import EngineConfig, run_backtest
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
 from backtester.engine.trade import ExitReason
 from backtester.strategy.base import Order, Strategy
 
@@ -195,7 +196,17 @@ def test_break_even_can_be_switched_off():
 
 # XAUUSD with costs: spread 0.25 + commission $6 / $100 per 1.0 = 0.06 -> a long's
 # break-even stop is 100.31, where a hit is 0R net.
-GOLD = EngineConfig()
+# XAUUSD's old commission, $6 per lot (FTMO's 0.0014 % replaced it on 2026-10-15): these tests
+# are about the break-even / cost mechanics and keep the fixed-dollar commission they were written for.
+GOLD_USD6 = CostConfig(
+    symbols={
+        **DEFAULT_SYMBOL_COSTS,
+        "XAUUSD": replace(
+            DEFAULT_SYMBOL_COSTS["XAUUSD"], commission_per_lot=6.0, commission_pct_per_side=0.0
+        ),
+    }
+)
+GOLD = EngineConfig(costs=GOLD_USD6)
 
 
 def test_break_even_with_costs_is_0r_net():
@@ -237,27 +248,27 @@ GOLD_LOSS = [ENTRY, (100.0, 100.1, 97.4, 97.6)]
 
 
 def test_long_costs_spread_at_entry_and_commission():
-    [t] = run(GOLD_WIN, {0: [(LONG, 97.5, 105.0)]}, EngineConfig(), symbol="XAUUSD")
+    [t] = run(GOLD_WIN, {0: [(LONG, 97.5, 105.0)]}, GOLD, symbol="XAUUSD")
     assert t.entry_fill == pytest.approx(100.25) and t.exit_fill == 105.0
     assert t.spread_r == pytest.approx(0.1) and t.commission_r == pytest.approx(0.024)
     assert t.r_gross == pytest.approx(2.0) and t.r_net == pytest.approx(1.876)
-    [loss] = run(GOLD_LOSS, {0: [(LONG, 97.5, 105.0)]}, EngineConfig(), symbol="XAUUSD")
+    [loss] = run(GOLD_LOSS, {0: [(LONG, 97.5, 105.0)]}, GOLD, symbol="XAUUSD")
     assert loss.r_gross == pytest.approx(-1.0) and loss.r_net == pytest.approx(-1.124)
 
 
 def test_short_costs_spread_at_exit():
     ohlc = [ENTRY, (100.0, 100.1, 94.9, 95.0)]
-    [t] = run(ohlc, {0: [(SHORT, 102.5, 95.0)]}, EngineConfig(), symbol="XAUUSD")
+    [t] = run(ohlc, {0: [(SHORT, 102.5, 95.0)]}, GOLD, symbol="XAUUSD")
     assert t.entry_fill == 100.0 and t.exit_fill == pytest.approx(95.25)
     assert t.r_gross == pytest.approx(2.0) and t.r_net == pytest.approx(1.876)
 
 
 def test_costs_can_be_switched_off_one_by_one():
     script = {0: [(LONG, 97.5, 105.0)]}
-    no_spread = EngineConfig(costs=CostConfig(spread_enabled=False))
+    no_spread = EngineConfig(costs=replace(GOLD_USD6, spread_enabled=False))
     [t] = run(GOLD_WIN, script, no_spread, symbol="XAUUSD")
     assert t.spread_r == 0 and t.entry_fill == 100.0 and t.r_net == pytest.approx(1.976)
-    no_commission = EngineConfig(costs=CostConfig(commission_enabled=False))
+    no_commission = EngineConfig(costs=replace(GOLD_USD6, commission_enabled=False))
     [t] = run(GOLD_WIN, script, no_commission, symbol="XAUUSD")
     assert t.commission_r == 0 and t.r_net == pytest.approx(1.9)
     [t] = run(GOLD_WIN, script, NO_COSTS, symbol="XAUUSD")
@@ -434,7 +445,7 @@ def test_short_two_tps_mirrored():
 
 def test_two_tps_net_of_costs():
     # XAUUSD, risk 2: spread 0.125R, commission 6 / (2 x 100) = 0.03R; break-even 100.31
-    gold = EngineConfig(break_even_at_next_session=False)
+    gold = EngineConfig(costs=GOLD_USD6, break_even_at_next_session=False)
     win = [ENTRY, TP1_CANDLE, (102.2, 104.1, 101.0, 103.9)]
     [t] = run(win, two_tps(), gold, symbol="XAUUSD")
     assert t.r_net == pytest.approx(1.6 - 0.125 - 0.03)

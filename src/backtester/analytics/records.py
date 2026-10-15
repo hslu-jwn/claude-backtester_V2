@@ -64,6 +64,7 @@ class TradeRecord:
     take_profit_3: float | None = None  # strategy 2 (files before it: none)
     tp2_share: float | None = None
     swap_r: float = 0.0  # inside r_net (files before swap: 0)
+    funding_r: float = 0.0  # inside r_net (files before funding: 0)
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:
@@ -97,6 +98,7 @@ class TradeRecord:
             take_profit_3=_float(row.get("take_profit_3")),
             tp2_share=_float(row.get("tp2_share")),
             swap_r=float(row.get("swap_r") or 0.0),
+            funding_r=float(row.get("funding_r") or 0.0),
         )
 
 

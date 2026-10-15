@@ -37,8 +37,13 @@ from backtester.runner import RunSettings, jsonable
 from backtester.strategy.registry import REGISTRY, strategy_name
 
 HIDDEN = frozenset(
-    {"engine.sessions", "strategy.strong_move.atr_mult", "engine.costs.spread_table"}
-)  # the spread table is built by tools/spread_table.py, not edited in the menu
+    {
+        "engine.sessions",
+        "strategy.strong_move.atr_mult",
+        "engine.costs.spread_table",
+        "engine.costs.funding",
+    }
+)  # the spread table is built by tools/spread_table.py, the funding rates are read from files
 
 
 class SettingsError(ValueError):

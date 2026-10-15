@@ -60,7 +60,9 @@ SETTINGS = RunSettings(  # read-only mappings like the defaults (pickled for the
         )
     ),
 )
-NET = 1.2 - 0.25 / 0.9 - 6 / 90  # spread 0.25 / 1R 0.9, $6 / (0.9 x $100)
+# spread 0.25 / 1R 0.9; XAUUSD commission 0.0007 % per side of entry 110.0 and exit 111.08
+# (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
+NET = 1.2 - 0.25 / 0.9 - 0.000007 * (110.0 + 111.08) / 0.9
 
 
 def write_day(cache: Path, symbol: str, day: date, ohlc) -> None:

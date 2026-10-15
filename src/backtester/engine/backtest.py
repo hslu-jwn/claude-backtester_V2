@@ -114,7 +114,9 @@ class Backtest:
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
                 trade = self._fill(order, candle, now)
-                if self._config.costs.too_expensive(trade.symbol, trade.risk, trade.entry_time):
+                if self._config.costs.too_expensive(
+                    trade.symbol, trade.risk, trade.entry_time, trade.entry
+                ):
                     self._strategy.on_order_skipped(order.ref, now)
                     continue
                 if order.limit_fill:
@@ -204,7 +206,7 @@ class Backtest:
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
-            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol, now),
+            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol, now, entry),
             tags=order.tags,
             reason=order.reason,
             confluence=order.confluence,
@@ -227,8 +229,14 @@ class Backtest:
 
     def _result(self, trade: OpenTrade) -> TradeResult:
         costs = self._config.costs
+        exits = [(p.share, p.time) for p in trade.parts]
         swap_r = costs.swap_r(
-            trade.symbol, trade.direction, trade.risk, trade.entry_time,
-            [(p.share, p.time) for p in trade.parts],
-        )  # fmt: skip
-        return trade.result(costs.commission_r(trade.symbol, trade.risk), swap_r)
+            trade.symbol, trade.direction, trade.risk, trade.entry_time, exits, trade.entry
+        )
+        funding_r = costs.funding_r(
+            trade.symbol, trade.direction, trade.risk, trade.entry_time, exits, trade.entry
+        )
+        commission_r = costs.commission_r(
+            trade.symbol, trade.risk, trade.entry, [(p.share, p.fill) for p in trade.parts]
+        )
+        return trade.result(commission_r, swap_r, funding_r)

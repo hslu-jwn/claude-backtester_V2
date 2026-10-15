@@ -95,6 +95,7 @@ class TradeResult:
     take_profit_3: float | None = None
     tp2_share: float | None = None  # with a TP3
     swap_r: float = 0.0  # already inside r_net (negative = cost)
+    funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
 
     @property
     def risk(self) -> float:
@@ -266,7 +267,9 @@ class OpenTrade:
         if not self.is_closed:
             self._exit(self.open_share, candle, now, price, reason)
 
-    def result(self, commission_r: float, swap_r: float = 0.0) -> TradeResult:
+    def result(
+        self, commission_r: float, swap_r: float = 0.0, funding_r: float = 0.0
+    ) -> TradeResult:
         if not self.is_closed:
             raise ValueError("the trade is still open")
         last = self.parts[-1]
@@ -285,7 +288,7 @@ class OpenTrade:
             exit_fill=last.fill,
             exit_reason=last.reason,
             r_gross=sum(p.share * p.r_gross for p in self.parts),
-            r_net=sum(p.share * p.r_fills for p in self.parts) - commission_r + swap_r,
+            r_net=sum(p.share * p.r_fills for p in self.parts) - commission_r + swap_r + funding_r,
             spread_r=self.spread / self.risk,
             commission_r=commission_r,
             break_even_time=self.break_even_time,
@@ -301,4 +304,5 @@ class OpenTrade:
             take_profit_3=self.take_profit_3,
             tp2_share=self.tp2_share,
             swap_r=swap_r,
+            funding_r=funding_r,
         )
