@@ -1581,3 +1581,9 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   default is +13.9 R net / 1836 trades (+0.008 R/trade, histdata same window +28.7 R). **Out of sample: no edge.**
 - ☐ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
   before and trade it in that year; report the chained out-of-sample net R against the default variant.
+- ☐ **11.8 More markets from MT5** (user, 2026-10-15): about 26 liquid FTMO symbols (FX majors and crosses,
+  US / EU / JP indices, metals, energy, BTC / ETH, DXY as reference) with `tools/mt5_download.py`.
+- ☐ **11.9 Crypto order flow from Binance** (user, 2026-10-15; the user may trade crypto on Binance directly,
+  no prop firm needed): public trade data (aggTrades, aggressor side) of BTCUSDT / ETHUSDT, reduced to 1m bars
+  with buy / sell volume, delta and trade count; the raw files are deleted after each month.
+- ☐ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).

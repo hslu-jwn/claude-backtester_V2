@@ -257,6 +257,9 @@ access; the user may supply the research). They help; they never override the ru
     no overnight holds (swap).
   - Data split (rule set by the user, 2026-10-15): histdata years are the sample (development) years;
     the real test runs on the period FTMO's MT5 history records (`data/cache/mt5/`, ROADMAP 11.5).
+    One cut-off for all symbols: **2021-09-14** (first M1 day of FTMO's indices; user confirmed 2026-10-15):
+    develop on data before it, test each idea once on MT5 data from it on. 2021-26 was already used by
+    the studies and strategies 1-5, so it is fresh only for new ideas.
   - Models: as in Working agreement › Models and subagents (Opus plans, subagents code / test /
     read with Sonnet or Haiku). New books: follow the process in `knowledge/README.md`.
   - End: same End protocol as below, plus update the idea statuses in `knowledge/ideas.md`.
