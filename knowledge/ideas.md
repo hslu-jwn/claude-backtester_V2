@@ -64,7 +64,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |
 | I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | open |
 | I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | blocked: no volume in histdata |
-| I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14 | open |
+| I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14 | built as cost / stop (`CostConfig.max_cost_r`, 2026-10-14); strategy 2 at 0.10 R: net +57 R better, still negative (ROADMAP 10.5) |
 
 ## Suggested order (Claude's proposal, the user decides)
 1. **Tooling first** (T-01, I-22): every later test then reports robustness the Kaufman way.

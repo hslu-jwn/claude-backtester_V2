@@ -1414,6 +1414,26 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   Not monotonic and inside the noise; it does not turn strategy 2 positive with swap. Re-entries a skipped trade would
   allow are not modelled in this study.
 
+  **Close before the rollover and cost filter in the engine (2026-10-14/15, user: "test" / "build it").** Both built, off
+  by default (strategy-ny-indices.md › Close before the rollover; risk-management.md › Cost filter). The rollover close is
+  at 16:15 ET because the index feed has no candles 16:15-18:00 ET (a first run at 16:59 closed everything at 18:01 and
+  was discarded). Same data and period as above, sum R, halves = net with swap:
+
+  | variant | trades | win % | gross | net ex-swap | net | 20-22 / 23-26 | max DD |
+  |---|---|---|---|---|---|---|---|
+  | no filter | 1,662 | 37.4 | +29.2 | -61.6 | -135.4 | -89.9 / -45.5 | 141 |
+  | close at 16:15 ET | 1,662 | 41.0 | -15.0 | -105.8 | -109.6 | -58.2 / -51.5 | 115 |
+  | cost filter 0.10 R | 1,507 | 38.6 | +50.0 | -8.1 | -77.9 | -45.6 / -32.3 | 91 |
+  | close 16:15 + cost 0.10 | 1,507 | 42.4 | +11.2 | -47.0 | -49.5 | -20.3 / -29.3 | 59 |
+  | 15m trend filter | 1,097 | 39.1 | +63.1 | +6.4 | -46.4 | -44.6 / -1.8 | 67 |
+  | close 16:15 + 15m filter | 1,097 | 42.8 | +42.3 | -14.4 | -17.2 | -18.7 / +1.6 | 46 |
+
+  Reading: closing at 16:15 removes almost all swap (-74 -> -4 R) but also 44 R of gross profit from the runners that
+  reach TP2 / TP3 overnight: net +26 R. The cost filter (engine, re-entries included) removes 155 trades with tight
+  stops that were gross losers too: net +57 R, both halves better. Combined -49.5 R, with the 15m filter -17 R (max DD
+  46 R). Each step helps a little and in both halves, but the best combination was picked from 6 runs on the same
+  data and is still negative: **no edge yet**. Not run: rollover + cost + 15m together. Defaults unchanged (all off).
+
 
 ## Phase 11: Research studies from the knowledge base (user, 2026-10-14)
 
