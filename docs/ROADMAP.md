@@ -1561,3 +1561,9 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   overnight hold. Test with the spread table (and the fixed spread), robustness report, halves, stressed
   costs; sweep only gap bucket, stop distance and exit time. Expected from 11.2: about +0.04-0.05 R gross
   per trade (fill first 44 vs 37 %), so costs decide; report "no edge" if net is not positive in both halves.
+
+  **Result 2026-10-15** (`tools/gap_fade_grid.py`, 2020-01..2026, NAS100 + US500, 2374 trades): default
+  (0.1-1 ATR, stop 1.0, exit 16:00) +112.7 R gross, +55.0 R net with the fixed spread (+58.6 with the spread
+  table), +0.023 R/trade, halves +34.6 / +20.4; swap -1.7 R. 27 of 36 variants net positive (75 %), mean - 1 sd
+  negative (-8.9); best gap 0.1-1, stop 0.75, exit 12:00: +79.4 R net, halves +57.5 / +21.9, +42.1 with costs x1.5.
+  Weak positive, 2023-26 weaker; not yet an edge without out-of-sample confirmation. Waiting for the user.
