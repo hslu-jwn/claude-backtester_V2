@@ -60,7 +60,9 @@ class NyIndexSweepConfig:
     trend_filter: TrendFilterConfig = field(default_factory=TrendFilterConfig)
     # close open trades before the 17:00 New York rollover (no swap); off by default
     close_before_rollover: bool = False
-    rollover_close_minutes: int = 1  # at the first 1m close at or after 17:00 ET minus this
+    # at the first 1m close at or after 17:00 ET minus this; 45 = 16:15 ET, the last close of
+    # the histdata.com index feed before its 16:15-18:00 gap (spec › Close before the rollover)
+    rollover_close_minutes: int = 45
 
     # sweep (confluences.md › Liquidity sweep)
     sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
