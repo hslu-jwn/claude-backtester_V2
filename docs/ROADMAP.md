@@ -1599,6 +1599,9 @@ changes results, defaults changed only with the user's go.
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
   costs, and report where the strategy's net R sits (percentile, mean and spread of the random runs) in the
   robustness report. First use: the gap fade (11.4 / 11.7).
+  Decided by the user 2026-10-15: gap fade baseline = same gap days, same stop and exit, coin flip between fading
+  and following the gap; other strategies = random entry times inside the strategy's own window with its own stop
+  and exit; defaults 1,000 runs, seed 42.
 - ☐ **12.2 Intrabar order from M1** (T-03): when SL and TP are both inside one candle, read the M1 bars inside it
   to see which came first; only a conflict inside one M1 bar stays SL first (CLAUDE.md allows "unless a lower
   timeframe resolves it"). Option, off by default; report how many trades change.
@@ -1612,4 +1615,9 @@ changes results, defaults changed only with the user's go.
   limits, as an extra column in the robustness report.
 - ☐ **12.7 Monte Carlo backtester** (user, 2026-10-15): one tool and results page that runs the Monte Carlo kinds
   on a backtest: trade order / day reshuffle (5.3, account drawdown and FTMO pass rate), random entries (12.1),
-  random fills (12.6), optional synthetic price paths. Scope to be agreed with the user before building.
+  random fills (12.6), synthetic price paths. Decided by the user 2026-10-15: **all four kinds, shown in the
+  report** (not a separate app page). The report shows a fan of simulated equity curves (like a stock-price Monte
+  Carlo chart: many seeded paths from the start balance, best and worst marked), all important numbers (among them
+  the probability of passing an FTMO challenge, the gain on a 100k account, the average gain per month in %), and
+  ends every test with a clear verdict whether the strategy has an edge. Thresholds and approximations: see the
+  spec `risk-management.md › Monte Carlo` once agreed.

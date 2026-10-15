@@ -33,6 +33,7 @@ def test_registered_names_and_order():
         "no_wick",
         "trend_following",
         "gap_fade",
+        "opening_range",
     ]
 
 
