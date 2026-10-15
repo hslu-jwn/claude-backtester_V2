@@ -1626,3 +1626,10 @@ changes results, defaults changed only with the user's go.
   the probability of passing an FTMO challenge, the gain on a 100k account, the average gain per month in %), and
   ends every test with a clear verdict whether the strategy has an edge. Thresholds and approximations: see the
   spec `risk-management.md › Monte Carlo` once agreed.
+  **Built 2026-10-15** (`tools/monte_carlo.py`, `analytics/verdict.py`, `risk/monte_carlo.py`,
+  `analytics/random_baseline.py`, `analytics/random_fills.py`, `data/random_walk.py`). First run: gap fade NAS100 +
+  US500 2020-01-01..2021-09-13 (development years), 625 trades, +24.4 R net (+0.039 R/trade): **WEAK** (t 1.08 < 2;
+  halves check fails by construction, every trade in the first half); random entries 97.5th percentile, costs x1.5
+  +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
+  29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
+  Open: halves split for runs not spanning 2020-26 (user to decide).

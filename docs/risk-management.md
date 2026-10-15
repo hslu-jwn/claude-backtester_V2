@@ -136,6 +136,11 @@ clear verdict.
   4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);
   5. net R positive without the best trade;
   6. median net R of the random-fill runs (kind C) > 0.
+  Details (chosen by Claude 2026-10-15, `analytics/verdict.py`, to be confirmed by the user): a check without
+  input (e.g. random entries for a strategy without a baseline yet) is n/a, listed and named in the reason, and
+  counts neither as pass nor fail; t ≥ 2 and percentile ≥ 95 pass at equality, the net checks need > 0; the
+  random-path warning (kind D) is raised when a symbol's mean net R per trade on the random paths is above 0, a
+  banner only, not part of the verdict.
 - **A. Day reshuffle** (the Monte Carlo above): ⚙️ **1,000** runs. A "day" = a weekday of the run's period
   (midnight to midnight `Europe/Prague`; days without trades included, so days and months are real calendar
   lengths); trades belong to their exit day and keep their order and times inside it. Account per run: start
