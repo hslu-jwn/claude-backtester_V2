@@ -155,6 +155,7 @@ _GROUP_RULES = (
     ("strategy.cash_close", "Cash session"),
     ("strategy.min_gap_atr", "Gap filter"),
     ("strategy.max_gap_atr", "Gap filter"),
+    ("strategy.mode", "Gap filter"),
     ("strategy.stop_gap_mult", "Exit"),
     ("strategy.exit_time", "Exit"),
     ("detectors.fvg.", "Detectors"),

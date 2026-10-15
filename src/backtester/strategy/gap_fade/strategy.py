@@ -30,6 +30,10 @@ CALENDAR_PER_TRADING_DAY = 1.5
 WARMUP_MARGIN_DAYS = 7
 
 
+def _opposite(direction: Direction) -> Direction:
+    return Direction.BEARISH if direction is Direction.BULLISH else Direction.BULLISH
+
+
 class GapFade(Strategy):
     base_timeframe = Timeframe.M1
     timeframes = (Timeframe.M1,)
@@ -118,8 +122,11 @@ class GapFade(Strategy):
         gap = open_price - prev_close
         if not cfg.min_gap_atr <= abs(gap) / atr < cfg.max_gap_atr:
             return []
-        direction = Direction.BEARISH if gap > 0 else Direction.BULLISH  # fade the gap
+        with_gap = Direction.BULLISH if gap > 0 else Direction.BEARISH
+        direction = with_gap if cfg.mode == "follow" else _opposite(with_gap)
         sign = 1 if direction is Direction.BULLISH else -1
+        # fade: target = the previous close; follow: the same distance on the other side
+        target = prev_close if cfg.mode == "fade" else open_price + sign * abs(gap)
         self._ref, self._ref_date = self._next_ref, today
         self._next_ref += 1
         return [
@@ -127,8 +134,8 @@ class GapFade(Strategy):
                 direction,
                 open_price,
                 open_price - sign * cfg.stop_gap_mult * abs(gap),
-                prev_close,
-                reason=f"gap fade {gap / atr:+.2f} ATR",
+                target,
+                reason=f"gap {cfg.mode} {gap / atr:+.2f} ATR",
                 ref=self._ref,
             )
         ]

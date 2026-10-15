@@ -20,6 +20,9 @@ class GapFadeConfig:
     max_gap_atr: float = 1.0  # |gap| in daily ATR must be below this (exclusive)
     stop_gap_mult: float = 1.0  # stop = entry -/+ this x |gap| (1.0 = 1:1 in price)
     exit_time: time = time(16, 0)  # an open trade closes at the close of this candle
+    # "fade" = against the gap (spec); "follow" = research only: the other direction with the
+    # same stop and target distances (random-entry baseline, ROADMAP 12.1, user 2026-10-15)
+    mode: str = "fade"
 
     def __post_init__(self) -> None:
         ZoneInfo(self.zone)  # raises for an unknown zone
@@ -29,6 +32,8 @@ class GapFadeConfig:
             raise ValueError("min_gap_atr must be > 0")
         if self.max_gap_atr <= self.min_gap_atr:
             raise ValueError("max_gap_atr must be > min_gap_atr")
+        if self.mode not in ("fade", "follow"):
+            raise ValueError("mode must be 'fade' or 'follow'")
         if self.stop_gap_mult <= 0:
             raise ValueError("stop_gap_mult must be > 0")
         if self.cash_close <= self.cash_open:

@@ -48,3 +48,6 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
   costs, best trade removed.
 - Sweep **only**: gap bucket (`min_gap_atr` / `max_gap_atr`, e.g. 0.1-0.25, 0.25-0.5, 0.5-1, 0.1-1),
   `stop_gap_mult` (e.g. 0.75, 1.0, 1.5), `exit_time` (e.g. 11:00, 12:00, 16:00).
+- `mode` = `fade` (default) or `follow`: follow takes the other direction (gap up -> long) with the same stop and
+  target distances, same days, filter and time exit. Research only, used by the random-entry baseline
+  (ROADMAP 12.1, user 2026-10-15); default fade.

@@ -96,6 +96,31 @@ def test_gap_down_is_the_mirror_and_goes_long():
     assert t.initial_stop == 99.0 and t.take_profit == 105.0
 
 
+def test_follow_gap_up_goes_long_with_mirrored_stop_and_target():
+    [t] = scenario(108.0, mode="follow")  # gap +3
+    assert t.direction is LONG and t.entry == 108.0
+    assert t.initial_stop == 105.0 and t.take_profit == 111.0
+
+
+def test_follow_gap_down_goes_short_with_mirrored_stop_and_target():
+    [t] = scenario(102.0, mode="follow")  # gap -3
+    assert t.direction is SHORT and t.entry == 102.0
+    assert t.initial_stop == 105.0 and t.take_profit == 99.0
+
+
+def test_follow_uses_stop_gap_mult_and_the_same_days_and_time_exit():
+    [t] = scenario(108.0, mode="follow", stop_gap_mult=2.0)
+    assert t.initial_stop == 102.0 and t.take_profit == 111.0
+    assert t.exit_reason is ExitReason.SIGNAL and t.exit_price == 107.5
+    assert scenario(105.5, mode="follow") == []  # gap 0.05 ATR: filtered like the fade
+
+
+def test_default_mode_is_fade_and_unknown_mode_is_refused():
+    assert GapFadeConfig().mode == "fade"
+    with pytest.raises(ValueError):
+        GapFadeConfig(mode="reverse")
+
+
 def test_entry_is_the_close_of_the_candle_closing_at_0930():
     [t] = scenario(108.0)
     assert t.entry_time == at(TRADE_DAY, "09:30")
@@ -280,9 +305,9 @@ def test_config_defaults_are_the_spec():
 # --- no lookahead -----------------------------------------------------------------------------
 
 
-def orders_by_index(candles: list[Candle]) -> dict[int, list]:
+def orders_by_index(candles: list[Candle], mode: str = "fade") -> dict[int, list]:
     series = CandleSeries("T", M1, candles)
-    strategy = GapFade("T", GapFadeConfig())
+    strategy = GapFade("T", GapFadeConfig(mode=mode))
     out = {}
     for i, c in enumerate(candles):
         orders = strategy.on_candle(c.ts + M1.duration, {M1: series.view(i)})
@@ -303,17 +328,19 @@ def many_days() -> list[Candle]:
     return candles
 
 
-def test_orders_only_come_from_the_candle_closing_at_0930():
+@pytest.mark.parametrize("mode", ["fade", "follow"])
+def test_orders_only_come_from_the_candle_closing_at_0930(mode):
     candles = many_days()
-    out = orders_by_index(candles)
+    out = orders_by_index(candles, mode)
     assert out
     for i in out:
         assert (candles[i].ts + M1.duration).astimezone(NY).time() == time(9, 30)
 
 
-def test_appending_future_candles_never_changes_orders_already_given():
+@pytest.mark.parametrize("mode", ["fade", "follow"])
+def test_appending_future_candles_never_changes_orders_already_given(mode):
     candles = many_days()
-    full = orders_by_index(candles)
+    full = orders_by_index(candles, mode)
     for cut in (len(candles) - 1, len(candles) - 5, len(candles) // 2, 20):
-        prefix = orders_by_index(candles[:cut])
+        prefix = orders_by_index(candles[:cut], mode)
         assert prefix == {i: o for i, o in full.items() if i < cut}
