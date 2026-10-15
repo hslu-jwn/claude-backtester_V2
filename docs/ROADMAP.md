@@ -936,7 +936,7 @@ has no step yet.
   (`results/20261009-135418_XAUUSD-GBPUSD-GBPJPY`, 7.5 min): 17,742 trades, win rate
   34.6%, net R −2,950.4 (gross −825.3), max drawdown 2,955 R, profit factor 0.75. The
   first run (above, before the fix) differs little: the ~3 shifted weeks a year.
-- ☐ **6.4 Robustness report** (knowledge base T-01; user, 2026-10-14). **Built 2026-10-14, waiting for the
+- ☑ **6.4 Robustness report** (knowledge base T-01; user, 2026-10-14). **Built 2026-10-14, waiting for the
   user's check.** `analytics/robustness.py` (pure functions on trade lists and grids, config
   `RobustnessConfig`, defaults Kaufman's, accepted by the user): share of profitable variants and
   `robust` at >= 70 %, mean / sample st.dev / mean − 1 sd of net R over a grid, neighbour-smoothed
@@ -952,7 +952,7 @@ has no step yet.
   Simulator (6.1) reuses the functions. Check: `python -m backtester.tools.trend_grid --symbols
   XAUUSD NAS100 --timeframes D1 H4 --signals breakout sma --out results/trend_check2` and look at
   `grid.csv` / the family table.
-- ☐ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14). **Built 2026-10-14, waiting for the
+- ☑ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14). **Built 2026-10-14, waiting for the
   user's check.** `analytics/metrics.py`: four new split keys, listed with the others on the results page
   (Performance tab) and usable in `split` / `by_period`; time groups are listed in time order: **Hour
   (UTC)** of the entry ("08:00 UTC"), **Weekday** ("1 Mon" … "7 Sun", Friday is its own row), **Month
@@ -961,7 +961,7 @@ has no step yet.
   Midday 11:00-15:00, Close 15:00-16:00, else "Outside cash hours"; the window times are the Aziz
   windows, constants `NY_WINDOWS`). Tests: `tests/analytics/test_time_splits.py`. Check: open a run
   on the results page and look at the four new tables under Performance.
-- ☐ **6.6 MT5 history check** (user, 2026-10-14): how many years of M1 with tick volume and spread FTMO's
+- ☑ **6.6 MT5 history check** (user, 2026-10-14): how many years of M1 with tick volume and spread FTMO's
   MT5 serves. **First check 2026-10-14** (read-only, FTMO-Demo): the terminal's "Max bars in chart" is
   100,000, so only ~3.5 months of M1 come back (2026-07-06 .. 2026-10-14); every bar has tick volume and
   spread. The user raises the limit (MT5 › Tools › Options › Charts › Max bars in chart = Unlimited,
@@ -979,7 +979,7 @@ has no step yet.
   reach further back. Not yet exported or compared with the histdata cache; the spread over the years is a
   historical server value and differs from today's (gold median 0.22 over the years against 0.42 in the last
   3.5 months): the spread table (6.7) must be built per year as well as per hour.
-- ☐ **6.7 Spread by year and hour of day in the cost model** (user, 2026-10-14). **Built and run 2026-10-15,
+- ☑ **6.7 Spread by year and hour of day in the cost model** (user, 2026-10-14). **Built and run 2026-10-15,
   waiting for the user's check; off by default.** `engine/spread_table.py` (`SpreadTable`: spread per symbol,
   New York year and New York clock hour, nearest year with the hour, later year on a tie, None -> fixed
   spread), `CostConfig.spread_table` (None = the fixed `SymbolCosts.spread`; `spread`, `spread_r`,
@@ -1474,12 +1474,17 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
 
 ## Phase 11: Research studies from the knowledge base (user, 2026-10-14)
 
+6.4, 6.5, 6.6, 6.7, 11.1 and 11.2 are accepted by the user 2026-10-15 ("End."); the open decisions of
+6.7 (spread table as default, from which year) stay open. Next by Claude's decision (user: "you can
+decide", 2026-10-15): the gap-fade candidate I-39 as a spec and strategy test with the real costs
+(11.4 below), then 11.3.
+
 One-off research tools on cached data; they change no setting and no strategy. Ideas and sources:
 `knowledge/ideas.md`. Order agreed with the user 2026-10-14: robustness report (6.4) and time split (6.5)
 first, then these studies, then day-trade strategies without swap (ORB I-07/I-08, compression break I-33)
 with the cost-to-target (I-45) and free-path (I-37) filters.
 
-- ☐ **11.1 Noise / regime study** (I-01). **Built and run 2026-10-14, waiting for the user's check.**
+- ☑ **11.1 Noise / regime study** (I-01). **Built and run 2026-10-14, waiting for the user's check.**
   `analytics/noise.py` (efficiency ratio ER(n) = |close − close n bars ago| / sum of the n bar moves,
   from closed bars only; rank correlation; seeded random-walk reference) and `python -m
   backtester.tools.noise_study` (per symbol × timeframe M15-D1 × n 10 / 20 / 60 × year / half /
@@ -1510,7 +1515,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   - **Consequence:** the ER gate (I-02) can only select the better part of a signal that has no net edge;
     do not expect it to rescue strategy 4. It is a diagnostic and a possible filter for a better base
     signal. **I-02 dropped by the user 2026-10-15.**
-- ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39). **Built and run 2026-10-15,
+- ☑ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39). **Built and run 2026-10-15,
   waiting for the user's check.** Plan by Opus, code by Sonnet. `analytics/open_gap.py` (cash days
   09:30-16:00 New York from M1, classified; daily ATR(14); one record per regular day; features known
   at 10:00 / 11:00 are listed in `FEATURE_FIELDS` and tested not to read later bars; summaries per
@@ -1550,3 +1555,9 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
     hardly predictable at 11:00. The only candidate is the gap fade of 0.1-1 ATR gaps (fill first
     44 vs 37 %): test as a strategy with spread (the candle path and exits decide), ideas I-39.
 - ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (I-17).
+- ☐ **11.4 Gap fade as a strategy test** (I-39; candidate from 11.2). Spec first (`docs/strategy-gap-fade.md`):
+  NAS100 / US500, gap = cash open − previous cash close in daily ATR(14), only gaps of 0.1-1 ATR, entry at
+  the cash open, target the previous close, stop at the mirror level (1:1), exit at 16:00 if neither; no
+  overnight hold. Test with the spread table (and the fixed spread), robustness report, halves, stressed
+  costs; sweep only gap bucket, stop distance and exit time. Expected from 11.2: about +0.04-0.05 R gross
+  per trade (fill first 44 vs 37 %), so costs decide; report "no edge" if net is not positive in both halves.

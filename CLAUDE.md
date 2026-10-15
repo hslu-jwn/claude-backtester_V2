@@ -207,7 +207,7 @@ access; the user may supply the research). They help; they never override the ru
 | Liquidity sweep rules | reworked with the user 2026-10-12/13: options built (tolerance, 2/3 closes, wick+close, BoS before top, doji share), off by default, temporary Sweep menu on the chart; no rule adopted (study: no rule changes sweep quality); do not change defaults without his go |
 | Strategy 4 (trend following, Kaufman) | built 2026-10-14 (ROADMAP 10); with FTMO swap no variant is robust; **parked**; its SMA-band cross is strategy 2's optional trend filter (`SmaBandCross`) |
 | Costs | swap in the engine (17:00 New York rollover, triple day, net R only); **FTMO rates of 2026-10-14 are the defaults** (user, 2026-10-14); cost filter `CostConfig.max_cost_r` (spread + commission in R of the stop, off by default) |
-| Knowledge base + research tools (2026-10-14/15) | `knowledge/` from 6 books (topics, 45 ideas); robustness report (6.4), time splits (6.5), noise study (11.1), open / gap study (11.2) built, waiting for the user's check; one candidate: gap fade of 0.1-1 ATR gaps (I-39) |
+| Knowledge base + research tools (2026-10-14/15) | `knowledge/` from 6 books (topics, 45 ideas, trigger `Continue.Knowledge`); robustness report 6.4, time splits 6.5, MT5 history 6.6, spread table 6.7 (off by default), noise study 11.1, open / gap study 11.2 built and accepted 2026-10-15; no edge found yet; one candidate: gap fade of 0.1-1 ATR gaps (I-39 / ROADMAP 11.4) |
 | Risk / FTMO (Phase 5) | stubs only |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
 | MT5 | connection and demo test orders built, never run against FTMO |
@@ -232,6 +232,24 @@ access; the user may supply the research). They help; they never override the ru
 - **Start** (user says "Continue." or names a task): `git pull`, read `docs/HANDOFF.md`, this file and
   the ROADMAP entry of the task, run the tests as a baseline, then say in max 10 lines what you will do
   (plan, test cases, files, models) and ask all open questions at once. Then work test-first.
+- **Start, research mode** (user writes `Continue.Knowledge`): continue the research from the
+  knowledge base to find a tradeable edge; separate from `Continue.` (which follows the strategy
+  work's next step in `docs/HANDOFF.md`).
+  - First: `git pull`, read `docs/HANDOFF.md` (knowledge-base chat section and its Open list),
+    `knowledge/README.md`, `knowledge/ideas.md` (status column), `knowledge/topics/testing-and-robustness.md`
+    (checklist) and the ROADMAP entries of 6.4-6.7 and Phase 11; run the tests as a baseline.
+  - Then say in max 10 lines which idea / study comes next and why (best open candidate by evidence:
+    an idea that already survived a study beats a new one), test cases, files, models; ask all open
+    questions together, numbered.
+  - Rules: one idea at a time; test first; the idea's rule goes into a `docs/` spec before any strategy
+    code; every test with the robustness report (halves 2020-22 / 2023-26, share of profitable variants,
+    stressed costs, best trade removed) and the real cost model (spread table from `tools/spread_table.py`
+    where available, swap); report "no edge" honestly and record it in `knowledge/ideas.md` and the
+    ROADMAP; never change defaults (costs, sweep options, spread table) without the user's go; prefer
+    no overnight holds (swap).
+  - Models: Opus plans / designs, Sonnet codes and tests, a cheaper model for mechanical reading
+    (user's preference, 2026-10-15). New books: follow the process in `knowledge/README.md`.
+  - End: same End protocol as below, plus update the idea statuses in `knowledge/ideas.md`.
 - **During:** when the user says ok / fine / yes, it is final: write it into the repo in the same
   commit (rule -> `docs/` with "(rule set by the user, <date>)"; accepted issue -> ROADMAP line
   "accepted by the user <date>"; postponed/declined -> likewise). Never ask about it again.
