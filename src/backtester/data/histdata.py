@@ -77,7 +77,19 @@ _HOUR = pd.Timedelta(hours=1)
 _FILE_NAME = re.compile(r"^DAT_MT_(?P<symbol>[A-Z0-9]+)_M1_(?P<period>\d{6}|\d{4})\.csv$")
 _RAW_COLUMNS = ["date", "time", "open", "high", "low", "close", "volume"]
 # histdata's symbol in the file name -> ours (the name used by the cache, chart, costs)
-SYMBOL_NAMES = MappingProxyType({"NSXUSD": "NAS100", "SPXUSD": "US500"})
+SYMBOL_NAMES = MappingProxyType(
+    {
+        "NSXUSD": "NAS100",
+        "SPXUSD": "US500",
+        "GRXEUR": "GER40",
+        "UKXGBP": "UK100",
+        "JPXJPY": "JP225",
+        "ETXEUR": "EU50",
+        "WTIUSD": "USOIL",
+        "BCOUSD": "UKOIL",
+        "UDXUSD": "DXY",
+    }
+)
 
 
 class HistdataError(ValueError):
