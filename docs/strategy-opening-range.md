@@ -68,3 +68,16 @@ FX and metals trade both of their sessions, each with its own range and its own 
 - **Test** once on FTMO's MT5 data from 2021-09-14 with the variants chosen in development, real costs
   (`risk-management.md` › Costs), robustness report (halves, costs x 1.5, best trade removed, share of
   profitable variants). Report "no edge" honestly.
+
+## Details (set by Claude, 2026-10-15, with the user's go)
+
+- A session counts for the daily ATR as soon as it has one candle.
+- NR4 / inside use strict comparisons of the previous sessions' high - low; too little history = no trade.
+- A filter that fails on the first breakout candle skips the whole session (no waiting for a later
+  breakout); the volume filter applies to the first signal only, not to the reversal.
+- The candle closing exactly at open + `range_minutes` belongs to the range; a `band` session without a
+  candle closing at the open gets no trade.
+- A reversal may trigger on the candle that stopped the first trade (its close is beyond the other side).
+- An order skipped by the cost filter uses up the session's one trade.
+- `min_rel_volume` > 0 on a candle without volume (histdata: 0), with fewer than `volume_lookback`
+  sessions of history, or with a usual volume of 0 skips the session: it never passes silently.
