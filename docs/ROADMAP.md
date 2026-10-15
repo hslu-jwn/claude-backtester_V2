@@ -970,6 +970,15 @@ has no step yet.
   US100.cash 1.45 (NAS100 1.0 + 1.0), US500.cash 0.60 (0.5 + 0.25). Spreads are nearly flat over the day
   except the server-midnight bar (17:00 New York rollover: GBPUSD ~6.7 pip, GBPJPY ~21 pip) and slightly
   higher gold spreads in Asia. Changing the defaults is the user's call.
+  **Second check 2026-10-15 (after the setting was fixed):** `common.ini` still had `MaxBars=100000` (the
+  user's change had not been saved); Claude set it to 2147483647 (backup `common.ini.bak-2026-10-15` next to
+  it), closed MT5 gracefully and started it again (user: "do this yourself"). The terminal now reports
+  `maxbars` 100,000,000 and serves M1 with tick volume > 0 on every bar and a spread per bar: XAUUSD from
+  2015-05 (median spread 22 points), GBPUSD from 2015-11 (6), GBPJPY from 2016-01 (16), US100.cash and
+  US500.cash from 2017-12 (145 / 46); the FX and gold requests were capped at 4,000,000 bars, so they may
+  reach further back. Not yet exported or compared with the histdata cache; the spread over the years is a
+  historical server value and differs from today's (gold median 0.22 over the years against 0.42 in the last
+  3.5 months): the spread table (6.7) must be built per year as well as per hour.
 - ☐ **6.7 Spread by hour of day in the cost model** (user, 2026-10-14): spread table per symbol × hour
   (from 6.6), plus the rollover bar, optional news markup; replaces the fixed spread when given. Needed
   before the first day-trade strategy (knowledge base I-07, I-33, I-45). Volume rules (I-44) only after

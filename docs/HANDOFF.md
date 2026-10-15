@@ -42,16 +42,17 @@ session ends after this one, it may rewrite this file: merge both sections inste
     touch frequency; no first-30-minute continuation; 7 % trend days; **one candidate**: gaps of 0.1-1 ATR touch the
     previous close before the mirror level 44 vs 37 % (NAS100), 43 vs 38 % (US500), same sign in both halves
     (about +0.04-0.05 R per 1:1 fade before costs). Needs a strategy test with costs (idea I-39).
-- **MT5 history check (6.6):** the terminal serves only ~3.5 months of M1 (Max bars in chart = 100,000); every bar
-  has tick volume and spread. Median FTMO spreads against `SymbolCosts` are in ROADMAP 6.6 (gold and GBPJPY
+- **MT5 history check (6.6):** first the terminal served only ~3.5 months of M1 (Max bars in chart = 100,000);
+  fixed 2026-10-15, now 2015-16 onwards; every bar has tick volume and spread. Median FTMO spreads against `SymbolCosts` are in ROADMAP 6.6 (gold and GBPJPY
   higher than ours).
 - **Decisions of the user:** I-02 (noise gate) dropped 2026-10-15; defaults of the robustness report (Kaufman's)
   accepted; day-trade strategies without swap are the next family.
 
 **Open (needs the user), this chat:**
 1. Check 6.4, 6.5, 11.1, 11.2; then mark them ☑.
-2. MT5: set Tools › Options › Charts › Max bars in chart = Unlimited and restart MT5, then Claude re-runs the
-   history check (6.6) to see how many years of tick volume and spread FTMO serves.
+2. MT5 history (6.6): **done 2026-10-15**: `MaxBars` set to Unlimited in common.ini by Claude (backup next to it),
+   MT5 restarted; FTMO serves M1 with tick volume and spread from 2015-16 (FX, gold) and 2017-12 (indices).
+   Next: export it (read-only) for the spread table 6.7 and for volume A/B tests (I-44).
 3. Next steps in the agreed order: 11.3 time-of-day drift (XAUUSD / FX), 6.7 spread by hour of day in the cost
    model, then day-trade strategies (ORB I-07/I-08, compression break I-33, gap fade I-39) with the cost-to-target
    filter (I-45) and the free-path filter (I-37). Each strategy: spec in `docs/` first.
