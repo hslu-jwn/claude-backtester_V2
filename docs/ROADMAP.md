@@ -1474,7 +1474,43 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   - **Consequence:** the ER gate (I-02) can only select the better part of a signal that has no net edge;
     do not expect it to rescue strategy 4. It is a diagnostic and a possible filter for a better base
     signal. **I-02 dropped by the user 2026-10-15.**
-- ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39): gap fill by size, first 30 min vs
-  rest of day per half, share of trend days, share of day extremes in the first 90 min, last-hour new high,
-  Friday / month-end.
+- ☐ **11.2 Open / gap / trend-day study on NAS100 / US500** (I-09, I-39). **Built and run 2026-10-15,
+  waiting for the user's check.** Plan by Opus, code by Sonnet. `analytics/open_gap.py` (cash days
+  09:30-16:00 New York from M1, classified; daily ATR(14); one record per regular day; features known
+  at 10:00 / 11:00 are listed in `FEATURE_FIELDS` and tested not to read later bars; summaries per
+  half) and `python -m backtester.tools.open_gap_study` (`results/open_gap_study/`: days, exclusions,
+  gap_fill, first30, trend_days, extremes, last_hour). `metrics.month_part(date)` was extracted. Tests:
+  `tests/analytics/test_open_gap.py`, `test_open_gap_summaries.py`, `tests/tools/test_open_gap_study.py`.
+  **Data facts** (from the cache): the index feed has no bars 16:15-18:00 New York; the 16:00-16:14
+  bars are not the cash session; holiday CFD sessions end 12:59 (43-45 days), half days 13:14;
+  2023-02..07 has many hour-sized holes: 2023-26 loses about 130 of ~880 days (74 data holes, 54 first
+  bar missing, NAS100) against about 30 in 2020-22; ~1,450-1,520 regular days per symbol are used.
+  **Results** (2020-01 .. 2026-09; "gap" = cash open − previous cash close, the CFD trades overnight):
+  - **Gap fill (same day): 60 % NAS100, 58 % US500 (claim 48 %); by day 3: 76 % / 75 % (claim 76 %).**
+    It depends on size: <0.1 ATR 90-92 %, 0.1-0.25 74-76 %, 0.25-0.5 48-52 %, 0.5-1 29-31 %, 1+ 10-17 %.
+    Against the baseline "the same-size move the other way" (extend: 54 % overall, the random-walk
+    level) the excess is small: which level is touched FIRST, the previous close ("fill") or its
+    mirror ("extend"): NAS100 44 % vs 37 %, US500 43 % vs 38 % (rest: neither / same bar). Same sign in
+    both halves and both symbols; by bucket the edge sits in 0.1-0.25 ATR (54 vs 46, 58 vs 40) and, for
+    NAS100, 0.5-1 ATR (30 vs 17); 0.25-0.5 ATR has none.
+    As a 1:1 fade (target previous close, stop at the mirror level, exit at the close) this is about
+    +0.04-0.05 R per trade before costs (same-bar days counted as losses, days with neither level
+    exit at the close: not measured), z about 3 (NAS100) and 2 (US500), the two symbols are not
+    independent; cost per trade on a 0.1-0.25 ATR gap is a large share of that. Candidate, not a rule.
+  - **First 30 minutes vs the rest of the day: no continuation** (51-55 %, mean rest in that direction
+    +0.009 / −0.008 ATR, |t| < 1; 2020-22 55 %, 2023-26 49-51 %).
+  - **Trend days (open and close in the opposite 10 % of the range): 7 % of days** (claim 20 %, not
+    reproduced with this strict definition; 6-8 % in both halves, Fridays the same, 8-12 % in 2020-22).
+    Features at 11:00: gap unfilled lift 0.98-1.06, new extreme 10-11 lift 1.0, close at 11:00 in the
+    extreme fifth of the range so far lift 1.3-1.5 (10 % vs 7 %; partly mechanical).
+  - **Day high / low: 80-86 % of days have the high or the low in the first 90 minutes** (claim 90 %;
+    uniform 23 %, random walk 32 % each): high 38-42 %, low 46-52 %. The last hour has the high on
+    25-36 % of days and the low on 17-25 % (random walk 26 %): U-shape, more in 2020-22.
+  - **Last hour:** a new high of the day in the last hour is followed by a close at 0.85-0.89 of the
+    range (mechanical) and a mean close only +0.02 ATR above the old high; 2020-22 t +2.6..+3.6 (both
+    symbols, high and low), 2023-26 t −0.8..+1.4: not stable.
+  - **Consequence:** the claims of the books are mostly not reproduced as edges: gap fill is mostly
+    the random-walk touch frequency, the first 30 minutes do not continue, trend days are rare and
+    hardly predictable at 11:00. The only candidate is the gap fade of 0.1-1 ATR gaps (fill first
+    44 vs 37 %): test as a strategy with spread (the candle path and exits decide), ideas I-39.
 - ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (I-17).

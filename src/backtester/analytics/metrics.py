@@ -195,20 +195,24 @@ def _weekdays_in_month(year: int, month: int) -> list[int]:
     ]
 
 
-@_ranked(MONTH_PARTS.index)
-def by_month_part(t) -> str:
-    """ "first 3 days" / "last 3 days" of the entry's month counted in weekdays (no holiday
+def month_part(d) -> str:
+    """"first 3 days" / "last 3 days" of the date's month counted in weekdays (no holiday
     calendar), "mid" otherwise. A weekend day counts the weekdays before / after it. The
-    first part wins where they overlap."""
-    e = t.entry_time
-    weekdays = _weekdays_in_month(e.year, e.month)
-    before = sum(d <= e.day for d in weekdays)
-    after = sum(d >= e.day for d in weekdays)
+    first part wins where they overlap. `d`: a date or datetime."""
+    weekdays = _weekdays_in_month(d.year, d.month)
+    before = sum(x <= d.day for x in weekdays)
+    after = sum(x >= d.day for x in weekdays)
     if before <= MONTH_EDGE_DAYS:
         return MONTH_PARTS[0]
     if after <= MONTH_EDGE_DAYS:
         return MONTH_PARTS[2]
     return MONTH_PARTS[1]
+
+
+@_ranked(MONTH_PARTS.index)
+def by_month_part(t) -> str:
+    """The month part of the entry (see `month_part`)."""
+    return month_part(t.entry_time)
 
 
 @_ranked(NY_ORDER.index)
