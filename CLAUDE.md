@@ -218,8 +218,15 @@ access; the user may supply the research). They help; they never override the ru
   one line. Ask all open questions together, numbered. Never assume; on any doubt or conflict
   (also for CLAUDE.md, code, tests, config) ask before changing anything.
 - Small commits on the session's feature branch; no PR unless asked.
-- **Models:** Opus for architecture and hard logic, Sonnet for implementation, a cheaper model
-  for mechanical edits and searches (`/model opusplan` splits plan/work automatically).
+- **Models and subagents (rule set by the user, 2026-10-15):** the main session (Opus) plans,
+  designs, manages and reviews; coding and testing go to subagents (`Agent` tool). Claude picks
+  the subagent model per task and saves tokens: **Sonnet** for writing code and tests, hard
+  debugging and backtest runs that need judgment; **Haiku** for mechanical edits, searches,
+  reading files/books and running commands (pytest, ruff, graphify). One subagent per
+  independent piece; give each a complete brief (files, spec section, test cases, done = tests
+  green + ruff) because it starts without this chat's context. The main session checks the
+  result (diff, test output) before committing. Trivial one-line edits and git commands stay
+  in the main session; don't spawn an agent when doing it directly costs fewer tokens.
 - **Where to work:** the cloud has no market data (git-ignored) and no browser view of the
   app, so backtests and chart checks happen locally; docs and test-only work can run in the cloud.
 - **New strategies** must be one new folder under `strategy/` (copy `strategy/_template/`, its README has the steps)
@@ -247,8 +254,8 @@ access; the user may supply the research). They help; they never override the ru
     where available, swap); report "no edge" honestly and record it in `knowledge/ideas.md` and the
     ROADMAP; never change defaults (costs, sweep options, spread table) without the user's go; prefer
     no overnight holds (swap).
-  - Models: Opus plans / designs, Sonnet codes and tests, a cheaper model for mechanical reading
-    (user's preference, 2026-10-15). New books: follow the process in `knowledge/README.md`.
+  - Models: as in Working agreement › Models and subagents (Opus plans, subagents code / test /
+    read with Sonnet or Haiku). New books: follow the process in `knowledge/README.md`.
   - End: same End protocol as below, plus update the idea statuses in `knowledge/ideas.md`.
 - **During:** when the user says ok / fine / yes, it is final: write it into the repo in the same
   commit (rule -> `docs/` with "(rule set by the user, <date>)"; accepted issue -> ROADMAP line
