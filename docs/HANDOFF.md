@@ -6,52 +6,48 @@ Session protocol). The user does no file work. Newest state only; history is in 
 ## Branch
 `claude/happy-johnson-l6dmz2` (the session's branch; use the one the session prompt names if different)
 
-## Last session (2026-10-14): strategy 4, trend following after Kaufman; swap costs
-- **Source:** the user's request referred to Kaufman, *Trading Systems and Methods*, pp. 152-154 and "Appendix B" pp. 329-332.
-  In the 5th edition (2013), which the user supplied, pp. 152-154 cover Dunnigan's thrust method / Ruggiero's Dunnigan
-  trend, and pp. 329-332 (ch. 8) cover band vs delay, calculation period, n-day momentum and MPTDI. There is no
-  Appendix B. Spec: `docs/strategy-trend-following.md` (book findings and Claude's choices marked).
-- **Built:**
-  - **Engine:** signal exits (`Strategy.exits()`, `ExitReason.SIGNAL`) and orders without a TP.
-  - **Swap:** one night per 17:00 New York rollover, triple weekday, net R only, `TradeResult.swap_r`,
-    `CostConfig.swap_enabled`.
-  - **Strategy 4:** `strategy/trend_following/`, signals breakout / sma (+ ATR band) / momentum / kama /
-    dunnigan, 3 x ATR(20) stop, stop-and-reverse, 15m-1d.
-  - **Grid:** `python -m backtester.tools.trend_grid` with `--swap-file`.
-  - 1206 tests pass.
-- **FTMO swap rates (MT5, 2026-10-14)** are recorded in ROADMAP 10.4 and in `results/ftmo_swap_2026-10-14.json`
-  (git-ignored; recreate it from the ROADMAP table if it is missing).
-- **Result (ROADMAP 10.3 / 10.4):**
-  - Without swap, 4h / 1d and 1h sma + band are slightly positive. With FTMO swap, nothing on 15m-4h is
-    positive, because XAUUSD longs cost $61 per lot per night.
-  - Robustness check on XAUUSD + GBPJPY + NAS100 (chosen after the fact), 1h sma 40-60 x band 0.75-1.25: all 9
-    are positive with swap (+13 to +107 R). But each symbol is positive in only one half (XAU in 2023-26,
-    GBPJPY in 2020-22), and the drawdown is 47 R against 1.3 R per month. Not tradeable.
-- **MT5:** `python -m backtester.tools.mt5_info` failed with "Authorization failed". A plain
-  `mt5.initialize()` against the running terminal worked after the user logged in by hand in MT5. The login
-  saved in Settings ⚙ → Trading is probably outdated. The user posted a trial password in the chat; Claude did
-  not use it and advised changing it.
+**Two sessions share this checkout (2026-10-14/15).** Besides this one, a second session works on Phase 6 / 11
+(robustness report 6.4, time splits 6.5, noise study 11.1; see their ROADMAP entries and commits). Before committing:
+`git status` / `git pull`, stage only your own files, never `git add -A` over the other session's changes. If that
+session ends after this one, it may rewrite this file: merge both sections instead of overwriting.
+
+## Last session (2026-10-14/15, strategy 2 costs and filters): swap defaults, trend filter, rollover close, cost filter
+- **Swap defaults:** FTMO's MT5 rates of 2026-10-14 are now the default `SymbolCosts` (user, 2026-10-14;
+  risk-management.md › Costs). Net results of every strategy now include swap.
+- **Strategy 2 trend filter** (user: keep strategy 4 as a filter): `NyIndexSweepConfig.trend_filter`, off by default;
+  signals only in the direction of the last SMA ± band x ATR cross (shared class `SmaBandCross` in
+  `strategy/trend_following/indicators.py`, strategy 4 uses it too).
+- **Close before the rollover** (user: test it): `close_before_rollover`, off by default, closes at **16:15 ET**
+  (`rollover_close_minutes` 45) because the histdata index feed has no candles 16:15-18:00 ET. Rollover time constants
+  moved to `sessions.py` (layer rule: strategies may not import the engine).
+- **Cost filter** (user: build it): `CostConfig.max_cost_r`, off by default; the engine skips an order whose spread +
+  commission is above that many R of the stop and calls `Strategy.on_order_skipped` (strategy 2: no trade counted,
+  setup stays open; strategy 4: flat). Strategies 1 and 3 have no hook (noted in the spec).
+- **Results (ROADMAP 10.5):** strategy 2, 2020-26 with swap: -135 R; best combination close 16:15 + 15m filter -17 R,
+  close + cost 0.10 -50 R. Swap was -74 R (654 trades held overnight). No edge -> **strategy 2 parked by the user
+  2026-10-15**. CSVs: `results/s2_trend_filter/` (git-ignored).
+- 1348 tests pass.
 
 ## Accepted by the user (do not ask again)
-- Everything built this session, as it is ("End." 2026-10-14). ROADMAP 10.1-10.4 ☑.
-- Earlier: tests first, small commits, no PR; strategy 1 paused, strategy 3 dropped; sweep option defaults
-  stay off; temporary Sweep menu stays.
+- Everything built this session ("End." 2026-10-15); ROADMAP 10.5 ☑. FTMO swap rates as defaults. Trend filter code
+  stays (off). Strategy 2 parked.
+- Earlier: tests first, small commits, no PR; strategy 1 paused, strategy 3 dropped, strategy 4 parked; sweep option
+  defaults stay off; temporary Sweep menu stays.
 
 ## Open (needs the user)
-1. **Strategy 4:** drop it, or keep it as a filter (e.g. strategy 2 trades only in the direction of the 1h trend)?
-2. **Swap defaults:** should FTMO's rates become the app's default `SymbolCosts`? That would change the net
-   results of strategies 1-3. Until then the rates are 0.
-3. **Next:** the cost filter (skip entries where costs are a large share of the stop), or new edge sources
-   (session opening-range breakout, previous day / week high-low sweeps, regime filters).
-4. **Login:** update the MT5 login in Settings ⚙ → Trading (the user does this; never ask for credentials in chat).
+1. **Next:** Claude recommended the day-trade strategies of Phase 11 (opening-range breakout I-07/I-08, compression
+   break I-33) with the cost filter (I-45) and the free-path filter (I-37); no overnight holds, so no swap. The order
+   agreed in Phase 11 (after 6.4 / 6.5 / the studies) is the other session's area; check its state first.
+2. **Login:** update the MT5 login in Settings ⚙ → Trading (the user does this; never ask for credentials in chat).
 - **Known issues:**
   - ruff: the old RUF007 in `core/series.py`.
-  - `tools/no_wick_grid.py` is not ruff-formatted (unchanged since strategy 3).
-  - An untracked stray file `C:Usersjusti.claudeclaude-notify-signalsstop` in the repo root, from a notify
-    hook. It is not the project's; ask before deleting.
+  - Two hung `python.exe` processes running a scratch script `s2_filter.py` (from a crashed run 2026-10-14) may still
+    be open; harmless, close them in Task Manager (auto mode did not allow Claude to stop them).
+  - Strategy 2's `decisions` list still shows an order the cost filter skipped as taken (inspection only).
 
 ## Next step (suggested)
-Ask the open questions 1-3 together, then follow the user's choice (spec -> tests -> code).
+Read the other session's latest entries (ROADMAP 6.4, 6.5, 11.x), then ask the user which day-trade strategy to spec
+first (spec -> tests -> code).
 
 ## First prompt for the next chat
 `Continue.`

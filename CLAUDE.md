@@ -196,17 +196,17 @@ access; the user may supply the research). They help; they never override the ru
 - **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
 
-## Status (2026-10-14, end of session)
+## Status (2026-10-15, end of session)
 
 | Part | Status |
 |---|---|
 | Data (histdata.com, 5 symbols, 2018/2020-2026), chart, replay, overlays, settings, presets, results page | built, checked by the user |
 | Strategy 1 (session zone sweep) | built, **paused** by the user; full run 2020-2026 negative (ROADMAP 6.3) |
-| Strategy 2 (NY Open index sweep) | built; 2023-26 −3.4 R net (+42.7 gross), 2020-22 about −50 R; sweep, window and exit variants all within noise and not stable out of sample (ROADMAP 8.2.5); sweep options exist, off by default |
+| Strategy 2 (NY Open index sweep) | built, **parked** by the user 2026-10-15; 2020-26 −135 R net with FTMO swap (+29 gross); trend filter, close at 16:15 ET and cost filter (all off by default) improve it to −17 R at best, inside the noise (ROADMAP 8.2.5, 10.5) |
 | Strategy 3 (no-wick candle in the trend) | built 2026-10-13; all 24 variants (5m-1h, higher / same trend, close / body_end / middle) negative gross and net 2020-26 (ROADMAP 9.1); dropped by the user |
 | Liquidity sweep rules | reworked with the user 2026-10-12/13: options built (tolerance, 2/3 closes, wick+close, BoS before top, doji share), off by default, temporary Sweep menu on the chart; no rule adopted (study: no rule changes sweep quality); do not change defaults without his go |
-| Strategy 4 (trend following, Kaufman) | built 2026-10-14 (ROADMAP 10); with FTMO swap no variant is robust (best 1h sma 50 + 1 ATR band: +107 R on 3 picked symbols, each symbol positive in one half only); **parked**, drop or use as a filter is the user's call |
-| Swap | in the engine (17:00 New York rollover, triple day, net R only, `swap_r`); default rates still 0, FTMO rates of 2026-10-14 in `results/ftmo_swap_2026-10-14.json` via `trend_grid --swap-file`; making them default is the user's call |
+| Strategy 4 (trend following, Kaufman) | built 2026-10-14 (ROADMAP 10); with FTMO swap no variant is robust; **parked**; its SMA-band cross is strategy 2's optional trend filter (`SmaBandCross`) |
+| Costs | swap in the engine (17:00 New York rollover, triple day, net R only); **FTMO rates of 2026-10-14 are the defaults** (user, 2026-10-14); cost filter `CostConfig.max_cost_r` (spread + commission in R of the stop, off by default) |
 | Risk / FTMO (Phase 5) | stubs only |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
 | MT5 | connection and demo test orders built, never run against FTMO |

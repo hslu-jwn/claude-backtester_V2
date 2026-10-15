@@ -1384,8 +1384,9 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
   loses in 2023-26 in 6 of 9; NAS100 mixed. The total is positive because different symbols carry different
   periods, and the 3 symbols were chosen after seeing the results. +107 R over 81 months = about 1.3 R / month
   against a 47 R drawdown. CSVs: `results/trend_check/`.
-- ☐ **10.5 Strategy 4 as a trend filter for strategy 2** (user, 2026-10-14: "keep it as a filter"). **Built 2026-10-14,
-  waiting for the user's check.** `NyIndexSweepConfig.trend_filter` (off by default; spec: strategy-ny-indices.md ›
+- ☑ **10.5 Strategy 4 as a trend filter for strategy 2** (user, 2026-10-14: "keep it as a filter"). Built 2026-10-14,
+  accepted by the user 2026-10-15 with "End." (with the rollover close and the cost filter); **strategy 2 parked by the
+  user 2026-10-15** after these results. `NyIndexSweepConfig.trend_filter` (off by default; spec: strategy-ny-indices.md ›
   Trend filter): signals only in the direction of the last SMA ± band x ATR cross (strategy 4's `sma` signal, shared
   class `SmaBandCross`). Same session: FTMO swap rates of 2026-10-14 made the default costs (user, 2026-10-14).
 

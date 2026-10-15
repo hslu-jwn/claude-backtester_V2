@@ -1,5 +1,8 @@
 # Strategy 2: New York Open Index Sweep
 
+> **Parked by the user (2026-10-15):** no variant is positive net 2020-26 with FTMO swap (ROADMAP 8.2.5, 10.5). The code
+> and all options stay; nothing is built further until the user picks it up again.
+
 **Instruments:** NAS100, US500. Long described, short mirrored. Detection rules (swing, BoS, trend, sweep, confluences, EQ) are in `confluences.md`. Defined with the user on 2026-10-09/10. Strategy logic goes in `strategy/ny_index_sweep/`.
 
 > Note: **order blocks** use the first OB version (the new OB rules are on hold, `confluences.md` › Order block).
