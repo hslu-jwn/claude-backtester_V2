@@ -16,6 +16,8 @@ from types import MappingProxyType
 
 from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.base import Strategy
+from backtester.strategy.gap_fade.config import GapFadeConfig
+from backtester.strategy.gap_fade.strategy import GapFade
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.no_wick.strategy import NoWick
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
@@ -47,6 +49,7 @@ _SPECS = (
         "trend_following", "Strategy 4 · Trend following (Kaufman)",
         TrendFollowingConfig, TrendFollowing,
     ),
+    StrategySpec("gap_fade", "Strategy 5 · Gap fade (index open)", GapFadeConfig, GapFade),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

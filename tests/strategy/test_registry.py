@@ -32,6 +32,7 @@ def test_registered_names_and_order():
         "ny_index_sweep",
         "no_wick",
         "trend_following",
+        "gap_fade",
     ]
 
 

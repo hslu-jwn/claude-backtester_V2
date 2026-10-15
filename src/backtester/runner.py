@@ -54,6 +54,7 @@ from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, r
 from backtester.engine.spread_table import SpreadTable
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
+from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.registry import make_strategy, strategy_name
@@ -70,7 +71,13 @@ copyreg.pickle(MappingProxyType, lambda m: (_read_only, (dict(m),)))
 
 
 # every registered strategy's config (tests/strategy/test_registry.py keeps this in step)
-StrategyConfig = SessionZoneSweepConfig | NyIndexSweepConfig | NoWickConfig | TrendFollowingConfig
+StrategyConfig = (
+    SessionZoneSweepConfig
+    | NyIndexSweepConfig
+    | NoWickConfig
+    | TrendFollowingConfig
+    | GapFadeConfig
+)
 
 
 @dataclass(frozen=True, slots=True)

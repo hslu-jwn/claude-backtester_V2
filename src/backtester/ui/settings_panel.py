@@ -258,6 +258,7 @@ UNUSED = {
     "ny_index_sweep": {"engine.break_even_at_next_session"},
     "no_wick": {"engine.break_even_at_next_session"},
     "trend_following": {"engine.break_even_at_next_session"},
+    "gap_fade": {"engine.break_even_at_next_session"},
 }
 
 
