@@ -161,6 +161,7 @@ LABELS = {
     "strategy.bos_within_am": "BOS within X candles (AM)",
     "strategy.bos_within_pm": "BOS within X candles (PM)",
     "strategy.tap_timeout": "Tap within X candles of the BOS",
+    "engine.costs.max_cost_r": "Cost filter: skip orders with spread + commission above this R (0 = off)",
     "strategy.close_before_rollover": "Close open trades before the 17:00 New York rollover (no swap)",
     "strategy.rollover_close_minutes": "Rollover close: minutes before 17:00 ET",
     "strategy.trend_filter.enabled": "Trend filter: only trades in the direction of the last SMA cross",

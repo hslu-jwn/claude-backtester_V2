@@ -16,7 +16,8 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
 3b. `strategy.exits()`: the open trades whose `Order.ref` it names close at this candle's
    close (ExitReason.SIGNAL, costs as for any exit); `on_trade_closed` runs for each BEFORE
    the new orders are filled (stop-and-reverse, strategy 4). Unknown refs are ignored.
-4. New orders are filled at candle i's close and managed from candle i + 1. A limit order
+4. New orders are filled at candle i's close and managed from candle i + 1, unless the
+   cost filter skips them (`CostConfig.max_cost_r`; `strategy.on_order_skipped`). A limit order
    (`Order.limit_fill`) is filled at its level inside candle i; in that candle only its SL
    counts (SL first, a TP there is not counted), then it is managed from candle i + 1.
 
@@ -113,6 +114,9 @@ class Backtest:
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
                 trade = self._fill(order, candle, now)
+                if self._config.costs.too_expensive(trade.symbol, trade.risk):
+                    self._strategy.on_order_skipped(order.ref, now)
+                    continue
                 if order.limit_fill:
                     trade.on_fill_candle(candle, now)
                 if trade.is_closed:

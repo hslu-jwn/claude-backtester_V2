@@ -29,6 +29,14 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   swap_R = nights' swap per lot / (SL distance x value of a 1.0 price move per lot). It changes **net R
   only** (gross = chart prices) and is reported as `swap_r` per trade. ⚙️ `swap_enabled` (CostConfig) switches it
   off so results can be shown with and without swap. Rates come from FTMO via `tools.mt5_info` (defaults above).
+- ⚙️ **Cost filter** (user, 2026-10-14: build it in the engine, off by default; details chosen by Claude; knowledge base
+  I-45 cost-to-target): `CostConfig.max_cost_r`, default **0 = off**. An order whose spread + commission in R at its fill
+  (spread / SL distance + commission as a price distance / SL distance; only the costs that are switched on; no swap, no
+  slippage) is **above** this value is not filled. The engine tells the strategy (`Strategy.on_order_skipped(ref, now)`,
+  default: nothing): strategy 2 counts no trade for it and keeps the setup open for a later entry; strategy 4 stays flat
+  and the next signal event tries again. Equal to the limit is filled. Strategies 1 and 3 have no hook yet: for their
+  per-session limits a skipped order counts as taken (both are paused / dropped). The filter studied on strategy 2's
+  trades: ROADMAP 10.5.
 - ⚙️ **Slippage** in points per fill, applied to **entries and SL hits** (market fills); TPs are limit orders, no slippage. Defaults (rough starting estimates, to be checked against FTMO demo fills):
 
   | Symbol | Slippage per fill |

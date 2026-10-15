@@ -367,3 +367,29 @@ def test_new_signals_appending_future_candles_never_changes_orders_already_given
         part = run(ohlc[:cut], **config)
         known = [t for t in whole if t.entry_time <= DEFAULT_START + cut * H4.duration]
         assert [key(t) for t in part] == [key(t) for t in known], cut
+
+
+# --- cost filter (risk-management.md › Costs › Cost filter) -------------------------------
+
+
+def test_a_skipped_order_leaves_the_strategy_flat_so_the_next_event_tries_again():
+    from backtester.engine.costs import SymbolCosts
+
+    class Counting(TrendFollowing):
+        sent = 0
+
+        def on_candle(self, now, views):
+            orders = super().on_candle(now, views)
+            self.sent += len(orders)
+            return orders
+
+    up_again = (10.2, 10.5, 10.15, 10.45)  # 4: close 10.45 > highest high 10.3 -> long again
+    strategy = Counting("TEST", TrendFollowingConfig(timeframe=H4, **CFG))
+    costs = CostConfig(
+        symbols={"TEST": SymbolCosts(spread=1.0, commission_per_lot=0, contract_size=1)},
+        max_cost_r=0.5,  # spread 1.0 against stops under 1.0 away: every order is skipped
+    )
+    trades = run_backtest(
+        strategy, [build_series([*FLAT, BREAK_UP, up_again], H4)], EngineConfig(costs=costs)
+    )
+    assert trades == [] and strategy.sent == 2  # flat after the skip: the repeat is an entry

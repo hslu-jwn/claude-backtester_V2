@@ -33,6 +33,7 @@ from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 ROLLOVER_WEEKDAYS = range(5)  # New York Mon-Fri; no rollover on Saturday / Sunday dates
 WEDNESDAY = 2  # datetime.weekday(): Monday = 0
 SWAP_TRIPLE_NIGHTS = 3
+COST_FILTER_TOLERANCE = 1e-12  # floating point: a cost equal to the limit is filled
 
 
 def rollover_nights(
@@ -145,6 +146,12 @@ class CostConfig:
     commission_enabled: bool = True  # off: no commission
     swap_enabled: bool = True  # off: swap_r is 0
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
+    # cost filter: orders with spread + commission above this many R are not filled; 0 = off
+    max_cost_r: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.max_cost_r < 0:
+            raise ValueError("max_cost_r must be >= 0 (0 = off)")
 
     def for_symbol(self, symbol: str) -> SymbolCosts:
         try:
@@ -179,6 +186,13 @@ class CostConfig:
             return 0.0
         costs = self.for_symbol(symbol)
         return costs.commission_per_lot / (risk * costs.value_per_price_unit)
+
+    def too_expensive(self, symbol: str, risk: float) -> bool:
+        """Cost filter: spread + commission in R above `max_cost_r` (never when it is 0)."""
+        if not self.max_cost_r:
+            return False
+        cost = self.spread_r(symbol, risk) + self.commission_r(symbol, risk)
+        return cost > self.max_cost_r + COST_FILTER_TOLERANCE
 
     def swap_r(
         self,

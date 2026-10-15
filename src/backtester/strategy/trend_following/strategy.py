@@ -128,6 +128,10 @@ class TrendFollowing(Strategy):
         out, self._to_close = self._to_close, []
         return out
 
+    def on_order_skipped(self, ref: object, now: datetime) -> None:
+        if ref == self._ref:  # never filled (cost filter): flat, the next event tries again
+            self._position = self._ref = None
+
     def on_trade_closed(self, ref: object, result: TradeResult) -> None:
         if ref == self._ref:  # the position the strategy still holds (a stop-out)
             self._position = self._ref = None

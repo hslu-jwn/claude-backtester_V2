@@ -145,6 +145,16 @@ class NyIndexSweep(Strategy):
             self._open = [(s, t) for s, t in self._open if s is not ref]
             ref.trade_closed(result.exit_time)
 
+    def on_order_skipped(self, ref: object, now: datetime) -> None:
+        """Cost filter: the order was never filled, so it counts no trade and the setup
+        may enter again (risk-management.md › Costs › Cost filter)."""
+        if not isinstance(ref, Setup):
+            return
+        self._open = [(s, t) for s, t in self._open if s is not ref]
+        if self.window is not None and self.window.window == ref.window:
+            self.window.trades -= 1
+        ref.trade_closed(now)
+
     def exits(self) -> list[object]:
         out, self._to_close = self._to_close, []
         return out

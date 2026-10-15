@@ -126,7 +126,9 @@ def main(argv: list[str] | None = None) -> int:
                 write_csv(args.out / "summary.csv", summary)
                 write_csv(args.out / "by_year.csv", years)
                 write_csv(args.out / "split.csv", split)
-    print(f"{'variant':28}{'trades':>8}{'win%':>7}{'gross R':>10}{'net R':>10}{'<=22':>9}{'>22':>9}")
+    print(
+        f"{'variant':28}{'trades':>8}{'win%':>7}{'gross R':>10}{'net R':>10}{'<=22':>9}{'>22':>9}"
+    )
     halves = {(r["variant"], r["half"]): r["net_r_net"] for r in split if r["symbol"] == "ALL"}
     for r in (r for r in summary if r["symbol"] == "ALL"):
         a = halves[(r["variant"], f"<= {FIRST_HALF_END_YEAR}")]

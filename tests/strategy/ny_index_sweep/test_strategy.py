@@ -262,7 +262,10 @@ def rollover(week):
     return base, closed
 
 
-def cutoff(t, minutes=1):
+ROLLOVER_MINUTES = NyIndexSweepConfig().rollover_close_minutes
+
+
+def cutoff(t, minutes=ROLLOVER_MINUTES):
     local = t.astimezone(NEW_YORK)
     return datetime.combine(local.date(), time(17, 0), NEW_YORK) - timedelta(minutes=minutes)
 
@@ -273,13 +276,17 @@ def test_close_before_rollover_no_trade_pays_swap(rollover):
     assert closed and all(t.swap_r == 0 for t in closed)
 
 
-def test_close_before_rollover_exits_at_the_1659_close_of_the_entry_day(rollover):
+def test_rollover_close_default_is_the_1615_close_before_the_feed_gap():
+    assert NyIndexSweepConfig().rollover_close_minutes == 45
+
+
+def test_close_before_rollover_exits_at_the_cutoff_close_of_the_entry_day(rollover):
     base, closed = rollover
     assert len(closed) == len(base)  # the windows end at 16:00: no re-entry is possible
     for b, c in zip(base, closed, strict=True):
         assert (b.entry_time, b.direction, b.entry) == (c.entry_time, c.direction, c.entry)
-        if b.exit_time < cutoff(b.entry_time):
-            assert c == b  # closed before 16:59 anyway: unchanged
+        if b.exit_time <= cutoff(b.entry_time):
+            assert c == b  # closed by then anyway (an SL in the cutoff candle comes first)
         else:
             assert c.exit_reason is ExitReason.SIGNAL
             assert c.exit_time == cutoff(b.entry_time).astimezone(UTC)
@@ -288,3 +295,18 @@ def test_close_before_rollover_exits_at_the_1659_close_of_the_entry_day(rollover
 def test_rollover_close_minutes_must_be_at_least_one():
     with pytest.raises(ValueError):
         NyIndexSweepConfig(close_before_rollover=True, rollover_close_minutes=0)
+
+
+# --- cost filter (risk-management.md › Costs › Cost filter) -------------------------------
+
+
+def test_skipped_orders_count_no_trade_and_free_the_setup(week):
+    m1, base, _ = week
+    strategy = NyIndexSweep("NAS100")
+    skip_all = EngineConfig(costs=CostConfig(max_cost_r=1e-9), break_even_at_next_session=False)
+    assert run_backtest(strategy, series(m1), skip_all) == []
+    assert any(d.order is not None for d in strategy.decisions)  # orders were sent
+    assert not any("per session reached" in d.rejected for d in strategy.decisions)
+    assert sum(d.order is not None for d in strategy.decisions) > sum(
+        d.order is not None for d in base.decisions
+    )  # re-entries the skipped trades made possible
