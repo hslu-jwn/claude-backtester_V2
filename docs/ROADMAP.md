@@ -1613,6 +1613,11 @@ changes results, defaults changed only with the user's go.
   same candles (entry, exit, spread, swap, R), every difference explained.
 - ☐ **12.6 Stressed fills** (T-07): seeded random slippage on stop / market fills and "touch is not a fill" for
   limits, as an extra column in the robustness report.
+- ☐ **12.8 Engine slippage** (found 2026-10-15, filed by the user's go the same day): `SymbolCosts.slippage`
+  (`engine/costs.py`) is defined but the engine never applies it, so every backtest so far ran without slippage
+  although `risk-management.md › Slippage` says entries and SL hits get it (TPs none). Apply it in the engine
+  (net R only, reported per trade like `spread_r`), decide with the user whether time / signal exits count as
+  market fills, and rerun the open studies' headline numbers to show the change.
 - ☐ **12.7 Monte Carlo backtester** (user, 2026-10-15): one tool and results page that runs the Monte Carlo kinds
   on a backtest: trade order / day reshuffle (5.3, account drawdown and FTMO pass rate), random entries (12.1),
   random fills (12.6), synthetic price paths. Decided by the user 2026-10-15: **all four kinds, shown in the
