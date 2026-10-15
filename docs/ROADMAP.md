@@ -1587,3 +1587,29 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   no prop firm needed): public trade data (aggTrades, aggressor side) of BTCUSDT / ETHUSDT, reduced to 1m bars
   with buy / sell volume, delta and trade count; the raw files are deleted after each month.
 - ☐ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
+
+## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
+
+Lessons from HftBacktest, VectorBT, NautilusTrader and prediction-market-backtesting, read 2026-10-15
+(`knowledge/topics/backtest-frameworks.md`, ideas T-02..T-07). Each step test-first, off by default where it
+changes results, defaults changed only with the user's go.
+
+- ☐ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
+  Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
+  windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
+  costs, and report where the strategy's net R sits (percentile, mean and spread of the random runs) in the
+  robustness report. First use: the gap fade (11.4 / 11.7).
+- ☐ **12.2 Intrabar order from M1** (T-03): when SL and TP are both inside one candle, read the M1 bars inside it
+  to see which came first; only a conflict inside one M1 bar stays SL first (CLAUDE.md allows "unless a lower
+  timeframe resolves it"). Option, off by default; report how many trades change.
+- ☐ **12.3 Walk-forward splitter** (T-04): rolling and anchored windows as a shared tool for 6.1 / 6.2 and studies;
+  11.7 becomes its first user.
+- ☐ **12.4 Parameter heat map** (T-05): two parameters, one metric (net R, R per trade), on the results page.
+  Visual step.
+- ☐ **12.5 Demo reconciliation** (T-06; before Phase 7): demo trades from MT5 next to the engine's trades on the
+  same candles (entry, exit, spread, swap, R), every difference explained.
+- ☐ **12.6 Stressed fills** (T-07): seeded random slippage on stop / market fills and "touch is not a fill" for
+  limits, as an extra column in the robustness report.
+- ☐ **12.7 Monte Carlo backtester** (user, 2026-10-15): one tool and results page that runs the Monte Carlo kinds
+  on a backtest: trade order / day reshuffle (5.3, account drawdown and FTMO pass rate), random entries (12.1),
+  random fills (12.6), optional synthetic price paths. Scope to be agreed with the user before building.

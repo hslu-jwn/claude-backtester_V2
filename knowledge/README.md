@@ -18,6 +18,7 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | File | Covers |
 |---|---|
 | [testing-and-robustness.md](topics/testing-and-robustness.md) | IS/OOS, walk-forward, parameter plateaus, robustness %, shocks, checklist |
+| [backtest-frameworks.md](topics/backtest-frameworks.md) | Lessons from HftBacktest, VectorBT, NautilusTrader, prediction-market backtesting; the four kinds of Monte Carlo |
 | [markets-and-regimes.md](topics/markets-and-regimes.md) | Noise / efficiency ratio, which market suits which style, edge decay |
 | [trend-following.md](topics/trend-following.md) | Why trends pay, methods compared, improvements (pullback, delay, filters) |
 | [breakouts-and-opening-range.md](topics/breakouts-and-opening-range.md) | N-day and volatility breakouts, ORB family, inside-day filter |

@@ -97,6 +97,10 @@ Derived from K ch.21-24 (full version with page refs: `books/kaufman-tsm-ch21-24
 12. Walk-forward with stable parameters; final hold-out untouched.
 13. Year/half table, slope of returns, best trade removed, top 10 wins/losses studied.
 14. Shock-day check.
+14a. Random-entry baseline: net R percentile against 1,000 seeded random-entry runs with the same
+    exits and costs (T-02; [backtest-frameworks.md](backtest-frameworks.md)).
+14b. SL and TP in one candle: resolved from M1, not "SL first" (T-03).
+14c. Stressed fills: seeded random slippage; the result must survive it (T-07).
 15. Enough trades (dozens to hundreds); standard error of expectancy reported.
 16. Time in market and swap in R reported separately.
 
@@ -109,6 +113,7 @@ Derived from K ch.21-24 (full version with page refs: `books/kaufman-tsm-ch21-24
 
 **Before live**
 21. Paper/demo with worst-of-5-minutes fills, same rules, same data source; compare to expectation.
+21a. Reconcile demo trades with the engine on the same candles before trusting either (T-06).
 22. Live monitoring: binomial test of the loss streak and chi-square of live vs expected win rate
     decide whether a system is "broken" (K p.1092-1097). Retest only after 5-10 % new data.
 
