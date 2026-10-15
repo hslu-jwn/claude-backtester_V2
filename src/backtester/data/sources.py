@@ -17,7 +17,8 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.data.adapters.cache_adapter import CacheAdapter, cached_days
-from backtester.data.cache import DEFAULT_CACHE_DIR
+from backtester.data.binance import CACHE_DIR as BINANCE_CACHE_DIR
+from backtester.data.cache import DEFAULT_CACHE_DIR, MT5_CACHE_DIR
 
 
 @dataclass(frozen=True)
@@ -60,10 +61,38 @@ class SymbolSources:
 
 
 # Decimals of the quoted price, per symbol the app knows (chart axis, reports). histdata
-# writes the indices with 3 decimals; MT5 index CFDs quote 2.
-PRICE_DIGITS = MappingProxyType({"XAUUSD": 3, "GBPUSD": 5, "GBPJPY": 3, "NAS100": 2, "US500": 2})
+# writes the indices with 3 decimals; MT5 index CFDs quote 2. The symbols of ROADMAP 11.8 /
+# 11.9 use FTMO's `digits` (MT5 symbol_info, 2026-10-15); histdata's are never higher.
+PRICE_DIGITS = MappingProxyType(
+    {
+        "XAUUSD": 3, "GBPUSD": 5, "GBPJPY": 3, "NAS100": 2, "US500": 2,
+        # histdata.com and FTMO
+        "EURUSD": 5, "USDJPY": 3, "AUDUSD": 5, "USDCAD": 5, "USDCHF": 5, "NZDUSD": 5,
+        "EURJPY": 3, "EURGBP": 5, "XAGUSD": 3, "GER40": 2, "UK100": 2, "JP225": 2, "EU50": 2,
+        "USOIL": 3, "UKOIL": 3, "DXY": 3,
+        # FTMO only (data/cache/mt5)
+        "US30": 2, "US2000": 2, "NATGAS": 3, "BTCUSD": 2, "ETHUSD": 2,
+        # Binance futures (data/cache/binance)
+        "BTCUSDT": 2, "ETHUSDT": 2,
+    }
+)  # fmt: skip
 
-DEFAULT_SOURCES = SymbolSources({symbol: DEFAULT_CACHE_DIR for symbol in PRICE_DIGITS})
+# Symbols that have no histdata.com file: they are read from another cache (ROADMAP 11.8 / 11.9).
+MT5_ONLY = ("US30", "US2000", "NATGAS", "BTCUSD", "ETHUSD")
+BINANCE_SYMBOLS = ("BTCUSDT", "ETHUSDT")
+
+DEFAULT_SOURCES = SymbolSources(
+    {
+        symbol: (
+            MT5_CACHE_DIR
+            if symbol in MT5_ONLY
+            else BINANCE_CACHE_DIR
+            if symbol in BINANCE_SYMBOLS
+            else DEFAULT_CACHE_DIR
+        )
+        for symbol in PRICE_DIGITS
+    }
+)
 
 
 def warmup_start(cached: set[date], start: date, max_days: int) -> date:

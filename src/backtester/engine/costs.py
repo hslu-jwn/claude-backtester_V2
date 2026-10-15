@@ -85,6 +85,8 @@ class SymbolCosts:
 
 USDJPY_APPROX = 150.0  # GBPJPY pip value in USD goes through USDJPY; fixed setting
 FRIDAY = 4
+BINANCE_TAKER_FEE = 0.0005  # placeholder: 0.05 % per side (ROADMAP 11.9)
+BINANCE_REFERENCE_PRICE = MappingProxyType({"BTCUSDT": 100_000.0, "ETHUSDT": 4_000.0})  # placeholder
 
 # Swap: FTMO's MT5 rates of 2026-10-14 (USD per lot per night, ROADMAP 10.4), the default
 # since the user's decision of 2026-10-14. Today's rates, also applied to older years.
@@ -137,8 +139,41 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
             swap_short_per_lot=-0.4575,
             swap_triple_weekday=FRIDAY,
         ),
+        # --- ROADMAP 11.8 / 11.9, read from the FTMO MT5 terminal on 2026-10-15 ---------
+        # spread = median of the last 60 cached days of M1 bar spreads (data/cache/mt5);
+        # swap = symbol_info swap points x tick value (USD per lot per night); quote_to_usd
+        # from the tick value; slippage = half the spread (rough, like the others);
+        # commission: FX $5 as GBPUSD, XAGUSD $6 as XAUUSD (assumptions: not in symbol_info),
+        # indices / energy / DXY 0. Crypto swap is a percentage mode in MT5: 0 here.
+        "EURUSD": SymbolCosts(0.00002, 5.0, 100_000, slippage=0.00001, swap_long_per_lot=-8.53, swap_short_per_lot=0.21, swap_triple_weekday=WEDNESDAY),
+        "AUDUSD": SymbolCosts(0.00002, 5.0, 100_000, slippage=0.00001, swap_long_per_lot=-3.04, swap_short_per_lot=-6.54),
+        "NZDUSD": SymbolCosts(0.00003, 5.0, 100_000, slippage=0.000015, swap_long_per_lot=-4.78, swap_short_per_lot=0.01),
+        "EURGBP": SymbolCosts(0.00004, 5.0, 100_000, 1.3271, slippage=0.00002, swap_long_per_lot=-8.4804, swap_short_per_lot=0.0),
+        "USDJPY": SymbolCosts(0.003, 5.0, 100_000, 0.00632, slippage=0.0015, swap_long_per_lot=1.0813, swap_short_per_lot=-11.0347),
+        "USDCAD": SymbolCosts(0.00003, 5.0, 100_000, 0.7047, slippage=0.000015, swap_long_per_lot=0.4792, swap_short_per_lot=-8.4426),
+        "USDCHF": SymbolCosts(0.00005, 5.0, 100_000, 1.2088, slippage=0.000025, swap_long_per_lot=1.5715, swap_short_per_lot=-16.2468),
+        "EURJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00632, slippage=0.0045, swap_long_per_lot=1.328, swap_short_per_lot=-7.6199),
+        "XAGUSD": SymbolCosts(0.049, 6.0, 5000, slippage=0.0245, swap_long_per_lot=-68.05, swap_short_per_lot=0.30),
+        "GER40": SymbolCosts(1.53, 0.0, 1, 1.1211, slippage=0.765, swap_long_per_lot=-5.0571, swap_short_per_lot=-0.0511, swap_triple_weekday=FRIDAY),
+        "UK100": SymbolCosts(1.45, 0.0, 1, 1.3271, slippage=0.725, swap_long_per_lot=-3.2063, swap_short_per_lot=0.148, swap_triple_weekday=FRIDAY),
+        "JP225": SymbolCosts(10.0, 0.0, 10, 0.00632, slippage=5.0, swap_long_per_lot=-0.5683, swap_short_per_lot=-0.1894, swap_triple_weekday=FRIDAY),
+        "EU50": SymbolCosts(1.06, 0.0, 1, 1.1211, slippage=0.53, swap_long_per_lot=-1.2359, swap_short_per_lot=-0.0124, swap_triple_weekday=FRIDAY),
+        "USOIL": SymbolCosts(0.075, 0.0, 100, slippage=0.0375, swap_long_per_lot=4.966, swap_short_per_lot=-22.54, swap_triple_weekday=FRIDAY),
+        "UKOIL": SymbolCosts(0.069, 0.0, 100, slippage=0.0345, swap_long_per_lot=6.097, swap_short_per_lot=-27.582, swap_triple_weekday=FRIDAY),
+        "DXY": SymbolCosts(0.018, 0.0, 100, slippage=0.009, swap_long_per_lot=-2.337, swap_short_per_lot=0.118, swap_triple_weekday=FRIDAY),
+        "US30": SymbolCosts(2.28, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
+        "US2000": SymbolCosts(0.93, 0.0, 1, slippage=0.465, swap_long_per_lot=-0.5735, swap_short_per_lot=-0.0172, swap_triple_weekday=FRIDAY),
+        "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
+        "BTCUSD": SymbolCosts(1.0, 0.0, 1, slippage=0.5, swap_triple_weekday=FRIDAY),
+        "ETHUSD": SymbolCosts(0.6, 0.0, 10, slippage=0.3, swap_triple_weekday=FRIDAY),
+        # --- PLACEHOLDER, to be confirmed by the user (ROADMAP 11.9): Binance futures ---
+        # taker fee 0.05 % per side as dollars per 1.0 lot (1 coin) at a fixed reference price
+        # (a percentage of notional is not modelled); spread 0; funding (data/cache/binance_funding)
+        # not applied yet, so swap 0.
+        "BTCUSDT": SymbolCosts(0.0, 2 * BINANCE_TAKER_FEE * BINANCE_REFERENCE_PRICE["BTCUSDT"], 1),
+        "ETHUSDT": SymbolCosts(0.0, 2 * BINANCE_TAKER_FEE * BINANCE_REFERENCE_PRICE["ETHUSDT"], 1),
     }
-)
+)  # fmt: skip
 
 
 @dataclass(frozen=True, slots=True)

@@ -79,3 +79,68 @@ def test_cached_block_is_the_run_of_consecutive_cached_days():
     )
     with pytest.raises(KeyError):
         cached_block(cached, d + timedelta(days=3))
+
+
+# --- ROADMAP 11.8 / 11.9: more symbols -------------------------------------------------
+
+HISTDATA_NAMES = [
+    "EURUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "NZDUSD",
+    "EURJPY",
+    "EURGBP",
+    "XAGUSD",
+    "GER40",
+    "UK100",
+    "JP225",
+    "EU50",
+    "USOIL",
+    "UKOIL",
+    "DXY",
+]
+MT5_ONLY_NAMES = ["US30", "US2000", "NATGAS", "BTCUSD", "ETHUSD"]
+BINANCE_NAMES = ["BTCUSDT", "ETHUSDT"]
+
+
+@pytest.mark.parametrize("symbol", HISTDATA_NAMES)
+def test_new_histdata_symbols_default_to_histdata(symbol):
+    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/histdata")
+
+
+@pytest.mark.parametrize("symbol", MT5_ONLY_NAMES)
+def test_symbols_only_on_ftmo_default_to_the_mt5_cache(symbol):
+    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/mt5")
+
+
+@pytest.mark.parametrize("symbol", BINANCE_NAMES)
+def test_binance_symbols_default_to_the_binance_cache(symbol):
+    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/binance")
+
+
+def test_every_default_symbol_has_price_digits_and_costs():
+    from backtester.data.sources import PRICE_DIGITS
+    from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
+
+    assert set(DEFAULT_SOURCES.symbols) == set(PRICE_DIGITS) == set(DEFAULT_SYMBOL_COSTS)
+    assert len(PRICE_DIGITS) == 5 + 16 + 5 + 2
+
+
+def test_the_original_five_symbols_keep_their_digits():
+    from backtester.data.sources import PRICE_DIGITS
+
+    original = {"XAUUSD": 3, "GBPUSD": 5, "GBPJPY": 3, "NAS100": 2, "US500": 2}
+    assert {s: PRICE_DIGITS[s] for s in original} == original
+
+
+@pytest.mark.parametrize(
+    ("symbol", "digits"),
+    [("EURUSD", 5), ("USDJPY", 3), ("XAGUSD", 3), ("GER40", 2), ("USOIL", 3), ("DXY", 3),
+     ("NATGAS", 3), ("BTCUSD", 2), ("BTCUSDT", 2)],
+)  # fmt: skip
+def test_new_price_digits(symbol, digits):
+    from backtester.data.sources import PRICE_DIGITS
+
+    assert PRICE_DIGITS[symbol] == digits

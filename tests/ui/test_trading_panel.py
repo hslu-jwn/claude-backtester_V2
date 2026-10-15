@@ -7,6 +7,7 @@ import json
 from fake_keyring import FakeKeyring
 from fake_mt5 import FakeMt5
 
+from backtester.data.sources import PRICE_DIGITS
 from backtester.live.credentials import Credentials, load_credentials
 from backtester.ui import trading_panel
 from backtester.ui.trading_panel import PASSWORD_NONE, PASSWORD_SAVED, Deps, trading_action
@@ -34,9 +35,9 @@ def deps(tmp_path, store=None, mt5=None):
 def test_load_with_nothing_saved(tmp_path):
     out = trading_action("load", {}, deps(tmp_path))
     assert out["fields"]["login"] == "" and out["fields"]["server"] == ""
-    assert out["fields"]["symbols"] == {
-        s: s for s in ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
-    }
+    original = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
+    assert {s: out["fields"]["symbols"][s] for s in original} == {s: s for s in original}
+    assert set(out["fields"]["symbols"]) == set(PRICE_DIGITS)  # + ROADMAP 11.8 / 11.9
     assert out["password_placeholder"] == PASSWORD_NONE
     assert "not measured yet" in out["clock"]
 
@@ -49,7 +50,8 @@ def test_save_puts_secrets_only_in_the_credential_store(tmp_path):
     text = (tmp_path / "trading.json").read_text(encoding="utf-8")
     for secret in ("51234567", "s3cr3t", "Broker-Demo7"):
         assert secret not in text
-    assert json.loads(text)["symbols"] == {
+    saved = json.loads(text)["symbols"]
+    assert {s: saved[s] for s in ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")} == {
         "XAUUSD": "XAUUSD.x",
         "GBPUSD": "GBPUSD",
         "GBPJPY": "GBPJPY",

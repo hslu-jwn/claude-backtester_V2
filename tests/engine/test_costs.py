@@ -45,3 +45,56 @@ def test_indices_have_no_commission_so_break_even_is_the_spread(symbol):
     config = CostConfig()
     assert config.commission_r(symbol, risk=20.0) == 0
     assert config.break_even_offset(symbol) == DEFAULT_SYMBOL_COSTS[symbol].spread
+
+
+# --- ROADMAP 11.8 / 11.9: FTMO costs of the new symbols (read from the terminal 2026-10-15) ----
+
+NEW_FTMO = [  # symbol, spread, swap long, swap short, triple weekday (0 = Monday)
+    ("EURUSD", 0.00002, -8.53, 0.21, 2),
+    ("USDJPY", 0.003, 1.0813, -11.0347, 2),
+    ("XAGUSD", 0.049, -68.05, 0.30, 2),
+    ("GER40", 1.53, -5.0571, -0.0511, 4),
+    ("JP225", 10.0, -0.5683, -0.1894, 4),
+    ("USOIL", 0.075, 4.966, -22.54, 4),
+    ("US30", 2.28, -11.7596, 0.5936, 4),
+    ("NATGAS", 0.06, -5.84, 1.27, 4),
+]
+
+
+@pytest.mark.parametrize(("symbol", "spread", "long", "short", "triple"), NEW_FTMO)
+def test_new_ftmo_symbols_spread_and_swap(symbol, spread, long, short, triple):
+    costs = DEFAULT_SYMBOL_COSTS[symbol]
+    assert costs.spread == pytest.approx(spread)
+    assert costs.swap_long_per_lot == pytest.approx(long, abs=1e-4)
+    assert costs.swap_short_per_lot == pytest.approx(short, abs=1e-4)
+    assert costs.swap_triple_weekday == triple
+
+
+def test_quote_currency_conversion_and_contract_sizes():
+    assert DEFAULT_SYMBOL_COSTS["USDJPY"].quote_to_usd == pytest.approx(0.00632, rel=1e-3)
+    assert DEFAULT_SYMBOL_COSTS["GER40"].quote_to_usd == pytest.approx(1.1211, rel=1e-3)
+    assert DEFAULT_SYMBOL_COSTS["JP225"].contract_size == 10
+    assert DEFAULT_SYMBOL_COSTS["XAGUSD"].contract_size == 5000
+    assert DEFAULT_SYMBOL_COSTS["EURUSD"].contract_size == 100_000
+
+
+def test_commission_of_the_new_symbols():
+    assert DEFAULT_SYMBOL_COSTS["EURUSD"].commission_per_lot == 5.0
+    for symbol in ("GER40", "US30", "USOIL", "DXY", "NATGAS"):
+        assert DEFAULT_SYMBOL_COSTS[symbol].commission_per_lot == 0.0
+
+
+def test_binance_placeholder_costs_are_marked_and_flat():
+    for symbol in ("BTCUSDT", "ETHUSDT"):
+        costs = DEFAULT_SYMBOL_COSTS[symbol]
+        assert costs.spread == 0.0 and costs.swap_long_per_lot == costs.swap_short_per_lot == 0.0
+        assert costs.contract_size == 1
+    # 0.05 % taker fee per side at the reference price: 2 x 0.0005 x 100,000 per BTC
+    assert DEFAULT_SYMBOL_COSTS["BTCUSDT"].commission_per_lot == pytest.approx(100.0)
+    assert DEFAULT_SYMBOL_COSTS["ETHUSDT"].commission_per_lot == pytest.approx(4.0)
+
+
+def test_existing_five_symbols_are_unchanged():
+    assert DEFAULT_SYMBOL_COSTS["XAUUSD"].swap_long_per_lot == -61.27
+    assert DEFAULT_SYMBOL_COSTS["GBPJPY"].quote_to_usd == pytest.approx(1 / 150.0)
+    assert DEFAULT_SYMBOL_COSTS["NAS100"].spread == 1.0

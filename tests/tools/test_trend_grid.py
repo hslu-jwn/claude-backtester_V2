@@ -243,7 +243,7 @@ def test_swap_file_overrides_symbol_costs_and_keeps_the_rest(tmp_path):
 @pytest.mark.parametrize(
     "content",
     [
-        '{"EURUSD": {"long": -1}}',  # unknown symbol
+        '{"FOOBAR": {"long": -1}}',  # unknown symbol
         '{"XAUUSD": {"long": -1, "bogus": 2}}',  # unknown key
         '{"XAUUSD": {"triple_weekday": 7}}',  # not a weekday
         '{"XAUUSD": {"long": "x"}}',  # not a number
