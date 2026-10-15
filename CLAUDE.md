@@ -207,6 +207,7 @@ access; the user may supply the research). They help; they never override the ru
 | Liquidity sweep rules | reworked with the user 2026-10-12/13: options built (tolerance, 2/3 closes, wick+close, BoS before top, doji share), off by default, temporary Sweep menu on the chart; no rule adopted (study: no rule changes sweep quality); do not change defaults without his go |
 | Strategy 4 (trend following, Kaufman) | built 2026-10-14 (ROADMAP 10); with FTMO swap no variant is robust; **parked**; its SMA-band cross is strategy 2's optional trend filter (`SmaBandCross`) |
 | Costs | swap in the engine (17:00 New York rollover, triple day, net R only); **FTMO rates of 2026-10-14 are the defaults** (user, 2026-10-14); cost filter `CostConfig.max_cost_r` (spread + commission in R of the stop, off by default) |
+| Knowledge base + research tools (2026-10-14/15) | `knowledge/` from 6 books (topics, 45 ideas); robustness report (6.4), time splits (6.5), noise study (11.1), open / gap study (11.2) built, waiting for the user's check; one candidate: gap fade of 0.1-1 ATR gaps (I-39) |
 | Risk / FTMO (Phase 5) | stubs only |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
 | MT5 | connection and demo test orders built, never run against FTMO |

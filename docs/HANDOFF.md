@@ -28,6 +28,34 @@ session ends after this one, it may rewrite this file: merge both sections inste
   2026-10-15**. CSVs: `results/s2_trend_filter/` (git-ignored).
 - 1348 tests pass.
 
+## Last session, second chat (2026-10-14/15, books, knowledge base, research tools)
+- **Knowledge base** `knowledge/` (pointer in CLAUDE.md): `README.md` (index, how to add a book), `books/` (reading
+  notes: Kaufman *Trading Systems and Methods*, Douglas, Hougaard, Volman, Aziz, Coulling), `topics/` (11+1 synthesis
+  files, backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (backlog I-xx / T-xx with status),
+  `reading-brief.md` (brief for reading agents). Books come from `00_Literature/Trading`. Background, not rules.
+- **Built, all waiting for the user's check (how to check is in each ROADMAP entry):**
+  - **6.4 robustness report** `analytics/robustness.py` + `trend_grid` (`robustness.csv`, `grid.csv`, family table).
+  - **6.5 time splits** (hour, weekday, month part, NY window) on the results page.
+  - **11.1 noise study** `tools/noise_study.py`: all markets are near random-walk noise (ER(20) 0.22-0.27 against 0.227);
+    indices not noisier than FX; noise explains the sign of strategy 4's gross R, not enough to pay costs.
+  - **11.2 open / gap / trend-day study** `tools/open_gap_study.py` (NAS100, US500): gap fill is mostly the random-walk
+    touch frequency; no first-30-minute continuation; 7 % trend days; **one candidate**: gaps of 0.1-1 ATR touch the
+    previous close before the mirror level 44 vs 37 % (NAS100), 43 vs 38 % (US500), same sign in both halves
+    (about +0.04-0.05 R per 1:1 fade before costs). Needs a strategy test with costs (idea I-39).
+- **MT5 history check (6.6):** the terminal serves only ~3.5 months of M1 (Max bars in chart = 100,000); every bar
+  has tick volume and spread. Median FTMO spreads against `SymbolCosts` are in ROADMAP 6.6 (gold and GBPJPY
+  higher than ours).
+- **Decisions of the user:** I-02 (noise gate) dropped 2026-10-15; defaults of the robustness report (Kaufman's)
+  accepted; day-trade strategies without swap are the next family.
+
+**Open (needs the user), this chat:**
+1. Check 6.4, 6.5, 11.1, 11.2; then mark them ☑.
+2. MT5: set Tools › Options › Charts › Max bars in chart = Unlimited and restart MT5, then Claude re-runs the
+   history check (6.6) to see how many years of tick volume and spread FTMO serves.
+3. Next steps in the agreed order: 11.3 time-of-day drift (XAUUSD / FX), 6.7 spread by hour of day in the cost
+   model, then day-trade strategies (ORB I-07/I-08, compression break I-33, gap fade I-39) with the cost-to-target
+   filter (I-45) and the free-path filter (I-37). Each strategy: spec in `docs/` first.
+
 ## Accepted by the user (do not ask again)
 - Everything built this session ("End." 2026-10-15); ROADMAP 10.5 ☑. FTMO swap rates as defaults. Trend filter code
   stays (off). Strategy 2 parked.
