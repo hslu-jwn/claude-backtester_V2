@@ -1555,7 +1555,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
     hardly predictable at 11:00. The only candidate is the gap fade of 0.1-1 ATR gaps (fill first
     44 vs 37 %): test as a strategy with spread (the candle path and exits decide), ideas I-39.
 - ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (I-17).
-- ☐ **11.4 Gap fade as a strategy test** (I-39; candidate from 11.2). Spec first (`docs/strategy-gap-fade.md`):
+- ☑ **11.4 Gap fade as a strategy test** (I-39; candidate from 11.2). Spec first (`docs/strategy-gap-fade.md`):
   NAS100 / US500, gap = cash open − previous cash close in daily ATR(14), only gaps of 0.1-1 ATR, entry at
   the cash open, target the previous close, stop at the mirror level (1:1), exit at 16:00 if neither; no
   overnight hold. Test with the spread table (and the fixed spread), robustness report, halves, stressed
@@ -1566,4 +1566,13 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   (0.1-1 ATR, stop 1.0, exit 16:00) +112.7 R gross, +55.0 R net with the fixed spread (+58.6 with the spread
   table), +0.023 R/trade, halves +34.6 / +20.4; swap -1.7 R. 27 of 36 variants net positive (75 %), mean - 1 sd
   negative (-8.9); best gap 0.1-1, stop 0.75, exit 12:00: +79.4 R net, halves +57.5 / +21.9, +42.1 with costs x1.5.
-  Weak positive, 2023-26 weaker; not yet an edge without out-of-sample confirmation. Waiting for the user.
+  Weak positive, 2023-26 weaker; not yet an edge without out-of-sample confirmation. Accepted by the user 2026-10-15 ("weak positive,
+  waiting for out-of-sample"); next 11.5-11.7 (user, 2026-10-15).
+- ☐ **11.5 MT5 history download** (user, 2026-10-15): FTMO M1 bars from the running terminal into their own
+  cache `data/cache/mt5/` (same Parquet layout as histdata: bid = MT5 bar, ask = bid + the bar's spread, volume =
+  tick volume), so every tool can read FTMO data through `SymbolSources`; histdata stays the default. Server
+  clock checked for the downloaded years (against histdata where both exist).
+- ☐ **11.6 Gap fade out of sample** (user, 2026-10-15): the same 36 variants on FTMO's NAS100 / US500 history
+  2017-12..2019-12 (never seen by 11.4), fixed spread and spread table.
+- ☐ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
+  before and trade it in that year; report the chained out-of-sample net R against the default variant.
