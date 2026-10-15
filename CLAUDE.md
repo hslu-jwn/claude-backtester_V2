@@ -255,6 +255,8 @@ access; the user may supply the research). They help; they never override the ru
     where available, swap); report "no edge" honestly and record it in `knowledge/ideas.md` and the
     ROADMAP; never change defaults (costs, sweep options, spread table) without the user's go; prefer
     no overnight holds (swap).
+  - Data split (rule set by the user, 2026-10-15): histdata years are the sample (development) years;
+    the real test runs on the period FTMO's MT5 history records (`data/cache/mt5/`, ROADMAP 11.5).
   - Models: as in Working agreement › Models and subagents (Opus plans, subagents code / test /
     read with Sonnet or Haiku). New books: follow the process in `knowledge/README.md`.
   - End: same End protocol as below, plus update the idea statuses in `knowledge/ideas.md`.
