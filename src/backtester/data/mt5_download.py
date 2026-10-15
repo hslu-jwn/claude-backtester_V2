@@ -46,7 +46,10 @@ from backtester.data.cache import (
     write_atomic,
 )
 
-DEFAULT_NAMES = {"NAS100": "US100.cash", "US500": "US500.cash"}
+DEFAULT_NAMES = {
+    "NAS100": "US100.cash", "US500": "US500.cash",
+    **{s: f"{s}.cash" for s in ("US30", "US2000", "GER40", "UK100", "JP225", "EU50", "USOIL", "UKOIL", "NATGAS", "DXY")},
+}  # fmt: skip  # our name -> FTMO's (ROADMAP 11.8); other symbols have the same name
 DEFAULT_CLOCK = ServerClock("America/New_York", 7)
 DEFAULT_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 FIRST_DAY = date(2010, 1, 1)  # earlier than any FTMO history; empty chunks are skipped
