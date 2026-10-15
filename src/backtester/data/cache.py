@@ -20,6 +20,7 @@ _PRICE_FIELDS = ("open", "high", "low", "close")
 COLUMNS = ["ts"] + [f"{s}_{f}" for s in ("bid", "ask") for f in (*_PRICE_FIELDS, "volume")]
 
 DEFAULT_CACHE_DIR = Path("data/cache/histdata")
+MT5_CACHE_DIR = Path("data/cache/mt5")  # FTMO M1 bars, written by `data/mt5_download.py`
 
 
 def cache_path(cache_dir: Path, symbol: str, day: date) -> Path:

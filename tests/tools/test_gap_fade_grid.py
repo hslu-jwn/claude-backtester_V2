@@ -19,7 +19,9 @@ from backtester.tools.gap_fade_grid import family_key, variant_name, variants
 @pytest.fixture(autouse=True)
 def no_real_data(monkeypatch):
     monkeypatch.setattr(gap_fade_grid, "load_shocks", lambda *a, **k: ({}, ""))
-    monkeypatch.setattr(gap_fade_grid, "last_cached_day", lambda symbols: date(2026, 9, 30))
+    monkeypatch.setattr(
+        gap_fade_grid, "last_cached_day", lambda symbols, sources=None: date(2026, 9, 30)
+    )
 
 
 def trade(symbol="NAS100", year=2021, r_gross=1.0, r_net=0.9, swap_r=0.0):
@@ -119,3 +121,30 @@ def test_full_sweep_runs_36_variants(tmp_path, monkeypatch):
     assert len(seen) == 36
     with (tmp_path / "grid.csv").open(encoding="utf-8") as f:
         assert "ALL VARIANTS" in {r["family"] for r in csv.DictReader(f)}
+
+
+def test_source_option_reads_the_mt5_cache_and_histdata_stays_the_default(tmp_path, monkeypatch):
+    from backtester.data.cache import MT5_CACHE_DIR
+    from backtester.data.sources import DEFAULT_SOURCES
+
+    sources_seen, shock_sources = [], []
+
+    def fake_run(symbols, start, end, settings, *args, **kwargs):
+        sources_seen.append(kwargs.get("sources", DEFAULT_SOURCES))
+        return SimpleNamespace(trades=(), runs={s: SimpleNamespace(trades=()) for s in symbols})
+
+    def fake_shocks(symbols, start, end, config=None, sources=DEFAULT_SOURCES):
+        shock_sources.append(sources)
+        return {}, ""
+
+    monkeypatch.setattr(gap_fade_grid, "run_backtests", fake_run)
+    monkeypatch.setattr(gap_fade_grid, "load_shocks", fake_shocks)
+    monkeypatch.setattr(gap_fade_grid, "RESULTS_DIR", tmp_path)
+    assert gap_fade_grid.parse_args([]).source == "histdata"
+    assert gap_fade_grid.main(["--no-sweep"]) == 0
+    assert sources_seen[-1] is DEFAULT_SOURCES and shock_sources[-1] is DEFAULT_SOURCES
+    assert (tmp_path / "gap_fade" / "fixed" / "summary.csv").exists()
+    assert gap_fade_grid.main(["--no-sweep", "--source", "mt5"]) == 0
+    for used in (sources_seen[-1], shock_sources[-1]):
+        assert used.cache_dir("NAS100") == used.cache_dir("US500") == MT5_CACHE_DIR
+    assert (tmp_path / "gap_fade_mt5" / "fixed" / "summary.csv").exists()  # not over histdata's

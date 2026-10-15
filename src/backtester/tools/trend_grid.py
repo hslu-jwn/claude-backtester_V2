@@ -52,7 +52,7 @@ from backtester.analytics.robustness import (
     trade_robustness,
 )
 from backtester.core.models import Timeframe
-from backtester.data.sources import DEFAULT_SOURCES
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.engine.costs import CostConfig
 from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
@@ -314,21 +314,26 @@ def _midnight(d: date) -> datetime:
 
 
 def load_shocks(
-    symbols: Sequence[str], start: date, end: date, config: RobustnessConfig | None = None
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    config: RobustnessConfig | None = None,
+    sources: SymbolSources | None = None,
 ) -> tuple[dict[str, set[date]], str]:
     """({symbol: shock dates}, note). Daily bars from the cache (a bar is dated the day it
     closes); a symbol that cannot be read is left out and the note says so."""
     cfg = config or RobustnessConfig()
+    sources = sources or DEFAULT_SOURCES
     shocks: dict[str, set[date]] = {}
     parts, failed = [], []
     for symbol in symbols:
         try:
-            cached = set(DEFAULT_SOURCES.cached_days(symbol))
+            cached = set(sources.cached_days(symbol))
             first = start - timedelta(days=SHOCK_WARMUP_DAYS)
             days = [d for d in cached if first <= d <= end]
             if not days:
                 raise ValueError("no cached days")
-            frame = DEFAULT_SOURCES.adapter(symbol).fetch_frame(
+            frame = sources.adapter(symbol).fetch_frame(
                 symbol,
                 Timeframe.D1,
                 _midnight(min(days)),

@@ -2,6 +2,7 @@
 
     python -m backtester.tools.gap_fade_grid                 # 36 variants, fixed spread
     python -m backtester.tools.gap_fade_grid --spread-table  # with data/spreads/ftmo_spread_median.json
+    python -m backtester.tools.gap_fade_grid --source mt5 --start 2021-09-15  # FTMO's candles
     python -m backtester.tools.gap_fade_grid --no-sweep --start 2026-08-01 --end 2026-08-31
 
 Variants = gap bucket (min_gap_atr-max_gap_atr: 0.1-0.25, 0.25-0.5, 0.5-1, 0.1-1) x
@@ -12,7 +13,8 @@ Default symbols NAS100 and US500, from 2020-01-01 to the last cached day. Writte
 `<out>/robustness.csv` (net without the best trade, costs x 1.5, halves, shock days) and
 `<out>/grid.csv` (share of profitable variants, plateau variant per bucket x stop family,
 ordered by exit time, and over all variants) via `analytics/robustness.py`. Default `<out>` is
-results/gap_fade/fixed, or results/gap_fade/table with `--spread-table`. Net R includes the swap.
+results/gap_fade/fixed, or results/gap_fade/table with `--spread-table` (`gap_fade_mt5/` with
+`--source mt5`). Net R includes the swap.
 Research only: it changes no setting. Spec: strategy-gap-fade.md > Backtest options
 (ROADMAP 11.4).
 """
@@ -26,7 +28,8 @@ from datetime import date, time
 from pathlib import Path
 
 from backtester.analytics.robustness import RobustnessConfig
-from backtester.data.sources import DEFAULT_SOURCES
+from backtester.data.cache import MT5_CACHE_DIR
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
@@ -107,31 +110,42 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    "without the flag: fixed spread")  # fmt: skip
     p.add_argument("--no-shocks", action="store_true",
                    help="do not read the daily bars for the shock days")  # fmt: skip
+    p.add_argument("--source", choices=("histdata", "mt5"), default="histdata",
+                   help="candle cache: histdata (default) or FTMO's data/cache/mt5 "
+                   "(python -m backtester.tools.mt5_download)")  # fmt: skip
     p.add_argument("--workers", type=int, default=WORKERS,
                    help="processes per backtest (1 = in this process)")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
     return p.parse_args(argv)
 
 
-def last_cached_day(symbols: list[str]) -> date:
-    return max(max(DEFAULT_SOURCES.cached_days(s)) for s in symbols)
+def last_cached_day(symbols: list[str], sources: SymbolSources = DEFAULT_SOURCES) -> date:
+    return max(max(sources.cached_days(s)) for s in symbols)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     configs = variants(not args.no_sweep, args.buckets, args.stop_mults, args.exit_times)
     symbols = [s.upper() for s in args.symbols]
-    end = args.end or last_cached_day(symbols)
+    sources = (
+        DEFAULT_SOURCES
+        if args.source == "histdata"
+        else SymbolSources.single(MT5_CACHE_DIR, symbols)
+    )
+    end = args.end or last_cached_day(symbols, sources)
     engine = RunSettings().engine
     if args.spread_table is not None:
         table = SpreadTable.from_dict(json.loads(args.spread_table.read_text(encoding="utf-8")))
         engine = replace(engine, costs=replace(engine.costs, spread_table=table))
         print(f"spread table: {table.stat} by year and New York hour, {table.note}")
     mode = "fixed" if args.spread_table is None else "table"
-    out = args.out or RESULTS_DIR / "gap_fade" / mode
+    folder = "gap_fade" if args.source == "histdata" else f"gap_fade_{args.source}"
+    out = args.out or RESULTS_DIR / folder / mode
     out.mkdir(parents=True, exist_ok=True)
     rcfg = RobustnessConfig()
-    shocks, shock_note = ({}, "") if args.no_shocks else load_shocks(symbols, args.start, end, rcfg)
+    shocks, shock_note = (
+        ({}, "") if args.no_shocks else load_shocks(symbols, args.start, end, rcfg, sources)
+    )
     summary, split, robust, entries = [], [], [], []
     for config in configs:
         name = variant_name(config)
@@ -140,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             args.start,
             end,
             replace(RunSettings(), strategy=config, engine=engine),
+            sources=sources,
             workers=args.workers,
         )
         print(f"{name}: {len(result.trades)} trades", flush=True)
