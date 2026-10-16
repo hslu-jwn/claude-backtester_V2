@@ -1669,6 +1669,11 @@ changes results, defaults changed only with the user's go.
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
   positives.
 
+- ☐ **12.10 Trial log + deflated Sharpe** (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
+  11.12): every run logged with its trial family; PSR / DSR (López de Prado) on the chosen variant.
+- ☐ **12.11 Bayesian report** (T-10): Beta posterior of the win rate and of mean R, A/B of variants, trades needed;
+  prior odds 1:50 against an edge (rule set by the user, 2026-10-16).
+
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later
 5.2 account simulator and 12.5 demo reconciliation (before live). Knowledge on combining edges: the user adds
