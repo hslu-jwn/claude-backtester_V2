@@ -20,12 +20,12 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | ID | Idea | Type | Symbols / TF | Swap | Source | Status |
 |---|---|---|---|---|---|---|
 | T-01 | Robustness report: plateau heat map, % profitable combos, halves t-test, shock days, 3 cost levels | tooling | all | – | K ch.21 | done 2026-10-15 (ROADMAP 6.4; heat map via plateau on a family, stressed costs x1.5 instead of 3 levels) |
-| T-02 ★ | Random-entry baseline (Monte Carlo of entries): percentile of net R vs 1,000 seeded random-entry runs | tooling | all | – | VectorBT | open (ROADMAP 12.1, next, user 2026-10-15) |
+| T-02 ★ | Random-entry baseline (Monte Carlo of entries): percentile of net R vs 1,000 seeded random-entry runs | tooling | all | – | VectorBT | done 2026-10-16 (ROADMAP 12.1, in tools/monte_carlo.py) |
 | T-03 | SL and TP inside one candle: resolve the order from M1 instead of "SL first" | tooling | all | – | NautilusTrader | open (ROADMAP 12.2) |
-| T-04 | Shared walk-forward splitter (rolling / anchored) | tooling | all | – | VectorBT; K ch.21 | open (ROADMAP 12.3) |
+| T-04 | Shared walk-forward splitter (rolling / anchored) | tooling | all | – | VectorBT; K ch.21 | done 2026-10-16 (ROADMAP 12.3, analytics/walk_forward.py) |
 | T-05 | Parameter heat map on the results page | tooling | all | – | VectorBT; K ch.21 | open (ROADMAP 12.4) |
 | T-06 | Demo vs engine reconciliation of the same trades | tooling | FTMO symbols | – | HftBacktest; prediction-market-backtesting | open (ROADMAP 12.5, before Phase 7) |
-| T-07 | Stressed fills: seeded random slippage, touch is not a fill | tooling | all | – | NautilusTrader | open (ROADMAP 12.6) |
+| T-07 | Stressed fills: seeded random slippage, touch is not a fill | tooling | all | – | NautilusTrader | random slippage done 2026-10-15 (12.6, analytics/random_fills.py); touch-is-not-a-fill open |
 | I-22 | "Book of Truths" report: R by hour, weekday, Friday, month-end, Aziz windows | tooling | all | – | H; A ch.7 | done 2026-10-15 (ROADMAP 6.5, results page) |
 | I-01 ★ | Noise / regime study: ER per symbol, timeframe, half | study | all, 15m-1d | – | K ch.1, 17, 20, 23 | done 2026-10-14 (ROADMAP 11.1): all markets near random-walk noise, indices not noisier; ER explains the sign of strategy 4's gross R, not enough to pay costs |
 | I-02 | Trend-quality gate (ER, regression r, strength osc.) on strategies 2 and 4 | filter | all | – | K p.10-14, 275, 408 | dropped by the user 2026-10-15 (ROADMAP 11.1: noise only picks the better part of a signal without net edge) |
@@ -64,7 +64,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-36 ★ | Tipping-point exit module; breakeven vs no breakeven A/B | exit mgmt | any entry | – | V ch.14; A; C ch.8 | open |
 | I-37 ★ | Free-path-to-target skip filter | filter | any entry | – | V ch.15; A rule 5 | open |
 | I-38 | Session-mean (VWAP proxy) hold / rejection | signal | indices; 5m | none | A VWAP | open |
-| I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7 | tested 2026-10-15 (ROADMAP 11.4, strategy 5 `gap_fade`): **weak positive**, default +55 R net / 2374 trades (+0.023 R/trade), both halves positive (2023-26 weaker), 27/36 variants net positive, survives costs x1.5 and best trade removed; **failed out of sample** (ROADMAP 11.6): 2018-19 default -22 R gross / -59 R net, 6 of 36 variants positive; no edge |
+| I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7 | no edge 2026-10-16 (ROADMAP 11.4-11.7: weak positive 2020-26, negative 2018-19, walk-forward +0.6 R / 1423 trades, Monte Carlo verdict NO EDGE for walk-forward and default; random fills and costs x1.5 kill it) |
 | I-40 | Exhaustion reversal: 5+ candles, RSI extreme, at a level | signal | indices, gold; 5m | none | A reversal | open |
 | I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | open |
 | I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |

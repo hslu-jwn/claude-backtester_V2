@@ -1581,6 +1581,15 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   default is +13.9 R net / 1836 trades (+0.008 R/trade, histdata same window +28.7 R). **Out of sample: no edge.**
 - ☐ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
   before and trade it in that year; report the chained out-of-sample net R against the default variant.
+  **Result 2026-10-16** (`tools/gap_fade_walk_forward.py`, histdata NAS100 + US500 2018-2026, anchored, max net R on
+  the years before, first test year 2019; runtime 125 min): chained out-of-sample **+0.6 R / 1423 trades** against
+  the default variant's +22.6 R / 2752 trades (2019-26). Picks jumped between variants (5 different in 8 years);
+  test years -12.7, +18.3, +5.7, -13.1, -13.5, -1.1, +15.9, +1.0 R. Monte Carlo report: walk-forward **NO EDGE**
+  (all 6 checks fail: t 0.02, random entries 92nd percentile, weaker half -6.3 R, costs x1.5 -19.3 R, random fills
+  median -35.7 R); default variant **NO EDGE** (t 0.47, costs x1.5 -16.4 R, random fills median -47.1 R fail; random
+  entries 98.7th percentile, halves and without-best pass); FTMO pass at 1 % risk 29 % (walk-forward) / 32 %
+  (default). The slippage stress hurts most: gap stops are small, so a few points of slippage are a large share of
+  1 R. **Gap fade: no tradeable edge.**
 - ☐ **11.8 More markets from MT5** (user, 2026-10-15): about 26 liquid FTMO symbols (FX majors and crosses,
   US / EU / JP indices, metals, energy, BTC / ETH, DXY as reference) with `tools/mt5_download.py`.
 - ☐ **11.9 Crypto order flow from Binance** (user, 2026-10-15; the user may trade crypto on Binance directly,
