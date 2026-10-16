@@ -5,7 +5,9 @@ Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7). The chec
 1. `t_stat`: mean net R per trade > 0 and t = mean / (sd / sqrt(n)) >= `t_min`;
 2. `random_entries` (kind B): the strategy's percentile among the random-entry runs >=
    `percentile_min`;
-3. `halves`: both halves' net R > 0;
+3. `halves`: both halves' net R > 0 (the run's own period split at the middle date of start..end,
+   `middle_date` / `period_halves`; rule set by the user 2026-10-15; a half without trades has net 0
+   and fails);
 4. `cost_stress`: net R with costs x `RobustnessConfig.cost_stress` > 0;
 5. `without_best`: net R without the best trade > 0;
 6. `random_fills` (kind C): median net R of the random-fill runs > 0.
@@ -22,6 +24,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 CHECK_KEYS = (
     "t_stat", "random_entries", "halves", "cost_stress", "without_best", "random_fills",
@@ -84,6 +87,20 @@ def t_statistic(values: Sequence[float]) -> float | None:
     if var <= 0:
         return None
     return mean / math.sqrt(var / n)
+
+
+def middle_date(start: date, end: date) -> date:
+    """Middle date of start..end (start + half the day span, rounded down)."""
+    return start + timedelta(days=(end - start).days // 2)
+
+
+def period_halves(trades: Sequence, start: date, end: date) -> tuple[float, float]:
+    """Net R of the trades entered up to / after the middle date (the middle date is in the first
+    half). A half without trades has net 0."""
+    mid = middle_date(start, end)
+    first = sum(t.r_net for t in trades if t.entry_time.date() <= mid)
+    second = sum(t.r_net for t in trades if t.entry_time.date() > mid)
+    return first, second
 
 
 def _over(value: float | None, limit: float) -> bool:

@@ -154,3 +154,35 @@ def test_path_row_warns_when_net_r_is_above_zero():
 def test_path_row_without_trades_has_no_warning():
     r = path_row("NAS100", [], 3, ToolConfig())
     assert r["trades"] == 0 and r["mean_net_r"] is None and r["warning"] is False
+
+
+def test_halves_check_uses_the_middle_date_of_the_run(tmp_path, stub):
+    # 2021-01-04..2021-04-30: the middle date is 2021-03-03; the old rule (year 2022) would put
+    # every trade into the first half. The stub's trades span weekdays from the start.
+    tool.main(argv(tmp_path, "--paths", "0"))
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    r = summary["robustness"]
+    assert r["half_split_date"] == "2021-03-03"
+    assert r["half_first_trades"] > 0 and r["half_second_trades"] > 0
+    assert r["half_first_trades"] + r["half_second_trades"] == summary["meta"]["trades"]
+
+
+def test_build_summary_takes_a_ready_trade_list_without_kind_d():
+    trades = [trade("NAS100", d, 1.0 if i % 3 else -0.8) for i, d in enumerate(weekdays())]
+    follow = [trade("NAS100", d, -1.0 if i % 3 else 0.8) for i, d in enumerate(weekdays())]
+    from dataclasses import replace
+
+    from backtester.runner import RunSettings
+
+    s = tool.build_summary(
+        trades, follow, {"strategy": "x", "symbols": ["NAS100"], "start": START, "end": END,
+                         "source": "histdata"},
+        RunSettings(), ToolConfig(runs=20), log=lambda *_: None,
+    )  # fmt: skip
+    assert s["random_paths"] is None and s["random_entries"]["available"] is True
+    s2 = tool.build_summary(
+        trades, None, {"strategy": "x", "symbols": ["NAS100"], "start": START, "end": END,
+                       "source": "histdata"},
+        replace(RunSettings()), ToolConfig(runs=20), log=lambda *_: None,
+    )  # fmt: skip
+    assert s2["random_entries"]["available"] is False

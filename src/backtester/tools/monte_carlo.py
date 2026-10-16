@@ -31,7 +31,14 @@ from pathlib import Path
 from backtester.analytics.random_baseline import RandomBaselineConfig, random_entry_baseline
 from backtester.analytics.random_fills import RandomFillsConfig, random_fills
 from backtester.analytics.robustness import RobustnessConfig, trade_robustness
-from backtester.analytics.verdict import VerdictConfig, VerdictInputs, evaluate, t_statistic
+from backtester.analytics.verdict import (
+    VerdictConfig,
+    VerdictInputs,
+    evaluate,
+    middle_date,
+    period_halves,
+    t_statistic,
+)
 from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.random_walk import RandomWalkConfig, load_profile, write_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
@@ -110,19 +117,80 @@ def random_paths(
 # ----- analysis ----------------------------------------------------------------------------
 
 
-def verdict_inputs(trades, baseline, fills, rcfg: RobustnessConfig) -> VerdictInputs:
+def verdict_inputs(
+    trades, baseline, fills, rcfg: RobustnessConfig, start: date, end: date
+) -> VerdictInputs:
     rob = trade_robustness(trades, rcfg)
     rs = [t.r_net for t in trades]
+    first, second = period_halves(trades, start, end)
     return VerdictInputs(
         mean_r=_mean(rs),
         t=t_statistic(rs),
         percentile=None if baseline is None else baseline.percentile,
-        half_first_net=rob["half_first_net_r"],
-        half_second_net=rob["half_second_net_r"],
+        half_first_net=first,
+        half_second_net=second,
         stressed_net=rob["net_r_stressed"],
         net_without_best=rob["net_r_without_best"],
         fill_median=fills.p50,
     )
+
+
+def build_summary(
+    trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
+    paths: dict | None = None, log=print,
+) -> dict:  # fmt: skip
+    """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
+    source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
+    (kind D result) None = skipped."""
+    start, end = meta["start"], meta["end"]
+    rcfg = RobustnessConfig()
+    trades = list(trades)
+    baseline = None
+    if follow_trades is not None:
+        baseline = random_entry_baseline(
+            trades, list(follow_trades), RandomBaselineConfig(config.runs, config.seed)
+        )
+    log("kind C: random fills")
+    fills = random_fills(
+        trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
+    )
+    log("kind A: day reshuffle + FTMO")
+    mc = run_monte_carlo(trades, start, end, MonteCarloConfig(config.runs, config.seed))
+    inputs = verdict_inputs(trades, baseline, fills, rcfg, start, end)
+    verdict = evaluate(inputs, VerdictConfig())
+    rob = trade_robustness(trades, rcfg)
+    first, second = period_halves(trades, start, end)
+    mid = middle_date(start, end)
+    rs = [t.r_net for t in trades]
+    return {
+        "meta": {
+            **meta,
+            "runs": config.runs,
+            "seed": config.seed,
+            "paths": config.paths if paths is not None else 0,
+            "trades": len(trades),
+        },
+        "verdict": verdict,
+        "robustness": {
+            **rob,
+            "half_first_net_r": first,
+            "half_second_net_r": second,
+            "half_first_trades": sum(t.entry_time.date() <= mid for t in trades),
+            "half_second_trades": sum(t.entry_time.date() > mid for t in trades),
+            "half_split_date": mid,
+            "mean_net_r": _mean(rs),
+            "t_stat": inputs.t,
+            "cost_stress": rcfg.cost_stress,
+        },
+        "random_entries": (
+            {"available": False, "note": NOT_AVAILABLE}
+            if baseline is None
+            else {"available": True, **asdict(baseline)}
+        ),
+        "random_fills": asdict(fills),
+        "monte_carlo": mc,
+        "random_paths": paths,
+    }
 
 
 def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
@@ -134,67 +202,30 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     )
     strategy_cfg = default_config(args.strategy)
     settings = replace(RunSettings(), strategy=strategy_cfg)
-    rcfg = RobustnessConfig()
 
     log(f"backtest {args.strategy} {symbols} {args.start}..{args.end}")
     base = run_backtests(symbols, args.start, args.end, settings, sources=sources)
     trades = list(base.trades)
     log(f"  {len(trades)} trades")
 
-    baseline = None
+    follow = None
     if args.strategy == GAP_FADE:
         log("kind B: follow run")
-        follow = run_backtests(
+        follow = list(run_backtests(
             symbols, args.start, args.end,
             replace(settings, strategy=replace(strategy_cfg, mode="follow")), sources=sources,
-        )  # fmt: skip
-        baseline = random_entry_baseline(
-            trades, list(follow.trades), RandomBaselineConfig(config.runs, config.seed)
-        )
-    log("kind C: random fills")
-    fills = random_fills(
-        trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
-    )
-    log("kind A: day reshuffle + FTMO")
-    mc = run_monte_carlo(trades, args.start, args.end, MonteCarloConfig(config.runs, config.seed))
+        ).trades)  # fmt: skip
     paths = None
     if config.paths > 0:
         log("kind D: random price paths")
         paths = random_paths(symbols, settings, sources, args.start, args.end, config, log)
-
-    inputs = verdict_inputs(trades, baseline, fills, rcfg)
-    verdict = evaluate(inputs, VerdictConfig())
-    rob = trade_robustness(trades, rcfg)
-    rs = [t.r_net for t in trades]
-    return {
-        "meta": {
-            "strategy": args.strategy,
-            "symbols": symbols,
-            "start": args.start,
-            "end": args.end,
-            "source": args.source,
-            "runs": config.runs,
-            "seed": config.seed,
-            "paths": config.paths,
-            "trades": len(trades),
-        },
-        "verdict": verdict,
-        "robustness": {
-            **rob,
-            "mean_net_r": _mean(rs),
-            "t_stat": inputs.t,
-            "cost_stress": rcfg.cost_stress,
-            "first_half_end_year": rcfg.first_half_end_year,
-        },
-        "random_entries": (
-            {"available": False, "note": NOT_AVAILABLE}
-            if baseline is None
-            else {"available": True, **asdict(baseline)}
-        ),
-        "random_fills": asdict(fills),
-        "monte_carlo": mc,
-        "random_paths": paths,
-    }
+    meta = {
+        "strategy": args.strategy, "symbols": symbols, "start": args.start, "end": args.end,
+        "source": args.source,
+    }  # fmt: skip
+    summary = build_summary(trades, follow, meta, settings, config, paths, log)
+    summary["meta"]["paths"] = config.paths
+    return summary
 
 
 # ----- summary.json ------------------------------------------------------------------------
@@ -472,7 +503,9 @@ def random_paths_html(summary: dict) -> str:
     )
     p = summary["random_paths"]
     if p is None:
-        return section("Random paths (kind D)", how, "<p>Skipped (--paths 0).</p>")
+        return section(
+            "Random paths (kind D)", how, "<p>Skipped (--paths 0 or not applicable).</p>"
+        )
     rows, classes = [], {}
     for i, r in enumerate(p["rows"]):
         rows.append([
@@ -488,11 +521,11 @@ def random_paths_html(summary: dict) -> str:
 
 def robustness_html(summary: dict) -> str:
     r = summary["robustness"]
-    end = r["first_half_end_year"]
+    split = r["half_split_date"]
     rows = [
         ["Mean net R per trade / t-statistic",
          f"{fmt(r['mean_net_r'], '+.3f')} / {fmt(r['t_stat'])}"],
-        [f"Halves (to {end} / after), net R",
+        [f"Halves (to {split} / after), net R",
          f"{r['half_first_net_r']:+.1f} / {r['half_second_net_r']:+.1f}"],
         [f"Costs x {r['cost_stress']:g}, net R", f"{r['net_r_stressed']:+.1f}"],
         ["Without the best trade, net R", f"{r['net_r_without_best']:+.1f}"],
@@ -552,15 +585,19 @@ def default_out(args: argparse.Namespace) -> Path:
     return RESULTS_DIR / MONTE_CARLO_DIR / name
 
 
+def write_outputs(summary: dict, out: Path) -> None:
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "report.html").write_text(render_report(summary), encoding="utf-8")
+    (out / "summary.json").write_text(json.dumps(jsonable(summary), indent=1), encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     config = ToolConfig(runs=args.runs, seed=args.seed, paths=args.paths)
     out = args.out or default_out(args)
     t0 = clock.time()
     summary = analyse(args, config)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "report.html").write_text(render_report(summary), encoding="utf-8")
-    (out / "summary.json").write_text(json.dumps(jsonable(summary), indent=1), encoding="utf-8")
+    write_outputs(summary, out)
     v = summary["verdict"]
     print(f"\nVERDICT: {v.label}. {v.reason}")
     print(f"written to {out} ({clock.time() - t0:.0f} s)")

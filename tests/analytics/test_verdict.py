@@ -119,3 +119,49 @@ def test_t_statistic():
     assert t_statistic([]) is None
     assert t_statistic([2.0, 2.0, 2.0]) is None  # no variance
     assert t_statistic([-1.0, -3.0]) < 0
+
+
+# ----- halves of the run's own period (user decision 2026-10-15) -----------------------------
+
+
+def _tr(day, r):
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        entry_time=datetime(day.year, day.month, day.day, 14, 30, tzinfo=UTC), r_net=r
+    )
+
+
+def test_period_halves_split_at_the_middle_date():
+    from datetime import date
+
+    from backtester.analytics.verdict import middle_date, period_halves
+
+    start, end = date(2020, 1, 1), date(2021, 9, 13)
+    mid = middle_date(start, end)
+    assert mid == date(2020, 11, 6)  # 621 days, half = 310
+    trades = [_tr(date(2020, 3, 1), 1.0), _tr(mid, 2.0), _tr(date(2020, 11, 7), 4.0),
+              _tr(date(2021, 9, 13), 8.0)]  # fmt: skip
+    assert period_halves(trades, start, end) == (3.0, 12.0)  # the middle date is in the first half
+
+
+def test_period_halves_empty_half_has_net_zero_and_fails_the_check():
+    from datetime import date
+
+    from backtester.analytics.verdict import VerdictInputs, evaluate, period_halves
+
+    start, end = date(2020, 1, 1), date(2020, 12, 31)
+    first, second = period_halves([_tr(date(2020, 2, 1), 5.0)], start, end)
+    assert (first, second) == (5.0, 0.0)
+    v = evaluate(VerdictInputs(1.0, 3.0, 99.0, first, second, 1.0, 1.0, 1.0))
+    assert "halves" in v.failed
+
+
+def test_period_halves_ignores_trades_outside_nothing_and_one_day_period():
+    from datetime import date
+
+    from backtester.analytics.verdict import period_halves
+
+    d = date(2020, 5, 5)
+    assert period_halves([_tr(d, 2.0)], d, d) == (2.0, 0.0)
