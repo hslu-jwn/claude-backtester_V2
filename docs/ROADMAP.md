@@ -1628,6 +1628,12 @@ changes results, defaults changed only with the user's go.
   with other prices it is scaled by price / reference price (cost-model fix, mainly for the development years).
 - ☐ **11.12 Volume filter on parked strategies with potential** (user 2026-10-16: "yes if the strategies
   have potential"): only strategies with positive gross R before costs qualify; decided by Claude per strategy.
+  Claude's pick (user "ok", 2026-10-16): strategy 2 only (+29 R gross 2020-26); development on FTMO US30 /
+  US2000 before the cut-off (the only indices with tick volume there), A/B on NAS100 / US500 from 2021-09
+  (already used by strategy 2, so not fresh). Gap fade and strategies 1, 3, 4: no (nothing before costs).
+- ☐ **11.13 Order-flow study on BTC / ETH** (user "ok", 2026-10-16): Binance futures delta (taker buy - sell)
+  and its imbalance vs the next 1m-4h return, against the round-trip fee; development period 2020-01 .. 2021-09-13
+  only. Research tool, no rule. Next after it: forward test of the ORB on the FTMO demo (needs Phase 7).
 - ☑ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
   Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
