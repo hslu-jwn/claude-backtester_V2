@@ -76,3 +76,15 @@ What to randomise decides what it answers:
 A and B are the most useful; together they are the "Monte Carlo backtester" (ROADMAP 12.7).
 
 See also: [testing-and-robustness.md](testing-and-robustness.md), [costs-and-execution.md](costs-and-execution.md).
+
+
+## Cross-checks from the method books (Chan, López de Prado, Davey, Carver)
+- **Same code for backtest and live; feed bars one at a time** (EC p.4, 25): this is our `SeriesView` / incremental-detector design and the reason the
+  demo-vs-engine reconciliation (T-06) is worth doing.
+- Backtests need a research factory, not a lone coder; backtest results are not fed back to the researchers (LP 1.2, 1.3.1.4); results of a failed
+  backtest are not reused, the model is started from scratch (LP 11.5).
+- Parallel sweeps (LP 20): one job per parameter combination, balance heavy and light jobs, keep a single-process debug path; irrelevant otherwise.
+- Red flags to assert in the engine: fills at exact bar highs / lows, limit orders filled on touch, same-bar entry and exit or stop and target
+  (KD ch.14); costs never zero (KD ch.6); data definition identical in test and trade (KD ch.11; histdata vs FTMO feed).
+- Statistics for the Monte Carlo family above: resampled trades assume independence, so check serial correlation first (Durbin-Watson) or use
+  start-trade / moving-start analysis (KD ch.7); trades must be on one unit basis; compare against the 8,000-run matched monkeys (T-14).

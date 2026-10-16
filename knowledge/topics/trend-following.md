@@ -1,6 +1,6 @@
 # Trend following
 
-Sources: K = Kaufman *TSM* ch. 1, 5-8, 17, 19, 21-23; H = Hougaard; D = Douglas.
+Sources: K = Kaufman *TSM* ch. 1, 5-8, 17, 19, 21-23; H = Hougaard; D = Douglas; RC = Carver; EC = Chan ch.6; KD = Davey.
 Our strategy 4 (`docs/strategy-trend-following.md`) already implemented breakout, SMA + ATR band,
 momentum, KAMA and Dunnigan; it failed with FTMO swap and was unstable across halves (ROADMAP 10).
 
@@ -60,3 +60,35 @@ momentum, KAMA and Dunnigan; it failed with FTMO swap and was unstable across ha
 - **Aziz 9 EMA ride:** from ~11:00 New York, price consolidating above a rising 9 EMA; buy near the EMA,
   exit on the first 5-min close on the other side. Probably weak in noise but cheap to test.
 - Both are intraday, so no swap; costs per trade are the problem (see costs topic).
+
+## Carver's EWMAC trend rule and framework (RC ch.1, 7, 12, App. B)
+Idea links: I-51, T-12. Backtests after costs on 40+ futures, SR 0.3-0.4 per instrument and rule set, ~1.0 for the diversified book.
+- Why trend pays (his view): other people's **disposition effect** (take small profits, hold losers; prospect theory). His A-and-B test: an early
+  loss taker (target 20 daily sigma, stop 5) beat an early profit taker (5 / 20) on 27 of 31 futures. Trend following has positive skew; hit
+  rates are modest; compare rules only within the same skew.
+- **EWMAC forecast** = scalar × (EWMA_fast − EWMA_slow)/daily price-unit sigma, EWMA alpha = 2/(L+1), slow = 4 × fast. Pairs and scalars:
+  2:8 → 10.6, 4:16 → 7.5, 8:32 → 5.3, 16:64 → 3.75, 32:128 → 2.65, 64:256 → 1.87; cap ±20. Adjacent pairs correlate 0.90, two steps
+  apart 0.60-0.70, further 0.15-0.45; slower than 64:256 performs poorly. Turnover 54 round trips a year for 2:8 down to 7.5 for 64:256; only
+  the cheapest instruments can use the fastest (RC Table 43, 57).
+- Recommended set: three speeds (16:64, 32:128, 64:256) plus carry; speeds cannot be ranked by performance, so weight them by
+  correlation (42/16/42) and blend ([combining-edges.md](combining-edges.md)). Faster trend rules usually do worse because most markets
+  do not trend at short horizons.
+- **Random entry + vol-scaled trailing stop** (X daily sigma from the best price, no profit target) was profitable on real data from trend
+  capture alone; the holding period is set by X (X=1: 4 days, 4: 6.5 weeks, 10: 26 weeks) ([stops-exits-and-trade-management.md](stops-exits-and-trade-management.md)).
+  A natural null benchmark for any entry rule (T-14).
+- Differences from our strategy 4: continuous scaled forecasts instead of stop-and-reverse, three or more speeds blended, slow speeds up to
+  256 days, no hard stop, volatility-target sizing, 10 % position inertia, forecast cap. Swap is a cost on held positions (earns for the carry
+  side), so the slow end only works if swap net of carry is small.
+- **Carry** forecast = annualised expected return if prices stay unchanged / annualised price sigma, scalar 30, cap 20; negative skew,
+  steady, occasionally blows up (CHF peg removal, Jan 2015); trend and carry have correlation ~0.25. For our CFDs the swap table is the carry
+  proxy (FX interest differential; gold carry is funding cost only) (RC App. B). → I-51, I-29
+
+## Time-series momentum and its limits (Chan ch.6)
+- Causes of momentum: persistence of roll-return sign (futures only), slow news diffusion, forced fund flows, HFT. Test with the lagged
+  return correlation grid on non-overlapping pairs, plus Hurst and variance ratio (T-11).
+- Simple rule: long / short by the sign of the past 12-month return, hold 1 month, open a 1/25 slice every day (staggered tranches);
+  Sharpe 1.0-1.1 on BR, HG, TU (gross), 2.1 when replacing the lagged return by the lagged roll return. S&P DTI (EMA trend on 24 futures):
+  Sharpe 1.3 over 1988-2010, −26 % drawdown after 2008. Cross-sectional momentum lost ~30 % a year in 2008-09 (EC p.134-152).
+- Momentum's pros: natural stop (the signal flips), unlimited upside, thrives on fat tails (a random series with the same kurtosis reproduced
+  the return 12 % of the time, so test against that null); cons: low Sharpe at long horizons, crashes lasting years, shrinking horizons.
+  Multi-day holds pay swap, so it adds little beyond strategy 4 for us.

@@ -1,6 +1,6 @@
 # Stops, exits and trade management
 
-Sources: K = Kaufman *TSM* ch. 5, 8, 16, 20, 22-23; D = Douglas; H = Hougaard.
+Sources: K = Kaufman *TSM* ch. 5, 8, 16, 20, 22-23; D = Douglas; H = Hougaard; RC = Carver; LP = López de Prado; KD = Davey; EC = Chan; JK = Kaeppel.
 
 ## Stops
 - The stop is set **before** entry from market structure or volatility, never from comfort. If the
@@ -77,3 +77,26 @@ Sources: K = Kaufman *TSM* ch. 5, 8, 16, 20, 22-23; D = Douglas; H = Hougaard.
   previous one, or price closes below the last pivot low).
 - **Free path to target (V ch.15):** skip when clusters, prior highs/lows or a round number sit inside
   the target distance. → I-37
+
+## Volatility-scaled stops, barriers and what exits can do (Carver, López de Prado, Davey, Chan, Kaeppel)
+Ideas: I-36, I-60, T-14, T-15. Rule of this section: exits reshape the payoff distribution, the edge has to come from the entry (LP 13.6).
+- **Carver:** no systematic profit targets ("no evidence they work, markets trend"). One exit: a trailing stop X daily sigma (price units)
+  from the best price since entry; X sets the holding period and turnover: X=1: 4 days / 64 round trips a year; 2: 9 days / 29; 3: 17 days / 15;
+  4: 6.5 weeks / 8; 8: 13 weeks / 4; 10: 26 weeks / 2. When volatility doubles the stop doubles and the position halves, so risk per bet is
+  constant. Stops must be in market sigma, never in account or pain terms (RC ch.5, 13).
+- **Triple barrier (LP 3.4):** profit-take, stop-loss (both multiples of current volatility) and a vertical barrier (max holding bars); the first
+  touch decides. Our SL / TP in R plus a session-end exit *is* a triple barrier with the vertical barrier at the session close. Fixed-horizon
+  labels ignore stops and volatility regime.
+- **Synthetic OU result (LP 13.6, no costs):** with zero long-run equilibrium (reversion) the best region is a SMALL target with a LARGE stop (Sharpe
+  up to ~3.2 at half-life 5), the opposite corner is worst, the symmetric diagonal is near neutral; with a positive forecast the optimum is a
+  rectangle (target ~5-6, stop 4-10 sigma); as half-life grows the map flattens and any optimum is noise. Asymmetric trap: small target, wide stop
+  gives a high hit rate and a good Sharpe until the tail loss arrives.
+- **Davey:** break-even stops cut winners; if a far stop destroys the system the entry is the problem; a profit target with a huge cap acts as
+  "hold to session end"; do not trust same-bar stop and target fills (KD ch.10, 14).
+- **Chan:** a stop is useless across closed-market gaps and liquidity vacuums; for mean reversion it contradicts the entry and lowers the backtest
+  but protects against a regime change into a trend: set it wider than the worst in-sample excursion so it never triggers in sample (1.2-1.5×); for
+  momentum the flipped signal is the stop (EC p.153, 182-184).
+- **Kaeppel (options, transferable parts):** decide stop, partial exit and final exit before entry; take profit at ~80 % of the potential ("do not hold
+  out for the last dollar"); after +1R take half and trail the rest at half the peak open profit; 2-sigma-of-the-holding-period level as a stop / target
+  (sigma_h = price × annual vol × sqrt(h/365)); win-rate × payoff: a 68 % trade with 1 : 2.5 payoff means one max loss erases three winners, cut at
+  1 : 1 (JK p.161, 187, 197-200). Evidence: showcase trades only. → I-24, I-60

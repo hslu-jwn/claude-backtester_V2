@@ -1,6 +1,6 @@
 # Mean reversion and oscillators
 
-Sources: K = Kaufman *TSM* ch. 3-4, 9, 11, 13-14, 16, 18, 22; H = Hougaard.
+Sources: K = Kaufman *TSM* ch. 3-4, 9, 11, 13-14, 16, 18, 22; H = Hougaard; EC = Chan ch.2-5, 8; KD = Davey ch.18; JK = Kaeppel.
 
 ## Where it fits
 - High-noise markets and short timeframes favour mean reversion (K p.14, 870). Equity indices are the
@@ -48,6 +48,8 @@ Sources: K = Kaufman *TSM* ch. 3-4, 9, 11, 13-14, 16, 18, 22; H = Hougaard.
   (K p.754). → I-11
 - **Gustafson:** long after 4 lower closes, exit after 5 higher closes or 8 days; S&P 76-78 %
   winners (long-only, bull market) (K p.1010). → I-19
+- **Davey's two-closes baseline:** after 2 down closes buy at the next open (2 up closes: short), ATR stop 0.5-1.25 × ATR(14), used only to
+  demo the monkey test (KD App. A). → I-19, I-03
 - **Divergence Index:** (MA10 − MA40) / stdev(changes, 40)², bands ±1 stdev; buy below the lower band
   in an uptrend, exit at zero (K p.384). Self-normalising.
 - **Pairs / ratio:** stress indicator = stochastic of (Stoch(A) − Stoch(B)); enter > 95 / < 5, exit at
@@ -73,3 +75,39 @@ Sources: K = Kaufman *TSM* ch. 3-4, 9, 11, 13-14, 16, 18, 22; H = Hougaard.
 - **IRB boomerang (Volman ch.12):** inside a range at least ~20 pip wide, a small block at a barrier is
   traded away from the barrier; needs ~10 pip of free path.
 - **Spikes without buildup** tend to retrace fully to their origin (V ch.15). Fits I-16.
+
+## Statistics first, then a trivial rule (Chan)
+Sources: EC ch.2-5, 8. Tools: T-11; ideas I-47, I-48, I-58, I-59.
+- Procedure: test the series (ADF, Hurst, variance ratio, half-life; see [markets-and-regimes.md](markets-and-regimes.md)), then trade a
+  parameterless linear rule to prove the edge exists: position = −(price − MA(L))/std(L) with L = half-life. It needs unlimited capital
+  and no stop, so it is a proof of edge, not a system (EC p.48-50). Bollinger version: enter at |z| > 1, exit at 0, one unit at a
+  time; on GLD/USO it beat the linear version (Sharpe 0.96 vs 0.59, gross) (EC p.70-72).
+- Short-term or **time-of-day mean reversion** exists even when daily bars show a random walk (EC p.63, 96); a stationary series with a
+  10-year half-life is useless. Enter only in the window where the reversion exists and be flat before the next shift.
+- **Buy-on-gap (stocks, EC p.93-96):** buy stocks that gap down by more than 1 sd (90-day close-to-close) below the prior low but whose open is
+  above the 20-day MA; exit at the close; Sharpe 1.5 in 2006-12, faded after 2009. A momentum filter on a reversion trade: small drops revert,
+  big ones carry news. Mirror and the **opposite** gap-momentum rule are in [intraday-sessions-gaps-calendar.md](intraday-sessions-gaps-calendar.md).
+- Scaling in at several bands is never optimal in-sample versus all-in at a constant probability of going deeper (Schoenberg-Corwin), but with
+  time-varying volatility it can win out of sample (EC p.72-74). Kalman-filter hedge ratios helped on pairs (EWA/EWC Sharpe 2.4, in-sample) but
+  need a cointegrated pair; our five symbols give none (GBPUSD / GBPJPY is really a USDJPY test).
+- Dangers: steady profits breed over-leverage (LTCM), rare catastrophic loss, regime change into a trend, spread strategies are very sensitive
+  to bad ticks (a fake spike looks like a reversal); a stop hurts the backtest but is insurance, set it wider than the worst in-sample
+  excursion (EC p.61, 84, 183). Momentum books and reversion books diversify each other.
+- Mean reversion does not carry from spot to futures (roll return) and needs equal point values in a pair (same quote currency)
+  (EC p.57, 109).
+
+## Davey's euro reversal systems (futures, 2009-2013)
+Source: KD ch.18-19, App. B-C. Ideas I-47, I-48. Walk-forward, Monte Carlo and incubation; 76-85 % of optimisations profitable.
+- **Night (105-min bars, 18:00-07:00 ET, new trades until 01:00):** long limit at SMA(High, Nb) − ATRmult × ATR(NATR), short mirror
+  (Nb 9-19, NATR 73-93, ATRmult 2.55-3.15); one trade a day, the order nearest price; target TRmult × true range (0.51-0.71), stop ≤ ~34
+  ticks incl. costs, all flat at session end. Monte Carlo return/DD 2.0, P(profit year) 85 %; first 15 weeks live flat.
+- **Day (60-min bars, 07:00-15:00 ET):** if High ≥ highest high of 3-5 bars and Close < Close 70-80 bars ago, sell-short limit at High +
+  2-11 pips (wait for one more thrust); mirror for longs; one trade a day, stop 225-425 $, no target, exit 15:00. Return/DD 5.45 but only
+  ~20 of 614 days above $1,000: without them barely profitable, so every signal must be taken.
+- Cautions: limit fills need penetration; stop and target in one bar; both are fades of range extremes, close in spirit to sweeps and
+  the gap fade that failed for us; his 4-year sample is short.
+
+## Kaeppel's timing sketch (options book, no statistics)
+- Wilder RSI pullback against an MA trend as entry, exit after 7 days or at the opposite extreme of a second oscillator; ADX/DMI above 75
+  = overbought, expect a pause until it falls below 50 (JK p.101-105). One chart each; low priority (close to I-05). Measure instead the
+  forward-return hit rate after a signal for several horizons and compare with the unconditional rate (JK p.100; T-13).

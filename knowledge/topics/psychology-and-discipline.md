@@ -1,6 +1,6 @@
 # Psychology and discipline
 
-Sources: D = Douglas *Trading in the Zone*; H = Hougaard *Best Loser Wins*; K = Kaufman.
+Sources: D = Douglas *Trading in the Zone*; H = Hougaard *Best Loser Wins*; K = Kaufman; RC = Carver; KD = Davey; WK = Kurt; EC = Chan.
 Mostly not backtestable. Turned into execution and risk rules where possible.
 
 ## Probability mindset (Douglas)
@@ -55,3 +55,15 @@ Mostly not backtestable. Turned into execution and risk rules where possible.
 - All three are discretionary and say so: Volman calls his edge "a personal perception", Coulling says
   her method cannot be automated, Aziz says mechanical systems lose. Coding their rules is our
   interpretation and must be tested, not assumed.
+
+
+## From the method books (Carver, Davey, Kurt, Chan)
+- **Meddling is the biggest cause of bad results** (RC ch.1): overriding the system, changing the risk target after losses, taking profits early.
+  Commitment devices: objective rules, automation, a fixed vol target, starting small. Disposition effect: people take small profits and hold losers.
+- Davey: decide beforehand when to start (after N months of incubation regardless of the equity curve), what to do with an open signal, and when to
+  quit (max drawdown, losing streak, loss per week or month, win rate below X, equity-curve break); skipping or front-running signals invalidates the
+  test; trade 3+ systems so none is micro-managed; after an operational error sync back with market orders; ~1 idea in 100-200 works (KD ch.21, 25).
+- Kurt: a good hypothesis is falsifiable; a story that explains every outcome (profit or loss) gains from contradicting data, so write down the
+  result that would make you drop the idea before the test (WK ch.18). Collecting trades that confirm the idea is the wrong direction (WK ch.1).
+- Chan: steady mean-reversion profits breed over-leverage; do not override the model; start under-leveraged (EC p.61, 172).
+- Steady wins with no losses usually mean negative skew not yet exposed (RC epilogue); a very high hit rate deserves suspicion, not comfort.

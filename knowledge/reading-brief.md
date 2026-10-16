@@ -18,7 +18,15 @@ Write ONLY your notes file (path given in your task). Do not touch any repo file
   (SMC style: FVG, order block, BOS) on FX/gold; (2) NY-open index sweep on NAS100/US500; (3) no-wick
   candle with the trend; (4) Kaufman trend following (N-day breakout, SMA + ATR band, momentum, KAMA,
   Dunnigan) 15m-1d with 3xATR stop and stop-and-reverse: swap costs kill holding periods, edge not
-  stable across halves of the sample.
+  stable across halves of the sample; (5) index cash-open gap fade (0.1-1 ATR gaps to previous close):
+  no edge in walk-forward, killed by random slippage on small stops. Opening-range breakout is being tested.
+- Already built for testing: robustness report (halves, share of profitable variants, stressed costs,
+  best trade removed), walk-forward splitter, Monte Carlo report (day reshuffle, random entries, random
+  fills, random price paths), t-stat, FTMO pass probability. Data split: develop before 2021-09-14,
+  test once on FTMO MT5 data after it.
+- Current focus: how to COMBINE several weak edges (forecast scaling, diversification, vol targeting),
+  meta-labelling / filtering a primary signal, deflated Sharpe and multiple-testing corrections,
+  Bayesian ways to judge a small sample of trades.
 - So we look for: fundamentals, robust testing methods, risk/position-sizing knowledge, and NEW
   testable strategy ideas that fit our data (price only, intraday to daily, FX/gold/indices).
 

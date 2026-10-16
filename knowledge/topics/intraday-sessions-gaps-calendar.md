@@ -1,6 +1,6 @@
 # Intraday structure, sessions, gaps and calendar
 
-Sources: K = Kaufman *TSM* ch. 10, 12, 15-16, 20; H = Hougaard. All statistics are claims from the
+Sources: K = Kaufman *TSM* ch. 10, 12, 15-16, 20; H = Hougaard; EC = Chan ch.3-4, 7; KD = Davey; RC = Carver; JK = Kaeppel. All statistics are claims from the
 books, mostly on 2000-2011 futures and gross of costs. Each one is a cheap study on our M1 data before
 it becomes a strategy.
 
@@ -71,3 +71,28 @@ it becomes a strategy.
   rate decisions): bars print 10x faster, levels evaporate, spreads widen.
 - **Coulling:** the first bar at the cash open on low volume is often a probe ("trap"); in 24 h FX the
   open equals the previous close, so FX has no gap signal.
+
+## Gap momentum and time-of-day reversion (Chan, ch.3-4, 7)
+Sources: EC p.63, 93-96, 155-168. Ideas I-46 (gap momentum), I-17 (time of day), I-39 (gap fade, no edge). All numbers are **gross of costs**
+and in-sample (his words).
+- **Opening-gap momentum:** buy if today's open is above yesterday's **high** by entryZscore × the sd of daily close-to-close returns (90-day,
+  entryZscore **0.1**, a tiny threshold); short if the open is below yesterday's **low** by the same margin; exit at the close (open-to-close
+  return). Eurostoxx 50 future: APR 13 %, Sharpe 1.4 (2004-12). The same rule on GBPUSD with the day defined from 17:00 New York (close) to
+  05:00 New York (London open): APR 7.2 %, Sharpe 1.3 (2007-12) (EC p.155-157). Rationale: stop orders cluster beyond the prior extreme and cascade
+  after a long closed period, plus overnight news. On a 24 h FX market the only real gap is the weekend one, so signal counts are low.
+- This is the **opposite direction** of the gap fade (strategy 5 / I-39, which found no edge): it needs a gap *beyond the previous high / low*, not
+  just away from the previous close. Chan's stock buy-on-gap is the reversion side for moderate gaps with a trend filter (price above its 20-day MA),
+  so the split by gap size, by "beyond prior range" and by trend filter is the question to measure (study with I-09).
+- A VIX above 35 cut the Eurostoxx gap rule from Sharpe 1.4 to 0.16 (EC p.184); the sign of such a switch is strategy specific.
+- **Post-earnings drift** (stocks): trade the open in the direction of the gap if |gap| ≥ 0.5 sd; the drift horizon has shrunk to intraday and
+  overnight holding was negative. **Leveraged-ETF rebalancing:** momentum in the last 15 min after a move above 2 % (DRN Sharpe 1.8). Macro
+  releases on EURUSD showed no momentum in his test (EC p.158-164). Not applicable to our data except as an index last-hour check.
+- Time-of-day: reversion can exist only in particular parts of the day (open to close for the gap-down stocks); bucket returns and
+  autocorrelation by half-hour per symbol and per half-sample, trade only buckets with a stable sign (EC p.63, 96). → I-17
+
+## Session structure from the practitioner books
+- Davey: keep one session definition across the whole history; both euro systems are flat by a fixed time (07:00 and 15:00 ET), skip the thin
+  15:00-17:00 window, one trade a day for the day system; day trading is attractive but 9 of 10 short-timeframe ideas fail (KD ch.10, 18).
+- Carver: intraday trading needs near-zero costs ([costs-and-execution.md](costs-and-execution.md)); seasonality appears only as forced-trader
+  effects such as tax-year end (RC ch.2).
+- Kaeppel: a market-on-open order after a gap fills far from the plan (JK p.114-115).

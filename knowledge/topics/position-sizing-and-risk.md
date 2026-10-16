@@ -1,6 +1,7 @@
 # Position sizing and risk
 
-Sources: K = Kaufman *TSM* ch. 2, 5, 21-24; D = Douglas; H = Hougaard. Applies to `risk/` (Phase 5),
+Sources: K = Kaufman *TSM* ch. 2, 5, 21-24; D = Douglas; H = Hougaard; RC = Carver; EC = Chan; KD = Davey;
+LP = López de Prado; WK = Kurt. Applies to `risk/` (Phase 5),
 which works on the R trade list. Spec: `docs/risk-management.md`.
 
 ## Basic rules
@@ -24,13 +25,16 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
 - **Drawdown scaling (Turtles):** cut size 20 % for every 10 % drawdown, restore 10 % per ~6.7 %
   recovery (K p.231). For FTMO use finer steps of the 10 % limit. → I-26
 - Kelly / optimal f: f = [p(PLR+1) − 1] / PLR. Over-betting leads to ruin; use only as an **upper
-  bound** to *reduce* leverage (K p.1088-1092).
+  bound** to *reduce* leverage (K p.1088-1092). Carver and Chan agree: Kelly vol target = Sharpe, overbetting hurts
+  more than underbetting, use **half Kelly** of a pessimistic Sharpe (RC ch.9; EC p.172-173); Davey rejects his optimal f
+  (21 % ruin, 67 % median DD) (KD ch.16). Details below.
 - Martingale / averaging down: works only in strongly trending low-noise markets with caps; blow-up
   risk; not for us (K p.1000-1011).
 - Equity-curve trading (trade only when equity > its MA): inconsistent in Kaufman's tests (K p.1086).
   Check autocorrelation of trade outcomes first. → I-28
 
 ## Risk of ruin and "is it broken?"
+- Streak and "k losses in n trades" odds are binomial tails (WK ch.4); P(at least one success in n trials) = 1 − (1−p)^n.
 - Equal win/loss: R = ((1−A)/(1+A))^c, A = 2p − 1, c = capital units (K p.1072).
 - Unequal (Gehm/Vince): ruin = ((1−P)/P)^(MaxRisk/A) with P = ½(1 + Z/A); ruin grows faster than
   capital shrinks (K p.1073-1075; worked example 0.63 % → 7.9 % → 28 % as capital halves).
@@ -44,6 +48,9 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
 - Information ratio, Calmar (return / max DD), Sortino, Ulcer Index (RMS drawdown), average maximum
   retracement, time to recovery (K p.1034-1045). Use daily data; monthly data looks better than it is.
 - VaR fails exactly in crises (kurtosis up to 25 vs 3 normal); use stress tests (K p.1034-1045).
+- Run statistics (LP 14.5): drawdown and time under water, both as 95th percentile; concentration of returns by a
+  Herfindahl-type index for wins, losses and bets per month (0 = uniform, 1 = one return dominates): want low
+  concentration, no reliance on a few outliers.
 
 ## Portfolio
 - Diversify across unrelated markets **and** strategy types; all trend followers share one profit
@@ -66,3 +73,48 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
 - **Volman (ch.16):** fixed fraction of 1-2 % on the stop, recomputed once a day; same size for every
   valid setup (no "quality" sizing); one position at a time; ignore new setups while in a trade.
 - Both are far too large for FTMO's limits: use 0.25-0.5 % per trade with a daily stop.
+
+## Volatility target and Kelly in practice (Carver, Chan, Davey)
+Sources: RC ch.9-10 (Tables 20-27), EC ch.8, KD ch.7, 16, 20. Idea links: I-27, I-53, T-16.
+- The **volatility target** is the long-run annualised sigma of the account as a % of *current* capital, the most important
+  choice. Cash target = % target × current capital / 16 per day (256 days); recompute capital daily so the account compounds
+  and de-risks after losses. Do not change the percentage afterwards (meddling).
+- Kelly: optimal vol target = expected Sharpe (SR 0.5 → 50 %). Use half Kelly of a **pessimistic** Sharpe: back-tested SR
+  0.25 / 0.40 / 0.50 / 0.75 / 1.0+ → target 12 / 20 / 25 / 37 / 50 %, halve for negative skew; semi-discretionary 10 / 15 / 20 / 25 %
+  for SR 0.2-0.5 (RC Tables 25-26). Ten-year chance of losing half at SR 0.5: < 1 % at a 25 % target, 10 % at 50 %, 40 % at
+  100 %, 93 % at 200 % (RC Table 23).
+- Rules that risk a fixed % per trade imply huge vol targets: with 2.5 % max risk per trade and ~2 positions, a 1-day hold is ~100 %
+  a year, 1 week ~40 %, 6 weeks ~10 % (RC Table 27). For FTMO's 10 % limit this is why day-trade risk must stay at 0.25-0.5 %.
+- Chan: Gaussian Kelly f = m/s² (mean excess return over variance); several strategies F = C⁻¹M. Non-Gaussian: draw from a
+  distribution with the strategy's four moments and maximise mean log(1 + fR); leverage above 1/|worst bar| is certain ruin;
+  simulated drawdowns are far worse than historical ones (unconstrained f: −99.9 %; half Kelly still −96 %; a seven-fold cut was
+  needed for −50 %, only 1.5× on the historical sample). When a broker cap binds, scaling all strategies proportionally is **not**
+  growth-optimal (EC p.172-179). Apply Kelly **per strategy** so a failing one withers (EC p.188).
+- **CPPI for a drawdown cap** (EC p.180-182): trade a sub-account of size D × equity with Kelly leverage f on it, rest in cash; reset
+  to D × equity only at a new equity high, never top up after losses. Growth is close to leverage f·D on the whole account but the
+  drawdown is bounded by D; useless against gaps, and not for a multi-strategy book. For FTMO D could be a buffer below 10 %.
+- **Fixed fractional (Davey):** contracts = floor(x × equity / largest historical loss); choose x by Monte Carlo (maximise
+  return/DD subject to median DD and ruin ≤ 10 %), not by optimal f (x 0.175 vs optimal-f peak 0.32). Start equity is sized so ruin is
+  < 10 % (small accounts have large ruin odds even with positive expectancy); traders tolerate only about half the drawdown they
+  claim; a 362 % median return is a warning, not a target; start at the smallest size and add from profits (KD ch.16, 19-20).
+- **Quit rule in advance** (KD ch.20): average of 1.5 × the worst daily-basis walk-forward drawdown and the 95th-percentile Monte
+  Carlo max DD; minimum account = quit drawdown + margin. Skipping or front-running signals invalidates the test (KD ch.21).
+- Practicalities: position inertia of 10 % cuts costs without changing the pre-cost result for holds above a few days; want at
+  least 4 blocks at maximum forecast, else drop the instrument or raise its weight (RC ch.11-12).
+
+## Bet sizing from a probability and strategy risk (López de Prado)
+Sources: LP 3.7, 10, 15. Idea links: I-57, T-16.
+- Size from a predicted win probability p (side from the primary rule): z = (p − ½)/sqrt(p(1 − p)), size m = 2·Z(z) − 1 with Z the
+  normal CDF (p = 0.5 → 0, saturating toward 1). Average the sizes of the bets still open, discretise to steps of 0.05-0.2 to avoid
+  jitter trades (LP 10.3-10.5). Concurrency sizing: budget = (concurrent longs − shorts)/maximum concurrent (LP 10.2).
+  High accuracy with bad sizing still loses (LP 10.1). Allocation to a strategy should grow only with live evidence (LP 1.3.1.6).
+- **Strategy risk = binomial precision.** Each bet wins +π⁺ with probability p, loses π⁻. Symmetric payoff: annualised SR =
+  (2p − 1)/(2·sqrt(p(1 − p))) × sqrt(n), n = bets per year (p = 0.55 needs ~396 bets a year for SR 2). Asymmetric: SR = sqrt(n)(
+  (π⁺ − π⁻)p + π⁻)/((π⁺ − π⁻)·sqrt(p(1 − p))); the p* that reaches a target SR is the root of a quadratic in p (LP 15.3). In R:
+  break-even precision = |π⁻|/(π⁺ + |π⁻|) before costs (33 % for 1R stop, 2R target).
+- Probability of failure: bootstrap the bet outcomes (n × k years, draw with replacement), get the distribution of precision, and
+  report P[p < p_threshold] (LP 15.4). A drop of precision from 0.70 to 0.67 can erase the profit; strategies with large n are
+  fragile to small precision changes. Discard if the failure probability exceeds the tolerance (e.g. 5 %).
+- Bayesian version: draw p (and payoffs) from the Beta / mean-R posterior and simulate the FTMO account for each draw; the pass rate
+  averaged over draws is wider and more honest than the plug-in rate; the 20th percentile p is a defensible go/no-go for demo
+  (WK notes M6, [statistics-and-bayes.md](statistics-and-bayes.md)).

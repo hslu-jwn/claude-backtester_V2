@@ -1,6 +1,6 @@
 # Breakouts and the opening range
 
-Sources: K = Kaufman *TSM* ch. 3, 5, 15-16, 20; H = Hougaard.
+Sources: K = Kaufman *TSM* ch. 3, 5, 15-16, 20; H = Hougaard; EC = Chan ch.7; RC = Carver; KD = Davey; JK = Kaeppel; LP = López de Prado.
 
 ## Daily / multi-day breakouts
 - N-day breakout (Donchian, Turtles): see [trend-following.md](trend-following.md). Reliable but large
@@ -74,3 +74,18 @@ Sources: V = Volman *Forex Price Action Scalping* (chapter), C = Coulling *Volum
   **only if the range is much smaller than the daily ATR** (skip when the range is close to the ATR);
   stop at a VWAP close; target = next daily level, else exit on the first opposite 5-min extreme.
   Mid/large caps only; on the indices this means event days. → I-07 (adds the range/ATR filter)
+
+## Stop cascades, event triggers and compression state (Chan, Carver, Kaeppel, López de Prado)
+- **Why breakouts work (Chan):** stop orders sitting beyond a prior extreme trigger together; the effect is strongest after a long closed
+  period (overnight, weekend). Stop hunting around support / resistance and round numbers: levels breached in FX tend to continue (Osler,
+  EC p.157, 167). Needs order-flow data for a direct test; the gap version is testable from candles (I-46).
+- **One family is enough (Carver):** breakouts, MA crossovers and oscillators capture the same trend behaviour; pick speeds, not families
+  (RC ch.7). Davey's own contest system was a 48-bar highest-close breakout with RSI(30) > 50 (short mirror), fixed or ATR stop, waits of
+  5 bars after a loss and 20 after a win, daily bars, ~9 futures; 40-75 % drawdowns and one trade made 95 % of a year's profit; a countertrend
+  breakout variant failed walk-forward (KD p.24-28, 118-121). → I-54
+- **Compression state (Kaeppel):** a long narrow range tends to precede a larger move; measure it by the short / long volatility ratio (6-day /
+  100-day), ADX, and days since the last N-day high or low; then trade the break in both directions with an OCO stop pair (JK p.103-105,
+  183). No statistics given; the trigger is a volatility state, not a fixed N-day high or a session start. → I-32
+- **CUSUM filter (LP 2.5.2.1):** keep running up and down sums of deviations (reset at zero), fire an event only when one exceeds a
+  threshold h (about one daily sd), then reset. A volatility-normalised filter rule (Fama-Blume) that does not fire repeatedly while price
+  hovers at a level; used as event definition for continuation or fade. Prior: filter rules lose after costs. → I-55
