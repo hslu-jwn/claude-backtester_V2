@@ -28,6 +28,7 @@ from datetime import date, time
 from pathlib import Path
 
 from backtester.analytics.robustness import RobustnessConfig
+from backtester.analytics.trial_log import append, make_record
 from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.engine.spread_table import SpreadTable
@@ -48,6 +49,7 @@ from backtester.tools.trend_grid import (
 )
 
 SYMBOLS = ("NAS100", "US500")
+STRATEGY = "gap_fade"  # registry name; the default trial-log family
 START = date(2020, 1, 1)
 BUCKETS = ((0.1, 0.25), (0.25, 0.5), (0.5, 1.0), (0.1, 1.0))
 STOP_MULTS = (0.75, 1.0, 1.5)
@@ -115,6 +117,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    "(python -m backtester.tools.mt5_download)")  # fmt: skip
     p.add_argument("--workers", type=int, default=WORKERS,
                    help="processes per backtest (1 = in this process)")  # fmt: skip
+    p.add_argument("--family", default=None,
+                   help="trial-log family (default gap_fade)")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
     return p.parse_args(argv)
 
@@ -158,6 +162,10 @@ def main(argv: list[str] | None = None) -> int:
             workers=args.workers,
         )
         print(f"{name}: {len(result.trades)} trades", flush=True)
+        append(make_record(
+            args.family or STRATEGY, STRATEGY, config, symbols, args.start, end, args.source,
+            [t.r_net for t in result.trades],
+        ))  # fmt: skip
         sets = {"ALL": result.trades, **{s: r.trades for s, r in result.runs.items()}}
         for group, trades in sets.items():
             row = summary_row(name, group, trades)

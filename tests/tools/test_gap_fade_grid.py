@@ -148,3 +148,23 @@ def test_source_option_reads_the_mt5_cache_and_histdata_stays_the_default(tmp_pa
     for used in (sources_seen[-1], shock_sources[-1]):
         assert used.cache_dir("NAS100") == used.cache_dir("US500") == MT5_CACHE_DIR
     assert (tmp_path / "gap_fade_mt5" / "fixed" / "summary.csv").exists()  # not over histdata's
+
+
+def test_every_variant_is_logged_once_with_family_default_and_override(tmp_path, monkeypatch):
+    from backtester.analytics.trial_log import family_trials
+
+    monkeypatch.setattr(gap_fade_grid, "run_backtests", fake_run_factory([]))
+    assert gap_fade_grid.main(["--out", str(tmp_path)]) == 0
+    lines = family_trials("gap_fade")
+    assert len(lines) == 36 and {r.strategy for r in lines} == {"gap_fade"}
+    assert all(r.symbols == ["NAS100", "US500"] and r.trades == 2 for r in lines)
+    assert len({r.key for r in lines}) == 36
+    assert gap_fade_grid.main(["--out", str(tmp_path), "--no-sweep", "--family", "x"]) == 0
+    assert len(family_trials("x")) == 1 and len(family_trials("gap_fade")) == 36
+    gap_fade_grid.main(["--out", str(tmp_path), "--no-sweep", "--family", "x"])  # rerun
+    assert len(family_trials("x")) == 1
+
+
+def test_family_option_parses():
+    assert gap_fade_grid.parse_args([]).family is None
+    assert gap_fade_grid.parse_args(["--family", "f"]).family == "f"

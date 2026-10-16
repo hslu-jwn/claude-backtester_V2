@@ -96,6 +96,7 @@ def test_gap_fade_run_writes_report_and_summary(tmp_path, stub):
         "cost_stress",
         "without_best",
         "random_fills",
+        "deflated_sharpe",
     ]
     assert summary["random_entries"]["available"] is True
     assert 0 <= summary["random_entries"]["percentile"] <= 100
@@ -186,3 +187,63 @@ def test_build_summary_takes_a_ready_trade_list_without_kind_d():
         replace(RunSettings()), ToolConfig(runs=20), log=lambda *_: None,
     )  # fmt: skip
     assert s2["random_entries"]["available"] is False
+
+
+# ----- trial log and deflated Sharpe (ROADMAP 12.10) -----------------------------------------
+
+
+def test_parse_args_family_defaults_to_none_and_can_be_set():
+    base = ["NAS100", "--start", "2020-01-01", "--end", "2020-02-01"]
+    assert parse_args(base).family is None
+    assert parse_args([*base, "--family", "gap grid"]).family == "gap grid"
+
+
+def test_run_is_logged_with_family_defaulting_to_the_strategy(tmp_path, stub):
+    from backtester.analytics.trial_log import family_trials
+
+    tool.main(argv(tmp_path, "--paths", "0"))
+    (line,) = family_trials("gap_fade")
+    assert line.strategy == "gap_fade" and line.symbols == ["NAS100", "US500"]
+    assert line.start == START.isoformat() and line.end == END.isoformat()
+    assert line.source == "histdata" and line.trades == 120 and line.sharpe is not None
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["meta"]["family"] == "gap_fade"
+
+
+def test_family_option_overrides_and_rerun_is_not_a_new_trial(tmp_path, stub):
+    from backtester.analytics.trial_log import family_summary, family_trials, read_all
+
+    tool.main(argv(tmp_path / "a", "--paths", "0", "--family", "mine"))
+    tool.main(argv(tmp_path / "b", "--paths", "0", "--family", "mine"))
+    assert family_trials("gap_fade") == []
+    assert family_summary(family_trials("mine"))[0] == 1 and len(read_all()) == 1
+
+
+def test_deflated_sharpe_uses_the_family_and_is_in_summary_and_report(tmp_path, stub):
+    from backtester.analytics.trial_log import append, count_only
+
+    append(count_only("gap_fade", "gap_fade", 9, note="old"))
+    tool.main(argv(tmp_path, "--paths", "0"))
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    d = summary["deflated"]
+    assert d["n_trials"] == 10 and d["family"] == "gap_fade"
+    assert d["variance"] == pytest.approx(1 / summary["meta"]["trades"])  # one Sharpe: V = 1/n
+    assert 0 <= d["psr0"] <= 1 and 0 <= d["dsr"] <= 1 and d["sr0"] > 0
+    check = next(c for c in summary["verdict"]["checks"] if c["key"] == "deflated_sharpe")
+    assert check["available"] and check["value"] == pytest.approx(d["dsr"])
+    html = (tmp_path / "report.html").read_text(encoding="utf-8")
+    for text in ("Deflated Sharpe", "PSR(0)", "DSR", "gap_fade"):
+        assert text in html
+
+
+def test_build_summary_without_a_deflated_result_makes_check_7_not_available():
+    trades = [trade("NAS100", d, 1.0 if i % 3 else -0.8) for i, d in enumerate(weekdays())]
+    from backtester.runner import RunSettings
+
+    s = tool.build_summary(
+        trades, None, {"strategy": "x", "symbols": ["NAS100"], "start": START, "end": END,
+                       "source": "histdata"},
+        RunSettings(), ToolConfig(runs=20), log=lambda *_: None,
+    )  # fmt: skip
+    assert "deflated_sharpe" in s["verdict"].not_available
+    assert s["deflated"] is None

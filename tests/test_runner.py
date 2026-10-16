@@ -279,3 +279,16 @@ def test_per_year_printout(cache, tmp_path, capsys):
     assert main([*argv, "--out", str(tmp_path / "out")]) == 0
     out = capsys.readouterr().out
     assert "trades    win    net R  max DD" in out and "\n2026 " in out
+
+
+def test_command_logs_the_run_as_a_trial(cache, tmp_path):
+    from backtester.analytics.trial_log import family_trials
+
+    folder = cache.cache_dir("XAUUSD")
+    argv = ["xauusd", "--start", "2026-01-05", "--end", "2026-01-05", "--cache-dir", str(folder)]
+    assert main([*argv, "--out", str(tmp_path / "out")]) == 0
+    assert main([*argv, "--out", str(tmp_path / "out"), "--family", "mine"]) == 0
+    (line,) = family_trials("session_zone_sweep")
+    assert line.strategy == "session_zone_sweep" and line.symbols == ["XAUUSD"]
+    assert line.start == "2026-01-05" and len(family_trials("mine")) == 1
+    assert len(list((tmp_path / "out").iterdir())) == 2  # the log is not in the run folders

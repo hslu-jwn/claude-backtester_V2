@@ -1,4 +1,4 @@
-"""Monte Carlo verdict: six checks, EDGE / WEAK / NO EDGE.
+"""Monte Carlo verdict: seven checks, EDGE / WEAK / NO EDGE.
 Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7)."""
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from backtester.analytics.verdict import (
 
 GOOD = VerdictInputs(
     mean_r=0.1, t=3.0, percentile=99.0, half_first_net=5.0, half_second_net=4.0,
-    stressed_net=6.0, net_without_best=7.0, fill_median=8.0,
+    stressed_net=6.0, net_without_best=7.0, fill_median=8.0, dsr=0.99,
 )  # fmt: skip
 
 
@@ -29,7 +29,11 @@ def check(verdict, key):
 def test_all_pass_is_edge():
     v = evaluate(GOOD)
     assert v.label == "EDGE" and v.failed == ()
-    assert [c.key for c in v.checks] == list(CHECK_KEYS) and len(CHECK_KEYS) == 6
+    assert (
+        [c.key for c in v.checks] == list(CHECK_KEYS)
+        and len(CHECK_KEYS) == 7
+        and CHECK_KEYS[-1] == "deflated_sharpe"
+    )
     assert all(c.passed and c.available for c in v.checks)
 
 
@@ -46,6 +50,8 @@ def test_all_pass_is_edge():
         ({"stressed_net": 0.0}, "cost_stress"),
         ({"net_without_best": -0.1}, "without_best"),
         ({"fill_median": 0.0}, "random_fills"),
+        ({"dsr": 0.949}, "deflated_sharpe"),
+        ({"dsr": 0.0}, "deflated_sharpe"),
     ],
 )
 def test_each_single_failure_is_weak(change, key):
@@ -165,3 +171,37 @@ def test_period_halves_ignores_trades_outside_nothing_and_one_day_period():
 
     d = date(2020, 5, 5)
     assert period_halves([_tr(d, 2.0)], d, d) == (2.0, 0.0)
+
+
+# ----- check 7: deflated Sharpe (ROADMAP 12.10, rule set by the user 2026-10-16) --------------
+
+
+def test_dsr_equality_passes_and_value_and_threshold_are_shown():
+    v = evaluate(replace(GOOD, dsr=0.95))
+    c = check(v, "deflated_sharpe")
+    assert c.passed and c.available and c.value == 0.95 and c.threshold == 0.95
+    assert v.label == "EDGE"
+
+
+def test_dsr_none_is_not_available_and_not_a_failure():
+    v = evaluate(replace(GOOD, dsr=None))
+    c = check(v, "deflated_sharpe")
+    assert not c.available and not c.passed and c.value is None
+    assert v.label == "EDGE" and "deflated_sharpe" in v.not_available
+    assert "deflated_sharpe" not in v.failed
+
+
+def test_dsr_default_input_is_none():
+    assert VerdictInputs(1.0, 3.0, 99.0, 1.0, 1.0, 1.0, 1.0, 1.0).dsr is None
+
+
+def test_dsr_counts_toward_weak_and_no_edge():
+    assert evaluate(replace(GOOD, dsr=0.5, t=1.0)).label == "WEAK"  # 2 fails
+    assert evaluate(replace(GOOD, dsr=0.5, t=1.0, fill_median=-1.0)).label == "NO EDGE"
+
+
+def test_dsr_min_is_configurable():
+    v = evaluate(GOOD, VerdictConfig(dsr_min=0.995))
+    assert v.failed == ("deflated_sharpe",)
+    with pytest.raises(ValueError):
+        VerdictConfig(dsr_min=1.5)

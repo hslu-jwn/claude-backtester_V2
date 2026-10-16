@@ -1,4 +1,4 @@
-"""Monte Carlo verdict: six checks, EDGE / WEAK / NO EDGE. Pure logic, no plotting.
+"""Monte Carlo verdict: seven checks, EDGE / WEAK / NO EDGE. Pure logic, no plotting.
 
 Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7). The checks:
 
@@ -10,13 +10,15 @@ Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7). The chec
    and fails);
 4. `cost_stress`: net R with costs x `RobustnessConfig.cost_stress` > 0;
 5. `without_best`: net R without the best trade > 0;
-6. `random_fills` (kind C): median net R of the random-fill runs > 0.
+6. `random_fills` (kind C): median net R of the random-fill runs > 0;
+7. `deflated_sharpe`: DSR >= `dsr_min` (rule set by the user 2026-10-16, ROADMAP 12.10; n/a when
+   the DSR cannot be computed: fewer than 2 trades, zero sd or a non-positive denominator).
 
 EDGE when every available check passes, WEAK when one or two fail, NO EDGE otherwise. A check
 without input (None, e.g. kind B for a strategy that has no random-entry variant yet) is "n/a":
 it is listed, counts neither as pass nor as fail, and the verdict then needs all available
 checks (chosen by Claude 2026-10-15, to be confirmed by the user). Equality passes for the
-two threshold checks (t == t_min, percentile == percentile_min); the net checks need > 0.
+three threshold checks (t == t_min, percentile == percentile_min, dsr == dsr_min); the net checks need > 0.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from datetime import date, timedelta
 
 CHECK_KEYS = (
     "t_stat", "random_entries", "halves", "cost_stress", "without_best", "random_fills",
+    "deflated_sharpe",
 )  # fmt: skip
 EDGE, WEAK, NO_EDGE = "EDGE", "WEAK", "NO EDGE"
 
@@ -37,11 +40,14 @@ class VerdictConfig:
     t_min: float = 2.0  # spec: t >= 2
     percentile_min: float = 95.0  # spec: above 95 % of the random-entry runs
     net_min: float = 0.0  # the net checks need strictly more than this (R)
+    dsr_min: float = 0.95  # spec: deflated Sharpe >= 0.95
     weak_max_fails: int = 2  # up to this many failed checks = WEAK
 
     def __post_init__(self) -> None:
         if not 0 <= self.percentile_min <= 100:
             raise ValueError("percentile_min must be in [0, 100]")
+        if not 0 <= self.dsr_min <= 1:
+            raise ValueError("dsr_min must be in [0, 1]")
         if self.weak_max_fails < 0:
             raise ValueError("weak_max_fails must be >= 0")
 
@@ -56,6 +62,7 @@ class VerdictInputs:
     stressed_net: float
     net_without_best: float
     fill_median: float | None  # kind C median; None = not available
+    dsr: float | None = None  # deflated Sharpe; None = not available
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,6 +145,10 @@ def evaluate(inputs: VerdictInputs, config: VerdictConfig | None = None) -> Verd
         Check(
             "random_fills", "Median net R of random fills (kind C) > 0", i.fill_median,
             cfg.net_min, fills_ok, available=i.fill_median is not None,
+        ),
+        Check(
+            "deflated_sharpe", "Deflated Sharpe ratio (DSR)", i.dsr, cfg.dsr_min,
+            i.dsr is not None and i.dsr >= cfg.dsr_min, available=i.dsr is not None,
         ),
     )  # fmt: skip
     failed = tuple(c.key for c in checks if c.available and not c.passed)

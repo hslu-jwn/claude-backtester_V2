@@ -28,9 +28,21 @@ from dataclasses import asdict, dataclass, is_dataclass, replace
 from datetime import date
 from pathlib import Path
 
+from backtester.analytics.deflated_sharpe import (
+    DeflatedResult,
+    DeflatedSharpeConfig,
+    deflated_sharpe,
+    trade_stats,
+)
 from backtester.analytics.random_baseline import RandomBaselineConfig, random_entry_baseline
 from backtester.analytics.random_fills import RandomFillsConfig, random_fills
 from backtester.analytics.robustness import RobustnessConfig, trade_robustness
+from backtester.analytics.trial_log import (
+    append,
+    family_summary,
+    family_trials,
+    make_record,
+)
 from backtester.analytics.verdict import (
     VerdictConfig,
     VerdictInputs,
@@ -118,8 +130,9 @@ def random_paths(
 
 
 def verdict_inputs(
-    trades, baseline, fills, rcfg: RobustnessConfig, start: date, end: date
-) -> VerdictInputs:
+    trades, baseline, fills, rcfg: RobustnessConfig, start: date, end: date,
+    dsr: float | None = None,
+) -> VerdictInputs:  # fmt: skip
     rob = trade_robustness(trades, rcfg)
     rs = [t.r_net for t in trades]
     first, second = period_halves(trades, start, end)
@@ -132,16 +145,18 @@ def verdict_inputs(
         stressed_net=rob["net_r_stressed"],
         net_without_best=rob["net_r_without_best"],
         fill_median=fills.p50,
+        dsr=dsr,
     )
 
 
 def build_summary(
     trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
-    paths: dict | None = None, log=print,
+    paths: dict | None = None, log=print, deflated: DeflatedResult | None = None,
+    family: str | None = None,
 ) -> dict:  # fmt: skip
     """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
     source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
-    (kind D result) None = skipped."""
+    (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a."""
     start, end = meta["start"], meta["end"]
     rcfg = RobustnessConfig()
     trades = list(trades)
@@ -156,7 +171,9 @@ def build_summary(
     )
     log("kind A: day reshuffle + FTMO")
     mc = run_monte_carlo(trades, start, end, MonteCarloConfig(config.runs, config.seed))
-    inputs = verdict_inputs(trades, baseline, fills, rcfg, start, end)
+    inputs = verdict_inputs(
+        trades, baseline, fills, rcfg, start, end, None if deflated is None else deflated.dsr
+    )
     verdict = evaluate(inputs, VerdictConfig())
     rob = trade_robustness(trades, rcfg)
     first, second = period_halves(trades, start, end)
@@ -169,8 +186,10 @@ def build_summary(
             "seed": config.seed,
             "paths": config.paths if paths is not None else 0,
             "trades": len(trades),
+            "family": family,
         },
         "verdict": verdict,
+        "deflated": None if deflated is None else {**asdict(deflated), "family": family},
         "robustness": {
             **rob,
             "half_first_net_r": first,
@@ -208,6 +227,17 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     trades = list(base.trades)
     log(f"  {len(trades)} trades")
 
+    family = args.family or args.strategy
+    append(make_record(
+        family, args.strategy, strategy_cfg, symbols, args.start, args.end, args.source,
+        [t.r_net for t in trades],
+    ))  # fmt: skip
+    n_trials, sharpes = family_summary(family_trials(family))
+    deflated = deflated_sharpe(
+        trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
+    )
+    log(f"trial log: family {family}, N = {n_trials}")
+
     follow = None
     if args.strategy == GAP_FADE:
         log("kind B: follow run")
@@ -223,7 +253,7 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         "strategy": args.strategy, "symbols": symbols, "start": args.start, "end": args.end,
         "source": args.source,
     }  # fmt: skip
-    summary = build_summary(trades, follow, meta, settings, config, paths, log)
+    summary = build_summary(trades, follow, meta, settings, config, paths, log, deflated, family)
     summary["meta"]["paths"] = config.paths
     return summary
 
@@ -323,6 +353,24 @@ def verdict_html(summary: dict) -> str:
         + table(["Check", "Value", "Threshold", "Result"], rows, classes)
         + "<div class='how'>How to read this: EDGE = all checks pass, WEAK = one or two fail, "
         "NO EDGE = three or more fail; an n/a check is listed but not counted.</div>"
+    )
+
+
+def deflated_html(summary: dict) -> str:
+    d = summary["deflated"]
+    if d is None:
+        return section("Deflated Sharpe", "not computed for this summary.", "")
+    rows = [[
+        fmt(d["psr0"], ".3f"), fmt(d["dsr"], ".3f"), str(d["n_trials"]),
+        fmt(d["variance"], ".5f"), fmt(d["sr0"], ".4f"), str(d["family"]),
+    ]]  # fmt: skip
+    return section(
+        "Deflated Sharpe",
+        "PSR(0) is the chance the true Sharpe per trade is above 0. DSR is the same after "
+        "allowing for the best of N tried variants (family): SR0 is the Sharpe the best of N "
+        "zero-skill variants would show, V the variance of the family's Sharpes. DSR >= 0.95 "
+        "passes check 7.",
+        table(["PSR(0)", "DSR", "N", "V", "SR0", "Family"], rows),
     )
 
 
@@ -542,7 +590,7 @@ def robustness_html(summary: dict) -> str:
 
 def render_report(summary: dict) -> str:
     body = "".join((
-        verdict_html(summary), fan_html(summary), numbers_html(summary), ftmo_html(summary),
+        verdict_html(summary), deflated_html(summary), fan_html(summary), numbers_html(summary), ftmo_html(summary),
         random_entries_html(summary), random_fills_html(summary), random_paths_html(summary),
         robustness_html(summary),
     ))  # fmt: skip
@@ -574,6 +622,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=d.seed)
     p.add_argument("--paths", type=int, default=d.paths,
                    help="random price paths per symbol (kind D), 0 = skip")  # fmt: skip
+    p.add_argument("--family", default=None,
+                   help="trial-log family: the variants this run was picked from "
+                   "(default: the strategy)")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
     args.symbols = [s.upper() for s in args.symbols]

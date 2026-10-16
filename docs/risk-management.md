@@ -157,7 +157,7 @@ One HTML report per backtest run (`python -m backtester.tools.monte_carlo <run-i
 (`knowledge/topics/backtest-frameworks.md`), every random draw seeded (⚙️ seed **42**). It ends every test with a
 clear verdict.
 
-- **Verdict** (first thing in the report): **EDGE** when all six checks pass, **WEAK** when one or two fail,
+- **Verdict** (first thing in the report): **EDGE** when all seven checks pass, **WEAK** when one or two fail,
   **NO EDGE** otherwise:
   1. mean net R per trade > 0 with t = mean / (sd / sqrt(n)) ≥ ⚙️ **2**;
   2. net R above ⚙️ **95 %** of the random-entry runs (kind B);
@@ -171,6 +171,8 @@ clear verdict.
   counts neither as pass nor fail; t ≥ 2 and percentile ≥ 95 pass at equality, the net checks need > 0; the
   random-path warning (kind D) is raised when a symbol's mean net R per trade on the random paths is above 0, a
   banner only, not part of the verdict.
+  7. **Deflated Sharpe** DSR ≥ ⚙️ **0.95** (7th check, rule set by the user 2026-10-16; see › Trial log and
+     deflated Sharpe). With seven checks, WEAK still means one or two failed.
 - **A. Day reshuffle** (the Monte Carlo above): ⚙️ **1,000** runs. A "day" = a weekday of the run's period
   (midnight to midnight `Europe/Prague`; days without trades included, so days and months are real calendar
   lengths); trades belong to their exit day and keep their order and times inside it. Account per run: start
@@ -211,6 +213,33 @@ clear verdict.
 - **D. Random price paths**: ⚙️ **20** seeded random-walk M1 paths per symbol with the symbol's real volatility
   per hour of day, ⚙️ **2** years each, run through the same strategy and costs. Expected: net R per trade about
   minus the mean cost; clearly more is reported as a warning (bug or lookahead), not as an edge.
+
+### Trial log and deflated Sharpe (ROADMAP 12.10; rules set by the user, 2026-10-16)
+Why: picking the best of many variants finds a "winner" even on pure noise (López de Prado, *AFML* 11, 14.7;
+`knowledge/topics/statistics-and-bayes.md`). Every tried variant is logged, and the verdict deflates the chosen
+one's Sharpe by the number of trials.
+
+- **Trial log:** `results/trials.jsonl` (git-ignored like all results), one JSON line per backtest of a variant:
+  family, strategy, the variant's settings, symbols, start, end, data source, time written, trade count, net R,
+  mean / sd / skewness / kurtosis of net R per trade, Sharpe per trade. Written by `run.py`, the Monte Carlo
+  tool and `tools/gap_fade_grid.py` (one line per variant; other tools later). Append-only; a line with the same
+  family, strategy, settings, symbols, period and source as an earlier one replaces it when read (rerunning a
+  variant is not a new trial).
+- **Family** = the set of variants the chosen one was picked from. ⚙️ Default: the strategy name; `--family`
+  overrides it in every writing tool.
+- **Back-fill** (user, 2026-10-16): trials run before the log existed are added by hand
+  (`python -m backtester.tools.trials add ...`), with their numbers where the old result files have them,
+  otherwise as count-only lines (count for N, no Sharpe).
+- **Sharpe per trade** SR = mean / sd of net R per trade (sample sd), not annualised; n = trade count;
+  skewness g3 and kurtosis g4 (not excess, normal = 3) of net R per trade.
+- **PSR(SR\*)** = Φ( (SR − SR\*) √(n − 1) / √(1 − g3·SR + (g4 − 1)/4 · SR²) ); shown as PSR(0).
+- **DSR** = PSR(SR0) with SR0 = √V · ((1 − γ) Φ⁻¹(1 − 1/N) + γ Φ⁻¹(1 − 1/(N·e))), γ = 0.5772 (Euler's constant),
+  N = number of trials in the family (count-only lines included, at least 1; N = 1 gives SR0 = 0, DSR = PSR(0)),
+  V = sample variance of the Sharpes of the family's lines that have one, when there are ⚙️ **2** or more;
+  otherwise V = 1/n of the evaluated run (the variance of a zero-skill Sharpe estimate; chosen by Claude 2026-10-16).
+- **Check 7** of the verdict passes at DSR ≥ 0.95; n/a with fewer than 2 trades, zero sd or a non-positive
+  denominator under the square root.
+- The report shows PSR(0), DSR, N, V, SR0 and the family name.
 
 ### Risk sweep (`risk/sweep.py`)
 - A grid over the settings to compare results (max drawdown, return, Monte Carlo 95% drawdown).

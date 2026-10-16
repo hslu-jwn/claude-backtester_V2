@@ -15,6 +15,7 @@ from datetime import date
 from pathlib import Path
 
 from backtester.analytics.metrics import by_period, by_year
+from backtester.analytics.trial_log import append, make_record
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
@@ -100,6 +101,11 @@ def main(argv: list[str] | None = None) -> int:
         help="session_zone_sweep (strategy 1, default), ny_index_sweep (strategy 2: NAS100 / "
         "US500), no_wick (strategy 3) or trend_following (strategy 4); spec defaults, no presets",
     )
+    parser.add_argument(
+        "--family",
+        default=None,
+        help="trial-log family: the variants this run was picked from (default: the strategy)",
+    )
     parser.add_argument("--presets-dir", type=Path, default=PRESETS_DIR, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
@@ -128,6 +134,11 @@ def main(argv: list[str] | None = None) -> int:
     print()
     print(format_periods(result.trades))
     print(f"\nresults: {folder}")
+    source = "histdata" if args.cache_dir is None else str(args.cache_dir)
+    append(make_record(
+        args.family or args.strategy, args.strategy, settings.strategy, symbols, args.start,
+        args.end, source, [t.r_net for t in result.trades],
+    ))  # fmt: skip
     return 0
 
 

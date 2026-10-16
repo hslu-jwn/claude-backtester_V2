@@ -41,6 +41,14 @@ def build_series(
     return CandleSeries(symbol, timeframe, build_candles(ohlc, timeframe, start))
 
 
+@pytest.fixture(autouse=True)
+def trials_log_in_tmp(tmp_path, monkeypatch):
+    """Tools append to results/trials.jsonl (ROADMAP 12.10); tests must never touch the real one."""
+    from backtester.analytics import trial_log
+
+    monkeypatch.setattr(trial_log, "RESULTS_DIR", tmp_path / "_results")
+
+
 @pytest.fixture
 def make_candles():
     return build_candles
