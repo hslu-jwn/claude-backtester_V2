@@ -1579,7 +1579,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   -22.1 R gross, -59.4 R net / 747 trades (-0.080 R/trade); 11.4's best variant (stop 0.75, exit 12:00) -7.3 R
   gross, -54.9 R net; 6 of 36 variants net positive, mean -22.7 R. On FTMO's own feed 2021-09..2026-09 the
   default is +13.9 R net / 1836 trades (+0.008 R/trade, histdata same window +28.7 R). **Out of sample: no edge.**
-- ☐ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
+- ☑ **11.7 Gap fade walk-forward** (user, 2026-10-15): each year, pick the variant that was best on the years
   before and trade it in that year; report the chained out-of-sample net R against the default variant.
   **Result 2026-10-16** (`tools/gap_fade_walk_forward.py`, histdata NAS100 + US500 2018-2026, anchored, max net R on
   the years before, first test year 2019; runtime 125 min): chained out-of-sample **+0.6 R / 1423 trades** against
@@ -1603,7 +1603,7 @@ Lessons from HftBacktest, VectorBT, NautilusTrader and prediction-market-backtes
 (`knowledge/topics/backtest-frameworks.md`, ideas T-02..T-07). Each step test-first, off by default where it
 changes results, defaults changed only with the user's go.
 
-- ☐ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
+- ☑ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
   Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
   costs, and report where the strategy's net R sits (percentile, mean and spread of the random runs) in the
@@ -1614,7 +1614,7 @@ changes results, defaults changed only with the user's go.
 - ☐ **12.2 Intrabar order from M1** (T-03): when SL and TP are both inside one candle, read the M1 bars inside it
   to see which came first; only a conflict inside one M1 bar stays SL first (CLAUDE.md allows "unless a lower
   timeframe resolves it"). Option, off by default; report how many trades change.
-- ☐ **12.3 Walk-forward splitter** (T-04): rolling and anchored windows as a shared tool for 6.1 / 6.2 and studies;
+- ☑ **12.3 Walk-forward splitter** (T-04): rolling and anchored windows as a shared tool for 6.1 / 6.2 and studies;
   11.7 becomes its first user.
 - ☐ **12.4 Parameter heat map** (T-05): two parameters, one metric (net R, R per trade), on the results page.
   Visual step.
@@ -1622,12 +1622,14 @@ changes results, defaults changed only with the user's go.
   same candles (entry, exit, spread, swap, R), every difference explained.
 - ☐ **12.6 Stressed fills** (T-07): seeded random slippage on stop / market fills and "touch is not a fill" for
   limits, as an extra column in the robustness report.
+  Random slippage built 2026-10-15 (`analytics/random_fills.py`, kind C of the Monte Carlo report); "touch is not a
+  fill" for limits still open.
 - ☐ **12.8 Engine slippage** (found 2026-10-15, filed by the user's go the same day): `SymbolCosts.slippage`
   (`engine/costs.py`) is defined but the engine never applies it, so every backtest so far ran without slippage
   although `risk-management.md › Slippage` says entries and SL hits get it (TPs none). Apply it in the engine
   (net R only, reported per trade like `spread_r`), decide with the user whether time / signal exits count as
   market fills, and rerun the open studies' headline numbers to show the change.
-- ☐ **12.7 Monte Carlo backtester** (user, 2026-10-15): one tool and results page that runs the Monte Carlo kinds
+- ☑ **12.7 Monte Carlo backtester** (user, 2026-10-15): one tool and results page that runs the Monte Carlo kinds
   on a backtest: trade order / day reshuffle (5.3, account drawdown and FTMO pass rate), random entries (12.1),
   random fills (12.6), synthetic price paths. Decided by the user 2026-10-15: **all four kinds, shown in the
   report** (not a separate app page). The report shows a fan of simulated equity curves (like a stock-price Monte
@@ -1642,3 +1644,13 @@ changes results, defaults changed only with the user's go.
   +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
   29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
   Halves split at the middle of the run's period (user, 2026-10-15); n/a checks count neither way (user, 2026-10-15).
+- ☐ **12.9 Portfolio tool** (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
+  correlation of daily R between strategies / variants, a combined Monte Carlo report on one account, and the
+  number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
+  positives.
+
+**Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
+edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later
+5.2 account simulator and 12.5 demo reconciliation (before live). Knowledge on combining edges: the user adds
+Carver *Systematic Trading*, López de Prado *Advances in Financial Machine Learning*, Chan *Algorithmic Trading*,
+Davey *Building Winning Algorithmic Trading Systems* to `00_Literature/Trading` (books are added only from the text).

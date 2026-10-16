@@ -28,65 +28,46 @@ session ends after this one, it may rewrite this file: merge both sections inste
   2026-10-15**. CSVs: `results/s2_trend_filter/` (git-ignored).
 - 1348 tests pass.
 
-## Last session, second chat (2026-10-14/15): books, knowledge base, research tools, spread table
-- **Knowledge base** `knowledge/` (index `README.md`, `books/` notes of Kaufman *Trading Systems and Methods*,
-  Douglas, Hougaard, Volman, Aziz, Coulling, `topics/`, `ideas.md` backlog with status, `reading-brief.md`;
-  pointer and the trigger **`Continue.Knowledge`** in CLAUDE.md). Background, not rules.
-- **Built (all accepted by the user, "End." 2026-10-15; ROADMAP ☑):**
-  - **6.4 robustness report** `analytics/robustness.py` (+ `trend_grid` `robustness.csv`, `grid.csv`).
-  - **6.5 time splits** (hour, weekday, month part, NY window) on the results page.
-  - **6.6 MT5 history**: `MaxBars` set to Unlimited in common.ini by Claude (backup next to it), MT5 restarted;
-    FTMO serves M1 with tick volume and spread from 2015-16 (FX, gold) and 2017-12 (indices).
-  - **6.7 spread table** `engine/spread_table.py`, `CostConfig.spread_table` (off by default),
-    `tools/spread_table.py` -> `data/spreads/` (git-ignored), `trend_grid --spread-table`.
-  - **11.1 noise study**: all markets near random-walk noise; indices not noisier; noise decides the sign of
-    strategy 4's gross R, not enough to pay costs. Noise gate I-02 dropped by the user.
-  - **11.2 open / gap / trend-day study**: gap fill is mostly the random-walk touch; no first-30-minute
-    continuation; 7 % trend days; one candidate: gaps of 0.1-1 ATR touch the previous close before the mirror
-    level 44 vs 37 % (NAS100), 43 vs 38 % (US500), same sign in both halves.
-- **No edge found yet.** Books' claims mostly not reproduced; strategies 1-4 negative (other chat).
-- **Facts to remember:** histdata has no volume (MT5 tick volume only); FTMO spreads moved a lot over the
-  years (gold 0.07 in 2021-23, 0.42 in 2026; NAS100 0.6 -> 1.45) and some years before 2022 look wrong
-  (GBPUSD 2020-21 5 pips); server clock NY + 7 h (920 of 948 weeks, misses 2020-03..2021-03).
-- 1449 tests pass; ruff: only the old RUF007 in `core/series.py`.
-
-**Open (needs the user), this chat:**
-1. Spread table: make it the default (changes the net R of every strategy)? From which year (the years before
-   2022 look wrong)? Also: add a news mark-up later (needs a calendar)?
-2. Gap fade (ROADMAP 11.4): Claude decided it is next. Entry at the open with target previous close and stop at
-   the mirror level is the simplest form: should the first version also use the opening range (wait 5-30
-   minutes) or stay at the open?
-3. Volume (I-44): FTMO tick volume exists from 2015-16; worth an A/B test of the price-only ideas with and
-   without volume, or park it until an idea survives without volume?
-4. Should the book research continue with more books (technical, price-only: e.g. on intraday statistics,
-   market microstructure, systematic trading)? Which titles do you have?
-5. 11.3 time-of-day drift (XAUUSD / FX): keep it after 11.4, or drop it (the indices' open study showed
-   mostly no effects)?
-
-**Next step (Claude's decision):** write `docs/strategy-gap-fade.md` (11.4), tests first, run with the
-spread table and the robustness report; first prompt `Continue.Knowledge`.
+## Last session, knowledge chat (2026-10-15/16): backtest frameworks, Monte Carlo report, gap fade verdict
+- **Framework lessons** (HftBacktest, VectorBT, NautilusTrader, prediction-market backtesting; "Kalshi Market" repo
+  not found, dropped): `knowledge/topics/backtest-frameworks.md`, checklist lines 14a-c / 21a, ideas T-02..T-07,
+  ROADMAP Phase 12.
+- **Monte Carlo report** (12.7 ☑, spec `risk-management.md › Monte Carlo report`):
+  `python -m backtester.tools.monte_carlo NAS100 US500 --start .. --end .. --strategy gap_fade` ->
+  `results/monte_carlo/<..>/report.html` + `summary.json`. Verdict EDGE / WEAK / NO EDGE from 6 checks (t >= 2,
+  random entries >= 95th pct, both halves of the run's period, costs x1.5, without best trade, random-fill median);
+  fan chart; account numbers at 0.5 / 1 / 1.5 % on 100k; FTMO 2-Step pass probability; kinds A day reshuffle
+  (`risk/monte_carlo.py`), B random entries (`analytics/random_baseline.py`, gap fade `mode="follow"`),
+  C random fills (`analytics/random_fills.py`), D random price paths (`data/random_walk.py`, slow: ~9 s per path).
+- **Walk-forward** (12.3 ☑ `analytics/walk_forward.py`; 11.7 ☑ `tools/gap_fade_walk_forward.py`, 125 min).
+- **Gap fade: no edge** (I-39). Walk-forward 2019-26 +0.6 R / 1423 trades, default +22.6 R / 2752; both NO EDGE;
+  2020-21 alone WEAK (t 1.08). Random slippage kills it (small stops).
+- **Found:** the engine never applies `SymbolCosts.slippage` -> every backtest so far is too optimistic (12.8 filed).
+- 1832 tests pass (without the other session's `tests/tools/test_orb_grid.py`); ruff: only the old RUF007.
 
 ## Accepted by the user (do not ask again)
-- Everything built this session ("End." 2026-10-15); ROADMAP 10.5 ☑. FTMO swap rates as defaults. Trend filter code
-  stays (off). Strategy 2 parked.
+- Knowledge chat 2026-10-16 ("End."): everything built, ROADMAP 11.7 / 12.1 / 12.3 / 12.7 ☑; verdict rules (n/a
+  checks neutral, halves at mid-period); Monte Carlo all four kinds in the report, risks side by side; gap fade no
+  edge; infrastructure first, then find / combine edges (order in ROADMAP Phase 12).
+- Strategy chat 2026-10-15: FTMO swap rates as defaults; trend filter code stays (off); strategy 2 parked.
 - Earlier: tests first, small commits, no PR; strategy 1 paused, strategy 3 dropped, strategy 4 parked; sweep option
   defaults stay off; temporary Sweep menu stays.
 
 ## Open (needs the user)
-1. **Next:** Claude recommended the day-trade strategies of Phase 11 (opening-range breakout I-07/I-08, compression
-   break I-33) with the cost filter (I-45) and the free-path filter (I-37); no overnight holds, so no swap. The order
-   agreed in Phase 11 (after 6.4 / 6.5 / the studies) is the other session's area; check its state first.
-2. **Login:** update the MT5 login in Settings ⚙ → Trading (the user does this; never ask for credentials in chat).
-- **Known issues:**
-  - ruff: the old RUF007 in `core/series.py`.
-  - Two hung `python.exe` processes running a scratch script `s2_filter.py` (from a crashed run 2026-10-14) may still
-    be open; harmless, close them in Task Manager (auto mode did not allow Claude to stop them).
-  - Strategy 2's `decisions` list still shows an order the cost filter skipped as taken (inspection only).
+1. **Books:** the user adds Carver, López de Prado, Chan, Davey to `00_Literature/Trading`; then add them per
+   `knowledge/README.md` (focus: combining edges, meta-labelling, deflated Sharpe).
+2. **12.8 engine slippage:** do time / signal exits count as market fills (slipped)? Ask before building.
+3. Older open points of the knowledge chat: spread table as default (and from which year), volume A/B (I-44),
+   11.3 time-of-day drift keep or drop.
+4. **Opening-range breakout (11.10, strategy 6)** is another session's work in this checkout (`tools/orb_grid.py`,
+   `tests/tools/test_orb_grid.py` uncommitted at this session's end); leave its files alone.
+5. **Login:** update the MT5 login in Settings ⚙ → Trading (the user does this; never ask for credentials in chat).
+- **Known issues:** ruff RUF007 in `core/series.py`; the FTMO daily-loss check counts an overnight trade only from
+  its exit day (spec note); Monte Carlo kind D is slow (37 min for 2 symbols x 20 paths); strategy 2's `decisions`
+  list shows cost-filtered orders as taken.
 
 ## Next step (suggested)
-Read the other session's latest entries (ROADMAP 6.4, 6.5, 11.x), then ask the user which day-trade strategy to spec
-first (spec -> tests -> code).
+12.8 engine slippage (spec question 2 first), then 12.2, 12.9, 6.1 (ROADMAP Phase 12 order).
 
 ## First prompt for the next chat
-`Continue.` for the strategy work (strategy 2 area), `Continue.Knowledge` for
-the research from the knowledge base (gap fade 11.4 next).
+`Continue.` (infrastructure, 12.8 next) or `Continue.Knowledge` once the new books are in `00_Literature/Trading`.
