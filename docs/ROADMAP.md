@@ -1631,9 +1631,18 @@ changes results, defaults changed only with the user's go.
   Claude's pick (user "ok", 2026-10-16): strategy 2 only (+29 R gross 2020-26); development on FTMO US30 /
   US2000 before the cut-off (the only indices with tick volume there), A/B on NAS100 / US500 from 2021-09
   (already used by strategy 2, so not fresh). Gap fade and strategies 1, 3, 4: no (nothing before costs).
+  **Result 2026-10-16** (`results/s2_volume_ab_mt5/`): development US30 + US2000 2018-21: spec -10.5 R gross /
+  -147 R net (739 trades), with volume -6.3 / -18 (119); NAS100 + US500 2021-09..2026: spec +13.6 / -81 (1215),
+  with volume -23.5 / -30 (120, -0.25 R/trade). The filter only removes trades: **no edge**; option stays off.
 - ☐ **11.13 Order-flow study on BTC / ETH** (user "ok", 2026-10-16): Binance futures delta (taker buy - sell)
   and its imbalance vs the next 1m-4h return, against the round-trip fee; development period 2020-01 .. 2021-09-13
   only. Research tool, no rule. Next after it: forward test of the ORB on the FTMO demo (needs Phase 7).
+  **Result 2026-10-16** (`results/orderflow_study/`): short-horizon effects are real against a circular-shift
+  baseline and stable on both symbols and halves (5m cumulative delta over 4 bars mean-reverts over the next 3
+  bars, relative volume), but 0.02-0.05 %, 2-5x below even the maker fee. Effects that beat the fees (BTC 1h
+  cvd_12 momentum, 4h CVD divergence) are BTC-only, tail-driven in the 2020-21 bull run and unstable on ETH,
+  out of 576 tests. Nothing ready for a spec; one hypothesis to re-test once on post-cut-off data: BTC 1h
+  cvd_12, 6-bar horizon.
 - ☑ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
   Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
