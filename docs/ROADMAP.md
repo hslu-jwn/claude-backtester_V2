@@ -1619,6 +1619,11 @@ changes results, defaults changed only with the user's go.
   **Test period (go by the user 2026-10-16):** exactly two variants fixed in advance, band 0.25 ATR and band
   0.5 ATR, no target, min_rel_volume 1.5, on US30 / US2000 / NAS100 / US500, FTMO MT5 data from 2021-09-14,
   real costs, robustness report; nothing tuned afterwards.
+  **Test result 2026-10-16** (`results/orb_test/`, spread scaled with the price level): band 0.25 ATR 301
+  trades, +35.0 R gross, +30.3 R net (+0.10 R/trade), halves 2021-23 +27.6 / 2024-26 +2.7, costs x1.5 +25,
+  best trade removed +23; band 0.5 ATR 263 trades, +12.3 R net (+0.05), halves +12.7 / -0.5. Same with the
+  spread table. US30 and US500 carry it, US2000 flat; Welch t about 1.5 (not significant). Out of sample
+  positive but fading since 2024: not a confirmed edge; waiting for the user.
 - ☐ **11.11 Spread scaled with the price level** (user 2026-10-16; built, awaiting the user's check): the fixed spread is today's; in years
   with other prices it is scaled by price / reference price (cost-model fix, mainly for the development years).
 - ☐ **11.12 Volume filter on parked strategies with potential** (user 2026-10-16: "yes if the strategies
