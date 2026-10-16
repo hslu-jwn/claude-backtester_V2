@@ -21,6 +21,9 @@ Spec: strategy-ny-indices.md. Base timeframe 1m; 5m, 15m, 1h and New York-aligne
    `max_trades_per_session` entries, or the entry is in the best time and
    `include_best_time_trades` is off, or the trend filter (if on) points the other way
    (trend_filter.py; the setup stays valid). `decisions` keeps every signal and what happened.
+   Volume filter (if on): the entry candle's tick volume against the usual volume of its
+   minute after the window's open (see `_volume_ok`); no volume, too little history or a
+   usual volume of 0 reject the signal, like the trend filter.
 6. `close_before_rollover`: trades still open at 17:00 ET minus `rollover_close_minutes`
    close at that 1m close (`exits`), so they pay no swap.
 Trades in R only. TP1 / TP2 / TP3 a third each; break-even with costs after TP1.
@@ -28,8 +31,10 @@ Trades in R only. TP1 / TP2 / TP3 a third each; break-even with costs after TP1.
 
 from __future__ import annotations
 
+import math
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
@@ -57,6 +62,9 @@ if TYPE_CHECKING:
 M1, M5, M15, H1, H4 = Timeframe.M1, Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4
 SWEPT_KIND = {Direction.BULLISH: SwingKind.LOW, Direction.BEARISH: SwingKind.HIGH}
 BEST_TIME_TAG = "best_time"
+# warm-up in calendar days for the volume history: 5 trading days of 7, plus a margin for holidays
+CALENDAR_PER_TRADING_DAY = 1.5
+WARMUP_MARGIN_DAYS = 7
 
 
 @dataclass
@@ -106,6 +114,14 @@ class NyIndexSweep(Strategy):
         self.trend_filter = (
             TrendFilter(config.trend_filter) if config.trend_filter.enabled else None
         )
+        # tick volume by minute after the window open, per window kind and New York date
+        self._volumes: dict[Window, dict[date, dict[int, float]]] = defaultdict(dict)
+        history = config.volume_lookback if config.min_rel_volume > 0 else 0
+        if history:
+            self.min_warmup_days = math.ceil((history + 1) * CALENDAR_PER_TRADING_DAY) + (
+                WARMUP_MARGIN_DAYS
+            )
+        self._candle_volume = 0.0  # tick volume of the candle being processed
         self.window: WindowState | None = None
         self.decisions: list[Decision] = []
         self.ended: list[Setup] = []  # every setup that ended, for inspection
@@ -123,8 +139,11 @@ class NyIndexSweep(Strategy):
         if self.trend_filter is not None:
             self.trend_filter.update(views[self.config.trend_filter.timeframe])
         candle = views[M1].current
+        self._candle_volume = candle.volume
         self._update_window(now)
         ws = self.window
+        if ws is not None and self.config.min_rel_volume > 0:
+            self._record_volume(ws.window, now, candle.volume)
         if ws is None or ws.bias is None:
             return []
         ctx = Context(now, candle, self.frames, self.config, self.doji_max_body)
@@ -265,6 +284,28 @@ class NyIndexSweep(Strategy):
                 self._accepted.update(s.accepted)
             ws.setups = [s for s in ws.setups if s.step is not Step.DONE]
 
+    # --- volume filter -----------------------------------------------------------------
+
+    def _record_volume(self, w: TradingWindow, now: datetime, volume: float) -> None:
+        days = self._volumes[w.kind]
+        days.setdefault(w.trading_date, {})[_minute(now, w)] = volume
+        while len(days) > self.config.volume_lookback + 1:
+            del days[min(days)]
+
+    def _volume_ok(self, w: TradingWindow, at: datetime, volume: float) -> bool:
+        """Entry candle volume >= min_rel_volume x the mean volume of the same minute after
+        the window open over the previous `volume_lookback` sessions of this window kind.
+        No volume, too little history or a usual volume of 0: False (never passes silently)."""
+        cfg = self.config
+        days = self._volumes[w.kind]
+        previous = sorted(d for d in days if d < w.trading_date)[-cfg.volume_lookback :]
+        if len(previous) < cfg.volume_lookback or volume <= 0:
+            return False
+        usual = [days[d][m] for d in previous if (m := _minute(at, w)) in days[d]]
+        if not usual or sum(usual) <= 0:
+            return False
+        return volume >= cfg.min_rel_volume * (sum(usual) / len(usual))
+
     # --- orders ------------------------------------------------------------------------
 
     def _order(self, ws: WindowState, signal: Signal) -> Order | None:
@@ -280,6 +321,11 @@ class NyIndexSweep(Strategy):
         elif self.trend_filter is not None and signal.direction is not self.trend_filter.direction:
             trend = self.trend_filter.direction
             rejected = f"against the trend filter ({trend.value if trend else 'no trend yet'})"
+            setup.trade_closed(signal.at)
+        elif cfg.min_rel_volume > 0 and not self._volume_ok(
+            ws.window, signal.at, self._candle_volume
+        ):
+            rejected = f"volume below {cfg.min_rel_volume:g} x usual"
             setup.trade_closed(signal.at)
         else:
             result = targets(signal, self.frames, cfg, self.detectors.equilibrium)
@@ -330,6 +376,11 @@ class NyIndexSweep(Strategy):
             tp2_share=third if len(tps) > 2 else None,
             ref=setup,
         )
+
+
+def _minute(t: datetime, w: TradingWindow) -> int:
+    """Whole minutes from the window's open to `t` (negative before the open)."""
+    return int((t - w.open).total_seconds() // 60)
 
 
 def _inside(ts: datetime, tf: Timeframe, outer_ts: datetime, outer_tf: Timeframe) -> bool:

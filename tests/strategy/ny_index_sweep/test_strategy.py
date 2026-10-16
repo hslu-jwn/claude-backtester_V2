@@ -9,6 +9,7 @@ The walk: 1m candles Monday to Friday around the clock (NAS100 doji threshold), 
 from __future__ import annotations
 
 import random
+from dataclasses import replace
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -23,7 +24,7 @@ from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig, TrendF
 from backtester.strategy.ny_index_sweep.frames import beyond, candle_open
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.ny_index_sweep.trend_filter import TrendFilter
-from backtester.strategy.ny_index_sweep.windows import Window
+from backtester.strategy.ny_index_sweep.windows import Window, window_of
 
 M1, M5, M15, H1, H4 = Timeframe.M1, Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4
 START = datetime(2026, 9, 7, tzinfo=UTC)  # Monday
@@ -310,3 +311,117 @@ def test_skipped_orders_count_no_trade_and_free_the_setup(week):
     assert sum(d.order is not None for d in strategy.decisions) > sum(
         d.order is not None for d in base.decisions
     )  # re-entries the skipped trades made possible
+
+
+# --- tick-volume filter (strategy-ny-indices.md › Volume filter; ROADMAP 11.12) ------------
+
+LOOKBACK = 3
+
+
+def with_volume(m1, fn):
+    """The same candles with tick volume `fn(candle)` (prices unchanged)."""
+    return [replace(c, volume=fn(c)) for c in m1]
+
+
+def run_vol(m1, until=None, k=1.0):
+    cfg = NyIndexSweepConfig(min_rel_volume=k, volume_lookback=LOOKBACK)
+    return run(m1, until, config=cfg)[0]
+
+
+def orders_by_window(strategy):
+    return {
+        (d.signal.setup.window.trading_date, d.signal.setup.window.kind): d.signal.at
+        for d in strategy.decisions
+        if d.order is not None
+    }
+
+
+def history_dates(base):
+    """(date, kind) of windows with at least LOOKBACK earlier windows of the same kind that
+    saw candles: every 20-day-walk weekday window does, so the 4th weekday on."""
+    first = START.date()
+    return {
+        k: d for k, d in orders_by_window(base).items() if (k[0] - first).days >= 7
+    }  # 5 weekdays + weekend: plenty of history
+
+
+def test_volume_filter_config_defaults_and_validation():
+    c = NyIndexSweepConfig()
+    assert c.min_rel_volume == 0.0 and c.volume_lookback == 20
+    for bad in ({"min_rel_volume": -0.1}, {"volume_lookback": 0}):
+        with pytest.raises(ValueError):
+            NyIndexSweepConfig(**bad)
+
+
+def test_volume_filter_off_changes_nothing_even_without_volume(week):
+    m1, base, _ = week
+    assert summary(run(with_volume(m1, lambda c: 0.0))[0].decisions) == summary(base.decisions)
+
+
+def test_volume_filter_passes_when_volume_equals_usual(week):
+    m1, base, _ = week
+    flat = with_volume(m1, lambda c: 100.0)
+    got = orders_by_window(run_vol(flat, k=1.0))
+    expected = history_dates(base)
+    assert expected and {k: got.get(k) for k in expected} == expected
+
+
+def test_volume_filter_fails_below_k_times_usual(week):
+    m1, _, _ = week
+    flat = with_volume(m1, lambda c: 100.0)
+    strategy = run_vol(flat, k=1.5)
+    late = {k for k in orders_by_window(strategy) if (k[0] - START.date()).days >= 7}
+    assert late == set()
+    assert any("volume" in d.rejected for d in strategy.decisions)
+
+
+def test_volume_filter_a_spike_on_the_entry_candle_passes_it(week):
+    m1, base, _ = week
+    flat = with_volume(m1, lambda c: 100.0)
+    key, at = max(history_dates(base).items(), key=lambda kv: kv[1])
+    assert key not in orders_by_window(run_vol(flat, k=1.5))
+    spike = with_volume(m1, lambda c: 200.0 if c.ts + M1.duration == at else 100.0)
+    assert orders_by_window(run_vol(spike, k=1.5)).get(key) == at
+    weak = with_volume(m1, lambda c: 140.0 if c.ts + M1.duration == at else 100.0)
+    assert key not in orders_by_window(run_vol(weak, k=1.5))
+
+
+def test_volume_filter_without_volume_skips_never_passes(week):
+    m1, _, _ = week
+    strategy = run_vol(with_volume(m1, lambda c: 0.0), k=0.1)
+    assert orders_by_window(strategy) == {}
+    assert any("volume" in d.rejected for d in strategy.decisions)
+
+
+def test_volume_filter_skips_while_history_is_too_short(week):
+    m1, _, _ = week
+    flat = with_volume(m1, lambda c: 100.0)
+    cfg = NyIndexSweepConfig(min_rel_volume=1.0, volume_lookback=50)  # the walk has 20 days
+    assert orders_by_window(run(flat, config=cfg)[0]) == {}
+
+
+def test_volume_filter_compares_am_with_am_and_pm_with_pm(week):
+    m1, base, _ = week
+    # AM minutes trade 100, PM minutes 1000: against a pooled history one of the two would fail
+    split = with_volume(m1, lambda c: 100.0 if window_kind_of_safe(c) is Window.AM else 1000.0)
+    got = orders_by_window(run_vol(split, k=1.0))
+    expected = history_dates(base)
+    assert {k[1] for k in expected} == {Window.AM, Window.PM}
+    assert {k: got.get(k) for k in expected} == expected
+
+
+def window_kind_of_safe(c: Candle):
+    w = window_of(c.ts + M1.duration)
+    return w.kind if w is not None else None
+
+
+def test_volume_filter_no_lookahead(week):
+    m1, _, _ = week
+    rng = random.Random(5)
+    noisy = with_volume(m1, lambda c: 80.0 + rng.random() * 40)
+    full = run_vol(noisy, k=0.8)
+    assert full.decisions
+    for days in (5, 12):
+        cut = START + timedelta(days=days, hours=17)
+        short = run_vol([c for c in noisy if c.ts + M1.duration <= cut], cut, k=0.8)
+        assert summary(short.decisions) == [x for x in summary(full.decisions) if x[0] <= cut]

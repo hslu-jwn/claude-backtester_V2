@@ -114,6 +114,14 @@
   missing there, it closes at the next 1m close (it then pays that night). Why 45: the histdata.com index feed has no
   candles from 16:15 to 18:00 ET (cash close; checked 2020 and 2024, winter and summer), so the last close before the
   rollover is 16:15; with 1 minute every trade would close at 18:01, after the rollover and the gap.
+- ⚙️ **Volume filter** (rule set by Claude with the user's go, 2026-10-16; ROADMAP 11.12). `min_rel_volume`, **off by default** (0).
+  On: the entry candle (the 1m candle at whose close the order is given) must have a tick volume of at least
+  `min_rel_volume` x the mean tick volume of the same minute after the window's open (AM and PM separately: AM
+  against the earlier AM windows, PM against the PM ones) over the previous ⚙️ `volume_lookback` (20) sessions of that window kind.
+  No volume on the candle (histdata candles carry 0), fewer than `volume_lookback` earlier sessions, or a usual volume of 0 =
+  the signal is rejected (never passed silently). A rejected signal counts no trade and the setup stays valid for a later
+  entry (like the trend filter). Needs candles with tick volume (MT5 cache). Backtest-only extension: strategy 2 is specced
+  for NAS100 / US500; it may be run on US30 / US2000 for development before the cut-off.
 - Later: BoS against "the last swing high before the sweep" instead of the most recent one (user, 2026-10-11)
 - 3rd-confluence timeout (25 setup-TF candles)
 - Confluence types on/off (OB, BB, BPR, FVG, EQ)

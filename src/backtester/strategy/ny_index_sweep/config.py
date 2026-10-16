@@ -63,6 +63,11 @@ class NyIndexSweepConfig:
     # at the first 1m close at or after 17:00 ET minus this; 45 = 16:15 ET, the last close of
     # the histdata.com index feed before its 16:15-18:00 gap (spec › Close before the rollover)
     rollover_close_minutes: int = 45
+    # tick-volume filter (spec › Volume filter): the entry candle's volume must be at least
+    # this x the mean volume of the same minute after the window's open (AM / PM separately)
+    # over the previous `volume_lookback` sessions. 0 = off. Needs candles with volume (MT5).
+    min_rel_volume: float = 0.0
+    volume_lookback: int = 20
 
     # sweep (confluences.md › Liquidity sweep)
     sweep_lookback: int = 3  # a wick beyond one of the last N swings of the sweep TF
@@ -106,6 +111,10 @@ class NyIndexSweepConfig:
             raise ValueError("max_trades_per_session must be >= 1")
         if self.rollover_close_minutes < 1:
             raise ValueError("rollover_close_minutes must be >= 1 (17:00 itself is the rollover)")
+        if self.min_rel_volume < 0:
+            raise ValueError("min_rel_volume must be >= 0")
+        if self.volume_lookback < 1:
+            raise ValueError("volume_lookback must be >= 1")
         if self.sweep_lookback < 1:
             raise ValueError("sweep_lookback must be >= 1")
         if self.sweep_equal_tolerance_atr < 0 or self.sweep_breakout_closes < 0:
