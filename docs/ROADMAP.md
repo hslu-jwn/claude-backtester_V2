@@ -1597,6 +1597,10 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   with buy / sell volume, delta and trade count; the raw files are deleted after each month.
 - ☐ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
 
+- ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
+  variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
+- ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
 Lessons from HftBacktest, VectorBT, NautilusTrader and prediction-market-backtesting, read 2026-10-15
@@ -1612,6 +1616,13 @@ changes results, defaults changed only with the user's go.
   17 of 18 variants, mean +0.013 R/trade; best: US indices band 0.25 ATR, no target, with volume: 177 trades,
   +19.7 R net (+0.11 R/trade), halves +0.9 / +18.8, +16.3 with costs x1.5, +14.3 without the best trade.
   Candidate for the test period (small sample, chosen among many variants).
+  **Test period (go by the user 2026-10-16):** exactly two variants fixed in advance, band 0.25 ATR and band
+  0.5 ATR, no target, min_rel_volume 1.5, on US30 / US2000 / NAS100 / US500, FTMO MT5 data from 2021-09-14,
+  real costs, robustness report; nothing tuned afterwards.
+- ☐ **11.11 Spread scaled with the price level** (user 2026-10-16): the fixed spread is today's; in years
+  with other prices it is scaled by price / reference price (cost-model fix, mainly for the development years).
+- ☐ **11.12 Volume filter on parked strategies with potential** (user 2026-10-16: "yes if the strategies
+  have potential"): only strategies with positive gross R before costs qualify; decided by Claude per strategy.
 - ☑ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
   Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
