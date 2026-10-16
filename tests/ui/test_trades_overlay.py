@@ -25,6 +25,7 @@ from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.resample import CANDLE_COLUMNS
 from backtester.detectors.zone import ZoneKind
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, PartialExit
 from backtester.settings import settings_from_values, to_json
@@ -84,7 +85,8 @@ def test_the_scenario_trade_with_its_chart_positions():
     assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.2)
     # costs on (XAUUSD): spread 0.25 / 0.9 and 0.0007 % per side of entry 110.0 / exit 111.08
     # (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
-    assert t.r_net == pytest.approx(1.2 - 0.25 / 0.9 - 0.000007 * (110.0 + 111.08) / 0.9)
+    spread = 0.25 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price  # scaled (2026-10-16)
+    assert t.r_net == pytest.approx(1.2 - spread / 0.9 - 0.000007 * (110.0 + 111.08) / 0.9)
     assert e.entry_x == ENTRY_INDEX and e.exit_x == ENTRY_INDEX + 1
     assert e.decision.signal.confluence.kind.value == "fvg"
     assert e.zone_x0 == 6  # the London 08:00 swing candle (5m 08:00 is candle 6)

@@ -191,7 +191,7 @@ class Backtest:
             if not order.tp2_share or 1 - order.tp1_share - order.tp2_share <= 1e-12:
                 raise ValueError("tp1_share + tp2_share must leave a share for TP3")
         symbol = self._replay.symbol
-        spread = self._config.costs.spread(symbol, now)
+        spread = self._config.costs.spread(symbol, now, entry)
         check = None
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start

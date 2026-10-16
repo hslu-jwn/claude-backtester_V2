@@ -1619,7 +1619,7 @@ changes results, defaults changed only with the user's go.
   **Test period (go by the user 2026-10-16):** exactly two variants fixed in advance, band 0.25 ATR and band
   0.5 ATR, no target, min_rel_volume 1.5, on US30 / US2000 / NAS100 / US500, FTMO MT5 data from 2021-09-14,
   real costs, robustness report; nothing tuned afterwards.
-- ☐ **11.11 Spread scaled with the price level** (user 2026-10-16): the fixed spread is today's; in years
+- ☐ **11.11 Spread scaled with the price level** (user 2026-10-16; built, awaiting the user's check): the fixed spread is today's; in years
   with other prices it is scaled by price / reference price (cost-model fix, mainly for the development years).
 - ☐ **11.12 Volume filter on parked strategies with potential** (user 2026-10-16: "yes if the strategies
   have potential"): only strategies with positive gross R before costs qualify; decided by Claude per strategy.

@@ -17,6 +17,35 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
+- ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.11): the fixed spread is today's FTMO
+  value, which is far too large in R in years with lower prices (XAGUSD 2015 at about $15 against $65 now). In the fixed-spread
+  mode the spread of a fill is
+
+      spread used = SymbolCosts.spread x (fill price / SymbolCosts.reference_price)
+
+  so it stays the same share of the price. The fill price is the trade's entry; the exit pays the same spread as the entry
+  (as before). `CostConfig.spread_price_scaling` (default **True**) switches it off to reproduce old results. The spread
+  table (per year and hour, ROADMAP 6.7) is a measurement and is **not** scaled; where it has no value the scaled fixed spread
+  is used. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
+  (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage is not applied by the engine
+  yet; when it is (ROADMAP 12.8) it follows the spread's scaling. FX is scaled the same way (no special case).
+  Reference prices (`REFERENCE_PRICES` in `engine/costs.py`): median M1 bid close over the last 60 cached days of the FTMO MT5
+  history (`data/cache/mt5/<SYM>`, 2026-08-16 to 2026-10-14), measured 2026-10-16:
+
+  | Symbol | Price | Symbol | Price | Symbol | Price |
+  |---|---|---|---|---|---|
+  | XAUUSD | 4342.74 | XAGUSD | 64.58 | GBPUSD | 1.348 |
+  | GBPJPY | 209.75 | EURUSD | 1.15405 | AUDUSD | 0.71185 |
+  | NZDUSD | 0.57601 | EURGBP | 0.85688 | USDJPY | 158.058 |
+  | USDCAD | 1.39191 | USDCHF | 0.81828 | EURJPY | 179.43 |
+  | NAS100 | 29580.48 | US500 | 7696.45 | GER40 | 25563.64 |
+  | UK100 | 10720.5 | JP225 | 66072.5 | EU50 | 6316.47 |
+  | US30 | 52172.25 | US2000 | 2890.78 | USOIL | 92.499 |
+  | UKOIL | 102.245 | NATGAS | 2.876 | DXY | 99.673 |
+  | BTCUSD | 79679.87 | ETHUSD | 2498.33 | | |
+
+  Note: the XAUUSD, GBPUSD, GBPJPY, NAS100 and US500 spreads are estimates, not measured in this window; their reference price is
+  still the 2026 price level they stand for.
 - ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6** (replaced 2026-10-15 by FTMO's percentage fee, see *Real fees* below), GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**.
   Swap defaults = FTMO's MT5 rates of 2026-10-14 (rule set by the user, 2026-10-14), USD per lot per night, long / short:
   XAUUSD **-61.27 / -4.20**, GBPUSD **-5.77 / -4.48**, GBPJPY **+2.04 / -13.85** (triple Wednesday), NAS100 **-6.912 / +0.339**,

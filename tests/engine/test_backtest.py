@@ -198,7 +198,10 @@ def test_break_even_can_be_switched_off():
 # break-even stop is 100.31, where a hit is 0R net.
 # XAUUSD's old commission, $6 per lot (FTMO's 0.0014 % replaced it on 2026-10-15): these tests
 # are about the break-even / cost mechanics and keep the fixed-dollar commission they were written for.
+# Synthetic prices around 100 test the fixed-spread arithmetic: price scaling is off here
+# (it has its own tests in test_spread_scaling.py).
 GOLD_USD6 = CostConfig(
+    spread_price_scaling=False,
     symbols={
         **DEFAULT_SYMBOL_COSTS,
         "XAUUSD": replace(

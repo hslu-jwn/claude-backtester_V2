@@ -39,7 +39,7 @@ from __future__ import annotations
 import csv
 from bisect import bisect_right
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -138,6 +138,9 @@ class SymbolCosts:
     swap_long_pct_year: float = 0.0  # per year, charged per night (negative = cost)
     swap_short_pct_year: float = 0.0
     funding: bool = False  # Binance perpetual funding from data/cache/binance_funding
+    # median price of the window the fixed spread stands for (REFERENCE_PRICES); None: the
+    # spread is never scaled with the price level (CostConfig.spread_price_scaling)
+    reference_price: float | None = None
 
     @property
     def value_per_price_unit(self) -> float:
@@ -158,7 +161,7 @@ BINANCE_TAKER_FEE = 0.0005
 # Swap: FTMO's MT5 rates of 2026-10-14 (USD per lot per night, ROADMAP 10.4), the default
 # since the user's decision of 2026-10-14. Today's rates, also applied to older years.
 
-DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
+_BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
     {
         "XAUUSD": SymbolCosts(
             spread=0.25,
@@ -249,6 +252,30 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     }
 )  # fmt: skip
 
+# Reference prices of the fixed spreads (rule set by the user, 2026-10-16; risk-management.md ›
+# Costs › Spread scaled with the price level): the median of the M1 bid close over the last 60
+# cached days of the FTMO MT5 history (data/cache/mt5/<SYM>, 2026-08-16 to 2026-10-14), measured
+# on 2026-10-16. The spread used for a fill is spread x fill price / reference price. Binance
+# symbols have no spread (no entry here: never scaled).
+REFERENCE_PRICES: Mapping[str, float] = MappingProxyType(
+    {
+        "XAUUSD": 4342.74, "XAGUSD": 64.58, "GBPUSD": 1.348, "GBPJPY": 209.75,
+        "EURUSD": 1.15405, "AUDUSD": 0.71185, "NZDUSD": 0.57601, "EURGBP": 0.85688,
+        "USDJPY": 158.058, "USDCAD": 1.39191, "USDCHF": 0.81828, "EURJPY": 179.43,
+        "NAS100": 29580.48, "US500": 7696.45, "GER40": 25563.64, "UK100": 10720.5,
+        "JP225": 66072.5, "EU50": 6316.47, "US30": 52172.25, "US2000": 2890.78,
+        "USOIL": 92.499, "UKOIL": 102.245, "NATGAS": 2.876, "DXY": 99.673,
+        "BTCUSD": 79679.87, "ETHUSD": 2498.33,
+    }
+)  # fmt: skip
+
+DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
+    {
+        name: replace(costs, reference_price=REFERENCE_PRICES.get(name))
+        for name, costs in _BASE_SYMBOL_COSTS.items()
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class CostConfig:
@@ -263,6 +290,9 @@ class CostConfig:
     funding: Mapping[str, FundingSeries] | None = None
     # spread by year and hour of day (ROADMAP 6.7); None: the fixed `SymbolCosts.spread`
     spread_table: SpreadTable | None = None
+    # fixed spread x (fill price / SymbolCosts.reference_price) (rule set by the user,
+    # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
+    spread_price_scaling: bool = True
 
     def __post_init__(self) -> None:
         if self.max_cost_r < 0:
@@ -274,20 +304,27 @@ class CostConfig:
         except KeyError:
             raise KeyError(f"no cost settings for {symbol}; add it to CostConfig.symbols") from None
 
-    def spread(self, symbol: str, at: datetime | None = None) -> float:
+    def spread(self, symbol: str, at: datetime | None = None, price: float = 0.0) -> float:
         """Spread applied to fills (0 when switched off). With a `spread_table` and a time
-        `at` it is the table's spread of that time; where the table has no value (or no
-        time is given) it is the fixed `SymbolCosts.spread`."""
+        `at` it is the table's spread of that time (never scaled); where the table has no
+        value (or no time is given) it is the fixed `SymbolCosts.spread`, scaled by
+        `price / reference_price` when a `price` > 0 is given, `spread_price_scaling` is on
+        and the symbol has a reference price."""
         if not self.spread_enabled:
             return 0.0
         if self.spread_table is not None and at is not None:
             value = self.spread_table.spread_at(symbol, at)
             if value is not None:
                 return value
-        return self.for_symbol(symbol).spread
+        costs = self.for_symbol(symbol)
+        if self.spread_price_scaling and costs.reference_price and price > 0:
+            return costs.spread * price / costs.reference_price
+        return costs.spread
 
-    def spread_r(self, symbol: str, risk: float, at: datetime | None = None) -> float:
-        return self.spread(symbol, at) / risk
+    def spread_r(
+        self, symbol: str, risk: float, at: datetime | None = None, price: float = 0.0
+    ) -> float:
+        return self.spread(symbol, at, price) / risk
 
     def commission_price(self, symbol: str, price: float = 0.0) -> float:
         """Round-turn commission as a price distance per lot (0 when switched off). A
@@ -311,7 +348,7 @@ class CostConfig:
     ) -> float:
         """Distance from the entry (chart price) to the break-even stop, so a hit there
         ends at 0R after spread and commission (strategy-session-zones.md › Stop loss)."""
-        return self.spread(symbol, at) + self.commission_price(symbol, price)
+        return self.spread(symbol, at, price) + self.commission_price(symbol, price)
 
     def commission_r(
         self,
@@ -336,7 +373,7 @@ class CostConfig:
         """Cost filter: spread + commission in R above `max_cost_r` (never when it is 0)."""
         if not self.max_cost_r:
             return False
-        cost = self.spread_r(symbol, risk, at) + self.commission_r(symbol, risk, entry)
+        cost = self.spread_r(symbol, risk, at, entry) + self.commission_r(symbol, risk, entry)
         return cost > self.max_cost_r + COST_FILTER_TOLERANCE
 
     def swap_r(
