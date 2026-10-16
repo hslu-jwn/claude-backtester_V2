@@ -47,8 +47,8 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-02 | Trend-quality gate (ER, regression r, strength osc.) on strategies 2 and 4 | filter | all | – | K p.10-14, 275, 408 | dropped by the user 2026-10-15 (ROADMAP 11.1: noise only picks the better part of a signal without net edge) |
 | I-09 ★ | Open / gap / trend-day statistics on indices | study | NAS100, US500 | none | K ch.15-16, H; EC p.93-96, 155-157 | done 2026-10-15 (ROADMAP 11.2): gap fill mostly random-walk touch, no first-30 continuation, 7 % trend days; only candidate = I-39 |
 | I-17 | Time-of-day drift by session | study | XAUUSD, FX | none | K p.689-699; EC p.63, 96 | open |
-| I-07 ★ | Volatility-scaled opening range breakout | signal | indices, gold; 5-15m | none | K p.759-764; A ORB | open |
-| I-08 ★ | ORB only after inside / NR4 day or low vol | filter+signal | all; 5-15m | none | K p.759-764 | open |
+| I-07 ★ | Volatility-scaled opening range breakout | signal | indices, gold; 5-15m | none | K p.759-764; A ORB | development 2026-10-16 (ROADMAP 11.10): price-only no edge (0/23 variants net positive, costs ~0.1 R/trade); candidate only with the volume filter on US indices |
+| I-08 ★ | ORB only after inside / NR4 day or low vol | filter+signal | all; 5-15m | none | K p.759-764 | development 2026-10-16: inside-day filter best gross (+0.08 R/trade) but net -0.02 R/trade; NR4 net -0.07 |
 | I-16 ★ | Intraday volatility-shock fade | signal | gold, indices; 5-30m | none | K p.775-777, 626-634 | open |
 | I-03 ★ | RSI(2) mean reversion | signal | indices (1h-1d) | 0-1 night | K p.389-390; KD App.A | open |
 | I-05 ★ | Pullback entry inside a slow trend | signal | all; 15m-1d | some | K p.950, 418, 835; JK p.101 | open |
@@ -85,7 +85,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | open |
 | I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |
 | I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | open |
-| I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | unblocked 2026-10-15 (MT5 tick volume, ROADMAP 11.5); user 2026-10-15: test it as an A/B activity filter, first on the opening-range breakout |
+| I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | unblocked 2026-10-15 (MT5 tick volume, ROADMAP 11.5); user 2026-10-15: test it as an A/B activity filter, first on the opening-range breakout; result 2026-10-16: relative tick volume >= 1.5 improves 17 of 18 ORB variants (+0.013 R/trade) |
 | I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14; RC ch.12 (see I-52) | built as cost / stop (`CostConfig.max_cost_r`, 2026-10-14); strategy 2 at 0.10 R: net +57 R better, still negative (ROADMAP 10.5) |
 | I-46 ★ | Gap momentum: open beyond the previous high / low by 0.1 sd of daily returns, exit at the close; FX version from the London open | signal | NAS100, US500, XAUUSD; GBPUSD (05:00-17:00 ET); 5m-1h | none | EC p.155-157 | open |
 | I-47 | Euro-night style fade: ATR-stretched average high / low limit entry, session exit | signal | GBPUSD, XAUUSD; 60-105m | none | KD ch.18 | open |

@@ -1603,6 +1603,15 @@ Lessons from HftBacktest, VectorBT, NautilusTrader and prediction-market-backtes
 (`knowledge/topics/backtest-frameworks.md`, ideas T-02..T-07). Each step test-first, off by default where it
 changes results, defaults changed only with the user's go.
 
+  **Development result 2026-10-16** (`tools/orb_grid.py`, before the cut-off, fixed spread; `results/orb_dev/`):
+  price-only on histdata 2015-2021-09, 18 symbols: 0 of 23 variants net positive; gross small positive
+  (+0.01-0.04 R/trade), costs about 0.1 R/trade for 5-30m ranges, less for ATR bands (best: band 0.5-1 ATR,
+  -0.005 to -0.014 R/trade). US indices with band 0.25-0.5 ATR slightly positive (+12-24 R, ~+0.01 R/trade)
+  but the first half negative. XAGUSD about -1 R/trade: today's fixed spread on 2015 prices (cost-model flaw).
+  Volume A/B on FTMO MT5 (FX, XAUUSD 2015-21, US30 2019-21, US2000 2018-21): min_rel_volume 1.5 improves
+  17 of 18 variants, mean +0.013 R/trade; best: US indices band 0.25 ATR, no target, with volume: 177 trades,
+  +19.7 R net (+0.11 R/trade), halves +0.9 / +18.8, +16.3 with costs x1.5, +14.3 without the best trade.
+  Candidate for the test period (small sample, chosen among many variants).
 - ☑ **12.1 Random-entry baseline** (T-02; next step, user 2026-10-15, before the gap fade walk-forward 11.7):
   Monte Carlo of entries. For a run, draw 1,000 seeded sets of random entry times (same symbols, same session
   windows, same trade count and long/short mix), keep the strategy's own stop / target / exit and the real
