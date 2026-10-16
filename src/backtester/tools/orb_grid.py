@@ -270,6 +270,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--no-filters", action="store_true", help="skip the 5 filter variants")
     p.add_argument("--volume", action="store_true",
                    help="also the 18 base variants with min_rel_volume 1.5 (MT5 data)")  # fmt: skip
+    p.add_argument("--variants", nargs="+", default=None, metavar="NAME",
+                   help="run only these variants, named as the grid prints them (quote each, "
+                   "e.g. \"band 0.25atr T0 vol1.5\"); replaces the sweep flags")  # fmt: skip
     p.add_argument("--first-half-end-year", type=int,
                    default=RobustnessConfig().first_half_end_year,
                    help="last entry year of the first half (halves are split after it)")  # fmt: skip
@@ -289,7 +292,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="no backtest: join the CSVs of these --part output folders into --out "
                    "and rebuild grid.csv and ab_volume.csv")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.variants:
+        valid = [variant_name(c) for c in variants(True, True, True)]
+        unknown = [v for v in args.variants if v not in valid]
+        if unknown:
+            p.error(f"unknown variant(s) {unknown}; valid names: {valid}")
+    return args
 
 
 def last_cached_day(symbols: list[str], sources: SymbolSources = DEFAULT_SOURCES) -> date:
@@ -364,7 +373,11 @@ def main(argv: list[str] | None = None) -> int:
             args.out or RESULTS_DIR / folder / "merged",
             RobustnessConfig(first_half_end_year=args.first_half_end_year),
         )
-    configs = variants(not args.no_sweep, args.volume, not args.no_filters)
+    if args.variants:
+        by_name = {variant_name(c): c for c in variants(True, True, True)}
+        configs = [by_name[v] for v in args.variants]
+    else:
+        configs = variants(not args.no_sweep, args.volume, not args.no_filters)
     if args.part:
         k, n = args.part
         configs = configs[k - 1 :: n]

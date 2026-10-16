@@ -340,3 +340,24 @@ def test_part_argument_is_validated():
     with pytest.raises(SystemExit):
         orb_grid.parse_args(["--part", "4/3"])
     assert orb_grid.parse_args(["--part", "2/4"]).part == (2, 4)
+
+
+def test_variants_option_runs_only_the_named_variants_without_other_flags(tmp_path, monkeypatch):
+    seen = []
+    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory(seen))
+    names = ["band 0.5atr T0 vol1.5", "band 0.25atr T0 vol1.5"]
+    argv = ["--variants", *names, "--symbols", "NAS100", "--out", str(tmp_path)]
+    assert orb_grid.main(argv) == 0
+    assert [(s[3].strategy.band_atr, s[3].strategy.min_rel_volume) for s in seen] == [
+        (0.5, 1.5), (0.25, 1.5),
+    ]  # fmt: skip
+    with (tmp_path / "summary.csv").open(encoding="utf-8") as f:
+        assert {r["variant"] for r in csv.DictReader(f)} == set(names)
+
+
+def test_variants_option_rejects_an_unknown_name_and_lists_the_valid_ones(capsys):
+    with pytest.raises(SystemExit):
+        orb_grid.parse_args(["--variants", "band 9atr T0"])
+    err = capsys.readouterr().err
+    assert "band 9atr T0" in err
+    assert "band 0.25atr T0 vol1.5" in err and "range 15m T0" in err
