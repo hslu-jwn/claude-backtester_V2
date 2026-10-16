@@ -1691,6 +1691,8 @@ changes results, defaults changed only with the user's go.
 
 - ☐ **12.10 Trial log + deflated Sharpe** (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
   11.12): every run logged with its trial family; PSR / DSR (López de Prado) on the chosen variant.
+  **Built 2026-10-16** (`analytics/deflated_sharpe.py`, `analytics/trial_log.py`, `tools/trials.py`; DSR >= 0.95 is
+  verdict check 7, user 2026-10-16). Back-fill (count-only, the old result files have no sd): gap_fade 36, opening_range 41.
 - ☐ **12.11 Bayesian report** (T-10): Beta posterior of the win rate and of mean R, A/B of variants, trades needed;
   prior odds 1:50 against an edge (rule set by the user, 2026-10-16).
 
