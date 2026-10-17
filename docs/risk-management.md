@@ -17,7 +17,7 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
-- ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.11): the fixed spread is today's FTMO
+- ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.14): the fixed spread is today's FTMO
   value, which is far too large in R in years with lower prices (XAGUSD 2015 at about $15 against $65 now). In the fixed-spread
   mode the spread of a fill is
 

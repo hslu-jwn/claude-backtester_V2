@@ -12,7 +12,7 @@ to the last cached day. Written to `<out>/summary.csv`, `split.csv` (2020-22 aga
 trade, halves, net without the best trade, costs x 1.5). Default `<out>` is results/s2_volume_ab
 (`s2_volume_ab_mt5` with `--source mt5`). Symbols other than NAS100 / US500 are a backtest-only
 extension of strategy 2. Research only: it changes no setting. Spec: strategy-ny-indices.md >
-Volume filter (ROADMAP 11.12).
+Volume filter (ROADMAP 11.15).
 """
 
 from __future__ import annotations

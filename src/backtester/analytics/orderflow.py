@@ -1,4 +1,4 @@
-"""Order-flow study on Binance futures (BTCUSDT, ETHUSDT). Spec: ROADMAP.md > 11.13.
+"""Order-flow study on Binance futures (BTCUSDT, ETHUSDT). Spec: ROADMAP.md > 11.16.
 
 Research only: no trading rule, no setting. M1 bars with taker delta are aggregated to 5m / 15m /
 1h / 4h bars. Every feature is known at the bar's close; every target starts at that close and

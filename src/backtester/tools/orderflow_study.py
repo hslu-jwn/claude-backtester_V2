@@ -3,7 +3,7 @@
     python -m backtester.tools.orderflow_study
     python -m backtester.tools.orderflow_study --symbols BTCUSDT --shuffles 50
 
-Development period only: 2020-01-01 .. 2021-09-13 (ROADMAP 11.13; later data is never read).
+Development period only: 2020-01-01 .. 2021-09-13 (ROADMAP 11.16; later data is never read).
 For the bars of 5m / 15m / 1h / 4h the features of `analytics/orderflow.py` (imbalance, cumulative
 delta and its z-score, CVD-price divergence, relative volume, funding) are cut into deciles and
 compared with the forward return of the next 1 / 3 / 6 bars (percent and ATR units).

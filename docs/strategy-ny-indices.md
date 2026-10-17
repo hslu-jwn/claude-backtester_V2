@@ -114,7 +114,7 @@
   missing there, it closes at the next 1m close (it then pays that night). Why 45: the histdata.com index feed has no
   candles from 16:15 to 18:00 ET (cash close; checked 2020 and 2024, winter and summer), so the last close before the
   rollover is 16:15; with 1 minute every trade would close at 18:01, after the rollover and the gap.
-- ⚙️ **Volume filter** (rule set by Claude with the user's go, 2026-10-16; ROADMAP 11.12). `min_rel_volume`, **off by default** (0).
+- ⚙️ **Volume filter** (rule set by Claude with the user's go, 2026-10-16; ROADMAP 11.15). `min_rel_volume`, **off by default** (0).
   On: the entry candle (the 1m candle at whose close the order is given) must have a tick volume of at least
   `min_rel_volume` x the mean tick volume of the same minute after the window's open (AM and PM separately: AM
   against the earlier AM windows, PM against the PM ones) over the previous ⚙️ `volume_lookback` (20) sessions of that window kind.

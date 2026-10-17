@@ -1034,7 +1034,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
 - Needs from Phase 5 at least: position sizer (lots from risk % and SL distance) and the
   FTMO daily / max loss limits.
 
-- ◐ **7.1 Account connection + demo test orders** (user's request 2026-10-09).
+- ☑ **7.1 Account connection + demo test orders** (user's request 2026-10-09).
   - Settings ⚙ → Trading: platform (MT5 now, others later), login, password (masked),
     server (the servers the terminal knows, else typed), optional terminal path, "Save",
     "Test connection" (connected or MT5's error; account name, server, DEMO / REAL,
@@ -1069,7 +1069,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
     open; afterwards no position in the terminal's Trade tab, history shows 2 x 3 deals
     per symbol.
 
-- ☐ **7.2 Demo forward test of the ORB candidate** (user 2026-10-17; spec `docs/live-trading.md`): automatic
+- ◐ **7.2 Demo forward test of the ORB candidate** (user 2026-10-17; spec `docs/live-trading.md`): automatic
   demo orders + paper log, 0.25 % risk, daily stop -2 %, emergency stop, the bot starts MT5 itself, minimal
   Live page and Telegram (messages + /status, /stop). Order: 7.1 demo test orders, then sizer + bot loop,
   then Live page and Telegram.
@@ -1078,6 +1078,12 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   (0 slippage), SL modify, half and full close ok, nothing left open, median 174 ms. Built 2026-10-17:
   risk sizer, daily guard (-2 %, FTMO 5 % / 10 %), bot loop `python -m backtester.live.bot` (stop files
   results/live/STOP and EMERGENCY), paper log; not yet run live.
+  Built 2026-10-17 too: `/live` page, Telegram (messages, /status /stop /emergency; token in the Credential
+  Manager; the user's test message arrived), initial balance from the first balance deal, settings panel
+  limited to the 5 strategy symbols' cost fields (the page froze with 28 symbols). Accepted by the user 2026-10-17.
+  **Open before the first live day (user 2026-10-17, do not change before the next session):** UI clean-up —
+  remove the Sweep button from the top bar; Settings: chart settings collapsible, the account connection
+  section better organized; a clear separate button that opens the live-account window with all its options.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
@@ -1578,11 +1584,11 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   negative (-8.9); best gap 0.1-1, stop 0.75, exit 12:00: +79.4 R net, halves +57.5 / +21.9, +42.1 with costs x1.5.
   Weak positive, 2023-26 weaker; not yet an edge without out-of-sample confirmation. Accepted by the user 2026-10-15 ("weak positive,
   waiting for out-of-sample"); next 11.5-11.7 (user, 2026-10-15).
-- ☐ **11.5 MT5 history download** (user, 2026-10-15): FTMO M1 bars from the running terminal into their own
+- ☑ **11.5 MT5 history download** (user, 2026-10-15): FTMO M1 bars from the running terminal into their own
   cache `data/cache/mt5/` (same Parquet layout as histdata: bid = MT5 bar, ask = bid + the bar's spread, volume =
   tick volume), so every tool can read FTMO data through `SymbolSources`; histdata stays the default. Server
   clock checked for the downloaded years (against histdata where both exist).
-- ☐ **11.6 Gap fade out of sample** (user, 2026-10-15): the same 36 variants on FTMO's NAS100 / US500 history
+- ☑ **11.6 Gap fade out of sample** (user, 2026-10-15): the same 36 variants on FTMO's NAS100 / US500 history
   2017-12..2019-12 (never seen by 11.4), fixed spread and spread table.
   **Result 2026-10-15:** FTMO has only daily index bars before 2021-09 (M1 from 2021-09-14), so the test ran on
   histdata 2018-2019 instead (never seen by 11.4; fixed spread, no spread table for those years): default
@@ -1600,12 +1606,12 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   entries 98.7th percentile, halves and without-best pass); FTMO pass at 1 % risk 29 % (walk-forward) / 32 %
   (default). The slippage stress hurts most: gap stops are small, so a few points of slippage are a large share of
   1 R. **Gap fade: no tradeable edge.**
-- ☐ **11.8 More markets from MT5** (user, 2026-10-15): about 26 liquid FTMO symbols (FX majors and crosses,
+- ☑ **11.8 More markets from MT5** (user, 2026-10-15): about 26 liquid FTMO symbols (FX majors and crosses,
   US / EU / JP indices, metals, energy, BTC / ETH, DXY as reference) with `tools/mt5_download.py`.
-- ☐ **11.9 Crypto order flow from Binance** (user, 2026-10-15; the user may trade crypto on Binance directly,
+- ☑ **11.9 Crypto order flow from Binance** (user, 2026-10-15; the user may trade crypto on Binance directly,
   no prop firm needed): public trade data (aggTrades, aggressor side) of BTCUSDT / ETHUSDT, reduced to 1m bars
   with buy / sell volume, delta and trade count; the raw files are deleted after each month.
-- ☐ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
+- ☑ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
 
 - ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
@@ -1633,10 +1639,10 @@ changes results, defaults changed only with the user's go.
   trades, +35.0 R gross, +30.3 R net (+0.10 R/trade), halves 2021-23 +27.6 / 2024-26 +2.7, costs x1.5 +25,
   best trade removed +23; band 0.5 ATR 263 trades, +12.3 R net (+0.05), halves +12.7 / -0.5. Same with the
   spread table. US30 and US500 carry it, US2000 flat; Welch t about 1.5 (not significant). Out of sample
-  positive but fading since 2024: not a confirmed edge; waiting for the user.
-- ☐ **11.11 Spread scaled with the price level** (user 2026-10-16; built, awaiting the user's check): the fixed spread is today's; in years
+  positive but fading since 2024: not a confirmed edge. Accepted by the user 2026-10-17 ("End."); next: demo forward test 7.2.
+- ☑ **11.14 Spread scaled with the price level** (numbered 11.11 in its commits; user 2026-10-16; built, awaiting the user's check): the fixed spread is today's; in years
   with other prices it is scaled by price / reference price (cost-model fix, mainly for the development years).
-- ☐ **11.12 Volume filter on parked strategies with potential** (user 2026-10-16: "yes if the strategies
+- ☑ **11.15 Volume filter on parked strategies with potential** (numbered 11.12 in its commits) (user 2026-10-16: "yes if the strategies
   have potential"): only strategies with positive gross R before costs qualify; decided by Claude per strategy.
   Claude's pick (user "ok", 2026-10-16): strategy 2 only (+29 R gross 2020-26); development on FTMO US30 /
   US2000 before the cut-off (the only indices with tick volume there), A/B on NAS100 / US500 from 2021-09
@@ -1644,7 +1650,7 @@ changes results, defaults changed only with the user's go.
   **Result 2026-10-16** (`results/s2_volume_ab_mt5/`): development US30 + US2000 2018-21: spec -10.5 R gross /
   -147 R net (739 trades), with volume -6.3 / -18 (119); NAS100 + US500 2021-09..2026: spec +13.6 / -81 (1215),
   with volume -23.5 / -30 (120, -0.25 R/trade). The filter only removes trades: **no edge**; option stays off.
-- ☐ **11.13 Order-flow study on BTC / ETH** (user "ok", 2026-10-16): Binance futures delta (taker buy - sell)
+- ☑ **11.16 Order-flow study on BTC / ETH** (numbered 11.13 in its commits) (user "ok", 2026-10-16): Binance futures delta (taker buy - sell)
   and its imbalance vs the next 1m-4h return, against the round-trip fee; development period 2020-01 .. 2021-09-13
   only. Research tool, no rule. Next after it: forward test of the ORB on the FTMO demo (needs Phase 7).
   **Result 2026-10-16** (`results/orderflow_study/`): short-horizon effects are real against a circular-shift
