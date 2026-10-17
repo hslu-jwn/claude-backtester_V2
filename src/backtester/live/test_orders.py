@@ -40,6 +40,8 @@ from backtester.live.orders import (
     OrderLog,
     close_own_positions,
     close_volume,
+    confirm_close,
+    confirm_open,
     market_order,
     modify_sl,
     own_orders,
@@ -64,14 +66,6 @@ def _round_step(value: float, step: float) -> float:
 
 def _side_name(side: Direction) -> str:
     return "buy" if side is Direction.BULLISH else "sell"
-
-
-def _position(mt5: ModuleType, result) -> object | None:
-    """The position a filled market order opened."""
-    deals = mt5.history_deals_get(ticket=result.deal) if result.deal else ()
-    ticket = deals[0].position_id if deals else result.order
-    found = mt5.positions_get(ticket=ticket)
-    return found[0] if found else None
 
 
 def _step_line(name: str, result, ms: float, extra: str = "") -> str:
@@ -100,17 +94,20 @@ def run_side(mt5: ModuleType, name: str, side: Direction, log: OrderLog) -> list
         if result is not None and result.retcode == RETCODE_MARKET_CLOSED:
             raise TestAborted("market closed: no test possible now")
         return lines
-    slippage = sign * (result.price - sent_at) / point
+    fill = confirm_open(mt5, result)
+    if not fill.confirmed:
+        lines.append("  ! the fill is not confirmed (no deal / position visible)")
+    slippage = sign * (fill.price - sent_at) / point
     lines.append(
         _step_line(
             "1 open",
             result,
             ms,
-            f"filled {result.price} vs {'ask' if sign > 0 else 'bid'} {sent_at} "
+            f"filled {fill.price} vs {'ask' if sign > 0 else 'bid'} {sent_at} "
             f"(slippage {slippage:+.0f} points), filling {_filling_name(mt5, mode)}",
         )
     )
-    position = _position(mt5, result)
+    position = fill.position
     if position is None:
         lines.append("  ! the position can't be found after the fill")
         return lines
@@ -146,16 +143,17 @@ def run_side(mt5: ModuleType, name: str, side: Direction, log: OrderLog) -> list
 
     # 3. close half
     result, ms, mode = close_volume(mt5, position, half, log, "close half")
-    left = mt5.positions_get(ticket=position.ticket)
-    left_volume = left[0].volume if left else 0.0
-    check = "" if abs(left_volume - (volume - half)) < 1e-9 else " !"
-    fill = f", at {result.price}" if result is not None else ""
-    lines.append(_step_line("3 close half", result, ms, f"{left_volume:g} lots left{check}{fill}"))
+    done = confirm_close(mt5, result, position, half)
+    left = [done.position] if done.position is not None else []
+    left_volume = done.position.volume if left else 0.0
+    check = "" if done.confirmed and abs(left_volume - (volume - half)) < 1e-9 else " !"
+    price = f", at {done.price}" if result is not None else ""
+    lines.append(_step_line("3 close half", result, ms, f"{left_volume:g} lots left{check}{price}"))
 
     # 4. close the rest
     if left:
         result, ms, mode = close_volume(mt5, left[0], left[0].volume, log, "close rest")
-        gone = not mt5.positions_get(ticket=position.ticket)
+        gone = confirm_close(mt5, result, left[0], left[0].volume).position is None
         lines.append(
             _step_line("4 close rest", result, ms, "position closed" if gone else "! still open")
         )

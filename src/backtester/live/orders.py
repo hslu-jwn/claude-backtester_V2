@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,6 +22,8 @@ from types import ModuleType
 
 from backtester.core.models import Direction
 
+CONFIRM_TIMEOUT_S = 5.0  # how long to wait for the deal / position after order_send
+CONFIRM_INTERVAL_S = 0.05  # poll interval while waiting
 MAGIC = 7_100_001  # marks the backtester's orders and positions
 DEVIATION_POINTS = 20  # accepted slippage for market orders, in points
 RETCODE_DONE = 10009
@@ -227,3 +230,119 @@ def close_own_positions(mt5: ModuleType, symbol: str, log: OrderLog) -> int:
         result, _, _ = close_volume(mt5, position, position.volume, log, "cleanup close")
         closed += result is not None and result.retcode == RETCODE_DONE
     return closed
+
+
+# --- confirming a fill (FTMO returns retcode 10009 with deal 0 and price 0.0; the deal and the
+# --- updated position show up a few ms later, so nothing is read from the result itself) -----
+
+
+@dataclass(frozen=True)
+class Fill:
+    """What the terminal really did, read from the deal and the position."""
+
+    confirmed: bool
+    price: float = 0.0
+    volume: float = 0.0
+    commission: float = 0.0
+    swap: float = 0.0
+    profit: float = 0.0
+    fee: float = 0.0
+    deal_ticket: int = 0
+    position_id: int = 0
+    position: object | None = None  # the position as it is now (None: gone)
+
+    @property
+    def net(self) -> float:
+        return self.profit + self.commission + self.swap + self.fee
+
+
+def _own_deal(mt5: ModuleType, result, position_id: int):
+    """The deal that belongs to `result` (its order), or None while it isn't visible."""
+    deals = mt5.history_deals_get(position=position_id) or ()
+    mine = [d for d in deals if getattr(d, "order", None) == result.order]
+    if result.deal:
+        mine = [d for d in mine if d.ticket == result.deal] or mine
+    return mine[-1] if mine else None
+
+
+def _confirm(mt5, result, position_id, expect_left, timeout, interval, sleep, clock) -> Fill:
+    """Poll until the deal exists and the position matches: open (`expect_left` None: it
+    exists), or `expect_left` lots left (0.0: gone)."""
+    if result is None or result.retcode not in (RETCODE_DONE, RETCODE_DONE_PARTIAL):
+        return Fill(False, position_id=position_id)
+    deadline = clock() + timeout
+    while True:
+        deal = _own_deal(mt5, result, position_id)
+        found = mt5.positions_get(ticket=position_id) or ()
+        position = found[0] if found else None
+        if expect_left is None:
+            state_ok = position is not None
+        elif expect_left <= 0:
+            state_ok = position is None
+        else:
+            state_ok = position is not None and abs(position.volume - expect_left) < 1e-9
+        if deal is not None and state_ok:
+            return Fill(
+                True,
+                deal.price,
+                deal.volume,
+                getattr(deal, "commission", 0.0),
+                getattr(deal, "swap", 0.0),
+                getattr(deal, "profit", 0.0),
+                getattr(deal, "fee", 0.0),
+                deal.ticket,
+                position_id,
+                position,
+            )
+        if clock() >= deadline:
+            price = deal.price if deal is not None else 0.0
+            return Fill(False, price, position_id=position_id, position=position)
+        sleep(interval)
+
+
+def confirm_open(
+    mt5: ModuleType,
+    result,
+    timeout: float | None = None,
+    interval: float | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+) -> Fill:
+    """Wait for the deal of an accepted market open (the position id is the order ticket)."""
+    if result is None:
+        return Fill(False)
+    return _confirm(
+        mt5,
+        result,
+        result.order,
+        None,
+        CONFIRM_TIMEOUT_S if timeout is None else timeout,
+        CONFIRM_INTERVAL_S if interval is None else interval,
+        sleep,
+        clock,
+    )
+
+
+def confirm_close(
+    mt5: ModuleType,
+    result,
+    position,
+    volume: float,
+    timeout: float | None = None,
+    interval: float | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
+) -> Fill:
+    """Wait for the deal of a (partial) close and for the position to show the reduced volume
+    (or to be gone). Do not take the next step before this returns `confirmed`."""
+    left = round(position.volume - volume, 8)
+    return _confirm(
+        mt5,
+        result,
+        position.ticket,
+        max(left, 0.0),
+        CONFIRM_TIMEOUT_S if timeout is None else timeout,
+        CONFIRM_INTERVAL_S if interval is None else interval,
+        sleep,
+        clock,
+    )
