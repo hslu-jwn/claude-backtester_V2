@@ -1085,6 +1085,15 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   remove the Sweep button from the top bar; Settings: chart settings collapsible, the account connection
   section better organized; a clear separate button that opens the live-account window with all its options.
 
+- ☐ **7.3 UI clean-up before the first live day, step (a)** (user 2026-10-17; spec `docs/live-trading.md` ›
+  App layout and Live page; mockups in `docs/ui-mockups/`, inspiration only): one top bar Chart · Backtest ·
+  Risk · Live (Live red while the bot runs), app opens on `/live` when the bot runs; Sweep menu into the chart
+  settings; chart settings one collapsible block; account connection + Telegram from ⚙ to `/live` › Connection;
+  new `/live` page with Start / Pause / Stop / Close all & stop, settings editable only when stopped, account in
+  USD, daily stop and FTMO limits, session countdown, heartbeat, setup funnel, positions, recent-trades strip.
+- ☐ **7.4 Chart page in the new style, step (b)** (user 2026-10-17, after 7.3): side cards (backtest result,
+  overlay switches, trades in view), timeframe buttons, range bar (1M / 3M / 6M / YTD / 1Y / All, go to date).
+
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
 `docs/strategy-ny-indices.md` (new 2026-10-10), detection rules in `confluences.md`.
