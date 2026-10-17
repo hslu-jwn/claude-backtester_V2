@@ -2,7 +2,17 @@
 
 The bot writes it once per minute and on every event (atomic: temp file + rename, so a reader
 never sees half a file). It holds no secrets: no login, password, server, token or chat id.
-Spec: docs/live-trading.md › Monitoring.
+Spec: docs/live-trading.md › Monitoring, App layout and Live page.
+
+Keys added for the /live page (ROADMAP 7.3), next to the older ones (running, connected, balance,
+equity, guard, positions, signals, ...):
+  "paused":       bool, the PAUSE file exists (no new entries, open trades still managed)
+  "risk_percent": float, risk per trade in % of the balance
+  "strategy":     short name of the strategy (STRATEGY_NAME)
+  "session":      {"name", "open_utc", "close_utc" (ISO, UTC), "is_open"}: the current session
+                  window if open, else the next one (weekends skipped, holidays not known)
+  "setups":       {symbol: {"stage", "detail", "time"}}; stage is one of STAGES, "time" is when
+                  the symbol entered that stage
 """
 
 from __future__ import annotations
@@ -10,11 +20,20 @@ from __future__ import annotations
 import contextlib
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from backtester.strategy.opening_range.config import SYMBOL_CLASS, SessionSpec
 
 STATUS_NAME = "status.json"
 STALE_S = 120.0  # a heartbeat older than this means the bot is not running
+STRATEGY_NAME = "Opening-range breakout"
+STAGES = (
+    "waiting_session", "range_forming", "range_set", "waiting_breakout",
+    "volume_passed", "entered", "done",
+)  # fmt: skip
+MAX_SKIP_DAYS = 8  # days searched for the next session (weekends, long breaks)
 
 
 def write_status(path: Path, data: dict) -> None:
@@ -70,6 +89,76 @@ def summary_text(status: dict | None) -> str:
     return text
 
 
+def session_window(now: datetime, name: str, spec: SessionSpec) -> dict:
+    """The session window of `spec` that holds `now`, else the next one (Saturdays and Sundays
+    skipped; exchange holidays are not known). Times in UTC, computed in the session zone."""
+    tz = ZoneInfo(spec.zone)
+    day = now.astimezone(tz).date()
+    for _ in range(MAX_SKIP_DAYS):
+        if day.weekday() < 5:
+            open_at = datetime.combine(day, spec.open_time, tzinfo=tz)
+            close_at = datetime.combine(day, spec.exit_time, tzinfo=tz)
+            if now <= close_at:
+                break
+        day += timedelta(days=1)
+    return {
+        "name": name,
+        "open_utc": open_at.astimezone(UTC).isoformat(),
+        "close_utc": close_at.astimezone(UTC).isoformat(),
+        "is_open": open_at <= now <= close_at,
+    }
+
+
+def _session(cfg, now: datetime) -> dict | None:
+    sessions = cfg.strategy.sessions.get(SYMBOL_CLASS.get(cfg.symbols[0], ""), {})
+    for key, spec in sessions.items():
+        return session_window(now, key.replace("_", " ").title(), spec)
+    return None
+
+
+def _fmt(x: float) -> str:
+    return f"{x:.10g}"
+
+
+def _detail(bot, symbol: str, stage: str, state) -> str:
+    cfg = bot.config.strategy
+    if stage == "waiting_session":
+        return "waiting for the session open"
+    if stage == "range_forming":
+        return "waiting for the range to form"
+    if stage in ("range_set", "waiting_breakout"):
+        return f"range {_fmt(state.down)}-{_fmt(state.up)}"
+    if stage == "volume_passed":
+        return f"rel volume {state.rel_volume or 0:.1f} >= {cfg.min_rel_volume:.1f}, order pending"
+    if stage == "entered":
+        t = next((p for p in bot.open_positions() if p["symbol"] == symbol), None)
+        return f"{t['side']} {t['lots']:g} lots at {_fmt(t['entry'])}" if t else "in a trade"
+    if state.traded:
+        return "traded today"
+    if state.rel_volume is not None and state.rel_volume < cfg.min_rel_volume:
+        return f"rel volume {state.rel_volume:.1f} < {cfg.min_rel_volume:.1f}, skipped"
+    return "no trade today"
+
+
+def build_setups(bot, now: datetime) -> dict:
+    """Stage of every symbol (see STAGES), from the strategy read-only `setup_state`."""
+    out = {}
+    held = {t.symbol for t in bot.by_ticket.values()}
+    for name, sym in bot.symbols.items():
+        state = sym.strategy.setup_state(now)
+        stage = state.phase
+        if name in held:
+            stage = "entered"
+        elif stage == "ordered":
+            stage = "volume_passed"
+        detail = _detail(bot, name, stage, state)
+        before = bot.setup_since.get(name)
+        if before is None or before[0] != stage:
+            bot.setup_since[name] = (stage, now.isoformat())
+        out[name] = {"stage": stage, "detail": detail, "time": bot.setup_since[name][1]}
+    return out
+
+
 def build_status(bot, now: datetime) -> dict:
     """The status of a running `Bot` (duck-typed; see live/bot.py)."""
     cfg = bot.config
@@ -110,4 +199,9 @@ def build_status(bot, now: datetime) -> dict:
         "positions": bot.open_positions(),
         "signals": [s for s in bot.signals if s["time"].startswith(today)],
         "last_error": bot.last_error,
+        "paused": bot.paused,
+        "risk_percent": cfg.risk_percent,
+        "strategy": STRATEGY_NAME,
+        "session": _session(cfg, now),
+        "setups": build_setups(bot, now),
     }

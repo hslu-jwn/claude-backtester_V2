@@ -90,6 +90,21 @@ class _Session:
     ref: int | None = None  # the open (or just ordered) trade
     reversal: Direction | None = None  # armed: the direction of the one reversal trade
     reversals_left: int = 0
+    # read-only bookkeeping for `OpeningRange.setup_state` (never used by the trading logic)
+    last_offset: int = -1  # offset of the latest candle taken in
+    armed_offset: int = -1  # offset of the candle that set the levels
+    rel_volume: float | None = None  # signal volume / usual volume at the last volume check
+
+
+@dataclass(frozen=True, slots=True)
+class SetupState:
+    """Where today's session stands (for the Live page). Read-only; see `setup_state`."""
+
+    phase: str  # waiting_session, range_forming, range_set, waiting_breakout, ordered, done
+    up: float | None = None  # breakout levels, once set
+    down: float | None = None
+    rel_volume: float | None = None  # tick volume of the signal candle vs its usual value
+    traded: bool = False  # a trade was ordered today
 
 
 class OpeningRange(Strategy):
@@ -145,6 +160,7 @@ class OpeningRange(Strategy):
                 ).total_seconds()
                 // 60
             )
+            st.last_offset = offset
             if offset == 0:
                 st.open_close = candle.close
                 continue
@@ -162,6 +178,7 @@ class OpeningRange(Strategy):
         st.open_close, st.range_seen, st.armed, st.done = None, False, False, False
         st.taken, st.ref, st.reversal = False, None, None
         st.reversals_left = 0
+        st.last_offset, st.armed_offset, st.rel_volume = -1, -1, None
 
     def _take_in(self, st: _Session, offset: int, candle: Candle) -> None:
         if not st.seen:
@@ -249,7 +266,9 @@ class OpeningRange(Strategy):
         usual = [v[offset] for v in st.volumes if offset in v]
         if not usual or sum(usual) <= 0:
             return False
-        return candle.volume >= cfg.min_rel_volume * (sum(usual) / len(usual))
+        mean = sum(usual) / len(usual)
+        st.rel_volume = candle.volume / mean
+        return candle.volume >= cfg.min_rel_volume * mean
 
     def _signal(self, st: _Session, offset: int, candle: Candle, now: datetime) -> Order | None:
         cfg = self.config
@@ -259,6 +278,7 @@ class OpeningRange(Strategy):
             if cfg.entry_mode is EntryMode.RANGE and offset <= cfg.range_minutes:
                 return None  # still inside the opening range
             self._arm(st)
+            st.armed_offset = offset
             if st.done:
                 return None
         if offset > cfg.entry_window_minutes:
@@ -305,6 +325,52 @@ class OpeningRange(Strategy):
             reason=f"opening range {self.config.entry_mode.value} {st.name}",
             ref=ref,
         )
+
+    # --- read-only view for the Live page --------------------------------------------------
+
+    def setup_state(self, now: datetime) -> SetupState:
+        """Phase of the session of `now` (the one whose window holds `now`, else the first).
+        Reads state only; changes nothing and decides nothing."""
+        st = next(
+            (
+                s
+                for s in self._sessions
+                if s.spec.open_time <= now.astimezone(s.tz).time() <= s.spec.exit_time
+            ),
+            self._sessions[0],
+        )
+        local = now.astimezone(st.tz)
+        t = local.time()
+        if local.weekday() >= 5 or t < st.spec.open_time:
+            return SetupState("waiting_session")
+        if t > st.spec.exit_time:
+            return SetupState(
+                "done", rel_volume=self._rel(st, local), traded=self._today(st, local)
+            )
+        if st.day != local.date():
+            return SetupState("waiting_session")  # no candle of today yet
+        levels = (st.up, st.down) if st.armed and st.up != st.down else (None, None)
+        up, down = levels
+        traded = st.taken
+        if st.ref is not None:
+            phase = "ordered"
+        elif st.done or (st.taken and st.reversal is None):
+            phase = "done"
+        elif not st.armed:
+            phase = "range_forming"
+        elif st.last_offset == st.armed_offset:
+            phase = "range_set"
+        else:
+            phase = "waiting_breakout"
+        return SetupState(phase, up, down, st.rel_volume, traded)
+
+    @staticmethod
+    def _today(st: _Session, local: datetime) -> bool:
+        return st.day == local.date() and st.taken
+
+    @staticmethod
+    def _rel(st: _Session, local: datetime) -> float | None:
+        return st.rel_volume if st.day == local.date() else None
 
     # --- exits and the engine's callbacks ---------------------------------------------------
 

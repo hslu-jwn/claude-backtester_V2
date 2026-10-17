@@ -4,7 +4,8 @@
     python -m backtester.live.bot --risk 0.25 --daily-stop 2 --symbols US30 US500
 
 Stop it by creating the file `results/live/STOP` (stop, close nothing) or
-`results/live/EMERGENCY` (close all positions with our MAGIC, then stop); Ctrl+C also stops it
+`results/live/EMERGENCY` (close all positions with our MAGIC, then stop); `results/live/PAUSE`
+blocks new entries while it exists (open trades keep being managed); Ctrl+C also stops it
 (positions keep their server-side SL). Spec: docs/live-trading.md.
 
 How it works
@@ -118,6 +119,10 @@ class BotConfig:
         return self.out_dir / "EMERGENCY"
 
     @property
+    def pause_file(self) -> Path:
+        return self.out_dir / "PAUSE"
+
+    @property
     def status_file(self) -> Path:
         return self.out_dir / STATUS_NAME
 
@@ -197,6 +202,8 @@ class Bot:
         self.signals: list[dict] = []
         self.day_trades: list[tuple[datetime, float]] = []  # (closed at, R net)
         self.last_status: dict | None = None
+        self.paused = False  # the PAUSE file exists: no new entries (docs/live-trading.md)
+        self.setup_since: dict[str, tuple[str, str]] = {}  # symbol -> (stage, since), status.json
 
     # --- logs -------------------------------------------------------------------------------
 
@@ -408,6 +415,7 @@ class Bot:
             self.note("emergency_file")
             self._close_all("emergency")
             return STOP
+        self._check_pause()
         if self._guard() == STOP:
             return STOP
         self._reconcile()
@@ -416,6 +424,13 @@ class Bot:
             self._feed_new(sym, self._fetch_new(sym))
         self.publish()
         return CONTINUE
+
+    def _check_pause(self) -> None:
+        """The PAUSE file blocks new entries only; each change is noted once."""
+        paused = self.config.pause_file.exists()
+        if paused != self.paused:
+            self.paused = paused
+            self.note("paused" if paused else "unpaused")
 
     # --- the daily guard --------------------------------------------------------------------
 
@@ -547,6 +562,9 @@ class Bot:
         })  # fmt: skip
         self._tell("signal", {"symbol": sym.name, "side": "buy" if long else "sell",
                               "entry": order.entry, "sl": order.stop_loss})  # fmt: skip
+        if self.paused:
+            self._skip(sym, order, bar_now, "paused")
+            return
         if self.blocked:
             self._skip(sym, order, bar_now, f"daily stop active: {self.blocked}")
             return

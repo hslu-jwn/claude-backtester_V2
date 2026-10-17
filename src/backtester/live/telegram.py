@@ -143,6 +143,10 @@ def format_event(kind: str, f: dict) -> str | None:
         return "STOP file found: bot stopping (positions stay open with their SL)."
     if kind == "emergency_file":
         return "EMERGENCY file found: closing all bot positions, then stopping."
+    if kind == "paused":
+        return "Paused: no new entries; open trades keep being managed."
+    if kind == "unpaused":
+        return "Resumed: new entries allowed again."
     if kind == "signal":
         return (
             f"Signal {sym} {f.get('side', '')} entry {_num(f.get('entry'))} SL {_num(f.get('sl'))}"
