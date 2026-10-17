@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 import sys
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -93,6 +93,13 @@ def test_the_scenario_has_every_overlay(data):
         "Overall trend (H4)",
         "M5 trend",
     ]
+
+
+def test_payload_carries_the_feed_switch_day(data):
+    data, replay = data
+    assert data.full(KEYS, 0)["feed_switch"] is None
+    marked = ChartData(replay, data.events_for, feed_switch=date(2026, 10, 4))
+    assert marked.full(KEYS, 0)["feed_switch"] == "2026-10-04"
 
 
 def test_full_payload_at_any_cursor_has_nothing_after_it(data):

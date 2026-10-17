@@ -263,6 +263,30 @@ color differs / is opposite, candles only one side has. FTMO's spread per UTC ho
   test (open 2 x min lot with SL / TP, SL to break-even, close half, close rest; buy and
   sell), log in `results/live/test_orders/`.
 
+### Updating the caches (ROADMAP 7.5)
+
+Nothing is downloaded at app start. `python -m backtester.tools.update_data [--dry-run]` (or the
+chart page's "Update data" button, `update_data.start_background()` / `state()`) fetches, per
+symbol, everything after the last cached UTC day up to yesterday (`data/update.py` plans, the
+tool executes; a failing symbol is reported and does not stop the others):
+
+- **MT5 cache**: every symbol with a folder in `data/cache/mt5/`, from the running terminal in
+  one session. The download starts `mt5_overlap_days` (7) before the first missing day, because
+  `download_symbol` skips the first day with real bars of its range as partial. Weekend days
+  are cached as empty files, so a Monday after a cached Sunday has nothing to do.
+- **Binance cache**: BTCUSDT / ETHUSDT (monthly zip, else daily zips; days before today only).
+- **histdata cache**: whole months after the last cached month, only months that are over;
+  download page form + import. Symbols whose histdata cache is more than 93 days behind (a
+  closed archive, e.g. EURUSD to 2021-12) are skipped.
+- A symbol with no cached day is skipped ("no cache, use the full download tool"): an update
+  never downloads a whole history.
+
+**Chart fill (chart only):** for a symbol whose source is the histdata cache, the chart reads
+the MT5 cache days after the last histdata day (`ui/chart_data.py` `FeedFillAdapter`,
+`chart_adapter`, `chart_cached_days`; the payload field `feed_switch` is the first MT5 day).
+`SymbolSources` and with it every backtest, tool and trades overlay keep reading one feed
+(data split rule, ROADMAP 7.5).
+
 ## Build order
 
 See `docs/ROADMAP.md`. Phases: 0 historical data (histdata.com) → 1 chart with replay → 2 confluences on the

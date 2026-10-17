@@ -44,6 +44,10 @@ class CacheAdapter(DataAdapter):
     def __init__(self, cache_dir: str | Path = DEFAULT_CACHE_DIR):
         self.cache_dir = Path(cache_dir)
 
+    def _path(self, symbol: str, day: date) -> Path:
+        """The day file of `symbol` (a subclass may read some days from another folder)."""
+        return cache_path(self.cache_dir, symbol, day)
+
     def fetch(
         self, symbol: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]:
@@ -68,7 +72,7 @@ class CacheAdapter(DataAdapter):
             raise ValueError(f"end {end} must be after start {start}")
 
         days = _days(start, end)
-        paths = [cache_path(self.cache_dir, symbol, d) for d in days]
+        paths = [self._path(symbol, d) for d in days]
         missing = [d for d, p in zip(days, paths) if not p.exists()]
         if missing:
             raise MissingCacheError(
@@ -88,8 +92,8 @@ class CacheAdapter(DataAdapter):
         """Candles closing in (start, end] whose UTC days are all cached (D, W, NY 4h)."""
         span = timeframe.duration + timedelta(days=1)  # a DST day is up to 25 hours
         around = _days(start - span, end + span)
-        loaded = [d for d in around if cache_path(self.cache_dir, symbol, d).exists()]
-        m1 = read_cached_days([cache_path(self.cache_dir, symbol, d) for d in loaded])
+        loaded = [d for d in around if self._path(symbol, d).exists()]
+        m1 = read_cached_days([self._path(symbol, d) for d in loaded])
         if m1.empty:
             return resample(pd.DataFrame(), timeframe)
         candles = resample(drop_flat_minutes(m1), timeframe, boundary, h4)
