@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime, timedelta
 
 from backtester.live.status import STALE_S, write_status
@@ -129,47 +130,202 @@ def test_start_reports_a_spawn_failure(tmp_path):
 # --- rendering -------------------------------------------------------------------------------
 
 
+def rendered(tmp_path, st=None, now=NOW) -> str:
+    if st is not None:
+        write_status(tmp_path / "status.json", st)
+    return text_of(live.render(live.live_view(tmp_path, now), now))
+
+
 def test_render_shows_the_numbers(tmp_path):
-    write_status(tmp_path / "status.json", status())
-    text = text_of(live.render(live.live_view(tmp_path, NOW)))
-    for s in ("DEMO", "-1.0", "US500", "daily stop active", "99,000"):
+    text = rendered(tmp_path, status(initial_balance=100_000.0, symbols=["US500"]))
+    for s in ("DEMO", "-1.00 %", "US500", "$99,000", "$100,000", "-$1,000 floating", "-2.0 R",
+              "Running"):  # fmt: skip
         assert s in text
 
 
+def test_render_signals_and_positions(tmp_path):
+    text = rendered(tmp_path, status())
+    assert "daily stop active" in text and "14:41" in text and "+0.40" in text
+
+
 def test_stale_heartbeat_is_red(tmp_path):
-    write_status(tmp_path / "status.json", status(age_s=STALE_S + 30))
-    text = text_of(live.render(live.live_view(tmp_path, NOW)))
-    assert "lv-stale" in text and "no heartbeat" in text.lower()
+    text = rendered(tmp_path, status(age_s=STALE_S + 30))
+    assert "lv-stale" in text and "no heartbeat" in text.lower() and "Stopped" in text
 
 
 def test_fresh_heartbeat_is_not_red(tmp_path):
-    write_status(tmp_path / "status.json", status(age_s=10))
-    assert "lv-stale" not in text_of(live.render(live.live_view(tmp_path, NOW)))
+    text = rendered(tmp_path, status(age_s=10))
+    assert "lv-stale" not in text and "checked 10 s ago" in text
 
 
 def test_render_without_status_does_not_crash(tmp_path):
-    assert "not started" in text_of(live.render(live.live_view(tmp_path, NOW))).lower()
+    text = rendered(tmp_path)
+    assert "not started" in text.lower() and "Stopped" in text and "–" in text
+
+
+def test_render_with_a_minimal_old_status_shows_dashes(tmp_path):
+    old = {"running": True, "heartbeat": (NOW - timedelta(seconds=5)).isoformat()}
+    text = rendered(tmp_path, old)
+    assert "Running" in text and "–" in text  # no balance / strategy / session: dashes, no crash
+
+
+def test_render_new_fields(tmp_path):
+    session = {"name": "US open", "open_utc": "2026-01-12T14:30:00+00:00",
+               "close_utc": "2026-01-12T21:00:00+00:00", "is_open": True}  # fmt: skip
+    st = status(
+        strategy="Opening-range breakout", risk_percent=0.25, session=session,
+        started_at="2026-01-12T13:00:00+00:00", initial_balance=100_000.0, symbols=["US500"],
+        setups={"US500": {"stage": "range_set", "detail": "range 100-110", "time": ""}},
+    )  # fmt: skip
+    text = rendered(tmp_path, st)
+    for s in ("Opening-range breakout", "open, 6 h left", "08:00 ET", "range 100-110",
+              "US open 09:30–16:00 ET", "Range set", "lv-step-done", "lv-step-current"):  # fmt: skip
+        assert s in text
+
+
+def test_paused_state_and_labels(tmp_path):
+    write_status(tmp_path / "status.json", status(age_s=5))
+    assert live.live_view(tmp_path, NOW)["state"] == "running"
+    assert live.toggle_pause(tmp_path) is True and (tmp_path / "PAUSE").exists()
+    view = live.live_view(tmp_path, NOW)
+    assert view["state"] == "paused" and live.button_state(view)["pause_label"] == "Resume"
+    assert live.toggle_pause(tmp_path) is False and not (tmp_path / "PAUSE").exists()
+    write_status(tmp_path / "status.json", status(age_s=5, paused=True))
+    assert live.live_view(tmp_path, NOW)["state"] == "paused"
+
+
+def test_a_leftover_pause_file_is_ignored_when_stopped(tmp_path):
+    (tmp_path / "PAUSE").touch()
+    assert live.live_view(tmp_path, NOW)["state"] == "none"
+
+
+def test_button_states(tmp_path):
+    none = live.button_state(live.live_view(tmp_path, NOW))
+    assert none == {"start_disabled": False, "pause_label": "Pause", "pause_disabled": True,
+                    "stop_disabled": True}  # fmt: skip
+    write_status(tmp_path / "status.json", status(age_s=5))
+    run = live.button_state(live.live_view(tmp_path, NOW))
+    assert run["start_disabled"] and not run["pause_disabled"] and not run["stop_disabled"]
+
+
+def test_settings_follow_the_bot(tmp_path):
+    idle = live.settings_state(live.live_view(tmp_path, NOW))
+    assert idle == {"disabled": False, "risk": None, "stop": None, "symbols": None}
+    write_status(tmp_path / "status.json", status(age_s=5, risk_percent=0.5, symbols=["US30"]))
+    run = live.settings_state(live.live_view(tmp_path, NOW))
+    assert run["disabled"] and run["risk"] == 0.5 and run["stop"] == 2.0
+    assert run["symbols"] == ["US30"]
+    write_status(tmp_path / "status.json", status(age_s=STALE_S + 5))
+    assert live.settings_state(live.live_view(tmp_path, NOW))["disabled"] is False
+
+
+def test_start_passes_the_settings_to_the_bot(tmp_path):
+    calls = []
+    clean = {"risk": 0.5, "daily_stop": 1.0, "symbols": ["US500"]}
+    live.start_bot(tmp_path, NOW, spawn=lambda cmd, log: calls.append(cmd), settings=clean)
+    assert calls[0][3:] == ["--symbols", "US500", "--risk", "0.5", "--daily-stop", "1"]
+
+
+def test_start_removes_a_leftover_pause_file(tmp_path):
+    (tmp_path / "PAUSE").touch()
+    live.start_bot(tmp_path, NOW, spawn=lambda *a: None)
+    assert not (tmp_path / "PAUSE").exists()
+
+
+def test_usd_formatting():
+    assert live.usd(100412.4) == "$100,412" and live.usd(-326.0, signed=True) == "-$326"
+    assert live.usd(326.0, signed=True) == "+$326" and live.usd(None) == "–"
+    assert live.usd("x") == "–"
+
+
+def test_trades_figure_empty_and_filled():
+    empty = live.trades_figure(live.lm.trade_strip([], 100_000.0, "all", NOW))
+    assert len(empty.data) == 0 and "No trades" in empty.layout.annotations[0].text
+    t = [{"symbol": "A", "exit_time": "2026-01-12T15:00:00+00:00", "money": -50.0, "r_net": -0.2},
+         {"symbol": "A", "exit_time": "2026-01-12T16:00:00+00:00", "money": 80.0, "r_net": 0.3}]  # fmt: skip
+    fig = live.trades_figure(live.lm.trade_strip(t, 100_000.0, "all", NOW))
+    assert list(fig.data[0].marker.color) == ["#f6465d", "#2ebd85"] and len(fig.data) == 2
 
 
 def test_guard_bar_scale():
-    s = status(day_pl_percent=-2.5)
-    bar = live.guard_bar(s)
-    assert bar["loss_percent"] == 2.5 and bar["stop_percent"] == 2.0 and bar["limit_percent"] == 5.0
-    assert bar["fill_width"] == 50.0 and bar["level"] == "stopped"
-    assert live.guard_bar(status(day_pl_percent=1.0))["fill_width"] == 0.0
+    bar = live.guard_bar(status(day_pl_percent=-2.5))
+    assert bar["loss"] == 2.5 and bar["stop"] == 2.0 and bar["fraction"] == 1.0
+    assert bar["level"] == "stopped"
+    assert live.guard_bar(status(day_pl_percent=1.0))["fraction"] == 0.0
     assert live.guard_bar(status(day_pl_percent=-1.0))["level"] == "ok"
-    assert live.guard_bar(status(day_pl_percent=-4.9))["fill_width"] == 98.0
-    assert live.guard_bar(status(day_pl_percent=-9.0))["fill_width"] == 100.0
 
 
 # --- the app ---------------------------------------------------------------------------------
 
 
-def test_app_routes_live_and_links_to_it():
+def ids_of(component) -> set[str]:
+    return set(re.findall(r'"id": "([^"]+)"', text_of(component)))
+
+
+def test_app_routes_live_and_has_the_top_bar():
     page = app_module.page_for("/live", None)
     assert "lv-interval" in text_of(page)
     app = app_module.create_app()
+    text = text_of(app.layout)
+    for i in ("nav-chart", "nav-backtest", "nav-live", "nav-status", "nav-landed"):
+        assert i in text
     assert "lv-interval" in text_of(app.validation_layout)
-    from backtester.ui import trading_panel
 
-    assert "/live" in text_of(trading_panel.layout())
+
+def test_live_page_has_connection_and_settings():
+    ids = ids_of(live.layout())
+    for i in ("tr-login", "tr-password", "tr-server", "tr-path", "tr-save", "tr-test", "tr-orders",
+              "tr-tg-token", "tr-tg-chat", "lv-risk", "lv-daily-stop", "lv-symbols", "lv-start",
+              "lv-pause", "lv-stop", "lv-emergency", "lv-range", "lv-trades"):  # fmt: skip
+        assert i in ids
+
+
+def test_connection_is_open_only_without_a_connected_bot(tmp_path):
+    def conn_open(path):
+        return live.layout(path, NOW).children[-1].open
+
+    assert conn_open(tmp_path) is True  # no status file
+    write_status(tmp_path / "status.json", status(age_s=5))
+    assert conn_open(tmp_path) is False
+    write_status(tmp_path / "status.json", status(age_s=5, connected=False))
+    assert conn_open(tmp_path) is True
+    write_status(tmp_path / "status.json", status(age_s=STALE_S + 9))
+    assert conn_open(tmp_path) is True
+
+
+def test_chart_page_sweep_controls_moved_into_the_settings():
+    from backtester.data.sources import DEFAULT_SOURCES
+    from backtester.ui.pages import chart
+
+    page = chart.layout(DEFAULT_SOURCES)
+    ids = ids_of(page)
+    assert not {"tb-sweep", "pop-sweep", "tr-open", "tr-modal"} & ids
+    assert {"chart-sweep-tol", "chart-sweep-cancel", "chart-sweep-n", "chart-sweep-top",
+            "chart-sweep-tweak"} <= ids  # fmt: skip
+    text = text_of(page)
+    assert text.count('"type": "Details"') == 1 and "Account connection" not in text
+
+
+def _nested_lists(node, path="root") -> list[str]:
+    """Dash's renderer fails (React error 31) on a list inside a children list."""
+    found = []
+    children = getattr(node, "children", None)
+    if isinstance(children, list):
+        for i, child in enumerate(children):
+            if isinstance(child, list):
+                found.append(f"{path}[{i}]")
+            else:
+                found += _nested_lists(child, f"{path}[{i}]")
+    elif children is not None and not isinstance(children, str | int | float):
+        found += _nested_lists(children, path)
+    return found
+
+
+def test_no_nested_children_lists(tmp_path):
+    write_status(
+        tmp_path / "status.json",
+        status(setups={"US500": {"stage": "entered", "detail": "x"}}, symbols=["US500"]),
+    )
+    assert _nested_lists(live.layout(tmp_path, NOW)) == []
+    for piece in live.render(live.live_view(tmp_path, NOW), NOW).values():
+        assert _nested_lists(piece) == []

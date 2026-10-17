@@ -770,7 +770,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--symbols", nargs="+", default=list(FORWARD_SYMBOLS))
     p.add_argument("--risk", type=float, default=BotConfig.risk_percent, help="percent per trade")
-    p.add_argument("--daily-stop", type=float, default=GuardConfig.daily_stop_percent)
+    p.add_argument("--daily-stop", type=float, default=GuardConfig().daily_stop_percent)
     p.add_argument("--balance", type=float, default=None,
                    help="initial balance override (default: the account's first balance deal)")  # fmt: skip
     args = p.parse_args(argv)

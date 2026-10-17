@@ -1,32 +1,362 @@
-/* /live page (ROADMAP 7.2): the demo bot at a glance */
-.lv-page { max-width: 980px; margin: 0 auto; padding: 12px 16px 40px; font-size: 13px; }
-.lv-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-.lv-title { font-size: 18px; font-weight: 600; }
-.lv-actions { display: flex; align-items: center; gap: 8px; margin: 8px 0 14px; }
-.lv-btn { padding: 6px 14px; border: 1px solid #b2b5be; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
-.lv-btn:hover { background: #f0f3fa; }
-.lv-go { background: #2962ff; border-color: #2962ff; color: #fff; }
-.lv-go:hover { background: #1e4fd6; }
-.lv-danger { background: #f23645; border-color: #f23645; color: #fff; }
-.lv-danger:hover { background: #cc2a38; }
-.lv-msg { color: #787b86; margin-left: 8px; }
-.lv-badge { padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-weight: 600; }
-.lv-ok { background: #e3f5ee; color: #067a61; }
-.lv-idle { background: #f0f3fa; color: #787b86; }
-.lv-stale { background: #fde7e9; color: #f23645; }
-.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 24px; margin-bottom: 12px; }
-.lv-kv { display: flex; justify-content: space-between; border-bottom: 1px solid #e0e3eb; padding: 3px 0; }
-.lv-k { color: #787b86; }
-.lv-h { margin: 16px 0 6px; font-weight: 600; }
-.lv-bar { position: relative; height: 14px; background: #f0f3fa; border: 1px solid #e0e3eb; border-radius: 3px; overflow: hidden; }
-.lv-fill { height: 100%; }
-.lv-fill.lv-ok { background: #089981; }
-.lv-fill.lv-stopped { background: #f5a623; }
-.lv-fill.lv-breach { background: #f23645; }
-.lv-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #131722; }
-.lv-help { color: #787b86; margin-top: 4px; font-size: 12px; }
-.lv-table { border-collapse: collapse; width: 100%; }
-.lv-table th, .lv-table td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid #e0e3eb; }
-.lv-empty { color: #787b86; }
-.lv-error { margin-top: 12px; padding: 8px 10px; background: #fde7e9; color: #f23645; border-radius: 4px; }
-.lv-log { margin: 0; padding: 8px 10px; background: #f8f9fd; border: 1px solid #e0e3eb; border-radius: 4px; max-height: 360px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+/* /live page (ROADMAP 7.2 / 7.3): dark cards, small uppercase titles, monospace numbers */
+.lv-page {
+  --bg: #0b1220;
+  --card: #111a2b;
+  --line: #1d2a40;
+  --text: #e6ebf5;
+  --muted: #7d8aa5;
+  --green: #2ebd85;
+  --red: #f6465d;
+  --amber: #f5a623;
+  --blue: #4f8cff;
+  min-height: calc(100vh - var(--nav-h));
+  box-sizing: border-box;
+  padding: 16px 24px 48px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+.lv-page > * + * {
+  margin-top: 14px;
+}
+.lv-card {
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.lv-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.lv-card-title,
+.lv-summary {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lv-summary {
+  cursor: pointer;
+}
+.lv-sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+.lv-mono,
+.lv-big,
+.lv-table td,
+.lv-log {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.lv-big {
+  margin-bottom: 4px;
+  font-size: 24px;
+  font-weight: 600;
+}
+.lv-big.lv-small {
+  padding: 5px 0;
+  font-size: 17px;
+}
+.lv-pos {
+  color: var(--green);
+}
+.lv-neg,
+.lv-stale {
+  color: var(--red);
+}
+
+/* header */
+.lv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.lv-head-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lv-strategy {
+  font-size: 17px;
+  font-weight: 600;
+}
+.lv-state {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #1d2a40;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.lv-state.lv-ok {
+  background: #12392e;
+  color: var(--green);
+}
+.lv-state.lv-warn {
+  background: #3d2e0c;
+  color: var(--amber);
+}
+.lv-state.lv-bad {
+  background: #3a1620;
+  color: var(--red);
+}
+.lv-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 6px;
+}
+.lv-meta {
+  color: var(--muted);
+}
+.lv-note {
+  margin-top: 6px;
+  color: var(--muted);
+}
+.lv-error {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #3a1620;
+  color: var(--red);
+}
+.lv-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lv-btn {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid #2a3a58;
+  border-radius: 8px;
+  background: #15213a;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.lv-btn:hover:not(:disabled) {
+  background: #1b2a49;
+}
+.lv-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.lv-go {
+  border-color: var(--blue);
+  background: #1f4fb8;
+}
+.lv-danger {
+  border-color: #6b2230;
+  background: #3a1620;
+  color: #ff8896;
+}
+.lv-msg {
+  min-height: 1em;
+  color: var(--muted);
+}
+
+/* cards row */
+.lv-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+.lv-bar {
+  position: relative;
+  height: 6px;
+  margin: 6px 0;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #1d2a40;
+}
+.lv-fill {
+  height: 100%;
+  background: var(--green);
+}
+.lv-fill.lv-warn,
+.lv-fill.lv-stopped {
+  background: var(--amber);
+}
+.lv-fill.lv-breach {
+  background: var(--red);
+}
+.lv-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text);
+}
+.lv-limit-head {
+  display: flex;
+  justify-content: space-between;
+}
+.lv-limit + .lv-limit {
+  margin-top: 8px;
+}
+
+/* setup funnels and trades */
+.lv-two {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1.4fr);
+  gap: 14px;
+}
+.lv-two > .lv-card {
+  min-width: 0;
+}
+.lv-funnels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.lv-symbol {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.lv-step {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+  color: var(--muted);
+}
+.lv-dot {
+  flex: 0 0 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px solid #33415c;
+  border-radius: 50%;
+  color: #0b1220;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: center;
+}
+.lv-step-done .lv-dot {
+  border-color: var(--green);
+  background: var(--green);
+}
+.lv-step-done {
+  color: var(--text);
+}
+.lv-step-current {
+  color: var(--text);
+  font-weight: 600;
+}
+.lv-step-current .lv-dot {
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 9px var(--blue);
+}
+.lv-seg label {
+  margin-left: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.lv-seg label:has(input:checked) {
+  background: #1d2a40;
+  color: var(--text);
+}
+.lv-seg input {
+  display: none;
+}
+
+/* tables and log */
+.lv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.lv-table th {
+  padding: 4px 10px 6px 0;
+  color: var(--muted);
+  font-weight: 500;
+  text-align: left;
+}
+.lv-table td {
+  padding: 6px 10px 6px 0;
+  border-top: 1px solid var(--line);
+}
+.lv-empty {
+  color: var(--muted);
+}
+.lv-log {
+  max-height: 320px;
+  margin: 0;
+  overflow: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+/* settings */
+.lv-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+.lv-input {
+  width: 110px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid #2a3a58;
+  border-radius: 6px;
+  background: #0b1220;
+  color: var(--text);
+  font-family: ui-monospace, Consolas, monospace;
+}
+.lv-input:disabled {
+  opacity: 0.5;
+}
+.lv-checks label {
+  margin-right: 14px;
+  white-space: nowrap;
+}
+
+/* connection section: the shared settings-dialog classes, dark */
+.lv-conn .st-fields {
+  padding: 6px 0 4px;
+  overflow: visible;
+}
+.lv-conn .st-label {
+  color: var(--text);
+}
+.lv-conn .st-help,
+.lv-conn .st-section,
+.lv-conn .st-status {
+  color: var(--muted);
+}
+.lv-conn .st-row {
+  border-bottom-color: var(--line);
+}
+.lv-conn .st-input {
+  border-color: #2a3a58;
+  background: #0b1220;
+  color: var(--text);
+}
+.lv-conn .st-btn {
+  border-color: #2a3a58;
+  background: #15213a;
+  color: var(--text);
+}
+.lv-conn .st-btn.st-primary {
+  border-color: var(--blue);
+  background: #1f4fb8;
+}
+.lv-conn .st-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 0;
+}
+.lv-conn .tr-result {
+  border-color: var(--line);
+  background: #0b1220;
+  color: var(--text);
+}

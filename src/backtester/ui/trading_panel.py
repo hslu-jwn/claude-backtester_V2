@@ -1,4 +1,5 @@
-"""Settings ⚙ → Trading: the account connection (a modal). Spec: ROADMAP.md › 7.1.
+"""The account connection, a section of the /live page (moved out of ⚙ by ROADMAP 7.3).
+Spec: ROADMAP.md › 7.1, live-trading.md › App layout and Live page.
 
 Platform (MT5 now), login, password (masked), server (the servers the terminal knows as
 suggestions, any name can be typed), optional terminal path, the broker's symbol names,
@@ -50,6 +51,10 @@ PASSWORD_SAVED = "saved, leave empty to keep it"
 PASSWORD_NONE = "password"
 TOKEN_SAVED = "saved, leave empty to keep it"
 TOKEN_NONE = "bot token"
+LOAD_DELAY_MS = 300  # the fields load once, this long after the section is shown
+
+
+_PROP = {"tr-load": "n_intervals"}  # every other trigger is a button
 
 
 @dataclass(frozen=True)
@@ -221,7 +226,8 @@ def _input(id_: str, **kwargs) -> dcc.Input:
     return dcc.Input(id=id_, type="text", className="st-input", **kwargs)
 
 
-def layout() -> html.Div:
+def layout(open_: bool = True) -> html.Details:
+    """The Connection section; `open_` False collapses it (the bot is connected)."""
     fields = html.Div(
         [
             html.Div("Account", className="st-section"),
@@ -319,48 +325,30 @@ def layout() -> html.Div:
         ],
         className="st-fields",
     )
-    return html.Div(
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div("Settings · Trading", className="st-title"),
-                        html.Button("✕", className="st-close", **{"data-modal-close": "tr-modal"}),
-                    ],
-                    className="st-head",
-                ),
-                html.Div(
-                    [
-                        dcc.RadioItems(
-                            id="tr-nav", options=["Trading"], value="Trading", className="st-nav"
-                        ),
-                        fields,
-                    ],
-                    className="st-main",
-                ),
-                html.Div(
-                    [
-                        html.Div(id="tr-status", className="st-status"),
-                        dcc.Link("Live page", href="/live", className="st-btn"),
-                        html.Button("Test connection", id="tr-test", className="st-btn"),
-                        html.Button("Save", id="tr-save", className="st-btn st-primary"),
-                        html.Button(
-                            "Close", className="st-btn", **{"data-modal-close": "tr-modal"}
-                        ),
-                    ],
-                    className="st-foot",
-                ),
-            ],
-            className="st-dialog",
-        ),
-        id="tr-modal",
-        className="st-backdrop",
+    footer = html.Div(
+        [
+            html.Div(id="tr-status", className="st-status"),
+            html.Button("Test connection", id="tr-test", className="st-btn"),
+            html.Button("Save", id="tr-save", className="st-btn st-primary"),
+        ],
+        className="st-foot",
+    )
+    return html.Details(
+        [
+            html.Summary("Connection · MT5 account and Telegram", className="lv-summary"),
+            dcc.Interval(id="tr-load", interval=LOAD_DELAY_MS, max_intervals=1),
+            fields,
+            footer,
+        ],
+        id="tr-section",
+        open=open_,
+        className="lv-card lv-conn",
     )
 
 
 def register_callbacks(app: Dash, deps: Deps | None = None) -> None:
     deps = deps or Deps(run_test_orders=run_from_panel)
-    triggers = {"tr-open": "load", "tr-save": "save", "tr-test": "test", "tr-orders": "orders"}
+    triggers = {"tr-load": "load", "tr-save": "save", "tr-test": "test", "tr-orders": "orders"}
     symbol_ids = [f"tr-sym-{s}" for s in SYMBOLS]
 
     @app.callback(
@@ -375,7 +363,7 @@ def register_callbacks(app: Dash, deps: Deps | None = None) -> None:
         Output("tr-clock", "children"),
         Output("tr-status", "children"),
         Output("tr-result", "children"),
-        *[Input(i, "n_clicks") for i in triggers],
+        *[Input(i, _PROP.get(i, "n_clicks")) for i in triggers],
         State("tr-platform", "value"),
         State("tr-login", "value"),
         State("tr-password", "value"),
@@ -422,14 +410,14 @@ def register_callbacks(app: Dash, deps: Deps | None = None) -> None:
             "\n".join(out["result"]),
         )
 
-    tg_triggers = {"tr-open": "load", "tr-tg-save": "save", "tr-tg-test": "test"}
+    tg_triggers = {"tr-load": "load", "tr-tg-save": "save", "tr-tg-test": "test"}
 
     @app.callback(
         Output("tr-tg-chat", "value"),
         Output("tr-tg-token", "value"),
         Output("tr-tg-token", "placeholder"),
         Output("tr-tg-status", "children"),
-        *[Input(i, "n_clicks") for i in tg_triggers],
+        *[Input(i, _PROP.get(i, "n_clicks")) for i in tg_triggers],
         State("tr-tg-token", "value"),
         State("tr-tg-chat", "value"),
         prevent_initial_call=True,

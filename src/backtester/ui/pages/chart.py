@@ -117,7 +117,6 @@ from backtester.ui import (
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
-    trading_panel,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
@@ -424,7 +423,7 @@ def with_boundary(config: ChartConfig, boundary: str | None, h4: str | None = No
 
 
 # Temporary tweaker (user, 2026-10-12): liquidity sweep rules tried on the chart. Values of
-# the toolbar's Sweep menu: the equal-high tolerance in ATR ("none": one of the last N).
+# the Sweep section of the chart settings: the equal-high tolerance in ATR ("none": one of the last N).
 SWEEP_TOLERANCES = (
     ("none", "One of the last N (current)"),
     ("0", "Most extreme of last N (0)"),
@@ -453,7 +452,7 @@ SWEEP_CANCELS = {
 
 
 def sweep_config(tweak: dict | None) -> SweepConfig:
-    """The sweep rules chosen in the toolbar's Sweep menu ({"n", "tol", "cancel", "top"})."""
+    """The sweep rules chosen in the Sweep section of the chart settings ({"n", "tol", "cancel", "top"})."""
     tweak = tweak or {}
     tol = tweak.get("tol", "none")
     return SweepConfig(
@@ -799,109 +798,104 @@ def layout(
     symbols = sources.available_symbols()
     settings = _popover(
         "pop-settings",
-        "Chart settings",
+        "Settings",
         [
-            _switch("chart-sessions", "Session lines", ["on"]),
-            _switch("chart-overlays", "Overlays", []),
-            html.Div(
-                "Overlay types" if OVERLAYS else "No overlay types yet",
-                id="chart-overlay-summary",
-                className="tb-pop-sub",
-            ),
-            dcc.Checklist(
-                id="chart-overlay-types",
-                options=overlay_options(enabled=False),
-                value=[],
-                persistence=True,
-                className="tb-check tb-types",
-            ),
-            html.Div("Daily / weekly candles", className="tb-pop-sub"),
-            dcc.Dropdown(
-                id="chart-day-boundary",
-                options=[{"label": f"Day from {b.value}", "value": b.name} for b in DayBoundary],
-                value=DEFAULT_BOUNDARY.name,
-                clearable=False,
-                searchable=False,
-                persistence=True,
-            ),
-            html.Div("4h candles", className="tb-pop-sub"),
-            dcc.Dropdown(
-                id="chart-h4-alignment",
-                options=[{"label": a.value, "value": a.name} for a in H4Alignment],
-                value=H4Alignment.UTC.name,
-                clearable=False,
-                searchable=False,
-                persistence=True,
-            ),
-            html.Div("Detector settings", className="tb-pop-sub"),
-            dcc.Checklist(
-                id="chart-filters",
-                options=[
-                    {"label": "FVG strong-move filter", "value": "fvg"},
-                    {"label": "OB strong-move filter", "value": "ob"},
-                ],
-                value=["ob"],
-                persistence=True,
-                className="tb-check",
-            ),
-            html.Div("Trading", className="tb-pop-sub"),
-            html.Div(
+            html.Details(
                 [
-                    html.Button(
-                        "Account connection…",
-                        id="tr-open",
-                        className="tb-run",
-                        n_clicks=0,
-                        **{"data-modal": "tr-modal"},
-                    )
+                    html.Summary("Chart settings"),
+                    _switch("chart-sessions", "Session lines", ["on"]),
+                    _switch("chart-overlays", "Overlays", []),
+                    html.Div(
+                        "Overlay types" if OVERLAYS else "No overlay types yet",
+                        id="chart-overlay-summary",
+                        className="tb-pop-sub",
+                    ),
+                    dcc.Checklist(
+                        id="chart-overlay-types",
+                        options=overlay_options(enabled=False),
+                        value=[],
+                        persistence=True,
+                        className="tb-check tb-types",
+                    ),
+                    html.Div("Daily / weekly candles", className="tb-pop-sub"),
+                    dcc.Dropdown(
+                        id="chart-day-boundary",
+                        options=[
+                            {"label": f"Day from {b.value}", "value": b.name} for b in DayBoundary
+                        ],
+                        value=DEFAULT_BOUNDARY.name,
+                        clearable=False,
+                        searchable=False,
+                        persistence=True,
+                    ),
+                    html.Div("4h candles", className="tb-pop-sub"),
+                    dcc.Dropdown(
+                        id="chart-h4-alignment",
+                        options=[{"label": a.value, "value": a.name} for a in H4Alignment],
+                        value=H4Alignment.UTC.name,
+                        clearable=False,
+                        searchable=False,
+                        persistence=True,
+                    ),
+                    html.Div("Detector settings", className="tb-pop-sub"),
+                    dcc.Checklist(
+                        id="chart-filters",
+                        options=[
+                            {"label": "FVG strong-move filter", "value": "fvg"},
+                            {"label": "OB strong-move filter", "value": "ob"},
+                        ],
+                        value=["ob"],
+                        persistence=True,
+                        className="tb-check",
+                    ),
+                    html.Div("Liquidity sweep (temporary)", className="tb-pop-sub tb-group"),
+                    html.Div("Same-height high counts as the level", className="tb-pop-sub"),
+                    dcc.Dropdown(
+                        id="chart-sweep-tol",
+                        options=[{"label": label, "value": v} for v, label in SWEEP_TOLERANCES],
+                        value="none",
+                        clearable=False,
+                        searchable=False,
+                        persistence=True,
+                    ),
+                    html.Div("Breakout filter", className="tb-pop-sub"),
+                    dcc.Dropdown(
+                        id="chart-sweep-cancel",
+                        options=[
+                            {"label": label, "value": k} for k, (label, _) in SWEEP_CANCELS.items()
+                        ],
+                        value="off",
+                        clearable=False,
+                        searchable=False,
+                        persistence=True,
+                    ),
+                    html.Div("Highs / lows that count (last N swings)", className="tb-pop-sub"),
+                    dcc.Dropdown(
+                        id="chart-sweep-n",
+                        options=[{"label": f"Last {n} swings", "value": n} for n in range(1, 6)],
+                        value=SweepConfig().lookback_swings,
+                        clearable=False,
+                        searchable=False,
+                        persistence=True,
+                    ),
+                    dcc.Checklist(
+                        id="chart-sweep-top",
+                        options=[
+                            {"label": "BOS must break structure from before the top", "value": "on"}
+                        ],
+                        value=[],
+                        persistence=True,
+                        className="tb-check",
+                    ),
+                    html.Div(
+                        "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
+                        "and Equilibrium overlays. Defaults = the current rules.",
+                        className="tb-pop-note",
+                    ),
                 ],
-                className="tb-pop-row",
-            ),
-        ],
-    )
-    sweep_tweak = _popover(
-        "pop-sweep",
-        "Liquidity sweep (temporary)",
-        [
-            html.Div("Same-height high counts as the level", className="tb-pop-sub"),
-            dcc.Dropdown(
-                id="chart-sweep-tol",
-                options=[{"label": label, "value": v} for v, label in SWEEP_TOLERANCES],
-                value="none",
-                clearable=False,
-                searchable=False,
-                persistence=True,
-            ),
-            html.Div("Breakout filter", className="tb-pop-sub"),
-            dcc.Dropdown(
-                id="chart-sweep-cancel",
-                options=[{"label": label, "value": k} for k, (label, _) in SWEEP_CANCELS.items()],
-                value="off",
-                clearable=False,
-                searchable=False,
-                persistence=True,
-            ),
-            html.Div("Highs / lows that count (last N swings)", className="tb-pop-sub"),
-            dcc.Dropdown(
-                id="chart-sweep-n",
-                options=[{"label": f"Last {n} swings", "value": n} for n in range(1, 6)],
-                value=SweepConfig().lookback_swings,
-                clearable=False,
-                searchable=False,
-                persistence=True,
-            ),
-            dcc.Checklist(
-                id="chart-sweep-top",
-                options=[{"label": "BOS must break structure from before the top", "value": "on"}],
-                value=[],
-                persistence=True,
-                className="tb-check",
-            ),
-            html.Div(
-                "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
-                "and Equilibrium overlays. Defaults = the current rules.",
-                className="tb-pop-note",
-            ),
+                open=True,
+                className="tb-details",
+            )
         ],
     )
     strategy = _popover(
@@ -977,20 +971,6 @@ def layout(
             ),
             html.Div(
                 [_icon_button("tb-strategy", "strategy", "Strategy", "pop-strategy"), strategy],
-                className="tb-anchor",
-            ),
-            html.Div(
-                [
-                    html.Button(
-                        "Sweep",
-                        id="tb-sweep",
-                        title="Liquidity sweep rules (temporary tweaker)",
-                        className="tb-btn",
-                        n_clicks=0,
-                        **{"data-pop": "pop-sweep"},
-                    ),
-                    sweep_tweak,
-                ],
                 className="tb-anchor",
             ),
             _icon_button("chart-replay-toggle", "replay", "Bar replay (on / off)"),
@@ -1116,7 +1096,6 @@ def layout(
             dcc.Store(id="chart-goto"),
             dcc.Store(id="settings-current", storage_type="local"),
             settings_panel.layout(),
-            trading_panel.layout(),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
@@ -1132,7 +1111,6 @@ def register_callbacks(
     app: Dash, sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG
 ) -> None:
     settings_panel.register_callbacks(app)
-    trading_panel.register_callbacks(app)
 
     @app.callback(
         Output("chart-dates", "min_date_allowed"),

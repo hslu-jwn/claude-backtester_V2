@@ -1,0 +1,74 @@
+/* Top bar on every page (ROADMAP 7.3): dark, Chart · Backtest · Risk · Live + bot status */
+:root {
+  --nav-h: 44px;
+}
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--nav-h);
+  box-sizing: border-box;
+  padding: 0 16px;
+  background: #0b1220;
+  border-bottom: 1px solid #1d2a40;
+  font-size: 13px;
+}
+.nav-brand {
+  margin-right: 18px;
+  color: #e6ebf5;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.nav-link {
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #8d9bb5;
+  text-decoration: none;
+}
+a.nav-link:hover {
+  color: #e6ebf5;
+  background: #141e33;
+}
+.nav-link.active {
+  color: #e6ebf5;
+  background: #172238;
+}
+.nav-link.nav-off {
+  opacity: 0.4;
+  cursor: default;
+}
+.nav-link.nav-red {
+  color: #ff6b7a;
+  background: #3a1620;
+  font-weight: 600;
+}
+.nav-link.nav-red::after {
+  content: " ●";
+  font-size: 10px;
+}
+.nav-spacer {
+  flex: 1 1 auto;
+}
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8d9bb5;
+  font-size: 12px;
+}
+.nav-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5b6a85;
+}
+.nav-status.nav-ok::before {
+  background: #2ebd85;
+}
+.nav-status.nav-warn::before {
+  background: #f5a623;
+}

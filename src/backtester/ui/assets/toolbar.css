@@ -20,7 +20,7 @@ body {
 .tb-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - var(--nav-h, 0px));
   background: #ffffff;
 }
 
@@ -616,4 +616,17 @@ body {
 
 .st-row.st-hidden {
   display: none;
+}
+
+/* chart settings: one collapsible block (ROADMAP 7.3) */
+.tb-details > summary {
+  margin-bottom: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tb-group {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--tb-line);
+  font-weight: 600;
 }

@@ -1,10 +1,13 @@
 """Dash app entry point: `python -m backtester.ui.app` → http://127.0.0.1:8050
 
+One top bar on every page (ui/nav.py): Chart · Backtest · Risk · Live; Live is red while the
+bot runs and the app opens on `/live` then (ROADMAP 7.3).
+
 Pages: chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
 one trade, from the results page) and a backtest's results (`/results/<run id>`,
 pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
-Prop Firm page (pages/risk.py) comes in Phase 5. The demo bot's monitor is `/live`
-(pages/live.py, ROADMAP 7.2). Each symbol is read from the cache of its
+Prop Firm page (pages/risk.py) comes in Phase 5. The demo bot's monitor and account
+connection are `/live` (pages/live.py, ROADMAP 7.2 / 7.3). Each symbol is read from the cache of its
 own data source (`data/sources.py`). A page is built when it is opened, so symbols cached
 while the app runs appear after a reload.
 """
@@ -16,6 +19,7 @@ import argparse
 from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.ui import nav
 from backtester.ui.pages import chart, live, results
 
 RESULTS_PREFIX = "/results/"
@@ -32,10 +36,11 @@ def page_for(pathname: str | None, sources: SymbolSources, search: str | None = 
 
 def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
     app = Dash(__name__, title="Backtester", suppress_callback_exceptions=True)
-    app.layout = html.Div([dcc.Location(id="url"), html.Div(id="page")])
+    app.layout = html.Div([dcc.Location(id="url"), nav.layout(), html.Div(id="page")])
     app.validation_layout = html.Div(
         [
             dcc.Location(id="url"),
+            nav.layout(),
             html.Div(id="page"),
             chart.layout(sources),
             results.layout(""),
@@ -47,6 +52,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
     def _page(pathname, search):
         return page_for(pathname, sources, search)
 
+    nav.register_callbacks(app)
     chart.register_callbacks(app, sources)
     results.register_callbacks(app)
     live.register_callbacks(app)
