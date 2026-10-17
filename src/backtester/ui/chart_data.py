@@ -349,10 +349,9 @@ def chart_cached_days(
 ) -> list[date]:
     """Days the chart can show for `symbol` (histdata days, then the MT5 days after them)."""
     days = sources.cached_days(symbol)
-    adapter = chart_adapter(sources, symbol, histdata_dir=histdata_dir, mt5_dir=mt5_dir)
-    if isinstance(adapter, FeedFillAdapter):
-        days = sorted({*days, *adapter.mt5_days(symbol)})
-    return days
+    if sources.cache_dir(symbol) != Path(histdata_dir):  # not a histdata symbol: no fill
+        return days
+    return sorted({*days, *FeedFillAdapter(histdata_dir, mt5_dir).mt5_days(symbol)})
 
 
 def feed_switch(

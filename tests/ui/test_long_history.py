@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -52,6 +53,9 @@ class CountingSources:
 
     def cached_days(self, symbol):
         return sorted(YEARS)
+
+    def cache_dir(self, symbol):
+        return Path("not-histdata")  # read as it is by the chart, no MT5 fill
 
     def adapter(self, symbol):
         raise AssertionError("must be refused before reading the cache")

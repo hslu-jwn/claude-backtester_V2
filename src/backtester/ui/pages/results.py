@@ -69,12 +69,19 @@ def _read_json(path: Path) -> dict:
         return {}
 
 
+_RUN_ID = re.compile(r"\d{8}-\d{6}")
+
+
 def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
     """Run selector options, newest first (run ids start with their UTC start time)."""
     folder = Path(results_dir)
     if not folder.is_dir():
         return []
-    runs = sorted((p for p in folder.iterdir() if (p / "summary.json").is_file()), reverse=True)
+    found = sorted((p for p in folder.iterdir() if (p / "summary.json").is_file()), reverse=True)
+    # timestamped runs first (newest first), study folders after them in name order
+    runs = [p for p in found if _RUN_ID.match(p.name)] + [
+        p for p in found if not _RUN_ID.match(p.name)
+    ]
     options = []
     for p in runs:
         s = _read_json(p / "summary.json")

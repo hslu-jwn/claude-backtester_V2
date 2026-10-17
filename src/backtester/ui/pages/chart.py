@@ -119,9 +119,15 @@ from backtester.ui import (
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
+    update_button,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
-from backtester.ui.chart_data import ChartData
+from backtester.ui.chart_data import (
+    ChartData,
+    chart_adapter,
+    chart_cached_days,
+    feed_switch,
+)
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OVERLAYS,
@@ -165,7 +171,9 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
     if end < start:
         return None, "The end date is before the start date."
     tf = Timeframe[timeframe]
-    weekdays = sum(1 for d in sources.cached_days(symbol) if start <= d <= end and d.weekday() < 5)
+    weekdays = sum(
+        1 for d in chart_cached_days(sources, symbol) if start <= d <= end and d.weekday() < 5
+    )
     estimate = weekdays * 1440 // tf.value
     if estimate > config.max_candles * config.early_refuse_factor:
         return None, (
@@ -174,7 +182,7 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
             "(e.g. 4h or D for years)."
         )
     try:
-        frame = sources.adapter(symbol).fetch_frame(
+        frame = chart_adapter(sources, symbol).fetch_frame(
             symbol,
             Timeframe[timeframe],
             _midnight(start),
@@ -213,7 +221,7 @@ def _higher_series(sources, symbol, timeframe, start_date, end_date, config) -> 
     for tf in config.higher_timeframes:
         if tf.value <= timeframe.value:
             continue
-        frame = sources.adapter(symbol).fetch_frame(
+        frame = chart_adapter(sources, symbol).fetch_frame(
             symbol, tf, _midnight(start), _midnight(end + timedelta(days=1))
         )
         if len(frame):
@@ -226,10 +234,10 @@ def _overall_series(sources, symbol, start_date, end_date, config) -> CandleSeri
     `overall_trend_warmup_days` before the chart range to its end, using only cached days
     with no missing day in between, so the trend is already known at the range's start."""
     start, end = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
-    cached = set(sources.cached_days(symbol))
+    cached = set(chart_cached_days(sources, symbol))
     first = warmup_start(cached, start, config.overall_trend_warmup_days)
     timeframe = config.trend.overall_timeframe
-    frame = sources.adapter(symbol).fetch_frame(
+    frame = chart_adapter(sources, symbol).fetch_frame(
         symbol, timeframe, _midnight(first), _midnight(end + timedelta(days=1))
     )
     return CandleSeries(symbol, timeframe, candles_from_frame(frame)) if len(frame) else None
@@ -531,7 +539,12 @@ def chart_data(
     config: ChartConfig = DEFAULT_CONFIG,
 ) -> ChartData:
     """Payload builder for one loaded range and detector setting (kept for replay steps)."""
-    return ChartData(replay, lambda o: _cached_events(replay, o, settings, sources), config)
+    return ChartData(
+        replay,
+        lambda o: _cached_events(replay, o, settings, sources),
+        config,
+        feed_switch=feed_switch(sources, replay.symbol) if sources is not None else None,
+    )
 
 
 def replay_message(replay: Replay, cursor: int) -> str:
@@ -1008,7 +1021,7 @@ def layout(
             _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
             html.Div(className="tb-sep"),
             _icon_button("side-toggle", "panel", "Show / hide the side panel"),
-            # free space: the "Update data" button comes here (ROADMAP 7.5)
+            *update_button.layout(),
             html.Div(className="tb-spacer"),
             html.Div(
                 [
@@ -1156,6 +1169,7 @@ def register_callbacks(
     results_dir: Path = RESULTS_DIR,
 ) -> None:
     settings_panel.register_callbacks(app)
+    update_button.register_callbacks(app)
 
     @app.callback(
         Output("chart-dates", "min_date_allowed"),
@@ -1168,7 +1182,7 @@ def register_callbacks(
         State("chart-focus", "data"),
     )
     def _date_limits(symbol, focus):
-        return date_limits(sources.cached_days(symbol) if symbol else [], symbol, focus)
+        return date_limits(chart_cached_days(sources, symbol) if symbol else [], symbol, focus)
 
     @app.callback(
         Output("chart-dates", "start_date", allow_duplicate=True),
@@ -1188,7 +1202,7 @@ def register_callbacks(
         if replay_state and replay_state.get("on"):
             return no_update, no_update
         found = dates_for_view(
-            sources.cached_days(symbol),
+            chart_cached_days(sources, symbol),
             date.fromisoformat(start[:10]),
             date.fromisoformat(end[:10]),
             view,
@@ -1226,7 +1240,7 @@ def register_callbacks(
                 (f"Go to: {text!r} is not a UTC time like 2026-09-12 12:15."),
             )
         return goto_outputs(
-            at, symbol, timeframe, start, end, replay_state, n_submit, sources.cached_days(symbol),
+            at, symbol, timeframe, start, end, replay_state, n_submit, chart_cached_days(sources, symbol),
             config,
         )  # fmt: skip
 
@@ -1261,7 +1275,7 @@ def register_callbacks(
         at = chart_side.utc(trade.entry_candle)
         return goto_outputs(
             at, symbol, timeframe, start, end, replay_state, trig["value"],
-            sources.cached_days(symbol), config,
+            chart_cached_days(sources, symbol), config,
         )  # fmt: skip
 
     @app.callback(
@@ -1519,7 +1533,7 @@ def register_callbacks(
     def _quick_range(*args):
         symbol = args[-1]
         key = str(ctx.triggered_id).removeprefix("range-")
-        found = quick_range(sources.cached_days(symbol) if symbol else [], key)
+        found = quick_range(chart_cached_days(sources, symbol) if symbol else [], key)
         if found is None:
             return no_update, no_update
         return found[0].isoformat(), found[1].isoformat()

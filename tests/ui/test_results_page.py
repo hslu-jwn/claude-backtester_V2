@@ -168,3 +168,23 @@ def test_performance_tab_has_results_per_year_and_quarter_per_symbol(results_dir
     assert "All symbols" in text and "GBPUSD" in text
     gold = str(results.tab_content("performance", results.filtered(trades, "XAUUSD"))[0])
     assert "GBPUSD" not in gold  # one symbol: only the "all" columns (the same numbers)
+
+
+def make_run(folder, name):
+    (folder / name).mkdir()
+    (folder / name / "summary.json").write_text(json.dumps({"symbols": ["X"]}))
+
+
+def test_newest_timestamped_run_beats_a_study_folder_name(tmp_path):
+    for name in ("gap_fade_walk_forward", "20261001-090000_A", "20261008-120000_B", "zz_study"):
+        make_run(tmp_path, name)
+    values = [o["value"] for o in results.list_runs(tmp_path)]
+    assert values[:2] == ["20261008-120000_B", "20261001-090000_A"]
+    assert values[2:] == ["zz_study", "gap_fade_walk_forward"]  # others after, as before
+
+
+def test_only_named_folders_keep_the_old_order_and_empty_is_empty(tmp_path):
+    assert results.list_runs(tmp_path) == []
+    for name in ("a_study", "b_study"):
+        make_run(tmp_path, name)
+    assert [o["value"] for o in results.list_runs(tmp_path)] == ["b_study", "a_study"]
