@@ -2,8 +2,8 @@
 
 Reads `results/live/status.json` (written by the bot every minute and on every event), today's
 `orders.jsonl` and the day folders' `trades.csv` every few seconds; nothing is computed here but
-display values (`ui/live_model.py` holds the tested helpers). Times: session window and "running
-since" in New York time (ET), signals and the log in UTC, each labelled.
+display values (`ui/live_model.py` holds the tested helpers). Times: all in Swiss time (CH, user
+2026-10-17), labelled.
 
 Buttons: **Start** launches `python -m backtester.live.bot` with the settings of this page as a
 detached process (it keeps running when the web server stops) and refuses while a fresh heartbeat
@@ -110,7 +110,7 @@ def start_bot(
 
 
 def _log_line(entry: dict) -> str:
-    when = str(entry.get("time", ""))[11:19]
+    when = lm.hm_ch(entry.get("time", ""), seconds=True)
     request = entry.get("request") or {}
     detail = " ".join(f"{k}={v}" for k, v in request.items()) if isinstance(request, dict) else ""
     return f"{when} {entry.get('label', '')} {detail}".strip()
@@ -212,7 +212,7 @@ def render_head(view: dict, now: datetime) -> html.Div:
         f"{lm.window_text(status.get('session'))} · {lm.countdown_text(status.get('session'), now)}",
     ]
     if state in ("running", "paused"):
-        meta.append(f"running since {lm.clock_et(status.get('started_at'))}")
+        meta.append(f"running since {lm.clock_ch(status.get('started_at'))}")
     parts = [
         html.Div(
             [
@@ -375,10 +375,10 @@ def render_positions(view: dict) -> html.Div:
 
 def render_signals(view: dict) -> html.Div:
     return _table(
-        ["Time (UTC)", "Symbol", "Side", "Result", "Reason"],
+        ["Time (CH)", "Symbol", "Side", "Result", "Reason"],
         [
             [
-                str(s.get("time", ""))[11:16],
+                lm.hm_ch(s.get("time", "")),
                 s.get("symbol", ""),
                 s.get("side", ""),
                 s.get("status", ""),
@@ -546,7 +546,7 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
             _card(
                 "Event log",
                 html.Pre(pieces["log"], id="lv-log", className="lv-log"),
-                right=html.Span(f"last {LOG_LINES}, times in UTC", className="lv-sub"),
+                right=html.Span(f"last {LOG_LINES}, times in Swiss time", className="lv-sub"),
             ),
             _card(
                 "Settings",

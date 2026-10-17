@@ -58,19 +58,27 @@ def test_countdown_stale_open_time_in_the_past():
     assert m.countdown_text(s, NOW).startswith("open, ")  # the times decide, not the old flag
 
 
-def test_window_text_in_new_york():
-    # 2026-01-12 14:30 UTC = 09:30 EST
+def test_window_text_in_swiss_time():
+    # 2026-01-12 14:30 UTC = 15:30 CET (user 2026-10-17: Swiss time on the Live page)
     s = {"name": "US open", "open_utc": "2026-01-12T14:30:00+00:00",
          "close_utc": "2026-01-12T21:00:00+00:00"}  # fmt: skip
-    assert m.window_text(s) == "US open 09:30–16:00 ET"
+    assert m.window_text(s) == "US open 15:30–22:00 CH"
     assert m.window_text(None) == "–"
 
 
-def test_clock_et():
-    assert m.clock_et("2026-07-01T12:41:00+00:00") == "08:41 ET"  # EDT
-    assert m.clock_et("") == "–"
-    assert m.clock_et("garbage") == "–"
-    assert m.clock_et("2026-07-01T12:41:00") == "–"  # naive time: not trusted
+def test_clock_ch():
+    assert m.clock_ch("2026-07-01T12:41:00+00:00") == "14:41 CH"  # CEST
+    assert m.clock_ch("2026-01-12T12:41:00+00:00") == "13:41 CH"  # CET
+    assert m.clock_ch("") == "–"
+    assert m.clock_ch("garbage") == "–"
+    assert m.clock_ch("2026-07-01T12:41:00") == "–"  # naive time: not trusted
+
+
+def test_hm_ch_for_tables():
+    assert m.hm_ch("2026-07-01T12:41:05+00:00") == "14:41"
+    assert m.hm_ch("2026-07-01T12:41:05+00:00", seconds=True) == "14:41:05"
+    assert m.hm_ch("") == ""
+    assert m.hm_ch("2026-07-01T12:41:05") == ""  # naive time: not trusted
 
 
 # --- heartbeat ---------------------------------------------------------------------------------

@@ -1081,16 +1081,21 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   Built 2026-10-17 too: `/live` page, Telegram (messages, /status /stop /emergency; token in the Credential
   Manager; the user's test message arrived), initial balance from the first balance deal, settings panel
   limited to the 5 strategy symbols' cost fields (the page froze with 28 symbols). Accepted by the user 2026-10-17.
-  **Open before the first live day (user 2026-10-17, do not change before the next session):** UI clean-up —
+  **Done in 7.3 (2026-10-17):** UI clean-up —
   remove the Sweep button from the top bar; Settings: chart settings collapsible, the account connection
   section better organized; a clear separate button that opens the live-account window with all its options.
 
-- ☐ **7.3 UI clean-up before the first live day, step (a)** (user 2026-10-17; spec `docs/live-trading.md` ›
+- ☑ **7.3 UI clean-up before the first live day, step (a)** (user 2026-10-17; spec `docs/live-trading.md` ›
   App layout and Live page; mockups in `docs/ui-mockups/`, inspiration only): one top bar Chart · Backtest ·
   Risk · Live (Live red while the bot runs), app opens on `/live` when the bot runs; Sweep menu into the chart
   settings; chart settings one collapsible block; account connection + Telegram from ⚙ to `/live` › Connection;
   new `/live` page with Start / Pause / Stop / Close all & stop, settings editable only when stopped, account in
   USD, daily stop and FTMO limits, session countdown, heartbeat, setup funnel, positions, recent-trades strip.
+  **Built 2026-10-17, accepted by the user 2026-10-17 ("End."):** bot PAUSE file (paused breakouts skipped for
+  the day) and status fields paused / risk_percent / strategy / session / setups; `ui/nav.py` top bar,
+  `ui/live_model.py` (tested helpers), new `ui/pages/live.py`, Connection on `/live` (`trading_panel` as
+  Details), sweep controls in ⚙ Chart settings; Live page times in Swiss time. Fix: `bot.py --daily-stop`
+  default (slots dataclass). Polish left: empty trades chart axes, Connection dropdowns light on the dark page.
 - ☐ **7.4 Chart page in the new style, step (b)** (user 2026-10-17, after 7.3): side cards (backtest result,
   overlay switches, trades in view), timeframe buttons, range bar (1M / 3M / 6M / YTD / 1Y / All, go to date).
 

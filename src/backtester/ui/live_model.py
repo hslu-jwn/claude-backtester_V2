@@ -4,8 +4,8 @@ Everything the page shows is derived here from `results/live/status.json` (a dic
 missing: the page then shows "–") and the bot's `trades.csv` files, so it is unit-tested without a
 browser. Spec: docs/live-trading.md › App layout and Live page.
 
-Times: the session window and "running since" are shown in New York time ("ET", the exchange's
-clock, DST-aware); the signals table and the event log stay in UTC and say so.
+Times: everything on the page is shown in Swiss time ("CH", Europe/Zurich, DST-aware; user,
+2026-10-17); status.json and the logs stay in UTC.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from backtester.live.bot import FORWARD_SYMBOLS, BotConfig
 from backtester.live.status import STALE_S, heartbeat_age_s, is_fresh
 from backtester.risk.prop_rules import GuardConfig
 
-NEW_YORK = ZoneInfo("America/New_York")
+SWISS = ZoneInfo("Europe/Zurich")
 DASH = "–"
 
 # Limits of the editable settings (user, 2026-10-17: "risk > 0 and <= 2, daily stop > 0 and <= 5").
@@ -85,18 +85,28 @@ def fmt_duration(seconds: float) -> str:
     return f"{mins} min"
 
 
-def clock_et(text) -> str:
+def clock_ch(text) -> str:
     when = _parse_utc(text)
-    return f"{when.astimezone(NEW_YORK):%H:%M} ET" if when else DASH
+    return f"{when.astimezone(SWISS):%H:%M} CH" if when else DASH
+
+
+def hm_ch(text, seconds: bool = False) -> str:
+    """Swiss clock time for table cells ("" when the time is missing or naive)."""
+    when = _parse_utc(text)
+    return (
+        f"{when.astimezone(SWISS):%H:%M:%S}"
+        if when and seconds
+        else (f"{when.astimezone(SWISS):%H:%M}" if when else "")
+    )
 
 
 def window_text(session: dict | None) -> str:
-    """ "US open 09:30–16:00 ET"."""
+    """ "US open 15:30–22:00 CH"."""
     s = session or {}
     start, end = _parse_utc(s.get("open_utc")), _parse_utc(s.get("close_utc"))
     if start is None or end is None:
         return DASH
-    span = f"{start.astimezone(NEW_YORK):%H:%M}–{end.astimezone(NEW_YORK):%H:%M} ET"
+    span = f"{start.astimezone(SWISS):%H:%M}–{end.astimezone(SWISS):%H:%M} CH"
     return f"{s['name']} {span}" if s.get("name") else span
 
 
@@ -282,7 +292,9 @@ def trade_strip(trades: list[dict], initial_balance, range_key: str, now: dateti
                 continue
         out["pct"].append(t["money"] / before * 100 if base and base > 0 and before > 0 else 0.0)
         out["balance"].append(balance)
-        out["labels"].append(f"{t['symbol']} {t['exit_time'][:16].replace('T', ' ')} UTC")
+        when = _parse_utc(t["exit_time"])
+        stamp = f"{when.astimezone(SWISS):%Y-%m-%d %H:%M} CH" if when else t["exit_time"]
+        out["labels"].append(f"{t['symbol']} {stamp}")
         out["total"] += t["money"]
     return out
 

@@ -62,3 +62,9 @@ runs strategy 6.
   balance line in USD (Day / Week / All); today's signals and skips; the event log.
 - **Settings on `/live`** (risk % per trade, daily stop %, symbols) can be changed **only while the bot is
   stopped**; Start passes them to the bot.
+- **Pause** (rule set by the user, 2026-10-17): a breakout that comes while paused is skipped for that
+  day (logged "paused"); resuming never enters it late, only later signals.
+- **Times on the Live page in Swiss time** (Europe/Zurich, labelled "CH"; user, 2026-10-17); status.json
+  and the logs stay in UTC.
+- **Top bar links** (user, 2026-10-17): Backtest opens the newest run's results (no run list yet); Risk
+  stays greyed out until the Risk page exists.

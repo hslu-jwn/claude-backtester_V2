@@ -145,7 +145,9 @@ def test_render_shows_the_numbers(tmp_path):
 
 def test_render_signals_and_positions(tmp_path):
     text = rendered(tmp_path, status())
-    assert "daily stop active" in text and "14:41" in text and "+0.40" in text
+    assert (
+        "daily stop active" in text and "15:41" in text and "+0.40" in text
+    )  # 14:41 UTC = 15:41 CET
 
 
 def test_stale_heartbeat_is_red(tmp_path):
@@ -178,8 +180,8 @@ def test_render_new_fields(tmp_path):
         setups={"US500": {"stage": "range_set", "detail": "range 100-110", "time": ""}},
     )  # fmt: skip
     text = rendered(tmp_path, st)
-    for s in ("Opening-range breakout", "open, 6 h left", "08:00 ET", "range 100-110",
-              "US open 09:30–16:00 ET", "Range set", "lv-step-done", "lv-step-current"):  # fmt: skip
+    for s in ("Opening-range breakout", "open, 6 h left", "14:00 CH", "range 100-110",
+              "US open 15:30–22:00 CH", "Range set", "lv-step-done", "lv-step-current"):  # fmt: skip
         assert s in text
 
 
