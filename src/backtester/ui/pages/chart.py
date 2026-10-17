@@ -85,10 +85,11 @@ from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import parse_qs
 from uuid import uuid4
 
-from dash import ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
+from dash import ALL, ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
@@ -102,13 +103,14 @@ from backtester.data.sources import SymbolSources, cached_block, warmup_start
 from backtester.detectors.sweep import SweepConfig
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
-from backtester.runner import BackgroundRun, RunSettings, start_run
+from backtester.runner import RESULTS_DIR, BackgroundRun, RunSettings, start_run
 from backtester.settings import from_json
 from backtester.strategy.registry import REGISTRY
 from backtester.ui import (
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     breaker_overlay,  # noqa: F401  (registers the Breaker block overlay)
+    chart_side,
     equilibrium_overlay,  # noqa: F401  (registers the Equilibrium overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
@@ -315,6 +317,39 @@ def goto_dates(
     last = min(first + timedelta(days=span), block_last)
     first = max(min(first, last - timedelta(days=span)), block_first)
     return first, last
+
+
+def goto_outputs(
+    at: datetime,
+    symbol: str,
+    timeframe: str,
+    start: str,
+    end: str,
+    replay_state: dict | None,
+    n: int,
+    cached: Sequence[date],
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple:
+    """Outputs (goto command, start date, end date, message) of a go to `at` (UTC): the
+    command for the browser plus the days to load if they aren't shown, or a message.
+    Used by the "Go to" field and by a click on a trade in the side panel."""
+    goto = {"t": int(at.timestamp()), "symbol": symbol, "n": n}
+    in_replay = bool(replay_state and replay_state.get("on"))
+    if in_replay and replay_state.get("now") and at > datetime.fromisoformat(replay_state["now"]):
+        return no_update, no_update, no_update, "Go to: that is after the replay time."
+    found = goto_dates(
+        cached,
+        date.fromisoformat(start[:10]),
+        date.fromisoformat(end[:10]),
+        at,
+        Timeframe[timeframe],
+        config,
+    )
+    if isinstance(found, str):
+        return no_update, no_update, no_update, found
+    if found is None or in_replay:
+        return goto, no_update, no_update, no_update
+    return goto, found[0].isoformat(), found[1].isoformat(), no_update
 
 
 def load_replay(
@@ -793,7 +828,10 @@ def date_limits(days: Sequence[date], symbol: str | None = None, focus: dict | N
 
 
 def layout(
-    sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG, focus: dict | None = None
+    sources: SymbolSources,
+    config: ChartConfig = DEFAULT_CONFIG,
+    focus: dict | None = None,
+    results_dir: Path = RESULTS_DIR,
 ) -> html.Div:
     symbols = sources.available_symbols()
     settings = _popover(
@@ -804,19 +842,6 @@ def layout(
                 [
                     html.Summary("Chart settings"),
                     _switch("chart-sessions", "Session lines", ["on"]),
-                    _switch("chart-overlays", "Overlays", []),
-                    html.Div(
-                        "Overlay types" if OVERLAYS else "No overlay types yet",
-                        id="chart-overlay-summary",
-                        className="tb-pop-sub",
-                    ),
-                    dcc.Checklist(
-                        id="chart-overlay-types",
-                        options=overlay_options(enabled=False),
-                        value=[],
-                        persistence=True,
-                        className="tb-check tb-types",
-                    ),
                     html.Div("Daily / weekly candles", className="tb-pop-sub"),
                     dcc.Dropdown(
                         id="chart-day-boundary",
@@ -981,6 +1006,9 @@ def layout(
             html.Div(className="tb-sep"),
             _icon_button("tb-zoom", "zoom", "Zoom: drag a rectangle on the chart"),
             _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
+            html.Div(className="tb-sep"),
+            _icon_button("side-toggle", "panel", "Show / hide the side panel"),
+            # free space: the "Update data" button comes here (ROADMAP 7.5)
             html.Div(className="tb-spacer"),
             html.Div(
                 [
@@ -1075,8 +1103,22 @@ def layout(
     return html.Div(
         [
             toolbar,
-            html.Div([html.Div(id="chart-lwc"), replay_bar], className="tb-chart"),
-            bottom,
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div([html.Div(id="chart-lwc"), replay_bar], className="tb-chart"),
+                            bottom,
+                        ],
+                        className="ch-chartcol",
+                    ),
+                    chart_side.panel(chart_side.run_summary(results_dir)),
+                ],
+                id="ch-main",
+                className=chart_side.main_class(False),
+            ),
+            dcc.Store(id="chart-range"),
+            dcc.Store(id="side-collapsed", storage_type="local"),
             dcc.Store(id="chart-config", data=chart_settings(config)),
             dcc.Store(id="chart-sweep-tweak"),
             dcc.Store(id="chart-base"),
@@ -1103,12 +1145,15 @@ def layout(
             ),
             dcc.Interval(id="bt-timer", interval=500, disabled=True),
         ],
-        className="tb-page",
+        className="tb-page ch-page",
     )
 
 
 def register_callbacks(
-    app: Dash, sources: SymbolSources, config: ChartConfig = DEFAULT_CONFIG
+    app: Dash,
+    sources: SymbolSources,
+    config: ChartConfig = DEFAULT_CONFIG,
+    results_dir: Path = RESULTS_DIR,
 ) -> None:
     settings_panel.register_callbacks(app)
 
@@ -1180,27 +1225,77 @@ def register_callbacks(
                 no_update,
                 (f"Go to: {text!r} is not a UTC time like 2026-09-12 12:15."),
             )
-        goto = {"t": int(at.timestamp()), "symbol": symbol, "n": n_submit}
-        in_replay = bool(replay_state and replay_state.get("on"))
-        if (
-            in_replay
-            and replay_state.get("now")
-            and at > datetime.fromisoformat(replay_state["now"])
-        ):
-            return no_update, no_update, no_update, "Go to: that is after the replay time."
-        found = goto_dates(
-            sources.cached_days(symbol),
-            date.fromisoformat(start[:10]),
-            date.fromisoformat(end[:10]),
-            at,
-            Timeframe[timeframe],
+        return goto_outputs(
+            at, symbol, timeframe, start, end, replay_state, n_submit, sources.cached_days(symbol),
             config,
-        )
-        if isinstance(found, str):
-            return no_update, no_update, no_update, found
-        if found is None or in_replay:
-            return goto, no_update, no_update, no_update
-        return goto, found[0].isoformat(), found[1].isoformat(), no_update
+        )  # fmt: skip
+
+    @app.callback(
+        Output("chart-goto", "data", allow_duplicate=True),
+        Output("chart-dates", "start_date", allow_duplicate=True),
+        Output("chart-dates", "end_date", allow_duplicate=True),
+        Output("chart-message", "children", allow_duplicate=True),
+        Input({"type": "side-trade", "index": ALL}, "n_clicks"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "start_date"),
+        State("chart-dates", "end_date"),
+        State("chart-replay", "data"),
+        prevent_initial_call=True,
+    )
+    def _goto_trade(_clicks, symbol, timeframe, start, end, replay_state):
+        """A click on a trade in "Trades in view": go to its entry candle."""
+        trig = ctx.triggered[0] if ctx.triggered else None
+        folder = chart_side.newest_run(results_dir)
+        if (
+            not trig
+            or not trig["value"]
+            or folder is None
+            or not (symbol and timeframe and start and end)
+        ):
+            return (no_update,) * 4
+        by_id = {t.id: t for t in chart_side.run_trades(folder)}
+        trade = by_id.get(ctx.triggered_id["index"])
+        if trade is None:
+            return (no_update,) * 4
+        at = chart_side.utc(trade.entry_candle)
+        return goto_outputs(
+            at, symbol, timeframe, start, end, replay_state, trig["value"],
+            sources.cached_days(symbol), config,
+        )  # fmt: skip
+
+    @app.callback(
+        Output("side-trades", "children"),
+        Input("chart-range", "data"),
+        Input("chart-symbol", "value"),
+    )
+    def _side_trades(rng, symbol):
+        """Trades of the newest run whose entry is inside the visible range."""
+        folder = chart_side.newest_run(results_dir)
+        if folder is None:
+            return chart_side.trades_body([], has_run=False)
+        times = chart_side.view_times(rng)
+        if times is None or not rng or rng.get("symbol") != symbol:
+            return chart_side.trades_body([])
+        found = chart_side.trades_in_view(chart_side.run_trades(folder), symbol, *times)
+        return chart_side.trades_body(found)
+
+    @app.callback(
+        Output("side-collapsed", "data"),
+        Input("side-toggle", "n_clicks"),
+        State("side-collapsed", "data"),
+        prevent_initial_call=True,
+    )
+    def _side_toggle(clicks, collapsed):
+        return chart_side.collapsed_after(clicks, collapsed)
+
+    @app.callback(
+        Output("ch-main", "className"),
+        Output("side-toggle", "className"),
+        Input("side-collapsed", "data"),
+    )
+    def _side_apply(collapsed):
+        return chart_side.main_class(collapsed), "tb-btn" if collapsed else "tb-btn active"
 
     app.clientside_callback(
         ClientsideFunction("chart", "goto"),

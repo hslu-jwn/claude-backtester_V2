@@ -40,7 +40,7 @@
     badges: {}, messages: [],
     sorted: null,       // cached draw list
     span: null,         // replay span {left, right} in minutes
-    spanTimer: null, viewTimer: null, nonce: 0,
+    spanTimer: null, viewTimer: null, rangeTimer: null, nonce: 0,
     drawn: {},          // performance.now() when each payload kind was last applied
   };
 
@@ -365,6 +365,8 @@
       setProps("chart-click", { data: { x, n: ++S.nonce } });
     });
     S.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      clearTimeout(S.rangeTimer);
+      S.rangeTimer = setTimeout(reportRange, 250);
       if (!S.replay && range) { // the server needs it to load the days of a timeframe switch
         clearTimeout(S.viewTimer);
         S.viewTimer = setTimeout(() => setProps("chart-viewport", { data: viewNow() }), 250);
@@ -414,6 +416,17 @@
       center: S.times[i] + off * S.tfmin * 60,
       count: range.to - range.from,
     };
+  }
+
+  /* The visible candles as a UTC time range [from, to) for the side panel's "Trades in view"
+     (store chart-range): the first visible candle's open .. the last visible candle's close. */
+  function reportRange() {
+    const range = S.chart && S.chart.timeScale().getVisibleLogicalRange();
+    const n = S.times.length;
+    if (!range || !n) return;
+    const i0 = Math.min(Math.max(Math.round(range.from), 0), n - 1);
+    const i1 = Math.min(Math.max(Math.round(range.to), 0), n - 1);
+    setProps("chart-range", { data: { symbol: S.symbol, from: S.times[i0], to: S.times[i1] + S.tfmin * 60 } });
   }
 
   /* Centre the chart on time `v.center` with `v.count` candles visible; prices auto-fit. */
@@ -718,6 +731,7 @@
         showMessages();
         invalidate();
         view();
+        reportRange();
         S.drawn.base = performance.now();
         return null; // the selection callback sends the overlay request
       },

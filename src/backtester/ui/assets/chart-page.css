@@ -1,0 +1,500 @@
+/* Chart page in the new style (ROADMAP 7.4): dark like /live (toolbar, range bar, side panel,
+   popovers, settings dialog), the chart pane itself light blue (chart_config.py `background`).
+   Everything is scoped to `.ch-page`, so the results page (which shares toolbar.css) stays as it
+   was. Dash's dropdown / date picker menus may render outside the page: those rules use
+   `body:has(.ch-page)`. */
+:root:has(.ch-page),
+.ch-page {
+  --bg: #0b1220;
+  --card: #111a2b;
+  --line: #1d2a40;
+  --line2: #2a3a58;
+  --text: #e6ebf5;
+  --muted: #7d8aa5;
+  --hover: #172238;
+  --blue: #4f8cff;
+  --green: #2ebd85;
+  --red: #f6465d;
+  --Dash-Text-Strong: var(--text);
+  --Dash-Text-Primary: var(--text);
+  --Dash-Text-Weak: var(--muted);
+  --Dash-Text-Disabled: var(--muted);
+  --Dash-Stroke-Weak: var(--line2);
+  --Dash-Stroke-Strong: var(--muted);
+  --Dash-Fill-Primary-Hover: rgba(125, 170, 255, 0.1);
+  --Dash-Fill-Primary-Active: rgba(125, 170, 255, 0.18);
+  --Dash-Fill-Interactive-Weak: rgba(125, 170, 255, 0.1);
+}
+body:has(.ch-page) {
+  background: var(--bg);
+}
+
+.ch-page {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+.ch-page .tb-bar {
+  background: var(--bg);
+  color: var(--text);
+}
+.ch-page .tb-top {
+  height: 52px;
+  padding: 0 16px;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.ch-page .tb-bottom {
+  height: 40px;
+  padding: 0 12px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+}
+.ch-page .tb-sep {
+  background: var(--line);
+}
+.ch-page .tb-icon {
+  filter: invert(0.85);
+}
+.ch-page .tb-btn.active .tb-icon {
+  filter: invert(29%) sepia(97%) saturate(4000%) hue-rotate(222deg);
+}
+.ch-page .tb-btn {
+  border-radius: 6px;
+}
+.ch-page .tb-btn:hover,
+.ch-page .tb-range:hover,
+.ch-page .tb-menu-item:hover,
+.ch-page .tb-replay button:hover {
+  background: var(--hover);
+}
+.ch-page .tb-btn.active {
+  background: #15294d;
+}
+
+/* symbol dropdown and timeframe buttons */
+.ch-page .tb-symbol {
+  width: 140px;
+  color: var(--text);
+}
+.ch-page .tb-symbol .dash-dropdown,
+.ch-page .tb-symbol .dash-dropdown-trigger,
+.ch-page .tb-symbol button {
+  border: 1px solid var(--line2) !important;
+  border-radius: 8px !important;
+  background: var(--card) !important;
+  color: var(--text);
+}
+.ch-page .tb-timeframes {
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+}
+.ch-page .tb-timeframes label {
+  padding: 4px 9px;
+  color: var(--muted);
+}
+.ch-page .tb-timeframes label:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.ch-page .tb-timeframes label:has(input:checked) {
+  background: #3b73e8;
+  color: #ffffff !important;
+}
+
+/* popovers */
+.ch-page .tb-pop {
+  background: var(--card);
+  border-color: var(--line2);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.ch-page .tb-pop-sub,
+.ch-page .tb-pop-note,
+.ch-page .tb-message,
+.ch-page .tb-utc,
+.ch-page .tb-caret {
+  color: var(--muted);
+}
+.ch-page .tb-group {
+  border-top-color: var(--line);
+  color: var(--text);
+}
+.ch-page .tb-menu-item {
+  color: var(--text);
+}
+.ch-page .tb-run {
+  background: #3b73e8;
+}
+.ch-page .tb-progress {
+  background: var(--line);
+}
+.ch-page .tb-progress-bar {
+  background: var(--blue);
+}
+.ch-page .tb-check label {
+  color: var(--text);
+}
+.ch-page .tb-replay {
+  background: var(--card);
+  border-color: var(--line2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.ch-page .tb-replay button {
+  background: transparent;
+  color: var(--text);
+}
+.ch-page .tb-goto,
+.ch-page .tb-dates input,
+.ch-page .tb-dates .dash-datepicker-input {
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.ch-page .tb-dates .dash-datepicker-input-wrapper {
+  border-color: var(--line2);
+  background: var(--bg);
+}
+.ch-page .tb-dates .dash-datepicker-range-arrow {
+  color: var(--muted);
+}
+.ch-page .tb-range {
+  color: var(--muted);
+  border-radius: 6px;
+}
+.ch-page .tb-range:hover {
+  color: var(--text);
+}
+
+/* dropdown / date picker menus (may sit outside the page) */
+body:has(.ch-page) .dash-dropdown-content,
+body:has(.ch-page) .dash-datepicker-content {
+  border: 1px solid var(--line2);
+  background: var(--card);
+  color: var(--text);
+}
+body:has(.ch-page) .dash-dropdown-option:hover,
+body:has(.ch-page) .dash-dropdown-option.selected {
+  background: var(--hover);
+}
+body:has(.ch-page) .dash-dropdown-search {
+  background: var(--bg);
+  color: var(--text);
+}
+.ch-page .dash-dropdown,
+.ch-page .dash-dropdown-trigger {
+  border-color: var(--line2);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* chart area: the pane stays light blue; the legend / badges / tooltip sit on it */
+.ch-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 14px;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+.ch-chartcol {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+.ch-chartcol .tb-chart {
+  background: #dfe9f8;
+}
+.ch-side {
+  display: flex;
+  flex: 0 0 320px;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.ch-main.ch-collapsed .ch-side {
+  display: none;
+}
+
+/* cards */
+.ch-card {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.ch-fold label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+.ch-fold label::after {
+  content: "▾";
+  font-size: 12px;
+}
+.ch-fold:has(input:checked) label::after {
+  content: "▸";
+}
+.ch-fold input {
+  display: none;
+}
+.ch-fold:has(input:checked) ~ .ch-card-body {
+  display: none;
+}
+.ch-card-body {
+  margin-top: 10px;
+}
+.ch-empty,
+.ch-note,
+.ch-muted {
+  color: var(--muted);
+}
+.ch-empty,
+.ch-note {
+  font-size: 12px;
+}
+.ch-pos {
+  color: var(--green);
+}
+.ch-neg {
+  color: var(--red);
+}
+
+/* backtest result */
+.ch-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ch-stat {
+  padding: 8px 10px;
+  background: #0d1627;
+  border-radius: 8px;
+}
+.ch-stat-label {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ch-stat-value {
+  margin-top: 2px;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 17px;
+  font-weight: 600;
+}
+.ch-run {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ch-run-id {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ch-link {
+  color: var(--blue);
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* overlay switches */
+.ch-switches label {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--text);
+  cursor: pointer;
+}
+.ch-switches input {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 18px;
+  margin: 0;
+  border-radius: 9px;
+  background: #2a3a58;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ch-switches input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: left 0.15s;
+}
+.ch-switches input:checked {
+  background: #3b73e8;
+}
+.ch-switches input:checked::after {
+  left: 18px;
+}
+.ch-switches input:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.ch-switches label:has(input:disabled) {
+  color: var(--muted);
+  cursor: default;
+}
+.ch-master {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.ch-note {
+  margin-top: 6px;
+}
+
+/* trades in view */
+#side-trades {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.ch-trade {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 4px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ch-trade:hover {
+  background: var(--hover);
+}
+.ch-trade-what {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ch-trade-r {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+}
+.ch-badge {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ch-long {
+  background: #12392e;
+  color: var(--green);
+}
+.ch-short {
+  background: #3a1620;
+  color: var(--red);
+}
+
+/* panel toggle icon */
+.icon-panel {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='2'/%3E%3Cpath d='M15 5v14'/%3E%3C/svg%3E");
+}
+
+/* settings dialog (opened from the toolbar), dark */
+.ch-page .st-backdrop {
+  background: rgba(2, 6, 14, 0.6);
+}
+.ch-page .st-dialog {
+  background: var(--card);
+  border: 1px solid var(--line2);
+  color: var(--text);
+}
+.ch-page .st-head,
+.ch-page .st-presets:not(:empty),
+.ch-page .st-nav,
+.ch-page .st-foot {
+  border-color: var(--line);
+}
+.ch-page .st-close,
+.ch-page .st-reset {
+  color: var(--muted);
+}
+.ch-page .st-close:hover,
+.ch-page .st-reset:hover,
+.ch-page .st-nav label:hover,
+.ch-page .st-btn:hover {
+  background: var(--hover);
+}
+.ch-page .st-nav label {
+  color: var(--text);
+}
+.ch-page .st-nav label:has(input:checked) {
+  background: #15294d;
+  color: #8fb4ff;
+}
+.ch-page .st-section,
+.ch-page .st-help,
+.ch-page .st-status,
+.ch-page .st-preset-label {
+  color: var(--muted);
+}
+.ch-page .st-row {
+  border-bottom-color: var(--line);
+}
+.ch-page .st-input,
+.ch-page .st-btn {
+  border-color: var(--line2);
+  background: var(--bg);
+  color: var(--text);
+}
+.ch-page .st-btn.st-primary {
+  border-color: #3b73e8;
+  background: #3b73e8;
+  color: #ffffff;
+}
+.ch-page .st-switch input {
+  background: #2a3a58;
+}
+.ch-page .st-switch input:checked {
+  background: #3b73e8;
+}
+.ch-page .tr-result {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--text);
+}

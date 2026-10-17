@@ -1,8 +1,7 @@
 """Chart settings and helpers shared by the chart page and the overlays (no Plotly, no
 Dash). Spec: ROADMAP.md › 1.1, 1.3, 4.0a.
 
-`ChartConfig` holds the chart's tunable values and colors (white, like the user's
-TradingView). `session_line_positions` places the session start lines (1.3): through the
+`ChartConfig` holds the chart's tunable values and colors (the pane is light blue on the dark page, ROADMAP 7.4). `session_line_positions` places the session start lines (1.3): through the
 middle of the candle the session starts on.
 """
 
@@ -40,12 +39,12 @@ class ChartConfig:
     replay_min_visible: int = 5  # at least this many candles left of the cursor (e.g. on H4)
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
-    # Colors (white, like the user's TradingView).
+    # Colors (the chart pane is light blue on the dark page, ROADMAP 7.4; same candle colors).
     up_body: str = "#6f9ceb"
     down_body: str = "#000000"
     edge_color: str = "#000000"
     wick_color: str = "#000000"
-    background: str = "#ffffff"
+    background: str = "#dfe9f8"
     text_color: str = "#131722"
     axis_color: str = "#131722"  # axis lines and tick marks
     show_grid: bool = False
