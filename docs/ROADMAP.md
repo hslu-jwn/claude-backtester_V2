@@ -1073,6 +1073,11 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   demo orders + paper log, 0.25 % risk, daily stop -2 %, emergency stop, the bot starts MT5 itself, minimal
   Live page and Telegram (messages + /status, /stop). Order: 7.1 demo test orders, then sizer + bot loop,
   then Live page and Telegram.
+  **7.1 run on the FTMO demo 2026-10-17 (BTCUSD):** first run showed FTMO confirms fills late (deal 0, price
+  0.0 in the order result) -> fill confirmation from the deals added; second run clean: fills at the quote
+  (0 slippage), SL modify, half and full close ok, nothing left open, median 174 ms. Built 2026-10-17:
+  risk sizer, daily guard (-2 %, FTMO 5 % / 10 %), bot loop `python -m backtester.live.bot` (stop files
+  results/live/STOP and EMERGENCY), paper log; not yet run live.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
