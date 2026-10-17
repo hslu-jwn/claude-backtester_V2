@@ -27,6 +27,13 @@ Windows Credential Manager, DEMO LOCK in every order function, `OrderLog`).
   change). Alternative without a terminal: FTMO's cTrader accounts via the cTrader Open API (Linux
   possible); not planned now.
 - The bot is its own process (not inside the browser); closing the page does not stop it.
+- **Warm-up history check (2026-10-17):** the terminal downloads history asynchronously, so the first
+  request at start can end early. After fetching a symbol's history the bot compares the last candle's
+  close with the terminal's last quote time (`symbol_info.time`); if the history ends more than 5 minutes
+  before it (`BotConfig.history_tolerance_s`), it waits 3 s (`history_wait_s`) and fetches again, up to 10
+  attempts (`history_attempts`). Still short: a `stale_history` warning in the log and the bot goes on; the
+  next cycle fetches from the last candle and fills the gap. A weekend or closed market is fine (the quote
+  time is the last quote, so it ends where the history does).
 
 ## Monitoring
 

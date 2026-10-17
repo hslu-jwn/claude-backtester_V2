@@ -437,3 +437,84 @@ def test_a_position_left_open_past_the_exit_is_closed_on_restart(world):
     second.connect()
     second.start()
     assert world.fake.positions == {} and len(world.closes()) == 1
+
+
+# --- warm-up history completeness ------------------------------------------------------------
+
+
+def quote_at(world: World, t: datetime) -> None:
+    """The terminal's last quote time for the symbol (server clock = UTC)."""
+    world.fake.symbols[BROKER] = world.fake.symbols[BROKER]._replace(time=int(t.timestamp()))
+
+
+def truncate(world: World, last: datetime) -> list[tuple]:
+    """Cut the M1 history after `last` (the terminal has not downloaded the rest); returns the
+    full rows so a test can restore them."""
+    full = history_rows() + today_rows()
+    world.fake.set_rates(
+        BROKER, world.fake.TIMEFRAME_M1, [r for r in full if r[0] <= int(last.timestamp())]
+    )
+    return full
+
+
+def kinds(world: World) -> list[str]:
+    return [d["label"] for d in world.decisions()]
+
+
+def test_complete_history_has_no_retry_and_no_warning(world):
+    quote_at(world, ny(DAY, 9, 38))
+    started(world)
+    assert world.clock.sleeps == []
+    assert "stale_history" not in kinds(world) and "history_complete" not in kinds(world)
+
+
+def test_truncated_history_is_refetched_fed_once_without_warning(world):
+    quote_at(world, ny(DAY, 9, 38))
+    full = truncate(world, ny(DAY, 9, 29))
+    world.clock.on_sleep = lambda _c: world.fake.set_rates(BROKER, world.fake.TIMEFRAME_M1, full)
+    bot = started(world)
+    assert world.clock.sleeps == [3.0]
+    ks = kinds(world)
+    assert "stale_history" not in ks and ks.count("history_complete") == 1
+    ts = [c.ts for c in bot.symbols[SYM].candles]
+    assert ts == sorted(set(ts)) and ts[-1] == ny(DAY, 9, 37)
+
+
+def test_always_truncated_history_warns_once_and_the_bot_continues(world):
+    quote_at(world, ny(DAY, 9, 38))
+    truncate(world, ny(DAY, 9, 29))
+    bot = started(world, history_attempts=4)
+    assert world.clock.sleeps == [3.0, 3.0, 3.0]
+    stale = [d for d in world.decisions() if d["label"] == "stale_history"]
+    assert len(stale) == 1
+    assert bot.symbols[SYM].candles[-1].ts == ny(DAY, 9, 29)
+    world.at(ny(DAY, 9, 39) + timedelta(seconds=3))
+    assert bot.cycle() is not None
+
+
+def test_market_closed_weekend_history_counts_as_complete(world):
+    quote_at(world, ny(DAY, 16, 0))  # the last quote of Monday's session
+    started(world, t=ny(DAY, 16, 30) + timedelta(days=5))
+    assert world.clock.sleeps == []
+    assert "stale_history" not in kinds(world)
+
+
+def test_next_cycle_fills_the_gap_left_by_a_short_warm_up(world):
+    quote_at(world, ny(DAY, 9, 38))
+    full = truncate(world, ny(DAY, 9, 29))
+    bot = started(world, history_attempts=1)
+    fed = []
+    strategy = bot.symbols[SYM].strategy
+    original = strategy.on_candle
+    strategy.on_candle = lambda now, views: (fed.append(now), original(now, views))[1]
+    world.fake.set_rates(BROKER, world.fake.TIMEFRAME_M1, full)
+    world.at(ny(DAY, 9, 38) + timedelta(seconds=3))
+    bot.cycle()
+    ts = [c.ts for c in bot.symbols[SYM].candles]
+    assert ts[-1] == ny(DAY, 9, 37)
+    assert ts == sorted(set(ts))
+    assert all(
+        b - a == timedelta(minutes=1)
+        for a, b in zip(ts[ts.index(ny(DAY, 9, 29)) :], ts[ts.index(ny(DAY, 9, 29)) + 1 :])
+    )
+    assert fed == sorted(set(fed)) and fed[0] == ny(DAY, 9, 31)

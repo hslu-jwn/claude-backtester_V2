@@ -29,7 +29,8 @@ SymbolInfo = namedtuple(
     "name visible digits point trade_contract_size trade_tick_size trade_tick_value "
     "volume_min volume_step volume_max trade_stops_level trade_freeze_level swap_long "
     "swap_short swap_mode trade_mode filling_mode trade_exemode currency_base "
-    "currency_profit spread path description",
+    "currency_profit spread path description time",
+    defaults=(0,),  # time: the last quote, server seconds (0 = unknown)
 )
 Tick = namedtuple("Tick", "time bid ask last volume time_msc")
 Position = namedtuple("Position", "ticket symbol type volume price_open sl tp magic comment time")

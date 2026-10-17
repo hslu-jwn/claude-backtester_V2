@@ -104,6 +104,9 @@ class BotConfig:
     poll_delay_s: float = 2.0  # wait after the minute boundary before asking for the new bar
     bar_retries: int = 5  # extra tries while an expected bar is not there yet
     bar_retry_s: float = 1.0
+    history_tolerance_s: float = 300.0  # warm-up history may end this far before the last quote
+    history_attempts: int = 10  # tries to get a complete warm-up history
+    history_wait_s: float = 3.0  # wait between those tries (the terminal downloads async)
     stale_signal_s: float = 90.0  # an order from a bar older than this is not sent
     reconnect_first_s: float = 5.0
     reconnect_factor: float = 2.0
@@ -350,12 +353,47 @@ class Bot:
             if self.mt5.symbol_info(sym.broker) is None:
                 raise Mt5Error(f"{sym.broker}: unknown symbol on this server")
             begin = now - timedelta(days=sym.strategy.min_warmup_days)
-            candles = self._candles(sym, begin, now)
+            candles = self._warm_history(sym, begin, now)
             if not candles:
                 self.note("no_history", symbol=sym.name)
                 continue
             self._feed_new(sym, candles)
             self.note("warm_up", symbol=sym.name, bars=len(sym.candles), last=sym.candles[-1].ts)
+
+    def _warm_history(self, sym: _Symbol, begin: datetime, now: datetime) -> list[Candle]:
+        """The warm-up history. The terminal downloads history asynchronously, so a first
+        request can end early: compare the last candle's close with the terminal's last quote
+        and re-fetch while it is older than the tolerance. Still incomplete after the attempts:
+        a `stale_history` warning, and the bot goes on with what it has (the next cycles fill
+        the gap from the last candle)."""
+        cfg = self.config
+        candles: list[Candle] = []
+        quote = None
+        for attempt in range(1, max(1, cfg.history_attempts) + 1):
+            candles = self._candles(sym, begin, now)
+            quote = self._quote_time(sym)
+            if quote is None:
+                return candles  # the terminal gave no quote time: nothing to compare with
+            last_close = candles[-1].ts + Timeframe.M1.duration if candles else None
+            if last_close is not None and quote - last_close <= timedelta(
+                seconds=cfg.history_tolerance_s
+            ):
+                if attempt > 1:
+                    self.note("history_complete", symbol=sym.name, attempts=attempt)
+                return candles
+            if attempt < cfg.history_attempts:
+                self.sleep(cfg.history_wait_s)
+        if candles:
+            self.note("stale_history", symbol=sym.name, last=candles[-1].ts, quote=quote)
+        return candles
+
+    def _quote_time(self, sym: _Symbol) -> datetime | None:
+        """The terminal's latest quote time for the symbol in UTC (None when unknown)."""
+        info = self.mt5.symbol_info(sym.broker)
+        seconds = getattr(info, "time", 0) or 0
+        if seconds <= 0:
+            return None
+        return self.clock.to_utc([seconds])[0].to_pydatetime()
 
     @staticmethod
     def _floor(t: datetime) -> datetime:
