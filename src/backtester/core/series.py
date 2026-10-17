@@ -8,6 +8,7 @@ Everything else (detectors, strategies, risk, charts during replay) receives a
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from itertools import pairwise
 
 from backtester.core.errors import LookaheadError
 from backtester.core.models import Candle, Timeframe
@@ -17,7 +18,7 @@ class CandleSeries:
     """Full, time-ordered history for one symbol + timeframe. Engine-private."""
 
     def __init__(self, symbol: str, timeframe: Timeframe, candles: Sequence[Candle]):
-        for prev, cur in zip(candles, candles[1:]):
+        for prev, cur in pairwise(candles):
             if cur.ts <= prev.ts:
                 raise ValueError(f"Candles not strictly increasing: {prev.ts} -> {cur.ts}")
         self.symbol = symbol

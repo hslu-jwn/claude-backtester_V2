@@ -340,6 +340,17 @@
   background: #0b1220;
   color: var(--text);
 }
+.lv-conn .dash-dropdown,
+.lv-conn .dash-dropdown-focus-target,
+.lv-conn .dash-dropdown-content {
+  border-color: #2a3a58;
+  background: #0b1220;
+  color: var(--text);
+}
+.lv-conn .dash-dropdown-option:hover,
+.lv-conn .dash-dropdown-option.selected {
+  background: #15213a;
+}
 .lv-conn .st-btn {
   border-color: #2a3a58;
   background: #15213a;
@@ -359,4 +370,9 @@
   border-color: var(--line);
   background: #0b1220;
   color: var(--text);
+}
+/* Dash's own theme colours (option labels, dropdowns) default to dark text; the page is dark */
+.lv-page {
+  --Dash-Text-Strong: var(--text);
+  --Dash-Text-Disabled: var(--muted);
 }

@@ -243,10 +243,13 @@ def test_usd_formatting():
 def test_trades_figure_empty_and_filled():
     empty = live.trades_figure(live.lm.trade_strip([], 100_000.0, "all", NOW))
     assert len(empty.data) == 0 and "No trades" in empty.layout.annotations[0].text
+    # no data: no axes with made-up ranges (-1..6), only the note
+    assert empty.layout.xaxis.visible is False and empty.layout.yaxis.visible is False
     t = [{"symbol": "A", "exit_time": "2026-01-12T15:00:00+00:00", "money": -50.0, "r_net": -0.2},
          {"symbol": "A", "exit_time": "2026-01-12T16:00:00+00:00", "money": 80.0, "r_net": 0.3}]  # fmt: skip
     fig = live.trades_figure(live.lm.trade_strip(t, 100_000.0, "all", NOW))
     assert list(fig.data[0].marker.color) == ["#f6465d", "#2ebd85"] and len(fig.data) == 2
+    assert fig.layout.xaxis.visible is not False and fig.layout.yaxis.visible is not False
 
 
 def test_guard_bar_scale():

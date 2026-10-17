@@ -429,6 +429,8 @@ def trades_figure(strip: dict) -> go.Figure:
         yaxis2={"overlaying": "y", "side": "right", "color": "#4f8cff", "showgrid": False,
                 "tickprefix": "$", "tickformat": ",.0f"},
     )  # fmt: skip
+    if not n:  # no data: hide the axes plotly would draw with a made-up range
+        fig.update_layout(xaxis_visible=False, yaxis_visible=False)
     return fig
 
 
