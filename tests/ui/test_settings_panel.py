@@ -161,3 +161,14 @@ def test_doji_threshold_is_first_in_detectors_with_one_explanation():
     body = str(sp._group_body("Detectors", [(leaf.path, leaf) for leaf in detectors], True))
     assert body.count("Used by every detector") == 1
     assert body.index("Doji threshold") < body.index("FVG")
+
+
+def test_panel_has_a_bounded_number_of_widgets_and_costs_only_for_the_strategy_symbols():
+    """28 symbols x 13 cost fields (364 pattern-matched widgets) froze the browser renderer on the
+    chart page; the panel lists cost fields only for the symbols the strategies trade, the others
+    keep their defaults (not widgets, still in the settings)."""
+    paths = [leaf.path for _, leaf, _ in sp.panel_fields()]
+    assert len(paths) < 250
+    cost_symbols = {p.split(".")[3] for p in paths if p.startswith("engine.costs.symbols.")}
+    assert cost_symbols == set(sp.PANEL_COST_SYMBOLS)
+    assert len(RunSettings().engine.costs.symbols) > len(cost_symbols)

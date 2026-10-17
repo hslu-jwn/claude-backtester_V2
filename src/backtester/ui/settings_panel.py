@@ -278,6 +278,9 @@ SECTION_HELP = {
 # choices not offered: strategy 1's equilibrium has its own switch (strategy 2 ranks it)
 HIDDEN_OPTIONS = {("session_zone_sweep", "strategy.confluence_kinds"): {"EQUILIBRIUM"}}
 DEFAULT_STRATEGY = "session_zone_sweep"
+# per-symbol cost fields are shown for these symbols only: with all 28 symbols the panel had
+# 364 pattern-matched cost widgets and the browser froze; the others keep their spec defaults
+PANEL_COST_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 # settings a strategy does not use (shown for no widget): strategy 2 has no break-even at
 # the next session start (`Strategy.uses_session_break_even`)
 UNUSED = {
@@ -357,7 +360,15 @@ def from_widget(kind: str, value: Any) -> Any:
 def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
     """The settings the panel shows for `strategy` (its defaults), in field order."""
     base = RunSettings(strategy=default_config(strategy))
-    return [leaf for leaf in leaves(base) if leaf.path not in UNUSED.get(strategy, ())]
+    return [
+        leaf
+        for leaf in leaves(base)
+        if leaf.path not in UNUSED.get(strategy, ()) and _panel_symbol(leaf.path)
+    ]
+
+
+def _panel_symbol(path: str) -> bool:
+    return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS
 
 
 def real_path(widget_path: str) -> str:
