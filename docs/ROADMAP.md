@@ -1096,17 +1096,25 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   `ui/live_model.py` (tested helpers), new `ui/pages/live.py`, Connection on `/live` (`trading_panel` as
   Details), sweep controls in ⚙ Chart settings; Live page times in Swiss time. Fix: `bot.py --daily-stop`
   default (slots dataclass). Polish left: empty trades chart axes, Connection dropdowns light on the dark page.
-- ☐ **7.4 Chart page in the new style, step (b)** (user 2026-10-17, after 7.3): side cards (backtest result,
+- ☑ **7.4 Chart page in the new style, step (b)** (user 2026-10-17, after 7.3): side cards (backtest result,
   overlay switches, trades in view), timeframe buttons, range bar (1M / 3M / 6M / YTD / 1Y / All, go to date).
   Decided by the user 2026-10-17: page dark like `/live`, the chart pane itself lighter (light-blue background,
   same candle colours); "Backtest result" card shows the newest run; the overlay switches move from the toolbar
   into the side panel below the Backtest result card (only there); a click on a trade in "Trades in view" jumps
   to it on the chart; the side cards are collapsible (chart full width).
-- ☐ **7.5 Update data button** (user 2026-10-17): no download at app start (fast start); a "⟳ Update data"
+- ☑ **7.5 Update data button** (user 2026-10-17): no download at app start (fast start); a "⟳ Update data"
   button on the chart page fetches in the background, per symbol, everything after its last cached day up to
   yesterday: MT5 cache from the running terminal, Binance for BTC / ETH-USDT, new histdata months once
   published. Decided by the user 2026-10-17: the chart shows MT5 bars after a symbol's last histdata day
   (chart only); backtests keep one feed (data split rule).
+  **Built 2026-10-17, accepted by the user 2026-10-17:** `data/update.py` (plan), `tools/update_data.py` (job, CLI
+  `--dry-run`), `ui/update_button.py`, chart MT5 fill (`chart_data.chart_adapter`); first real run: 28 updated, 0
+  errors. Decided by the user 2026-10-17: the update keeps adding new histdata months for the 5 core symbols;
+  histdata caches more than 93 days old are not kept current (MT5 on the chart after them); a trade with exit
+  reason `end_of_data` counts as "open" in Trades in view. 7.4 built the same day (`ui/chart_side.py`,
+  `chart-page.css`); newest run = newest `YYYYMMDD-HHMMSS` run id. Open polish: "Updated …" text overlaps the
+  button on narrow windows; dashed "MT5" marker at the feed switch not drawn; replay bar and ⚙ dialog on the dark
+  page not checked visually.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
