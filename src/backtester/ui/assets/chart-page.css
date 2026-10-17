@@ -149,7 +149,10 @@ body:has(.ch-page) {
 }
 .ch-page .tb-goto,
 .ch-page .tb-dates input,
-.ch-page .tb-dates .dash-datepicker-input {
+.ch-page .tb-dates .dash-datepicker-input,
+.ch-page .dash-datepicker,
+.ch-page .dash-datepicker input,
+.ch-page .dash-dropdown-focus-target {
   border: 1px solid var(--line2);
   border-radius: 6px;
   background: var(--bg);
