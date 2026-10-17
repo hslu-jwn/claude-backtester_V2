@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
+
+import pytest
 
 from backtester.live.status import STALE_S, write_status
 from backtester.ui import app as app_module
@@ -204,10 +208,22 @@ def test_a_leftover_pause_file_is_ignored_when_stopped(tmp_path):
 def test_button_states(tmp_path):
     none = live.button_state(live.live_view(tmp_path, NOW))
     assert none == {"start_disabled": False, "pause_label": "Pause", "pause_disabled": True,
-                    "stop_disabled": True}  # fmt: skip
+                    "stop_disabled": True, "emergency_disabled": True}  # fmt: skip
     write_status(tmp_path / "status.json", status(age_s=5))
     run = live.button_state(live.live_view(tmp_path, NOW))
     assert run["start_disabled"] and not run["pause_disabled"] and not run["stop_disabled"]
+    assert not run["emergency_disabled"]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process flags")
+def test_spawn_hides_the_console_window(tmp_path, monkeypatch):
+    # DETACHED_PROCESS + the venv launcher opened an empty console; a hidden console does not
+    seen = {}
+    monkeypatch.setattr(live.subprocess, "Popen", lambda cmd, **kw: seen.update(kw))
+    live._spawn_detached(["x"], tmp_path / "bot.log")
+    flags = seen["creationflags"]
+    assert flags & subprocess.CREATE_NO_WINDOW and flags & subprocess.CREATE_NEW_PROCESS_GROUP
+    assert not flags & subprocess.DETACHED_PROCESS
 
 
 def test_settings_follow_the_bot(tmp_path):

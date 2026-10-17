@@ -76,11 +76,9 @@ def toggle_pause(out_dir: Path) -> bool:
 def _spawn_detached(command: list[str], log_file: Path) -> object:
     kwargs: dict = {}
     if sys.platform == "win32":
-        kwargs["creationflags"] = (
-            subprocess.DETACHED_PROCESS
-            | subprocess.CREATE_NEW_PROCESS_GROUP
-            | subprocess.CREATE_NO_WINDOW
-        )
+        # a hidden console, not DETACHED_PROCESS: the venv's python.exe is a launcher, and
+        # its real Python would open a new (empty) console window without one
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
     else:
         kwargs["start_new_session"] = True
     with log_file.open("ab") as out:
@@ -461,6 +459,7 @@ def button_state(view: dict) -> dict:
         "pause_label": "Resume" if view["state"] == "paused" else "Pause",
         "pause_disabled": not running,
         "stop_disabled": view["state"] in ("none", "stopped"),
+        "emergency_disabled": view["state"] in ("none", "stopped"),
     }
 
 
@@ -502,7 +501,12 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                                 disabled=buttons["stop_disabled"],
                             ),
                             dcc.ConfirmDialogProvider(
-                                html.Button("Close all & stop", className="lv-btn lv-danger"),
+                                html.Button(
+                                    "Close all & stop",
+                                    id="lv-emergency-btn",
+                                    className="lv-btn lv-danger",
+                                    disabled=buttons["emergency_disabled"],
+                                ),
                                 id="lv-emergency",
                                 message=(
                                     "Close ALL positions opened by the bot and stop it. Continue?"
@@ -626,6 +630,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
         Output("lv-pause", "children"),
         Output("lv-pause", "disabled"),
         Output("lv-stop", "disabled"),
+        Output("lv-emergency-btn", "disabled"),
         Output("lv-risk", "disabled"),
         Output("lv-daily-stop", "disabled"),
         Output("lv-symbols", "options"),
@@ -643,6 +648,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
         return (
             p["head"], p["cards"], p["setup"], p["positions"], p["signals"], p["log"],
             b["start_disabled"], b["pause_label"], b["pause_disabled"], b["stop_disabled"],
+            b["emergency_disabled"],
             s["disabled"], s["disabled"], symbol_options(keep, s["disabled"]),
             no_update if s["risk"] is None else s["risk"],
             no_update if s["stop"] is None else s["stop"],
