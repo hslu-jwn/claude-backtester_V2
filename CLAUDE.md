@@ -25,6 +25,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-trend-following.md` | Strategy 4: trend following after Kaufman (breakout / SMA + band / momentum / KAMA / Dunnigan, ATR stop, stop-and-reverse, no TP) |
 | `docs/strategy-gap-fade.md` | Strategy 5: fade the index cash-open gap (0.1-1 ATR) to the previous close, stop at the mirror level, exit 16:00 (ROADMAP 11.4) |
 | `docs/strategy-opening-range.md` | Strategy 6: opening-range breakout (range / ATR band, session-end exit, narrow-range and tick-volume filters) (ROADMAP 11.10) |
+| `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |

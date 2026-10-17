@@ -1069,6 +1069,11 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
     open; afterwards no position in the terminal's Trade tab, history shows 2 x 3 deals
     per symbol.
 
+- ☐ **7.2 Demo forward test of the ORB candidate** (user 2026-10-17; spec `docs/live-trading.md`): automatic
+  demo orders + paper log, 0.25 % risk, daily stop -2 %, emergency stop, the bot starts MT5 itself, minimal
+  Live page and Telegram (messages + /status, /stop). Order: 7.1 demo test orders, then sizer + bot loop,
+  then Live page and Telegram.
+
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
 `docs/strategy-ny-indices.md` (new 2026-10-10), detection rules in `confluences.md`.
