@@ -136,18 +136,25 @@ def trading_action(trigger: str, form: Mapping, deps: Deps | None = None) -> dic
         except (CredentialStoreError, ValueError) as e:
             out["status"] = f"Not saved: {scrub(str(e), saved)}."
     elif trigger in ("test", "orders"):
-        try:
-            credentials = _form_credentials(form, saved)
-        except CredentialStoreError as e:
-            out["status"] = f"Can't connect: {e}."
-            credentials = None
-        if credentials is not None:
+        # nothing typed, nothing saved: the terminal's logged-in account, as the bot does
+        terminal = saved is None and not any(form.get(k) for k in ("login", "password", "server"))
+        credentials = None
+        if not terminal:
+            try:
+                credentials = _form_credentials(form, saved)
+            except CredentialStoreError as e:
+                out["status"] = f"Can't connect: {e}."
+        if credentials is not None or terminal:
             settings = _form_settings(form, settings)
             mt5 = deps.mt5() if deps.mt5 else None
             if trigger == "test":
                 report = check_connection(settings, credentials, mt5)
                 out["result"] = report_lines(report)
-                out["status"] = "Connection tested (not saved)."
+                out["status"] = (
+                    "Connection tested on the terminal's logged-in account (nothing saved)."
+                    if terminal
+                    else "Connection tested (not saved)."
+                )
             elif deps.run_test_orders is None:
                 out["status"] = "Demo test orders are not available."
             else:

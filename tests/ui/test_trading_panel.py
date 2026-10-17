@@ -91,6 +91,30 @@ def test_test_connection_uses_the_form_without_saving(tmp_path):
     assert store.store == {}
 
 
+def test_test_connection_with_an_empty_form_uses_the_terminals_account(tmp_path):
+    # like the bot and the test-orders CLI: nothing typed, nothing saved -> no login passed
+    fake = FakeMt5()
+    empty = {**FORM, "login": "", "password": "", "server": ""}
+    out = trading_action("test", empty, deps(tmp_path, mt5=fake))
+    assert out["result"][0] == "Connected: yes"
+    assert "login" not in fake.init_kwargs and "password" not in fake.init_kwargs
+    assert "terminal" in out["status"]
+
+
+def test_partly_filled_form_still_refuses(tmp_path):
+    fake = FakeMt5()
+    out = trading_action("test", {**FORM, "login": ""}, deps(tmp_path, mt5=fake))
+    assert out["status"] == "Can't connect: the login is the account number (digits only)."
+    assert out["result"] == []
+
+
+def test_save_refuses_an_empty_form(tmp_path):
+    empty = {**FORM, "login": "", "password": "", "server": ""}
+    out = trading_action("save", empty, deps(tmp_path))
+    assert out["status"].startswith("Not saved:")
+    assert not (tmp_path / "trading.json").exists()
+
+
 def test_failed_connection_shows_mt5s_error_without_secrets(tmp_path):
     fake = FakeMt5(login_ok=False)
     fake.initialize = lambda *a, **k: (
