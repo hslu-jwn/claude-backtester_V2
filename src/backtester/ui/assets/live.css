@@ -1,0 +1,32 @@
+/* /live page (ROADMAP 7.2): the demo bot at a glance */
+.lv-page { max-width: 980px; margin: 0 auto; padding: 12px 16px 40px; font-size: 13px; }
+.lv-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.lv-title { font-size: 18px; font-weight: 600; }
+.lv-actions { display: flex; align-items: center; gap: 8px; margin: 8px 0 14px; }
+.lv-btn { padding: 6px 14px; border: 1px solid #b2b5be; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+.lv-btn:hover { background: #f0f3fa; }
+.lv-go { background: #2962ff; border-color: #2962ff; color: #fff; }
+.lv-go:hover { background: #1e4fd6; }
+.lv-danger { background: #f23645; border-color: #f23645; color: #fff; }
+.lv-danger:hover { background: #cc2a38; }
+.lv-msg { color: #787b86; margin-left: 8px; }
+.lv-badge { padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-weight: 600; }
+.lv-ok { background: #e3f5ee; color: #067a61; }
+.lv-idle { background: #f0f3fa; color: #787b86; }
+.lv-stale { background: #fde7e9; color: #f23645; }
+.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 24px; margin-bottom: 12px; }
+.lv-kv { display: flex; justify-content: space-between; border-bottom: 1px solid #e0e3eb; padding: 3px 0; }
+.lv-k { color: #787b86; }
+.lv-h { margin: 16px 0 6px; font-weight: 600; }
+.lv-bar { position: relative; height: 14px; background: #f0f3fa; border: 1px solid #e0e3eb; border-radius: 3px; overflow: hidden; }
+.lv-fill { height: 100%; }
+.lv-fill.lv-ok { background: #089981; }
+.lv-fill.lv-stopped { background: #f5a623; }
+.lv-fill.lv-breach { background: #f23645; }
+.lv-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #131722; }
+.lv-help { color: #787b86; margin-top: 4px; font-size: 12px; }
+.lv-table { border-collapse: collapse; width: 100%; }
+.lv-table th, .lv-table td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid #e0e3eb; }
+.lv-empty { color: #787b86; }
+.lv-error { margin-top: 12px; padding: 8px 10px; background: #fde7e9; color: #f23645; border-radius: 4px; }
+.lv-log { margin: 0; padding: 8px 10px; background: #f8f9fd; border: 1px solid #e0e3eb; border-radius: 4px; max-height: 360px; overflow: auto; font-size: 12px; white-space: pre-wrap; }

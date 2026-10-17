@@ -15,7 +15,7 @@ from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
-from fake_bot_mt5 import FakeBotMt5
+from fake_bot_mt5 import Deal2, FakeBotMt5
 from fake_mt5 import Position
 
 from backtester.data.adapters.mt5_adapter import ServerClock
@@ -96,6 +96,9 @@ class World:
             volume_min=0.1, volume_step=0.1, volume_max=500.0, trade_stops_level=0,
         )  # fmt: skip
         self.fake.set_rates(BROKER, self.fake.TIMEFRAME_M1, history_rows() + today_rows())
+        self.fake.deals[900] = Deal2(  # the account's first deal: the initial balance
+            900, 0, 0, "", 2, 0.0, 0.0, 0, 0, 100_000.0, 0.0, 0.0, 0.0, 1000
+        )
         self.set_tick(103.0, 103.2)
         self.clock = Clock(ny(DAY, 9, 38))
         self.out = tmp_path / "live"

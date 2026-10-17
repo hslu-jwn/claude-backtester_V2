@@ -29,6 +29,13 @@ from backtester.live.credentials import (
     load_credentials,
     save_credentials,
 )
+from backtester.live.telegram import (
+    TelegramClient,
+    TelegramConfig,
+    TelegramError,
+    load_telegram,
+    save_telegram,
+)
 from backtester.live.test_orders import run_from_panel
 from backtester.live.trading_settings import (
     PLATFORMS,
@@ -41,6 +48,8 @@ from backtester.live.trading_settings import (
 
 PASSWORD_SAVED = "saved, leave empty to keep it"
 PASSWORD_NONE = "password"
+TOKEN_SAVED = "saved, leave empty to keep it"
+TOKEN_NONE = "bot token"
 
 
 @dataclass(frozen=True)
@@ -52,6 +61,7 @@ class Deps:
     mt5: Callable[[], ModuleType] | None = None  # None: the real MetaTrader5
     appdata: str | Path | None = None
     run_test_orders: Callable | None = None  # (settings, credentials, symbol, mt5) -> lines
+    telegram_http: Callable | None = None  # (url, payload, timeout) -> reply; None: real HTTPS
 
 
 def _clock_text(settings: TradingSettings) -> str:
@@ -145,6 +155,48 @@ def trading_action(trigger: str, form: Mapping, deps: Deps | None = None) -> dic
     return out
 
 
+def telegram_action(trigger: str, form: Mapping, deps: Deps | None = None) -> dict:
+    """Telegram fields. trigger: "load" (panel opened), "save" or "test" (a test message).
+    Token and chat id are stored only in the Windows Credential Manager; the token is never sent
+    back to the browser (empty field on Save / Test keeps the saved one).
+    Returns {"status", "chat_id", "token_placeholder"}."""
+    deps = deps or Deps()
+    out = {"status": "", "chat_id": None, "token_placeholder": TOKEN_NONE}
+    saved = None
+    try:
+        backend = deps.backend()
+        saved = load_telegram(backend)
+    except CredentialStoreError as e:
+        backend, out["status"] = None, f"Credential store: {e}."
+    token = str(form.get("token") or "").strip() or (saved.token if saved else "")
+    chat = str(form.get("chat_id") or "").strip() or (saved.chat_id if saved else "")
+    config = TelegramConfig(token, chat)
+    if trigger == "save":
+        try:
+            if backend is None:
+                raise CredentialStoreError("the credential store is not available")
+            save_telegram(config, backend)
+            saved = config
+            out["status"] = "Saved: Telegram token and chat id in the Windows Credential Manager."
+        except CredentialStoreError as e:
+            out["status"] = f"Not saved: {e}."
+    elif trigger == "test":
+        if not token or not chat:
+            out["status"] = "Enter the bot token and the chat id first."
+        else:
+            try:
+                TelegramClient(config, http=deps.telegram_http).send(
+                    "Test message from the backtester: Telegram is set up."
+                )
+                out["status"] = "Test message sent."
+            except TelegramError as e:
+                out["status"] = f"Test message failed: {e}."
+    if trigger == "load" or out["chat_id"] is None:
+        out["chat_id"] = saved.chat_id if saved else (chat if trigger != "load" else "")
+    out["token_placeholder"] = TOKEN_SAVED if saved else TOKEN_NONE
+    return out
+
+
 # --- layout ------------------------------------------------------------------------------
 
 
@@ -216,6 +268,33 @@ def layout() -> html.Div:
             ),
             *[_row(symbol, _input(f"tr-sym-{symbol}")) for symbol in SYMBOLS],
             html.Div(id="tr-clock", className="st-help"),
+            html.Div("Telegram", className="st-section"),
+            html.Div(
+                "Messages and commands (/status, /stop, /emergency) for the live bot. Create a "
+                "bot with @BotFather for the token; the chat id is your chat with that bot. "
+                "Stored only in the Windows Credential Manager.",
+                className="st-help st-section-help",
+            ),
+            _row(
+                "Bot token",
+                dcc.Input(
+                    id="tr-tg-token",
+                    type="password",
+                    className="st-input",
+                    placeholder=TOKEN_NONE,
+                    autoComplete="new-password",
+                ),
+                "Never shown again after saving.",
+            ),
+            _row("Chat id", _input("tr-tg-chat", autoComplete="off"), "A number."),
+            html.Div(
+                [
+                    html.Button("Save Telegram", id="tr-tg-save", className="st-btn"),
+                    html.Button("Send test message", id="tr-tg-test", className="st-btn"),
+                    html.Span(id="tr-tg-status", className="st-help"),
+                ],
+                className="tr-actions",
+            ),
             html.Div("Demo test orders", className="st-section"),
             html.Div(
                 "Demo accounts only (DEMO LOCK): buy and sell 2 x the minimum lot with SL "
@@ -262,6 +341,7 @@ def layout() -> html.Div:
                 html.Div(
                     [
                         html.Div(id="tr-status", className="st-status"),
+                        dcc.Link("Live page", href="/live", className="st-btn"),
                         html.Button("Test connection", id="tr-test", className="st-btn"),
                         html.Button("Save", id="tr-save", className="st-btn st-primary"),
                         html.Button(
@@ -340,4 +420,28 @@ def register_callbacks(app: Dash, deps: Deps | None = None) -> None:
             out["clock"],
             out["status"],
             "\n".join(out["result"]),
+        )
+
+    tg_triggers = {"tr-open": "load", "tr-tg-save": "save", "tr-tg-test": "test"}
+
+    @app.callback(
+        Output("tr-tg-chat", "value"),
+        Output("tr-tg-token", "value"),
+        Output("tr-tg-token", "placeholder"),
+        Output("tr-tg-status", "children"),
+        *[Input(i, "n_clicks") for i in tg_triggers],
+        State("tr-tg-token", "value"),
+        State("tr-tg-chat", "value"),
+        prevent_initial_call=True,
+    )
+    def _telegram(*args):
+        token, chat = args[len(tg_triggers) :]
+        trigger = tg_triggers.get(ctx.triggered_id, "load")
+        out = telegram_action(trigger, {"token": token, "chat_id": chat}, deps)
+        # the token never goes back to the browser; Test keeps what was typed
+        return (
+            out["chat_id"],
+            "" if trigger in ("load", "save") else no_update,
+            out["token_placeholder"],
+            out["status"],
         )

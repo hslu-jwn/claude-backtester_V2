@@ -22,6 +22,7 @@ class FakeBotMt5(FakeMt5):
     DEAL_REASON_EXPERT = 3
     DEAL_TYPE_BUY = 0
     DEAL_TYPE_SELL = 1
+    DEAL_TYPE_BALANCE = 2
 
     def __init__(self, trade_mode=0, delay_polls=0, balance=100_000.0, equity=None, **kw):
         super().__init__(trade_mode=trade_mode, **kw)

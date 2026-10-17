@@ -3,7 +3,8 @@
 Pages: chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
 one trade, from the results page) and a backtest's results (`/results/<run id>`,
 pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
-Prop Firm page (pages/risk.py) comes in Phase 5. Each symbol is read from the cache of its
+Prop Firm page (pages/risk.py) comes in Phase 5. The demo bot's monitor is `/live`
+(pages/live.py, ROADMAP 7.2). Each symbol is read from the cache of its
 own data source (`data/sources.py`). A page is built when it is opened, so symbols cached
 while the app runs appear after a reload.
 """
@@ -15,12 +16,15 @@ import argparse
 from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.ui.pages import chart, results
+from backtester.ui.pages import chart, live, results
 
 RESULTS_PREFIX = "/results/"
+LIVE_PATH = "/live"
 
 
 def page_for(pathname: str | None, sources: SymbolSources, search: str | None = None):
+    if pathname == LIVE_PATH:
+        return live.layout()
     if pathname and pathname.startswith(RESULTS_PREFIX):
         return results.layout(pathname.removeprefix(RESULTS_PREFIX))
     return chart.layout(sources, focus=chart.focus_from_query(search))
@@ -35,6 +39,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
             html.Div(id="page"),
             chart.layout(sources),
             results.layout(""),
+            live.layout(),
         ]
     )
 
@@ -44,6 +49,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
 
     chart.register_callbacks(app, sources)
     results.register_callbacks(app)
+    live.register_callbacks(app)
     return app
 
 

@@ -32,6 +32,7 @@ How it works
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import time
 from collections.abc import Callable
@@ -61,6 +62,8 @@ from backtester.live.orders import (
     require_demo,
     retcode_text,
 )
+from backtester.live.status import STATUS_NAME, build_status, summary_text, write_status
+from backtester.live.telegram import Notifier, TelegramClient, load_telegram
 from backtester.live.trading_settings import TradingSettings, load_trading_settings
 from backtester.paths import RESULTS_DIR
 from backtester.risk.prop_rules import GuardConfig, GuardStatus, evaluate, prague_day_start
@@ -69,6 +72,7 @@ from backtester.strategy.opening_range.config import EntryMode, OpeningRangeConf
 from backtester.strategy.opening_range.strategy import OpeningRange
 
 CONTINUE, STOP = "continue", "stop"
+ERROR_KINDS = ("error", "disconnected", "connect_failed", "close_failed", "refused")
 FORWARD_SYMBOLS = ("US30", "US500", "NAS100", "US2000")
 PAPER_COLUMNS = [
     "time_utc", "symbol", "side", "signal_entry", "sim_fill", "sl", "spread", "lots", "status",
@@ -92,6 +96,7 @@ class BotConfig:
     symbols: tuple[str, ...] = FORWARD_SYMBOLS
     strategy: OpeningRangeConfig = field(default_factory=forward_strategy_config)
     risk_percent: float = 0.25  # of the balance per trade (adjustable per strategy)
+    initial_balance: float | None = None  # override; None: the account's first balance deal
     guard: GuardConfig = field(default_factory=GuardConfig)
     comment_prefix: str = "orb"  # + the signal bar's close time: stable across restarts
     out_dir: Path = RESULTS_DIR / "live"
@@ -111,6 +116,14 @@ class BotConfig:
     @property
     def emergency_file(self) -> Path:
         return self.out_dir / "EMERGENCY"
+
+    @property
+    def status_file(self) -> Path:
+        return self.out_dir / STATUS_NAME
+
+
+class InitialBalanceError(RuntimeError):
+    """The account's initial balance can't be found and no override is given."""
 
 
 class BotDisconnected(RuntimeError):
@@ -153,6 +166,7 @@ class Bot:
         credentials=None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         sleep: Callable[[float], None] = time.sleep,
+        notifier=None,  # Telegram: anything with `event(kind, fields)`; never blocks (telegram.py)
     ):
         self.config, self.mt5, self.settings, self.credentials = config, mt5, settings, credentials
         self.now, self.sleep = now, sleep
@@ -172,6 +186,17 @@ class Bot:
         self._day_balance = 0.0
         self.status: GuardStatus | None = None
         self.blocked = ""  # reason; empty: trading allowed
+        self.notifier = notifier
+        self.initial_balance: float | None = None  # FTMO max loss is measured from it
+        # state for status.json (live/status.py)
+        self.running = False
+        self.connected = False
+        self.account_mode = ""
+        self.started_at: datetime | None = None
+        self.last_error = ""
+        self.signals: list[dict] = []
+        self.day_trades: list[tuple[datetime, float]] = []  # (closed at, R net)
+        self.last_status: dict | None = None
 
     # --- logs -------------------------------------------------------------------------------
 
@@ -192,6 +217,64 @@ class Bot:
         if self.config.verbose:
             text = " ".join(f"{k}={v}" for k, v in fields.items())
             print(f"{self.now():%H:%M:%S} {kind} {text}", flush=True)
+        safe = {
+            k: scrub(v, self.credentials) if isinstance(v, str) else v for k, v in plain.items()
+        }
+        if kind in ERROR_KINDS:
+            detail = safe.get("what") or safe.get("error") or safe.get("retcode") or ""
+            self.last_error = f"{kind}: {detail}"
+        if kind == "disconnected":
+            self.connected = False
+        if kind in ("stopped", "refused"):
+            self.running = False
+        self._tell(kind, safe)
+        self.publish()
+
+    def _tell(self, kind: str, fields: dict) -> None:
+        """Hand an event to Telegram; whatever goes wrong there never reaches the trading."""
+        if self.notifier is not None:
+            with contextlib.suppress(Exception):
+                self.notifier.event(kind, fields)
+
+    def publish(self) -> None:
+        """Write status.json (heartbeat); a failed write must not stop trading."""
+        with contextlib.suppress(Exception):
+            self.last_status = build_status(self, self.now())
+            write_status(self.config.status_file, self.last_status)
+
+    def status_text(self) -> str:
+        return summary_text(self.last_status)
+
+    @property
+    def day_r(self) -> float:
+        return sum(
+            r for when, r in self.day_trades if self._day_key is None or when >= self._day_key
+        )
+
+    def open_positions(self) -> list[dict]:
+        out = []
+        for t in list(self.by_ticket.values()):
+            sign = 1 if t.direction is Direction.BULLISH else -1
+            risk = abs(t.signal_entry - t.sl)
+            tick = self.mt5.symbol_info_tick(t.broker)
+            price = (tick.bid if sign > 0 else tick.ask) if tick else None
+            floating = sign * (price - t.real_fill) / risk if price is not None and risk else 0.0
+            out.append({
+                "symbol": t.symbol, "side": "buy" if sign > 0 else "sell", "lots": t.lots,
+                "entry": t.real_fill, "sl": t.sl, "ticket": t.ticket,
+                "floating_r": round(floating, 3), "since": t.entry_time.isoformat(),
+            })  # fmt: skip
+        return out
+
+    def _set_signal(self, sym: _Symbol, bar_now: datetime, status: str, reason: str = "") -> None:
+        key = bar_now.isoformat()
+        for s in reversed(self.signals):
+            if s["time"] == key and s["symbol"] == sym.name:
+                s["status"], s["reason"] = status, reason
+                return
+        self.signals.append(
+            {"time": key, "symbol": sym.name, "side": "", "status": status, "reason": reason}
+        )
 
     def _append(self, name: str, columns: list[str], values: dict) -> None:
         path = self._day_dir() / name
@@ -218,12 +301,37 @@ class Bot:
                 self.sleep(wait)
                 wait = min(wait * self.config.reconnect_factor, self.config.reconnect_max_s)
         require_demo(self.mt5)
+        self.connected, self.running, self.account_mode = True, True, "DEMO"
+        self.started_at = self.started_at or self.now()
         self.note("connected")
 
     def _check_connected(self) -> None:
         terminal, account = self.mt5.terminal_info(), self.mt5.account_info()
         if terminal is None or account is None or not terminal.connected:
             raise BotDisconnected("terminal or account not available")
+
+    def resolve_initial_balance(self) -> float:
+        """Override, else the account's first balance deal (whole history). Raises
+        `InitialBalanceError` when neither exists."""
+        if self.config.initial_balance:
+            self.initial_balance = float(self.config.initial_balance)
+            return self.initial_balance
+        now = self.now()
+        deals = self.mt5.history_deals_get(
+            self.clock.to_server(datetime(2000, 1, 1, tzinfo=UTC)),
+            self.clock.to_server(now + timedelta(days=1)),
+        )
+        balance = sorted(
+            (d for d in (deals or ()) if getattr(d, "type", None) == self.mt5.DEAL_TYPE_BALANCE),
+            key=lambda d: getattr(d, "time", 0),
+        )
+        if not balance or not getattr(balance[0], "profit", 0) > 0:
+            raise InitialBalanceError(
+                "initial balance not found in the account's deal history; "
+                "pass it with --balance <amount>"
+            )
+        self.initial_balance = float(balance[0].profit)
+        return self.initial_balance
 
     # --- start: history and resume ----------------------------------------------------------
 
@@ -257,6 +365,7 @@ class Bot:
         """Connect, warm up, then one `cycle` per minute until stopped. Returns the exit code."""
         try:
             self.connect()
+            self.resolve_initial_balance()
             if self.config.stop_file.exists():
                 self.config.stop_file.unlink()
                 self.note("old_stop_file_removed")
@@ -273,7 +382,7 @@ class Bot:
                 self.sleep(self._seconds_to_next_minute())
             self.note("stopped")
             return 0
-        except DemoLockError as e:
+        except (DemoLockError, InitialBalanceError) as e:
             self.note("refused", error=str(e))
             return 1
         except KeyboardInterrupt:
@@ -305,6 +414,7 @@ class Bot:
         self._retry_exits()
         for sym in self.symbols.values():
             self._feed_new(sym, self._fetch_new(sym))
+        self.publish()
         return CONTINUE
 
     # --- the daily guard --------------------------------------------------------------------
@@ -319,7 +429,9 @@ class Bot:
             if self.blocked:
                 self.note("guard_reset", balance=self._day_balance)
             self.blocked = ""
-        status = evaluate(self.config.guard, self._day_balance, account.equity)
+        status = evaluate(
+            self.config.guard, self._day_balance, account.equity, self.initial_balance
+        )
         self.status = status
         if status.breach:
             self.note("guard_breach", reason=status.reason, day_pl=round(status.day_pl, 2))
@@ -383,6 +495,7 @@ class Bot:
 
     def _skip(self, sym: _Symbol, order, bar_now: datetime, reason: str, **extra) -> None:
         sym.strategy.on_order_skipped(order.ref, bar_now)
+        self._set_signal(sym, bar_now, "skipped", reason)
         self.note("skip", symbol=sym.name, reason=reason, **extra)
         self._paper(sym, order, bar_now, None, "skipped", reason, 0.0, 0.0, "", extra)
 
@@ -427,6 +540,13 @@ class Bot:
             else:
                 sym.strategy.on_order_skipped(order.ref, bar_now)
             return
+        long = order.direction is Direction.BULLISH
+        self.signals.append({
+            "time": bar_now.isoformat(), "symbol": sym.name, "side": "buy" if long else "sell",
+            "status": "signal", "reason": "",
+        })  # fmt: skip
+        self._tell("signal", {"symbol": sym.name, "side": "buy" if long else "sell",
+                              "entry": order.entry, "sl": order.stop_loss})  # fmt: skip
         if self.blocked:
             self._skip(sym, order, bar_now, f"daily stop active: {self.blocked}")
             return
@@ -474,6 +594,7 @@ class Bot:
             candle.ts, fill.commission, sized.lots * abs(order.entry - sl) * value, comment,
         )  # fmt: skip
         self._track(trade)
+        self._set_signal(sym, bar_now, "filled")
         self.note(
             "order", symbol=sym.name, side="buy" if long else "sell", lots=sized.lots, sl=sl,
             fill=real, ticket=position.ticket, confirmed=fill.confirmed,
@@ -597,6 +718,7 @@ class Bot:
             break_even_stop=None, mae_r=0.0, mfe_r=0.0,
         )  # fmt: skip
         self.symbols[trade.symbol].strategy.on_trade_closed(trade.ref, result)
+        self.day_trades.append((when, r_net))
         self._append(
             "trades.csv",
             TRADE_COLUMNS,
@@ -631,8 +753,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--symbols", nargs="+", default=list(FORWARD_SYMBOLS))
     p.add_argument("--risk", type=float, default=BotConfig.risk_percent, help="percent per trade")
     p.add_argument("--daily-stop", type=float, default=GuardConfig.daily_stop_percent)
-    p.add_argument("--balance", type=float, default=GuardConfig.initial_balance,
-                   help="initial balance of the account (FTMO max loss is measured from it)")  # fmt: skip
+    p.add_argument("--balance", type=float, default=None,
+                   help="initial balance override (default: the account's first balance deal)")  # fmt: skip
     args = p.parse_args(argv)
     settings = load_trading_settings()
     try:
@@ -643,10 +765,31 @@ def main(argv: list[str] | None = None) -> int:
     config = BotConfig(
         symbols=tuple(s.upper() for s in args.symbols),
         risk_percent=args.risk,
-        guard=GuardConfig(daily_stop_percent=args.daily_stop, initial_balance=args.balance),
+        guard=GuardConfig(daily_stop_percent=args.daily_stop),
+        initial_balance=args.balance,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
-    return Bot(config, load_mt5(), settings, credentials).run()
+    notifier = _telegram_notifier(config)
+    bot = Bot(config, load_mt5(), settings, credentials, notifier=notifier)
+    if notifier is not None:
+        notifier.status_text = bot.status_text
+        notifier.start()
+    try:
+        return bot.run()
+    finally:
+        if notifier is not None:
+            notifier.stop()  # sends the last texts ("stopped")
+
+
+def _telegram_notifier(config: BotConfig) -> Notifier | None:
+    """Telegram from the Windows Credential Manager; none saved (or no keyring): no messages."""
+    try:
+        saved = load_telegram()
+    except CredentialStoreError:
+        return None
+    if saved is None:
+        return None
+    return Notifier(TelegramClient(saved), config.stop_file, config.emergency_file)
 
 
 if __name__ == "__main__":
