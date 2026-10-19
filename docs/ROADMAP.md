@@ -1736,7 +1736,7 @@ changes results, defaults changed only with the user's go.
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
   positives.
 
-- ☐ **12.10 Trial log + deflated Sharpe** (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
+- ☑ **12.10 Trial log + deflated Sharpe** (accepted by the user 2026-10-19, "End.") (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
   11.12): every run logged with its trial family; PSR / DSR (López de Prado) on the chosen variant.
   **Built 2026-10-16** (`analytics/deflated_sharpe.py`, `analytics/trial_log.py`, `tools/trials.py`; DSR >= 0.95 is
   verdict check 7, user 2026-10-16). Back-fill (count-only, the old result files have no sd): gap_fade 36, opening_range 41.
@@ -1748,3 +1748,77 @@ edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio to
 5.2 account simulator and 12.5 demo reconciliation (before live). Knowledge on combining edges: the user adds
 Carver *Systematic Trading*, López de Prado *Advances in Financial Machine Learning*, Chan *Algorithmic Trading*,
 Davey *Building Winning Algorithmic Trading Systems* to `00_Literature/Trading` (books are added only from the text).
+Done 2026-10-16: the four books plus Kurt and Kaeppel are in `knowledge/` (Natenberg skipped by the user).
+
+## Phase 13: Whole-software audit 2026-10-19 (findings; nothing fixed yet)
+
+Read-only audit by three agents during the first demo day (user: do not change the app while the demo test runs).
+Tests 2262 passed, 1 failed only when run from another folder (13.22); ruff clean except 4 files not formatted (three
+are another session's uncommitted reformatting). Each item test-first; fix the live ones after the demo day, one at a
+time, with the bot stopped. Claude's ranking; the user decides the order.
+
+**Live bot (could hurt the forward test)**
+- ☐ **13.1 Loop safety net:** `bot.py` `run` catches only connection errors; any other exception (tick None in
+  `orders.py` market_order / close_volume, `account_info` None, sizer ValueError) ends the bot silently: no Telegram,
+  positions keep only their server SL, no 15:55 exit (overnight swap). Log + Telegram + continue.
+- ☐ **13.2 EMERGENCY before STOP:** `cycle()` checks the STOP file first; Stop then "Close all & stop" in the same
+  minute stops without closing.
+- ☐ **13.3 Retry closes until flat:** `_close_all` (emergency, daily stop, FTMO breach) logs `close_failed` once and
+  stops / blocks; positions stay open unmanaged.
+- ☐ **13.4 Single-instance lock:** `start_bot` only checks the heartbeat; a double click before the first heartbeat
+  or a bot stuck in connect backoff (> 120 s) lets a second bot start -> duplicate orders. PID / lock file.
+- ☐ **13.5 Lost order result:** a non-DONE / None `order_send` result is treated as rejected; if the server executed
+  it, the position is orphaned (no session exit). Look up own positions by comment first.
+- ☐ **13.6 Closed-bar check on server time:** `Mt5Adapter.to_candles` uses the PC clock; a PC clock > 2 s ahead lets
+  the forming bar in, and it is never refreshed (lookahead / parity).
+- ☐ **13.7 Sizing on the live price:** risk uses the signal close, not the ask / bid; SL rounded to digits, not
+  tick size; no stops-level check.
+- ☐ **13.8 Wall-clock fallback exit:** session exits need a bar at 15:55; on half-days or a feed stall the position
+  stays overnight.
+- ☐ **13.9 Validate CLI risk** (`--risk 0` / negative crashes, no 2 % / 5 % cap outside the UI); **13.10** entry
+  deal `fee` missing from net money on the `_close` path; **13.11** daily-loss guard (`risk/prop_rules.py`) measures
+  5 % of the day-start balance, FTMO and the Monte Carlo use 5 % of the initial balance.
+- Minor: STOP file during startup deleted silently; restart replay writes noisy "stale signal" skips; Telegram
+  `/emergency@botname` not matched; initial balance = first balance deal (a top-up misstates the 10 % limit).
+
+**Data**
+- ☐ **13.12 histdata clock 2015-2018:** `histdata_to_utc` assumes "NY standard + Europe DST" for all years; in
+  2015-2018 the files follow US DST, so 3-4 weeks a year (mid-March, end Oct / early Nov) are 1 h late. 2019-2026
+  correct. Affects the development years of strategy 6 (ORB 2015-2021) and every pre-2019 study. Date-dependent rule.
+- ☐ **13.13 GER40 histdata changes instrument on 2020-06-15** (DAX ~11,960 -> Euro Stoxx level ~3,100,
+  GRXEUR files 2020-2021). Add a price-continuity check to the importer; drop or relabel those files.
+- ☐ **13.14 MT5 cache before 2020:** server clock NY+7 is valid only from 2020 (1 h shifts 2015-2019 in US-only DST
+  weeks, most Fridays 2010-2014); sparse days (XAUUSD / XAGUSD 2010-12 ~21 bars, GBPUSD Jan 2019) and 23 empty
+  US30 days in 2019 cached as valid.
+- ☐ **13.15 One-day holes on 1 January** (XAUUSD / GBPUSD / GBPJPY 2020, NAS100 / US500 2018, 15 symbols 2021) from
+  year-by-year imports; re-import neighbouring years together and count both files.
+- ☐ **13.16 MT5 downloader swallows errors:** every Mt5Error in the first chunk counts as "before history"; a wrong
+  broker name reports "no new days" as success.
+- ☐ **13.17 Paths relative to the working folder** (`paths.py`, `data/cache.py`, `binance.py`, `costs.py`, spread
+  table, the bot's STOP / PAUSE files): a tool run from another folder sees no data or writes a new `data/cache`
+  there. Anchor to the repo root.
+- ☐ **13.18 Output folders:** `orb_grid --part` without `--out` lets the parts overwrite each other (also
+  `gap_fade_grid`); the Monte Carlo folder name omits `--source` / `--seed` / `--runs`. Update job vs readers on
+  Windows (PermissionError, shared `.tmp` name for two jobs).
+- Minor: `mt5_download --end` accepts today; Binance day holes not retried; tools crash with tracebacks on bad input
+  (`show` end <= start or bad `--tz`, `trials add --count -1`); `spread_table.py` duplicates the MT5 defaults;
+  `check.py` loads whole histories into memory; `.gitignore` line with an inline comment does not match the stray
+  hook file `C:Usersjusti.claudeclaude-notify-signalsstop`; `.vscode/` and `data/cache/dukascopy/` leftovers;
+  `data` extra lacks numpy / requests.
+
+**Engine / analytics**
+- ☐ **13.19 no_wick limit fill is lookahead** (strategy 3 orders a limit inside the candle it just saw close and the
+  engine fills it in that candle). Strategy 3 is dropped; remove or block the path.
+- ☐ **13.20 Kind C random fills never slip time exits** (`signal`, `end_of_data`), the main exits of strategies 5 / 6;
+  together with 12.8 (engine slippage still not applied) all net R stays optimistic.
+- ☐ **13.21 Parallel runner progress race** (`runner.py` drain with `queue.empty()`): progress can step backwards ->
+  the flaky `test_parallel_processes_give_the_same_result`; trades themselves are deterministic.
+- ☐ **13.22 `tests/tools/test_s2_volume_ab.py`** fails when pytest runs from another folder (relative path).
+- ☐ **13.23 Monte Carlo FTMO pass rate:** unfinished attempts are dropped (slow strategies look better); the pass
+  fires at the first exit reaching the target even if a later trade that day breaches.
+- Minor: short SL / TP triggered on bid candles (slightly optimistic); EDGE possible with DSR n/a; MC `_one_run`
+  divides by a zero balance (unreachable at <= 1.5 %); `risk/account_sim.py`, `config.py`, `sweep.py` still stubs.
+- Verified correct (short): demo lock without bypass, no credentials in files / logs / Telegram, sizer rounding,
+  Prague day / NY session DST, live signal only on closed bars, live / backtest parity of strategy 6, MTF clock,
+  SL-first fills, swap / funding / commission math, gap fade and ORB windows, deflated Sharpe math, cache sanity on
+  random days (no duplicates, no broken candles), histdata / MT5 seam within 0.03-0.07 %.
