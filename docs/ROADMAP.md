@@ -1653,6 +1653,16 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   Built 2026-10-19 (awaiting the user's check): `python -m backtester.tools.stationarity_study --cache-dir <histdata cache>` ->
   `results/stationarity/` (adf, hurst, vr, lagcorr, time_of_day, findings .csv, summary.txt); code `analytics/stationarity.py`.
   Findings use the robust variants (Spearman lag grid, returns clipped at 5 robust sd for VR and time of day, gap returns zeroed in lag pairs). Files with no cache day (New Year days) are bridged. Sibling rule as built: the symbol plus >= 1 same-sign sibling.
+  **Result 2026-10-19:** findings real / shuffled-returns reference (same rule): ADF 0 / 0, VR 188 / 0, lag grid 356 / 0,
+  time-of-day mean 88 / 0, time-of-day autocorrelation 516 / 0. (1) **No stationarity:** no symbol / timeframe reverts
+  to a level (0 of 105 ADF cells; core 5 p 0.14-0.98; half-lives months to years). (2) Hurst at or below the random
+  walk everywhere. (3) **Short-term reversal is real but tiny:** VR < 1 and negative lag-1 correlation on M5-H1 in
+  most FX pairs and metals (H1 k=1,h=1: XAGUSD -0.077, GBPUSD -0.042, XAUUSD -0.039, GBPJPY -0.035; both halves); the
+  next-hour move after a 1-sd hour is 0.2-0.5 of one spread -> not tradeable; small moves revert, big moves continue
+  (raw Pearson positive). Indices: no robust H1 structure. (4) The 20:30-22:00 UTC FX / silver pattern and the M5
+  autocorrelation are bid / spread microstructure at the rollover, not an edge. First run's lag-grid "findings" were
+  crash hours (March 2020, SNB 2015, Brexit night) and weekend-gap returns; fixed (gap returns zeroed, Spearman,
+  winsorized). Conclusion: price-only time-series structure on these symbols is too small for retail costs.
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
