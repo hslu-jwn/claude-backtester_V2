@@ -1,15 +1,13 @@
-"""Chart page wiring of the MT5 fill (ROADMAP 7.5): the chart's own loading uses the chart
-adapter and days; backtests and the strategy trades overlay keep the plain histdata sources."""
+"""Chart page wiring of the day-by-day MT5 preference (rule of 2026-10-19): the chart reads
+through the same `SymbolSources` as backtests and the strategy overlays."""
 
 from __future__ import annotations
 
 from datetime import date
-from functools import partial
 
 import pytest
 from test_chart_feed import HIST_LEVEL, MT5_LEVEL, SYMBOL, feeds, put  # noqa: F401
 
-from backtester.ui import chart_data as cd
 from backtester.ui.chart_config import ChartConfig
 from backtester.ui.pages import chart
 
@@ -17,11 +15,8 @@ D = date.fromisoformat
 
 
 @pytest.fixture
-def wired(feeds, monkeypatch):  # noqa: F811
-    """The chart module's fill functions pointed at the temporary histdata / MT5 caches."""
-    sources, hist, mt5 = feeds
-    for name in ("chart_adapter", "chart_cached_days", "feed_switch"):
-        monkeypatch.setattr(chart, name, partial(getattr(cd, name), histdata_dir=hist, mt5_dir=mt5))
+def wired(feeds):  # noqa: F811
+    sources, _, _ = feeds
     chart._cached_replay.cache_clear()
     chart.chart_data.cache_clear()
     yield sources
@@ -29,26 +24,22 @@ def wired(feeds, monkeypatch):  # noqa: F811
     chart.chart_data.cache_clear()
 
 
-def test_chart_range_past_the_last_histdata_day_loads_mt5_days(wired):
+def test_chart_range_reads_mt5_where_it_has_the_day(wired):
     payload, message = chart.base_payload(wired, SYMBOL, "M1", "2026-10-02", "2026-10-05")
     assert payload is not None, message
     opens = payload["candles"]["o"]
-    assert len(opens) == 40  # 4 days x 10 minutes, MT5 copy of 10-03 not added
-    assert HIST_LEVEL <= min(opens) < HIST_LEVEL + 10  # histdata days
-    assert max(opens) >= MT5_LEVEL  # MT5 days after the last histdata day
+    assert len(opens) == 40  # 4 days x 10 minutes, each day once
+    assert HIST_LEVEL <= min(opens) < HIST_LEVEL + 10  # 10-02: histdata only
+    assert max(opens) >= MT5_LEVEL  # 10-03 on: MT5
 
 
-def test_chart_days_and_replay_feed_switch_include_mt5(wired):
-    days = chart.chart_cached_days(wired, SYMBOL)
-    assert D("2026-10-05") in days and D("2026-10-05") not in wired.cached_days(SYMBOL)
+def test_replay_feed_switch_is_the_first_mt5_day_after_histdata_only_days(wired):
     replay, _ = chart.load_replay(wired, SYMBOL, "M1", "2026-10-02", "2026-10-05")
     data = chart.chart_data(replay, chart.DEFAULT_SETTINGS, wired, ChartConfig())
-    assert (
-        data.feed_switch == chart.feed_switch(wired, SYMBOL) == D("2026-10-04")
-    )  # first MT5 day after histdata
+    assert data.feed_switch == wired.feed_switch(SYMBOL) == D("2026-10-03")
 
 
-def test_strategy_overlays_get_the_plain_histdata_sources(wired, monkeypatch):
+def test_strategy_overlays_get_the_same_sources(wired):
     seen = []
 
     class Fake:
@@ -63,5 +54,3 @@ def test_strategy_overlays_get_the_plain_histdata_sources(wired, monkeypatch):
     chart._cached_events.cache_clear()
     chart._cached_events(replay, Fake(), chart.DEFAULT_SETTINGS, wired)
     assert seen == [wired]
-    assert wired.cached_days(SYMBOL) == [D("2026-10-01"), D("2026-10-02"), D("2026-10-03")]
-    assert not isinstance(wired.adapter(SYMBOL), cd.FeedFillAdapter)

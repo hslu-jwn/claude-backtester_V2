@@ -124,6 +124,16 @@ XAUUSD, GBPUSD, GBPJPY, NAS100, US500 → histdata.com (`DEFAULT_SOURCES`; price
 symbol in `PRICE_DIGITS`).
 `--cache-dir` on `tools.check` / `tools.show` overrides it for a single run.
 
+**MT5 preferred, day by day (rule set by the user, 2026-10-19):** "We always prefer MT5 if we
+have it, but it doesn't go far enough into the past." For every histdata symbol
+`SymbolSources` has a preferred folder (`data/cache/mt5/`): a UTC day that exists in the MT5
+cache is read from MT5, a day only in the histdata cache from histdata (`PreferredCacheAdapter`;
+`cached_days` is the union). It applies to backtests, tools and the chart alike (the chart-only
+fill after the last histdata day was removed). Binance and MT5-only symbols are unchanged.
+MT5 index prices differ slightly from histdata's, so a small jump at the seam between the two
+feeds is expected (the chart marks the first MT5 day after the last histdata-only day).
+Research tools that name `MT5_CACHE_DIR` / `DEFAULT_CACHE_DIR` explicitly keep that one feed.
+
 ### histdata.com (backtest history, every symbol)
 
 - M1 files in MetaTrader format, per month (`DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, the

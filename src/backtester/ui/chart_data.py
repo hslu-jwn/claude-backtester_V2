@@ -17,7 +17,7 @@ replay), so the browser never gets anything that isn't known at the cursor:
   it to the payload at `frm` gives the payload at `to`.
 
 The payload also names the `feed_switch` day: the first day the chart shows MT5 bars instead of
-histdata ones for its symbol (`FeedFillAdapter` below), or None.
+histdata ones for its symbol (`SymbolSources.feed_switch`), or None.
 
 A box, line or hover area that runs to the cursor (an active zone, an open trade) is sent
 with `x1` null, "live": the browser draws it to its latest candle. So a replay step only
@@ -39,15 +39,10 @@ from collections import Counter, OrderedDict
 from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
-from pathlib import Path
 
 import pandas as pd
 
-from backtester.data.adapters.cache_adapter import CacheAdapter, cached_days
-from backtester.data.cache import DEFAULT_CACHE_DIR, MT5_CACHE_DIR, cache_path
 from backtester.data.resample import CALENDAR, calendar_label
-from backtester.data.sources import SymbolSources
-from backtester.data.update import last_cached_day
 from backtester.detectors.base import Event
 from backtester.engine.replay import Replay
 from backtester.ui.chart_config import DEFAULT_CONFIG, SESSION_LABELS, ChartConfig
@@ -296,76 +291,6 @@ class ChartData:
             badges[key] = [encode_badge(x) for x in after.badges]
         out.update(add=added, remove=removed, badges=badges)
         return out
-
-
-# --- chart-only feed: histdata, then MT5 after its last day (ROADMAP 7.5) ---------------------
-
-
-class FeedFillAdapter(CacheAdapter):
-    """Histdata days, and MT5 cache days for the days after the last histdata day. Only the
-    chart uses it: `SymbolSources` (backtests, tools) keeps reading one feed (data split rule).
-    A day file is read from exactly one folder, so no day is duplicated or overlapped; a
-    D / W / 4h candle spanning the switch day is built from both feeds."""
-
-    def __init__(self, histdata_dir: Path = DEFAULT_CACHE_DIR, mt5_dir: Path = MT5_CACHE_DIR):
-        super().__init__(histdata_dir)
-        self.mt5_dir = Path(mt5_dir)
-        self._mt5_days: dict[str, frozenset[date]] = {}
-
-    def mt5_days(self, symbol: str) -> frozenset[date]:
-        """MT5 cache days after the symbol's last histdata day (looked at once per adapter)."""
-        if symbol not in self._mt5_days:
-            last = last_cached_day(self.cache_dir, symbol)
-            after = [d for d in cached_days(symbol, self.mt5_dir) if last is None or d > last]
-            self._mt5_days[symbol] = frozenset(after)
-        return self._mt5_days[symbol]
-
-    def _path(self, symbol: str, day: date) -> Path:
-        if day in self.mt5_days(symbol):
-            return cache_path(self.mt5_dir, symbol, day)
-        return super()._path(symbol, day)
-
-
-def chart_adapter(
-    sources: SymbolSources,
-    symbol: str,
-    *,
-    histdata_dir: Path = DEFAULT_CACHE_DIR,
-    mt5_dir: Path = MT5_CACHE_DIR,
-) -> CacheAdapter:
-    """The adapter the chart reads `symbol` with: histdata + MT5 fill when the symbol's source
-    is the histdata cache, else the plain `sources.adapter(symbol)`."""
-    if sources.cache_dir(symbol) != Path(histdata_dir):
-        return sources.adapter(symbol)
-    return FeedFillAdapter(histdata_dir, mt5_dir)
-
-
-def chart_cached_days(
-    sources: SymbolSources,
-    symbol: str,
-    *,
-    histdata_dir: Path = DEFAULT_CACHE_DIR,
-    mt5_dir: Path = MT5_CACHE_DIR,
-) -> list[date]:
-    """Days the chart can show for `symbol` (histdata days, then the MT5 days after them)."""
-    days = sources.cached_days(symbol)
-    if sources.cache_dir(symbol) != Path(histdata_dir):  # not a histdata symbol: no fill
-        return days
-    return sorted({*days, *FeedFillAdapter(histdata_dir, mt5_dir).mt5_days(symbol)})
-
-
-def feed_switch(
-    sources: SymbolSources,
-    symbol: str,
-    *,
-    histdata_dir: Path = DEFAULT_CACHE_DIR,
-    mt5_dir: Path = MT5_CACHE_DIR,
-) -> date | None:
-    """First day the chart shows MT5 bars for `symbol`, or None (no fill)."""
-    adapter = chart_adapter(sources, symbol, histdata_dir=histdata_dir, mt5_dir=mt5_dir)
-    if not isinstance(adapter, FeedFillAdapter):
-        return None
-    return min(adapter.mt5_days(symbol), default=None)
 
 
 class _Index:

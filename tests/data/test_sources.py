@@ -144,3 +144,18 @@ def test_new_price_digits(symbol, digits):
     from backtester.data.sources import PRICE_DIGITS
 
     assert PRICE_DIGITS[symbol] == digits
+
+
+def test_runner_load_uses_mt5_days_when_histdata_has_none(tmp_path):
+    """XAUUSD case: histdata ends earlier, MT5 has the range (rule of 2026-10-19)."""
+    from backtester.runner import RunSettings, _load
+
+    hist, mt5 = tmp_path / "h", tmp_path / "m"
+    write_day(hist, "XAUUSD", "2021-01-04", 0.7)
+    for day in ("2025-01-06", "2025-01-07"):
+        write_day(mt5, "XAUUSD", day, 0.65)
+    sources = SymbolSources({"XAUUSD": hist}, {"XAUUSD": mt5})
+    job = _load(sources, "XAUUSD", date(2025, 1, 6), date(2025, 1, 7), RunSettings())
+    assert (job.first_day, job.last_day) == (date(2025, 1, 6), date(2025, 1, 7))
+    with pytest.raises(ValueError, match="no cached day"):
+        _load(sources, "XAUUSD", date(2023, 1, 1), date(2023, 1, 5), RunSettings())

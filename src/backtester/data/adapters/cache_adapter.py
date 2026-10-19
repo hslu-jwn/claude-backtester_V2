@@ -104,6 +104,20 @@ class CacheAdapter(DataAdapter):
         return candles[keep].reset_index(drop=True)
 
 
+class PreferredCacheAdapter(CacheAdapter):
+    """Reads a day from `preferred_dir` when that day file exists there, else from `cache_dir`.
+    A day file is read from exactly one folder, so days are never duplicated or overlapped;
+    D / W / 4h candles spanning a seam are built from both feeds."""
+
+    def __init__(self, cache_dir: str | Path, preferred_dir: str | Path):
+        super().__init__(cache_dir)
+        self.preferred_dir = Path(preferred_dir)
+
+    def _path(self, symbol: str, day: date) -> Path:
+        preferred = cache_path(self.preferred_dir, symbol, day)
+        return preferred if preferred.exists() else super()._path(symbol, day)
+
+
 def candles_from_frame(frame: pd.DataFrame) -> list[Candle]:
     """Rows of a `fetch_frame` result as `Candle`s."""
     return [
