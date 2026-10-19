@@ -32,6 +32,15 @@ class ChartConfig:
     early_refuse_factor: float = 1.5
     # timeframe switch (ROADMAP 4.0b): extra candles loaded left of the view (overlay warm-up)
     switch_warmup_candles: int = 100
+    # load while scrolling (user, 2026-10-19): when fewer than `extend_margin_screens` visible
+    # widths (at least `extend_margin_min` candles) of loaded candles are left beyond the view's
+    # edge, the next `extend_candles` (estimated, every minute traded) are loaded
+    extend_candles: int = 6000
+    extend_margin_screens: float = 1.0
+    extend_margin_min: int = 100
+    # loading bar: percent shown once the request is sent / the candles have arrived
+    progress_sent: int = 10
+    progress_received: int = 60
     y_padding: float = 0.05  # fraction of the visible high-low range added above and below
     replay_window: int = 1500  # the replay span shows at most this many candles left of the cursor
     replay_visible: int = 120  # candles shown left of the cursor after each replay step

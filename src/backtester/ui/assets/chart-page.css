@@ -63,7 +63,6 @@ body:has(.ch-page) {
   border-radius: 6px;
 }
 .ch-page .tb-btn:hover,
-.ch-page .tb-range:hover,
 .ch-page .tb-menu-item:hover,
 .ch-page .tb-replay button:hover {
   background: var(--hover);
@@ -148,28 +147,12 @@ body:has(.ch-page) {
   color: var(--text);
 }
 .ch-page .tb-goto,
-.ch-page .tb-dates input,
-.ch-page .tb-dates .dash-datepicker-input,
 .ch-page .dash-datepicker,
 .ch-page .dash-datepicker input,
 .ch-page .dash-dropdown-focus-target {
   border: 1px solid var(--line2);
   border-radius: 6px;
   background: var(--bg);
-  color: var(--text);
-}
-.ch-page .tb-dates .dash-datepicker-input-wrapper {
-  border-color: var(--line2);
-  background: var(--bg);
-}
-.ch-page .tb-dates .dash-datepicker-range-arrow {
-  color: var(--muted);
-}
-.ch-page .tb-range {
-  color: var(--muted);
-  border-radius: 6px;
-}
-.ch-page .tb-range:hover {
   color: var(--text);
 }
 
@@ -520,4 +503,42 @@ body:has(.ch-page) .dash-dropdown-search {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 260px;
+}
+
+/* loading bar at the top of the chart pane (chart.js, 0-100 %) */
+.ch-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 20;
+  background: rgba(11, 18, 32, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+.ch-bar.on {
+  opacity: 1;
+  transition: none;
+}
+.ch-bar-fill {
+  width: 0;
+  height: 100%;
+  background: var(--blue);
+  box-shadow: 0 0 6px rgba(79, 140, 255, 0.8);
+  transition: width 0.2s linear;
+}
+.ch-bar-pct {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 10px;
+}
+.ch-bar-pct:empty {
+  display: none;
 }

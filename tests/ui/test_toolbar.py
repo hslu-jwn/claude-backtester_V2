@@ -11,7 +11,13 @@ from dash import no_update
 from backtester.data.sources import SymbolSources
 from backtester.ui import app as app_module
 from backtester.ui.pages import chart
-from backtester.ui.pages.chart import poll_backtest, quick_range, start_backtest, timeframe_label
+from backtester.ui.pages.chart import (
+    poll_backtest,
+    progress_percent,
+    quick_range,
+    start_backtest,
+    timeframe_label,
+)
 
 SEP = [date(2026, 9, 1) + timedelta(days=i) for i in range(30)]  # 09-01 .. 09-30
 
@@ -111,3 +117,26 @@ def test_zoom_buttons_and_the_go_to_field():
     page = str(chart.layout(SymbolSources({})))
     for id_ in ("tb-zoom", "tb-zoom-reset", "chart-goto-input", "chart-goto"):
         assert f"'{id_}'" in page
+
+
+def test_bottom_bar_has_no_range_buttons_or_date_picker():
+    """User, 2026-10-19: the loaded days come from the last-month default, scrolling and
+    "Go to"; the quick ranges, the calendar icon and the date picker are gone."""
+    page = str(chart.layout(SymbolSources({})))
+    for k in ("1M", "3M", "6M", "YTD", "1Y", "All"):
+        assert f"'range-{k}'" not in page
+    assert "DatePickerRange(id='chart-dates'" not in page and "icon-calendar" not in page
+    assert "chart-goto-input" in page and "chart-message" in page and "'UTC'" in page
+    assert "DatePickerRange(id='bt-dates'" in page  # the backtest popover keeps its own days
+
+
+def test_loading_bar_is_at_the_top_of_the_chart_pane():
+    page = chart.layout(SymbolSources({}))
+    pane = page.children[1].children[0].children[0]  # ch-chartcol -> tb-chart
+    assert "chart-bar" in str(pane.children) and "chart-lwc" in str(pane.children)
+
+
+def test_progress_percent_of_a_backtest():
+    assert progress_percent(250, 1000) == "25%" and progress_percent(1, 3) == "33%"
+    assert progress_percent(0, 0) == "0%"  # still loading candles
+    assert progress_percent(1200, 1000) == "100%"  # never over 100

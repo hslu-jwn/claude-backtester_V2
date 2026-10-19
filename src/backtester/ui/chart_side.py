@@ -1,4 +1,4 @@
-"""Side panel of the chart page (ROADMAP 7.4): Backtest result, Overlays, Trades in view.
+"""Side panel of the chart page (ROADMAP 7.4): Backtest result and Trades in view.
 
 Pure helpers (tested in `tests/ui/test_chart_side.py`) and the panel's layout; the callbacks
 live in `pages/chart.py`. Numbers come from the newest run's files through the results page's
@@ -6,8 +6,8 @@ own readers and `analytics/metrics.py` `summarize` (nothing is computed twice).
 
 - **Backtest result**: the newest run in `results/` (`newest_run`), its net R, win rate, trades
   and max drawdown in R, the run id and a link to its results page. No run: "No backtest yet".
-- **Overlays**: the overlay switches (same ids as before: `chart-overlays`,
-  `chart-overlay-types`, `chart-overlay-summary`), no longer in the toolbar.
+- The overlay switches are not here: they sit in the Settings popover (`pages/chart.py`
+  `overlay_controls`, user 2026-10-19).
 - **Trades in view**: the newest run's trades of the shown symbol whose entry candle is inside
   the visible range (`trades_in_view`); a click on one goes to it (`chart-goto`).
 """
@@ -22,7 +22,6 @@ from dash import dcc, html
 
 from backtester.analytics.metrics import summarize
 from backtester.analytics.records import TradeRecord, read_trades
-from backtester.ui import overlays
 from backtester.ui.pages import results
 
 MAX_LISTED = 40  # trades listed in the card; more are counted ("+N more: zoom in")
@@ -201,31 +200,6 @@ def trades_body(found: list[TradeRecord], has_run: bool = True) -> list:
     return items
 
 
-def overlays_body() -> list:
-    """The overlay switches: the master switch and one switch per overlay type."""
-    return [
-        dcc.Checklist(
-            id="chart-overlays",
-            options=[{"label": "Show overlays", "value": "on"}],
-            value=[],
-            persistence=True,
-            className="ch-switches ch-master",
-        ),
-        dcc.Checklist(
-            id="chart-overlay-types",
-            options=overlays.overlay_options(enabled=False),
-            value=[],
-            persistence=True,
-            className="ch-switches ch-types",
-        ),
-        html.Div(
-            "Overlay types" if overlays.OVERLAYS else "No overlay types yet",
-            id="chart-overlay-summary",
-            className="ch-note",
-        ),
-    ]
-
-
 def collapsed_after(clicks: int | None, collapsed: bool | None) -> bool:
     """The panel's collapsed state after a click on its toggle (a first call is no click)."""
     return (not collapsed) if clicks else bool(collapsed)
@@ -240,7 +214,6 @@ def panel(summary: dict | None) -> html.Div:
     return html.Div(
         [
             _card("Backtest result", result_body(summary), "ch-card-result"),
-            _card("Overlays", overlays_body(), "ch-card-overlays"),
             _card(
                 "Trades in view",
                 html.Div(trades_body([], summary is not None), id="side-trades"),

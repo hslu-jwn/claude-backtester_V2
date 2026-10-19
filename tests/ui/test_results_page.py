@@ -15,7 +15,7 @@ from backtester.data.sources import SymbolSources
 from backtester.runner import TRADE_COLUMNS
 from backtester.ui import app as app_module
 from backtester.ui.pages import results
-from backtester.ui.pages.chart import date_limits, focus_from_query, focus_selection
+from backtester.ui.pages.chart import focus_from_query, focus_selection, initial_dates
 
 RUN = "20261008-120000_XAUUSD-GBPUSD"
 
@@ -139,12 +139,10 @@ def test_chart_focus_selects_symbol_days_and_the_trades_overlay():
     assert focus_selection({**focus, "done": True}, []) is None  # applied once
     assert focus_selection(None, []) is None
     days = [date(2026, 9, d) for d in range(1, 11)]
-    assert date_limits(days, "GBPUSD", focus)[3:5] == ("2026-09-03", "2026-09-04")
-    assert date_limits(days, "XAUUSD", focus)[3:5] == ("2026-09-01", "2026-09-10")
-    assert date_limits(days, "GBPUSD", {**focus, "done": True})[3:5] == (
-        "2026-09-01",
-        "2026-09-10",
-    )
+    assert initial_dates(days, "GBPUSD", focus) == ("2026-09-03", "2026-09-04")
+    assert initial_dates(days, "XAUUSD", focus) == ("2026-09-01", "2026-09-10")
+    assert initial_dates(days, "GBPUSD", {**focus, "done": True}) == ("2026-09-01", "2026-09-10")
+    assert initial_dates([], "GBPUSD", focus) is None
 
 
 def test_bad_focus_queries_are_ignored():

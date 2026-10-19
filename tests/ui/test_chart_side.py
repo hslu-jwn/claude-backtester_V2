@@ -170,23 +170,44 @@ def ids_in(component) -> list[str]:
     return found
 
 
-def test_layout_has_the_side_panel_and_the_overlay_switches_only_there(tmp_path):
+def popover_ids(page, popover_id: str) -> list[str]:
+    def find(c):
+        if c is None or isinstance(c, (str, int, float)):
+            return None
+        if isinstance(c, (list, tuple)):
+            return next((f for x in c if (f := find(x)) is not None), None)
+        if getattr(c, "id", None) == popover_id:
+            return c
+        return find(getattr(c, "children", None))
+
+    return ids_in(find(page))
+
+
+def test_layout_has_the_side_panel_without_overlays_and_overlays_in_the_settings(tmp_path):
+    """User, 2026-10-19: the Overlays card moved into the Settings popover (same ids)."""
     page = chart.layout(SymbolSources({}), results_dir=tmp_path)
     toolbar, main = page.children[0], page.children[1]
     side = main.children[-1]
     side_ids = set(ids_in(side))
-    assert {"chart-overlays", "chart-overlay-types", "chart-overlay-summary", "side-trades"} <= (
-        side_ids
-    )
-    assert {"ch-card-result", "ch-card-overlays", "ch-card-trades"} <= side_ids
+    assert "side-trades" in side_ids and "ch-card-overlays" not in side_ids
+    assert {"ch-card-result", "ch-card-trades"} <= side_ids
+    assert not side_ids & {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"}
     assert "chart-lwc" in ids_in(main) and "chart-lwc" not in side_ids
-    # no overlay switch left in the toolbar (settings popover included)
+    settings = set(popover_ids(page, "pop-settings"))
+    assert {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"} <= settings
+    assert {"chart-sessions", "chart-day-boundary", "chart-filters"} <= settings
     tb_ids = set(ids_in(toolbar))
-    assert not tb_ids & {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"}
     assert "chart-sessions" in tb_ids and "side-toggle" in tb_ids
     all_ids = ids_in(page)
     assert len(all_ids) == len(set(all_ids))  # every id once
     assert "chart-range" in all_ids and "side-collapsed" in all_ids
+
+
+def test_settings_popover_has_a_chart_settings_and_a_chart_overlays_section():
+    text = str(chart.layout(SymbolSources({})))
+    assert "Chart Settings" in text and "Chart Overlays" in text
+    assert text.index("Chart Settings") < text.index("Chart Overlays")
+    assert "Show overlays" in text
 
 
 def test_side_panel_shows_the_newest_run(tmp_path):
@@ -199,7 +220,7 @@ def test_side_panel_shows_the_newest_run(tmp_path):
 def test_overlay_switch_options_cover_every_overlay_type():
     from backtester.ui.overlays import OVERLAYS
 
-    values = {o["value"] for o in chart_side.overlays_body()[1].options}
+    values = {o["value"] for o in chart.overlay_controls()[1].options}
     assert set(OVERLAYS) <= values
 
 

@@ -186,3 +186,25 @@ def test_new_york_4h_candles_span_utc_midnight_and_need_both_days(tmp_path):
     assert (row.open, row.high, row.close) == (100.0, 102.0, 101.0)  # 22:30 + next day 01:30
     utc_aligned = adapter.fetch_frame("XAUUSD", Timeframe.H4, ts(1, 0), ts(4, 0))
     assert utc_aligned.ts.tolist()[0] == pd.Timestamp("2026-09-01 00:00", tz="UTC")
+
+
+def test_cached_days_list_is_remembered_until_the_folder_changes(cache, monkeypatch):
+    """The chart asks for the day list on every callback: the folder is listed once and again
+    only after a day was added (e.g. by "Update data") or a new year folder appeared."""
+    from backtester.data.adapters import cache_adapter
+
+    scans = []
+    real = cache_adapter._scan_days
+    monkeypatch.setattr(cache_adapter, "_scan_days", lambda *a: scans.append(a) or real(*a))
+    first = cached_days("XAUUSD", cache)
+    assert cached_days("XAUUSD", cache) == first and len(scans) == 1
+    first.append(date(1999, 1, 1))  # a caller changing its list never changes the cache
+    assert date(1999, 1, 1) not in cached_days("XAUUSD", cache)
+
+    write_day(cache, date(2026, 9, 4), empty_cache_frame())  # new day in a known year
+    assert cached_days("XAUUSD", cache)[-1] == date(2026, 9, 4) and len(scans) == 2
+    write_day(cache, date(2027, 1, 4), empty_cache_frame())  # new year folder
+    assert cached_days("XAUUSD", cache)[-1] == date(2027, 1, 4) and len(scans) == 3
+    assert cached_days("GBPUSD", cache) == []  # a symbol without a folder, then one with
+    write_day(cache, date(2026, 9, 2), empty_cache_frame(), symbol="GBPUSD")
+    assert cached_days("GBPUSD", cache) == [date(2026, 9, 2)]

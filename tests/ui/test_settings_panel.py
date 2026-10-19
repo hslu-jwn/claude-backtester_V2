@@ -172,3 +172,17 @@ def test_panel_has_a_bounded_number_of_widgets_and_costs_only_for_the_strategy_s
     cost_symbols = {p.split(".")[3] for p in paths if p.startswith("engine.costs.symbols.")}
     assert cost_symbols == set(sp.PANEL_COST_SYMBOLS)
     assert len(RunSettings().engine.costs.symbols) > len(cost_symbols)
+
+
+def test_dialog_is_built_with_its_values_and_row_classes_so_page_load_changes_nothing():
+    """The ~200 widgets start on their defaults and rows hidden unless the default strategy
+    shows them, so the first settings callback has nothing to push (a page with ~200 changed
+    wildcard props took the Dash renderer ~30 s to start), and reset buttons have no ids."""
+    text = str(sp.layout())
+    assert "'type': 'st-reset'" not in text and "data-path=" in text
+    fields = {wp: leaf for wp, leaf, _ in sp.panel_fields()}
+    assert fields and all(
+        sp.initial_row_class(wp) in ("st-row", "st-row st-hidden") for wp in fields
+    )
+    shown = [wp for wp in fields if sp.initial_row_class(wp) == "st-row"]
+    assert shown and len(shown) < len(fields)  # other strategies' rows start hidden

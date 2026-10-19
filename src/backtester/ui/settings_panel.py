@@ -24,10 +24,11 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from dash import ALL, Dash, Input, Output, State, ctx, dcc, html, no_update
+from dash import ALL, ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from backtester.core.models import Timeframe
 from backtester.data.resample import supported
@@ -642,27 +643,32 @@ def preset_controls() -> list:
 def _widget(leaf: Leaf, widget_path: str):
     id_ = {"type": "st-field", "path": widget_path}
     owner = widget_path.partition(":")[0] if ":" in widget_path else DEFAULT_STRATEGY
+    start = to_widget(leaf.kind, leaf.default) if leaf.default is not None else None
     if leaf.kind == "bool":
         return dcc.Checklist(
-            id=id_, options=[{"label": "", "value": "on"}], value=[], className="st-switch"
+            id=id_, options=[{"label": "", "value": "on"}], value=start, className="st-switch"
         )
     if leaf.kind == "enum":
         return dcc.Dropdown(
             id=id_,
             options=options_of(leaf, owner),
+            value=start,
             clearable=False,
             searchable=False,
             className="st-dd",
         )
     if leaf.kind == "enum_set":
-        return dcc.Checklist(id=id_, options=options_of(leaf, owner), value=[], className="st-set")
+        return dcc.Checklist(
+            id=id_, options=options_of(leaf, owner), value=start or [], className="st-set"
+        )
     if leaf.kind in ("time", "text", "float_list"):
-        return dcc.Input(id=id_, type="text", debounce=True, className="st-input")
+        return dcc.Input(id=id_, type="text", value=start, debounce=True, className="st-input")
     optional = leaf.kind.startswith("optional_")
     return dcc.Input(
         id=id_,
         type="number",
         step="any",
+        value=start,
         debounce=True,
         placeholder="off" if optional else "",
         className="st-input",
@@ -695,15 +701,27 @@ def _row(leaf: Leaf, widget_path: str) -> html.Div:
             html.Div(_widget(leaf, widget_path), className="st-control"),
             html.Button(
                 "↺",
-                id={"type": "st-reset", "path": widget_path},
                 title=f"Reset to default ({_default_text(leaf)})",
                 className="st-reset",
-                n_clicks=0,
+                # no id: 200+ wildcard inputs made the Dash renderer take ~30 s to start the
+                # page; assets/settings.js reports a click in the one store `st-reset-click`
+                **{"data-path": widget_path},
             ),
         ],
         id={"type": "st-row", "path": widget_path},
-        className="st-row",
+        className=initial_row_class(widget_path),
     )
+
+
+@lru_cache(maxsize=1)
+def _owners() -> dict[str, set[str]]:
+    return {wp: o for wp, _, o in panel_fields()}
+
+
+def initial_row_class(widget_path: str) -> str:
+    """The class a row is built with: hidden unless the default strategy shows it (what
+    `row_classes` gives at page load, so that call can leave those rows alone)."""
+    return "st-row" + ("" if DEFAULT_STRATEGY in _owners().get(widget_path, ()) else " st-hidden")
 
 
 def _section_help_of(path: str) -> str:
@@ -848,9 +866,15 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         State({"type": "st-group-body", "group": ALL}, "id"),
     )
 
+    app.clientside_callback(
+        ClientsideFunction("settings", "apply"),
+        Output("st-status", "title"),
+        Input("st-apply", "data"),
+        prevent_initial_call=True,
+    )
+
     @app.callback(
-        Output({"type": "st-field", "path": ALL}, "value"),
-        Output({"type": "st-row", "path": ALL}, "className"),
+        Output("st-apply", "data"),
         Output("settings-current", "data"),
         Output("st-status", "children"),
         Output("st-preset", "options"),
@@ -862,7 +886,7 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         Output("st-group", "value"),
         Output("st-title", "children"),
         Input({"type": "st-field", "path": ALL}, "value"),
-        Input({"type": "st-reset", "path": ALL}, "n_clicks"),
+        Input("st-reset-click", "data"),
         Input("st-reset-all", "n_clicks"),
         Input("st-preset", "value"),
         Input("bt-preset", "value"),
@@ -891,13 +915,22 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         options = preset_options(result["presets"])
         note = "Modified, not saved (see Settings…)." if result["modified"] else ""
         groups = list(grouped(strategy_leaves(now)))
-        shown = [
-            no_update if new is None or not own else new.get(real_path(wp), no_update)
-            for wp, own in zip(widget_paths, mine, strict=True)
-        ]
+        # What the dialog's widgets must show now. Not outputs of this callback: ~200 wildcard
+        # outputs made the Dash renderer take ~30 s to start the page. `assets/settings.js` sets
+        # them (only what differs: widgets whose value is already shown, rows already in class).
+        apply = {
+            "values": {
+                wp: new[real_path(wp)]
+                for wp, own, current in zip(widget_paths, mine, values, strict=True)
+                if new is not None
+                and own
+                and real_path(wp) in new
+                and new[real_path(wp)] != current
+            },
+            "classes": dict(zip(widget_paths, classes, strict=True)),
+        }
         return (
-            shown,
-            classes,
+            apply,
             result["store"] if result["store"] is not None else no_update,
             status_text(result),
             options,
@@ -934,6 +967,6 @@ def _trigger():
         return {"strategy": ctx.triggered[0]["value"]}
     if isinstance(tid, str) and tid.removeprefix("st-") in PRESET_ACTIONS:
         return tid.removeprefix("st-")
-    if isinstance(tid, Mapping) and tid.get("type") == "st-reset":
-        return {"reset": tid["path"]}
+    if tid == "st-reset-click":
+        return {"reset": ctx.triggered[0]["value"]["path"]}
     return "field"

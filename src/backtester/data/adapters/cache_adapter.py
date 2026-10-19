@@ -17,6 +17,7 @@ are ever cached, so every candle returned is closed.
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -163,11 +164,38 @@ def available_symbols(cache_dir: str | Path = DEFAULT_CACHE_DIR) -> list[str]:
     return sorted(p.name for p in root.iterdir() if p.is_dir() and any(p.glob("*/*.parquet")))
 
 
+_DAY_LISTS: dict[tuple[str, str], tuple[tuple, tuple[date, ...]]] = {}
+
+
+def _signature(symbol_dir: Path) -> tuple:
+    """Every year folder's name and modification time: it changes when a day file is added."""
+    try:
+        with os.scandir(symbol_dir) as entries:
+            return tuple(sorted((e.name, e.stat().st_mtime_ns) for e in entries if e.is_dir()))
+    except OSError:
+        return ()
+
+
+def _scan_days(symbol_dir: Path) -> tuple[tuple, tuple[date, ...]]:
+    signature = _signature(symbol_dir)  # taken first: a day added meanwhile triggers a rescan
+    days = []
+    for year, _ in signature:
+        with os.scandir(symbol_dir / year) as files:  # scandir: much faster than glob
+            days += [date.fromisoformat(f.name[:-8]) for f in files if f.name.endswith(".parquet")]
+    return signature, tuple(sorted(days))
+
+
 def cached_days(symbol: str, cache_dir: str | Path = DEFAULT_CACHE_DIR) -> list[date]:
-    """Days cached for `symbol`, oldest first. Days cached as empty count as cached."""
-    return sorted(
-        date.fromisoformat(p.stem) for p in (Path(cache_dir) / symbol).glob("*/*.parquet")
-    )
+    """Days cached for `symbol`, oldest first. Days cached as empty count as cached.
+    Listing years of day files takes ~0.1 s and the chart asks on every callback, so the list is
+    kept in memory and read again only when a year folder changed (a day was added)."""
+    symbol_dir = Path(cache_dir) / symbol
+    key = (str(symbol_dir), symbol)
+    kept = _DAY_LISTS.get(key)
+    if kept is not None and _signature(symbol_dir) == kept[0]:
+        return list(kept[1])
+    _DAY_LISTS[key] = found = _scan_days(symbol_dir)
+    return list(found[1])
 
 
 def latest_run(days: list[date]) -> tuple[date, date] | None:

@@ -266,23 +266,8 @@ body {
 }
 
 /* bottom bar */
-.tb-range {
-  padding: 3px 7px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--tb-text);
-  font-size: 13px;
-  cursor: pointer;
-}
-.tb-range:hover {
-  background: var(--tb-hover);
-}
 .tb-cal-icon {
   margin-right: 4px;
-}
-.tb-dates {
-  font-size: 12px;
 }
 .tb-message {
   flex: 1 1 auto;

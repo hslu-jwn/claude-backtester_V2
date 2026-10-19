@@ -348,7 +348,8 @@ def test_chart_page_sweep_controls_moved_into_the_settings():
     assert {"chart-sweep-tol", "chart-sweep-cancel", "chart-sweep-n", "chart-sweep-top",
             "chart-sweep-tweak"} <= ids  # fmt: skip
     text = text_of(page)
-    assert text.count('"type": "Details"') == 1 and "Account connection" not in text
+    # two collapsible blocks in the Settings popover: Chart Settings and Chart Overlays
+    assert text.count('"type": "Details"') == 2 and "Account connection" not in text
 
 
 def _nested_lists(node, path="root") -> list[str]:

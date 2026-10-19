@@ -22,6 +22,7 @@
   const FOCUS_AFTER = 30; // ... and after its exit
   const GOTO_MAX_VISIBLE = 500; // "Go to" keeps the zoom up to this many visible candles ...
   const GOTO_VISIBLE = 120; // ... else shows this many
+  const EXTEND_DEBOUNCE_MS = 120; // wait for the pan / zoom to settle before asking for more
   const DETAIL_PX = 3;// narrower candles: no markers / labels (unreadable, slow to draw)
   const DASHES = { solid: [], dot: [3, 3], dash: [9, 9] }; // Plotly's patterns at width 1
   const KIND_ORDER = { bf: 0, bo: 1, l: 2, m: 3, t: 4 }; // fills, outlines, lines, markers, labels
@@ -42,6 +43,8 @@
     span: null,         // replay span {left, right} in minutes
     spanTimer: null, viewTimer: null, rangeTimer: null, nonce: 0,
     drawn: {},          // performance.now() when each payload kind was last applied
+    asked: new Set(),   // "key|side" of the edge loads already requested for this range
+    extendTimer: null,
   };
 
   // --- helpers ------------------------------------------------------------------------
@@ -87,6 +90,75 @@
   function invalidate() {
     S.sorted = null;
     if (S.prim && S.prim.requestUpdate) S.prim.requestUpdate();
+  }
+
+  // --- loading bar ----------------------------------------------------------------------
+  /* A thin bar at the top of the chart pane (#chart-bar), 0-100 %. Chart load: one server
+     request, so staged: request sent (cfg.progress_sent), candles received
+     (cfg.progress_received), overlays drawn (100); between the stages it creeps slowly
+     towards the next one. A backtest shows its real percent instead (P.bt). */
+  const BAR_CREEP_MS = 150; // creep step
+  const BAR_CREEP_SHARE = 0.06; // share of the remaining way covered per step
+  const BAR_STAGE_CAP = 0.92; // the creep stops at this share of the way to the next stage
+  const BAR_GIVE_UP_MS = 30000; // a load that never reports back hides the bar
+  const BAR_HOLD_MS = 250; // the full bar stays this long, then fades out
+  const BAR_FADE_MS = 350;
+  const P = { stage: null, pct: 0, cap: 0, bt: null, creep: null, giveUp: null, hide: null };
+
+  function barDraw(pct, on) {
+    const bar = document.getElementById("chart-bar");
+    const fill = document.getElementById("chart-bar-fill");
+    if (!bar || !fill) return;
+    clearTimeout(P.hide);
+    const shown = pct > 0 || on;
+    fill.style.transition = pct < (parseFloat(fill.style.width) || 0) ? "none" : ""; // never back
+    fill.style.width = Math.max(0, Math.min(pct, 100)) + "%";
+    bar.classList.toggle("on", on && shown);
+    const label = document.getElementById("chart-bar-pct");
+    if (label) label.textContent = on ? Math.round(pct) + " %" : "";
+  }
+
+  function barStop() {
+    clearInterval(P.creep);
+    clearTimeout(P.giveUp);
+    P.creep = P.giveUp = null;
+  }
+
+  /* Go to stage `pct`; the creep then runs slowly towards `next` (the following stage). */
+  function barStage(stage, pct, next) {
+    barStop();
+    P.stage = stage; P.pct = pct;
+    if (P.bt === null) barDraw(pct, true);
+    P.creep = setInterval(() => {
+      const top = pct + (next - pct) * BAR_STAGE_CAP;
+      if (P.pct < top) {
+        P.pct += (top - P.pct) * BAR_CREEP_SHARE;
+        if (P.bt === null) barDraw(P.pct, true);
+      }
+    }, BAR_CREEP_MS);
+    P.giveUp = setTimeout(barDone, BAR_GIVE_UP_MS);
+  }
+
+  function barDone() {
+    barStop();
+    if (P.stage === null) return;
+    P.stage = null;
+    if (P.bt !== null) return; // a backtest owns the bar
+    barDraw(100, true);
+    P.hide = setTimeout(() => {
+      const bar = document.getElementById("chart-bar");
+      if (bar) bar.classList.remove("on"); // fades out
+      P.hide = setTimeout(() => barDraw(0, false), BAR_FADE_MS);
+    }, BAR_HOLD_MS);
+  }
+
+  function barLoading() { // the request for new candles is on its way
+    const cfg = S.cfg || { progress_sent: 10, progress_received: 60 };
+    barStage("loading", cfg.progress_sent, cfg.progress_received);
+  }
+
+  function barReceived() { // candles are in; overlays may follow
+    barStage("overlays", S.cfg.progress_received, 100);
   }
 
   // --- drawing primitive --------------------------------------------------------------
@@ -370,6 +442,8 @@
       if (!S.replay && range) { // the server needs it to load the days of a timeframe switch
         clearTimeout(S.viewTimer);
         S.viewTimer = setTimeout(() => setProps("chart-viewport", { data: viewNow() }), 250);
+        clearTimeout(S.extendTimer);
+        S.extendTimer = setTimeout(maybeExtend, EXTEND_DEBOUNCE_MS);
       }
       if (!S.replay || S.picking || !range) return;
       clearTimeout(S.spanTimer);
@@ -427,6 +501,30 @@
     const i0 = Math.min(Math.max(Math.round(range.from), 0), n - 1);
     const i1 = Math.min(Math.max(Math.round(range.to), 0), n - 1);
     setProps("chart-range", { data: { symbol: S.symbol, from: S.times[i0], to: S.times[i1] + S.tfmin * 60 } });
+  }
+
+  /* Load more days while scrolling (user, 2026-10-19): when fewer than a margin of candles are
+     left beyond the view's left / right edge, ask the server for the next chunk of days (store
+     chart-more). The margin is the visible width (cfg.extend_margin_screens), at least
+     extend_margin_min candles and at most half a chunk (so a very wide view doesn't keep
+     loading). One request per range and side: if the server has no more days nothing changes
+     and the same edge is not asked again; a new range (key) asks again. */
+  function maybeExtend() {
+    if (S.replay || S.picking || !S.chart || !S.key || !S.times.length) return;
+    const range = S.chart.timeScale().getVisibleLogicalRange();
+    if (!range) return;
+    const cfg = S.cfg;
+    const margin = Math.min(
+      Math.max((range.to - range.from) * cfg.extend_margin_screens, cfg.extend_margin_min),
+      cfg.extend_candles / 2
+    );
+    const n = S.times.length;
+    const side = range.from < margin ? "left" : range.to > n - 1 - margin ? "right" : null;
+    if (!side) return;
+    const ask = S.key + "|" + side;
+    if (S.asked.has(ask)) return;
+    S.asked.add(ask);
+    setProps("chart-more", { data: { key: S.key, side, view: viewNow(), n: ++S.nonce } });
   }
 
   /* Centre the chart on time `v.center` with `v.count` candles visible; prices auto-fit. */
@@ -701,6 +799,7 @@
       base(payload, cfg) {
         if (!payload) {
           if (S.chart) { S.series.setData([]); clearDrawings(); S.key = null; S.sessions = []; invalidate(); }
+          barDone();
           return null;
         }
         if (!ensureChart(cfg)) return no();
@@ -709,8 +808,10 @@
         S.series.priceScale().setAutoScale(true);
         // a timeframe switch outside replay keeps the centre time and the candle count
         const before = S.key && !S.replay && !payload.replay ? viewNow() : null;
-        const keep = before && before.symbol === payload.symbol && before.tf !== payload.tf;
+        // (also for more days of the same timeframe: the days were extended while scrolling)
+        const keep = before && before.symbol === payload.symbol;
         S.cfg = cfg;
+        if (S.key !== payload.key) S.asked = new Set();
         S.key = payload.key;
         S.symbol = payload.symbol; S.tf = payload.tf; S.tfmin = payload.tfmin;
         S.digits = payload.digits; S.replay = payload.replay; S.picking = payload.picking;
@@ -733,6 +834,7 @@
         view();
         reportRange();
         S.drawn.base = performance.now();
+        barReceived(); // the selection callback finishes the bar if no overlays are needed
         return null; // the selection callback sends the overlay request
       },
 
@@ -750,7 +852,28 @@
         showBadges();
         invalidate();
         const req = need(wanted());
+        if (req) { if (P.stage === null) barReceived(); } // overlays on their way
+        else if (P.stage === "overlays") barDone();
         return req || no();
+      },
+
+      /* The chart inputs changed (symbol, timeframe, days, ...): a new base is requested. */
+      loading() {
+        if (P.stage !== "loading") barLoading();
+        return no();
+      },
+
+      /* Backtest progress (width of the toolbar's bar, "37%"); no job = finished. */
+      backtest(style, job) {
+        const width = style && style.width ? parseFloat(style.width) : NaN;
+        if (!job || Number.isNaN(width)) {
+          P.bt = null;
+          if (P.stage === null) barDraw(0, false);
+          return no();
+        }
+        P.bt = width;
+        barDraw(width, true);
+        return no();
       },
 
       /* Overlay payload (full drawings of some types at a cursor). */
@@ -772,6 +895,7 @@
         view();
         S.drawn.overlays = performance.now();
         const req = need(wanted()); // a type ticked while this one was on its way
+        if (!req) barDone();
         return req || no();
       },
 

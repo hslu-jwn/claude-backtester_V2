@@ -1115,6 +1115,14 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   `chart-page.css`); newest run = newest `YYYYMMDD-HHMMSS` run id. Open polish: "Updated …" text overlaps the
   button on narrow windows; dashed "MT5" marker at the feed switch not drawn; replay bar and ⚙ dialog on the dark
   page not checked visually.
+- **7.6 Chart page: fast load, load on scroll, overlays in Settings, loading bar** (user 2026-10-19, built, to be
+  checked by the user): the day lists of the caches are kept in memory and read again only when a year folder
+  changed (`cache_adapter.cached_days`; the 28-symbol page build took 5 s of directory listing, every callback
+  0.1 s more); the chart loads the next days while scrolling (`extend_dates`, chunk `ChartConfig.extend_candles`,
+  not in replay, the view keeps its time and zoom); the quick ranges, calendar icon and date picker are removed
+  (last month on open, scrolling, "Go to", trade focus from the URL; store `chart-dates`); the overlay switches
+  moved from the side panel into the ⚙ Settings popover ("Chart Settings" and "Chart Overlays", same ids); a thin
+  0-100 % bar at the top of the chart pane shows chart loads (staged) and backtests (real percent).
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 

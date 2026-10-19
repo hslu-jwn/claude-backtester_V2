@@ -9,10 +9,16 @@ or replay mode); `chart-ovl` = the drawings of the overlay types the browser ask
 next. Showing / hiding overlays, sub-entries and session lines happens in the browser.
 
 Pick symbol (every symbol of `SymbolSources` with cached days, each read from its own
-source's cache, `data/sources.py`), timeframe and a date range (UTC days, both
-inclusive, limited to cached days). A range touching a day that was never imported shows
-the `MissingCacheError` instead of a chart, so gaps in the cache are never silent.
-Zooming or panning is the library's; the price axis fits the visible candles.
+source's cache, `data/sources.py`) and timeframe. The shown days (store `chart-dates`
+{start, end}, UTC days, both inclusive, limited to cached days) start as the last month of
+the symbol and grow while scrolling (user, 2026-10-19): when the view comes near the left or
+right edge of the loaded candles the browser asks for more (`chart-more`), `extend_dates` adds
+a chunk of days there (never across a hole in the cache, at most `max_candles`, not in
+replay) and the chart reloads around the same time and zoom, overlays included. "Go to", a
+timeframe switch and a trade focus load their days too. A range touching a day that was never
+imported shows the `MissingCacheError` instead of a chart, so gaps in the cache are never
+silent. Zooming or panning is the library's; the price axis fits the visible candles.
+A thin bar at the top of the chart pane shows loads (staged) and backtests (percent).
 
 Replay (ROADMAP.md › 1.2): "Replay" first shows the full chart and asks for a start candle
 (click one, or press ▶ to start at the first candle of the last day). From then on only the
@@ -29,9 +35,9 @@ started on and follows the user's zoom/pan (the browser reports it); each step k
 Session lines (ROADMAP.md › 1.3): the "Sessions" switch shows or hides all session start
 lines (Tokyo, London, NY), in the normal chart and in replay; the choice is kept in the browser.
 
-Overlays (ROADMAP.md › Phase 2): the chart starts empty. The "Overlays" switch turns the
-detector overlays on and the "Overlay types" panel next to it (opens like a dropdown) picks
-which types are drawn: one checkbox per registered `OverlayType` in roadmap order, see
+Overlays (ROADMAP.md › Phase 2): the chart starts empty. In the ⚙ Settings popover's "Chart
+Overlays" section the "Show overlays" switch turns the detector overlays on and the list under
+it picks which types are drawn: one checkbox per registered `OverlayType` in roadmap order, see
 `ui/overlays.py`. A checkbox panel rather than a dropdown, so ticked entries stay in place
 and sub-entries stay right under their type. Events are computed once per
 loaded range by feeding the detector `SeriesView`s; during replay only events confirmed at
@@ -272,6 +278,55 @@ def dates_for_view(
     return None if (first, last) == (start, end) else (first, last)
 
 
+def extend_dates(
+    cached: Sequence[date],
+    start: date,
+    end: date,
+    side: str,
+    timeframe: Timeframe,
+    view: dict | None = None,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> tuple[date, date] | None:
+    """Days to show after the view came near the "left" or "right" edge of the loaded days
+    start..end (user, 2026-10-19), or None when there is nothing more to load. Adds a chunk of
+    `config.extend_candles` (estimated) candles of days on that side, within the run of cached
+    days around the shown ones (a hole in the cache stops it). Above `max_candles` the
+    opposite end is dropped, but never below what `view` (centre time and candle count, as in
+    `dates_for_view`) still shows; if that is not enough the new chunk is cut instead."""
+    cached_set = set(cached)
+    if start not in cached_set or end not in cached_set:
+        return None
+    block_first, block_last = cached_block(cached_set, start)
+    chunk = max(1, -(-config.extend_candles * timeframe.value // 1440))
+    first, last = start, end
+    if side == "left":
+        first = max(start - timedelta(days=chunk), block_first)
+    else:
+        last = min(end + timedelta(days=chunk), block_last)
+    if (first, last) == (start, end):
+        return None
+    allowed = config.max_candles * timeframe.value // 1440  # days that fit under the limit
+
+    def excess() -> int:
+        return (last - first).days + 1 - allowed
+
+    if excess() > 0:
+        keep_first, keep_last = last, first  # the far end may move up to the view's days
+        if view:
+            half = timedelta(seconds=view["count"] / 2 * timeframe.duration.total_seconds())
+            centre = datetime.fromtimestamp(view["center"], UTC)
+            keep_first, keep_last = (centre - half).date(), (centre + half).date()
+        if side == "left":
+            last = max(last - timedelta(days=excess()), min(keep_last, end))
+            first += timedelta(days=max(excess(), 0))
+        else:
+            first = min(first + timedelta(days=excess()), max(keep_first, start))
+            last -= timedelta(days=max(excess(), 0))
+        if (side == "left" and first >= start) or (side == "right" and last <= end):
+            return None  # no room left for the chunk
+    return first, last
+
+
 _GOTO = re.compile(
     r"^\s*(\d{4}-\d{2}-\d{2})(?:[ T]+(\d{1,2}):(\d{2}))?\s*(?:UTC|Z)?\s*$", re.IGNORECASE
 )
@@ -351,6 +406,13 @@ def goto_outputs(
     if found is None or in_replay:
         return goto, no_update, no_update, no_update
     return goto, found[0].isoformat(), found[1].isoformat(), no_update
+
+
+def _packed(outputs: tuple) -> tuple:
+    """(goto, start, end, message) of `goto_outputs` as (goto, dates store, message)."""
+    goto, start, end, message = outputs
+    dates = no_update if start is no_update else {"start": start, "end": end}
+    return goto, dates, message
 
 
 def load_replay(
@@ -679,15 +741,19 @@ def start_backtest(
     return {"id": job}, False, f"Running {', '.join(symbols)} …", {"width": "0%"}, no_update
 
 
+def progress_percent(done: int, total: int) -> str:
+    """ "37%": the share of the backtest's candles done (0% while the total isn't known)."""
+    return f"{min(done / total, 1.0) if total else 0.0:.0%}"
+
+
 def poll_backtest(job: dict | None):
     """Progress of the running backtest; when it is done, open its results page."""
     run = _RUNS.get(job["id"]) if job else None
     if run is None:
         return no_update, True, no_update, no_update, no_update
     if not run.finished:
-        share = run.done / run.total if run.total else 0.0
         status = f"{run.done:,} of {run.total:,} candles" if run.total else "Loading candles …"
-        return no_update, False, status, {"width": f"{share:.0%}"}, no_update
+        return no_update, False, status, {"width": progress_percent(run.done, run.total)}, no_update
     del _RUNS[job["id"]]
     if run.error is not None:
         return None, True, f"Failed: {run.error}", {"width": "0%"}, no_update
@@ -713,10 +779,14 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
         "session_line_dash": config.session_line_dash,
         "replay_min_visible": config.replay_min_visible,
         "replay_window": config.replay_window,
+        "extend_candles": config.extend_candles,
+        "extend_margin_screens": config.extend_margin_screens,
+        "extend_margin_min": config.extend_margin_min,
+        "progress_sent": config.progress_sent,
+        "progress_received": config.progress_received,
     }
 
 
-QUICK_RANGES = ("1M", "3M", "6M", "YTD", "1Y", "All")
 STRATEGIES = [{"label": spec.label, "value": name} for name, spec in REGISTRY.items()]
 
 
@@ -810,27 +880,49 @@ def focus_selection(focus: dict | None, overlay_types: list | None):
     return focus["symbol"], ["on"], types + [t for t in TRADES_OVERLAY if t not in types]
 
 
-def date_limits(days: Sequence[date], symbol: str | None = None, focus: dict | None = None):
-    """Date picker limits and the range shown when the symbol changes: the last month of
-    cached days (the "1M" quick range; with years cached, all of them would be too many
-    5m candles), or a pending trade focus's days for its symbol."""
+def initial_dates(days: Sequence[date], symbol: str | None = None, focus: dict | None = None):
+    """(start, end) ISO days shown when the symbol changes: the last month of cached days (the
+    "1M" quick range; with years cached, all of them would be too many 5m candles), or a
+    pending trade focus's days for its symbol. None without cached days. More days are loaded
+    by scrolling (`extend_dates`) and "Go to"."""
     if not days:
-        return None, None, [], None, None, None
-    cached = set(days)
-    span = (days[-1] - days[0]).days
-    holes = [days[0] + timedelta(days=i) for i in range(span + 1)]
+        return None
     first, last = quick_range(days, "1M")
-    start, end = first.isoformat(), last.isoformat()
     if focus and not focus.get("done") and focus["symbol"] == symbol:
-        start, end = focus["from"], focus["to"]
-    return (
-        days[0].isoformat(),
-        days[-1].isoformat(),
-        [d.isoformat() for d in holes if d not in cached],
-        start,
-        end,
-        start,
-    )
+        return focus["from"], focus["to"]
+    return first.isoformat(), last.isoformat()
+
+
+def dates_of(data: dict | None) -> tuple[str | None, str | None]:
+    """(start, end) ISO days of the `chart-dates` store ({"start", "end"}), None where unset."""
+    data = data or {}
+    return data.get("start"), data.get("end")
+
+
+def overlay_controls() -> list:
+    """The overlay switches in the Settings popover (user, 2026-10-19; before: the side panel's
+    Overlays card, same ids): the master switch and one switch per overlay type."""
+    return [
+        dcc.Checklist(
+            id="chart-overlays",
+            options=[{"label": "Show overlays", "value": "on"}],
+            value=[],
+            persistence=True,
+            className="ch-switches ch-master",
+        ),
+        dcc.Checklist(
+            id="chart-overlay-types",
+            options=overlay_options(enabled=False),
+            value=[],
+            persistence=True,
+            className="ch-switches ch-types",
+        ),
+        html.Div(
+            "Overlay types" if OVERLAYS else "No overlay types yet",
+            id="chart-overlay-summary",
+            className="ch-note",
+        ),
+    ]
 
 
 def layout(
@@ -846,7 +938,7 @@ def layout(
         [
             html.Details(
                 [
-                    html.Summary("Chart settings"),
+                    html.Summary("Chart Settings"),
                     _switch("chart-sessions", "Session lines", ["on"]),
                     html.Div("Daily / weekly candles", className="tb-pop-sub"),
                     dcc.Dropdown(
@@ -926,7 +1018,12 @@ def layout(
                 ],
                 open=True,
                 className="tb-details",
-            )
+            ),
+            html.Details(
+                [html.Summary("Chart Overlays"), *overlay_controls()],
+                open=True,
+                className="tb-details tb-group",
+            ),
         ],
     )
     strategy = _popover(
@@ -1074,19 +1171,6 @@ def layout(
     )
     bottom = html.Div(
         [
-            *[
-                html.Button(k, id=f"range-{k}", className="tb-range", n_clicks=0)
-                for k in QUICK_RANGES
-            ],
-            html.Div(className="tb-sep"),
-            html.Span(className="tb-icon icon-calendar tb-cal-icon"),
-            dcc.DatePickerRange(
-                id="chart-dates",
-                display_format="YYYY-MM-DD",
-                first_day_of_week=1,
-                className="tb-dates",
-            ),
-            html.Div(className="tb-sep"),
             html.Span(
                 className="tb-icon icon-goto tb-cal-icon",
                 title="Go to a UTC date / time (Alt+G), e.g. 2026-09-12 12:15",
@@ -1113,7 +1197,21 @@ def layout(
                 [
                     html.Div(
                         [
-                            html.Div([html.Div(id="chart-lwc"), replay_bar], className="tb-chart"),
+                            html.Div(
+                                [
+                                    html.Div(id="chart-lwc"),
+                                    html.Div(
+                                        [
+                                            html.Div(id="chart-bar-fill", className="ch-bar-fill"),
+                                            html.Span(id="chart-bar-pct", className="ch-bar-pct"),
+                                        ],
+                                        id="chart-bar",
+                                        className="ch-bar",
+                                    ),
+                                    replay_bar,
+                                ],
+                                className="tb-chart",
+                            ),
                             bottom,
                         ],
                         className="ch-chartcol",
@@ -1124,6 +1222,10 @@ def layout(
                 className=chart_side.main_class(False),
             ),
             dcc.Store(id="chart-range"),
+            dcc.Store(id="chart-dates"),
+            dcc.Store(id="chart-more"),
+            dcc.Store(id="st-reset-click"),
+            dcc.Store(id="st-apply"),
             dcc.Store(id="side-collapsed", storage_type="local"),
             dcc.Store(id="chart-config", data=chart_settings(config)),
             dcc.Store(id="chart-sweep-tweak"),
@@ -1165,35 +1267,31 @@ def register_callbacks(
     update_button.register_callbacks(app)
 
     @app.callback(
-        Output("chart-dates", "min_date_allowed"),
-        Output("chart-dates", "max_date_allowed"),
-        Output("chart-dates", "disabled_days"),
-        Output("chart-dates", "start_date"),
-        Output("chart-dates", "end_date"),
-        Output("chart-dates", "initial_visible_month"),
+        Output("chart-dates", "data"),
         Input("chart-symbol", "value"),
         State("chart-focus", "data"),
     )
-    def _date_limits(symbol, focus):
-        return date_limits(sources.cached_days(symbol) if symbol else [], symbol, focus)
+    def _initial_dates(symbol, focus):
+        """A new symbol starts on its last month (or a trade focus's days)."""
+        found = initial_dates(sources.cached_days(symbol) if symbol else [], symbol, focus)
+        return {"start": found[0], "end": found[1]} if found else None
 
     @app.callback(
-        Output("chart-dates", "start_date", allow_duplicate=True),
-        Output("chart-dates", "end_date", allow_duplicate=True),
+        Output("chart-dates", "data", allow_duplicate=True),
         Input("chart-timeframe", "value"),
         State("chart-viewport", "data"),
         State("chart-symbol", "value"),
-        State("chart-dates", "start_date"),
-        State("chart-dates", "end_date"),
+        State("chart-dates", "data"),
         State("chart-replay", "data"),
         prevent_initial_call=True,
     )
-    def _timeframe_days(timeframe, view, symbol, start, end, replay_state):
+    def _timeframe_days(timeframe, view, symbol, dates, replay_state):
         """Keep the view on a timeframe switch: load the days it needs (outside replay)."""
+        start, end = dates_of(dates)
         if not (view and timeframe and start and end) or view.get("symbol") != symbol:
-            return no_update, no_update
+            return no_update
         if replay_state and replay_state.get("on"):
-            return no_update, no_update
+            return no_update
         found = dates_for_view(
             sources.cached_days(symbol),
             date.fromisoformat(start[:10]),
@@ -1203,73 +1301,103 @@ def register_callbacks(
             config,
         )
         if found is None:
-            return no_update, no_update
-        return found[0].isoformat(), found[1].isoformat()
+            return no_update
+        return {"start": found[0].isoformat(), "end": found[1].isoformat()}
+
+    @app.callback(
+        Output("chart-dates", "data", allow_duplicate=True),
+        Input("chart-more", "data"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "data"),
+        State("chart-replay", "data"),
+        State("chart-day-boundary", "value"),
+        State("chart-h4-alignment", "value"),
+        prevent_initial_call=True,
+    )
+    def _more(request, symbol, timeframe, dates, replay_state, boundary, h4):
+        """The view came near an edge of the loaded candles: load the next days there."""
+        start, end = dates_of(dates)
+        if not (request and symbol and timeframe and start and end):
+            return no_update
+        if replay_state and replay_state.get("on"):
+            return no_update
+        cfg = with_boundary(config, boundary, h4)
+        if request.get("key") != chart_key(symbol, timeframe, start, end, cfg):
+            return no_update  # asked for other candles than the ones shown now
+        found = extend_dates(
+            sources.cached_days(symbol),
+            date.fromisoformat(start[:10]),
+            date.fromisoformat(end[:10]),
+            request.get("side"),
+            Timeframe[timeframe],
+            request.get("view"),
+            cfg,
+        )
+        if found is None:
+            return no_update
+        return {"start": found[0].isoformat(), "end": found[1].isoformat()}
 
     @app.callback(
         Output("chart-goto", "data"),
-        Output("chart-dates", "start_date", allow_duplicate=True),
-        Output("chart-dates", "end_date", allow_duplicate=True),
+        Output("chart-dates", "data", allow_duplicate=True),
         Output("chart-message", "children", allow_duplicate=True),
         Input("chart-goto-input", "n_submit"),
         State("chart-goto-input", "value"),
         State("chart-symbol", "value"),
         State("chart-timeframe", "value"),
-        State("chart-dates", "start_date"),
-        State("chart-dates", "end_date"),
+        State("chart-dates", "data"),
         State("chart-replay", "data"),
         prevent_initial_call=True,
     )
-    def _goto(n_submit, text, symbol, timeframe, start, end, replay_state):
+    def _goto(n_submit, text, symbol, timeframe, dates, replay_state):
         """Go to a UTC time: load its days if needed; the browser centres on it."""
         at = parse_goto(text)
+        start, end = dates_of(dates)
         if not n_submit or not (symbol and timeframe and start and end):
-            return no_update, no_update, no_update, no_update
+            return no_update, no_update, no_update
         if at is None:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                (f"Go to: {text!r} is not a UTC time like 2026-09-12 12:15."),
-            )
-        return goto_outputs(
-            at, symbol, timeframe, start, end, replay_state, n_submit, sources.cached_days(symbol),
-            config,
+            message = f"Go to: {text!r} is not a UTC time like 2026-09-12 12:15."
+            return no_update, no_update, message
+        found = goto_outputs(
+            at, symbol, timeframe, start, end, replay_state, n_submit,
+            sources.cached_days(symbol), config,
         )  # fmt: skip
+        return _packed(found)
 
     @app.callback(
         Output("chart-goto", "data", allow_duplicate=True),
-        Output("chart-dates", "start_date", allow_duplicate=True),
-        Output("chart-dates", "end_date", allow_duplicate=True),
+        Output("chart-dates", "data", allow_duplicate=True),
         Output("chart-message", "children", allow_duplicate=True),
         Input({"type": "side-trade", "index": ALL}, "n_clicks"),
         State("chart-symbol", "value"),
         State("chart-timeframe", "value"),
-        State("chart-dates", "start_date"),
-        State("chart-dates", "end_date"),
+        State("chart-dates", "data"),
         State("chart-replay", "data"),
         prevent_initial_call=True,
     )
-    def _goto_trade(_clicks, symbol, timeframe, start, end, replay_state):
+    def _goto_trade(_clicks, symbol, timeframe, dates, replay_state):
         """A click on a trade in "Trades in view": go to its entry candle."""
         trig = ctx.triggered[0] if ctx.triggered else None
         folder = chart_side.newest_run(results_dir)
+        start, end = dates_of(dates)
         if (
             not trig
             or not trig["value"]
             or folder is None
             or not (symbol and timeframe and start and end)
         ):
-            return (no_update,) * 4
+            return (no_update,) * 3
         by_id = {t.id: t for t in chart_side.run_trades(folder)}
         trade = by_id.get(ctx.triggered_id["index"])
         if trade is None:
-            return (no_update,) * 4
+            return (no_update,) * 3
         at = chart_side.utc(trade.entry_candle)
-        return goto_outputs(
+        found = goto_outputs(
             at, symbol, timeframe, start, end, replay_state, trig["value"],
             sources.cached_days(symbol), config,
         )  # fmt: skip
+        return _packed(found)
 
     @app.callback(
         Output("side-trades", "children"),
@@ -1335,8 +1463,7 @@ def register_callbacks(
         Output("chart-message", "children"),
         Input("chart-symbol", "value"),
         Input("chart-timeframe", "value"),
-        Input("chart-dates", "start_date"),
-        Input("chart-dates", "end_date"),
+        Input("chart-dates", "data"),
         Input("chart-replay-mode", "data"),
         Input("chart-resync", "data"),
         Input("chart-day-boundary", "value"),
@@ -1344,8 +1471,8 @@ def register_callbacks(
         State("chart-replay", "data"),
         State("chart-replay-span", "data"),
     )
-    def _base(symbol, timeframe, start_date, end_date, _mode, _resync, boundary, h4,
-              replay_state, span):  # fmt: skip
+    def _base(symbol, timeframe, dates, _mode, _resync, boundary, h4, replay_state, span):
+        start_date, end_date = dates_of(dates)
         cfg = with_boundary(config, boundary, h4)
         return base_payload(
             sources, symbol, timeframe, start_date, end_date, replay_state, span, cfg
@@ -1356,8 +1483,7 @@ def register_callbacks(
         Input("chart-need", "data"),
         State("chart-symbol", "value"),
         State("chart-timeframe", "value"),
-        State("chart-dates", "start_date"),
-        State("chart-dates", "end_date"),
+        State("chart-dates", "data"),
         State("chart-filters", "value"),
         State("settings-current", "data"),
         State("chart-day-boundary", "value"),
@@ -1365,8 +1491,8 @@ def register_callbacks(
         State("chart-sweep-tweak", "data"),
         prevent_initial_call=True,
     )
-    def _overlays(request, symbol, timeframe, start_date, end_date, filters, store, boundary,
-                  h4, sweep_tweak):  # fmt: skip
+    def _overlays(request, symbol, timeframe, dates, filters, store, boundary, h4, sweep_tweak):
+        start_date, end_date = dates_of(dates)
         strategy = settings_panel.store_json(store)
         cfg = with_boundary(config, boundary, h4)
         payload = overlay_payload(
@@ -1375,6 +1501,22 @@ def register_callbacks(
         )  # fmt: skip
         return payload if payload is not None else no_update
 
+    app.clientside_callback(  # the loading bar (chart.js): a new base is on its way
+        ClientsideFunction("chart", "loading"),
+        Output("chart-bar", "title"),
+        Input("chart-symbol", "value"),
+        Input("chart-timeframe", "value"),
+        Input("chart-dates", "data"),
+        Input("chart-replay-mode", "data"),
+        Input("chart-day-boundary", "value"),
+        Input("chart-h4-alignment", "value"),
+    )
+    app.clientside_callback(  # ... and a running backtest's percent on the same bar
+        ClientsideFunction("chart", "backtest"),
+        Output("chart-bar-pct", "title"),
+        Input("bt-bar", "style"),
+        Input("bt-job", "data"),
+    )
     app.clientside_callback(
         ClientsideFunction("chart", "base"),
         Output("chart-base-done", "data"),
@@ -1439,8 +1581,7 @@ def register_callbacks(
         Input("chart-click", "data"),
         Input("chart-symbol", "value"),
         Input("chart-timeframe", "value"),
-        Input("chart-dates", "start_date"),
-        Input("chart-dates", "end_date"),
+        Input("chart-dates", "data"),
         State("chart-replay", "data"),
         State("chart-replay-controls", "style"),
         State("chart-view", "data"),
@@ -1452,7 +1593,8 @@ def register_callbacks(
         prevent_initial_call=True,
     )
     def _replay_control(*args):
-        symbol, timeframe, start_date, end_date, state, controls_style, view, filters = args[-12:-4]
+        symbol, timeframe, dates, state, controls_style, view, filters = args[-11:-4]
+        start_date, end_date = dates_of(dates)
         strategy = settings_panel.store_json(args[-4])
         cfg = with_boundary(config, args[-3], args[-2])
         sweep_tweak = args[-1]
@@ -1517,36 +1659,20 @@ def register_callbacks(
         return 1000 // speed
 
     @app.callback(
-        Output("chart-dates", "start_date", allow_duplicate=True),
-        Output("chart-dates", "end_date", allow_duplicate=True),
-        *[Input(f"range-{k}", "n_clicks") for k in QUICK_RANGES],
-        State("chart-symbol", "value"),
-        prevent_initial_call=True,
-    )
-    def _quick_range(*args):
-        symbol = args[-1]
-        key = str(ctx.triggered_id).removeprefix("range-")
-        found = quick_range(sources.cached_days(symbol) if symbol else [], key)
-        if found is None:
-            return no_update, no_update
-        return found[0].isoformat(), found[1].isoformat()
-
-    @app.callback(
         Output("bt-symbols", "value"),
         Output("bt-dates", "start_date"),
         Output("bt-dates", "end_date"),
         Output("bt-dates", "min_date_allowed"),
         Output("bt-dates", "max_date_allowed"),
         Input("chart-symbol", "value"),
-        Input("chart-dates", "start_date"),
-        Input("chart-dates", "end_date"),
-        State("chart-dates", "min_date_allowed"),
-        State("chart-dates", "max_date_allowed"),
+        Input("chart-dates", "data"),
     )
-    def _backtest_defaults(symbol, start, end, low, high):
+    def _backtest_defaults(symbol, dates):
         """The backtest starts out with the chart's symbol and days."""
-        symbols = [symbol] if symbol else []
-        return symbols, start, end, low, high
+        days = sources.cached_days(symbol) if symbol else []
+        start, end = dates_of(dates)
+        low, high = (days[0].isoformat(), days[-1].isoformat()) if days else (None, None)
+        return [symbol] if symbol else [], start, end, low, high
 
     @app.callback(
         Output("bt-job", "data"),
