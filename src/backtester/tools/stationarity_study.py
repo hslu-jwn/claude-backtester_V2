@@ -40,6 +40,7 @@ from backtester.analytics.stationarity import (
     cells_from_rows,
     find_findings,
     series_rows,
+    shuffle_returns,
     symbol_end,
     time_of_day_rows,
     us_only_dst_days,
@@ -154,12 +155,14 @@ def analyze_symbol(job: tuple) -> dict:
                 "first_half": slice(0, split),
                 "second_half": slice(split, None),
             }
-            for period, sl in parts.items():
-                for r in time_of_day_rows(secs[sl], closes[sl], dst_days, cfg):
-                    rows["time_of_day"].append(
-                        {"symbol": symbol, "timeframe": tf_name, "period": period,
-                         "source": "real", **r}
-                    )  # fmt: skip
+            shuffled = np.exp(shuffle_returns(np.log(closes), cfg))
+            for source, series in (("real", closes), ("shuffled", shuffled)):
+                for period, sl in parts.items():
+                    for r in time_of_day_rows(secs[sl], series[sl], dst_days, cfg):
+                        rows["time_of_day"].append(
+                            {"symbol": symbol, "timeframe": tf_name, "period": period,
+                             "source": source, **r}
+                        )  # fmt: skip
         messages.append(f"{symbol} {tf_name}: {len(closes)} bars")
     return {"symbol": symbol, "rows": rows, "messages": messages}
 
@@ -190,7 +193,7 @@ def _num(r, key, fmt="{:.3f}"):
 
 def summary_text(
     rows: dict[str, list[dict]], findings: list[dict], counts: dict, symbols: Sequence[str],
-    timeframes: Sequence[str], cfg: StationarityConfig,
+    timeframes: Sequence[str], cfg: StationarityConfig, shuffled_counts: dict | None = None,
 ) -> str:  # fmt: skip
     lines = [
         "STATIONARITY STUDY (ROADMAP 11.11, idea T-11)",
@@ -237,6 +240,18 @@ def summary_text(
         lines.append(
             f"  {fam}: {c['cells']} cells, {c['bh_significant']} BH-significant, {c['findings']} findings"
         )
+    if shuffled_counts is not None:
+        lines += [
+            "",
+            "SHUFFLED REFERENCE (the real returns in random order, same statistics, same rule;",
+            "the honest answer is about 0 findings):",
+        ]
+        for fam, c in shuffled_counts.items():
+            real = counts.get(fam, {}).get("findings", 0)
+            lines.append(
+                f"  {fam}: shuffled {c['findings']} findings ({c['bh_significant']} BH-significant "
+                f"of {c['cells']} cells) vs real {real}"
+            )
     lines.append(
         "  (finding = BH-significant, same sign in both halves, and the symbol plus >= "
         f"{cfg.min_siblings - 1} same-sign sibling in its group; Hurst has no p-value, not a family)"
@@ -290,8 +305,12 @@ def main(argv: list[str] | None = None) -> int:
         write_rows(args.out / f"{name}.csv", rows[fam])
     findings, counts = find_findings(cells_from_rows(rows), cfg)
     write_rows(args.out / "findings.csv", findings, FINDING_COLUMNS)
+    shuffled_findings, shuffled_counts = find_findings(cells_from_rows(rows, "shuffled"), cfg)
+    write_rows(args.out / "findings_shuffled.csv", shuffled_findings, FINDING_COLUMNS)
     done = [s for s in symbols if any(r["symbol"] == s for r in rows["adf"])]
-    text = summary_text(rows, findings, counts, done, [t for t in args.timeframes], cfg)
+    text = summary_text(
+        rows, findings, counts, done, [t for t in args.timeframes], cfg, shuffled_counts
+    )
     (args.out / "summary.txt").write_text(text, encoding="utf-8")
     print(text)
     print(f"written to {args.out} ({math.ceil(time.time() - started)} s)")

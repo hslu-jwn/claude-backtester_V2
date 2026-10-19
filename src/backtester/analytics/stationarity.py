@@ -354,6 +354,16 @@ def symbol_end(symbol: str, end: date, cfg: StationarityConfig) -> date:
     return min(end, caps[symbol]) if symbol in caps else end
 
 
+def shuffle_returns(y, cfg: StationarityConfig) -> np.ndarray:
+    """Log prices with the same returns in a seeded random order (same start and end): the
+    second reference, it keeps fat tails and the size of the moves but no order."""
+    y = np.asarray(y, dtype=float)
+    if len(y) < 2:
+        return y.copy()
+    r = np.random.default_rng(cfg.seed).permutation(np.diff(y))
+    return np.concatenate([[y[0]], y[0] + np.cumsum(r)])
+
+
 def random_walk(n: int, sigma: float, cfg: StationarityConfig) -> np.ndarray:
     """Log prices (n + 1 points) of a seeded Gaussian random walk with per-bar std `sigma`."""
     steps = np.random.default_rng(cfg.seed).normal(0.0, sigma, n)
@@ -491,6 +501,7 @@ def series_rows(
     sigma = float(np.std(np.diff(y))) if len(y) > 2 else 0.0
     if sigma > 0:
         sources.append(("random_walk", random_walk(len(y) - 1, sigma, cfg)))
+        sources.append(("shuffled", shuffle_returns(y, cfg)))
     for source, series in sources:
         parts = {"whole": series, "first_half": series[:split], "second_half": series[split:]}
         gap_parts = (
@@ -509,8 +520,8 @@ def series_rows(
 # --- findings ------------------------------------------------------------------------------------------------------------------------
 
 
-def cells_from_rows(rows: dict[str, list[dict]]) -> list[dict]:
-    """Test cells of the real rows: family, symbol, timeframe, cell, period, p_value, value.
+def cells_from_rows(rows: dict[str, list[dict]], source: str = "real") -> list[dict]:
+    """Test cells of the rows of one `source` (real or shuffled): family, symbol, timeframe, cell, period, p_value, value.
     `rows` keys: adf, vr, lagcorr, time_of_day (rows with a `timeframe` of M5)."""
     cells = []
 
@@ -519,15 +530,17 @@ def cells_from_rows(rows: dict[str, list[dict]]) -> list[dict]:
                       "cell": key, "period": r["period"], "p_value": p, "value": value})  # fmt: skip
 
     for r in rows.get("adf", []):
-        if r["source"] == "real":
+        if r["source"] == source:
             add("adf", r, "adf", r["p_value"], r["lam"])
     for r in rows.get("vr", []):
-        if r["source"] == "real":
+        if r["source"] == source:
             add("vr", r, f"q={r['q']}", r["p_value_w"], r["vr_w"] - 1)
     for r in rows.get("lagcorr", []):
-        if r["source"] == "real":
+        if r["source"] == source:
             add("lagcorr", r, f"k={r['k']},h={r['h']}", r["p_spearman"], r["spearman"])
     for r in rows.get("time_of_day", []):
+        if r.get("source", "real") != source:
+            continue
         add("tod_mean", r, r["bucket"], r["p_mean_w"], r["mean_w"])
         add("tod_ac", r, r["bucket"], r["p_ac_w"], r["ac1_w"])
     return cells

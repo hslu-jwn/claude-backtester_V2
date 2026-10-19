@@ -288,7 +288,7 @@ def test_series_rows_has_three_periods_real_and_reference_and_no_nan():
     for fam in ("adf", "hurst", "vr", "lagcorr"):
         rows = out[fam]
         assert {r["period"] for r in rows} == {"whole", "first_half", "second_half"}
-        assert {r["source"] for r in rows} == {"real", "random_walk"}
+        assert {r["source"] for r in rows} == {"real", "random_walk", "shuffled"}
         for r in rows:
             for k, v in r.items():
                 assert not (isinstance(v, float) and math.isnan(v)), (fam, k)
@@ -456,3 +456,45 @@ def test_findings_cells_use_the_robust_columns():
     assert by["vr"]["value"] == pytest.approx(-0.1) and by["vr"]["p_value"] == 0.3
     assert (by["tod_mean"]["value"], by["tod_mean"]["p_value"]) == (-1.0, 0.2)
     assert (by["tod_ac"]["value"], by["tod_ac"]["p_value"]) == (0.1, 0.5)
+
+
+# --- second reference: the real returns in random order ----------------------------------------------------
+
+
+def test_shuffle_returns_keeps_the_returns_and_the_endpoints_and_is_seeded():
+    y = np.log(100) + rw(2000, seed=4)
+    s = st.shuffle_returns(y, CFG)
+    assert len(s) == len(y) and s[0] == y[0] and s[-1] == pytest.approx(y[-1])
+    assert np.allclose(np.sort(np.diff(s)), np.sort(np.diff(y)))
+    assert not np.allclose(np.diff(s), np.diff(y))
+    assert np.array_equal(s, st.shuffle_returns(y, CFG))
+
+
+def test_series_rows_has_a_shuffled_reference_with_all_families():
+    y = np.log(100) + rw(6000, seed=11)
+    out = st.series_rows("X", "H1", y, 3000, CFG)
+    for fam in ("adf", "hurst", "vr", "lagcorr"):
+        assert {r["source"] for r in out[fam]} == {"real", "random_walk", "shuffled"}
+    # the shuffled series has the same volatility, so the same per-bar spread of returns
+    real = next(r for r in out["vr"] if r["source"] == "real" and r["period"] == "whole")
+    assert real["q"] == 2
+
+
+def test_cells_from_rows_can_take_the_shuffled_source():
+    rows = {
+        "vr": [
+            {"source": "shuffled", "symbol": "A", "timeframe": "H1", "period": "whole", "q": 2,
+             "vr_w": 0.9, "p_value_w": 0.2, "vr": 0.9, "p_value": 0.2},
+            {"source": "real", "symbol": "A", "timeframe": "H1", "period": "whole", "q": 2,
+             "vr_w": 0.8, "p_value_w": 0.1, "vr": 0.8, "p_value": 0.1},
+        ],
+        "time_of_day": [
+            {"source": "shuffled", "symbol": "A", "timeframe": "M5", "period": "whole",
+             "bucket": "05:00", "mean_w": 1.0, "p_mean_w": 0.3, "ac1_w": 0.1, "p_ac_w": 0.4},
+        ],
+    }  # fmt: skip
+    shuf = st.cells_from_rows(rows, "shuffled")
+    assert {c["family"] for c in shuf} == {"vr", "tod_mean", "tod_ac"}
+    assert [c["value"] for c in st.cells_from_rows(rows) if c["family"] == "vr"] == [
+        pytest.approx(-0.2)
+    ]

@@ -52,7 +52,7 @@ def test_main_writes_all_files_with_real_and_random_walk_rows(tmp_path, monkeypa
         assert (out / f"{name}.csv").is_file(), name
     assert (out / "summary.txt").is_file()
     adf = read(out / "adf.csv")
-    assert {r["source"] for r in adf} == {"real", "random_walk"}
+    assert {r["source"] for r in adf} == {"real", "random_walk", "shuffled"}
     assert {r["symbol"] for r in adf} == {"NAS100", "US500"}
     assert {r["timeframe"] for r in adf} == {"H1", "M5"}
     assert {r["period"] for r in adf} == {"whole", "first_half", "second_half"}
@@ -147,3 +147,13 @@ def test_load_series_bridges_a_day_missing_from_the_cache(tmp_path):
     assert tool.missing_days("TEST", tmp_path, date(2016, 6, 1), date(2016, 6, 5)) == [
         date(2016, 6, 3)
     ]
+
+
+def test_shuffled_reference_is_written_and_counted(tmp_path, monkeypatch):
+    out = run(tmp_path, monkeypatch)
+    assert {r["source"] for r in read(out / "adf.csv")} == {"real", "random_walk", "shuffled"}
+    assert {r["source"] for r in read(out / "time_of_day.csv")} == {"real", "shuffled"}
+    header = (out / "findings_shuffled.csv").read_text(encoding="utf-8").splitlines()[0]
+    assert "family" in header
+    text = (out / "summary.txt").read_text(encoding="utf-8")
+    assert "SHUFFLED" in text and "lagcorr" in text
