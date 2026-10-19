@@ -41,6 +41,20 @@
 }
 .lv-summary {
   cursor: pointer;
+  list-style: none;
+}
+.lv-summary::-webkit-details-marker {
+  display: none;
+}
+.lv-summary::before {
+  content: "B8";
+  margin-right: 6px;
+}
+details[open] > .lv-summary::before {
+  content: "BE";
+}
+.lv-fold[open] > .lv-summary {
+  margin-bottom: 10px;
 }
 .lv-sub {
   color: var(--muted);
@@ -207,6 +221,7 @@
   display: grid;
   grid-template-columns: minmax(300px, 1fr) minmax(300px, 1.4fr);
   gap: 14px;
+  align-items: start;
 }
 .lv-two > .lv-card {
   min-width: 0;

@@ -200,6 +200,14 @@ def _card(title: str, body, right=None, extra: str = "") -> html.Div:
     return html.Div([head, body], className=f"lv-card {extra}".strip())
 
 
+def _fold(title: str, body, extra: str = "") -> html.Details:
+    """A card that is closed until the user opens it (the title is the clickable summary)."""
+    return html.Details(
+        [html.Summary(title, className="lv-summary"), html.Div(body, className="lv-fold-body")],
+        className=f"lv-card lv-fold {extra}".strip(),
+    )
+
+
 def render_head(view: dict, now: datetime) -> html.Div:
     status, state = view["status"] or {}, view["state"]
     label, css = STATE_BADGE[state]
@@ -468,7 +476,6 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
     view = live_view(out_dir, now)
     pieces = render(view, now)
     settings = settings_state(view)
-    connected = bool((view["status"] or {}).get("connected")) and view["state"] != "stale"
     buttons = button_state(view)
     chosen = settings["symbols"] or list(lm.DEFAULT_SYMBOLS)
     return html.Div(
@@ -522,7 +529,7 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
             html.Div(pieces["cards"], id="lv-cards"),
             html.Div(
                 [
-                    _card("Setup in progress", html.Div(pieces["setup"], id="lv-setup")),
+                    _fold("Setup in progress", html.Div(pieces["setup"], id="lv-setup")),
                     _card(
                         "Recent trades",
                         [
@@ -606,7 +613,7 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                     ),
                 ],
             ),
-            trading_panel.layout(open_=not connected),
+            trading_panel.layout(),
         ],
         className="lv-page",
     )

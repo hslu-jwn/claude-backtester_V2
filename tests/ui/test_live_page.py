@@ -9,6 +9,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from dash import html
 
 from backtester.live.status import STALE_S, write_status
 from backtester.ui import app as app_module
@@ -301,17 +302,40 @@ def test_live_page_has_connection_and_settings():
         assert i in ids
 
 
-def test_connection_is_open_only_without_a_connected_bot(tmp_path):
-    def conn_open(path):
-        return live.layout(path, NOW).children[-1].open
+def _details(component, out=None):
+    out = [] if out is None else out
+    if isinstance(component, html.Details):
+        out.append(component)
+    kids = getattr(component, "children", None)
+    for k in kids if isinstance(kids, list) else [kids]:
+        if hasattr(k, "children"):
+            _details(k, out)
+    return out
 
-    assert conn_open(tmp_path) is True  # no status file
+
+def _summary(details) -> str:
+    return text_of(details.children[0])
+
+
+def test_connection_is_closed_by_default_whatever_the_bot_state(tmp_path):
+    def conn_open(path):
+        return getattr(live.layout(path, NOW).children[-1], "open", False)
+
+    assert not conn_open(tmp_path)  # no status file
     write_status(tmp_path / "status.json", status(age_s=5))
-    assert conn_open(tmp_path) is False
+    assert not conn_open(tmp_path)
     write_status(tmp_path / "status.json", status(age_s=5, connected=False))
-    assert conn_open(tmp_path) is True
-    write_status(tmp_path / "status.json", status(age_s=STALE_S + 9))
-    assert conn_open(tmp_path) is True
+    assert not conn_open(tmp_path)
+
+
+def test_setup_in_progress_and_connection_are_closed_details(tmp_path):
+    found = {_summary(d): d for d in _details(live.layout(tmp_path, NOW))}
+    setup = next(d for t, d in found.items() if "Setup in progress" in t)
+    conn = next(d for t, d in found.items() if "Connection" in t)
+    for d in (setup, conn):
+        assert not getattr(d, "open", False)
+    assert "lv-setup" in ids_of(setup)
+    assert {"tr-login", "tr-password", "tr-server", "tr-save"} <= ids_of(conn)
 
 
 def test_chart_page_sweep_controls_moved_into_the_settings():

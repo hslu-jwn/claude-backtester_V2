@@ -233,8 +233,8 @@ def _input(id_: str, **kwargs) -> dcc.Input:
     return dcc.Input(id=id_, type="text", className="st-input", **kwargs)
 
 
-def layout(open_: bool = True) -> html.Details:
-    """The Connection section; `open_` False collapses it (the bot is connected)."""
+def layout(open_: bool = False) -> html.Details:
+    """The Connection section; closed by default, `open_` True expands it."""
     fields = html.Div(
         [
             html.Div("Account", className="st-section"),
