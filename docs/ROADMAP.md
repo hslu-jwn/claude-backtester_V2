@@ -1650,6 +1650,9 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   halves at the middle of the period; the time-of-day part drops the 2015-2018 US-only-DST weeks (13.12); a finding
   needs Benjamini-Hochberg at 5 % over all cells, the same sign in both halves and >= 2 sibling symbols; a seeded
   random walk is the reference. Built in its own worktree / branch `claude/knowledge-stationarity` (app running).
+  Built 2026-10-19 (awaiting the user's check): `python -m backtester.tools.stationarity_study --cache-dir <histdata cache>` ->
+  `results/stationarity/` (adf, hurst, vr, lagcorr, time_of_day, findings .csv, summary.txt); code `analytics/stationarity.py`.
+  Files with no cache day (New Year days) are bridged. Sibling rule as built: the symbol plus >= 1 same-sign sibling.
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
