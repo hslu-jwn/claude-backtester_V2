@@ -265,9 +265,35 @@ def read_trades(out_dir: Path) -> list[dict]:
             trades.append({
                 "symbol": row.get("symbol", ""), "exit_time": row.get("exit_time", ""),
                 "money": money, "r_net": _number(row.get("r_net")) or 0.0,
+                # what the chart needs to draw the order (ROADMAP 7.6); the bot records no TP
+                "side": row.get("side", ""), "entry_time": row.get("entry_time", ""),
+                "entry_fill": row.get("entry_fill", ""), "sl": row.get("sl", ""),
+                "exit_price": row.get("exit_price", ""),
             })  # fmt: skip
     trades.sort(key=lambda t: t["exit_time"])
     return trades
+
+
+def _window_cutoff(range_key: str, now: datetime):
+    days = RANGES.get(range_key)
+    return days, None if days is None else now.astimezone(UTC) - timedelta(days=days)
+
+
+def _in_window(trade: dict, days, cutoff, now: datetime) -> bool:
+    if cutoff is None:
+        return True
+    when = _parse_utc(trade["exit_time"])
+    if when is None:
+        return False
+    return when.date() == now.astimezone(UTC).date() if days == 1 else when >= cutoff
+
+
+def window_trades(trades: list[dict], range_key: str, now: datetime) -> list[dict]:
+    """The trades of a window ("day" = today UTC, "week", "all"), oldest exit first: the ones
+    `trade_strip` draws (the Live page's bars and its closed-trades table)."""
+    days, cutoff = _window_cutoff(range_key, now)
+    ordered = sorted(trades, key=lambda t: t["exit_time"])
+    return [t for t in ordered if _in_window(t, days, cutoff, now)]
 
 
 def trade_strip(trades: list[dict], initial_balance, range_key: str, now: datetime) -> dict:
@@ -276,27 +302,24 @@ def trade_strip(trades: list[dict], initial_balance, range_key: str, now: dateti
     Earlier trades still count toward the balance. Without a usable initial balance the percent
     is 0 and the line is the cumulative P/L."""
     base = _number(initial_balance)
-    days = RANGES.get(range_key)
-    cutoff = None if days is None else now.astimezone(UTC) - timedelta(days=days)
+    days, cutoff = _window_cutoff(range_key, now)
     balance = base if base and base > 0 else 0.0
     out = {"pct": [], "balance": [], "labels": [], "total": 0.0}
     for t in sorted(trades, key=lambda t: t["exit_time"]):
         before = balance
         balance += t["money"]
-        if cutoff is not None:
-            when = _parse_utc(t["exit_time"])
-            keep = when is not None and (
-                when.date() == now.astimezone(UTC).date() if days == 1 else when >= cutoff
-            )
-            if not keep:
-                continue
+        if not _in_window(t, days, cutoff, now):
+            continue
         out["pct"].append(t["money"] / before * 100 if base and base > 0 and before > 0 else 0.0)
         out["balance"].append(balance)
-        when = _parse_utc(t["exit_time"])
-        stamp = f"{when.astimezone(SWISS):%Y-%m-%d %H:%M} CH" if when else t["exit_time"]
-        out["labels"].append(f"{t['symbol']} {stamp}")
+        out["labels"].append(f"{t['symbol']} {_stamp(t['exit_time'])}")
         out["total"] += t["money"]
     return out
+
+
+def _stamp(exit_time: str) -> str:
+    when = _parse_utc(exit_time)
+    return f"{when.astimezone(SWISS):%Y-%m-%d %H:%M} CH" if when else exit_time
 
 
 # --- settings ------------------------------------------------------------------------------------

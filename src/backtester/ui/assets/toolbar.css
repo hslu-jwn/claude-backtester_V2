@@ -615,3 +615,29 @@ body {
   border-top: 1px solid var(--tb-line);
   font-weight: 600;
 }
+
+/* The opened trade (ROADMAP 7.6): "Trade: NAS100 long 2026-10-02 14:36 ✕" in the bottom bar */
+.tb-chip {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin: 0 8px;
+  padding: 1px 4px 1px 9px;
+  border: 1px solid var(--tb-line);
+  border-radius: 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tb-chip button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 50%;
+}
+.tb-chip button:hover {
+  background: rgba(127, 127, 127, 0.25);
+}

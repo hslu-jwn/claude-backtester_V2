@@ -391,3 +391,11 @@ details[open] > .lv-summary::before {
   --Dash-Text-Strong: var(--text);
   --Dash-Text-Disabled: var(--muted);
 }
+
+.lv-link {
+  color: #4f8cff;
+  text-decoration: none;
+}
+.lv-link:hover {
+  text-decoration: underline;
+}

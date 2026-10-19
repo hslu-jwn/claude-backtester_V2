@@ -56,11 +56,16 @@ It and the backtest use the settings panel's current settings (ROADMAP.md › 4.
 when their key changes.
 Overlays that load their own data (`OverlayType.needs_sources`) get the page's sources.
 
-Focus on one trade (ROADMAP.md › 3.6, from the results page's trade list):
-`/?symbol=…&from=…&to=…&t0=…&t1=…` selects the symbol and the UTC days from..to, turns on
-the Trades overlay with its confluences and, once the candles are drawn, scrolls the chart
-to the trade (t0 = entry candle, t1 = exit time). Applied once; the store `chart-focus` is
-then marked done, so later changes of symbol or days are the user's again.
+Focus on one trade (ROADMAP.md › 3.6, 7.6): a trade of a backtest (results page, the side
+panel's "Trades in view") or a live trade (Live page) opens as an ORDER, see `ui/trade_focus.py`:
+`/?symbol=…&tf=…&dir=…&entry=…&ep=…&sl=…&tp=…&exit=…&xp=…` selects the symbol and the timeframe
+(the strategy's own, from the run's settings), loads the trade's days and scrolls the chart to
+the trade; only that order is drawn (entry, SL, TP zones, labelled), nothing is run and no
+overlay is switched on. The order (store `chart-order`, drawn from `chart-order-draw`) stays until
+another symbol is picked or the ✕ on its chip (bottom bar) is pressed. A trade on a day that is not
+cached shows a note on the chip. Links of the older form (`symbol, from, to, t0, t1`, no order) turn
+on the Trades overlay as before. Applied once; the store `chart-focus` is then marked done, so
+later changes of symbol or days are the user's again.
 
 Timeframe switch (ROADMAP.md › 4.0b part 1), outside replay: the time at the centre of
 the view stays at the centre and the number of visible candles stays the same (the browser
@@ -92,7 +97,6 @@ from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
-from urllib.parse import parse_qs
 from uuid import uuid4
 
 from dash import ALL, ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
@@ -124,6 +128,7 @@ from backtester.ui import (
     settings_panel,
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
+    trade_focus,
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
     update_button,
 )
@@ -693,6 +698,48 @@ def overlay_payload(
     }
 
 
+def order_draw_payload(
+    sources: SymbolSources,
+    order: dict | None,
+    symbol: str | None,
+    timeframe: str | None,
+    start_date: str | None,
+    end_date: str | None,
+    replay_state: dict | None = None,
+    config: ChartConfig = DEFAULT_CONFIG,
+    run_trades: Sequence | None = None,
+) -> dict | None:
+    """{"key", "items"}: the drawings on the candles of this chart (`key` = the base payload's,
+    so the browser draws them only on those candles). With a focused `order` of this symbol: that
+    order, labelled. Without one: the `run_trades` (the newest run's, any strategy) of the symbol
+    that are on the loaded candles, light and capped at `MAX_RUN_ORDERS`; no strategy is run.
+    None: nothing to draw, another symbol, replay on, or no candles."""
+    if not symbol or not timeframe or (replay_state and replay_state.get("on")):
+        return None
+    if order and order.get("symbol") != symbol:
+        order = None
+    if not order and not [t for t in run_trades or () if t.symbol == symbol]:
+        return None
+    replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
+    if replay is None:
+        return None
+    opens = [c.ts for c in replay.view(len(replay) - 1)]
+    tf, digits = Timeframe[timeframe], price_digits(symbol)
+    if order:
+        items = trade_focus.order_payload(order, opens, tf, digits, config)
+    else:
+        items, drawn = [], 0
+        for t in run_trades:
+            if t.symbol != symbol or drawn >= trade_focus.MAX_RUN_ORDERS:
+                continue
+            found = trade_focus.order_payload(
+                trade_focus.trade_order(t), opens, tf, digits, config, light=True
+            )
+            drawn += bool(found)
+            items += found
+    return {"key": chart_key(symbol, timeframe, start_date, end_date, config), "items": items}
+
+
 def replay_delta(
     sources: SymbolSources,
     view: dict | None,
@@ -853,42 +900,81 @@ def _switch(id_: str, label: str, value: list) -> dcc.Checklist:
     )
 
 
-TRADES_OVERLAY = ("trades", "trades.confluences")  # turned on by a trade focus
+TRADES_OVERLAY = ("trades", "trades.confluences")  # turned on by an old-form trade focus
 
 
 def focus_from_query(search: str | None) -> dict | None:
     """The trade focus from the URL query (see the module docstring), or None."""
-    query = {k: v[0] for k, v in parse_qs((search or "").lstrip("?")).items()}
-    try:
-        focus = {
-            "symbol": query["symbol"],
-            "from": date.fromisoformat(query["from"]).isoformat(),
-            "to": date.fromisoformat(query["to"]).isoformat(),
-            "t0": datetime.fromisoformat(query["t0"]).isoformat(),
-            "t1": datetime.fromisoformat(query["t1"]).isoformat(),
-        }
-    except (KeyError, ValueError):
-        return None
-    return focus if focus["from"] <= focus["to"] else None
+    return trade_focus.focus_from_query(search)
 
 
 def focus_selection(focus: dict | None, overlay_types: list | None):
-    """(symbol, overlays switch, overlay types) for a pending focus, else None."""
-    if not focus or focus.get("done"):
+    """(symbol, overlays switch, overlay types) for a pending old-form focus (no order), else
+    None: an order focus switches no overlay on."""
+    if not focus or focus.get("done") or focus.get("order"):
         return None
     types = list(overlay_types or [])
     return focus["symbol"], ["on"], types + [t for t in TRADES_OVERLAY if t not in types]
 
 
+def order_focus_pending(focus: dict | None) -> bool:
+    """A focus with an order that the browser has not scrolled to yet."""
+    return bool(focus and focus.get("order") and not focus.get("done"))
+
+
+def focus_outputs(
+    focus: dict | None,
+    overlay_types: list | None,
+    cached: Sequence[date],
+    config: ChartConfig = DEFAULT_CONFIG,
+    timeframes: Sequence[str] = TIMEFRAMES,
+) -> tuple:
+    """Outputs (symbol, timeframe, overlays switch, overlay types, chart-dates, order) of a
+    pending trade focus; `no_update` for what it leaves alone, all of it without one. An order
+    focus sets symbol, timeframe and days and the order (with a `note` if the trade's day is not
+    cached: then the newest candles are shown); an old-form focus turns on the Trades overlay."""
+    if not focus or focus.get("done"):
+        return (no_update,) * 6
+    order = focus.get("order")
+    if order is None:
+        symbol, switch, types = focus_selection(focus, overlay_types)
+        return symbol, no_update, switch, types, no_update, None
+    timeframe = focus.get("tf") if focus.get("tf") in timeframes else None
+    found = trade_focus.focus_dates(cached, focus, config)
+    note = None
+    if found is None:
+        note = "not in the cache"
+        found = trade_focus.latest_dates(cached, timeframe or DEFAULT_TIMEFRAME, config)
+    dates = {"start": found[0], "end": found[1]} if found else None
+    return (
+        focus["symbol"],
+        timeframe or no_update,
+        no_update,
+        no_update,
+        dates,
+        {**order, "note": note} if note else order,
+    )
+
+
+def side_trade_focus(trade, folder: Path, n: int | None = None) -> dict:
+    """The focus for a trade of the run `folder` (chart side panel, results page): its order on
+    the run's timeframe. `n` (the click count) makes a second click on the same trade a change."""
+    focus = trade_focus.focus_from_order(
+        trade_focus.trade_order(trade), trade_focus.run_timeframe(folder, trade.symbol)
+    )
+    return focus if n is None else {**focus, "n": n}
+
+
 def initial_dates(days: Sequence[date], symbol: str | None = None, focus: dict | None = None):
     """(start, end) ISO days shown when the symbol changes: the last month of cached days (the
     "1M" quick range; with years cached, all of them would be too many 5m candles), or a
-    pending trade focus's days for its symbol. None without cached days. More days are loaded
-    by scrolling (`extend_dates`) and "Go to"."""
+    pending old-form trade focus's days for its symbol. None without cached days. More days are
+    loaded by scrolling (`extend_dates`) and "Go to". (An order focus sets its days itself,
+    `focus_outputs`.)"""
     if not days:
         return None
     first, last = quick_range(days, "1M")
-    if focus and not focus.get("done") and focus["symbol"] == symbol:
+    if focus and not focus.get("done") and not focus.get("order") and focus["symbol"] == symbol:
         return focus["from"], focus["to"]
     return first.isoformat(), last.isoformat()
 
@@ -1186,6 +1272,20 @@ def layout(
                 [html.Span(id="chart-message"), html.Span(id="chart-notes")],
                 className="tb-message",
             ),
+            html.Span(
+                [
+                    html.Span(id="chart-order-text"),
+                    html.Button(
+                        "✕",
+                        id="chart-order-clear",
+                        title="Remove the trade from the chart",
+                        n_clicks=0,
+                    ),
+                ],
+                id="chart-order-chip",
+                className="tb-chip",
+                style={"display": "none"},
+            ),
             html.Span("UTC", className="tb-utc"),
         ],
         className="tb-bar tb-bottom",
@@ -1242,6 +1342,9 @@ def layout(
             dcc.Store(id="chart-replay-span"),
             dcc.Store(id="bt-job"),
             dcc.Store(id="chart-focus", data=focus),
+            dcc.Store(id="chart-order"),
+            dcc.Store(id="chart-order-draw"),
+            dcc.Store(id="chart-order-done"),
             dcc.Store(id="chart-viewport"),
             dcc.Store(id="chart-goto"),
             dcc.Store(id="settings-current", storage_type="local"),
@@ -1272,7 +1375,10 @@ def register_callbacks(
         State("chart-focus", "data"),
     )
     def _initial_dates(symbol, focus):
-        """A new symbol starts on its last month (or a trade focus's days)."""
+        """A new symbol starts on its last month (or an old-form trade focus's days); an order
+        focus sets its own days (`_focus`)."""
+        if order_focus_pending(focus):
+            return no_update
         found = initial_dates(sources.cached_days(symbol) if symbol else [], symbol, focus)
         return {"start": found[0], "end": found[1]} if found else None
 
@@ -1283,10 +1389,13 @@ def register_callbacks(
         State("chart-symbol", "value"),
         State("chart-dates", "data"),
         State("chart-replay", "data"),
+        State("chart-focus", "data"),
         prevent_initial_call=True,
     )
-    def _timeframe_days(timeframe, view, symbol, dates, replay_state):
+    def _timeframe_days(timeframe, view, symbol, dates, replay_state, focus):
         """Keep the view on a timeframe switch: load the days it needs (outside replay)."""
+        if order_focus_pending(focus):
+            return no_update  # the trade focus loads its own days with the timeframe
         start, end = dates_of(dates)
         if not (view and timeframe and start and end) or view.get("symbol") != symbol:
             return no_update
@@ -1366,38 +1475,25 @@ def register_callbacks(
         return _packed(found)
 
     @app.callback(
-        Output("chart-goto", "data", allow_duplicate=True),
-        Output("chart-dates", "data", allow_duplicate=True),
+        Output("chart-focus", "data", allow_duplicate=True),
         Output("chart-message", "children", allow_duplicate=True),
         Input({"type": "side-trade", "index": ALL}, "n_clicks"),
-        State("chart-symbol", "value"),
-        State("chart-timeframe", "value"),
-        State("chart-dates", "data"),
         State("chart-replay", "data"),
         prevent_initial_call=True,
     )
-    def _goto_trade(_clicks, symbol, timeframe, dates, replay_state):
-        """A click on a trade in "Trades in view": go to its entry candle."""
+    def _focus_trade(_clicks, replay_state):
+        """A click on a trade in "Trades in view": open its order on the run's timeframe."""
         trig = ctx.triggered[0] if ctx.triggered else None
         folder = chart_side.newest_run(results_dir)
-        start, end = dates_of(dates)
-        if (
-            not trig
-            or not trig["value"]
-            or folder is None
-            or not (symbol and timeframe and start and end)
-        ):
-            return (no_update,) * 3
+        if not trig or not trig["value"] or folder is None:
+            return (no_update,) * 2
+        if replay_state and replay_state.get("on"):
+            return no_update, "Leave the replay to open a trade."
         by_id = {t.id: t for t in chart_side.run_trades(folder)}
         trade = by_id.get(ctx.triggered_id["index"])
         if trade is None:
-            return (no_update,) * 3
-        at = chart_side.utc(trade.entry_candle)
-        found = goto_outputs(
-            at, symbol, timeframe, start, end, replay_state, trig["value"],
-            sources.cached_days(symbol), config,
-        )  # fmt: skip
-        return _packed(found)
+            return (no_update,) * 2
+        return side_trade_focus(trade, folder, trig["value"]), no_update
 
     @app.callback(
         Output("side-trades", "children"),
@@ -1442,15 +1538,73 @@ def register_callbacks(
 
     @app.callback(
         Output("chart-symbol", "value"),
+        Output("chart-timeframe", "value"),
         Output("chart-overlays", "value"),
         Output("chart-overlay-types", "value"),
+        Output("chart-dates", "data", allow_duplicate=True),
+        Output("chart-order", "data"),
         Input("chart-focus", "data"),
         State("chart-overlay-types", "value"),
+        prevent_initial_call="initial_duplicate",
     )
     def _focus(focus, overlay_types):
-        found = focus_selection(focus, overlay_types)
-        return found if found is not None else (no_update, no_update, no_update)
+        """A trade focus: symbol, timeframe, days and the order (or, old form, the Trades
+        overlay)."""
+        symbol = focus.get("symbol") if focus else None
+        cached = sources.cached_days(symbol) if symbol else []
+        return focus_outputs(focus, overlay_types, cached, config)
 
+    @app.callback(
+        Output("chart-order", "data", allow_duplicate=True),
+        Input("chart-order-clear", "n_clicks"),
+        Input("chart-symbol", "value"),
+        State("chart-order", "data"),
+        prevent_initial_call=True,
+    )
+    def _clear_order(clicks, symbol, order):
+        """The order stays until another symbol is picked or its ✕ is pressed."""
+        if not order:
+            return no_update
+        if ctx.triggered_id == "chart-order-clear":
+            return None if clicks else no_update
+        return None if order.get("symbol") != symbol else no_update
+
+    @app.callback(
+        Output("chart-order-text", "children"),
+        Output("chart-order-chip", "style"),
+        Input("chart-order", "data"),
+    )
+    def _order_chip(order):
+        shown = {"display": "inline-flex"} if order else {"display": "none"}
+        return (trade_focus.chip_text(order, order.get("note")) if order else ""), shown
+
+    @app.callback(
+        Output("chart-order-draw", "data"),
+        Input("chart-base-done", "data"),
+        Input("chart-order", "data"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "data"),
+        State("chart-replay", "data"),
+        State("chart-day-boundary", "value"),
+        State("chart-h4-alignment", "value"),
+    )
+    def _order_draw(_done, order, symbol, timeframe, dates, replay_state, boundary, h4):
+        """The order as drawings on the loaded candles (not during replay: it would show the
+        future)."""
+        start, end = dates_of(dates)
+        cfg = with_boundary(config, boundary, h4)
+        folder = chart_side.newest_run(results_dir)
+        trades = chart_side.run_trades(folder) if folder is not None else ()
+        return order_draw_payload(
+            sources, order, symbol, timeframe, start, end, replay_state, cfg, trades
+        )
+
+    app.clientside_callback(
+        ClientsideFunction("chart", "order"),
+        Output("chart-order-done", "data"),
+        Input("chart-order-draw", "data"),
+    )
     app.clientside_callback(
         ClientsideFunction("chart", "focus"),
         Output("chart-focus", "data"),

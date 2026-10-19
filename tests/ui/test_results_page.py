@@ -9,13 +9,21 @@ import json
 from datetime import date
 
 import pytest
+from dash import no_update
 
 from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.runner import TRADE_COLUMNS
 from backtester.ui import app as app_module
 from backtester.ui.pages import results
-from backtester.ui.pages.chart import focus_from_query, focus_selection, initial_dates
+from backtester.ui.pages.chart import (
+    focus_from_query,
+    focus_outputs,
+    focus_selection,
+    initial_dates,
+    order_focus_pending,
+    side_trade_focus,
+)
 
 RUN = "20261008-120000_XAUUSD-GBPUSD"
 
@@ -118,18 +126,23 @@ def test_trade_list_rows_and_the_link_to_the_chart(results_dir):
         "r_net": -1.1, "exit": "SL", "confluence": "Order block",
         "session": "New York 2026-09-02",
     }  # fmt: skip
-    link = results.chart_link(trades[2])  # entered 09-03, closed 09-04
+    link = results.chart_link(trades[2], results_dir / RUN)  # entered 09-03, closed 09-04
     focus = focus_from_query(link.removeprefix("/"))
-    assert focus == {
-        "symbol": "XAUUSD",
-        "from": "2026-09-03",
-        "to": "2026-09-04",
-        "t0": "2026-09-03T13:00:00+00:00",
-        "t1": "2026-09-04T01:00:00+00:00",
-    }
+    assert focus["symbol"] == "XAUUSD" and focus["tf"] == "M5"  # strategy 1's base timeframe
+    assert focus["order"] == {
+        "symbol": "XAUUSD", "direction": "short", "entry_time": "2026-09-03T13:05:00Z",
+        "entry": 100.0, "sl": 99.0, "tp": 101.2, "exit_time": "2026-09-04T01:00:00Z",
+        "exit": 99.0,
+    }  # fmt: skip
+    assert (focus["from"], focus["to"]) == ("2026-09-01", "2026-09-06")  # 2 days margin on 5m
 
 
-def test_chart_focus_selects_symbol_days_and_the_trades_overlay():
+def test_chart_link_without_a_run_keeps_the_charts_timeframe(results_dir):
+    trade = read_trades(results_dir / RUN)[0]
+    assert focus_from_query(results.chart_link(trade).removeprefix("/"))["tf"] is None
+
+
+def test_old_form_chart_focus_selects_symbol_days_and_the_trades_overlay():
     focus = {"symbol": "GBPUSD", "from": "2026-09-03", "to": "2026-09-04", "t0": "", "t1": ""}
     assert focus_selection(focus, ["fvg"]) == (
         "GBPUSD",
@@ -145,6 +158,60 @@ def test_chart_focus_selects_symbol_days_and_the_trades_overlay():
     assert initial_dates([], "GBPUSD", focus) is None
 
 
+def test_an_order_focus_does_not_turn_on_the_trades_overlay(results_dir):
+    trade = read_trades(results_dir / RUN)[2]
+    focus = focus_from_query(results.chart_link(trade, results_dir / RUN).removeprefix("/"))
+    assert focus_selection(focus, ["fvg"]) is None  # the strategy is not run, nothing switched on
+    days = [date(2026, 9, d) for d in range(1, 11)]
+    symbol, tf, switch, types, dates, order = focus_outputs(focus, ["fvg"], days)
+    assert (symbol, tf, switch, types) == ("XAUUSD", "M5", no_update, no_update)
+    assert dates == {"start": "2026-09-01", "end": "2026-09-06"}
+    assert order == focus["order"]
+    assert order_focus_pending(focus) and not order_focus_pending({**focus, "done": True})
+    assert initial_dates(days, "XAUUSD", focus) == ("2026-09-01", "2026-09-10")  # not its days
+
+
+def test_order_focus_for_a_day_that_is_not_cached_shows_the_newest_days_and_a_note(results_dir):
+    trade = read_trades(results_dir / RUN)[2]
+    focus = focus_from_query(results.chart_link(trade, results_dir / RUN).removeprefix("/"))
+    days = [date(2026, 8, d) for d in range(1, 31)]  # the cache ends before 2026-09-03
+    _, tf, _, _, dates, order = focus_outputs(focus, [], days)
+    assert dates["end"] == "2026-08-30" and order["note"] == "not in the cache"
+    assert order["entry"] == 100.0 and tf == "M5"
+    assert focus_outputs(focus, [], [])[4] is None  # nothing cached at all
+
+
+def test_unknown_timeframe_leaves_the_charts_timeframe(results_dir):
+    trade = read_trades(results_dir / RUN)[0]
+    focus = focus_from_query(results.chart_link(trade).removeprefix("/"))  # no timeframe
+    days = [date(2026, 9, d) for d in range(1, 11)]
+    assert focus_outputs(focus, [], days)[1] is no_update
+
+
+def test_a_done_or_missing_focus_changes_nothing():
+    assert focus_outputs(None, [], []) == (no_update,) * 6
+    assert focus_outputs({"order": {}, "done": True}, [], []) == (no_update,) * 6
+
+
+def test_old_form_focus_still_turns_on_the_trades_overlay_through_focus_outputs():
+    focus = {"symbol": "GBPUSD", "from": "2026-09-03", "to": "2026-09-04", "t0": "", "t1": ""}
+    out = focus_outputs(focus, ["fvg"], [])
+    assert (
+        out[0] == "GBPUSD"
+        and out[2] == ["on"]
+        and out[3] == ["fvg", "trades", "trades.confluences"]
+    )
+    assert out[5] is None  # and no order
+
+
+def test_side_panel_focus_uses_the_runs_timeframe_and_a_click_count(results_dir):
+    trade = read_trades(results_dir / RUN)[1]
+    focus = side_trade_focus(trade, results_dir / RUN, 3)
+    assert focus["symbol"] == "GBPUSD" and focus["tf"] == "M5" and focus["n"] == 3
+    assert focus["order"]["direction"] == "short" and focus["order"]["sl"] == 99.0
+    assert "n" not in side_trade_focus(trade, results_dir / RUN)
+
+
 def test_bad_focus_queries_are_ignored():
     upside_down = "?symbol=X&from=2026-09-04&to=2026-09-03&t0=2026-09-04T00:00&t1=2026-09-04"
     for search in (None, "", "?symbol=X", upside_down, "?symbol=X&from=bad&to=x&t0=1&t1=2"):
@@ -157,6 +224,16 @@ def test_pages_by_address_pass_the_focus_to_the_chart():
     page = app_module.page_for("/", sources, search)
     store = next(c for c in page.children if getattr(c, "id", None) == "chart-focus")
     assert store.data["symbol"] == "XAUUSD"
+
+
+def test_pages_by_address_pass_an_order_to_the_chart_and_have_its_controls(results_dir):
+    trade = read_trades(results_dir / RUN)[0]
+    search = results.chart_link(trade, results_dir / RUN).removeprefix("/")
+    page = app_module.page_for("/", SymbolSources({}), search)
+    ids = {getattr(c, "id", None): c for c in page.children}
+    assert ids["chart-focus"].data["order"]["direction"] == "long"
+    assert {"chart-order", "chart-order-draw"} <= set(ids)
+    assert "chart-order-clear" in str(page) and "chart-order-chip" in str(page)
 
 
 def test_performance_tab_has_results_per_year_and_quarter_per_symbol(results_dir):

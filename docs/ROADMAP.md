@@ -1123,6 +1123,13 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   (last month on open, scrolling, "Go to", trade focus from the URL; store `chart-dates`); the overlay switches
   moved from the side panel into the ⚙ Settings popover ("Chart Settings" and "Chart Overlays", same ids); a thin
   0-100 % bar at the top of the chart pane shows chart loads (staged) and backtests (real percent).
+  **Trade focus** (user 2026-10-19, built, to be checked): a trade from the results page, the chart's
+  "Trades in view" or the Live page (open positions, closed trades table, bars) opens the chart on its symbol
+  and the strategy's own timeframe (run settings; live: 1m), scrolled to it, and draws only that order (entry,
+  SL red, TP green, labelled; `ui/trade_focus.py`, link `/?symbol&tf&dir&entry&ep&sl&tp&exit&xp`); no strategy
+  is run, no overlay switched on; chip with ✕ in the bottom bar. Without a focused trade the newest run's
+  trades of the shown symbol are drawn light (any strategy, from `trades.csv`, max 400). The live bot records
+  no TP, so live orders have entry and SL only.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 

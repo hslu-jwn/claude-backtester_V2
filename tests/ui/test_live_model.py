@@ -305,3 +305,41 @@ def test_landing_path():
     assert m.landing_path("/results/x", False, running, NOW) is None
     assert m.landing_path("/live", False, running, NOW) is None
     assert m.landing_path("/", False, hb(STALE_S + 5), NOW) is None
+
+
+# --- trades that open on the chart (ROADMAP 7.6) -----------------------------------------------
+
+
+def write_full_trades(tmp_path, day, rows):
+    from backtester.live.bot import TRADE_COLUMNS
+
+    folder = tmp_path / day
+    folder.mkdir()
+    lines = [",".join(TRADE_COLUMNS)]
+    lines += [",".join(str(r.get(c, "")) for c in TRADE_COLUMNS) for r in rows]
+    (folder / "trades.csv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def full_trade(**kw):
+    base = {"symbol": "US500", "side": "sell", "ticket": 7, "lots": 1.0,
+            "entry_time": "2026-01-12T14:35:00+00:00", "exit_time": "2026-01-12T15:00:00+00:00",
+            "entry_fill": 7700.0, "exit_price": 7690.0, "sl": 7710.0, "exit_reason": "signal",
+            "r_net": 1.0, "money": 250.0, "risk_money": 250.0}  # fmt: skip
+    return {**base, **kw}
+
+
+def test_read_trades_keeps_what_the_chart_needs_for_the_order(tmp_path):
+    write_full_trades(tmp_path, "2026-01-12", [full_trade()])
+    (got,) = m.read_trades(tmp_path)
+    assert (got["side"], got["entry_time"], got["entry_fill"], got["sl"], got["exit_price"]) == (
+        "sell", "2026-01-12T14:35:00+00:00", "7700.0", "7710.0", "7690.0"
+    )  # fmt: skip
+
+
+def test_window_trades_follow_the_strips_windows():
+    old = {"symbol": "A", "exit_time": "2026-01-01T15:00:00+00:00", "money": 1.0, "r_net": 0.1}
+    today = {"symbol": "B", "exit_time": "2026-01-12T14:00:00+00:00", "money": 1.0, "r_net": 0.1}
+    assert m.window_trades([old, today], "day", NOW) == [today]
+    assert m.window_trades([old, today], "all", NOW) == [old, today]
+    assert m.window_trades([today, old], "all", NOW) == [old, today]  # oldest exit first
+    assert m.window_trades([old, today], "bogus", NOW) == [old, today]

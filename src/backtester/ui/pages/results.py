@@ -9,8 +9,8 @@ TradingView Strategy Tester look (light theme, same style as the chart's toolbar
   **Performance summary** (all / long / short table, per year and per quarter for all
   symbols and each (ROADMAP 6.3), splits by symbol, session,
   long / short, confluence type, TP outcome and tag, R distribution histogram) and
-  **List of trades** (sortable; clicking a trade opens the chart on its symbol and days
-  with the Trades overlay and its confluences on, scrolled to the trade).
+  **List of trades** (sortable; clicking a trade opens the chart on its symbol, on the run's
+  strategy timeframe, scrolled to the trade with its order drawn: entry, SL, TP; ROADMAP 7.6).
 
 Every number comes from the run's files: trades.csv read back as `TradeRecord`s and
 computed with `analytics/metrics.py`, the same functions that wrote summary.json (so the
@@ -23,7 +23,6 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlencode
 
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, State, dash_table, dcc, html, no_update
@@ -41,6 +40,7 @@ from backtester.analytics.metrics import (
 )
 from backtester.analytics.records import TradeRecord, read_trades
 from backtester.runner import RESULTS_DIR
+from backtester.ui import trade_focus
 from backtester.ui.chart_config import price_digits
 
 _RUN_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -538,7 +538,7 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
     return html.Div(
         [
             html.Div(
-                "Click a trade to open it on the chart (Trades overlay and its confluences on).",
+                "Click a trade to open it on the chart with its entry, SL and TP.",
                 className="rs-hint",
             ),
             dash_table.DataTable(
@@ -588,17 +588,12 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
     )
 
 
-def chart_link(trade: TradeRecord) -> str:
-    """Chart URL focused on the trade: its symbol, the UTC days from entry to exit, and
-    the entry / exit candle times to scroll to (pages/chart.py `focus_from_query`)."""
-    query = {
-        "symbol": trade.symbol,
-        "from": trade.entry_candle.date().isoformat(),
-        "to": trade.exit_time.date().isoformat(),
-        "t0": trade.entry_candle.isoformat(),
-        "t1": trade.exit_time.isoformat(),
-    }
-    return "/?" + urlencode(query)
+def chart_link(trade: TradeRecord, folder: Path | None = None) -> str:
+    """Chart URL that opens the trade as an order (entry, SL, TP; pages/chart.py, ui/trade_focus.py)
+    on the timeframe of the run's strategy (from the settings in `folder`; without a run the
+    chart keeps its timeframe)."""
+    timeframe = trade_focus.run_timeframe(folder, trade.symbol) if folder else None
+    return trade_focus.trade_link(trade, timeframe)
 
 
 # --- page ------------------------------------------------------------------------------
@@ -739,4 +734,4 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
             return no_update
         by_id = {t.id: t for t in read_trades(folder)}
         trade = by_id.get(cell.get("row_id"))
-        return chart_link(trade) if trade else no_update
+        return chart_link(trade, folder) if trade else no_update

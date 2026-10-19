@@ -375,3 +375,68 @@ def test_no_nested_children_lists(tmp_path):
     assert _nested_lists(live.layout(tmp_path, NOW)) == []
     for piece in live.render(live.live_view(tmp_path, NOW), NOW).values():
         assert _nested_lists(piece) == []
+
+
+# --- trades that open on the chart (ROADMAP 7.6) -----------------------------------------------
+
+
+def links_in(component) -> list[str]:
+    """Every dcc.Link href inside a component tree."""
+    found = []
+    if getattr(component, "href", None) is not None and type(component).__name__ == "Link":
+        found.append(component.href)
+    children = getattr(component, "children", None)
+    for child in children if isinstance(children, list) else [children]:
+        if child is not None and not isinstance(child, str | int | float):
+            found += links_in(child)
+    return found
+
+
+def test_open_positions_link_to_the_chart_with_entry_and_sl_but_no_tp(tmp_path):
+    from urllib.parse import parse_qs, urlparse
+
+    pos = {"symbol": "US500", "side": "buy", "lots": 1.0, "entry": 7700.0, "sl": 7690.0,
+           "floating_r": 0.4, "ticket": 1, "since": "2026-01-12T14:35:00+00:00"}  # fmt: skip
+    write_status(tmp_path / "status.json", status(positions=[pos]))
+    view = live.live_view(tmp_path, NOW)
+    (href,) = links_in(live.render_positions(view))
+    query = parse_qs(urlparse(href).query)
+    assert query["symbol"] == ["US500"] and query["dir"] == ["long"] and query["tf"] == ["M1"]
+    assert query["ep"] == ["7700.0"] and query["sl"] == ["7690.0"]
+    assert "tp" not in query and "exit" not in query  # the bot records no take profit
+
+
+def test_a_position_without_a_time_has_no_link(tmp_path):
+    write_status(tmp_path / "status.json", status())  # the default position has since ""
+    assert links_in(live.render_positions(live.live_view(tmp_path, NOW))) == []
+
+
+def closed(**kw):
+    base = {"symbol": "US500", "side": "sell", "entry_time": "2026-01-12T14:35:00+00:00",
+            "exit_time": "2026-01-12T14:50:00+00:00", "entry_fill": "7700.0", "sl": "7710.0",
+            "exit_price": "7690.0", "money": 250.0, "r_net": 1.0}  # fmt: skip
+    return {**base, **kw}
+
+
+def test_closed_trades_table_links_each_trade_to_the_chart():
+    table = live.render_closed([closed(), closed(symbol="NAS100", side="buy", sl="7690.0")])
+    hrefs = links_in(table)
+    assert len(hrefs) == 2 and "symbol=NAS100" in hrefs[0] + hrefs[1]
+    assert (
+        "exit=2026-01-12T14%3A50%3A00Z" in hrefs[0] or "exit=2026-01-12T14%3A50%3A00Z" in hrefs[1]
+    )
+    text = text_of(table)
+    assert "15:35" in text  # 14:35 UTC = 15:35 CH
+    assert live.render_closed([]).children == "none yet"
+
+
+def test_closed_trade_without_an_order_has_no_link_but_still_a_row():
+    table = live.render_closed([closed(sl="")])
+    assert links_in(table) == [] and "US500" in text_of(table)
+
+
+def test_the_bars_of_the_trades_figure_carry_the_chart_link():
+    rows = [closed(), closed(exit_time="2026-01-12T15:30:00+00:00")]
+    fig = live.trades_figure(live.lm.trade_strip(rows, 100_000.0, "all", NOW), rows)
+    assert len(fig.data[0].customdata) == 2
+    assert all(str(link).startswith("/?symbol=US500") for link in fig.data[0].customdata)

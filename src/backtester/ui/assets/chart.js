@@ -45,6 +45,7 @@
     drawn: {},          // performance.now() when each payload kind was last applied
     asked: new Set(),   // "key|side" of the edge loads already requested for this range
     extendTimer: null,
+    orderDraw: null,    // the order's drawings {key, items} (a trade focus, ROADMAP 7.6)
   };
 
   // --- helpers ------------------------------------------------------------------------
@@ -82,6 +83,11 @@
       for (const { d } of m.values()) if (isShown(type, d) && d.k !== "h") list.push(d);
       list.sort((a, b) => KIND_ORDER[kindOf(a)] - KIND_ORDER[kindOf(b)]);
       out.push(...list);
+    }
+    if (S.orderDraw && S.orderDraw.key === S.key) { // the opened trade's order: on top of the overlays
+      const items = S.orderDraw.items.filter((d) => d.k !== "h");
+      items.sort((a, b) => KIND_ORDER[kindOf(a)] - KIND_ORDER[kindOf(b)]);
+      out.push(...items);
     }
     S.sorted = out;
     return out;
@@ -273,7 +279,7 @@
             ctx.beginPath();
             ctx.moveTo(X0, Math.round(Y0) + off); ctx.lineTo(X1, Math.round(Y1) + off);
             ctx.stroke();
-          } else if (!detail) {
+          } else if (!detail && d.o !== "order") { // the opened order keeps its labels
             continue;
           } else if (d.k === "m") {
             const X = ts.logicalToCoordinate(d.x), Y = series.priceToCoordinate(d.y);
@@ -899,20 +905,40 @@
         return req || no();
       },
 
-      /* Trade focus (from the results page): once the focused symbol's candles are drawn,
-         scroll to the trade (entry candle t0 .. exit time t1) and mark the focus done. */
+      /* The order of a trade focus (store chart-order-draw, drawings on this chart's candles). */
+      order(payload) {
+        S.orderDraw = payload || null;
+        invalidate();
+        return no();
+      },
+
+      /* Trade focus (results page, side panel, Live page): once the focused symbol's (and
+         timeframe's) candles are drawn, scroll to the trade and mark the focus done. An order
+         focus (ROADMAP 7.6) is marked done also when its candles are not there (the day is not
+         cached: the chip says so); an old-form focus waits for its range. The entry / exit
+         are CLOSE times: the candle containing the instant just before them. */
       focus(_done, focus) {
         if (!focus || focus.done || !S.chart || S.symbol !== focus.symbol || !S.times.length) {
           return no();
         }
+        if (focus.tf && S.tf !== focus.tf) return no(); // the timeframe is on its way
         const t0 = Date.parse(focus.t0) / 1000;
         const t1 = Date.parse(focus.t1) / 1000;
         const last = S.times.length - 1;
-        if (t0 < S.times[0] || t0 > S.times[last]) return no(); // not this range (yet)
+        const isOrder = !!focus.order;
+        const end = S.times[last] + S.tfmin * 60;
+        if (isOrder ? (t0 <= S.times[0] || t0 > end) : (t0 < S.times[0] || t0 > S.times[last])) {
+          return isOrder ? Object.assign({}, focus, { done: true }) : no(); // not this range (yet)
+        }
         let i0 = 0;
-        while (i0 < last && S.times[i0 + 1] <= t0) i0++; // the candle containing the entry
+        if (isOrder) {
+          while (i0 < last && S.times[i0 + 1] < t0) i0++; // the candle that closed at the entry
+        } else {
+          while (i0 < last && S.times[i0 + 1] <= t0) i0++; // the candle containing the entry
+        }
         let i1 = i0;
         while (i1 < last && S.times[i1 + 1] < t1) i1++; // ... and the exit
+        S.series.priceScale().applyOptions({ autoScale: true });
         S.chart.timeScale().setVisibleLogicalRange({
           from: i0 - FOCUS_BEFORE,
           to: i1 + FOCUS_AFTER,

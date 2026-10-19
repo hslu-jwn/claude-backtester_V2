@@ -30,7 +30,7 @@ from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 from backtester.live.status import STATUS_NAME, heartbeat_age_s, read_status
 from backtester.paths import RESULTS_DIR
 from backtester.ui import live_model as lm
-from backtester.ui import trading_panel
+from backtester.ui import trade_focus, trading_panel
 
 LIVE_DIR = RESULTS_DIR / "live"
 LOG_LINES = 50
@@ -352,9 +352,34 @@ def render_setup(view: dict) -> html.Div:
     return html.Div(blocks, className="lv-funnels")
 
 
+def chart_link(row: dict):
+    """ "Chart →" link that opens a live trade / position on the chart with its order (entry and
+    SL; the bot records no TP), or a dash when the row is no order."""
+    href = trade_focus.live_link(row)
+    return dcc.Link("Chart →", href=href, className="lv-link") if href else DASH
+
+
+def render_closed(trades: list[dict]) -> html.Div:
+    """The closed trades of the chosen window, newest first, each with its chart link."""
+    return _table(
+        ["Entry (CH)", "Symbol", "Side", "R", "Chart"],
+        [
+            [
+                lm.hm_ch(t.get("entry_time", "")) or DASH,
+                t.get("symbol", ""),
+                t.get("side", ""),
+                f"{t.get('r_net', 0.0):+.2f}",
+                chart_link(t),
+            ]
+            for t in reversed(trades)
+        ],
+        "none yet",
+    )
+
+
 def render_positions(view: dict) -> html.Div:
     return _table(
-        ["Symbol", "Side", "Lots", "Entry", "SL", "Floating R"],
+        ["Symbol", "Side", "Lots", "Entry", "SL", "Floating R", "Chart"],
         [
             [
                 p.get("symbol", DASH),
@@ -372,6 +397,7 @@ def render_positions(view: dict) -> html.Div:
                         else None
                     ),
                 ),
+                chart_link(p),
             ]
             for p in (view["status"] or {}).get("positions") or []
         ],
@@ -409,8 +435,9 @@ def render(view: dict, now: datetime | None = None) -> dict:
     }
 
 
-def trades_figure(strip: dict) -> go.Figure:
-    """Bars in % of the balance (green / red) and the balance line in USD (right axis)."""
+def trades_figure(strip: dict, trades: list[dict] | None = None) -> go.Figure:
+    """Bars in % of the balance (green / red) and the balance line in USD (right axis). `trades`
+    (the strip's trades, same order): a click on a bar opens that trade on the chart."""
     fig = go.Figure()
     n = len(strip["pct"])
     if n:
@@ -418,6 +445,7 @@ def trades_figure(strip: dict) -> go.Figure:
         fig.add_bar(
             x=x, y=strip["pct"], hovertext=strip["labels"], name="trade %", hovertemplate="%{hovertext}<br>%{y:+.2f} %<extra></extra>",
             marker_color=["#2ebd85" if v >= 0 else "#f6465d" for v in strip["pct"]],
+            customdata=[trade_focus.live_link(t) for t in trades or []] or None,
         )  # fmt: skip
         fig.add_scatter(
             x=x, y=strip["balance"], yaxis="y2", name="balance", mode="lines",
@@ -533,6 +561,9 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                     _card(
                         "Recent trades",
                         [
+                            html.Div(
+                                "Click a bar to open the trade on the chart.", className="lv-sub"
+                            ),
                             dcc.Graph(
                                 id="lv-trades",
                                 figure=trades_figure(lm.trade_strip([], None, "day", now)),
@@ -554,6 +585,7 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                 ],
                 className="lv-two",
             ),
+            _card("Closed trades", html.Div(render_closed([]), id="lv-closed")),
             _card("Open positions", html.Div(pieces["positions"], id="lv-positions")),
             _card("Today's signals and skips", html.Div(pieces["signals"], id="lv-signals")),
             _card(
@@ -664,16 +696,26 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
 
     @app.callback(
         Output("lv-trades", "figure"),
+        Output("lv-closed", "children"),
         Input("lv-interval", "n_intervals"),
         Input("lv-range", "value"),
     )
     def _trades(_, range_key):
         now = datetime.now(UTC)
         status = read_status(out_dir / STATUS_NAME) or {}
-        strip = lm.trade_strip(
-            lm.read_trades(out_dir), status.get("initial_balance"), range_key, now
-        )
-        return trades_figure(strip)
+        trades = lm.read_trades(out_dir)
+        strip = lm.trade_strip(trades, status.get("initial_balance"), range_key, now)
+        shown = lm.window_trades(trades, range_key, now)
+        return trades_figure(strip, shown), render_closed(shown)
+
+    app.clientside_callback(  # a click on a bar: open that trade on the chart
+        "function (click) { const p = click && click.points && click.points[0];"
+        " if (p && typeof p.customdata === 'string') window.location.assign(p.customdata);"
+        " return window.dash_clientside.no_update; }",
+        Output("lv-trades", "className"),
+        Input("lv-trades", "clickData"),
+        prevent_initial_call=True,
+    )
 
     @app.callback(
         Output("lv-msg", "children"),

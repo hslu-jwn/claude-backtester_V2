@@ -542,3 +542,8 @@ body:has(.ch-page) .dash-dropdown-search {
 .ch-bar-pct:empty {
   display: none;
 }
+
+.ch-page .tb-chip {
+  color: var(--text);
+  border-color: var(--line2);
+}
