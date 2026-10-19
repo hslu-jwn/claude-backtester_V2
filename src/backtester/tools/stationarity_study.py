@@ -144,7 +144,9 @@ def analyze_symbol(job: tuple) -> dict:
         ok = closes > 0
         secs, closes = secs[ok], closes[ok]
         split = int(np.searchsorted(secs // SECONDS_PER_DAY, mid_day, side="right"))
-        for fam, found in series_rows(symbol, tf_name, np.log(closes), split, cfg).items():
+        for fam, found in series_rows(
+            symbol, tf_name, np.log(closes), split, cfg, secs, Timeframe[tf_name].value * 60
+        ).items():
             rows[fam] += found
         if tf_name == TOD_TIMEFRAME:
             parts = {
@@ -196,7 +198,7 @@ def summary_text(
             "Reading: ADF p < 0.05 = prices pull back to a mean (stationary); half-life in bars. "
             "Hurst < 0.5 = mean-reverting, > 0.5 = trending, 0.5 = random walk. VR(q) < 1 = "
             "reversal, > 1 = trend over q bars. 'RW' = a seeded random walk of the same length "
-            "and volatility (the answer for no structure at all)."
+            "and volatility (the answer for no structure at all). The findings use the robust variants (Spearman rank correlation for the lag grid, returns clipped at 5 robust sd for VR and the time-of-day part); the plain columns stay in the CSV files."
         ),
         "",
         "CORE SYMBOLS FIRST, whole period (real vs RW), per timeframe:",

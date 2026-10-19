@@ -72,6 +72,10 @@ class StationarityConfig:
     dst_first_year: int = 2010
     dst_last_year: int = 2018
     symbol_ends: tuple[tuple[str, date], ...] = (("GER40", date(2020, 6, 12)),)  # ROADMAP 13.13
+    gap_bars: int = 3  # a return over more than this many bars is a gap (weekend, holiday, hole)
+    winsor_sd: float = (
+        5.0  # robust variants clip returns at this many robust sd (MAD) around the median
+    )
     min_siblings: int = 2  # the symbol itself plus at least one sibling
     sibling_groups: dict[str, tuple[str, ...]] = field(
         default_factory=lambda: {
@@ -222,9 +226,49 @@ def hurst(y, cfg: StationarityConfig) -> float | None:
     return float(np.polyfit(np.log(lags), np.log(stds), 1)[0])
 
 
-def variance_ratio(y, q: int, cfg: StationarityConfig) -> dict | None:
-    """Lo-MacKinlay VR(q) of the log price series `y` with the robust z: {vr, z, p_value, obs}."""
+def robust_sd(x) -> float:
+    """1.4826 x median absolute deviation (std of a normal sample, not moved by outliers);
+    the plain std if the MAD is 0 (many flat bars)."""
+    x = np.asarray(x, dtype=float)
+    if len(x) == 0:
+        return 0.0
+    mad = 1.4826 * float(np.median(np.abs(x - np.median(x))))
+    return mad if mad > 0 else float(np.std(x))
+
+
+def winsorize(x, sd_limit: float) -> np.ndarray:
+    """`x` clipped to median +- sd_limit x robust sd (unchanged if x has no spread)."""
+    x = np.asarray(x, dtype=float)
+    sd = robust_sd(x)
+    if sd <= 0:
+        return x.copy()
+    mid = float(np.median(x))
+    return np.clip(x, mid - sd_limit * sd, mid + sd_limit * sd)
+
+
+def ranks(values) -> np.ndarray:
+    """1-based ranks, ties get the mean of their positions."""
+    v = np.asarray(values, dtype=float)
+    _, inverse, counts = np.unique(v, return_inverse=True, return_counts=True)
+    upper = np.cumsum(counts)
+    return (upper - (counts - 1) / 2.0)[inverse]
+
+
+def gap_returns(secs, bar_seconds: int, cfg: StationarityConfig) -> np.ndarray:
+    """True for each return (len(secs) - 1) whose two bars are more than `gap_bars` bars
+    apart: a weekend, holiday or bridged cache hole, not a normal bar-to-bar move."""
+    s = np.asarray(secs, dtype=np.int64)
+    return np.diff(s) > cfg.gap_bars * bar_seconds
+
+
+def variance_ratio(
+    y, q: int, cfg: StationarityConfig, winsor_sd: float | None = None
+) -> dict | None:
+    """Lo-MacKinlay VR(q) of the log price series `y` with the robust z: {vr, z, p_value, obs}.
+    With `winsor_sd` the returns are clipped at that many sd first (a robust variant)."""
     y = _clean(y)
+    if winsor_sd is not None and len(y) > 1:
+        y = np.concatenate([[y[0]], y[0] + np.cumsum(winsorize(np.diff(y), winsor_sd))])
     r = np.diff(y)
     n = len(r)
     if n < max(cfg.vr_min_returns, 2 * q) or q < 2:
@@ -252,7 +296,8 @@ def variance_ratio(y, q: int, cfg: StationarityConfig) -> dict | None:
 
 def lag_corr(returns, k: int, h: int, min_pairs: int) -> dict | None:
     """Correlation of the past k-bar return with the next h-bar return on non-overlapping
-    blocks of k + h bars: {corr, pairs, t, p_value} or None."""
+    blocks of k + h bars: Pearson {corr, t, p_value}, Spearman {spearman, spearman_t,
+    p_spearman} and pairs, or None."""
     r = _clean(returns)
     block = k + h
     pairs = len(r) // block
@@ -264,7 +309,12 @@ def lag_corr(returns, k: int, h: int, min_pairs: int) -> dict | None:
         return None
     corr = float(np.corrcoef(past, nxt)[0, 1])
     t = corr * math.sqrt((pairs - 2) / max(1 - corr * corr, 1e-12))
-    return {"corr": corr, "pairs": pairs, "t": t, "p_value": t_p_value(t, pairs - 2)}
+    rho = float(np.corrcoef(ranks(past), ranks(nxt))[0, 1])  # robust to one extreme pair
+    rho_t = rho * math.sqrt((pairs - 2) / max(1 - rho * rho, 1e-12))
+    return {
+        "corr": corr, "pairs": pairs, "t": t, "p_value": t_p_value(t, pairs - 2),
+        "spearman": rho, "spearman_t": rho_t, "p_spearman": t_p_value(rho_t, pairs - 2),
+    }  # fmt: skip
 
 
 # --- DST weeks, symbol end, reference ------------------------------------------------------------------------------
@@ -313,12 +363,33 @@ def random_walk(n: int, sigma: float, cfg: StationarityConfig) -> np.ndarray:
 # --- time of day ---------------------------------------------------------------------------------------------------------------
 
 
+def _mean_stats(v: np.ndarray) -> tuple[float, float | None, float | None]:
+    n = len(v)
+    mean = float(v.mean())
+    sd = float(v.std(ddof=1)) if n > 1 else 0.0
+    if sd <= 0:
+        return mean, None, None
+    t = mean / (sd / math.sqrt(n))
+    return mean, t, t_p_value(t, n - 1)
+
+
+def _ac_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float] | None:
+    m = len(x)
+    if m < 3 or x.std() == 0 or y.std() == 0:
+        return None
+    c = max(-1.0, min(1.0, float(np.corrcoef(x, y)[0, 1])))
+    t = c * math.sqrt((m - 2) / max(1 - c * c, 1e-12))
+    return c, t, t_p_value(t, m - 2)
+
+
 def time_of_day_rows(secs, closes, excluded_days, cfg: StationarityConfig) -> list[dict]:
-    """Per UTC bucket of `bucket_minutes`: obs, mean 5-minute log return and its t / p, and
-    the first-order autocorrelation of the returns inside the bucket (ac1, pairs, t, p).
-    `secs`: bar open times (epoch seconds); `excluded_days`: day numbers to drop. Buckets with
-    fewer than `min_bucket_obs` returns are left out; the autocorrelation is None below that
-    many pairs."""
+    """Per UTC bucket of `bucket_minutes`: obs, mean 5-minute log return and its t / p, the
+    median, and the first-order autocorrelation of the returns inside the bucket (ac1, pairs,
+    t, p). The `_w` columns (mean_w, mean_w_t, p_mean_w, ac1_w, ac_w_t, p_ac_w) are the same
+    statistics with the bucket's returns clipped at `winsor_sd` robust sd (robust to a few
+    extreme bars); the findings use them. `secs`: bar open times (epoch seconds);
+    `excluded_days`: day numbers to drop. Buckets with fewer than `min_bucket_obs` returns are
+    left out; the autocorrelation is None below that many pairs."""
     secs = np.asarray(secs, dtype=np.int64)
     price = np.asarray(closes, dtype=float)
     if len(secs) < 3:
@@ -331,46 +402,37 @@ def time_of_day_rows(secs, closes, excluded_days, cfg: StationarityConfig) -> li
     width = cfg.bucket_minutes * 60
     nb = SECONDS_PER_DAY // width
     bucket = (secs[1:] % SECONDS_PER_DAY) // width
-    rv, bv = r[valid], bucket[valid]
-    obs = np.bincount(bv, minlength=nb)
-    sums = np.bincount(bv, weights=rv, minlength=nb)
-    sqs = np.bincount(bv, weights=rv * rv, minlength=nb)
     pair = valid[1:] & valid[:-1] & (bucket[1:] == bucket[:-1])
-    x, y, pb = r[:-1][pair], r[1:][pair], bucket[1:][pair]
-    npairs = np.bincount(pb, minlength=nb)
-    sx = np.bincount(pb, weights=x, minlength=nb)
-    sy = np.bincount(pb, weights=y, minlength=nb)
-    sxx = np.bincount(pb, weights=x * x, minlength=nb)
-    syy = np.bincount(pb, weights=y * y, minlength=nb)
-    sxy = np.bincount(pb, weights=x * y, minlength=nb)
     rows = []
     for b in range(nb):
-        n = int(obs[b])
+        v = r[valid & (bucket == b)]
+        n = len(v)
         if n < max(cfg.min_bucket_obs, 3):
             continue
-        mean = float(sums[b]) / n
-        var = (float(sqs[b]) - n * mean * mean) / (n - 1)
-        mean_t = mean / math.sqrt(var / n) if var > 0 else None
+        sd = robust_sd(v)
+        mid = float(np.median(v))
+        clip = (mid - cfg.winsor_sd * sd, mid + cfg.winsor_sd * sd) if sd > 0 else (-np.inf, np.inf)
+        mean, mean_t, p_mean = _mean_stats(v)
+        mean_w, mean_w_t, p_mean_w = _mean_stats(np.clip(v, *clip))
+        sel = pair & (bucket[1:] == b)
+        x, y = r[:-1][sel], r[1:][sel]
         row = {
             "bucket": f"{b * cfg.bucket_minutes // 60:02d}:{b * cfg.bucket_minutes % 60:02d}",
             "obs": n,
-            "mean_return": mean,
-            "mean_t": mean_t,
-            "p_mean": None if mean_t is None else t_p_value(mean_t, n - 1),
-            "ac_pairs": int(npairs[b]),
-            "ac1": None,
-            "ac_t": None,
-            "p_ac": None,
-        }
-        m = int(npairs[b])
-        if m >= max(cfg.min_bucket_obs, 3):
-            vx = m * float(sxx[b]) - float(sx[b]) ** 2
-            vy = m * float(syy[b]) - float(sy[b]) ** 2
-            if vx > 0 and vy > 0:
-                c = (m * float(sxy[b]) - float(sx[b]) * float(sy[b])) / math.sqrt(vx * vy)
-                c = max(-1.0, min(1.0, c))
-                t = c * math.sqrt((m - 2) / max(1 - c * c, 1e-12))
-                row.update(ac1=c, ac_t=t, p_ac=t_p_value(t, m - 2))
+            "mean_return": mean, "mean_t": mean_t, "p_mean": p_mean,
+            "median_return": mid,
+            "mean_w": mean_w, "mean_w_t": mean_w_t, "p_mean_w": p_mean_w,
+            "ac_pairs": len(x),
+            "ac1": None, "ac_t": None, "p_ac": None,
+            "ac1_w": None, "ac_w_t": None, "p_ac_w": None,
+        }  # fmt: skip
+        if len(x) >= max(cfg.min_bucket_obs, 3):
+            raw = _ac_stats(x, y)
+            if raw:
+                row.update(ac1=raw[0], ac_t=raw[1], p_ac=raw[2])
+            wins = _ac_stats(np.clip(x, *clip), np.clip(y, *clip))
+            if wins:
+                row.update(ac1_w=wins[0], ac_w_t=wins[1], p_ac_w=wins[2])
         rows.append(row)
     return rows
 
@@ -378,7 +440,7 @@ def time_of_day_rows(secs, closes, excluded_days, cfg: StationarityConfig) -> li
 # --- one series, three periods, real and reference -----------------------------------------------------------------------------
 
 
-def _period_rows(symbol, timeframe, source, period, y, cfg) -> dict[str, list[dict]]:
+def _period_rows(symbol, timeframe, source, period, y, cfg, gaps=None) -> dict[str, list[dict]]:
     base = {
         "symbol": symbol, "timeframe": timeframe, "period": period, "source": source,
         "bars": len(y),
@@ -396,10 +458,14 @@ def _period_rows(symbol, timeframe, source, period, y, cfg) -> dict[str, list[di
     for q in cfg.vr_qs:
         res = variance_ratio(y, q, cfg)
         if res:
+            wins = variance_ratio(y, q, cfg, winsor_sd=cfg.winsor_sd) or {}
             out["vr"].append(
-                {**base, "q": q, "vr": res["vr"], "z": res["z"], "p_value": res["p_value"]}
-            )
+                {**base, "q": q, "vr": res["vr"], "z": res["z"], "p_value": res["p_value"],
+                 "vr_w": wins.get("vr"), "z_w": wins.get("z"), "p_value_w": wins.get("p_value")}
+            )  # fmt: skip
     returns = np.diff(y)
+    if gaps is not None:
+        returns = np.where(gaps, 0.0, returns)  # gap returns are not used in lag pairs
     for k in cfg.lag_ks:
         for h_ in cfg.lag_ks:
             res = lag_corr(returns, k, h_, cfg.min_pairs)
@@ -409,12 +475,17 @@ def _period_rows(symbol, timeframe, source, period, y, cfg) -> dict[str, list[di
 
 
 def series_rows(
-    symbol: str, timeframe: str, y, split: int, cfg: StationarityConfig
-) -> dict[str, list[dict]]:
+    symbol: str, timeframe: str, y, split: int, cfg: StationarityConfig,
+    secs=None, bar_seconds: int | None = None,
+) -> dict[str, list[dict]]:  # fmt: skip
     """ADF / Hurst / VR / lag-correlation rows of the log-price series `y` for the whole
     period and its halves (`y[:split]`, `y[split:]`), for the real series and for a seeded
-    random walk of the same length and per-bar volatility (source = real / random_walk)."""
+    random walk of the same length and per-bar volatility (source = real / random_walk).
+    With `secs` (bar open times) and `bar_seconds`, a return over a gap of more than
+    `gap_bars` bars (weekend, holiday, bridged hole) is set to 0 in the lag-correlation pairs,
+    for the real series and the reference alike."""
     y = np.asarray(y, dtype=float)
+    gap_all = None if secs is None else gap_returns(secs, bar_seconds, cfg)
     out: dict[str, list[dict]] = {"adf": [], "hurst": [], "vr": [], "lagcorr": []}
     sources = [("real", y)]
     sigma = float(np.std(np.diff(y))) if len(y) > 2 else 0.0
@@ -422,8 +493,15 @@ def series_rows(
         sources.append(("random_walk", random_walk(len(y) - 1, sigma, cfg)))
     for source, series in sources:
         parts = {"whole": series, "first_half": series[:split], "second_half": series[split:]}
+        gap_parts = (
+            dict.fromkeys(parts)
+            if gap_all is None
+            else {"whole": gap_all, "first_half": gap_all[: max(split - 1, 0)],
+                  "second_half": gap_all[split:]}
+        )  # fmt: skip
         for period, part in parts.items():
-            for fam, rows in _period_rows(symbol, timeframe, source, period, part, cfg).items():
+            found = _period_rows(symbol, timeframe, source, period, part, cfg, gap_parts[period])
+            for fam, rows in found.items():
                 out[fam] += rows
     return out
 
@@ -445,13 +523,13 @@ def cells_from_rows(rows: dict[str, list[dict]]) -> list[dict]:
             add("adf", r, "adf", r["p_value"], r["lam"])
     for r in rows.get("vr", []):
         if r["source"] == "real":
-            add("vr", r, f"q={r['q']}", r["p_value"], r["vr"] - 1)
+            add("vr", r, f"q={r['q']}", r["p_value_w"], r["vr_w"] - 1)
     for r in rows.get("lagcorr", []):
         if r["source"] == "real":
-            add("lagcorr", r, f"k={r['k']},h={r['h']}", r["p_value"], r["corr"])
+            add("lagcorr", r, f"k={r['k']},h={r['h']}", r["p_spearman"], r["spearman"])
     for r in rows.get("time_of_day", []):
-        add("tod_mean", r, r["bucket"], r["p_mean"], r["mean_return"])
-        add("tod_ac", r, r["bucket"], r["p_ac"], r["ac1"])
+        add("tod_mean", r, r["bucket"], r["p_mean_w"], r["mean_w"])
+        add("tod_ac", r, r["bucket"], r["p_ac_w"], r["ac1_w"])
     return cells
 
 

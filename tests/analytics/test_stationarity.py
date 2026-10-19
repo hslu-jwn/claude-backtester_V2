@@ -352,3 +352,107 @@ def test_sibling_groups_are_disjoint_and_hold_the_core_symbols():
     seen = [s for g in CFG.sibling_groups.values() for s in g]
     assert len(seen) == len(set(seen))
     assert {"XAUUSD", "XAGUSD", "NAS100", "US500", "GBPJPY", "USDJPY"} <= set(seen)
+
+
+# --- robust variants: ranks, gaps, winsorizing (cause: one extreme pair dominated Pearson) --------------------
+
+
+def test_ranks_average_ties():
+    assert list(st.ranks(np.array([10.0, 20.0, 20.0, 30.0]))) == [1.0, 2.5, 2.5, 4.0]
+    assert list(st.ranks(np.array([3.0, 1.0, 2.0]))) == [3.0, 1.0, 2.0]
+
+
+def test_lag_corr_spearman_is_one_for_a_monotone_nonlinear_relation():
+    a = np.random.default_rng(2).normal(0, 1, 100)
+    r = np.column_stack([a, np.exp(3 * a)]).ravel()
+    res = st.lag_corr(r, 1, 1, 30)
+    assert res["spearman"] == pytest.approx(1.0) and res["corr"] < 0.95
+    assert res["p_spearman"] < 1e-10
+
+
+def test_one_extreme_pair_dominates_pearson_but_not_spearman():
+    rng = np.random.default_rng(5)
+    r = rng.normal(0, 0.001, 2000)  # k = h = 1, 1000 pairs of pure noise
+    r[500], r[501] = 0.1, -0.1  # one Brexit-like pair: up then down
+    res = st.lag_corr(r, 1, 1, 30)
+    assert res["corr"] < -0.5  # Pearson: that pair is most of the correlation
+    assert abs(res["spearman"]) < 0.15  # ranks: one pair out of 1000
+
+
+def test_gap_returns_mask_marks_returns_over_gap_bars():
+    secs = np.array([0, 3600, 7200, 7200 + 50 * 3600, 7200 + 51 * 3600])
+    assert list(st.gap_returns(secs, 3600, CFG)) == [False, False, True, False]
+    assert list(st.gap_returns(secs[:3], 3600, CFG)) == [False, False]
+    assert st.gap_returns(np.array([5]), 3600, CFG).size == 0
+
+
+def test_series_rows_does_not_use_a_return_over_a_gap_in_lag_pairs():
+    rng = np.random.default_rng(8)
+    r = rng.normal(0, 0.001, 3999)
+    secs = np.arange(4000) * 3600
+    secs[2000:] += 48 * 3600  # a weekend-like hole before return 1999
+    with_jump = r.copy()
+    with_jump[1999] += 0.5  # the gap return is huge
+    y_jump = np.concatenate([[0.0], np.cumsum(with_jump)])
+    zeroed = r.copy()
+    zeroed[1999] = 0.0
+    y_zero = np.concatenate([[0.0], np.cumsum(zeroed)])
+    a = st.series_rows("X", "H1", y_jump, 2000, CFG, secs, 3600)["lagcorr"]
+    b = st.series_rows("X", "H1", y_zero, 2000, CFG, None, None)["lagcorr"]
+    real = lambda rows: [x for x in rows if x["source"] == "real"]
+    assert [x["corr"] for x in real(a)] == pytest.approx([x["corr"] for x in real(b)])
+    c = st.series_rows("X", "H1", y_jump, 2000, CFG, None, None)["lagcorr"]
+    assert [x["corr"] for x in real(a)] != pytest.approx([x["corr"] for x in real(c)])
+
+
+def test_winsorize_clips_at_sd_limit_around_the_median():
+    x = np.concatenate([np.random.default_rng(1).normal(0, 1, 10_000), [100.0, -100.0]])
+    w = st.winsorize(x, 5.0)
+    assert w.max() < 10 and w.min() > -10 and len(w) == len(x)
+    assert np.array_equal(st.winsorize(np.zeros(5), 5.0), np.zeros(5))
+
+
+def test_winsorized_variance_ratio_ignores_up_down_spikes():
+    r = np.random.default_rng(3).normal(0, 0.001, 20_000)
+    for i in (5000, 12_000):
+        r[i], r[i + 1] = 0.05, -0.05
+    y = np.cumsum(r)
+    assert st.variance_ratio(y, 2, CFG)["vr"] < 0.9
+    res = st.variance_ratio(y, 2, CFG, winsor_sd=CFG.winsor_sd)
+    assert res["vr"] == pytest.approx(1.0, abs=0.05)
+
+
+def test_series_rows_vr_rows_carry_winsorized_columns():
+    y = np.log(100) + rw(6000, seed=11)
+    row = next(r for r in st.series_rows("X", "H1", y, 3000, CFG)["vr"] if r["period"] == "whole")
+    assert {"vr_w", "z_w", "p_value_w"} <= set(row)
+
+
+def test_time_of_day_winsorized_mean_ignores_one_outlier():
+    secs = m5_series(day_no(2020, 6, 1), 20)
+    ret = np.random.default_rng(1).normal(0, 0.0001, len(secs))
+    bucket = (secs % 86400) // 1800
+    ret[np.flatnonzero(bucket == 10)[40]] = 0.1
+    by = {r["bucket"]: r for r in st.time_of_day_rows(secs, np.exp(np.cumsum(ret)), set(), CFG)}
+    assert by["05:00"]["mean_return"] > 5e-4
+    assert abs(by["05:00"]["mean_w"]) < 5e-5
+    assert abs(by["05:00"]["median_return"]) < 5e-5
+    assert {"mean_w_t", "p_mean_w", "ac1_w", "ac_w_t", "p_ac_w"} <= set(by["05:00"])
+
+
+def test_findings_cells_use_the_robust_columns():
+    rows = {
+        "lagcorr": [{"source": "real", "symbol": "A", "timeframe": "H1", "period": "whole",
+                     "k": 1, "h": 1, "corr": 0.5, "p_value": 1e-9, "spearman": -0.1,
+                     "p_spearman": 0.4}],
+        "vr": [{"source": "real", "symbol": "A", "timeframe": "H1", "period": "whole", "q": 2,
+                "vr": 1.5, "p_value": 1e-9, "vr_w": 0.9, "p_value_w": 0.3}],
+        "time_of_day": [{"symbol": "A", "timeframe": "M5", "period": "whole", "bucket": "05:00",
+                         "mean_return": 1.0, "p_mean": 1e-9, "mean_w": -1.0, "p_mean_w": 0.2,
+                         "ac1": 0.5, "p_ac": 1e-9, "ac1_w": 0.1, "p_ac_w": 0.5}],
+    }  # fmt: skip
+    by = {c["family"]: c for c in st.cells_from_rows(rows)}
+    assert (by["lagcorr"]["value"], by["lagcorr"]["p_value"]) == (-0.1, 0.4)
+    assert by["vr"]["value"] == pytest.approx(-0.1) and by["vr"]["p_value"] == 0.3
+    assert (by["tod_mean"]["value"], by["tod_mean"]["p_value"]) == (-1.0, 0.2)
+    assert (by["tod_ac"]["value"], by["tod_ac"]["p_value"]) == (0.1, 0.5)
