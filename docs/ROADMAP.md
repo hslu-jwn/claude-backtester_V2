@@ -1646,6 +1646,10 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
 
 - ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
+  Decided by the user 2026-10-19: all 21 histdata symbols 2015-01-01..2021-09-13 (GER40 only to 2020-06-12, 13.13),
+  halves at the middle of the period; the time-of-day part drops the 2015-2018 US-only-DST weeks (13.12); a finding
+  needs Benjamini-Hochberg at 5 % over all cells, the same sign in both halves and >= 2 sibling symbols; a seeded
+  random walk is the reference. Built in its own worktree / branch `claude/knowledge-stationarity` (app running).
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
