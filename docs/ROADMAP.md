@@ -1692,6 +1692,13 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   at most a weak component for the portfolio tool (12.9). Known issue: the grid logs MT5 runs with source `histdata`, so
   its trial lines do not dedupe with the Monte Carlo lines (N 4 / 3 instead of 2; DSR stays < 0.95 either way since PSR(0) < 0.95).
 
+- ☐ **11.13 Large-move momentum study** (I-61; user, 2026-10-20): H1 (also M15, H4) bars whose return exceeds k = 2 / 3 / 4
+  robust sd (1.4826 x MAD over the trailing 500 bars, no lookahead; bars after a gap > 3 bars excluded); forward return over
+  h = 1, 2, 4, 8, 24 bars signed by the move (continuation > 0), in sd units and in spreads of the symbol; null: shuffled
+  event times (same symbol, count and hour of day), 1,000 runs, seed 42; a finding needs BH 5 %, the same sign in both halves,
+  >= 1 sibling and survives removing the top 1 % events; tradeable only if the mean continuation exceeds ~1.5 spreads.
+  21 histdata symbols 2015-01-01..2021-09-13 (GER40 to 2020-06-12), as 11.11 (defaults chosen by Claude from the 11.11 rules).
+
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
 Lessons from HftBacktest, VectorBT, NautilusTrader and prediction-market-backtesting, read 2026-10-15
@@ -1787,7 +1794,7 @@ changes results, defaults changed only with the user's go.
 - ☐ **12.11 Bayesian report** (T-10): Beta posterior of the win rate and of mean R, A/B of variants, trades needed;
   prior odds 1:50 against an edge (rule set by the user, 2026-10-16).
 
-- ☐ **12.12 Entry screening battery** (T-13; user, 2026-10-20): spec `risk-management.md › Entry screening`; first use:
+- ☑ **12.12 Entry screening battery** (accepted by the user 2026-10-20; pass item (c) = the strategy's own net R vs 1,000 random-exit runs of the same entries, confirmed by the user 2026-10-20) (T-13; user, 2026-10-20): spec `risk-management.md › Entry screening`; first use:
   re-audit strategies 1-7 (defaults, own symbols, development period).
   **Built 2026-10-20** (not yet marked done by the user): `analytics/entry_screen.py`, `tools/entry_screen.py`
   (`python -m backtester.tools.entry_screen --strategy <name> --cache-dir <histdata cache> --workers 1`; use
