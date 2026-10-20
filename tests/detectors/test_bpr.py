@@ -209,4 +209,4 @@ def test_update_out_of_order_or_twice_raises():
 def test_for_symbol_needs_a_doji_threshold():
     BprDetector.for_symbol("XAUUSD")
     with pytest.raises(KeyError):
-        BprDetector.for_symbol("EURUSD")
+        BprDetector.for_symbol("FOOBAR")

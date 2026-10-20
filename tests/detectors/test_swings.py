@@ -14,9 +14,11 @@ from conftest import build_series
 
 from backtester.core.models import Candle, Timeframe
 from backtester.core.series import CandleSeries
+from backtester.data.sources import PRICE_DIGITS
 from backtester.detectors.settings import DetectorSettings
 from backtester.detectors.swings import (
     DOJI_RANGE_SHARE,
+    MEDIAN_M5_RANGE,
     RangeShare,
     SwingConfig,
     SwingDetector,
@@ -166,12 +168,28 @@ def test_config_gold_default_gbp_pairs_scaled_others_need_a_value():
     # indices: median over 2020-01..2026-09 (user's choice, 2026-10-10)
     assert config.doji_threshold("NAS100") == pytest.approx(0.1767, abs=1e-4)
     assert config.doji_threshold("US500") == pytest.approx(0.0384, abs=1e-4)
-    with pytest.raises(KeyError, match="EURUSD"):
-        config.doji_threshold("EURUSD")
+    with pytest.raises(KeyError, match="FOOBAR"):
+        config.doji_threshold("FOOBAR")
     assert SwingConfig({"GBPUSD": 0.00002}).doji_threshold("GBPUSD") == 0.00002
     with pytest.raises(ValueError):
         SwingConfig({"XAUUSD": -1.0})
     assert DetectorSettings().swings == config  # the shared default (RunSettings.detectors)
+
+
+def test_every_known_symbol_has_a_default_doji_threshold():
+    config = SwingConfig()
+    for symbol in PRICE_DIGITS:
+        assert config.doji_threshold(symbol) > 0, symbol
+
+
+def test_measured_median_table_keeps_the_earlier_values_and_adds_the_rest():
+    assert MEDIAN_M5_RANGE["GBPUSD"] == 0.00028 and MEDIAN_M5_RANGE["GBPJPY"] == 0.066
+    assert MEDIAN_M5_RANGE["NAS100"] == 11.57 and MEDIAN_M5_RANGE["US500"] == 2.51
+    config = SwingConfig()
+    assert config.doji_threshold("XAUUSD") == 0.065
+    assert config.doji_threshold("AUDUSD") == pytest.approx(0.00032 * DOJI_RANGE_SHARE)
+    assert config.doji_threshold("BTCUSD") == pytest.approx(52.5 * DOJI_RANGE_SHARE)
+    assert set(PRICE_DIGITS) <= set(MEDIAN_M5_RANGE) | {"XAUUSD"}
 
 
 def test_equivalent_doji_body_scales_gold_by_typical_candle_range():

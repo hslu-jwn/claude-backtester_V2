@@ -188,4 +188,4 @@ def test_filter_on_keeps_a_subset_existing_at_or_after_the_bos():
 def test_for_symbol_needs_a_doji_threshold():
     OrderBlockDetector.for_symbol("XAUUSD")
     with pytest.raises(KeyError):
-        OrderBlockDetector.for_symbol("EURUSD")
+        OrderBlockDetector.for_symbol("FOOBAR")

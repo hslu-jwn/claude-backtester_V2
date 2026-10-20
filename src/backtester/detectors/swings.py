@@ -31,11 +31,21 @@ DOJI_REFERENCE_SYMBOL = "XAUUSD"
 DOJI_RANGE_SHARE = 0.065 / 4.255
 
 # Median 5m candle range (high - low) the other pairs' defaults come from, measured with
-# `python -m backtester.tools.check` (histdata.com): GBP pairs 2026-09-02..30, indices
-# over 2020-01-02..2026-09-30 (user's choice, 2026-10-10).
+# `tools.check.history_median_m5_range` (bid, flat zero-volume minutes dropped, read through
+# DEFAULT_SOURCES: MT5 day by day, else histdata / Binance). GBP pairs 2026-09-02..30 and
+# NAS100 / US500 2020-01-02..2026-09-30 (user's choice, 2026-10-10); every other symbol over
+# its full cached history, measured 2026-10-20 (user's choice; periods in confluences.md).
 MEDIAN_M5_RANGE = MappingProxyType(
-    {"GBPUSD": 0.00028, "GBPJPY": 0.066, "NAS100": 11.57, "US500": 2.51}
-)
+    {
+        "GBPUSD": 0.00028, "GBPJPY": 0.066, "NAS100": 11.57, "US500": 2.51,
+        "EURUSD": 0.00034, "USDJPY": 0.035, "AUDUSD": 0.00032, "USDCAD": 0.00034,
+        "USDCHF": 0.00029, "NZDUSD": 0.00031, "EURJPY": 0.050, "EURGBP": 0.00024,
+        "XAGUSD": 0.024, "GER40": 9.0, "UK100": 4.29, "JP225": 20.0, "EU50": 3.0,
+        "USOIL": 0.079, "UKOIL": 0.081, "DXY": 0.060,
+        "US30": 17.0, "US2000": 1.40, "NATGAS": 0.0060, "BTCUSD": 52.5, "ETHUSD": 3.5,
+        "BTCUSDT": 74.8, "ETHUSDT": 4.48,
+    }
+)  # fmt: skip
 
 
 class SwingKind(Enum):

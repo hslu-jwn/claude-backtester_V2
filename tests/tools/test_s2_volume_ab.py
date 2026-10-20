@@ -113,9 +113,9 @@ def test_doji_thresholds_for_symbols_without_one_use_the_gold_rule_on_their_medi
     sources = SimpleNamespace(adapter=lambda symbol: Adapter())
     base = SwingConfig()
     cfg = s2_volume_ab.swing_config_for(
-        ["NAS100", "US30"], date(2020, 1, 2), date(2021, 9, 13), sources, base
+        ["NAS100", "FOOBAR"], date(2020, 1, 2), date(2021, 9, 13), sources, base
     )
-    assert cfg.doji_max_body["US30"] == pytest.approx(equivalent_doji_body(3.0))
+    assert cfg.doji_max_body["FOOBAR"] == pytest.approx(equivalent_doji_body(3.0))
     assert cfg.doji_max_body["NAS100"] == base.doji_max_body["NAS100"]  # specced: untouched
     assert (
         s2_volume_ab.swing_config_for(

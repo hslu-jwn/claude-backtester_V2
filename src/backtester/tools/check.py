@@ -60,6 +60,7 @@ from enum import Enum
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import numpy as np
 import pandas as pd
 
 from backtester.core.models import Timeframe
@@ -500,6 +501,32 @@ def check_symbol(
     if spot_times:
         report.spot = spot_check(CacheAdapter(cache_dir), symbol, spot_times, config)
     return report
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryMedian:
+    median: float | None  # median high - low of the 5m candles (bid), None without data
+    first: date | None
+    last: date | None
+    days: int  # cached days read
+
+
+def history_median_m5_range(sources: SymbolSources, symbol: str) -> HistoryMedian:
+    """Median 5m candle range over every cached day of `symbol`, read through its sources
+    (MT5 day by day where it exists, else the main feed) with flat zero-volume minutes dropped,
+    as the backtests read it. Spec: confluences.md > Swing high / low (doji threshold table)."""
+    adapter = sources.adapter(symbol)
+    days = sources.cached_days(symbol)
+    ranges = []
+    for day in days:  # a 5m candle never spans two days: resample per day
+        m1 = drop_flat_minutes(read_cached_day(adapter._path(symbol, day)))
+        if not m1.empty:
+            m5 = resample(m1, Timeframe.M5)
+            ranges.append((m5["high"] - m5["low"]).to_numpy())
+    if not ranges:
+        return HistoryMedian(None, None, None, len(days))
+    median = float(np.median(np.concatenate(ranges)))
+    return HistoryMedian(median, days[0], days[-1], len(days))
 
 
 def _read_days(paths: dict[date, Path]) -> tuple[pd.DataFrame, pd.Series, list[date]]:

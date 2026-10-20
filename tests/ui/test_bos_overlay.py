@@ -102,10 +102,10 @@ def test_badges_go_to_the_browser_separately_from_the_drawings():
 
 
 def test_symbol_without_doji_threshold_shows_a_message():
-    replay = Replay(build_series([GREEN, RED], symbol="EURUSD"))
+    replay = Replay(build_series([GREEN, RED], symbol="FOOBAR"))
     drawings, messages = chart_overlays(replay, ["bos"], cursor=1, first_x=0)
     assert drawings == []
-    assert messages[0].startswith("BOS + trend: no doji threshold for EURUSD")
+    assert messages[0].startswith("BOS + trend: no doji threshold for FOOBAR")
 
 
 # --- overall trend (confluences.md › Trend: the 4H by default, a setting) --------------

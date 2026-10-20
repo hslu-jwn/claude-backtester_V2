@@ -117,7 +117,7 @@ def test_strong_move_filter_switch_off_by_default():
 
 
 def test_symbol_without_doji_threshold_shows_a_message():
-    replay = Replay(build_series(FVG, symbol="EURUSD"))
+    replay = Replay(build_series(FVG, symbol="FOOBAR"))
     drawings, messages = chart_overlays(replay, ["fvg"], 3, 0, settings=OFF)
     assert drawings == [] and messages and messages[0].startswith("FVG:")
 

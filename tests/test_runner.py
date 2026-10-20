@@ -42,6 +42,7 @@ from backtester.runner import (
     start_run,
     write_results,
 )
+from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.trend_following.config import TrendFollowingConfig
 
@@ -271,6 +272,19 @@ def test_command_runs_a_preset_and_records_its_name(cache, tmp_path, capsys):
     assert presets == ["No costs", "No costs (modified)"]
     with pytest.raises(SystemExit):
         main([*argv, "--preset", "missing"])
+
+
+def test_unsupported_symbol_is_a_clean_one_line_error(monkeypatch, capsys):
+    def refuse(*args, **kwargs):
+        raise UnsupportedSymbolError("opening_range: no session for BTCUSD (SYMBOL_CLASS in x)")
+
+    monkeypatch.setattr("backtester.run.run_backtests", refuse)
+    argv = ["AUDUSD", "BTCUSD", "--start", "2026-01-05", "--end", "2026-01-06"]
+    with pytest.raises(SystemExit) as e:
+        main([*argv, "--strategy", "opening_range"])
+    assert e.value.code == 2
+    err = capsys.readouterr().err
+    assert "opening_range: no session for BTCUSD" in err and "Traceback" not in err
 
 
 def test_per_year_printout(cache, tmp_path, capsys):

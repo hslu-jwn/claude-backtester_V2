@@ -19,6 +19,7 @@ from backtester.analytics.trial_log import append, make_record
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
+from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
 
 
@@ -123,7 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         preset = replace(preset, strategy=default_config(args.strategy))
     warmup = args.warmup_days if args.warmup_days is not None else preset.warmup_days
     settings = replace(preset, warmup_days=warmup)
-    result = run_backtests(symbols, args.start, args.end, settings, sources, _Bar(), args.workers)
+    try:
+        result = run_backtests(
+            symbols, args.start, args.end, settings, sources, _Bar(), args.workers
+        )
+    except UnsupportedSymbolError as e:  # one symbol without rules stops the whole run
+        parser.error(str(e))
     print(file=sys.stderr)
     name = args.preset if settings == preset else f"{args.preset} (modified)"
     folder = write_results(result, args.out, preset=name)

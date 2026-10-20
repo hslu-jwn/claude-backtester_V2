@@ -215,7 +215,7 @@ def test_update_out_of_order_or_twice_raises():
 def test_for_symbol_needs_a_doji_threshold():
     BosDetector.for_symbol("XAUUSD")
     with pytest.raises(KeyError):
-        BosDetector.for_symbol("EURUSD")
+        BosDetector.for_symbol("FOOBAR")
 
 
 # --- trend ---------------------------------------------------------------------------

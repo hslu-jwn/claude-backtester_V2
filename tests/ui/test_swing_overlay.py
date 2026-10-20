@@ -53,10 +53,10 @@ def test_replay_cursor_hides_swings_not_yet_confirmed():
 
 
 def test_symbol_without_doji_threshold_shows_a_message():
-    replay = Replay(build_series([GREEN, RED], symbol="EURUSD"))
+    replay = Replay(build_series([GREEN, RED], symbol="FOOBAR"))
     drawings, messages = chart_overlays(replay, ["swings"], cursor=1, first_x=0)
     assert drawings == []
-    assert messages and messages[0].startswith("Swings: no doji threshold for EURUSD")
+    assert messages and messages[0].startswith("Swings: no doji threshold for FOOBAR")
     try:
         detect_swings(replay)
     except OverlayUnavailable:

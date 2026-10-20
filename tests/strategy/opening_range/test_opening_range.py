@@ -21,6 +21,7 @@ from backtester.core.series import CandleSeries
 from backtester.engine.backtest import EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
 from backtester.engine.trade import ExitReason
+from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.opening_range.config import (
     SYMBOL_CLASS,
     EntryMode,
@@ -670,6 +671,14 @@ def test_default_sessions_are_the_spec_table():
 def test_unknown_symbol_is_refused():
     with pytest.raises(ValueError, match="USOIL"):
         OpeningRange("USOIL", OpeningRangeConfig())
+
+
+def test_symbol_without_a_session_gives_a_clear_one_line_message():
+    with pytest.raises(UnsupportedSymbolError) as e:
+        OpeningRange("BTCUSD", OpeningRangeConfig())  # crypto: no session defined
+    assert str(e.value) == (
+        "opening_range: no session for BTCUSD (SYMBOL_CLASS in strategy/opening_range/config.py)"
+    )
 
 
 # --- strategy contract and config ----------------------------------------------------------

@@ -11,6 +11,34 @@
 - **Doji/thin candle:** body |close − open| ≤ a per-symbol maximum (setting). XAUUSD: 0.065 (user-defined, same on every timeframe). Bid prices, as on the chart.
 - **Doji as a share of the candle's own range** (rule set by the user 2026-10-12, because the fixed amounts are tuned to 5m: on 4h NAS100 candles that look like dojis have bodies of 5–13 points against a threshold of 0.18): ⚙️ `SwingConfig.doji_range_share` (default **0 = off**, the fixed amounts above stay in force until the user has looked at it on the chart; suggested start 0.10): a doji is a body ≤ that share of the candle's own range (high − low), on every timeframe and symbol; a flat candle is a doji. Applies everywhere a doji is used (swings, BOS, sweeps, FVG, OB, zones, strategies). In the settings menu under Detectors.
 - **Other pairs: gold is the reference** (rule confirmed by the user). Their threshold covers the same share of a typical candle as gold's: 0.065 is 1.53% of gold's median 5m candle range (4.255, XAUUSD 2026-09-01..07), so a pair's default is 1.53% × its own median 5m range. Every pair's value can be changed in the settings. GBPUSD: median 0.00028 → 0.0000043 (below one point: only zero-body candles are dojis). GBPJPY: median 0.066 → 0.00101 (bodies of 0–1 point). Both measured on histdata.com 2026-09-02..30 (`tools.check` prints the values). NAS100: median 11.57 → 0.1767; US500: median 2.51 → 0.0384, both over the full history 2020-01..2026-09 (user's choice, 2026-10-10). Pairs without a value get no swings.
+
+  **Every other symbol** (rule set by the user 2026-10-20, "yes"): the median 5m range over the symbol's **full cached history**, read through `DEFAULT_SOURCES` (MT5 preferred day by day, histdata.com / Binance for older days; bid, flat zero-volume minutes dropped), threshold = 1.53% of it (`MEDIAN_M5_RANGE` in `detectors/swings.py`, `tools.check.history_median_m5_range`). The values above stay unchanged. (measured 2026-10-20, full history, user's choice)
+
+  | Symbol | Median 5m range | Doji threshold | Period (cached days) |
+  |---|---|---|---|
+  | EURUSD | 0.00034 | 0.0000052 | 2010-02-01..2026-10-18 (6104) |
+  | USDJPY | 0.035 | 0.00053 | 2010-02-01..2026-10-18 (6104) |
+  | AUDUSD | 0.00032 | 0.0000049 | 2010-02-01..2026-10-18 (6104) |
+  | USDCAD | 0.00034 | 0.0000052 | 2010-02-01..2026-10-18 (6104) |
+  | USDCHF | 0.00029 | 0.0000044 | 2010-02-01..2026-10-18 (6104) |
+  | NZDUSD | 0.00031 | 0.0000047 | 2010-02-01..2026-10-18 (6104) |
+  | EURJPY | 0.050 | 0.00076 | 2010-03-04..2026-10-18 (6073) |
+  | EURGBP | 0.00024 | 0.0000037 | 2010-02-01..2026-10-18 (6104) |
+  | XAGUSD | 0.024 | 0.00037 | 2010-02-02..2026-10-18 (6103) |
+  | GER40 | 9.0 | 0.137 | 2015-01-02..2026-10-18 (4307) |
+  | UK100 | 4.29 | 0.0655 | 2015-01-02..2026-10-18 (4307) |
+  | JP225 | 20.0 | 0.305 | 2015-01-02..2026-10-18 (4307) |
+  | EU50 | 3.0 | 0.0458 | 2015-01-02..2026-10-18 (3686) |
+  | USOIL | 0.079 | 0.00121 | 2015-01-02..2026-10-18 (4308) |
+  | UKOIL | 0.081 | 0.00124 | 2015-01-02..2026-10-18 (4307) |
+  | DXY | 0.060 | 0.00092 | 2015-01-02..2026-10-18 (3246) |
+  | US30 | 17.0 | 0.260 | 2019-02-09..2026-10-18 (2809) |
+  | US2000 | 1.40 | 0.0214 | 2018-01-24..2026-10-18 (3190) |
+  | NATGAS | 0.0060 | 0.000092 | 2024-10-24..2026-10-18 (725) |
+  | BTCUSD | 52.5 | 0.802 | 2017-04-06..2026-10-18 (3483) |
+  | ETHUSD | 3.5 | 0.0535 | 2018-01-10..2026-10-18 (3204) |
+  | BTCUSDT | 74.8 | 1.14 | 2020-01-01..2026-10-18 (2483) |
+  | ETHUSDT | 4.48 | 0.0685 | 2020-01-01..2026-10-18 (2483) |
 - A turning candle also starts the next swing: green, red, green gives a high (confirmed by the red) and a low (confirmed by the second green).
 - If both turn candles have the same extreme wick, the swing belongs to the earlier candle.
 

@@ -47,6 +47,11 @@ class Order:
     limit_fill: bool = False
 
 
+class UnsupportedSymbolError(ValueError):
+    """The strategy has no rules for this symbol (e.g. no session). A clear one-line message
+    for the user, not a bug: the command line prints it without a traceback."""
+
+
 class Strategy(ABC):
     base_timeframe: Timeframe
     timeframes: tuple[Timeframe, ...]  # all timeframes the strategy needs, incl. base

@@ -349,3 +349,26 @@ def test_index_old_cme_hours_until_2018_12_14():
     assert index_kind(utc(2018, 6, 5, 20, 20), utc(2018, 6, 5, 20, 21)) is GapKind.SHORT
     # forex / gold have no old windows
     assert kind(utc(2018, 6, 5, 20, 15), utc(2018, 6, 5, 20, 30)) is GapKind.UNEXPECTED
+
+
+# --- median 5m range over a symbol's full history, through its sources ------------------
+
+
+def test_history_median_reads_preferred_days_and_spans_all_cached_days(tmp_path):
+    main, pref = tmp_path / "histdata", tmp_path / "mt5"
+    write_day(main, date(2026, 9, 1), full_day("2026-09-01"))  # range 1.0 (histdata only)
+    write_day(main, date(2026, 9, 2), full_day("2026-09-02"))  # replaced by the MT5 day
+    wide = full_day("2026-09-02")
+    wide.loc[wide["bid_volume"] > 0, "bid_high"] += 1.0  # MT5 day: range 2.0 (not the filler)
+    write_day(pref, date(2026, 9, 2), wide)
+    sources = SymbolSources({"XAUUSD": main}, preferred_dirs={"XAUUSD": pref})
+    result = check.history_median_m5_range(sources, "XAUUSD")
+    assert result.days == 2
+    assert (result.first, result.last) == (date(2026, 9, 1), date(2026, 9, 2))
+    # both days have as many 5m candles: median of {1.0 x n, 2.0 x n} = 1.5
+    assert result.median == 1.5
+
+
+def test_history_median_of_an_uncached_symbol_is_none(tmp_path):
+    sources = SymbolSources({"XAUUSD": tmp_path})
+    assert check.history_median_m5_range(sources, "XAUUSD").median is None

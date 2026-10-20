@@ -39,7 +39,7 @@ from zoneinfo import ZoneInfo
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.detectors.settings import DetectorSettings
-from backtester.strategy.base import Order, Strategy
+from backtester.strategy.base import Order, Strategy, UnsupportedSymbolError
 from backtester.strategy.opening_range.config import (
     SYMBOL_CLASS,
     EntryMode,
@@ -122,7 +122,10 @@ class OpeningRange(Strategy):
         self.config = config = config or OpeningRangeConfig()
         market = SYMBOL_CLASS.get(symbol)
         if market is None or market not in config.sessions:
-            raise ValueError(f"opening_range has no sessions for {symbol}")
+            raise UnsupportedSymbolError(
+                f"opening_range: no session for {symbol} "
+                "(SYMBOL_CLASS in strategy/opening_range/config.py)"
+            )
         self._sessions = [
             _Session(name, spec, ZoneInfo(spec.zone))
             for name, spec in config.sessions[market].items()

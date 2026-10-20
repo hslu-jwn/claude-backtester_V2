@@ -553,4 +553,4 @@ def test_update_out_of_order_raises():
 def test_for_symbol_needs_a_doji_threshold():
     SweepDetector.for_symbol("XAUUSD")
     with pytest.raises(KeyError):
-        SweepDetector.for_symbol("EURUSD")
+        SweepDetector.for_symbol("FOOBAR")
