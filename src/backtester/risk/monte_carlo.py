@@ -238,7 +238,13 @@ def _one_run(days: list[Day], order, risk: float, config: MonteCarloConfig) -> d
 
 
 def _play_day(
-    day: Day, bal: float, risk: float, config: MonteCarloConfig, target_bal: float, tdays: int
+    day: Day,
+    bal: float,
+    risk: float,
+    config: MonteCarloConfig,
+    target_bal: float,
+    tdays: int,
+    fixed: bool = False,
 ) -> tuple[str | None, float]:
     """Play one day. Returns (status, closing balance): status None, "daily", "max" (the
     attempt is over) or "pass" (closed balance >= `target_bal` and `tdays` + 1 trading days).
@@ -247,7 +253,8 @@ def _play_day(
     point is the closed balance minus, for each trade still open, risk$ x max(1, -r_net), with
     risk$ = risk x the closed balance at that moment. Trades open since an earlier day count
     from the day start. Loss limits are fractions of the initial balance; reaching the limit
-    counts as a breach. Daily loss is checked before max loss.
+    counts as a breach. Daily loss is checked before max loss. `fixed` (the funded account,
+    user 2026-10-20): risk$ = risk x the initial balance, so it does not grow with the profits.
     """
     init = config.start_balance
     day_start, open_units = bal, 0.0
@@ -258,8 +265,8 @@ def _play_day(
             open_units += max(1.0, -r)
         else:
             open_units -= max(1.0, -r)
-            bal *= max(0.0, 1.0 + r * risk)
-        worst = bal * (1.0 - open_units * risk)
+            bal = bal + r * risk * init if fixed else bal * max(0.0, 1.0 + r * risk)
+        worst = bal - open_units * risk * (init if fixed else bal)
         if day_start - worst >= daily_lim:
             return "daily", worst
         if init - worst >= max_lim:
@@ -286,15 +293,20 @@ def _run_phase(
 
 def _run_funded(seq: list, j: int, pos0: int, n_days: int, risk: float, config) -> tuple:
     """Funded account from day position `pos0`, watched `funded_days` days. Returns
-    (lost, observed fully, next index, last day position)."""
-    bal, last = config.start_balance, pos0 + config.funded_days - 1
+    (lost, observed fully, next index, last day position). Rule set by the user 2026-10-20:
+    risk is a share of the initial balance and the profits are paid out at each day end
+    (balance back to at most the initial one), so they neither raise the risk nor buffer the
+    loss limits."""
+    init = config.start_balance
+    bal, last = init, pos0 + config.funded_days - 1
     k = j
     while k < len(seq) and seq[k][0] <= last:
         pos, day = seq[k]
-        status, bal = _play_day(day, bal, risk, config, NO_TARGET, 0)
+        status, bal = _play_day(day, bal, risk, config, NO_TARGET, 0, fixed=True)
         k += 1
         if status in ("daily", "max"):
             return True, True, k, pos
+        bal = min(bal, init)
     return False, last < n_days, k, last
 
 

@@ -1806,7 +1806,7 @@ Carver *Systematic Trading*, López de Prado *Advances in Financial Machine Lear
 Davey *Building Winning Algorithmic Trading Systems* to `00_Literature/Trading` (books are added only from the text).
 Done 2026-10-16: the four books plus Kurt and Kaeppel are in `knowledge/` (Natenberg skipped by the user).
 
-- ☐ **12.12 Funded-account loss rate looks wrong** (found 2026-10-20 while building the prop-firm card): `risk/monte_carlo.py`
+- ☑ **12.12 Funded-account loss rate looks wrong** (found 2026-10-20 while building the prop-firm card): `risk/monte_carlo.py`
   shows "funded account lost within 126 days" near 100 % even for strong strategies.
   Checked 2026-10-20: **no code bug**. Hand-built cases are right (tests in `tests/risk/test_monte_carlo.py`: exact
   win-every-day / lose-every-day cases, a strong one-trade-a-day case loses < 2 %). Causes of the near-100 %: (1) the
@@ -1816,7 +1816,8 @@ Done 2026-10-16: the four books plus Kurt and Kaeppel are in `knowledge/` (Naten
   trade and hits the 5 % daily limit by a bad day (strong 6-trades-a-day case at 0.5 %: 47 % lost, almost all "daily"
   after the balance grew); (3) the daily-loss approximation counts every open trade at its stop (several concurrent
   trades x 1 % risk reach 5 % at once). **Open with the user:** should the funded account risk a % of the *initial*
-  balance (profits assumed paid out)? Not changed. Accepted by the user 2026-10-20: the card's "too little data" limits
+  balance (profits assumed paid out)? **Rule set by the user 2026-10-20: yes** — the funded account risks a % of the
+  initial balance and its profits are paid out at each day end (no buffer); built 2026-10-20 (`_run_funded`, card version 2). Accepted by the user 2026-10-20: the card's "too little data" limits
   (100 trades, 120 trading days); button-started Monte Carlo reports go into the trial log (done 2026-10-20).
 
 ## Phase 13: Whole-software audit 2026-10-19 (findings; nothing fixed yet)

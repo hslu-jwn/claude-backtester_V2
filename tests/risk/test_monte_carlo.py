@@ -309,3 +309,37 @@ def test_funded_loss_rate_is_high_for_a_losing_strategy():
     trades, s, e = one_per_day(rs)
     f = mc.run_monte_carlo(trades, s, e, cfg(runs=60, risk_levels=(0.01,)))["risks"][0.01]["ftmo"]
     assert f["funded_observed"] == 0 or f["funded_lost_probability"] > 0.9
+
+
+# ----- funded account: risk on the initial balance, profits withdrawn (user, 2026-10-20) -----
+
+
+def _day(*rs):
+    events = tuple(e for r in rs for e in ((True, r), (False, r)))
+    return mc.Day(np.array(rs, dtype=float), events)
+
+
+def _funded(days, risk=0.01, **kw):
+    seq = list(enumerate(days))
+    lost, _observed, _k, _last = mc._run_funded(seq, 0, 0, len(seq), risk, cfg(**kw))
+    return lost
+
+
+def test_funded_risk_does_not_grow_with_the_profits():
+    # 100 winning days, then a day with 3 losses at 1 %. Compounding on the balance (2.7x the
+    # start) would risk 2.7 % of the initial balance per trade: 3 losses = 8.1 % > the 5 % daily
+    # limit. Risk on the initial balance: 3 % lost that day, the account lives.
+    assert _funded([_day(1.0)] * 100 + [_day(-1.0, -1.0, -1.0)]) is False
+
+
+def test_funded_profits_are_withdrawn_so_they_are_no_buffer():
+    # 30 winning days, then 10 losing days at 1 %: the profits were paid out at each day end,
+    # so the 10 losses take the account 10 % below its start = the max loss is reached
+    assert _funded([_day(1.0)] * 30 + [_day(-1.0)] * 10) is True
+    assert _funded([_day(1.0)] * 30 + [_day(-1.0)] * 9) is False
+
+
+def test_funded_daily_loss_still_uses_the_open_trades_at_their_stop():
+    # five trades open at once at 1 % on the initial balance: the worst point is 5 % -> breach
+    events = tuple((True, -1.0) for _ in range(5)) + tuple((False, -1.0) for _ in range(5))
+    assert _funded([mc.Day(np.array([-1.0] * 5), events)]) is True

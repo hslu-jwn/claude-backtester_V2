@@ -194,6 +194,9 @@ clear verdict.
   day so far minus, for each open trade, the risk x max(1, -r_net). Conservative (pass rate a bit too low).
   Output per risk: pass probability (both phases), fails split daily / max loss, median days to pass,
   P(funded account lost within ⚙️ **126** trading days).
+  **Funded account** (rule set by the user, 2026-10-20): risk per trade = risk x the **initial** balance (not the
+  current one), and the profits are paid out at each day end (the balance goes back to at most the initial one), so
+  profits neither raise the risk nor buffer the 5 % / 10 % limits. The challenge phases keep risk x the current balance.
   Implementation details (chosen by Claude 2026-10-15, `risk/monte_carlo.py`): max drawdown on the closed balance
   after every trade, fan / worst day / months on day-end balances; only full 21-day months; a trade exiting on a
   weekend moves to the next weekday; reaching a limit counts as a breach, daily loss checked before max loss;

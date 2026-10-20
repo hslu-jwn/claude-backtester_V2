@@ -28,7 +28,7 @@ from backtester.analytics.records import read_trades
 from backtester.paths import RESULTS_DIR
 from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo, weekdays
 
-CARD_VERSION = 1  # bump when the card's numbers or format change
+CARD_VERSION = 2  # 2: funded account risks on the initial balance (2026-10-20); bump when the card's numbers or format change
 CACHE_FILE = "prop_firm.json"
 DEFAULT_FIRM = "ftmo_2step"
 
