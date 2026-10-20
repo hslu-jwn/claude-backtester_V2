@@ -206,7 +206,8 @@ class Backtest:
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
-            break_even_level=entry + sign * self._config.costs.break_even_offset(symbol, now, entry),
+            break_even_level=entry
+            + sign * self._config.costs.break_even_offset(symbol, now, entry),
             tags=order.tags,
             reason=order.reason,
             confluence=order.confluence,

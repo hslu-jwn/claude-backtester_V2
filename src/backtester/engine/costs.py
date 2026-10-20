@@ -418,7 +418,9 @@ class CostConfig:
             return self.funding[symbol]
         path = FUNDING_DIR / f"{symbol}.csv"
         if not path.is_file():
-            raise FileNotFoundError(f"no funding rates for {symbol}: {path} (download Binance data)")
+            raise FileNotFoundError(
+                f"no funding rates for {symbol}: {path} (download Binance data)"
+            )
         return load_funding(path)
 
     def funding_r(

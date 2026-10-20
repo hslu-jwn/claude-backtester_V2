@@ -196,7 +196,7 @@ def _weekdays_in_month(year: int, month: int) -> list[int]:
 
 
 def month_part(d) -> str:
-    """"first 3 days" / "last 3 days" of the date's month counted in weekdays (no holiday
+    """ "first 3 days" / "last 3 days" of the date's month counted in weekdays (no holiday
     calendar), "mid" otherwise. A weekend day counts the weekdays before / after it. The
     first part wins where they overlap. `d`: a date or datetime."""
     weekdays = _weekdays_in_month(d.year, d.month)
