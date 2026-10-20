@@ -55,6 +55,7 @@ from backtester.engine.spread_table import SpreadTable
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.gap_fade.config import GapFadeConfig
+from backtester.strategy.gap_momentum.config import GapMomentumConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.opening_range.config import OpeningRangeConfig
@@ -79,6 +80,7 @@ StrategyConfig = (
     | TrendFollowingConfig
     | GapFadeConfig
     | OpeningRangeConfig
+    | GapMomentumConfig
 )
 
 

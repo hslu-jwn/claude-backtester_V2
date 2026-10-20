@@ -156,6 +156,11 @@ _GROUP_RULES = (
     ("strategy.min_gap_atr", "Gap filter"),
     ("strategy.max_gap_atr", "Gap filter"),
     ("strategy.mode", "Gap filter"),
+    ("strategy.entry_z", "Gap filter"),
+    ("strategy.vol_days", "Gap filter"),
+    ("strategy.side", "Gap filter"),
+    ("strategy.stop_atr", "Stop loss"),
+    ("strategy.target_r", "Take profit"),
     ("strategy.stop_gap_mult", "Exit"),
     ("strategy.exit_time", "Exit"),
     ("detectors.fvg.", "Detectors"),
@@ -288,6 +293,7 @@ UNUSED = {
     "no_wick": {"engine.break_even_at_next_session"},
     "trend_following": {"engine.break_even_at_next_session"},
     "gap_fade": {"engine.break_even_at_next_session"},
+    "gap_momentum": {"engine.break_even_at_next_session"},
     "opening_range": {"engine.break_even_at_next_session"},
 }
 

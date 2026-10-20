@@ -247,3 +247,49 @@ def test_build_summary_without_a_deflated_result_makes_check_7_not_available():
     )  # fmt: skip
     assert "deflated_sharpe" in s["verdict"].not_available
     assert s["deflated"] is None
+
+
+# --- gap momentum: kind B coin flips the side (ROADMAP 11.12) -------------------------------------
+
+
+def test_gap_momentum_kind_b_runs_the_fade_side_on_the_same_days(tmp_path, stub):
+    assert tool.main(argv(tmp_path, "--paths", "0", strategy="gap_momentum")) == 0
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["random_entries"]["available"] is True
+    assert [c.side for c in stub["run"][:2]] == ["momentum", "fade"]
+    assert {c.mode for c in stub["run"][:2]} == {"index"}
+
+
+def test_set_overrides_the_strategy_defaults_and_goes_into_the_trial_log(tmp_path, stub):
+    from datetime import time
+
+    from backtester.analytics.trial_log import family_trials
+
+    extra = ("--paths", "0", "--set", "entry_z=0.25", "stop_atr=2", "exit_time=11:00", "mode=fx")
+    assert tool.main(argv(tmp_path, *extra, strategy="gap_momentum")) == 0
+    cfg = stub["run"][0]
+    assert (cfg.entry_z, cfg.stop_atr, cfg.exit_time, cfg.mode) == (0.25, 2.0, time(11), "fx")
+    assert stub["run"][1].side == "fade" and stub["run"][1].entry_z == 0.25
+    [line] = family_trials("gap_momentum")
+    assert line.settings["entry_z"] == 0.25
+
+
+def test_set_refuses_an_unknown_setting_or_a_bad_item():
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("gap_momentum"), ["nope=1"])
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("gap_momentum"), ["entry_z"])
+
+
+def test_cache_dir_is_the_source_of_every_symbol(tmp_path, monkeypatch, stub):
+    seen = []
+    orig = tool.run_backtests
+
+    def spy(symbols, start, end, settings, *a, **k):
+        seen.append(k["sources"])
+        return orig(symbols, start, end, settings, *a, **k)
+
+    monkeypatch.setattr(tool, "run_backtests", spy)
+    cache = tmp_path / "cache"
+    assert tool.main(argv(tmp_path, "--paths", "0", "--cache-dir", str(cache))) == 0
+    assert seen[0].cache_dir("NAS100") == seen[0].cache_dir("US500") == cache

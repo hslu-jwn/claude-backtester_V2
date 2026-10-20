@@ -4,14 +4,16 @@
         --strategy gap_fade
     python -m backtester.tools.monte_carlo NAS100 --start 2021-09-15 --end 2026-09-30 \\
         --strategy gap_fade --source mt5 --paths 0
+    python -m backtester.tools.monte_carlo NAS100 US500 --start 2015-01-01 --end 2021-09-13 \\
+        --strategy gap_momentum --family gap_momentum_index --set entry_z=0.1 exit_time=12:00
 
 Runs the strategy (spec defaults, shared costs), then: kind A day reshuffle + FTMO 2-Step at
-0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade has the "follow" variant for it;
-other strategies show "not available for this strategy yet" and the verdict check is n/a), kind C
-random fills, kind D seeded random-walk paths (`--paths`, 0 skips; the volatility profile is
-measured on the same days as the run), and the robustness measures. Writes `<out>/report.html`
-(Plotly from the CDN) and `<out>/summary.json`; default `<out>` is
-`results/monte_carlo/<strategy>_<symbols>_<start>_<end>/`.
+0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade, "follow" variant, and the gap
+momentum, "fade" side, have one; other strategies show "not available for this strategy yet" and
+the verdict check is n/a), kind C random fills, kind D seeded random-walk paths (`--paths`, 0
+skips; the volatility profile is measured on the same days as the run), and the robustness
+measures. Writes `<out>/report.html` (Plotly from the CDN) and `<out>/summary.json`; default
+`<out>` is `results/monte_carlo/<strategy>_<symbols>_<start>_<end>/`.
 
 Spec: risk-management.md > Monte Carlo report (ROADMAP 12.7). Research only: changes no setting.
 """
@@ -24,8 +26,8 @@ import json
 import math
 import tempfile
 import time as clock
-from dataclasses import asdict, dataclass, is_dataclass, replace
-from datetime import date
+from dataclasses import asdict, dataclass, fields, is_dataclass, replace
+from datetime import date, time
 from pathlib import Path
 
 from backtester.analytics.deflated_sharpe import (
@@ -59,7 +61,8 @@ from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.registry import REGISTRY, default_config
 
-GAP_FADE = "gap_fade"
+# strategies with a kind B alternative on the same days: (setting, value) of the other choice
+ALTERNATIVES = {"gap_fade": ("mode", "follow"), "gap_momentum": ("side", "fade")}
 PERCENT = 100.0
 MONTE_CARLO_DIR = "monte_carlo"
 NOT_AVAILABLE = "not available for this strategy yet"
@@ -212,14 +215,39 @@ def build_summary(
     }
 
 
+def apply_overrides(config, items: list[str]):
+    """`config` with `key=value` items applied (types from the setting's current value; a time
+    setting is HH:MM). Research use: run one variant of a sweep. Unknown key: SystemExit."""
+    known = {f.name for f in fields(config)}
+    changes = {}
+    for item in items:
+        key, sep, text = item.partition("=")
+        if not sep or key not in known:
+            raise SystemExit(f"--set {item!r}: expected key=value with a setting of the strategy: "
+                             f"{', '.join(sorted(known))}")  # fmt: skip
+        current = getattr(config, key)
+        if key.endswith("_time") or isinstance(current, time):
+            changes[key] = time.fromisoformat(text)
+        elif isinstance(current, bool):
+            changes[key] = text.lower() in ("1", "true", "yes")
+        elif isinstance(current, int):
+            changes[key] = int(text)
+        elif isinstance(current, float):
+            changes[key] = float(text)
+        else:
+            changes[key] = text
+    return replace(config, **changes)
+
+
 def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     symbols = [s.upper() for s in args.symbols]
-    sources = (
-        DEFAULT_SOURCES
-        if args.source == "histdata"
-        else SymbolSources.single(MT5_CACHE_DIR, symbols)
-    )
-    strategy_cfg = default_config(args.strategy)
+    if args.cache_dir is not None:
+        sources = SymbolSources.single(args.cache_dir, symbols)
+    elif args.source == "histdata":
+        sources = DEFAULT_SOURCES
+    else:
+        sources = SymbolSources.single(MT5_CACHE_DIR, symbols)
+    strategy_cfg = apply_overrides(default_config(args.strategy), args.set or [])
     settings = replace(RunSettings(), strategy=strategy_cfg)
 
     log(f"backtest {args.strategy} {symbols} {args.start}..{args.end}")
@@ -239,11 +267,12 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     log(f"trial log: family {family}, N = {n_trials}")
 
     follow = None
-    if args.strategy == GAP_FADE:
-        log("kind B: follow run")
+    if args.strategy in ALTERNATIVES:
+        field, value = ALTERNATIVES[args.strategy]
+        log(f"kind B: {field}={value} run")
         follow = list(run_backtests(
             symbols, args.start, args.end,
-            replace(settings, strategy=replace(strategy_cfg, mode="follow")), sources=sources,
+            replace(settings, strategy=replace(strategy_cfg, **{field: value})), sources=sources,
         ).trades)  # fmt: skip
     paths = None
     if config.paths > 0:
@@ -618,6 +647,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="registry name, spec defaults (default session_zone_sweep)")  # fmt: skip
     p.add_argument("--source", choices=("histdata", "mt5"), default="histdata",
                    help="candle cache: histdata (default) or FTMO's data/cache/mt5")  # fmt: skip
+    p.add_argument("--cache-dir", type=Path, default=None,
+                   help="read every symbol from this cache folder (read only; overrides --source)")  # fmt: skip
+    p.add_argument("--set", nargs="+", default=None, metavar="KEY=VALUE",
+                   help="override settings of the strategy, e.g. entry_z=0.25 stop_atr=2 "
+                   "exit_time=11:00 (one variant of a sweep; the rest stay at the spec default)")  # fmt: skip
     p.add_argument("--runs", type=int, default=d.runs, help="runs for kinds A, B and C")
     p.add_argument("--seed", type=int, default=d.seed)
     p.add_argument("--paths", type=int, default=d.paths,
