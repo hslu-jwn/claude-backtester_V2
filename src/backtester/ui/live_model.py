@@ -224,19 +224,34 @@ def landing_path(pathname: str | None, landed: bool, status: dict | None, now: d
 # --- setup funnel --------------------------------------------------------------------------------
 
 
+def _done_states(detail: str) -> dict[str, str]:
+    """Row states of a finished setup, from the bot's detail text (live/status.py `_detail`):
+    all ticked after a trade, the volume filter failed on a skip, else only the range."""
+    if detail == "traded today":
+        return dict.fromkeys(STAGES, "done")
+    states = dict.fromkeys(STAGES, "todo")
+    states.update(dict.fromkeys(STAGES[:3], "done"), done="done")
+    if detail.endswith("skipped"):
+        states.update(waiting_breakout="done", volume_passed="failed")
+    return states
+
+
 def funnel_rows(setup: dict | None) -> list[dict]:
-    """The stages of a setup: earlier ones done, the current one highlighted, later ones todo."""
+    """The stages of a setup: earlier ones done, the current one highlighted, later ones todo.
+    A finished setup ticks only what happened (`_done_states`)."""
     setup = setup or {}
     at = STAGES.index(setup["stage"]) if setup.get("stage") in STAGES else None
+    text = str(setup.get("detail") or "")
+    done = _done_states(text) if setup.get("stage") == "done" else None
     rows = []
     for i, key in enumerate(STAGES):
         if at is None:
             state = "todo"
-        elif key == "done" and at == i:
-            state = "done"  # finished: everything ticked
+        elif done is not None:
+            state = done[key]
         else:
             state = "done" if i < at else "current" if i == at else "todo"
-        detail = str(setup.get("detail") or "") if at == i else ""
+        detail = text if at == i else ""
         rows.append({"key": key, "label": STAGE_LABELS[key], "state": state, "detail": detail})
     return rows
 

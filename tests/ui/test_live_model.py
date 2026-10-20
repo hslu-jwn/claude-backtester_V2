@@ -142,8 +142,34 @@ def test_funnel_marks_done_and_current():
     assert rows[3]["detail"] == "range 100-110" and rows[0]["detail"] == ""
 
 
-def test_funnel_done_stage_is_all_ticked():
-    assert {r["state"] for r in m.funnel_rows({"stage": "done"})} == {"done"}
+def test_funnel_done_after_a_trade_is_all_ticked():
+    rows = m.funnel_rows({"stage": "done", "detail": "traded today"})
+    assert {r["state"] for r in rows} == {"done"}
+
+
+def test_funnel_done_after_a_volume_skip_does_not_tick_volume_or_entered():
+    # 2026-10-19/20: the page ticked "Volume filter passed" and "Entered" for skipped setups
+    rows = m.funnel_rows({"stage": "done", "detail": "rel volume 1.1 < 1.5, skipped"})
+    states = {r["key"]: r["state"] for r in rows}
+    assert [states[k] for k in m.STAGES[:4]] == ["done"] * 4
+    assert states["volume_passed"] == "failed"
+    assert states["entered"] == "todo"
+    assert states["done"] == "done"
+    assert rows[-1]["detail"] == "rel volume 1.1 < 1.5, skipped"
+
+
+def test_funnel_done_without_a_trade_ticks_only_the_range():
+    rows = m.funnel_rows({"stage": "done", "detail": "no trade today"})
+    states = {r["key"]: r["state"] for r in rows}
+    assert [states[k] for k in m.STAGES[:3]] == ["done"] * 3
+    assert [states[k] for k in ("waiting_breakout", "volume_passed", "entered")] == ["todo"] * 3
+    assert states["done"] == "done"
+
+
+def test_funnel_done_with_an_unknown_detail_ticks_nothing_it_cannot_know():
+    states = {r["key"]: r["state"] for r in m.funnel_rows({"stage": "done"})}
+    assert states["entered"] == "todo" and states["volume_passed"] == "todo"
+    assert states["done"] == "done"
 
 
 def test_funnel_unknown_or_missing_stage():

@@ -38,6 +38,7 @@ REFRESH_MS = 3000
 BOT_LOG = "bot_stdout.log"
 PAUSE_NAME = "PAUSE"
 DASH = lm.DASH
+STEP_MARK = {"done": "✓", "failed": "✕"}  # funnel row state -> mark
 STATE_BADGE = {  # bot state -> (label, css)
     "running": ("Running", "ok"), "paused": ("Paused", "warn"),
     "stale": ("Stopped", "bad"), "stopped": ("Stopped", "idle"), "none": ("Stopped", "idle"),
@@ -334,7 +335,7 @@ def render_setup(view: dict) -> html.Div:
         steps = [
             html.Div(
                 [
-                    html.Span("✓" if r["state"] == "done" else "", className="lv-dot"),
+                    html.Span(STEP_MARK.get(r["state"], ""), className="lv-dot"),
                     html.Div(
                         [
                             html.Div(r["label"], className="lv-step-label"),

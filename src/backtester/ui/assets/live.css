@@ -259,6 +259,13 @@ details[open] > .lv-summary::before {
 .lv-step-done {
   color: var(--text);
 }
+.lv-step-failed .lv-dot {
+  border-color: var(--red);
+  background: var(--red);
+}
+.lv-step-failed {
+  color: var(--text);
+}
 .lv-step-current {
   color: var(--text);
   font-weight: 600;
