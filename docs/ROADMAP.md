@@ -872,7 +872,18 @@ has no step yet.
   variant sweep (base risk x floor x daily budget) on the trades of every strategy, dev years vs the MT5 period.
   **Part 1 built 2026-10-20, to be checked by the user:** `risk/adaptive.py`, `monte_carlo._play_day_adaptive`
   (`MonteCarloConfig.adaptive`, None = fixed, bit-identical), card with fixed / adaptive columns (card version 3);
-  modelling choices in `risk-management.md` › Adaptive risk. Part 2 (variant sweep) open.
+  modelling choices in `risk-management.md` › Adaptive risk.
+  **Part 2 built and run 2026-10-21, to be checked by the user (defaults NOT changed):** `tools/risk_sweep.py`
+  (`python -m backtester.tools.risk_sweep`; 100 variants per strategy: base 0.25-1.5 % x floor 0.1/0.25/0.5/off x
+  budget off/2/2.5/3/4 % + fixed baselines; 1000 reshuffles, same orders; dev 2018..2021-09-13 histdata (strategy 6:
+  US30/US2000 MT5, tick volume), test 2021-09-14..2026-10-16 MT5; picks fixed on dev, played once on test). Output
+  `results/risk_sweep/2026-10-21/` (report.md, summary.json, variants.csv; trade cache in `trades/`). Runtime 29 min.
+  Result: strategies 1-4 negative, their optimum (1.5 %, no scaling, budget 2-2.5 %) is variance gambling, not a
+  result. Strategy 6 (the only positive one): pick 1.5 % / floor 0.1 / budget 2.5 % = universal pick: pass 99.8 % dev,
+  83.9 % test (fixed 1.5 %: 63.2 / 16.4 %); flat top (45 of 100 within 1 pp): floor 0.1-0.25 matters, exact budget
+  does not. Caveats: pass rate counts finished attempts only (slow low-risk variants look 100 %), best base risk is
+  the grid edge 1.5 %, strategy 6 sample 177 / 302 trades. Open: time-capped pass metric, decide defaults.
+  No trial-log lines added (a risk sweep tries no strategy variant; 12.10 counts strategy variants).
 
 ## Phase 6: Robustness (before trusting any result)
 
