@@ -1692,7 +1692,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   at most a weak component for the portfolio tool (12.9). Known issue: the grid logs MT5 runs with source `histdata`, so
   its trial lines do not dedupe with the Monte Carlo lines (N 4 / 3 instead of 2; DSR stays < 0.95 either way since PSR(0) < 0.95).
 
-- ☐ **11.13 Large-move momentum study** (I-61; user, 2026-10-20): H1 (also M15, H4) bars whose return exceeds k = 2 / 3 / 4
+- ☑ **11.13 Large-move momentum study** (no edge; accepted by the user 2026-10-20) (I-61; user, 2026-10-20): H1 (also M15, H4) bars whose return exceeds k = 2 / 3 / 4
   robust sd (1.4826 x MAD over the trailing 500 bars, no lookahead; bars after a gap > 3 bars excluded); forward return over
   h = 1, 2, 4, 8, 24 bars signed by the move (continuation > 0), in sd units and in spreads of the symbol; null: shuffled
   event times (same symbol, count and hour of day), 1,000 runs, seed 42; a finding needs BH 5 %, the same sign in both halves,
