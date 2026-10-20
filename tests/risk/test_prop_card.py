@@ -198,3 +198,57 @@ def test_cli_writes_the_cache(tmp_path, monkeypatch):
     assert pc.main(["run1", "--results-dir", str(tmp_path)]) == 0
     assert (run / "prop_firm.json").is_file()
     assert pc.main(["missing", "--results-dir", str(tmp_path)]) == 1
+
+
+# ---- fixed vs adaptive (ROADMAP 5.7) -----------------------------------------------------
+
+
+def test_card_has_a_fixed_and_an_adaptive_line_per_base_risk():
+    card = pc.compute_card(daily(2.0), START, END, FAST, CARD)
+    fixed, adaptive = card["rows"], card["adaptive_rows"]
+    assert [r["risk"] for r in adaptive] == [r["risk"] for r in fixed] == [0.005, 0.01, 0.015]
+    for row in fixed + adaptive:
+        assert row["average_days_to_pass"] == row["median_days_to_pass"]  # all attempts equal
+    # always winning: the account is in profit, the factor is capped at 1, nothing is cut
+    # (one trade a day, 2 % at most) -> adaptive equals fixed
+    for f, a in zip(fixed, adaptive, strict=True):
+        assert (a["pass_probability"], a["median_days_to_pass"]) == (
+            f["pass_probability"], f["median_days_to_pass"])  # fmt: skip
+        assert a["skipped_trades"] == 0 and a["trades_seen"] > 0
+    assert card["adaptive"] == {"floor": 0.25, "daily_budget": 0.03}
+
+
+def test_adaptive_slows_a_losing_account_down():
+    card = pc.compute_card(daily(-1.0), START, END, FAST, CARD)
+    for f, a in zip(card["rows"], card["adaptive_rows"], strict=True):
+        assert f["attempts"] > 0 and a["attempts"] > 0
+        assert a["attempts"] < f["attempts"]  # each attempt takes longer to fail
+
+
+def test_adaptive_budget_skips_trades_and_is_reported():
+    # three trades at the same time every day, 1.5 % risk: the 3 % budget lets two (and a
+    # part of a third) through; the third is cut, not skipped, so skipped may stay 0 - use 4
+    def four_a_day(r):
+        out = []
+        for d in weekdays(START, END):
+            t0 = datetime(d.year, d.month, d.day, 10, tzinfo=UTC)
+            out += [
+                SimpleNamespace(entry_time=t0, exit_time=t0 + timedelta(hours=1), r_net=r)
+                for _ in range(4)
+            ]
+        return out
+
+    card = pc.compute_card(four_a_day(0.2), START, END, FAST, CARD)
+    top = card["adaptive_rows"][2]  # 1.5 % risk: 4 x 1.5 % wants 6 % of the day
+    assert top["skipped_trades"] > 0 and top["skipped_trades"] < top["trades_seen"]
+    assert card["adaptive_rows"][0]["skipped_trades"] == 0  # 0.5 % x 4 = 2 % fits
+
+
+def test_adaptive_settings_are_part_of_the_cache_key(tmp_path):
+    from backtester.risk.adaptive import AdaptiveRisk
+
+    run = write_run(tmp_path / "run1")
+    base = pc.cache_key(run, "ftmo_2step", FAST, CARD)
+    other = pc.FirmPreset(FAST.label, FAST.mc, AdaptiveRisk(floor=0.5))
+    assert pc.cache_key(run, "ftmo_2step", other, CARD) != base
+    assert pc.CARD_VERSION >= 3

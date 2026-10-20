@@ -3,9 +3,11 @@
 Spec: risk-management.md > Prop-firm field (where it shows; decided by the user 2026-10-20),
 ROADMAP 5.6 / 12.7.
 
-- **Prop firm card:** pass probability (both phases), fails split daily loss / max loss, median
-  days to pass and the chance the funded account is lost, at 0.5 / 1 / 1.5 % risk, from the day
-  reshuffle Monte Carlo of the run's R trades (`risk/prop_card.py`). The firm is a dropdown
+- **Prop firm card:** pass probability (both phases), fails split daily loss / max loss, average
+  and median days to pass and the chance the funded account is lost, at 0.5 / 1 / 1.5 % base
+  risk, each with a "fixed" and an "adaptive" column (ROADMAP 5.7; the adaptive one also shows the
+  share of trades skipped by the daily budget), from the day reshuffle Monte Carlo of the run's R
+  trades (`risk/prop_card.py`). The firm is a dropdown
   (`risk.prop_card.FIRMS`; FTMO 2-Step so far). A big run takes 20-30 s, so the numbers are
   computed in a background process once and cached in the run folder (`ui/prop_card_job.py`);
   the card shows "Calculating" until then. A page build only reads the cache; the first poll
@@ -36,13 +38,18 @@ CARD_ROWS = (
     "Pass probability (both phases)",
     "Failed: daily loss",
     "Failed: max loss",
+    "Average days to pass",
     "Median days to pass",
+    "Trades skipped by the daily budget",
 )
+MODES = ("Fixed", "Adaptive")
 HOW_TEXT = (
     "Estimated by reshuffling the {days} trading days {runs:,} times and playing every order as "
     "{label} challenge attempts (Phase 1, Phase 2, then a funded account). Trades still open "
     "count as if at their stop, so the daily-loss check is conservative and the pass rate a "
-    "little too low."
+    "little too low. Adaptive: the risk shrinks with the room to the max-loss line (down to "
+    "{floor:g} x the base risk, never above it) and a day's loss plus open risk stays within "
+    "{budget:g} % of the initial balance (trades that do not fit are skipped)."
 )
 WAITING_TEXT = "Waiting for another calculation to finish …"
 
@@ -59,18 +66,40 @@ def _risk_label(risk: float) -> str:
     return f"{risk * PERCENT:g} % risk"
 
 
+def _days(value: float | None) -> str:
+    return DASH if value is None else f"{value:.0f}"
+
+
+def _skipped(row: dict) -> str:
+    """Share of the trades the daily budget skipped (adaptive lines only)."""
+    return _share(row.get("skipped_trades", 0), row.get("trades_seen", 0))
+
+
 def _table(card: dict) -> html.Table:
-    rows = card["rows"]
+    fixed = card["rows"]
+    adaptive = card.get("adaptive_rows") or [None] * len(fixed)
+    # one column per (base risk, mode): fixed first, then adaptive
+    cols = [c for f, a in zip(fixed, adaptive, strict=True) for c in ((f, False), (a, True))
+            if c[0] is not None]  # fmt: skip
     funded = f"Funded account lost within {card['funded_days']} days"
     cells = [
-        (CARD_ROWS[0], [_pct(r["pass_probability"]) if r["attempts"] else DASH for r in rows]),
-        (CARD_ROWS[1], [_share(r["fail_daily"], r["attempts"]) for r in rows]),
-        (CARD_ROWS[2], [_share(r["fail_max"], r["attempts"]) for r in rows]),
-        (CARD_ROWS[3], [DASH if r["median_days_to_pass"] is None
-                        else f"{r['median_days_to_pass']:.0f}" for r in rows]),
-        (funded, [_pct(r["funded_lost_probability"]) for r in rows]),
+        (CARD_ROWS[0], [_pct(r["pass_probability"]) if r["attempts"] else DASH for r, _ in cols]),
+        (CARD_ROWS[1], [_share(r["fail_daily"], r["attempts"]) for r, _ in cols]),
+        (CARD_ROWS[2], [_share(r["fail_max"], r["attempts"]) for r, _ in cols]),
+        (CARD_ROWS[3], [_days(r.get("average_days_to_pass")) for r, _ in cols]),
+        (CARD_ROWS[4], [_days(r["median_days_to_pass"]) for r, _ in cols]),
+        (funded, [_pct(r["funded_lost_probability"]) for r, _ in cols]),
     ]  # fmt: skip
-    head = html.Thead(html.Tr([html.Th("")] + [html.Th(_risk_label(r["risk"])) for r in rows]))
+    if card.get("adaptive_rows"):
+        cells.append(
+            (CARD_ROWS[5], [_skipped(r) if is_adaptive else DASH for r, is_adaptive in cols])
+        )
+    modes = 2 if card.get("adaptive_rows") else 1
+    head = html.Thead([
+        html.Tr([html.Th("")] + [html.Th(_risk_label(r["risk"]), colSpan=modes) for r in fixed]),
+        html.Tr([html.Th("")] + [html.Th(MODES[int(is_a)]) for _, is_a in cols],
+                className="pf-modes"),
+    ])  # fmt: skip
     body = html.Tbody([html.Tr([html.Td(label)] + [html.Td(v) for v in values])
                        for label, values in cells])  # fmt: skip
     return html.Table([head, body], className="rs-table pf-table")
@@ -94,7 +123,9 @@ def card_body(status: dict) -> html.Div:
     card = status["card"]
     if card["status"] != "ok":
         return html.Div(card["reason"], className="pf-note")
-    how = HOW_TEXT.format(days=card["days"], runs=card["runs"], label=card["label"])
+    ad = card.get("adaptive") or {"floor": 0.0, "daily_budget": 0.0}
+    how = HOW_TEXT.format(days=card["days"], runs=card["runs"], label=card["label"],
+                          floor=ad["floor"], budget=ad["daily_budget"] * PERCENT)  # fmt: skip
     return html.Div([_table(card), html.Div(how, className="pf-how")])
 
 

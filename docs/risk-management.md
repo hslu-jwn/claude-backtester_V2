@@ -277,7 +277,15 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
     cannot lose more than 3 %, so the 5 % daily limit is out of reach.
   - Same limits in the challenge and the funded account (FTMO 2-Step: 5 % daily, 10 % static max loss).
   - **Shown:** the prop-firm card has, per base risk, a line "fixed" and a line "adaptive" (pass probability, fails
-    daily / max, average and median days to pass).
+    daily / max, average and median days to pass, funded lost, and for adaptive the share of trades the budget skipped).
+  - **Modelling choices of the simulation** (`risk/adaptive.py`, `monte_carlo._play_day_adaptive`; Claude 2026-10-20,
+    to be confirmed): (1) the equity at the entry is the *closed balance* then (the R list has no floating P/L); (2)
+    the risk $ of a trade is fixed at its entry (factor x base) and its exit P/L = r x that risk $; exits are matched
+    to entries by a trade id on the day's events; (3) "today's loss so far" = day start balance minus closed
+    balance, not below 0; (4) the new trade counts at 1 x its risk $ against the budget (its own r is not used, that
+    would skip losers by hindsight), open trades at risk $ x max(1, -r); (5) a skipped trade's R is not taken and
+    the day still counts as a trading day; (6) a trade open from an earlier day is entered at the day start with the
+    risk of that moment. Fixed risk (`adaptive=None`) is bit-identical to the numbers before 5.7.
   - **Variant sweep** (user, 2026-10-20: "we need to backtest all these variants"): base risk, floor and daily budget
     are swept on the trades of **every strategy**; best variant chosen on the development years (before the
     2021-09-14 cut-off), checked once on the later MT5 period and across strategies; the defaults above stay until

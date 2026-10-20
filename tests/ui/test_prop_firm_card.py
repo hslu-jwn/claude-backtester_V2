@@ -21,7 +21,7 @@ RUN = "20261008-120000_XAUUSD"
 
 OK_CARD = {
     "status": "ok", "label": "FTMO 2-Step", "trades": 400, "days": 300, "runs": 1000, "seed": 42,
-    "funded_days": 126,
+    "funded_days": 126, "adaptive": {"floor": 0.25, "daily_budget": 0.03},
     "rows": [
         {"risk": 0.005, "attempts": 200, "passes": 50, "pass_probability": 0.25, "fail_daily": 40,
          "fail_max": 110, "median_days_to_pass": 31.0, "funded_observed": 40,
@@ -31,6 +31,20 @@ OK_CARD = {
          "funded_lost_probability": 0.9},
         {"risk": 0.015, "attempts": 0, "passes": 0, "pass_probability": 0.0, "fail_daily": 0,
          "fail_max": 0, "median_days_to_pass": None, "funded_observed": 0,
+         "funded_lost_probability": None},
+    ],
+    "adaptive_rows": [
+        {"risk": 0.005, "attempts": 200, "passes": 120, "pass_probability": 0.6, "fail_daily": 0,
+         "fail_max": 80, "median_days_to_pass": 44.0, "average_days_to_pass": 47.4,
+         "skipped_trades": 50, "trades_seen": 1000, "funded_observed": 40,
+         "funded_lost_probability": 0.125},
+        {"risk": 0.01, "attempts": 400, "passes": 100, "pass_probability": 0.25, "fail_daily": 0,
+         "fail_max": 300, "median_days_to_pass": 20.0, "average_days_to_pass": 22.6,
+         "skipped_trades": 0, "trades_seen": 2000, "funded_observed": 30,
+         "funded_lost_probability": 0.3},
+        {"risk": 0.015, "attempts": 0, "passes": 0, "pass_probability": 0.0, "fail_daily": 0,
+         "fail_max": 0, "median_days_to_pass": None, "average_days_to_pass": None,
+         "skipped_trades": 0, "trades_seen": 0, "funded_observed": 0,
          "funded_lost_probability": None},
     ],
 }  # fmt: skip
@@ -104,6 +118,25 @@ def test_card_table_shows_the_five_numbers_at_each_risk():
     assert "50.0 %" in body and "90.0 %" in body  # funded lost
     assert "1,000" in body  # the estimate's reshuffles
     assert "reshuffl" in body and "conservative" in body  # the one-line explanation
+
+
+def test_card_has_a_fixed_and_an_adaptive_column_per_risk():
+    card = pf.card_body({"state": "ready", "card": OK_CARD})
+    body = text(card)
+    assert body.count("'Fixed'") == 3 and body.count("'Adaptive'") == 3
+    for label in ("Average days to pass", "Trades skipped by the daily budget"):
+        assert label in body
+    assert "60.0 %" in body and "12.5 %" in body  # adaptive pass probability, funded lost
+    assert "47" in body and "23" in body  # average days (47.4, 22.6)
+    assert "5 %" in body  # 50 of 1000 trades skipped
+    assert "colSpan=2" in body
+    assert "13 %" not in body  # a fixed column does not show the skipped share
+
+
+def test_card_without_adaptive_rows_still_renders_the_fixed_lines():
+    old = {k: v for k, v in OK_CARD.items() if k not in ("adaptive_rows", "adaptive")}
+    body = text(pf.card_body({"state": "ready", "card": old}))
+    assert "25.0 %" in body and "Trades skipped" not in body
 
 
 def test_a_risk_without_a_finished_attempt_shows_dashes():

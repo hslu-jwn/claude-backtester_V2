@@ -274,7 +274,12 @@
   font-size: 13px;
 }
 .pf-table {
-  max-width: 720px;
+  max-width: 900px;
+}
+.pf-modes th {
+  color: var(--tb-muted);
+  font-weight: 400;
+  font-size: 12px;
 }
 .pf-table th:not(:first-child),
 .pf-table td:not(:first-child) {

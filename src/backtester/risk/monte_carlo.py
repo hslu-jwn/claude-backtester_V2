@@ -14,6 +14,8 @@ Choices (simplifications until the account simulator, ROADMAP 5.2):
   trade closes (compounding, trades closing in order). No lots, no personal daily stop.
 - Drawdown is measured on the balance after every trade closes.
 - FTMO daily-loss approximation: see `_play_day`.
+- Adaptive risk (`MonteCarloConfig.adaptive`, ROADMAP 5.7): see `_play_day_adaptive`. With
+  `adaptive=None` the numbers are exactly those of the fixed-risk simulation.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from backtester.analytics.metrics import longest_streak
+from backtester.risk.adaptive import AdaptiveRisk, budgeted_risk, risk_factor
 
 PRAGUE = ZoneInfo("Europe/Prague")
 PERCENTILES = (5, 50, 95)
@@ -48,6 +51,7 @@ class MonteCarloConfig:
     daily_loss: float = 0.05
     max_loss: float = 0.10  # static
     min_trading_days: int = 4
+    adaptive: AdaptiveRisk | None = None  # None = fixed risk per trade (ROADMAP 5.7)
 
     def __post_init__(self) -> None:
         if self.runs < 1 or self.fan_paths < 0 or self.month_days < 1 or self.funded_days < 1:
@@ -65,10 +69,12 @@ class MonteCarloConfig:
 class Day:
     """One weekday: `r` the net R of the trades exiting on it, `events` their entry / exit
     events in time order as (is_entry, r) (a trade entered on an earlier day is entered at
-    the day start)."""
+    the day start). `ids` (same length as `events`) names the trade of each event so an exit
+    can be matched to its entry (adaptive risk fixes the risk at the entry)."""
 
     r: np.ndarray
     events: tuple[tuple[bool, float], ...]
+    ids: tuple[int, ...] = ()
 
 
 def weekdays(start: date, end: date) -> list[date]:
@@ -110,6 +116,7 @@ def build_days(trades: Sequence, start: date, end: date) -> list[Day]:
             Day(
                 np.array([t.r_net for _, t, _ in bucket], dtype=float),
                 tuple((a, b) for _, a, b in ev),
+                tuple(k[2] for k, _, _ in ev),
             )
         )
     return days
@@ -245,6 +252,7 @@ def _play_day(
     target_bal: float,
     tdays: int,
     fixed: bool = False,
+    stats: dict | None = None,
 ) -> tuple[str | None, float]:
     """Play one day. Returns (status, closing balance): status None, "daily", "max" (the
     attempt is over) or "pass" (closed balance >= `target_bal` and `tdays` + 1 trading days).
@@ -255,7 +263,11 @@ def _play_day(
     from the day start. Loss limits are fractions of the initial balance; reaching the limit
     counts as a breach. Daily loss is checked before max loss. `fixed` (the funded account,
     user 2026-10-20): risk$ = risk x the initial balance, so it does not grow with the profits.
+    With `config.adaptive` the day is played by `_play_day_adaptive` (`stats` counts entries
+    and skipped trades there).
     """
+    if config.adaptive is not None and config.adaptive.enabled:
+        return _play_day_adaptive(day, bal, risk, config, target_bal, tdays, fixed, stats)
     init = config.start_balance
     day_start, open_units = bal, 0.0
     daily_lim = config.daily_loss * init - EPS
@@ -276,22 +288,87 @@ def _play_day(
     return None, bal
 
 
+def _play_day_adaptive(
+    day: Day,
+    bal: float,
+    risk: float,
+    config: MonteCarloConfig,
+    target_bal: float,
+    tdays: int,
+    fixed: bool,
+    stats: dict | None,
+) -> tuple[str | None, float]:
+    """`_play_day` with adaptive risk (spec: risk-management.md > Adaptive risk). Differences:
+    - Each trade's risk$ is fixed at its entry: base risk (risk x the closed balance, or x the
+      initial balance when `fixed`) x `risk_factor` of the equity at the entry, then cut by the
+      daily budget; its exit P/L = r x that risk$. Modelling choice: the equity at the entry is
+      the closed balance (the R list has no floating P/L), neutral rather than conservative.
+    - Daily budget (`adaptive.daily_budget` x the initial balance): today's closed loss
+      (day start - balance, not below 0) + every open trade at its stop (risk$ x max(1, -r),
+      the daily-loss approximation) + the new trade's risk$ must fit; the new trade counts at
+      1 x its risk$ (its own r is not used: that would skip losers by hindsight). Cut to what
+      is left, skipped when not even floor x base risk fits; a skipped trade's exit is
+      ignored (its R is not taken). A day with only skipped trades still counts as a trading day.
+    - The worst point uses each open trade's own risk$. Loss limits and pass test as before.
+    """
+    ad = config.adaptive
+    init = config.start_balance
+    stats = stats if stats is not None else {}
+    day_start, open_units = bal, 0.0
+    daily_lim = config.daily_loss * init - EPS
+    max_lim = config.max_loss * init - EPS
+    budget = ad.daily_budget * init
+    open_: dict[int, tuple[float, float]] = {}  # trade id -> (risk$, exposure at its stop)
+    skipped: set[int] = set()
+    for (is_entry, r), tid in zip(day.events, day.ids, strict=True):
+        if is_entry:
+            stats["entries"] = stats.get("entries", 0) + 1
+            base = risk * (init if fixed else bal)
+            desired = base * risk_factor(bal, init, config.max_loss, ad.floor)
+            allowed = budget - max(0.0, day_start - bal) - open_units
+            got = budgeted_risk(desired, ad.floor * base, allowed)
+            if got is None:
+                skipped.add(tid)
+                stats["skipped"] = stats.get("skipped", 0) + 1
+                continue
+            exposure = got * max(1.0, -r)
+            open_[tid] = (got, exposure)
+            open_units += exposure
+        else:
+            if tid in skipped:
+                continue
+            got, exposure = open_.pop(tid)
+            open_units = open_units - exposure if open_ else 0.0
+            bal = max(0.0, bal + r * got)
+        worst = bal - open_units
+        if day_start - worst >= daily_lim:
+            return "daily", worst
+        if init - worst >= max_lim:
+            return "max", worst
+        if not is_entry and bal >= target_bal - EPS and tdays + 1 >= config.min_trading_days:
+            return "pass", bal
+    return None, bal
+
+
 def _run_phase(
-    seq: list, j: int, risk: float, target: float, config: MonteCarloConfig
-) -> tuple[str, int, int | None]:
+    seq: list, j: int, risk: float, target: float, config: MonteCarloConfig,
+    stats: dict | None = None,
+) -> tuple[str, int, int | None]:  # fmt: skip
     """One challenge phase from `seq[j]` (list of (day position, Day) with trades).
     Returns (status, next index, last day position): "pass", "daily", "max" or "open"."""
     bal = config.start_balance
     target_bal = config.start_balance * (1.0 + target)
     for tdays, k in enumerate(range(j, len(seq))):
         pos, day = seq[k]
-        status, bal = _play_day(day, bal, risk, config, target_bal, tdays)
+        status, bal = _play_day(day, bal, risk, config, target_bal, tdays, stats=stats)
         if status is not None:
             return status, k + 1, pos
     return "open", len(seq), None
 
 
-def _run_funded(seq: list, j: int, pos0: int, n_days: int, risk: float, config) -> tuple:
+def _run_funded(
+    seq: list, j: int, pos0: int, n_days: int, risk: float, config, stats: dict | None = None
+) -> tuple:
     """Funded account from day position `pos0`, watched `funded_days` days. Returns
     (lost, observed fully, next index, last day position). Rule set by the user 2026-10-20:
     risk is a share of the initial balance and the profits are paid out at each day end
@@ -302,7 +379,7 @@ def _run_funded(seq: list, j: int, pos0: int, n_days: int, risk: float, config) 
     k = j
     while k < len(seq) and seq[k][0] <= last:
         pos, day = seq[k]
-        status, bal = _play_day(day, bal, risk, config, NO_TARGET, 0, fixed=True)
+        status, bal = _play_day(day, bal, risk, config, NO_TARGET, 0, fixed=True, stats=stats)
         k += 1
         if status in ("daily", "max"):
             return True, True, k, pos
@@ -316,7 +393,7 @@ def _ftmo_run(seq: list, n_days: int, risk: float, config: MonteCarloConfig, acc
         j = next((k for k in range(j, len(seq)) if seq[k][0] >= pos), len(seq))
         start, status = pos, "pass"
         for target in (config.p1_target, config.p2_target):
-            status, j, end = _run_phase(seq, j, risk, target, config)
+            status, j, end = _run_phase(seq, j, risk, target, config, acc)
             if status != "pass":
                 break
             pos = end + 1
@@ -334,7 +411,7 @@ def _ftmo_run(seq: list, n_days: int, risk: float, config: MonteCarloConfig, acc
         acc["passes"] += 1
         acc["days_to_pass"].append(end - start + 1)
         j = next((k for k in range(j, len(seq)) if seq[k][0] >= pos), len(seq))
-        lost, observed, j, last = _run_funded(seq, j, pos, n_days, risk, config)
+        lost, observed, j, last = _run_funded(seq, j, pos, n_days, risk, config, acc)
         if observed:
             acc["funded_observed"] += 1
             acc["funded_lost"] += int(lost)
@@ -351,6 +428,9 @@ def _ftmo_summary(acc: dict) -> dict:
         "fail_daily": acc["fail_daily"],
         "fail_max": acc["fail_max"],
         "median_days_to_pass": float(np.median(days)) if days else None,
+        "average_days_to_pass": float(np.mean(days)) if days else None,
+        "skipped_trades": acc.get("skipped", 0),  # adaptive risk: cut out by the daily budget
+        "trades_seen": acc.get("entries", 0),  # adaptive risk: trades entered or skipped
         "funded_observed": acc["funded_observed"],
         "funded_lost_probability": (
             acc["funded_lost"] / acc["funded_observed"] if acc["funded_observed"] else 0.0
@@ -359,6 +439,21 @@ def _ftmo_summary(acc: dict) -> dict:
 
 
 # ----- entry point ----------------------------------------------------------------------
+
+
+def ftmo_by_risk(days: list[Day], orders, config: MonteCarloConfig) -> dict:
+    """The FTMO 2-Step summary (`_ftmo_summary`) for each risk level over the reshuffled
+    `orders`; no account statistics (the pass-probability card needs only this)."""
+    n = len(days)
+    out = {}
+    for risk in config.risk_levels:
+        acc = {"attempts": 0, "passes": 0, "fail_daily": 0, "fail_max": 0, "days_to_pass": [],
+               "funded_observed": 0, "funded_lost": 0}  # fmt: skip
+        for o in orders:
+            seq = [(p, days[i]) for p, i in enumerate(o) if len(days[i].r)]
+            _ftmo_run(seq, n, risk, config, acc)
+        out[risk] = _ftmo_summary(acc)
+    return out
 
 
 def run_monte_carlo(
@@ -376,19 +471,15 @@ def run_monte_carlo(
     const = _trade_constants(r_all, n, config)
     actual_order = np.arange(n)
     result: dict = {"config": config, "days": n, "risks": {}}
+    ftmo = ftmo_by_risk(days, orders, config)
     for risk in config.risk_levels:
         runs = [_one_run(days, o, risk, config) for o in orders]
-        acc = {"attempts": 0, "passes": 0, "fail_daily": 0, "fail_max": 0, "days_to_pass": [],
-               "funded_observed": 0, "funded_lost": 0}  # fmt: skip
-        for o in orders:
-            seq = [(p, days[i]) for p, i in enumerate(o) if len(days[i].r)]
-            _ftmo_run(seq, n, risk, config, acc)
         mat = np.array([x["day_bal"] for x in runs])
         actual = _one_run(days, actual_order, risk, config)["day_bal"]
         result["risks"][risk] = {
             "stats": _risk_stats(runs, const, config),
             "fan": _fan(mat, actual, config),
-            "ftmo": _ftmo_summary(acc),
+            "ftmo": ftmo[risk],
         }
     return result
 
@@ -397,6 +488,7 @@ __all__ = [
     "Day",
     "MonteCarloConfig",
     "build_days",
+    "ftmo_by_risk",
     "monthly_gains",
     "reshuffle_orders",
     "run_monte_carlo",

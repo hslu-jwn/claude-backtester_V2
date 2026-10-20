@@ -20,15 +20,24 @@ import argparse
 import hashlib
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field, replace
 from datetime import date
 from pathlib import Path
 
 from backtester.analytics.records import read_trades
 from backtester.paths import RESULTS_DIR
-from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo, weekdays
+from backtester.risk.adaptive import AdaptiveRisk
+from backtester.risk.monte_carlo import (
+    MonteCarloConfig,
+    build_days,
+    ftmo_by_risk,
+    reshuffle_orders,
+    weekdays,
+)
 
-CARD_VERSION = 2  # 2: funded account risks on the initial balance (2026-10-20); bump when the card's numbers or format change
+# 2: funded account risks on the initial balance (2026-10-20); 3: fixed and adaptive lines,
+# average days to pass (ROADMAP 5.7); bump when the card's numbers or format change
+CARD_VERSION = 3
 CACHE_FILE = "prop_firm.json"
 DEFAULT_FIRM = "ftmo_2step"
 
@@ -36,7 +45,9 @@ DEFAULT_FIRM = "ftmo_2step"
 @dataclass(frozen=True, slots=True)
 class FirmPreset:
     label: str
-    mc: MonteCarloConfig  # challenge rules + runs / seed / risk levels
+    mc: MonteCarloConfig  # challenge rules + runs / seed / risk levels (fixed risk)
+    # settings of the card's "adaptive" lines
+    adaptive: AdaptiveRisk = field(default_factory=AdaptiveRisk)
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +89,9 @@ def _row(risk: float, ftmo: dict) -> dict:
         "fail_daily": ftmo["fail_daily"],
         "fail_max": ftmo["fail_max"],
         "median_days_to_pass": ftmo["median_days_to_pass"],
+        "average_days_to_pass": ftmo["average_days_to_pass"],
+        "skipped_trades": ftmo["skipped_trades"],
+        "trades_seen": ftmo["trades_seen"],
         "funded_observed": observed,
         "funded_lost_probability": ftmo["funded_lost_probability"] if observed else None,
     }
@@ -94,14 +108,21 @@ def compute_card(
     reason = too_few_reason(len(trades), n_days, card)
     if reason:
         return {**base, "status": "too_few", "reason": reason}
-    mc = run_monte_carlo(trades, start, end, preset.mc)
+    # the same reshuffled day orders for the fixed and the adaptive lines; only the FTMO
+    # simulation runs (the card needs no account statistics)
+    days = build_days(trades, start, end)
+    orders = reshuffle_orders(len(days), preset.mc)
+    fixed = ftmo_by_risk(days, orders, replace(preset.mc, adaptive=None))
+    adaptive = ftmo_by_risk(days, orders, replace(preset.mc, adaptive=preset.adaptive))
     return {
         **base,
         "status": "ok",
         "runs": preset.mc.runs,
         "seed": preset.mc.seed,
         "funded_days": preset.mc.funded_days,
-        "rows": [_row(risk, data["ftmo"]) for risk, data in mc["risks"].items()],
+        "rows": [_row(risk, ftmo) for risk, ftmo in fixed.items()],
+        "adaptive": {"floor": preset.adaptive.floor, "daily_budget": preset.adaptive.daily_budget},
+        "adaptive_rows": [_row(risk, ftmo) for risk, ftmo in adaptive.items()],
     }
 
 

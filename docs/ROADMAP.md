@@ -870,6 +870,9 @@ has no step yet.
   field › Adaptive risk): linear room scaling (floor 0.25, never above the base), daily risk budget 3 %, in the
   challenge and the funded account; card shows fixed vs adaptive with pass probability and days to pass; then a
   variant sweep (base risk x floor x daily budget) on the trades of every strategy, dev years vs the MT5 period.
+  **Part 1 built 2026-10-20, to be checked by the user:** `risk/adaptive.py`, `monte_carlo._play_day_adaptive`
+  (`MonteCarloConfig.adaptive`, None = fixed, bit-identical), card with fixed / adaptive columns (card version 3);
+  modelling choices in `risk-management.md` › Adaptive risk. Part 2 (variant sweep) open.
 
 ## Phase 6: Robustness (before trusting any result)
 
