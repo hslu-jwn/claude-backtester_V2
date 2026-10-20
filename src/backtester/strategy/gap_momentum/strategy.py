@@ -49,7 +49,11 @@ class GapMomentum(Strategy):
         self.config = config = config or GapMomentumConfig()
         self._tz = ZoneInfo(config.zone)
         self._stats = SessionStats(
-            config.session_open, config.session_close, config.atr_period, config.vol_days
+            config.session_open,
+            config.session_close,
+            config.atr_period,
+            config.vol_days,
+            config.close_tolerance_min,
         )
         self._exit = TimedExit()
         history = max(config.vol_days + 1, config.atr_period + 1)  # sessions needed

@@ -28,6 +28,9 @@ class GapMomentumConfig:
     # "momentum" = with the gap (spec); "fade" = research only: the other direction on the same
     # days with the same stop and exit (random-entry baseline, Monte Carlo kind B)
     side: str = "momentum"
+    # the last candle of the previous session counts as its closing candle when it closes this
+    # many minutes before the session end (FTMO gold ends 16:55 ET; user, 2026-10-20); 0 = strict
+    close_tolerance_min: int = 10
 
     def __post_init__(self) -> None:
         ZoneInfo(self.zone)  # raises for an unknown zone
@@ -35,6 +38,8 @@ class GapMomentumConfig:
             raise ValueError("mode must be 'index' or 'fx'")
         if self.side not in ("momentum", "fade"):
             raise ValueError("side must be 'momentum' or 'fade'")
+        if self.close_tolerance_min < 0:
+            raise ValueError("close_tolerance_min must be >= 0")
         if self.entry_z < 0:
             raise ValueError("entry_z must be >= 0")
         if self.vol_days < 2:

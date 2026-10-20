@@ -377,3 +377,77 @@ def test_appending_future_candles_never_changes_orders_already_given(mode, side)
     for cut in (len(candles) - 1, len(candles) - 5, len(candles) // 2, 20):
         prefix = orders_by_index(candles[:cut], mode, side)
         assert prefix == {i: o for i, o in full.items() if i < cut}
+
+
+# ----- closing-candle tolerance (rule set by the user, 2026-10-20) ------------------------------
+
+
+def tolerance_scenario(mode: str, end_at: str, cfg=None):
+    """Warm-up days whose last candle closes at `end_at` (not at the session close), then a
+    gap-up trade day with the usual exit; returns the trades."""
+    open_t = SESSIONS[mode][0]
+    days = weekdays(date(2026, 1, 5), 6)
+    candles: list[Candle] = []
+    for k, d in enumerate(days[:5]):
+        c = CLOSES[k % 2]
+        candles += [
+            candle(d, open_t, c, c, c, c),
+            candle(d, "12:00", c, HIGH, LOW, c),
+            candle(d, end_at, c, c + 0.5, c - 0.5, c),
+        ]
+    rest = [("12:00", 109.0, 107.0, 108.0), (EXITS[mode], 109.0, 107.0, 107.5)]
+    candles += trade_day(days[5], 111.0, rest, mode)
+    return run(candles, mode=mode, **SMALL, **(cfg or {}))
+
+
+def test_tolerance_default_is_ten_minutes_and_must_not_be_negative():
+    assert GapMomentumConfig().close_tolerance_min == 10
+    with pytest.raises(ValueError):
+        GapMomentumConfig(close_tolerance_min=-1)
+
+
+@pytest.mark.parametrize(("mode", "end_at"), [("fx", "16:55"), ("index", "15:55")])
+def test_last_candle_within_tolerance_counts_as_the_closing_candle(mode, end_at):
+    trades = tolerance_scenario(mode, end_at)
+    assert len(trades) == 1
+    assert trades[0].direction is LONG
+
+
+@pytest.mark.parametrize(("mode", "end_at"), [("fx", "16:45"), ("index", "15:45")])
+def test_last_candle_outside_tolerance_is_not_a_regular_day(mode, end_at):
+    assert tolerance_scenario(mode, end_at) == []
+
+
+def test_tolerance_zero_is_the_strict_rule():
+    assert tolerance_scenario("fx", "16:55", {"close_tolerance_min": 0}) == []
+    assert len(tolerance_scenario("fx", "17:00", {"close_tolerance_min": 0})) == 1
+
+
+def test_session_stats_take_the_close_of_the_last_candle_in_tolerance():
+    from backtester.strategy.session_stats import SessionStats
+
+    stats = SessionStats(time(5, 0), time(17, 0), atr_period=1, vol_days=0, close_tolerance_min=10)
+    day = date(2026, 1, 5)
+    for hhmm, c in (("12:00", 101.0), ("16:50", 102.0), ("16:55", 103.0)):
+        h, m = map(int, hhmm.split(":"))
+        stats.take_in(day, time(h, m), Candle(ts=at(day, hhmm), open=c, high=c, low=c, close=c))
+    stats.finish()
+    assert stats.prev_regular
+    assert stats.prev_close == 103.0
+
+
+def test_full_closing_candle_behaves_as_before_with_or_without_tolerance():
+    a = scenario(111.0, mode="fx")
+    b = scenario(111.0, mode="fx", cfg={"close_tolerance_min": 0})
+    assert len(a) == 1
+    assert [(t.entry, t.exit_price, t.r_net) for t in a] == [
+        (t.entry, t.exit_price, t.r_net) for t in b
+    ]
+
+
+def test_missing_exit_candle_still_exits_at_the_first_later_candle():
+    # fx exit 11:00 has no candle on the trade day (as at a data hole): exits at the next candle
+    rest = [("10:59", 109.0, 107.0, 108.0), ("12:00", 109.0, 107.0, 107.5)]
+    trades = scenario(111.0, rest=rest, mode="fx", cfg={"exit_time": time(11, 0)})
+    assert len(trades) == 1
+    assert trades[0].exit_time == at(TRADE_DAY, "12:00")

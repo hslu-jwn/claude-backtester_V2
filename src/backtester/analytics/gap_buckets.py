@@ -51,7 +51,11 @@ def gap_days(
     candles closing in [session open, session close], in time order."""
     tz = ZoneInfo(config.zone)
     stats = SessionStats(
-        config.session_open, config.session_close, config.atr_period, config.vol_days
+        config.session_open,
+        config.session_close,
+        config.atr_period,
+        config.vol_days,
+        config.close_tolerance_min,
     )
     out: list[GapDay] = []
     pending: dict | None = None

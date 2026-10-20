@@ -2,7 +2,8 @@
 
 A *session* is the candles closing in (`open_time`, `close_time`] of one local day (the candle
 closing at `open_time` is the open price, not part of the session). A session is *regular* when a
-candle closes at `close_time`. Only regular sessions feed the previous close, the Wilder ATR and the
+candle closes at `close_time` (or, with `close_tolerance_min` > 0, the last candle of the session closes
+within that many minutes before it and counts as the closing candle). Only regular sessions feed the previous close, the Wilder ATR and the
 daily-return sd; the value known before today's open is what the properties return. Same
 definitions as `analytics/open_gap.py`. Spec: strategy-gap-fade.md, strategy-gap-momentum.md.
 """
@@ -12,15 +13,22 @@ from __future__ import annotations
 import math
 import statistics
 from collections import deque
-from datetime import date, time
+from datetime import date, datetime, time, timedelta
 from itertools import pairwise
 
 from backtester.core.models import Candle
 
 
 class SessionStats:
-    def __init__(self, open_time: time, close_time: time, atr_period: int, vol_days: int = 0):
+    def __init__(
+        self, open_time: time, close_time: time, atr_period: int, vol_days: int = 0,
+        close_tolerance_min: int = 0,
+    ):  # fmt: skip
         self.open_time, self.close_time = open_time, close_time
+        # earliest close time of a last candle that still counts as the closing candle
+        self._regular_from = (
+            datetime.combine(date.min, close_time) - timedelta(minutes=close_tolerance_min)
+        ).time()
         self.atr_period, self.vol_days = atr_period, vol_days
         # the session in progress
         self._day: date | None = None
@@ -46,8 +54,7 @@ class SessionStats:
             self._high = max(self._high, candle.high)
             self._low = min(self._low, candle.low)
         self._last_close = candle.close
-        if t == self.close_time:
-            self._has_close = True
+        self._has_close = t >= self._regular_from  # the last candle of the session decides
 
     def finish(self) -> None:
         """Close the session in progress (called at the next open)."""
