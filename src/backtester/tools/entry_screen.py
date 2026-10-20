@@ -276,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[{label}] {len(result.trades)} trades, bar {bar_minutes} min", flush=True)
         append(make_record(
             FAMILY_PREFIX + args.strategy, args.strategy, strategy_config, symbols, args.start,
-            args.end, SOURCE, [t.r_net for t in result.trades], NOTE,
+            args.end, SOURCE, result.trades, NOTE,
         ))  # fmt: skip
         trades = [ScreenTrade.from_trade(t) for t in result.trades]
         screen = screen_variant(

@@ -198,7 +198,11 @@ def test_combine_needs_components():
 
 
 def rec(family, values):
-    return make_record(family, "s", {"k": len(values)}, ["X"], START, END, "mt5", values)
+    ts = [
+        SimpleNamespace(r_net=v, exit_time=datetime(2021, 3, 1, 12, tzinfo=UTC) + timedelta(days=i))
+        for i, v in enumerate(values)
+    ]
+    return make_record(family, "s", {"k": len(values)}, ["X"], START, END, "mt5", ts)
 
 
 def test_n_is_the_sum_of_family_counts_including_count_only_lines(tmp_path):
@@ -244,3 +248,25 @@ def test_daily_r_equals_the_monte_carlo_kind_a_days_incl_weekend_and_outside_per
     mine = pf.daily_r(t, START, END)
     theirs = np.array([float(d.r.sum()) for d in build_days(t, START, END)])
     assert np.allclose(mine, theirs) and mine.sum() == pytest.approx(7.75)
+
+
+def test_portfolio_daily_r_is_the_weighted_sum_of_the_components_daily_r():
+    from backtester.analytics.daily import daily_net_r
+
+    a = [trade(date(2021, 3, 1), 1.0), trade(date(2021, 3, 3), -2.0)]
+    b = [trade(date(2021, 3, 1), 4.0), trade(date(2021, 3, 6), 2.0, hour=9)]  # Saturday -> Monday 8
+    w = [0.25, 0.75]
+    merged = pf.weighted_trades([a, b], w, 1.0)
+    expected = w[0] * daily_net_r(a, START, END) + w[1] * daily_net_r(b, START, END)
+    assert np.allclose(daily_net_r(merged, START, END), expected)
+
+
+def test_dsr_on_daily_r_equals_psr0_at_n_1_and_uses_days_as_n():
+    from backtester.analytics.daily import daily_net_r
+    from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
+
+    ts = [trade(date(2021, 3, 1) + timedelta(days=i), r) for i, r in enumerate([1, -1, 2, -0.5, 1])]
+    stats = trade_stats(daily_net_r(ts, START, END))
+    assert stats.n == 20  # days, not trades
+    res = deflated_sharpe(stats, 1, [])
+    assert res.sr0 == 0.0 and res.dsr == pytest.approx(res.psr0) and res.variance == 1 / 20

@@ -45,6 +45,7 @@ from pathlib import Path
 import numpy as np
 
 from backtester.analytics import portfolio as pf
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import (
     DeflatedSharpeConfig,
     deflated_sharpe,
@@ -195,15 +196,18 @@ def analyse(args: argparse.Namespace, config: ToolConfig, pcfg: PortfolioConfig,
     n_trials, sharpes = pf.component_trials(patterns, paths)
     counts = pf.family_counts(patterns, paths)
     deflated = deflated_sharpe(
-        trade_stats([t.r_net for t in merged]), n_trials, sharpes, DeflatedSharpeConfig()
+        trade_stats(daily_net_r(merged, args.start, args.end)),
+        n_trials,
+        sharpes,
+        DeflatedSharpeConfig(),
     )
-    log(f"trial log: component families {counts}, N = {n_trials}, {len(sharpes)} Sharpes")
+    log(f"trial log: component families {counts}, N = {n_trials}, {len(sharpes)} daily Sharpes")
     append(make_record(
         args.family, "portfolio",
         {"components": [{"name": c.name, "strategy": c.strategy, "settings": settings_dict(c.config)}
                         for c in comps],
          "weights": res.weights, "apply_idm": pcfg.apply_idm},
-        symbols, args.start, args.end, args.source, [t.r_net for t in merged],
+        symbols, args.start, args.end, args.source, merged,
     ), args.trials)  # fmt: skip
 
     log("kind B: random entries per component")
@@ -314,7 +318,7 @@ def trials_html(summary: dict) -> str:
     return mc.section(
         "Trial families behind N",
         "N of the deflated Sharpe is the sum of the trials logged in all component families; V "
-        "comes from all their Sharpes. This portfolio's own line (family "
+        "comes from all their daily Sharpes. This portfolio's own line (family "
         f"{summary['meta']['family']}) is written after and not counted.",
         table(["Family", "Trials"], rows),
     )

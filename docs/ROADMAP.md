@@ -1840,6 +1840,11 @@ changes results, defaults changed only with the user's go.
 
 - ☐ **12.13 DSR on daily R** (user, 2026-10-20): the deflated Sharpe uses the daily net R (Prague days, empty days 0)
   instead of per-trade R, in the Monte Carlo report and the portfolio tool; trial-log lines get daily statistics.
+  **Built 2026-10-20** (not yet marked done by the user): shared helper `analytics/daily.py` (`daily_net_r`, equal to the Monte Carlo
+  kind A days; used by the trial log, `tools/monte_carlo.py`, `tools/portfolio.py`, `analytics/portfolio.py`); `make_record` now takes the
+  trades and stores `days`, `day_mean`, `day_sd`, `day_skew`, `day_kurt`, `day_sharpe`; `family_summary` returns the daily Sharpes (older
+  lines count for N only); `trials list` shows the daily V. Tests `tests/analytics/test_daily.py` and additions to the trial-log,
+  portfolio, Monte Carlo tool and trials tests.
 
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later

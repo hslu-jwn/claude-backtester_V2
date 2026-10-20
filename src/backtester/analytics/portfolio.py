@@ -20,12 +20,12 @@ import fnmatch
 import statistics
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.trial_log import family_summary, read_all
 
 # the R-valued fields of a trade that are scaled by the weight (when the trade has them)
@@ -58,25 +58,10 @@ class PortfolioResult:
     component_stats: list[dict] = field(default_factory=list)
 
 
-PRAGUE = ZoneInfo("Europe/Prague")
-
-
 def daily_r(trades: Sequence, start: date, end: date) -> np.ndarray:
-    """Net R per weekday of start..end. A trade belongs to its exit day in Prague time; one
-    exiting on a weekend moves to the next weekday, one outside the period to the first / last day
-    (the same rule as the Monte Carlo kind A days, `risk.monte_carlo.build_days`, which this layer
-    may not import; a test keeps the two equal)."""
-    days, d = [], start
-    while d <= end:
-        if d.weekday() < 5:
-            days.append(d)
-        d += timedelta(days=1)
-    out = np.zeros(len(days))
-    for t in trades:
-        day = t.exit_time.astimezone(PRAGUE).date()
-        i = next((k for k, w in enumerate(days) if w >= day), len(days) - 1)
-        out[i] += t.r_net
-    return out
+    """Net R per weekday (the shared helper `analytics.daily.daily_net_r`, equal to the Monte Carlo
+    kind A days; a test keeps them equal)."""
+    return daily_net_r(trades, start, end)
 
 
 def _corr(a: np.ndarray, b: np.ndarray) -> float | None:

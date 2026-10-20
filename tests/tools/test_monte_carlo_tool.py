@@ -227,12 +227,13 @@ def test_deflated_sharpe_uses_the_family_and_is_in_summary_and_report(tmp_path, 
     summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
     d = summary["deflated"]
     assert d["n_trials"] == 10 and d["family"] == "gap_fade"
-    assert d["variance"] == pytest.approx(1 / summary["meta"]["trades"])  # one Sharpe: V = 1/n
+    n_days = len([x for x in weekdays(200) if START <= x <= END])
+    assert d["variance"] == pytest.approx(1 / n_days)  # one daily Sharpe: V = 1/days
     assert 0 <= d["psr0"] <= 1 and 0 <= d["dsr"] <= 1 and d["sr0"] > 0
     check = next(c for c in summary["verdict"]["checks"] if c["key"] == "deflated_sharpe")
     assert check["available"] and check["value"] == pytest.approx(d["dsr"])
     html = (tmp_path / "report.html").read_text(encoding="utf-8")
-    for text in ("Deflated Sharpe", "PSR(0)", "DSR", "gap_fade"):
+    for text in ("Deflated Sharpe", "PSR(0)", "DSR", "gap_fade", "daily"):
         assert text in html
 
 

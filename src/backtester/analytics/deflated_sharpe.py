@@ -1,8 +1,8 @@
-"""Probabilistic and deflated Sharpe ratio on net R per trade. Pure math, no plotting.
+"""Probabilistic and deflated Sharpe ratio on a net R series (since ROADMAP 12.13 the daily net R, `analytics/daily.py`). Pure math, no plotting.
 
 Spec: risk-management.md > Trial log and deflated Sharpe (ROADMAP 12.10); López de Prado,
-*Advances in Financial Machine Learning* 14.7. Sharpe = mean / sample sd of net R per trade (not
-annualised), n = trade count, skew g3 and kurtosis g4 (not excess: normal = 3).
+*Advances in Financial Machine Learning* 14.7. Sharpe = mean / sample sd of the series (not
+annualised), n = its length (days), skew g3 and kurtosis g4 (not excess: normal = 3).
 
     PSR(SR*) = Phi((SR - SR*) sqrt(n - 1) / sqrt(1 - g3 SR + (g4 - 1) / 4 SR^2))
     DSR      = PSR(SR0), SR0 = sqrt(V) ((1 - gamma) Phi^-1(1 - 1/N) + gamma Phi^-1(1 - 1/(N e)))

@@ -31,6 +31,7 @@ from datetime import date, time
 from enum import Enum
 from pathlib import Path
 
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import (
     DeflatedResult,
     DeflatedSharpeConfig,
@@ -273,13 +274,16 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     family = args.family or args.strategy
     append(make_record(
         family, args.strategy, strategy_cfg, symbols, args.start, args.end, args.source,
-        [t.r_net for t in trades],
+        trades,
     ))  # fmt: skip
     n_trials, sharpes = family_summary(family_trials(family))
     deflated = deflated_sharpe(
-        trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
+        trade_stats(daily_net_r(trades, args.start, args.end)),
+        n_trials,
+        sharpes,
+        DeflatedSharpeConfig(),
     )
-    log(f"trial log: family {family}, N = {n_trials}")
+    log(f"trial log: family {family}, N = {n_trials}, {len(sharpes)} daily Sharpes")
 
     follow = None
     if args.strategy in ALTERNATIVES:
@@ -410,9 +414,9 @@ def deflated_html(summary: dict) -> str:
     ]]  # fmt: skip
     return section(
         "Deflated Sharpe",
-        "PSR(0) is the chance the true Sharpe per trade is above 0. DSR is the same after "
+        "PSR(0) is the chance the true daily Sharpe (daily net R, Prague days, empty days 0) is above 0. DSR is the same after "
         "allowing for the best of N tried variants (family): SR0 is the Sharpe the best of N "
-        "zero-skill variants would show, V the variance of the family's Sharpes. DSR >= 0.95 "
+        "zero-skill variants would show, V the variance of the family's daily Sharpes (1/days when fewer than 2 exist). DSR >= 0.95 "
         "passes check 7.",
         table(["PSR(0)", "DSR", "N", "V", "SR0", "Family"], rows),
     )

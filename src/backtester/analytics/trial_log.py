@@ -3,7 +3,7 @@
 Spec: risk-management.md > Trial log and deflated Sharpe (ROADMAP 12.10). Append-only; on reading,
 the last line per key (family, strategy, settings, symbols, period, source) wins, so rerunning a
 variant is not a new trial. A count-only line (no stats) counts `count` trials for N but has no
-Sharpe, so it does not enter V. Corrupt or blank lines are skipped with a warning.
+Sharpe, so it does not enter V; V comes from the daily Sharpes only (ROADMAP 12.13). Corrupt or blank lines are skipped with a warning.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import trade_stats
 from backtester.paths import RESULTS_DIR
 
@@ -43,6 +44,13 @@ class TrialRecord:
     skew: float | None = None
     kurt: float | None = None
     sharpe: float | None = None
+    # daily net R (Prague days, empty days 0; ROADMAP 12.13); None on lines written before
+    days: int | None = None
+    day_mean: float | None = None
+    day_sd: float | None = None
+    day_skew: float | None = None
+    day_kurt: float | None = None
+    day_sharpe: float | None = None
     count: int = 1  # trials this line stands for (back-fill lines may be more than 1)
     note: str = field(default="")
 
@@ -67,14 +75,17 @@ def now_iso() -> str:
 
 def make_record(
     family: str, strategy: str, settings, symbols: Sequence[str], start: date, end: date,
-    source: str, r_net: Sequence[float], note: str = "",
+    source: str, trades: Sequence, note: str = "",
 ) -> TrialRecord:  # fmt: skip
-    """One variant's line from its net R per trade."""
+    """One variant's line from its trades (`r_net`, tz-aware `exit_time`): per-trade and daily
+    statistics (the daily ones over the weekdays start..end)."""
+    r_net = [t.r_net for t in trades]
     s = trade_stats(r_net)
+    d = trade_stats(daily_net_r(trades, start, end))
     return TrialRecord(
         family, strategy, settings_dict(settings), list(symbols), start.isoformat(),
         end.isoformat(), source, now_iso(), s.n, float(sum(r_net)), s.mean, s.sd, s.skew, s.kurt,
-        s.sharpe, 1, note,
+        s.sharpe, d.n, d.mean, d.sd, d.skew, d.kurt, d.sharpe, 1, note,
     )  # fmt: skip
 
 
@@ -120,5 +131,6 @@ def family_trials(family: str, path: Path | None = None) -> list[TrialRecord]:
 
 
 def family_summary(lines: Sequence[TrialRecord]) -> tuple[int, list[float]]:
-    """(N = trial count including count-only lines, Sharpes of the lines that have one)."""
-    return sum(r.count for r in lines), [r.sharpe for r in lines if r.sharpe is not None]
+    """(N = trial count including count-only lines, daily Sharpes of the lines that have one;
+    lines without daily statistics count for N only)."""
+    return sum(r.count for r in lines), [r.day_sharpe for r in lines if r.day_sharpe is not None]

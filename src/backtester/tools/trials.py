@@ -6,7 +6,8 @@
 
 `add` writes a count-only line (`--count N`: N trials for the count, no Sharpe) or, with
 `--trades`, `--mean` and `--sd`, one line with a Sharpe (mean / sd). `list` shows per family: N,
-the number of lines with a Sharpe and their variance V. Spec: risk-management.md > Trial log and
+the number of lines with a daily Sharpe and their variance V (manual `--trades` lines
+have a per-trade Sharpe only and do not enter V). Spec: risk-management.md > Trial log and
 deflated Sharpe (ROADMAP 12.10).
 """
 
@@ -70,7 +71,7 @@ def list_text(lines: list[TrialRecord]) -> str:
     for family in dict.fromkeys(r.family for r in lines):
         n, sharpes = family_summary([r for r in lines if r.family == family])
         v = f"{statistics.variance(sharpes):.4g}" if len(sharpes) >= 2 else "-"
-        out.append(f"{family}: N={n}, with Sharpe={len(sharpes)}, V={v}")
+        out.append(f"{family}: N={n}, with daily Sharpe={len(sharpes)}, V={v}")
     return "\n".join(out)
 
 
