@@ -262,14 +262,26 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
 - **Limits:** marks where the FTMO daily loss or max loss would have been broken (rule set by the user: this belongs here, not in the base backtest).
 - **Pass probability** via the Monte Carlo runs: pass rate, fail rate (daily vs. max loss), median days to pass.
 - **Near-target scaling** (reduce risk close to the profit target): to be defined then.
-- **Risk that shrinks towards the loss limit** (user's idea, 2026-10-20; to be specified with the user before
-  building): after an unlucky start the risk per trade goes down the closer the account gets to the max loss
-  (and the daily loss), so a losing streak cannot easily reach the limit; passing may take longer. The user's
-  example (an illustration, not the rule): 2.5 % down with 5 % allowed -> half the risk. Claude's suggestion to
-  discuss: risk = base risk x (room left / full room), room = distance from equity to the nearest breach level,
-  with a floor (e.g. 0.25 x base) and the base back once the room is restored; or equivalently "never risk more
-  than 1/N of the room left" (N losses in a row needed to breach). Compared in the Monte Carlo on pass rate,
-  fail split and median days to pass against fixed risk. Related: the account simulator's drawdown scaling (5.2).
+- **Adaptive risk** (rules set by the user, 2026-10-20; ROADMAP 5.7): in a challenge phase and in the funded
+  account the risk per trade shrinks as the account gets closer to the max-loss line, so an unlucky start does not
+  easily end the attempt (passing may take longer).
+  - **Room** = equity at the entry minus the max-loss line (initial balance x (1 - 10 %), static, FTMO); **full
+    room** = 10 % of the initial balance.
+  - **Risk** = base risk x (room / full room), **linear**, never above the base risk (an account in profit trades the
+    base), never below ⚙️ **floor** x base risk (default **0.25**). It follows the equity both ways (wins restore it).
+    Base risk in the challenge = a % of the current balance as before; in the funded account a % of the initial
+    balance (12.12); the factor applies on top.
+  - **Daily risk budget** ⚙️ **3 %** of the initial balance (rule (a), user 2026-10-20): a new trade's risk is cut
+    so that today's loss so far + the risk of every open trade (at its stop, as in the daily-loss approximation) +
+    the new trade's risk stays ≤ 3 %; if not even the floor risk fits, the trade is skipped. With stops holding a day
+    cannot lose more than 3 %, so the 5 % daily limit is out of reach.
+  - Same limits in the challenge and the funded account (FTMO 2-Step: 5 % daily, 10 % static max loss).
+  - **Shown:** the prop-firm card has, per base risk, a line "fixed" and a line "adaptive" (pass probability, fails
+    daily / max, average and median days to pass).
+  - **Variant sweep** (user, 2026-10-20: "we need to backtest all these variants"): base risk, floor and daily budget
+    are swept on the trades of **every strategy**; best variant chosen on the development years (before the
+    2021-09-14 cut-off), checked once on the later MT5 period and across strategies; the defaults above stay until
+    the user picks from the results.
 - **Where it shows** (decided by the user, 2026-10-20): no separate section; a "Prop firm" card on every
   backtest's results page (pass probability, fails daily / max loss, median days to pass, funded account lost,
   at 0.5 / 1 / 1.5 % risk, from the day-reshuffle Monte Carlo, FTMO 2-Step first) and a "Full Monte Carlo"

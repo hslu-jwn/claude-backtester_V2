@@ -866,6 +866,11 @@ has no step yet.
   `ui/prop_card_job.py`, `ui/process_job.py`. Big runs take 20-40 s, so the card is computed once in a background
   process and cached in `results/<run>/prop_firm.json` (details: `risk-management.md` › Prop-firm field).
 
+- ☐ **5.7 Adaptive risk for prop-firm accounts** (rules set by the user 2026-10-20, `risk-management.md` › Prop-firm
+  field › Adaptive risk): linear room scaling (floor 0.25, never above the base), daily risk budget 3 %, in the
+  challenge and the funded account; card shows fixed vs adaptive with pass probability and days to pass; then a
+  variant sweep (base risk x floor x daily budget) on the trades of every strategy, dev years vs the MT5 period.
+
 ## Phase 6: Robustness (before trusting any result)
 
 - ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
