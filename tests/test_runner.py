@@ -403,3 +403,87 @@ def test_a_failed_write_leaves_no_half_folder(cache, tmp_path, monkeypatch):
     with pytest.raises(OSError):
         write_results(result, tmp_path / "r", run_id="fail")
     assert not (tmp_path / "r" / "fail").exists()
+
+
+# --- loading progress, cancel while loading, unmapped symbols (ROADMAP 7.6) -------------------
+
+
+def test_loading_progress_is_monotonic_and_reaches_the_total(cache):
+    load, run = [], []
+    run_backtests(
+        ["XAUUSD", "GOLD"], MON, TUE, SETTINGS, cache, lambda d, t: run.append(d), 1,
+        load_progress=lambda d, t: load.append((d, t)),
+    )  # fmt: skip
+    assert load and load[-1][0] == load[-1][1] > 0
+    assert len({t for _, t in load}) == 1  # the total never changes
+    assert [d for d, _ in load] == sorted(d for d, _ in load)
+    assert all(d <= t for d, t in load)
+    assert run  # the run phase came after
+
+
+def test_loading_progress_counts_a_symbol_left_out(mixed):
+    load = []
+    run_backtests(
+        ["XAUUSD", "BTCUSD"], MON, MON, OPENING, mixed, workers=1,
+        load_progress=lambda d, t: load.append((d, t)),
+    )  # fmt: skip
+    assert load[-1][0] == load[-1][1]  # the skipped symbol's share is done too
+
+
+def test_cancel_while_loading_stops_before_the_run_phase(cache):
+    cancel, run, load = threading.Event(), [], []
+
+    def on_load(done, total):
+        load.append(done)
+        cancel.set()
+
+    with pytest.raises(RunCancelled):
+        run_backtests(
+            ["XAUUSD", "GOLD"], MON, TUE, SETTINGS, cache, lambda d, t: run.append(d), 1, cancel,
+            load_progress=on_load,
+        )  # fmt: skip
+    assert len(load) == 1 and run == []  # stopped at the very next loading step
+
+
+def test_cancelled_while_loading_background_run_saves_nothing(cache, tmp_path, monkeypatch):
+    from backtester import runner
+
+    started, release = threading.Event(), threading.Event()
+    real = runner.candles_from_frame
+
+    def slow(frame, *a, **k):
+        started.set()
+        release.wait(10)
+        return real(frame, *a, **k)
+
+    monkeypatch.setattr(runner, "candles_from_frame", slow)
+    out = tmp_path / "results"
+    run = start_run(["XAUUSD"], MON, MON, SETTINGS, cache, out, workers=1)
+    assert started.wait(10)
+    assert run.total == 0  # still loading
+    run.cancel()
+    release.set()
+    run.join(30)
+    assert run.cancelled and run.folder is None and run.error is None
+    assert not out.exists() or not list(out.iterdir())
+
+
+def test_background_run_reports_loading_progress(cache, tmp_path):
+    run = start_run(["XAUUSD"], MON, MON, SETTINGS, cache, tmp_path / "r", workers=1)
+    run.join(60)
+    assert run.error is None and run.load_total > 0 and run.load_done == run.load_total
+
+
+def test_an_unmapped_symbol_is_left_out_with_a_readable_note(mixed):
+    result = run_backtests(["XAUUSD", "NOPE"], MON, MON, SETTINGS, mixed, workers=1)
+    assert result.symbols == ("XAUUSD",)
+    assert len(result.notes) == 1
+    assert result.notes[0].startswith("NOPE left out: no data source for NOPE")
+    assert "'" not in result.notes[0].split(":")[1]  # no KeyError quotes around the text
+
+
+def test_when_the_only_symbol_is_unmapped_the_error_is_raised(mixed):
+    with pytest.raises(KeyError, match="no data source for NOPE"):
+        run_backtests(["NOPE"], MON, MON, SETTINGS, mixed, workers=1)
+    with pytest.raises(ValueError, match="NOPE.*NOPE2"):
+        run_backtests(["NOPE", "NOPE2"], MON, MON, SETTINGS, mixed, workers=1)

@@ -18,6 +18,7 @@ are ever cached, so every candle returned is closed.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -62,10 +63,12 @@ class CacheAdapter(DataAdapter):
         end: datetime,
         boundary: DayBoundary = DEFAULT_BOUNDARY,
         h4: H4Alignment = H4Alignment.UTC,
+        on_read: Callable[[int, int], None] | None = None,
     ) -> pd.DataFrame:
         """Same candles as `fetch`, as a DataFrame with columns
         ts, open, high, low, close, volume, spread. `boundary`: the day of D / W candles,
-        `h4`: the alignment of 4h candles."""
+        `h4`: the alignment of 4h candles. `on_read(files_done, files_total)` is called while
+        the day files are read (`cache.read_cached_days`)."""
         if not supported(timeframe):
             raise ValueError(f"{timeframe.name} is not supported by the cache")
         start, end = _utc(start), _utc(end)
@@ -83,18 +86,20 @@ class CacheAdapter(DataAdapter):
             )
 
         if spans_utc_days(timeframe, h4):
-            return self._spanning(symbol, timeframe, start, end, days, boundary, h4)
-        m1 = read_cached_days(paths)
+            return self._spanning(symbol, timeframe, start, end, days, boundary, h4, on_read)
+        m1 = read_cached_days(paths, on_read)
         candles = resample(drop_flat_minutes(m1), timeframe)
         in_range = (candles["ts"] >= start) & (candles["ts"] < end)
         return candles[in_range].reset_index(drop=True)
 
-    def _spanning(self, symbol, timeframe, start, end, days, boundary, h4) -> pd.DataFrame:
+    def _spanning(
+        self, symbol, timeframe, start, end, days, boundary, h4, on_read=None
+    ) -> pd.DataFrame:
         """Candles closing in (start, end] whose UTC days are all cached (D, W, NY 4h)."""
         span = timeframe.duration + timedelta(days=1)  # a DST day is up to 25 hours
         around = _days(start - span, end + span)
         loaded = [d for d in around if self._path(symbol, d).exists()]
-        m1 = read_cached_days([self._path(symbol, d) for d in loaded])
+        m1 = read_cached_days([self._path(symbol, d) for d in loaded], on_read)
         if m1.empty:
             return resample(pd.DataFrame(), timeframe)
         candles = resample(drop_flat_minutes(m1), timeframe, boundary, h4)

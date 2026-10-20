@@ -10,10 +10,13 @@ an empty file, so it is known and not mistaken for a missing day.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
 import pyarrow.dataset
 
 _PRICE_FIELDS = ("open", "high", "low", "close")
@@ -31,14 +34,43 @@ def read_cached_day(path: Path) -> pd.DataFrame:
     return pd.read_parquet(path)
 
 
-def read_cached_days(paths: list[Path]) -> pd.DataFrame:
+@dataclass(frozen=True)
+class ReadConfig:
+    chunk_files: int = 60  # day files read per step when a caller wants progress / cancel
+
+
+READ = ReadConfig()
+
+
+def read_cached_days(
+    paths: list[Path],
+    on_chunk: Callable[[int, int], None] | None = None,
+    chunk_files: int = READ.chunk_files,
+) -> pd.DataFrame:
     """Several day files as one frame (cache columns, file order), read in one go: with
-    years cached that is about 9 times faster than one file at a time."""
+    years cached that is about 9 times faster than one file at a time.
+
+    With `on_chunk(files_done, files_total)` the files are read `chunk_files` at a time and the
+    callback is called after each chunk (the backtest page's loading bar and its cancel; an
+    exception raised in it stops the read)."""
     if len(paths) == 1:
-        return read_cached_day(paths[0])
+        frame = read_cached_day(paths[0])
+        if on_chunk is not None:
+            on_chunk(1, 1)
+        return frame
     if not paths:
         return empty_cache_frame()
-    table = pyarrow.dataset.dataset([str(p) for p in paths], format="parquet").to_table()
+    if on_chunk is None:
+        table = pyarrow.dataset.dataset([str(p) for p in paths], format="parquet").to_table()
+    else:
+        tables = []
+        for i in range(0, len(paths), chunk_files):
+            chunk = paths[i : i + chunk_files]
+            tables.append(
+                pyarrow.dataset.dataset([str(p) for p in chunk], format="parquet").to_table()
+            )
+            on_chunk(i + len(chunk), len(paths))
+        table = pa.concat_tables(tables, promote_options="permissive")  # ms / us files mix
     frame = table.to_pandas()
     return frame[COLUMNS] if len(frame) else empty_cache_frame()
 
