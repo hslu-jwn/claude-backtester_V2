@@ -1789,6 +1789,29 @@ changes results, defaults changed only with the user's go.
 
 - ☐ **12.12 Entry screening battery** (T-13; user, 2026-10-20): spec `risk-management.md › Entry screening`; first use:
   re-audit strategies 1-7 (defaults, own symbols, development period).
+  **Built 2026-10-20** (not yet marked done by the user): `analytics/entry_screen.py`, `tools/entry_screen.py`
+  (`python -m backtester.tools.entry_screen --strategy <name> --cache-dir <histdata cache> --workers 1`; use
+  `--workers 1`, the process pool hangs on a 6-year M1 job), tests `tests/analytics/test_entry_screen.py` and
+  `tests/tools/test_entry_screen_tool.py`; one small addition to `engine/costs.py` (`swap_r_nights`, `swap_r` unchanged).
+  The choices the spec leaves open are listed in `risk-management.md › Entry screening`.
+  **First audit (2015-01-02 .. 2021-09-13, histdata, defaults, fixed spread of the cost model + swap; mean net R per
+  trade of the six N cells; results in `results/entry_screen/v2/<strategy>/`):** all seven FAIL.
+
+  | Strategy (symbols) | Trades | Cells > 0 | Best N cell net / gross | 1R/1R win | Percentile vs random | Reversed (cells > 0, mean net) | Hit-rate scan, largest z |
+  |---|---|---|---|---|---|---|---|
+  | 1 session_zone_sweep (XAU, GBPUSD, GBPJPY) | 19,274 | 0/6 | N1 -0.111 / -0.009 | 49.4 % | 0.0 | 0/6, -0.081 | -8.8 (N5) |
+  | 2 ny_index_sweep (NAS100, US500) | 1,386 | 0/6 | N1 -0.042 / -0.005 | 48.3 % | 37.8 | 0/6, -0.028 | -0.9 |
+  | 3 no_wick (5 symbols) | 42,462 | 0/6 | N5 -0.108 / +0.029 | 49.3 % | 0.0 | 0/6, -0.105 | -17.5 (N1) |
+  | 4 trend_following (5 symbols) | 1,229 | 0/6 | N5 -0.014 / +0.011 | 52.3 % | 0.0 | 1/6, -0.028 | -2.7 |
+  | 5 gap_fade (NAS100, US500) | 2,443 | 1/6 | N10 +0.000 / +0.017 | 50.9 % | 89.9 | 1/6, -0.016 | +3.4 (N3) |
+  | 6 opening_range (NAS100, US500) | 3,346 | 0/6 | N1 -0.014 / +0.006 | 48.0 % | 67.1 | 2/6, -0.014 | -2.5 (N10) |
+  | 7 gap_momentum (index) | 1,044 | 0/6 | N20 -0.003 / +0.002 | 51.8 % | 98.6 | 4/6, +0.006 | -3.7 (N3) |
+
+  Reading: strategies 1 and 3 lose about 0.11-0.14 R per trade at every horizon, almost all of it costs (gross close to
+  0), and their entries are worse than random times (hit rate 45-47 % against 49-50 %); the reversed signal is no better.
+  Strategy 5 is the only one with a real forward-return signal (51-52 % in the money 2-10 minutes later against 48-49 %
+  shuffled) but the move is smaller than the costs; it misses the random-exit percentile by 0.1 (89.9 vs > 90).
+  Strategy 7 beats the random exits (98.6) but its fixed-bar exits are flat before costs (gross +0.002 at N20).
 
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later

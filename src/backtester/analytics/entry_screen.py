@@ -37,6 +37,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from functools import cached_property
 
 import numpy as np
 import pandas as pd
@@ -90,7 +91,7 @@ class M1Data:
     low: np.ndarray
     close: np.ndarray
 
-    @property
+    @cached_property
     def close_s(self) -> np.ndarray:
         return self.open_s + SECONDS_PER_MINUTE
 

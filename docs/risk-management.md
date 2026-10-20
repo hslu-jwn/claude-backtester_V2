@@ -264,6 +264,18 @@ strategy's entries carry information at all, independent of its exit, before a f
 - Every screened variant is logged in the trial log (family `screen_<strategy>`).
 - **Output:** `results/entry_screen/<strategy>/` with a per-cell CSV (N, variant, trades, win rate, mean gross / net R,
   long / short split, halves at the middle of the period), the summary with PASS / FAIL and the reasons.
+- **Implementation choices where the rules above are silent** (built 2026-10-20, `analytics/entry_screen.py`; open to
+  the user's correction): "N bars later" = the last M1 candle that closed by entry + N x bar minutes, never before the
+  first candle after the entry (data gaps / weekends end the hold at the last candle before the gap); random exit =
+  hold drawn uniform on [0, 2 x mean hold] per trade and run (mean hold in expectation; the sample mean is reported),
+  the "strategy's percentile" is that of its own total net R among the 1,000 random totals (ties count half); 1R/1R
+  stop = the trade's initial stop distance, target the same distance, win rate = target hits / (target + stop hits),
+  trades unresolved at the end of the data left out; reversed signal = opposite direction, stop mirrored at the same
+  distance, spread / commission / swap of the new direction; shuffled entry times: per symbol a uniformly drawn M1
+  candle close on the New York weekdays and 15-minute time-of-day buckets in which the strategy entered, within its
+  entry date range, with the direction of the real trade it replaces (ties count as misses on both sides); across
+  several variants the cells and the bracket results are pooled and the percentile is the median. The hit-rate scan is
+  reported (z against the shuffled runs) but is not part of the pass rule.
 - **First use (user, 2026-10-20):** re-audit strategies 1-7 with their default settings on their own symbols, development
   period only (before 2021-09-14).
 
