@@ -1676,6 +1676,10 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   - `fx` **XAUUSD**: 32 / 36 variants positive in the first half, 29 / 36 in the second; with exit 11:00 ET all 12 variants
     positive in both halves and with the spread table (e.g. z 0.1 / stop 0.5: 342 trades, +13.4 / +22.7 R, table +28.4 R);
     exit 08:00 about 0 (the move comes 08:00-11:00 ET). Candidate, chosen among 108 symbol-variants (small sample).
+  **Test plan (user, 2026-10-20), fixed before any test data is seen:** (1) sibling check on development data: the same rule
+  unchanged on XAGUSD; (2) exactly two variants, XAUUSD `fx`, entry_z 0.1, exit 11:00 ET, stop_atr 0.5 and 1.0; (3) one test on
+  FTMO MT5 data 2021-09-14..today with the spread table, Monte Carlo report (7 checks) and robustness report; nothing tuned
+  afterwards, the result is reported as it comes.
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
