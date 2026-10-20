@@ -21,7 +21,11 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
     the 1m candle closing at 05:00; prior high / low / close = of the previous day's 05:00-17:00 candles.
 - **Volatility:** sd of the last ⚙️ `vol_days` (default **90**, Chan) daily close-to-close log returns of the
     sessions above, known before today's open. No trade until `vol_days` returns exist.
-- **Regular day:** as strategy 5 (a previous session without its closing candle gives no trade).
+- **Regular day:** as strategy 5 (a previous session without its closing candle gives no trade). **Closing
+  candle** (rule set by the user 2026-10-20): the last candle of the previous session counts as its closing candle
+  when it closes within ⚙️ `close_tolerance_min` (default **10**) minutes before the session end (16:00 / 17:00 ET);
+  its close is the session close. Reason: FTMO's XAUUSD M1 data ends at 16:55 ET (no 16:56-17:00 candles), so the
+  strict rule gave no trades on MT5; histdata has the 17:00 candle, so its results do not change.
 
 ## Rule (bullish described, bearish mirrored: one code path by `Direction`)
 

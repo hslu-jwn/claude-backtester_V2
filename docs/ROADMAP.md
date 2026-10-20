@@ -1680,6 +1680,10 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   unchanged on XAGUSD; (2) exactly two variants, XAUUSD `fx`, entry_z 0.1, exit 11:00 ET, stop_atr 0.5 and 1.0; (3) one test on
   FTMO MT5 data 2021-09-14..today with the spread table, Monte Carlo report (7 checks) and robustness report; nothing tuned
   afterwards, the result is reported as it comes.
+  **2026-10-20:** sibling XAGUSD (dev, fixed spread; no XAGUSD in the spread table): the two fixed variants -12.3 / -1.9 R net on
+  274 trades (second half negative), 15 / 36 variants positive -> no confirmation. First test attempt gave 0 trades: FTMO XAUUSD
+  has no candle after 16:55 ET; closing-candle tolerance of 10 min added to the spec (user, 2026-10-20), then the test runs
+  (user: run it anyway). Junk trial-log lines of the aborted runs deleted (user, 2026-10-20).
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
