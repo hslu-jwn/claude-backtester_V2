@@ -259,6 +259,18 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
 - **Limits:** marks where the FTMO daily loss or max loss would have been broken (rule set by the user: this belongs here, not in the base backtest).
 - **Pass probability** via the Monte Carlo runs: pass rate, fail rate (daily vs. max loss), median days to pass.
 - **Near-target scaling** (reduce risk close to the profit target): to be defined then.
+- **Risk that shrinks towards the loss limit** (user's idea, 2026-10-20; to be specified with the user before
+  building): after an unlucky start the risk per trade goes down the closer the account gets to the max loss
+  (and the daily loss), so a losing streak cannot easily reach the limit; passing may take longer. The user's
+  example (an illustration, not the rule): 2.5 % down with 5 % allowed -> half the risk. Claude's suggestion to
+  discuss: risk = base risk x (room left / full room), room = distance from equity to the nearest breach level,
+  with a floor (e.g. 0.25 x base) and the base back once the room is restored; or equivalently "never risk more
+  than 1/N of the room left" (N losses in a row needed to breach). Compared in the Monte Carlo on pass rate,
+  fail split and median days to pass against fixed risk. Related: the account simulator's drawdown scaling (5.2).
+- **Where it shows** (decided by the user, 2026-10-20): no separate section; a "Prop firm" card on every
+  backtest's results page (pass probability, fails daily / max loss, median days to pass, funded account lost,
+  at 0.5 / 1 / 1.5 % risk, from the day-reshuffle Monte Carlo, FTMO 2-Step first) and a "Full Monte Carlo"
+  button there that runs the whole report (ROADMAP 12.7) in the background; other firms' presets later (5.6).
 - **Weekend holding / news restrictions:** toggles to be defined then (news needs a calendar data source).
 - FTMO rules (2026; re-check before use, presets stay editable):
 

@@ -858,6 +858,9 @@ has no step yet.
   with reasons, Monte Carlo fan + drawdown distribution, sweep heatmap. Visual step: the
   user checks it in the app.
 - ☐ **5.6 Prop-firm field** (user, 2026-10-12, possible addition, after 5.5): presets for several prop firms, not only FTMO (rules editable), so that after a backtest the probability of passing any of them can be estimated (`risk-management.md` › Prop-firm field, `risk/prop_rules.py`). To be specified with the user before building.
+  **Decided by the user 2026-10-20:** shown as a "Prop firm" card on every results page plus a "Full Monte Carlo"
+  button (no separate section); new idea to add: risk that shrinks towards the loss limit (`risk-management.md` ›
+  Prop-firm field). Order: after the live fixes 13.1-13.5 and the live page folds 7.7.
 
 ## Phase 6: Robustness (before trusting any result)
 
@@ -1154,6 +1157,10 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   checked): once a cancelled run has really stopped the page swaps to the list (newest first: date, strategy,
   symbols, days, trades, net R, each row opens its results; broken summaries skipped) with a "Backtest
   cancelled" line that fades out after 4 s; without a running job `/backtest` is always that list.
+
+- ☐ **7.7 Live page fold-outs** (user 2026-10-20): every card can be folded; open by default: Open positions,
+  Closed trades (opens on Day), Today's signals and skips; closed by default: Recent trades, Event log, Settings
+  (Setup in progress and Connection are already closed by default, 7.6). After 13.1-13.5 (user: live fixes first).
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 
@@ -1795,6 +1802,7 @@ Read-only audit by three agents during the first demo day (user: do not change t
 Tests 2262 passed, 1 failed only when run from another folder (13.22); ruff clean except 4 files not formatted (three
 are another session's uncommitted reformatting). Each item test-first; fix the live ones after the demo day, one at a
 time, with the bot stopped. Claude's ranking; the user decides the order.
+**Order set by the user 2026-10-20:** 13.1-13.5 first, then 7.7, then the prop-firm card (5.6).
 
 **Live bot (could hurt the forward test)**
 - ☐ **13.1 Loop safety net:** `bot.py` `run` catches only connection errors; any other exception (tick None in
