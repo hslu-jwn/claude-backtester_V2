@@ -271,6 +271,26 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
   backtest's results page (pass probability, fails daily / max loss, median days to pass, funded account lost,
   at 0.5 / 1 / 1.5 % risk, from the day-reshuffle Monte Carlo, FTMO 2-Step first) and a "Full Monte Carlo"
   button there that runs the whole report (ROADMAP 12.7) in the background; other firms' presets later (5.6).
+  **Built 2026-10-20 (to be checked by the user):**
+  - *Card* (`risk/prop_card.py`, `ui/prop_firm_card.py`): the run's R trades (trades.csv, all symbols as one account) go
+    through kind A (day reshuffle, ⚙️ 1,000 runs, seed 42) and the FTMO 2-Step simulation at 0.5 / 1 / 1.5 % risk
+    (the `MonteCarloConfig` defaults). Rows: pass probability (both phases), failed daily loss / max loss (share of all
+    attempts), median days to pass, funded account lost within 126 days; "—" where no attempt finished. Below the
+    table one line says how it is estimated (reshuffled trading days; open trades count as at their stop, so the
+    daily-loss check is conservative). **Too little data** (⚙️ `PropCardConfig`: fewer than **100** trades or fewer than
+    **120** weekdays in the run's period; limits chosen by Claude 2026-10-20, to be confirmed) shows the reason instead
+    of numbers. The firm is a dropdown over `FIRMS` (FTMO 2-Step only for now; another firm's rules are one more preset).
+  - *Speed and cache:* a run of 9,000 trades takes about 20 s, one of 17,700 trades about 40 s, so the numbers are
+    computed once in a background process (`python -m backtester.risk.prop_card <run id>`, one at a time, the card
+    shows "Calculating" with the elapsed time) and stored in `results/<run>/prop_firm.json` (one entry per firm). An
+    entry is reused only while its key matches: card version, firm rules (Monte Carlo config), card limits, the run's
+    period and a hash of trades.csv; otherwise (or with a missing / broken file) it is recomputed and rewritten.
+  - *Full Monte Carlo button:* starts `tools/monte_carlo --run <run id>` (the run's own trades.csv, symbols, period and
+    settings.json: no new backtest, no trial-log line, so check 7 / DSR is n/a; kind B and D use the run's strategy
+    and settings) in the background, one at a time, with the running kind (and the path count in kind D), the elapsed
+    time and a Cancel (kills the process tree). Job state is on the server, so it survives leaving the page. The report
+    (`results/monte_carlo/<run id>/report.html` + `summary.json`) opens in a new tab from `/monte-carlo/<run id>/report.html`;
+    that route serves only those two file names inside `results/monte_carlo/`. With a report present the button reads "Run again".
 - **Weekend holding / news restrictions:** toggles to be defined then (news needs a calendar data source).
 - FTMO rules (2026; re-check before use, presets stay editable):
 

@@ -5,6 +5,12 @@
     python -m backtester.tools.monte_carlo NAS100 --start 2021-09-15 --end 2026-09-30 \\
         --strategy gap_fade --source mt5 --paths 0
 
+    python -m backtester.tools.monte_carlo --run 20261020-171430_NAS100-US500 --paths 0
+
+`--run <run id>` (the Full Monte Carlo button of the results page) takes the run's trades.csv,
+symbols, period and settings.json instead of running the backtest again; it writes no trial-log
+line, so the deflated-Sharpe check is n/a; default `<out>` is `results/monte_carlo/<run id>/`.
+
 Runs the strategy (spec defaults, shared costs), then: kind A day reshuffle + FTMO 2-Step at
 0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade has the "follow" variant for it;
 other strategies show "not available for this strategy yet" and the verdict check is n/a), kind C
@@ -22,6 +28,7 @@ import argparse
 import html
 import json
 import math
+import re
 import tempfile
 import time as clock
 from dataclasses import asdict, dataclass, is_dataclass, replace
@@ -36,6 +43,7 @@ from backtester.analytics.deflated_sharpe import (
 )
 from backtester.analytics.random_baseline import RandomBaselineConfig, random_entry_baseline
 from backtester.analytics.random_fills import RandomFillsConfig, random_fills
+from backtester.analytics.records import read_trades
 from backtester.analytics.robustness import RobustnessConfig, trade_robustness
 from backtester.analytics.trial_log import (
     append,
@@ -57,7 +65,8 @@ from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.paths import RESULTS_DIR
 from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
-from backtester.strategy.registry import REGISTRY, default_config
+from backtester.settings import from_dict
+from backtester.strategy.registry import REGISTRY, default_config, strategy_name
 
 GAP_FADE = "gap_fade"
 PERCENT = 100.0
@@ -212,48 +221,83 @@ def build_summary(
     }
 
 
+def load_run(run_id: str, results_dir: Path = RESULTS_DIR) -> dict:
+    """What `--run` takes from a finished run folder: symbols, period, settings (settings.json)
+    and the R trade list (trades.csv), so the report matches the run and the backtest is not
+    run again."""
+    folder = Path(results_dir) / run_id
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", run_id) or not (folder / "trades.csv").is_file():
+        raise SystemExit(f"no run {run_id!r} in {results_dir}")
+    try:
+        summary = json.loads((folder / "summary.json").read_text(encoding="utf-8"))
+        settings = from_dict(json.loads((folder / "settings.json").read_text(encoding="utf-8")))
+        return {
+            "symbols": [s.upper() for s in summary["symbols"]],
+            "start": date.fromisoformat(summary["start"]),
+            "end": date.fromisoformat(summary["end"]),
+            "settings": settings,
+            "trades": read_trades(folder),
+        }
+    except (OSError, ValueError, KeyError) as error:
+        raise SystemExit(f"run {run_id!r} is unreadable: {error}") from error
+
+
 def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
-    symbols = [s.upper() for s in args.symbols]
-    sources = (
-        DEFAULT_SOURCES
-        if args.source == "histdata"
-        else SymbolSources.single(MT5_CACHE_DIR, symbols)
-    )
-    strategy_cfg = default_config(args.strategy)
-    settings = replace(RunSettings(), strategy=strategy_cfg)
+    if args.run:  # the run's own trades and settings; spec sources (like the app's backtests)
+        run = load_run(args.run, args.results_dir)
+        symbols, start, end = run["symbols"], run["start"], run["end"]
+        settings, sources = run["settings"], DEFAULT_SOURCES
+        strategy_cfg = settings.strategy
+        strategy = strategy_name(strategy_cfg)
+        trades = list(run["trades"])
+        source = "run"
+        log(f"run {args.run}: {len(trades)} trades, {strategy} {symbols} {start}..{end}")
+    else:
+        symbols, start, end, strategy = args.symbols, args.start, args.end, args.strategy
+        source = args.source
+        sources = (
+            DEFAULT_SOURCES
+            if source == "histdata"
+            else SymbolSources.single(MT5_CACHE_DIR, symbols)
+        )
+        strategy_cfg = default_config(strategy)
+        settings = replace(RunSettings(), strategy=strategy_cfg)
+        log(f"backtest {strategy} {symbols} {start}..{end}")
+        base = run_backtests(symbols, start, end, settings, sources=sources)
+        trades = list(base.trades)
+        log(f"  {len(trades)} trades")
 
-    log(f"backtest {args.strategy} {symbols} {args.start}..{args.end}")
-    base = run_backtests(symbols, args.start, args.end, settings, sources=sources)
-    trades = list(base.trades)
-    log(f"  {len(trades)} trades")
-
-    family = args.family or args.strategy
-    append(make_record(
-        family, args.strategy, strategy_cfg, symbols, args.start, args.end, args.source,
-        [t.r_net for t in trades],
-    ))  # fmt: skip
-    n_trials, sharpes = family_summary(family_trials(family))
-    deflated = deflated_sharpe(
-        trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
-    )
-    log(f"trial log: family {family}, N = {n_trials}")
+    family = args.family or strategy
+    deflated = None
+    if not args.run:  # a run of the app is not a deliberately tried variant: no trial-log line
+        append(make_record(
+            family, strategy, strategy_cfg, symbols, start, end, source,
+            [t.r_net for t in trades],
+        ))  # fmt: skip
+        n_trials, sharpes = family_summary(family_trials(family))
+        deflated = deflated_sharpe(
+            trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
+        )
+        log(f"trial log: family {family}, N = {n_trials}")
 
     follow = None
-    if args.strategy == GAP_FADE:
+    if strategy == GAP_FADE:
         log("kind B: follow run")
         follow = list(run_backtests(
-            symbols, args.start, args.end,
+            symbols, start, end,
             replace(settings, strategy=replace(strategy_cfg, mode="follow")), sources=sources,
         ).trades)  # fmt: skip
     paths = None
     if config.paths > 0:
         log("kind D: random price paths")
-        paths = random_paths(symbols, settings, sources, args.start, args.end, config, log)
+        paths = random_paths(symbols, settings, sources, start, end, config, log)
     meta = {
-        "strategy": args.strategy, "symbols": symbols, "start": args.start, "end": args.end,
-        "source": args.source,
+        "strategy": strategy, "symbols": symbols, "start": start, "end": end, "source": source,
+        **({"run": args.run} if args.run else {}),
     }  # fmt: skip
-    summary = build_summary(trades, follow, meta, settings, config, paths, log, deflated, family)
+    summary = build_summary(
+        trades, follow, meta, settings, config, paths, log, deflated, None if args.run else family
+    )
     summary["meta"]["paths"] = config.paths
     return summary
 
@@ -611,9 +655,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     d = ToolConfig()
     p = argparse.ArgumentParser(prog="python -m backtester.tools.monte_carlo", description=__doc__,
                                 formatter_class=argparse.RawTextHelpFormatter)  # fmt: skip
-    p.add_argument("symbols", nargs="+", help="e.g. NAS100 US500")
-    p.add_argument("--start", type=date.fromisoformat, required=True, help="first UTC day")
-    p.add_argument("--end", type=date.fromisoformat, required=True, help="last UTC day")
+    p.add_argument("symbols", nargs="*", help="e.g. NAS100 US500 (not with --run)")
+    p.add_argument("--start", type=date.fromisoformat, default=None, help="first UTC day")
+    p.add_argument("--end", type=date.fromisoformat, default=None, help="last UTC day")
+    p.add_argument("--run", default=None, metavar="RUN_ID",
+                   help="a finished run in results/: its trades, symbols, period and settings "
+                   "are used (no backtest, no trial-log line); replaces SYMBOLS --start --end")  # fmt: skip
+    p.add_argument("--results-dir", type=Path, default=RESULTS_DIR,
+                   help="folder of the runs for --run (default results)")  # fmt: skip
     p.add_argument("--strategy", choices=tuple(REGISTRY), default="session_zone_sweep",
                    help="registry name, spec defaults (default session_zone_sweep)")  # fmt: skip
     p.add_argument("--source", choices=("histdata", "mt5"), default="histdata",
@@ -627,11 +676,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    "(default: the strategy)")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
+    if args.run is None and not (args.symbols and args.start and args.end):
+        p.error("give SYMBOLS --start --end, or --run RUN_ID")
     args.symbols = [s.upper() for s in args.symbols]
     return args
 
 
 def default_out(args: argparse.Namespace) -> Path:
+    if args.run:
+        return Path(args.results_dir) / MONTE_CARLO_DIR / args.run
     name = f"{args.strategy}_{'-'.join(args.symbols)}_{args.start}_{args.end}"
     return RESULTS_DIR / MONTE_CARLO_DIR / name
 

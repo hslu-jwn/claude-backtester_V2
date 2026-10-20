@@ -20,7 +20,7 @@ import argparse
 from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.ui import backtest_job, nav
+from backtester.ui import backtest_job, nav, report_route
 from backtester.ui.pages import backtest, chart, live, results
 
 RESULTS_PREFIX = "/results/"
@@ -56,6 +56,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
     def _page(pathname, search):
         return page_for(pathname, sources, search)
 
+    report_route.register(app.server)
     nav.register_callbacks(app)
     chart.register_callbacks(app, sources)
     results.register_callbacks(app)

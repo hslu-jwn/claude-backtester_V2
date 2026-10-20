@@ -861,6 +861,10 @@ has no step yet.
   **Decided by the user 2026-10-20:** shown as a "Prop firm" card on every results page plus a "Full Monte Carlo"
   button (no separate section); new idea to add: risk that shrinks towards the loss limit (`risk-management.md` ›
   Prop-firm field). Order: after the live fixes 13.1-13.5 and the live page folds 7.7.
+  **Card + button built 2026-10-20, to be checked by the user** (FTMO 2-Step only; other firms plug into
+  `risk/prop_card.py` `FIRMS` and show in the card's dropdown): `risk/prop_card.py`, `ui/prop_firm_card.py`,
+  `ui/prop_card_job.py`, `ui/process_job.py`. Big runs take 20-40 s, so the card is computed once in a background
+  process and cached in `results/<run>/prop_firm.json` (details: `risk-management.md` › Prop-firm field).
 
 ## Phase 6: Robustness (before trusting any result)
 
@@ -1777,6 +1781,12 @@ changes results, defaults changed only with the user's go.
   +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
   29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
   Halves split at the middle of the run's period (user, 2026-10-15); n/a checks count neither way (user, 2026-10-15).
+  **"Full Monte Carlo" button built 2026-10-20, to be checked by the user:** on every results page; runs
+  `python -m backtester.tools.monte_carlo --run <run id>` in the background (`ui/monte_carlo_job.py`), progress per
+  kind, Cancel, one at a time, survives leaving the page; the report opens in a new tab from
+  `/monte-carlo/<run id>/report.html` (`ui/report_route.py`, only `report.html` / `summary.json` under
+  `results/monte_carlo/`). `--run` takes the run's trades.csv, symbols, period and settings.json (no new backtest,
+  no trial-log line, so check 7 (DSR) is n/a), kind B / D use the run's strategy and settings.
 - ☐ **12.9 Portfolio tool** (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
   correlation of daily R between strategies / variants, a combined Monte Carlo report on one account, and the
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
@@ -1795,6 +1805,12 @@ edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio to
 Carver *Systematic Trading*, López de Prado *Advances in Financial Machine Learning*, Chan *Algorithmic Trading*,
 Davey *Building Winning Algorithmic Trading Systems* to `00_Literature/Trading` (books are added only from the text).
 Done 2026-10-16: the four books plus Kurt and Kaeppel are in `knowledge/` (Natenberg skipped by the user).
+
+- ☐ **12.12 Funded-account loss rate looks wrong** (found 2026-10-20 while building the prop-firm card): `risk/monte_carlo.py`
+  shows "funded account lost within 126 days" near 100 % even for strong strategies; likely the fixed loss limits
+  against a compounding funded balance plus the conservative daily-loss approximation. Check against a hand-built case
+  before trusting that row. Open with the user: the card's "too little data" limits (100 trades, 120 trading days,
+  `PropCardConfig`, Claude's choice) and whether button-started Monte Carlo reports go into the trial log.
 
 ## Phase 13: Whole-software audit 2026-10-19 (findings; nothing fixed yet)
 

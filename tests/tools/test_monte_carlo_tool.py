@@ -247,3 +247,100 @@ def test_build_summary_without_a_deflated_result_makes_check_7_not_available():
     )  # fmt: skip
     assert "deflated_sharpe" in s["verdict"].not_available
     assert s["deflated"] is None
+
+
+# ---- --run: the Full Monte Carlo button of the results page ------------------------------
+
+
+def make_run(tmp_path, strategy="gap_fade"):
+    """A finished run folder: summary.json, settings.json and a trades.csv of 120 trades (the stub's days)."""
+    import csv
+    from dataclasses import replace
+
+    from backtester.runner import TRADE_COLUMNS, RunSettings
+    from backtester.settings import to_dict
+    from backtester.strategy.registry import default_config
+
+    folder = tmp_path / "results" / "20261020-120000_NAS100-US500"
+    folder.mkdir(parents=True)
+    rows = []
+    for i, d in enumerate(weekdays()):
+        for symbol in ("NAS100", "US500"):
+            t = trade(symbol, d, 1.0 if i % 3 else -0.8)
+            row = dict.fromkeys(TRADE_COLUMNS, "")
+            row.update(
+                id=len(rows) + 1, symbol=symbol, direction="long", session="",
+                entry_time=t.entry_time.isoformat(), entry_candle=t.entry_time.isoformat(),
+                entry=100.0, initial_stop=99.0, take_profit=101.0, tp1_share=1.0,
+                planned_rr=1.0, exit_time=t.exit_time.isoformat(), exit_price=101.0,
+                exit_reason="take_profit", r_gross=t.r_gross, r_net=t.r_net, confluence="",
+                parts='[{"share": 1.0, "reason": "take_profit"}]',
+            )  # fmt: skip
+            rows.append(row)
+    with open(folder / "trades.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, TRADE_COLUMNS)
+        w.writeheader()
+        w.writerows(rows)
+    summary = {"symbols": ["NAS100", "US500"], "start": START.isoformat(), "end": END.isoformat()}
+    (folder / "summary.json").write_text(json.dumps(summary))
+    settings = replace(RunSettings(), strategy=default_config(strategy))
+    (folder / "settings.json").write_text(json.dumps(to_dict(settings)))
+    return folder
+
+
+def run_argv(folder, out, *extra):
+    return ["--run", folder.name, "--results-dir", str(folder.parent), "--paths", "0",
+            "--runs", "30", "--out", str(out), *extra]  # fmt: skip
+
+
+def test_run_option_needs_no_symbols_or_dates_but_otherwise_they_are_required():
+    a = parse_args(["--run", "20261020-120000_X"])
+    assert a.run == "20261020-120000_X" and a.symbols == [] and a.start is None
+    with pytest.raises(SystemExit):
+        parse_args(["NAS100"])  # no --start / --end / --run
+
+
+def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
+    folder = make_run(tmp_path)
+    out = tmp_path / "out"
+    assert tool.main(run_argv(folder, out)) == 0
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    meta = summary["meta"]
+    assert meta["strategy"] == "gap_fade" and meta["symbols"] == ["NAS100", "US500"]
+    assert meta["start"] == START.isoformat() and meta["end"] == END.isoformat()
+    assert meta["trades"] == 120 and meta["run"] == folder.name
+    # the base backtest is not run again: only the gap fade's follow run (kind B) is
+    assert [getattr(c, "mode", None) for c in stub["run"]] == ["follow"]
+    assert summary["random_entries"]["available"] is True
+    assert (out / "report.html").is_file()
+
+
+def test_run_option_does_not_touch_the_trial_log_and_check_7_is_not_available(tmp_path, stub):
+    from backtester.analytics.trial_log import read_all
+
+    folder = make_run(tmp_path)
+    tool.main(run_argv(folder, tmp_path / "out"))
+    assert read_all() == []
+    summary = json.loads((tmp_path / "out" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["deflated"] is None
+    assert "deflated_sharpe" in summary["verdict"]["not_available"]
+
+
+def test_run_option_other_strategy_has_no_kind_b(tmp_path, stub):
+    folder = make_run(tmp_path, strategy="ny_index_sweep")
+    tool.main(run_argv(folder, tmp_path / "out"))
+    assert stub["run"] == []
+    summary = json.loads((tmp_path / "out" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["random_entries"]["available"] is False and summary["meta"]["trades"] == 120
+
+
+def test_run_option_default_out_is_the_runs_folder_under_monte_carlo(tmp_path, stub):
+    folder = make_run(tmp_path)
+    args = parse_args(["--run", folder.name, "--results-dir", str(folder.parent)])
+    assert tool.default_out(args) == folder.parent / "monte_carlo" / folder.name
+
+
+def test_run_option_unknown_run_is_a_clear_error(tmp_path, stub):
+    with pytest.raises(SystemExit) as e:
+        tool.main(["--run", "nope", "--results-dir", str(tmp_path)])
+    assert "nope" in str(e.value)

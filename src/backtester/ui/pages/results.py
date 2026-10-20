@@ -12,6 +12,9 @@ TradingView Strategy Tester look (light theme, same style as the chart's toolbar
   **List of trades** (sortable; clicking a trade opens the chart on its symbol, on the run's
   strategy timeframe, scrolled to the trade with its order drawn: entry, SL, TP; ROADMAP 7.6).
 
+**Prop firm** card and **Full Monte Carlo** button above the tabs (`ui/prop_firm_card.py`;
+risk-management.md > Prop-firm field).
+
 Every number comes from the run's files: trades.csv read back as `TradeRecord`s and
 computed with `analytics/metrics.py`, the same functions that wrote summary.json (so the
 symbol filter and runs written before a metric existed work too). Nothing is computed here.
@@ -41,7 +44,7 @@ from backtester.analytics.metrics import (
 from backtester.analytics.records import TradeRecord, read_trades
 from backtester.runner import RESULTS_DIR
 from backtester.strategy.registry import REGISTRY
-from backtester.ui import trade_focus
+from backtester.ui import prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
 
 _RUN_ID = re.compile(r"[A-Za-z0-9_.-]+")
@@ -689,7 +692,12 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
         [
             top,
             html.Div(
-                [header, tabs, html.Div(id="rs-content", className="rs-content")],
+                [
+                    header,
+                    prop_firm_card.layout(folder.name, folder, results_dir),
+                    tabs,
+                    html.Div(id="rs-content", className="rs-content"),
+                ],
                 className="rs-body",
             ),
             dcc.Store(id="rs-run-id", data=folder.name),
@@ -701,6 +709,8 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
 
 
 def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
+    prop_firm_card.register_callbacks(app, results_dir)
+
     @app.callback(
         Output("rs-content", "children"),
         Output("rs-equity-data", "data"),
