@@ -1664,6 +1664,18 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   crash hours (March 2020, SNB 2015, Brexit night) and weekend-gap returns; fixed (gap returns zeroed, Spearman,
   winsorized). Conclusion: price-only time-series structure on these symbols is too small for retail costs.
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+  Spec `docs/strategy-gap-momentum.md` (strategy 7, rules set by the user 2026-10-20); built 2026-10-20 (`strategy/gap_momentum/`,
+  `tools/gap_momentum_grid.py`, gap-bucket study, Monte Carlo kind B by side coin flip). **Development result 2015-01..2021-09-13
+  (histdata, 36 variants per mode, halves split 2018-05-09):**
+  - `index` NAS100 + US500: 16 / 36 variants net positive (spread table 8 / 36), net -0.002 R/trade; every top variant
+    positive in the first half, negative in the second (best z 0.25 / stop 0.5 / 15:59: +28.8 R, halves +48 / -19). Gap
+    buckets: following vs fading never differs (|t| < 1.5). Monte Carlo on the best: **NO EDGE** (t 1.03, random
+    entries 82nd pct, halves fail, DSR 0.12 with N 36). -> no edge.
+  - `fx` GBPUSD / EURUSD: positive 2015-18 (34 / 36, 30 / 36 variants), negative 2018-21 (7 / 36, 11 / 36): Chan's
+    edge has decayed -> no edge.
+  - `fx` **XAUUSD**: 32 / 36 variants positive in the first half, 29 / 36 in the second; with exit 11:00 ET all 12 variants
+    positive in both halves and with the spread table (e.g. z 0.1 / stop 0.5: 342 trades, +13.4 / +22.7 R, table +28.4 R);
+    exit 08:00 about 0 (the move comes 08:00-11:00 ET). Candidate, chosen among 108 symbol-variants (small sample).
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
