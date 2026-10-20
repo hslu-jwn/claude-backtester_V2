@@ -159,6 +159,7 @@ _GROUP_RULES = (
     ("strategy.entry_z", "Gap filter"),
     ("strategy.vol_days", "Gap filter"),
     ("strategy.side", "Gap filter"),
+    ("strategy.close_tolerance_min", "Gap filter"),
     ("strategy.stop_atr", "Stop loss"),
     ("strategy.target_r", "Take profit"),
     ("strategy.stop_gap_mult", "Exit"),
