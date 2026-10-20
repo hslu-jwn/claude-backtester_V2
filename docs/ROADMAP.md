@@ -1158,7 +1158,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   symbols, days, trades, net R, each row opens its results; broken summaries skipped) with a "Backtest
   cancelled" line that fades out after 4 s; without a running job `/backtest` is always that list.
 
-- ☐ **7.7 Live page fold-outs** (user 2026-10-20): every card can be folded; open by default: Open positions,
+- ◐ **7.7 Live page fold-outs** (user 2026-10-20; built 2026-10-20, Closed trades with its own Day / Week / All, to be checked by the user): every card can be folded; open by default: Open positions,
   Closed trades (opens on Day), Today's signals and skips; closed by default: Recent trades, Event log, Settings
   (Setup in progress and Connection are already closed by default, 7.6). After 13.1-13.5 (user: live fixes first).
 

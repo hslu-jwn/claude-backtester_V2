@@ -239,11 +239,25 @@ def _card(title: str, body, right=None, extra: str = "") -> html.Div:
     return html.Div([head, body], className=f"lv-card {extra}".strip())
 
 
-def _fold(title: str, body, extra: str = "") -> html.Details:
-    """A card that is closed until the user opens it (the title is the clickable summary)."""
+def _fold(title: str, body, extra: str = "", open_: bool = False) -> html.Details:
+    """A card the user folds by its title (the clickable summary); closed unless `open_`
+    (ROADMAP 7.7: what concerns the day is open by default)."""
+    body = html.Div(body) if isinstance(body, list) else body  # no nested lists in Dash children
     return html.Details(
         [html.Summary(title, className="lv-summary"), html.Div(body, className="lv-fold-body")],
         className=f"lv-card lv-fold {extra}".strip(),
+        open=open_,
+    )
+
+
+def _range_picker(id_: str) -> dcc.RadioItems:
+    """Day / Week / All window of a trades card, Day first."""
+    return dcc.RadioItems(
+        id=id_,
+        options=[{"label": k.title(), "value": k} for k in lm.RANGES],
+        value="day",
+        className="lv-seg lv-fold-right",
+        inline=True,
     )
 
 
@@ -597,42 +611,42 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
             html.Div(
                 [
                     _fold("Setup in progress", html.Div(pieces["setup"], id="lv-setup")),
-                    _card(
+                    _fold(
                         "Recent trades",
                         [
+                            _range_picker("lv-range"),
                             html.Div(
                                 "Click a bar to open the trade on the chart.", className="lv-sub"
                             ),
                             dcc.Graph(
                                 id="lv-trades",
                                 figure=trades_figure(lm.trade_strip([], None, "day", now)),
-                                config={"displayModeBar": False},
+                                config={"displayModeBar": False, "responsive": True},
                             ),
                         ],
-                        right=dcc.RadioItems(
-                            id="lv-range",
-                            options=[
-                                {"label": "Day", "value": "day"},
-                                {"label": "Week", "value": "week"},
-                                {"label": "All", "value": "all"},
-                            ],
-                            value="day",
-                            className="lv-seg",
-                            inline=True,
-                        ),
                     ),
                 ],
                 className="lv-two",
             ),
-            _card("Closed trades", html.Div(render_closed([]), id="lv-closed")),
-            _card("Open positions", html.Div(pieces["positions"], id="lv-positions")),
-            _card("Today's signals and skips", html.Div(pieces["signals"], id="lv-signals")),
-            _card(
-                "Event log",
-                html.Pre(pieces["log"], id="lv-log", className="lv-log"),
-                right=html.Span(f"last {LOG_LINES}, times in Swiss time", className="lv-sub"),
+            _fold("Open positions", html.Div(pieces["positions"], id="lv-positions"), open_=True),
+            _fold(
+                "Closed trades",
+                [_range_picker("lv-closed-range"), html.Div(render_closed([]), id="lv-closed")],
+                open_=True,
             ),
-            _card(
+            _fold(
+                "Today's signals and skips",
+                html.Div(pieces["signals"], id="lv-signals"),
+                open_=True,
+            ),
+            _fold(
+                "Event log",
+                [
+                    html.Div(f"last {LOG_LINES}, times in Swiss time", className="lv-sub"),
+                    html.Pre(pieces["log"], id="lv-log", className="lv-log"),
+                ],
+            ),
+            _fold(
                 "Settings",
                 [
                     html.Div(
@@ -738,14 +752,16 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
         Output("lv-closed", "children"),
         Input("lv-interval", "n_intervals"),
         Input("lv-range", "value"),
+        Input("lv-closed-range", "value"),
     )
-    def _trades(_, range_key):
+    def _trades(_, range_key, closed_key):
         now = datetime.now(UTC)
         status = read_status(out_dir / STATUS_NAME) or {}
         trades = lm.read_trades(out_dir)
         strip = lm.trade_strip(trades, status.get("initial_balance"), range_key, now)
         shown = lm.window_trades(trades, range_key, now)
-        return trades_figure(strip, shown), render_closed(shown)
+        closed = lm.window_trades(trades, closed_key or "day", now)
+        return trades_figure(strip, shown), render_closed(closed)
 
     app.clientside_callback(  # a click on a bar: open that trade on the chart
         "function (click) { const p = click && click.points && click.points[0];"

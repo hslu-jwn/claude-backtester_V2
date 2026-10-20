@@ -406,3 +406,8 @@ details[open] > .lv-summary::before {
 .lv-link:hover {
   text-decoration: underline;
 }
+.lv-seg.lv-fold-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}

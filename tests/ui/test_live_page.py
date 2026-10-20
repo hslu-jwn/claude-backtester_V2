@@ -488,3 +488,41 @@ def test_spawned_command_really_runs_detached_from_the_caller(tmp_path):
             break
         time.sleep(0.2)
     assert marker.exists()
+
+
+def test_every_card_folds_and_the_days_cards_are_open_by_default(tmp_path):
+    # ROADMAP 7.7 (user 2026-10-20): open by default what concerns the day, the rest closed
+    found = {_summary(d): d for d in _details(live.layout(tmp_path, NOW))}
+
+    def fold(title):
+        return next(d for t, d in found.items() if title in t)
+
+    expected = {
+        "Open positions": True, "Closed trades": True, "Today's signals and skips": True,
+        "Recent trades": False, "Event log": False, "Settings": False,
+        "Setup in progress": False, "Connection": False,
+    }  # fmt: skip
+    for title, is_open in expected.items():
+        assert bool(getattr(fold(title), "open", False)) is is_open, title
+    assert "lv-positions" in ids_of(fold("Open positions"))
+    assert {"lv-closed", "lv-closed-range"} <= ids_of(fold("Closed trades"))
+    assert "lv-signals" in ids_of(fold("Today's signals and skips"))
+    assert {"lv-trades", "lv-range"} <= ids_of(fold("Recent trades"))
+    assert "lv-log" in ids_of(fold("Event log"))
+    assert {"lv-risk", "lv-daily-stop", "lv-symbols"} <= ids_of(fold("Settings"))
+
+
+def test_closed_trades_have_their_own_range_starting_on_day(tmp_path):
+    page = live.layout(tmp_path, NOW)
+    ranges = {}
+
+    def walk(node):
+        if getattr(node, "id", None) in ("lv-range", "lv-closed-range"):
+            ranges[node.id] = node.value
+        kids = getattr(node, "children", None)
+        for k in kids if isinstance(kids, list) else [kids]:
+            if hasattr(k, "to_plotly_json"):  # every component, also those without children
+                walk(k)
+
+    walk(page)
+    assert ranges == {"lv-range": "day", "lv-closed-range": "day"}
