@@ -26,12 +26,10 @@ def test_link_classes_active_and_red():
     assert "nav-red" in nav.link_classes("/", True)["live"]  # red on every page
 
 
-def test_backtest_link_goes_to_the_newest_run(tmp_path):
-    assert nav.backtest_href(tmp_path) == "/results/"
-    for name in ("2026-01-01_a", "2026-02-01_b"):
-        (tmp_path / name).mkdir()
-        (tmp_path / name / "summary.json").write_text(json.dumps({"symbols": ["X"]}))
-    assert nav.backtest_href(tmp_path) == "/results/2026-02-01_b"
+def test_backtest_link_goes_to_the_backtest_page():
+    """/backtest shows the running backtest, else the newest run (tests/ui/test_backtest_page.py)."""
+    assert nav.backtest_href() == "/backtest"
+    assert '"href": "/backtest"' in json.dumps(nav.layout(), default=lambda o: o.to_plotly_json())
 
 
 def test_risk_has_no_link_yet():

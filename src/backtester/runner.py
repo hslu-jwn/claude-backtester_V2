@@ -35,6 +35,7 @@ import csv
 import json
 import multiprocessing
 import os
+import shutil
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
@@ -54,6 +55,7 @@ from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, r
 from backtester.engine.spread_table import SpreadTable
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
+from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
@@ -61,6 +63,11 @@ from backtester.strategy.opening_range.config import OpeningRangeConfig
 from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.trend_following.config import TrendFollowingConfig
+
+
+class RunCancelled(Exception):
+    """The run was cancelled (`cancel` event of `run_backtests` / `BackgroundRun.cancel`).
+    Nothing is written for a cancelled run."""
 
 
 def _read_only(mapping: dict) -> MappingProxyType:
@@ -117,6 +124,9 @@ class RunResult:
     sources: SymbolSources
     runs: Mapping[str, SymbolRun]
     trades: tuple[TradeResult, ...]  # all symbols merged, entry time order
+    # symbols asked for but left out (no rules for them in the strategy, no data in the range),
+    # one line each; `symbols` holds only the ones that ran
+    notes: tuple[str, ...] = ()
 
     def summary(self) -> dict:
         return {
@@ -152,6 +162,10 @@ class _Job:
         return len(next(s for s in self.series if s.timeframe is base))
 
 
+class NoDataError(ValueError):
+    """A symbol has no cached day in the requested range."""
+
+
 def _midnight(d: date) -> datetime:
     return datetime.combine(d, time(), UTC)
 
@@ -163,7 +177,7 @@ def _load(
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     in_range = [d for d in days if d in cached]
     if not in_range:
-        raise ValueError(f"{symbol}: no cached day between {start} and {end}")
+        raise NoDataError(f"{symbol}: no cached day between {start} and {end}")
     first, last = in_range[0], in_range[-1]
     notes = []
     if first > start:
@@ -236,19 +250,42 @@ def run_backtests(
     sources: SymbolSources = DEFAULT_SOURCES,
     progress: Progress | None = None,
     workers: int | None = None,
+    cancel: threading.Event | None = None,
 ) -> RunResult:
-    """Strategy 1 over `symbols` and the UTC days [start, end]."""
+    """The settings' strategy over `symbols` and the UTC days [start, end].
+
+    A symbol the strategy has no rules for (`UnsupportedSymbolError`) or without a cached day
+    in the range is left out with a note while others can run; when none can, the error is
+    raised (the symbol's own error for a single symbol). Setting `cancel` stops the run at the
+    next progress step or symbol: `RunCancelled`."""
     settings = settings or RunSettings()
-    symbols = tuple(dict.fromkeys(symbols))
-    if not symbols:
+    requested = tuple(dict.fromkeys(symbols))
+    if not requested:
         raise ValueError("no symbols")
     if end < start:
         raise ValueError(f"end {end} is before start {start}")
-    jobs = [_load(sources, s, start, end, settings) for s in symbols]
+    jobs: list[_Job] = []
+    skipped: list[tuple[str, Exception]] = []
+    for s in requested:
+        _check_cancel(cancel)
+        try:
+            jobs.append(_load(sources, s, start, end, settings))
+        except (UnsupportedSymbolError, NoDataError) as e:
+            skipped.append((s, e))
+    if not jobs:
+        if len(skipped) == 1:
+            raise skipped[0][1]
+        text = "; ".join(str(e) for _, e in skipped)
+        if all(isinstance(e, UnsupportedSymbolError) for _, e in skipped):
+            raise UnsupportedSymbolError(text)
+        raise ValueError(text)
+    symbols = tuple(j.symbol for j in jobs)
+    left_out = tuple(f"{s} left out: {e}" for s, e in skipped)
     total = sum(j.base_candles for j in jobs)
     done = dict.fromkeys(symbols, 0)
 
     def report(symbol: str, n: int) -> None:
+        _check_cancel(cancel)
         done[symbol] = n
         if progress is not None:
             progress(sum(done.values()), total)
@@ -257,15 +294,30 @@ def run_backtests(
     if workers <= 1:
         runs = [_run_job(j, lambda n, _t, s=j.symbol: report(s, n)) for j in jobs]
     else:
-        runs = _run_parallel(jobs, workers, report)
+        runs = _run_parallel(jobs, workers, report, cancel)
     by_symbol = {r.symbol: r for r in runs}
     return RunResult(
-        symbols, start, end, settings, sources, by_symbol, merge_trades(list(by_symbol.values()))
+        symbols,
+        start,
+        end,
+        settings,
+        sources,
+        by_symbol,
+        merge_trades(list(by_symbol.values())),
+        left_out,
     )
 
 
+def _check_cancel(cancel: threading.Event | None) -> None:
+    if cancel is not None and cancel.is_set():
+        raise RunCancelled
+
+
 def _run_parallel(
-    jobs: list[_Job], workers: int, report: Callable[[str, int], None]
+    jobs: list[_Job],
+    workers: int,
+    report: Callable[[str, int], None],
+    cancel: threading.Event | None = None,
 ) -> list[SymbolRun]:
     ctx = multiprocessing.get_context("spawn")
     queue = ctx.Queue()
@@ -274,16 +326,24 @@ def _run_parallel(
         while not queue.empty():
             report(*queue.get())
 
-    with ProcessPoolExecutor(workers, ctx, _init_worker, (queue,)) as pool:
+    pool = ProcessPoolExecutor(workers, ctx, _init_worker, (queue,))
+    try:
         futures = {pool.submit(_run_in_worker, j): j for j in jobs}
         pending = set(futures)
         while pending:
+            _check_cancel(cancel)
             finished, pending = wait(pending, timeout=0.2, return_when=FIRST_COMPLETED)
             drain()
             for f in finished:
                 f.result()  # raise a worker's error here
                 report(futures[f].symbol, futures[f].base_candles)
         return [f.result() for f in futures]
+    except BaseException:  # cancelled or failed: stop the workers, don't wait for them
+        for process in list(getattr(pool, "_processes", {}).values()):
+            process.terminate()
+        raise
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
 
 # --- results folder --------------------------------------------------------------------
@@ -397,6 +457,15 @@ def write_results(
     run_id = run_id or new_run_id(result.symbols, out_dir)
     folder = out_dir / run_id
     folder.mkdir(parents=True, exist_ok=False)
+    try:
+        _write_files(result, folder, run_id, preset)
+    except BaseException:  # no half-written run folder is left behind
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
+    return folder
+
+
+def _write_files(result: RunResult, folder: Path, run_id: str, preset: str | None) -> None:
     rows = trade_rows(result)
     with open(folder / "trades.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, TRADE_COLUMNS)
@@ -429,12 +498,11 @@ def write_results(
             for s, r in result.runs.items()
         },
         **result.summary(),
-        "notes": [n for r in result.runs.values() for n in r.notes],
+        "notes": [*result.notes, *(n for r in result.runs.values() for n in r.notes)],
     }
     _dump(folder / "settings.json", settings)
     _dump(folder / "summary.json", summary)
     _dump(folder / "sessions.json", _session_file(result, rows))
-    return folder
 
 
 def _dump(path: Path, data) -> None:
@@ -446,24 +514,33 @@ def _dump(path: Path, data) -> None:
 
 class BackgroundRun:
     """A run in a background thread (`start_run`). Poll `done` / `total` and `finished`;
-    afterwards `folder` (results written) or `error` is set."""
+    afterwards `folder` (results written), `error` or `cancelled` (`cancel()` was called:
+    nothing was written) is set."""
 
-    def __init__(self, target: Callable[[Progress], Path]):
+    def __init__(self, target: Callable[[Progress, threading.Event], Path]):
         self.done = 0
         self.total = 0
         self.folder: Path | None = None
         self.error: Exception | None = None
+        self.cancelled = False
+        self._cancel = threading.Event()
         self._thread = threading.Thread(target=self._main, args=(target,), daemon=True)
         self._thread.start()
 
     def _progress(self, done: int, total: int) -> None:
         self.done, self.total = done, total
 
-    def _main(self, target: Callable[[Progress], Path]) -> None:
+    def _main(self, target: Callable[[Progress, threading.Event], Path]) -> None:
         try:
-            self.folder = target(self._progress)
+            self.folder = target(self._progress, self._cancel)
+        except RunCancelled:
+            self.cancelled = True
         except Exception as e:  # noqa: BLE001  (handed to the caller through `error`)
             self.error = e
+
+    def cancel(self) -> None:
+        """Stop the run at its next step; no results folder is written."""
+        self._cancel.set()
 
     @property
     def finished(self) -> bool:
@@ -485,8 +562,9 @@ def start_run(
 ) -> BackgroundRun:
     """`run_backtests` + `write_results` in a background thread."""
 
-    def target(progress: Progress) -> Path:
-        result = run_backtests(symbols, start, end, settings, sources, progress, workers)
+    def target(progress: Progress, cancel: threading.Event) -> Path:
+        result = run_backtests(symbols, start, end, settings, sources, progress, workers, cancel)
+        _check_cancel(cancel)
         return write_results(result, out_dir, preset=preset)
 
     return BackgroundRun(target)

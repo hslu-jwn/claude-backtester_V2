@@ -306,3 +306,100 @@ def test_command_logs_the_run_as_a_trial(cache, tmp_path):
     assert line.strategy == "session_zone_sweep" and line.symbols == ["XAUUSD"]
     assert line.start == "2026-01-05" and len(family_trials("mine")) == 1
     assert len(list((tmp_path / "out").iterdir())) == 2  # the log is not in the run folders
+
+
+# --- cancel, left-out symbols (ROADMAP 7.6, Backtest page) -------------------------------
+
+import threading
+
+from backtester.runner import RunCancelled
+from backtester.strategy.opening_range.config import OpeningRangeConfig
+
+OPENING = RunSettings(strategy=OpeningRangeConfig())
+
+
+@pytest.fixture
+def mixed(tmp_path):
+    folder = tmp_path / "cache"
+    for symbol in ("XAUUSD", "BTCUSD", "ETHUSD"):
+        write_day(folder, symbol, MON, FULL)
+    write_day(folder, "GOLD", TUE, FULL)
+    return SymbolSources.single(folder, ["XAUUSD", "BTCUSD", "ETHUSD", "GOLD"])
+
+
+def test_a_symbol_without_rules_is_left_out_with_a_note_when_others_can_run(mixed):
+    result = run_backtests(["XAUUSD", "BTCUSD"], MON, MON, OPENING, mixed, workers=1)
+    assert result.symbols == ("XAUUSD",) and list(result.runs) == ["XAUUSD"]
+    assert len(result.notes) == 1
+    assert result.notes[0].startswith("BTCUSD left out: opening_range: no session for BTCUSD")
+
+
+def test_a_symbol_without_data_in_the_range_is_left_out_with_a_note(mixed):
+    result = run_backtests(["XAUUSD", "GOLD"], MON, MON, SETTINGS, mixed, workers=1)
+    assert result.symbols == ("XAUUSD",)
+    assert result.notes == ("GOLD left out: GOLD: no cached day between 2026-01-05 and 2026-01-05",)
+
+
+def test_when_no_symbol_can_run_the_error_is_raised(mixed):
+    with pytest.raises(UnsupportedSymbolError, match="no session for BTCUSD"):
+        run_backtests(["BTCUSD"], MON, MON, OPENING, mixed, workers=1)
+    with pytest.raises(ValueError, match="no cached day"):
+        run_backtests(["XAUUSD", "GOLD"], WED, WED, SETTINGS, mixed, workers=1)
+    with pytest.raises(UnsupportedSymbolError) as e:  # two reasons in one message
+        run_backtests(["BTCUSD", "ETHUSD"], MON, MON, OPENING, mixed, workers=1)
+    assert "BTCUSD" in str(e.value) and "ETHUSD" in str(e.value)
+
+
+def test_left_out_symbols_are_in_the_written_notes(mixed, tmp_path):
+    run = start_run(["XAUUSD", "BTCUSD"], MON, MON, OPENING, mixed, tmp_path / "r", workers=1)
+    run.join(60)
+    assert run.error is None
+    notes = json.loads((run.folder / "summary.json").read_text())["notes"]
+    assert any(n.startswith("BTCUSD left out") for n in notes)
+    assert run.folder.name.endswith("_XAUUSD")  # only the symbols that ran
+
+
+def test_cancel_before_start_stops_the_run(cache):
+    cancel = threading.Event()
+    cancel.set()
+    with pytest.raises(RunCancelled):
+        run_backtests(["XAUUSD"], MON, MON, SETTINGS, cache, workers=1, cancel=cancel)
+
+
+def test_cancel_during_the_run_stops_at_the_next_progress_step(cache):
+    cancel, calls = threading.Event(), []
+
+    def progress(done, total):
+        calls.append(done)
+        cancel.set()
+
+    with pytest.raises(RunCancelled):
+        run_backtests(["XAUUSD", "GOLD"], MON, TUE, SETTINGS, cache, progress, 1, cancel)
+    assert len(calls) == 1  # the second symbol never ran
+
+
+def test_cancel_stops_parallel_workers(cache):
+    cancel = threading.Event()
+    cancel.set()
+    with pytest.raises(RunCancelled):
+        run_backtests(["XAUUSD", "GOLD"], MON, TUE, SETTINGS, cache, workers=2, cancel=cancel)
+
+
+def test_cancelled_background_run_writes_nothing(cache, tmp_path):
+    out = tmp_path / "results"
+    run = start_run(["XAUUSD"], MON, MON, SETTINGS, cache, out, workers=1)
+    run.cancel()  # may land before or after the end of this tiny run
+    run.join(60)
+    if run.cancelled:
+        assert run.folder is None and run.error is None
+        assert not out.exists() or not list(out.iterdir())
+    else:
+        assert run.folder is not None
+
+
+def test_a_failed_write_leaves_no_half_folder(cache, tmp_path, monkeypatch):
+    result = run_backtests(["XAUUSD"], MON, MON, SETTINGS, cache, workers=1)
+    monkeypatch.setattr("backtester.runner._dump", lambda *a: (_ for _ in ()).throw(OSError("x")))
+    with pytest.raises(OSError):
+        write_results(result, tmp_path / "r", run_id="fail")
+    assert not (tmp_path / "r" / "fail").exists()

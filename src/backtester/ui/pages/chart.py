@@ -97,7 +97,6 @@ from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
-from uuid import uuid4
 
 from dash import ALL, ClientsideFunction, Dash, Input, Output, State, ctx, dcc, html, no_update
 
@@ -113,10 +112,11 @@ from backtester.data.sources import SymbolSources, cached_block, warmup_start
 from backtester.detectors.sweep import SweepConfig
 from backtester.detectors.swings import SwingConfig
 from backtester.engine.replay import Replay
-from backtester.runner import RESULTS_DIR, BackgroundRun, RunSettings, start_run
+from backtester.runner import RESULTS_DIR, RunSettings, start_run
 from backtester.settings import from_json
 from backtester.strategy.registry import REGISTRY
 from backtester.ui import (
+    backtest_job,
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     breaker_overlay,  # noqa: F401  (registers the Breaker block overlay)
@@ -761,9 +761,9 @@ def replay_delta(
     return {**data.delta(view.get("types") or [], frm, cursor), "key": key}
 
 
-# --- backtest from the toolbar (ROADMAP 4.0, runner.start_run) ---------------------------
+# --- backtest from the toolbar (ROADMAP 4.0, 7.6; the run is shown on /backtest) ---------
 
-_RUNS: dict[str, BackgroundRun] = {}  # running backtests by job id (this server process)
+BACKTEST_PATH = "/backtest"
 
 
 def start_backtest(
@@ -775,37 +775,17 @@ def start_backtest(
     settings: RunSettings | None = None,
     preset: str | None = None,
 ):
-    """Outputs of the backtest callback after "Run": (job, timer disabled, status, bar
-    style, page). The run goes on in a background thread with `settings` (the settings
-    panel's current ones); `poll_backtest` follows it."""
+    """Outputs of the backtest callback after "Run": (status text, page). The run goes on in
+    a background thread (ui/backtest_job.py) with `settings` (the settings panel's current
+    ones) and the app opens the Backtest page, which shows it; one backtest at a time."""
     if not symbols or not start_date or not end_date:
-        return no_update, True, "Pick one or more symbols and the days.", {"width": "0%"}, no_update
-    job = uuid4().hex
+        return "Pick one or more symbols and the days.", no_update
     first, last = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
-    _RUNS[job] = start(
-        list(symbols), first, last, settings=settings, sources=sources, preset=preset
-    )
-    return {"id": job}, False, f"Running {', '.join(symbols)} …", {"width": "0%"}, no_update
-
-
-def progress_percent(done: int, total: int) -> str:
-    """ "37%": the share of the backtest's candles done (0% while the total isn't known)."""
-    return f"{min(done / total, 1.0) if total else 0.0:.0%}"
-
-
-def poll_backtest(job: dict | None):
-    """Progress of the running backtest; when it is done, open its results page."""
-    run = _RUNS.get(job["id"]) if job else None
-    if run is None:
-        return no_update, True, no_update, no_update, no_update
-    if not run.finished:
-        status = f"{run.done:,} of {run.total:,} candles" if run.total else "Loading candles …"
-        return no_update, False, status, {"width": progress_percent(run.done, run.total)}, no_update
-    del _RUNS[job["id"]]
-    if run.error is not None:
-        return None, True, f"Failed: {run.error}", {"width": "0%"}, no_update
-    name = run.folder.name
-    return None, True, f"Done: results/{name}", {"width": "100%"}, f"/results/{name}"
+    try:
+        backtest_job.start(symbols, first, last, settings, sources, preset, starter=start)
+    except backtest_job.JobRunning:
+        return "A backtest is already running. Open it with Backtest in the top bar.", no_update
+    return "", BACKTEST_PATH
 
 
 def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
@@ -1151,7 +1131,6 @@ def layout(
                 [html.Button("Run", id="bt-run", className="tb-run", n_clicks=0)],
                 className="tb-pop-row",
             ),
-            html.Div(html.Div(id="bt-bar", className="tb-progress-bar"), className="tb-progress"),
             html.Div(id="bt-status", className="tb-pop-note"),
         ],
     )
@@ -1340,7 +1319,6 @@ def layout(
             dcc.Store(id="chart-replay", data=REPLAY_OFF),
             dcc.Store(id="chart-replay-mode", data={"on": False, "picking": False}),
             dcc.Store(id="chart-replay-span"),
-            dcc.Store(id="bt-job"),
             dcc.Store(id="chart-focus", data=focus),
             dcc.Store(id="chart-order"),
             dcc.Store(id="chart-order-draw"),
@@ -1354,7 +1332,6 @@ def layout(
                 interval=1000 // config.replay_default_speed,
                 disabled=True,
             ),
-            dcc.Interval(id="bt-timer", interval=500, disabled=True),
         ],
         className="tb-page ch-page",
     )
@@ -1665,12 +1642,6 @@ def register_callbacks(
         Input("chart-day-boundary", "value"),
         Input("chart-h4-alignment", "value"),
     )
-    app.clientside_callback(  # ... and a running backtest's percent on the same bar
-        ClientsideFunction("chart", "backtest"),
-        Output("chart-bar-pct", "title"),
-        Input("bt-bar", "style"),
-        Input("bt-job", "data"),
-    )
     app.clientside_callback(
         ClientsideFunction("chart", "base"),
         Output("chart-base-done", "data"),
@@ -1829,28 +1800,21 @@ def register_callbacks(
         return [symbol] if symbol else [], start, end, low, high
 
     @app.callback(
-        Output("bt-job", "data"),
-        Output("bt-timer", "disabled"),
         Output("bt-status", "children"),
-        Output("bt-bar", "style"),
         Output("url", "pathname"),
         Input("bt-run", "n_clicks"),
-        Input("bt-timer", "n_intervals"),
         State("bt-symbols", "value"),
         State("bt-dates", "start_date"),
         State("bt-dates", "end_date"),
-        State("bt-job", "data"),
         State("settings-current", "data"),
         prevent_initial_call=True,
     )
-    def _backtest(_run, _tick, symbols, start, end, job, store):
-        if ctx.triggered_id == "bt-run":
-            if not _run:  # fired when the page is built (n_clicks 0), not a click
-                return (no_update,) * 5
-            settings = settings_panel.store_settings(store)
-            preset = settings_panel.preset_label(store)
-            return start_backtest(sources, symbols, start, end, settings=settings, preset=preset)
-        return poll_backtest(job)
+    def _backtest(run, symbols, start, end, store):
+        if not run:  # fired when the page is built (n_clicks 0), not a click
+            return no_update, no_update
+        settings = settings_panel.store_settings(store)
+        preset = settings_panel.preset_label(store)
+        return start_backtest(sources, symbols, start, end, settings=settings, preset=preset)
 
 
 _REPLAY_ACTIONS = {

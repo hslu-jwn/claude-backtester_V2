@@ -676,9 +676,9 @@ def test_unknown_symbol_is_refused():
 def test_symbol_without_a_session_gives_a_clear_one_line_message():
     with pytest.raises(UnsupportedSymbolError) as e:
         OpeningRange("BTCUSD", OpeningRangeConfig())  # crypto: no session defined
-    assert str(e.value) == (
-        "opening_range: no session for BTCUSD (SYMBOL_CLASS in strategy/opening_range/config.py)"
-    )
+    text = str(e.value)  # shown to the user (backtest page): names the symbols that do work
+    assert text.startswith("opening_range: no session for BTCUSD. It trades: ")
+    assert "NAS100" in text and "AUDUSD" in text and "SYMBOL_CLASS" not in text
 
 
 # --- strategy contract and config ----------------------------------------------------------

@@ -40,10 +40,11 @@ from backtester.analytics.metrics import (
 )
 from backtester.analytics.records import TradeRecord, read_trades
 from backtester.runner import RESULTS_DIR
+from backtester.strategy.registry import REGISTRY
 from backtester.ui import trade_focus
 from backtester.ui.chart_config import price_digits
 
-_RUN_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
+_RUN_ID = re.compile(r"[A-Za-z0-9_.-]+")
 ALL = "__all__"  # symbol filter value for every symbol
 TABS = (
     ("overview", "Overview"),
@@ -56,7 +57,7 @@ UP, DOWN, MUTED, ACCENT = "#089981", "#f23645", "#787b86", "#2962ff"  # TradingV
 
 def run_folder(run_id: str, results_dir: Path = RESULTS_DIR) -> Path | None:
     """The run's folder, or None for a name that isn't a run folder (no paths outside)."""
-    if not _RUN_ID.match(run_id or "") or run_id in (".", ".."):
+    if not _RUN_ID.fullmatch(run_id or "") or run_id in (".", ".."):
         return None
     folder = Path(results_dir) / run_id
     return folder if (folder / "summary.json").is_file() else None
@@ -69,7 +70,7 @@ def _read_json(path: Path) -> dict:
         return {}
 
 
-_RUN_ID = re.compile(r"\d{8}-\d{6}")
+_TIMESTAMPED = re.compile(r"\d{8}-\d{6}")
 
 
 def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
@@ -79,8 +80,8 @@ def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
         return []
     found = sorted((p for p in folder.iterdir() if (p / "summary.json").is_file()), reverse=True)
     # timestamped runs first (newest first), study folders after them in name order
-    runs = [p for p in found if _RUN_ID.match(p.name)] + [
-        p for p in found if not _RUN_ID.match(p.name)
+    runs = [p for p in found if _TIMESTAMPED.match(p.name)] + [
+        p for p in found if not _TIMESTAMPED.match(p.name)
     ]
     options = []
     for p in runs:
@@ -90,6 +91,13 @@ def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
             {"label": f"{p.name} · {symbols} · {s.get('start')} → {s.get('end')}", "value": p.name}
         )
     return options
+
+
+def strategy_label(settings: dict) -> str:
+    """The run's strategy as the menus name it ("Strategy 6 · Opening-range breakout"), from
+    settings.json. Runs written before the name was recorded were strategy 1."""
+    name = (settings.get("strategy") or {}).get("name") or "session_zone_sweep"
+    return REGISTRY[name].label if name in REGISTRY else name
 
 
 def run_date(run_id: str, summary: dict) -> str:
@@ -659,7 +667,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
     )
     header = html.Div(
         [
-            html.H2(f"Strategy 1 · Session zone sweep · {folder.name}", className="rs-title"),
+            html.H2(f"{strategy_label(settings)} · {folder.name}", className="rs-title"),
             html.Div(
                 [
                     html.Span([html.Span(k, className="rs-meta-key"), v], className="rs-meta")

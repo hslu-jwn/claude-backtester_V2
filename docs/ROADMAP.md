@@ -1130,6 +1130,18 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   is run, no overlay switched on; chip with ✕ in the bottom bar. Without a focused trade the newest run's
   trades of the shown symbol are drawn light (any strategy, from `trades.csv`, max 400). The live bot records
   no TP, so live orders have entry and SL only.
+  **Backtest page** (user 2026-10-20, built, to be checked): Run in the chart's Backtest menu starts the run
+  and opens `/backtest` (`ui/pages/backtest.py`, job state on the server in `ui/backtest_job.py`, so leaving and
+  coming back still shows it; one backtest at a time, a second Run says so): symbols, days, strategy, preset, a
+  large 0-100 % bar (striped while candles load), candles done of the total, elapsed, ETA and **Cancel backtest**
+  (`runner.BackgroundRun.cancel`: checked at every progress step and between symbols, parallel workers are
+  terminated; a cancelled run writes no folder). A finished run opens its results; a failed or cancelled one
+  stays on the page with its message. Backtest in the top bar = `/backtest` (the running job, else the newest
+  results). The chart's thin bar no longer mirrors backtests. Fixes found while testing: the results header
+  named strategy 1 for every run (now the run's own strategy); a symbol without rules (opening_range on
+  BTCUSD) or without data in the range is left out with a note while other symbols run (all left out: the
+  error); errors shown as text, not as a Python repr; `run_folder` accepted ids with `/` after a timestamp
+  (shadowed regex); a failed results write leaves no half folder.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 

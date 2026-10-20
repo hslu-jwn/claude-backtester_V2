@@ -102,14 +102,14 @@
   /* A thin bar at the top of the chart pane (#chart-bar), 0-100 %. Chart load: one server
      request, so staged: request sent (cfg.progress_sent), candles received
      (cfg.progress_received), overlays drawn (100); between the stages it creeps slowly
-     towards the next one. A backtest shows its real percent instead (P.bt). */
+     towards the next one. */
   const BAR_CREEP_MS = 150; // creep step
   const BAR_CREEP_SHARE = 0.06; // share of the remaining way covered per step
   const BAR_STAGE_CAP = 0.92; // the creep stops at this share of the way to the next stage
   const BAR_GIVE_UP_MS = 30000; // a load that never reports back hides the bar
   const BAR_HOLD_MS = 250; // the full bar stays this long, then fades out
   const BAR_FADE_MS = 350;
-  const P = { stage: null, pct: 0, cap: 0, bt: null, creep: null, giveUp: null, hide: null };
+  const P = { stage: null, pct: 0, cap: 0, creep: null, giveUp: null, hide: null };
 
   function barDraw(pct, on) {
     const bar = document.getElementById("chart-bar");
@@ -134,12 +134,12 @@
   function barStage(stage, pct, next) {
     barStop();
     P.stage = stage; P.pct = pct;
-    if (P.bt === null) barDraw(pct, true);
+    barDraw(pct, true);
     P.creep = setInterval(() => {
       const top = pct + (next - pct) * BAR_STAGE_CAP;
       if (P.pct < top) {
         P.pct += (top - P.pct) * BAR_CREEP_SHARE;
-        if (P.bt === null) barDraw(P.pct, true);
+        barDraw(P.pct, true);
       }
     }, BAR_CREEP_MS);
     P.giveUp = setTimeout(barDone, BAR_GIVE_UP_MS);
@@ -149,7 +149,6 @@
     barStop();
     if (P.stage === null) return;
     P.stage = null;
-    if (P.bt !== null) return; // a backtest owns the bar
     barDraw(100, true);
     P.hide = setTimeout(() => {
       const bar = document.getElementById("chart-bar");
@@ -866,19 +865,6 @@
       /* The chart inputs changed (symbol, timeframe, days, ...): a new base is requested. */
       loading() {
         if (P.stage !== "loading") barLoading();
-        return no();
-      },
-
-      /* Backtest progress (width of the toolbar's bar, "37%"); no job = finished. */
-      backtest(style, job) {
-        const width = style && style.width ? parseFloat(style.width) : NaN;
-        if (!job || Number.isNaN(width)) {
-          P.bt = null;
-          if (P.stage === null) barDraw(0, false);
-          return no();
-        }
-        P.bt = width;
-        barDraw(width, true);
         return no();
       },
 

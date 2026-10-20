@@ -3,7 +3,8 @@
 One top bar on every page (ui/nav.py): Chart · Backtest · Risk · Live; Live is red while the
 bot runs and the app opens on `/live` then (ROADMAP 7.3).
 
-Pages: chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
+Pages: the running backtest (`/backtest`, pages/backtest.py: progress bar, Cancel; ROADMAP 7.6),
+chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
 one trade, from the results page) and a backtest's results (`/results/<run id>`,
 pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
 Prop Firm page (pages/risk.py) comes in Phase 5. The demo bot's monitor and account
@@ -19,8 +20,8 @@ import argparse
 from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.ui import nav
-from backtester.ui.pages import chart, live, results
+from backtester.ui import backtest_job, nav
+from backtester.ui.pages import backtest, chart, live, results
 
 RESULTS_PREFIX = "/results/"
 LIVE_PATH = "/live"
@@ -29,6 +30,8 @@ LIVE_PATH = "/live"
 def page_for(pathname: str | None, sources: SymbolSources, search: str | None = None):
     if pathname == LIVE_PATH:
         return live.layout()
+    if pathname == backtest.PATH:
+        return backtest.page()
     if pathname and pathname.startswith(RESULTS_PREFIX):
         return results.layout(pathname.removeprefix(RESULTS_PREFIX))
     return chart.layout(sources, focus=chart.focus_from_query(search))
@@ -45,6 +48,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
             chart.layout(sources),
             results.layout(""),
             live.layout(),
+            backtest.layout(backtest_job.PLACEHOLDER),
         ]
     )
 
@@ -55,6 +59,7 @@ def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
     nav.register_callbacks(app)
     chart.register_callbacks(app, sources)
     results.register_callbacks(app)
+    backtest.register_callbacks(app)
     live.register_callbacks(app)
     return app
 

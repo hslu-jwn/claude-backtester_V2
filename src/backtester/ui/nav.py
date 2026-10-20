@@ -4,8 +4,8 @@ Spec: docs/live-trading.md › App layout and Live page. The Live link turns red
 (fresh heartbeat in `results/live/status.json`, read every few seconds). The app opens on `/live`
 when the bot runs at the first load of a browser session, else on the chart.
 
-Backtest links to the newest run's results page (`/results/<run id>`), or to `/results/` (a "no
-run" page) while there is none. Risk has no page yet (pages/risk.py is a stub): it is shown
+Backtest links to `/backtest`: the running backtest with its progress bar, else the newest run's
+results (or "No backtest yet"). Risk has no page yet (pages/risk.py is a stub): it is shown
 greyed out, not as a link.
 """
 
@@ -19,19 +19,19 @@ from dash import Dash, Input, Output, State, dcc, html, no_update
 from backtester.live.status import STATUS_NAME, read_status
 from backtester.paths import RESULTS_DIR
 from backtester.ui import live_model
-from backtester.ui.pages import results
 
 LIVE_DIR = RESULTS_DIR / "live"
 REFRESH_MS = 3000
 BOOT_DELAY_MS = 200  # the landing check runs once, this long after the page is shown
 RESULTS_PREFIX = "/results/"
+BACKTEST_PATH = "/backtest"  # the running backtest, else the newest results
 
 
 def section_of(pathname: str | None) -> str:
     """Which top-bar entry is active for a path: chart, backtest or live."""
     if pathname == live_model.LIVE_PATH:
         return "live"
-    if pathname and pathname.startswith(RESULTS_PREFIX):
+    if pathname == BACKTEST_PATH or (pathname and pathname.startswith(RESULTS_PREFIX)):
         return "backtest"
     return "chart"
 
@@ -45,9 +45,8 @@ def link_classes(pathname: str | None, bot_live: bool) -> dict[str, str]:
     return out
 
 
-def backtest_href(results_dir: Path = RESULTS_DIR) -> str:
-    runs = results.list_runs(results_dir)
-    return f"{RESULTS_PREFIX}{runs[0]['value']}" if runs else RESULTS_PREFIX
+def backtest_href() -> str:
+    return BACKTEST_PATH
 
 
 def layout() -> html.Div:
@@ -58,7 +57,7 @@ def layout() -> html.Div:
             dcc.Store(id="nav-landed", storage_type="session"),
             html.Div("BACKTESTER", className="nav-brand"),
             dcc.Link("Chart", id="nav-chart", href="/", className="nav-link"),
-            dcc.Link("Backtest", id="nav-backtest", href=RESULTS_PREFIX, className="nav-link"),
+            dcc.Link("Backtest", id="nav-backtest", href=BACKTEST_PATH, className="nav-link"),
             html.Span("Risk", className="nav-link nav-off", title="Not built yet"),
             dcc.Link("Live", id="nav-live", href=live_model.LIVE_PATH, className="nav-link"),
             html.Div(className="nav-spacer"),
@@ -68,12 +67,11 @@ def layout() -> html.Div:
     )
 
 
-def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR, results_dir: Path = RESULTS_DIR):
+def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
     @app.callback(
         Output("nav-chart", "className"),
         Output("nav-backtest", "className"),
         Output("nav-live", "className"),
-        Output("nav-backtest", "href"),
         Output("nav-status", "children"),
         Output("nav-status", "className"),
         Input("url", "pathname"),
@@ -86,7 +84,6 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR, results_dir: Path = 
             cls["chart"],
             cls["backtest"],
             cls["live"],
-            backtest_href(results_dir),
             view["text"],
             f"nav-status nav-{view['level']}",
         )

@@ -263,3 +263,41 @@ def test_only_named_folders_keep_the_old_order_and_empty_is_empty(tmp_path):
     for name in ("a_study", "b_study"):
         make_run(tmp_path, name)
     assert [o["value"] for o in results.list_runs(tmp_path)] == ["b_study", "a_study"]
+
+
+def test_run_ids_with_a_slash_never_open_a_folder(results_dir):
+    """A run id that starts like a timestamp must still not walk out of the results folder."""
+    for bad in (f"{RUN}/..", "20261008-120000/../x", rf"{RUN}\.."):
+        assert results.run_folder(bad, results_dir) is None
+
+
+def test_study_folders_open_like_runs(results_dir):
+    study = results_dir / "study_robustness"
+    study.mkdir()
+    (study / "summary.json").write_text(json.dumps({"symbols": ["XAUUSD"]}))
+    assert results.run_folder("study_robustness", results_dir) == study
+
+
+@pytest.mark.parametrize(
+    "name,label",
+    [
+        ("session_zone_sweep", "Strategy 1 · Session zone sweep"),
+        ("ny_index_sweep", "Strategy 2 · NY Open index sweep"),
+        ("no_wick", "Strategy 3 · No-wick candle in the trend"),
+        ("trend_following", "Strategy 4 · Trend following (Kaufman)"),
+        ("gap_fade", "Strategy 5 · Gap fade (index open)"),
+        ("opening_range", "Strategy 6 · Opening-range breakout"),
+    ],
+)
+def test_header_names_the_runs_own_strategy(results_dir, name, label):
+    (results_dir / RUN / "settings.json").write_text(json.dumps({"strategy": {"name": name}}))
+    page = str(results.layout(RUN, results_dir))
+    assert f"{label} · {RUN}" in page
+    assert (name != "session_zone_sweep") <= ("Strategy 1" not in page)
+
+
+def test_header_of_a_run_without_a_strategy_name_or_an_unknown_one(results_dir):
+    (results_dir / RUN / "settings.json").write_text("{}")  # written before names existed
+    assert f"Strategy 1 · Session zone sweep · {RUN}" in str(results.layout(RUN, results_dir))
+    (results_dir / RUN / "settings.json").write_text(json.dumps({"strategy": {"name": "future"}}))
+    assert f"future · {RUN}" in str(results.layout(RUN, results_dir))

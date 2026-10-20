@@ -128,14 +128,13 @@ def main(argv: list[str] | None = None) -> int:
         result = run_backtests(
             symbols, args.start, args.end, settings, sources, _Bar(), args.workers
         )
-    except UnsupportedSymbolError as e:  # one symbol without rules stops the whole run
+    except UnsupportedSymbolError as e:  # no symbol has rules (others are left out with a note)
         parser.error(str(e))
     print(file=sys.stderr)
     name = args.preset if settings == preset else f"{args.preset} (modified)"
     folder = write_results(result, args.out, preset=name)
-    for run in result.runs.values():
-        for note in run.notes:
-            print(f"note: {note}")
+    for note in (*result.notes, *(n for run in result.runs.values() for n in run.notes)):
+        print(f"note: {note}")
     print(format_summary(result.summary()))
     print()
     print(format_periods(result.trades))

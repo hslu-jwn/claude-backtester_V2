@@ -123,8 +123,8 @@ class OpeningRange(Strategy):
         market = SYMBOL_CLASS.get(symbol)
         if market is None or market not in config.sessions:
             raise UnsupportedSymbolError(
-                f"opening_range: no session for {symbol} "
-                "(SYMBOL_CLASS in strategy/opening_range/config.py)"
+                f"opening_range: no session for {symbol}. "
+                f"It trades: {', '.join(sorted(SYMBOL_CLASS))}"
             )
         self._sessions = [
             _Session(name, spec, ZoneInfo(spec.zone))
