@@ -1790,7 +1790,7 @@ changes results, defaults changed only with the user's go.
   +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
   29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
   Halves split at the middle of the run's period (user, 2026-10-15); n/a checks count neither way (user, 2026-10-15).
-- ☐ **12.9 Portfolio tool** (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
+- ☑ **12.9 Portfolio tool** (accepted by the user 2026-10-20) (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
   correlation of daily R between strategies / variants, a combined Monte Carlo report on one account, and the
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
   positives.
@@ -1837,6 +1837,9 @@ changes results, defaults changed only with the user's go.
   Strategy 5 is the only one with a real forward-return signal (51-52 % in the money 2-10 minutes later against 48-49 %
   shuffled) but the move is smaller than the costs; it misses the random-exit percentile by 0.1 (89.9 vs > 90).
   Strategy 7 beats the random exits (98.6) but its fixed-bar exits are flat before costs (gross +0.002 at N20).
+
+- ☐ **12.13 DSR on daily R** (user, 2026-10-20): the deflated Sharpe uses the daily net R (Prague days, empty days 0)
+  instead of per-trade R, in the Monte Carlo report and the portfolio tool; trial-log lines get daily statistics.
 
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later

@@ -230,15 +230,21 @@ one's Sharpe by the number of trials.
 - **Back-fill** (user, 2026-10-16): trials run before the log existed are added by hand
   (`python -m backtester.tools.trials add ...`), with their numbers where the old result files have them,
   otherwise as count-only lines (count for N, no Sharpe).
-- **Sharpe per trade** SR = mean / sd of net R per trade (sample sd), not annualised; n = trade count;
-  skewness g3 and kurtosis g4 (not excess, normal = 3) of net R per trade.
+- **Daily Sharpe** (rule changed by the user 2026-10-20, ROADMAP 12.13; before: per trade): SR = mean / sd (sample sd)
+  of the **daily net R** of the run, not annualised; a day = a weekday of the run's period, midnight to midnight
+  `Europe/Prague`, trades by exit day, days without trades = 0 (as Monte Carlo kind A); n = number of days; skewness g3
+  and kurtosis g4 (not excess, normal = 3) of the daily net R. Why: per-trade Sharpes of runs with very different trade
+  counts are not comparable (12.9: 302 vs 1,858 trades), daily ones are, also for a weighted portfolio. Trial-log lines
+  store the daily statistics too (days, daily mean / sd / skew / kurtosis / Sharpe); lines without them (written before
+  2026-10-20) count for N but not for V.
 - **PSR(SR\*)** = Φ( (SR − SR\*) √(n − 1) / √(1 − g3·SR + (g4 − 1)/4 · SR²) ); shown as PSR(0).
 - **DSR** = PSR(SR0) with SR0 = √V · ((1 − γ) Φ⁻¹(1 − 1/N) + γ Φ⁻¹(1 − 1/(N·e))), γ = 0.5772 (Euler's constant),
   N = number of trials in the family (count-only lines included, at least 1; N = 1 gives SR0 = 0, DSR = PSR(0)),
-  V = sample variance of the Sharpes of the family's lines that have one, when there are ⚙️ **2** or more;
-  otherwise V = 1/n of the evaluated run (the variance of a zero-skill Sharpe estimate; chosen by Claude 2026-10-16).
-- **Check 7** of the verdict passes at DSR ≥ 0.95; n/a with fewer than 2 trades, zero sd or a non-positive
-  denominator under the square root.
+  V = sample variance of the daily Sharpes of the family's lines that have one, when there are ⚙️ **2** or more;
+  otherwise V = 1/n of the evaluated run (n = days; the variance of a zero-skill Sharpe estimate; chosen by Claude 2026-10-16).
+- **Check 7** of the verdict passes at DSR ≥ 0.95; n/a with fewer than 2 days, zero sd or a non-positive
+  denominator under the square root. Same rule in the Monte Carlo report and the portfolio tool (on the combined,
+  weighted daily R).
 - The report shows PSR(0), DSR, N, V, SR0 and the family name.
 
 ### Entry screening (ROADMAP 12.12, idea T-13; rules set by the user, 2026-10-20)
