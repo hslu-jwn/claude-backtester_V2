@@ -293,3 +293,27 @@ def test_cache_dir_is_the_source_of_every_symbol(tmp_path, monkeypatch, stub):
     cache = tmp_path / "cache"
     assert tool.main(argv(tmp_path, "--paths", "0", "--cache-dir", str(cache))) == 0
     assert seen[0].cache_dir("NAS100") == seen[0].cache_dir("US500") == cache
+
+
+def test_spread_table_option_goes_into_the_costs_of_every_run(tmp_path, monkeypatch, stub):
+    assert (
+        parse_args(["NAS100", "--start", "2020-01-01", "--end", "2020-02-01"]).spread_table is None
+    )
+    table = tmp_path / "spreads.json"
+    table.write_text(json.dumps({
+        "stat": "median", "note": "test",
+        "values": {"NAS100": {"2021": {"9": 1.5}}},
+    }), encoding="utf-8")  # fmt: skip
+    seen = []
+    orig = tool.run_backtests
+
+    def spy(symbols, start, end, settings, *a, **k):
+        seen.append(settings.engine.costs.spread_table)
+        return orig(symbols, start, end, settings, *a, **k)
+
+    monkeypatch.setattr(tool, "run_backtests", spy)
+    assert tool.main(argv(tmp_path, "--paths", "0", "--spread-table", str(table))) == 0
+    assert seen and all(t is not None for t in seen)
+    seen.clear()
+    assert tool.main(argv(tmp_path, "--paths", "0")) == 0
+    assert all(t is None for t in seen)

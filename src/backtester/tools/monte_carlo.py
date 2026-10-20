@@ -56,6 +56,7 @@ from backtester.analytics.verdict import (
 from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.random_walk import RandomWalkConfig, load_profile, write_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
@@ -248,7 +249,12 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     else:
         sources = SymbolSources.single(MT5_CACHE_DIR, symbols)
     strategy_cfg = apply_overrides(default_config(args.strategy), args.set or [])
-    settings = replace(RunSettings(), strategy=strategy_cfg)
+    engine = RunSettings().engine
+    if args.spread_table is not None:
+        table = SpreadTable.from_dict(json.loads(args.spread_table.read_text(encoding="utf-8")))
+        engine = replace(engine, costs=replace(engine.costs, spread_table=table))
+        log(f"spread table: {table.stat} by year and New York hour, {table.note}")
+    settings = replace(RunSettings(), strategy=strategy_cfg, engine=engine)
 
     log(f"backtest {args.strategy} {symbols} {args.start}..{args.end}")
     base = run_backtests(symbols, args.start, args.end, settings, sources=sources)
@@ -652,6 +658,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--set", nargs="+", default=None, metavar="KEY=VALUE",
                    help="override settings of the strategy, e.g. entry_z=0.25 stop_atr=2 "
                    "exit_time=11:00 (one variant of a sweep; the rest stay at the spec default)")  # fmt: skip
+    p.add_argument(
+        "--spread-table",
+        type=Path,
+        default=None,
+        help="spread by year and New York hour (JSON); without it: fixed spread",
+    )
     p.add_argument("--runs", type=int, default=d.runs, help="runs for kinds A, B and C")
     p.add_argument("--seed", type=int, default=d.seed)
     p.add_argument("--paths", type=int, default=d.paths,
