@@ -1698,6 +1698,14 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   event times (same symbol, count and hour of day), 1,000 runs, seed 42; a finding needs BH 5 %, the same sign in both halves,
   >= 1 sibling and survives removing the top 1 % events; tradeable only if the mean continuation exceeds ~1.5 spreads.
   21 histdata symbols 2015-01-01..2021-09-13 (GER40 to 2020-06-12), as 11.11 (defaults chosen by Claude from the 11.11 rules).
+  **Result 2026-10-20** (`analytics/large_move.py`, `tools/large_move_study.py`, `results/large_move/`; 945 cells, 1,090 s):
+  150 BH-significant, 130 with halves + sibling, **2 findings** after the top-1 % removal (read as: same sign and trimmed |t| >= 1.96),
+  both reversals and not tradeable (UK100 H4 k4 h1: first half 0; NZDUSD M15 k2 h1: -1.1 spreads). Shuffled data: 0 findings.
+  Continuation above 1.5 spreads in 21 cells keeps its sign without the top 1 % but loses most of the mean (e.g. USDJPY M15
+  k4 h2 +0.27 -> +0.03 sd): carried by a few extreme events. Closest: **NAS100 H1 k4 h2** n 1,636, +0.46 sd (+11.9 spreads),
+  halves +0.65 / +0.23 (decaying), without the top 1 % +0.20 sd (t 1.74). Core 5: no finding. **Conclusion: no robust
+  large-move momentum; the continuation is a few crash / news hours.** Caveat: the null keeps count and hour of day but not
+  clustering (p too small), the halves and top-1 % rules are the real guard.
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
