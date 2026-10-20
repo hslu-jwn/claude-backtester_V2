@@ -13,13 +13,16 @@ import pandas as pd
 
 from backtester.core.models import Timeframe
 from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary, H4Alignment
-from backtester.data.sources import PRICE_DIGITS
+from backtester.data.sources import BINANCE_SYMBOLS, PRICE_DIGITS
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
 
 
 @dataclass(frozen=True)
 class ChartConfig:
+    # not offered in the symbol lists (user, 2026-10-20): Binance futures stay for research only,
+    # BTCUSD / ETHUSD (FTMO) are the ones charted and backtested
+    hidden_symbols: tuple[str, ...] = BINANCE_SYMBOLS
     max_candles: int = 20_000  # above this the page asks for a shorter range / higher timeframe
     # the day of D / W candles (ROADMAP 4.0b part 2; chart settings popover)
     day_boundary: DayBoundary = DEFAULT_BOUNDARY

@@ -144,3 +144,54 @@ body:has(.bj-page) {
   color: var(--blue);
   text-decoration: none;
 }
+
+/* previous backtests list (shown without a running job) */
+.bj-rows {
+  margin-top: 6px;
+}
+.bj-row {
+  display: grid;
+  grid-template-columns: 150px 1.4fr 1fr 190px 70px 90px;
+  gap: 12px;
+  padding: 9px 4px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.bj-rows .bj-row:hover {
+  background: #162238;
+}
+.bj-row-head {
+  margin-top: 18px;
+  color: var(--muted);
+}
+.bj-num {
+  text-align: right;
+  font-family: Consolas, "SF Mono", monospace;
+}
+.bj-page .rs-up {
+  color: var(--green);
+}
+.bj-page .rs-down {
+  color: var(--red);
+}
+.bj-toast {
+  max-width: 980px;
+  margin: 0 auto 14px;
+  padding: 10px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: bj-toast-out 0.4s ease 4s forwards;
+}
+@keyframes bj-toast-out {
+  to {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-width: 0;
+  }
+}

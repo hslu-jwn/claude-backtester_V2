@@ -23,12 +23,14 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
 
 Trades still open after the last candle are closed at its close (END_OF_DATA).
 Output: closed trades in R, in entry order. `progress(done, total)` (optional) is called
-every `progress_every` base candles and once at the end (ROADMAP 3.4: progress bar).
+every `ProgressThrottle.every_candles` base candles or every `every_seconds`, whichever comes
+first, and once at the end (ROADMAP 3.4 / 7.6: progress bar).
 """
 
 from __future__ import annotations
 
 import math
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -52,6 +54,20 @@ class EngineConfig:
 
 
 DEFAULT_ENGINE = EngineConfig()
+
+
+@dataclass(frozen=True, slots=True)
+class ProgressThrottle:
+    """When `Backtest.run` reports progress: every `every_candles` base candles or after
+    `every_seconds`, whichever comes first (short runs move as smoothly as long ones). The
+    clock is read only every `clock_check_candles` candles, so it costs nothing measurable."""
+
+    every_candles: int = 500
+    every_seconds: float = 0.2
+    clock_check_candles: int = 16
+
+
+DEFAULT_THROTTLE = ProgressThrottle()
 
 Progress = Callable[[int, int], None]  # (base candles done, total)
 
@@ -86,14 +102,25 @@ class Backtest:
         self._higher = tuple(tf for tf in strategy.timeframes if tf is not strategy.base_timeframe)
         self._replay = Replay(by_tf[strategy.base_timeframe], [by_tf[tf] for tf in self._higher])
 
-    def run(self, progress: Progress | None = None, progress_every: int = 500) -> list[TradeResult]:
+    def run(
+        self,
+        progress: Progress | None = None,
+        throttle: ProgressThrottle = DEFAULT_THROTTLE,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> list[TradeResult]:
         replay = self._replay
+        last_step, last_time = 0, clock() if progress is not None else 0.0
         open_trades: list[OpenTrade] = []
         closed: list[TradeResult] = []
         total = len(replay)
         for cursor in range(total):
-            if progress is not None and cursor and cursor % progress_every == 0:
-                progress(cursor, total)
+            if progress is not None and cursor:
+                due = cursor - last_step >= throttle.every_candles
+                if not due and cursor % throttle.clock_check_candles == 0:
+                    due = clock() - last_time >= throttle.every_seconds
+                if due:
+                    progress(cursor, total)
+                    last_step, last_time = cursor, clock()
             view = replay.view(cursor)
             candle = view.current
             now = replay.close_time(cursor)

@@ -16,6 +16,7 @@ from backtester.ui import backtest_job as bj
 class FakeRun:
     def __init__(self):
         self.done = self.total = 0
+        self.load_done = self.load_total = 0
         self.folder: Path | None = None
         self.error: Exception | None = None
         self.cancelled = False
@@ -87,15 +88,19 @@ def test_default_settings_are_strategy_1():
 
 def test_snapshot_of_a_running_job_loading_then_running():
     job, run = begin(now=100.0)
-    snap = bj.snapshot(job, now=103.0)
-    assert snap["state"] == "running" and snap["percent"] == 0.0
-    assert (
-        snap["detail"] == "Loading candles …" and snap["elapsed"] == "0:03" and snap["eta"] == "—"
-    )
-    run.done, run.total = 250, 1000
+    snap = bj.snapshot(job, now=103.0)  # nothing reported yet
+    assert snap["state"] == "running" and snap["percent"] == 0.0 and snap["phase"] == "loading"
+    assert snap["detail"] == bj.LOADING_TEXT and snap["elapsed"] == "0:03" and snap["eta"] == "—"
+    run.load_done, run.load_total = 400, 1000  # phase 1: candles are read
+    snap = bj.snapshot(job, now=110.0)
+    assert snap["phase"] == "loading" and snap["percent"] == 40.0 and snap["percent_text"] == "40%"
+    assert snap["detail"] == bj.LOADING_TEXT and snap["eta"] == "0:15"
+    assert snap["cancellable"] is True
+    run.load_done = run.load_total
+    run.done, run.total = 250, 1000  # phase 2: the run restarts the bar at 0 %
     snap = bj.snapshot(job, now=130.0)
-    assert snap["percent"] == 25.0 and snap["percent_text"] == "25%"
-    assert snap["detail"] == "250 of 1,000 candles"
+    assert snap["phase"] == "running" and snap["percent"] == 25.0 and snap["percent_text"] == "25%"
+    assert snap["detail"] == "Running · phase 2 of 2 · 250 of 1,000 candles"
     assert snap["elapsed"] == "0:30" and snap["eta"] == "1:30"
 
 

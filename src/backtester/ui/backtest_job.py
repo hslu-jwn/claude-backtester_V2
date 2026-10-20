@@ -4,7 +4,8 @@ Spec: ROADMAP.md > 7.6. The job lives here (not in a browser store), so leaving 
 page and coming back still shows it. One backtest at a time (`JobRunning` for a second
 `start`). No Dash imports: the page (`pages/backtest.py`) only reads `snapshot`.
 
-States of a snapshot: running (candles are loaded, then run, then the results are written),
+States of a snapshot: running (phase 1: candles are loaded, phase 2: run, then the results are
+written; each phase has its own 0-100 % bar),
 done (`href` = the results page), error (`message`), cancelled. A cancelled run writes no
 results folder (`runner.BackgroundRun.cancel`).
 """
@@ -22,7 +23,8 @@ from backtester.strategy.registry import REGISTRY, strategy_name
 
 RESULTS_PREFIX = "/results/"
 ETA_MIN_SHARE = 0.02  # no ETA before this share of the candles is done (the first steps lie)
-LOADING_TEXT = "Loading candles …"
+LOADING_TEXT = "Loading data · phase 1 of 2"
+RUNNING_TEXT = "Running · phase 2 of 2"
 CANCELLING_TEXT = "Cancelling …"
 WRITING_TEXT = "Writing results …"
 CANCELLED_TEXT = "Backtest cancelled. Nothing was saved."
@@ -33,7 +35,7 @@ NONE_TEXT = "—"
 PLACEHOLDER = {
     "state": "running", "symbols": [], "days": "", "strategy": "", "preset": "", "percent": 0.0,
     "percent_text": "0%", "detail": "", "elapsed": NONE_TEXT, "eta": NONE_TEXT,
-    "cancellable": True, "message": "", "href": None, "loading": False,
+    "cancellable": True, "message": "", "href": None, "loading": False, "phase": "loading",
 }  # fmt: skip
 
 
@@ -68,6 +70,14 @@ def reset() -> None:
     global _current
     with _lock:
         _current = None
+
+
+def dismiss() -> None:
+    """Forget a finished job (the page closes its view after a cancel); a running one stays."""
+    global _current
+    with _lock:
+        if _current is not None and _current.run.finished:
+            _current = None
 
 
 def is_running() -> bool:
@@ -157,6 +167,12 @@ def snapshot(job: Job, now: float | None = None) -> dict:
     )
     elapsed = max(end - job.started, 0.0)
     done, total = run.done, run.total
+    phase = "running" if total > 0 else "loading"
+    phase_start = job.started  # the ETA of a phase counts from when that phase began
+    if phase == "loading":  # the bar shows the loading phase until the run reports
+        done, total = run.load_done, run.load_total
+    else:
+        phase_start = getattr(run, "load_finished_at", None) or job.started
     if not finished:
         state = "running"
     elif run.error is not None:
@@ -165,7 +181,7 @@ def snapshot(job: Job, now: float | None = None) -> dict:
         state = "cancelled"
     else:
         state = "done"
-    writing = state == "running" and total > 0 and done >= total
+    writing = state == "running" and phase == "running" and done >= total
     cancelling = state == "running" and job.cancel_requested
     pct = 100.0 if state == "done" else percent(done, total)
     if state == "running":
@@ -173,10 +189,12 @@ def snapshot(job: Job, now: float | None = None) -> dict:
             detail = CANCELLING_TEXT
         elif writing:
             detail = WRITING_TEXT
+        elif phase == "loading":
+            detail = LOADING_TEXT
         else:
-            detail = f"{done:,} of {total:,} candles" if total else LOADING_TEXT
+            detail = f"{RUNNING_TEXT} · {done:,} of {total:,} candles"
     else:
-        detail = f"{done:,} of {total:,} candles" if total else ""
+        detail = f"{done:,} of {total:,} candles" if phase == "running" else ""
     message = ""
     if state == "error":
         message = error_message(run.error)
@@ -192,10 +210,11 @@ def snapshot(job: Job, now: float | None = None) -> dict:
         "percent_text": f"{pct:.0f}%",
         "detail": detail,
         "elapsed": format_duration(elapsed),
-        "eta": format_duration(eta_seconds(done, total, elapsed))
+        "eta": format_duration(eta_seconds(done, total, max(end - phase_start, 0.0)))
         if state == "running"
         else NONE_TEXT,
-        "loading": state == "running" and total == 0,  # candles are still being read
+        "phase": phase,
+        "loading": state == "running" and phase == "loading" and total == 0,  # nothing reported
         "cancellable": state == "running" and not writing and not cancelling,
         "message": message,
         "href": f"{RESULTS_PREFIX}{run.folder.name}" if state == "done" and run.folder else None,

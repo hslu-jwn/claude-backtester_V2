@@ -18,14 +18,20 @@ BUTTON_ID, STATUS_ID, TICK_ID = "update-btn", "update-status", "update-tick"
 def layout() -> list:
     """Button, status text and the poll interval (off until a job runs)."""
     return [
-        html.Button(
-            "⟳ Update data",
-            id=BUTTON_ID,
-            title="Update the MT5, Binance and histdata caches",
-            className="tb-btn tb-update",
-            n_clicks=0,
+        html.Div(
+            [
+                html.Button(
+                    "⟳ Update data",
+                    id=BUTTON_ID,
+                    title="Update the MT5, Binance and histdata caches",
+                    className="tb-btn tb-update",
+                    n_clicks=0,
+                ),
+                # Floats under the button (CSS), so it never pushes or covers toolbar items.
+                html.Span(id=STATUS_ID, className="tb-update-status"),
+            ],
+            className="tb-update-wrap",
         ),
-        html.Span(id=STATUS_ID, className="tb-update-status"),
         dcc.Interval(id=TICK_ID, interval=POLL_MS, disabled=True),
     ]
 
@@ -36,11 +42,12 @@ def refresh(trigger: str | None) -> dict:
         update_data.start_background()  # False while one runs: nothing else to do
     s = update_data.state()
     if s["running"]:
-        text, title = s["line"] or "Updating...", ""
+        text = s["line"] or "Updating..."
+        title = text
     elif s["finished_at"]:
         n = len(s["errors"])
         text = f"Updated {len(s['done'])} · {n} error{'' if n == 1 else 's'}"
-        title = "\n".join(s["errors"])
+        title = "\n".join([text, *s["errors"]])
     else:
         text, title = "", ""
     return {

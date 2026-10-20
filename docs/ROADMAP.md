@@ -1142,6 +1142,18 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   BTCUSD) or without data in the range is left out with a note while other symbols run (all left out: the
   error); errors shown as text, not as a Python repr; `run_folder` accepted ids with `/` after a timestamp
   (shadowed regex); a failed results write leaves no half folder.
+  **Backtest page, loading phase** (user 2026-10-20, built, to be checked): two phases, each with its own
+  0-100 % bar: "Loading data · phase 1 of 2" (real percent: every symbol an equal share, in it every timeframe;
+  the day files read in chunks of `ReadConfig.chunk_files`, then the candles built in chunks of
+  `LoadConfig.chunk_rows`; `run_backtests(load_progress=)`) and "Running · phase 2 of 2"; Cancel also works
+  while loading (checked every chunk, nothing saved); the engine reports progress every 500 candles or 0.2 s,
+  whichever first (`ProgressThrottle`), so short runs move smoothly; a symbol with no data source is left out
+  with a note like the other unusable symbols (`UnmappedSymbolError`, still a `KeyError`); the ETA of the
+  running phase counts from the end of loading.
+  **Cancel closes the running view, `/backtest` is the list of previous backtests** (user 2026-10-20, built, to be
+  checked): once a cancelled run has really stopped the page swaps to the list (newest first: date, strategy,
+  symbols, days, trades, net R, each row opens its results; broken summaries skipped) with a "Backtest
+  cancelled" line that fades out after 4 s; without a running job `/backtest` is always that list.
 
 ## Phase 8: Strategy 2 (NY Open index sweep)
 

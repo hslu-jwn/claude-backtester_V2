@@ -997,7 +997,7 @@ def layout(
     focus: dict | None = None,
     results_dir: Path = RESULTS_DIR,
 ) -> html.Div:
-    symbols = sources.available_symbols()
+    symbols = [s for s in sources.available_symbols() if s not in config.hidden_symbols]
     settings = _popover(
         "pop-settings",
         "Settings",
@@ -1082,12 +1082,10 @@ def layout(
                         className="tb-pop-note",
                     ),
                 ],
-                open=True,
                 className="tb-details",
             ),
             html.Details(
                 [html.Summary("Chart Overlays"), *overlay_controls()],
-                open=True,
                 className="tb-details tb-group",
             ),
         ],
@@ -1175,7 +1173,6 @@ def layout(
             _icon_button("tb-zoom", "zoom", "Zoom: drag a rectangle on the chart"),
             _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
             html.Div(className="tb-sep"),
-            _icon_button("side-toggle", "panel", "Show / hide the side panel"),
             *update_button.layout(),
             html.Div(className="tb-spacer"),
             html.Div(
@@ -1296,6 +1293,12 @@ def layout(
                         className="ch-chartcol",
                     ),
                     chart_side.panel(chart_side.run_summary(results_dir)),
+                    # Slim right-edge strip like TradingView's widget bar: always there.
+                    html.Div(
+                        _icon_button("side-toggle", "panel", "Show / hide the side panel"),
+                        id="ch-strip",
+                        className="ch-strip",
+                    ),
                 ],
                 id="ch-main",
                 className=chart_side.main_class(False),

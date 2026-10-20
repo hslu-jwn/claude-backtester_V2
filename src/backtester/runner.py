@@ -13,7 +13,9 @@ Spec: ROADMAP.md › 3.4. Per symbol:
    last close (`END_OF_DATA`, engine rule).
 Symbols run in parallel processes (one per symbol, up to `workers`); one symbol or
 `workers=1` runs in this process. The trades of all symbols are merged in entry time
-order. Progress: `progress(done, total)` in base candles (5m for strategy 1, 1m for strategy 2) over all symbols.
+order. Progress: `progress(done, total)` in base candles (5m for strategy 1, 1m for strategy 2) over all symbols;
+before it `load_progress(done, total)` reports the loading phase (every symbol an equal share, in it every
+timeframe an equal share: the day files read, then the candles built) and can be cancelled like the run.
 
 `write_results` writes `results/<run-id>/` (git-ignored):
 - `trades.csv`  one row per trade, all symbols, entry time order (`id` links sessions.json)
@@ -37,6 +39,7 @@ import multiprocessing
 import os
 import shutil
 import threading
+import time as clock_time
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 from dataclasses import dataclass, field, fields, is_dataclass
@@ -49,7 +52,13 @@ from backtester.analytics.metrics import summarize
 from backtester.core.models import Direction
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, cached_block, warmup_start
+from backtester.data.sources import (
+    DEFAULT_SOURCES,
+    SymbolSources,
+    UnmappedSymbolError,
+    cached_block,
+    warmup_start,
+)
 from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.spread_table import SpreadTable
@@ -162,6 +171,18 @@ class _Job:
         return len(next(s for s in self.series if s.timeframe is base))
 
 
+@dataclass(frozen=True)
+class LoadConfig:
+    read_share: float = 0.2  # share of a timeframe's loading taken by reading the day files
+    chunk_rows: int = 50_000  # candles built per step (progress and cancel in between)
+
+
+LOAD = LoadConfig()
+LOAD_UNITS = 10_000  # loading progress is reported in these units per symbol
+
+StepProgress = Callable[[float], None]  # share (0-1) of one symbol's loading done
+
+
 class NoDataError(ValueError):
     """A symbol has no cached day in the requested range."""
 
@@ -171,7 +192,12 @@ def _midnight(d: date) -> datetime:
 
 
 def _load(
-    sources: SymbolSources, symbol: str, start: date, end: date, settings: RunSettings
+    sources: SymbolSources,
+    symbol: str,
+    start: date,
+    end: date,
+    settings: RunSettings,
+    step: StepProgress | None = None,
 ) -> _Job:
     cached = set(sources.cached_days(symbol))
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -192,19 +218,29 @@ def _load(
     history = cached_block(cached, first)[0]  # first day of the cached run around `first`
     full = strategy.full_history
     end = _midnight(last + timedelta(1))
+    timeframes = tuple(dict.fromkeys(strategy.timeframes))
     series = tuple(
-        CandleSeries(
-            symbol,
-            tf,
-            candles_from_frame(
-                adapter.fetch_frame(
-                    symbol, tf, _midnight(history if tf in full else warm), end, h4=h4
-                )
-            ),
+        _load_timeframe(
+            adapter, symbol, tf, _midnight(history if tf in full else warm), end, h4,
+            lambda share, k=k: step((k + share) / len(timeframes)) if step else None,
         )
-        for tf in dict.fromkeys(strategy.timeframes)
-    )
+        for k, tf in enumerate(timeframes)
+    )  # fmt: skip
     return _Job(symbol, first, last, warm, series, settings, tuple(notes))
+
+
+def _load_timeframe(adapter, symbol, tf, start, end, h4, step: StepProgress) -> CandleSeries:
+    """One timeframe's candles; `step(share)` after every chunk of day files and of candles."""
+    share = LOAD.read_share
+    frame = adapter.fetch_frame(
+        symbol, tf, start, end, h4=h4, on_read=lambda done, total: step(share * done / total)
+    )
+    candles = []
+    for i in range(0, len(frame), LOAD.chunk_rows):
+        candles += candles_from_frame(frame.iloc[i : i + LOAD.chunk_rows])
+        step(share + (1 - share) * min(i + LOAD.chunk_rows, len(frame)) / len(frame))
+    step(1.0)
+    return CandleSeries(symbol, tf, candles)
 
 
 # --- running ---------------------------------------------------------------------------
@@ -251,13 +287,15 @@ def run_backtests(
     progress: Progress | None = None,
     workers: int | None = None,
     cancel: threading.Event | None = None,
+    load_progress: Progress | None = None,
 ) -> RunResult:
     """The settings' strategy over `symbols` and the UTC days [start, end].
 
     A symbol the strategy has no rules for (`UnsupportedSymbolError`) or without a cached day
     in the range is left out with a note while others can run; when none can, the error is
     raised (the symbol's own error for a single symbol). Setting `cancel` stops the run at the
-    next progress step or symbol: `RunCancelled`."""
+    next progress step, loading chunk (about a second at most) or symbol: `RunCancelled`.
+    `load_progress(done, total)` reports the loading phase before the run's `progress`."""
     settings = settings or RunSettings()
     requested = tuple(dict.fromkeys(symbols))
     if not requested:
@@ -266,12 +304,22 @@ def run_backtests(
         raise ValueError(f"end {end} is before start {start}")
     jobs: list[_Job] = []
     skipped: list[tuple[str, Exception]] = []
-    for s in requested:
+    load_total = LOAD_UNITS * len(requested)
+
+    def loaded(index: int, share: float) -> None:
         _check_cancel(cancel)
+        if load_progress is not None:
+            load_progress(round((index + share) * LOAD_UNITS), load_total)
+
+    for i, s in enumerate(requested):
+        loaded(i, 0.0)
         try:
-            jobs.append(_load(sources, s, start, end, settings))
-        except (UnsupportedSymbolError, NoDataError) as e:
+            jobs.append(
+                _load(sources, s, start, end, settings, lambda share, i=i: loaded(i, share))
+            )
+        except (UnsupportedSymbolError, NoDataError, UnmappedSymbolError) as e:
             skipped.append((s, e))
+        loaded(i, 1.0)
     if not jobs:
         if len(skipped) == 1:
             raise skipped[0][1]
@@ -517,9 +565,12 @@ class BackgroundRun:
     afterwards `folder` (results written), `error` or `cancelled` (`cancel()` was called:
     nothing was written) is set."""
 
-    def __init__(self, target: Callable[[Progress, threading.Event], Path]):
+    def __init__(self, target: Callable[[Progress, threading.Event, Progress], Path]):
         self.done = 0
         self.total = 0
+        self.load_done = 0  # the loading phase (before `done` / `total` start)
+        self.load_total = 0
+        self.load_finished_at: float | None = None  # clock_time.monotonic() when loading ended
         self.folder: Path | None = None
         self.error: Exception | None = None
         self.cancelled = False
@@ -530,9 +581,14 @@ class BackgroundRun:
     def _progress(self, done: int, total: int) -> None:
         self.done, self.total = done, total
 
-    def _main(self, target: Callable[[Progress, threading.Event], Path]) -> None:
+    def _load_progress(self, done: int, total: int) -> None:
+        self.load_done, self.load_total = done, total
+        if done >= total:
+            self.load_finished_at = clock_time.monotonic()
+
+    def _main(self, target: Callable[[Progress, threading.Event, Progress], Path]) -> None:
         try:
-            self.folder = target(self._progress, self._cancel)
+            self.folder = target(self._progress, self._cancel, self._load_progress)
         except RunCancelled:
             self.cancelled = True
         except Exception as e:  # noqa: BLE001  (handed to the caller through `error`)
@@ -562,8 +618,10 @@ def start_run(
 ) -> BackgroundRun:
     """`run_backtests` + `write_results` in a background thread."""
 
-    def target(progress: Progress, cancel: threading.Event) -> Path:
-        result = run_backtests(symbols, start, end, settings, sources, progress, workers, cancel)
+    def target(progress: Progress, cancel: threading.Event, load_progress: Progress) -> Path:
+        result = run_backtests(
+            symbols, start, end, settings, sources, progress, workers, cancel, load_progress
+        )
         _check_cancel(cancel)
         return write_results(result, out_dir, preset=preset)
 

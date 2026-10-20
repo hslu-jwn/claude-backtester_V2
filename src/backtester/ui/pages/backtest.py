@@ -6,7 +6,10 @@ the candles done of the total, the elapsed time and the ETA, and a **Cancel** bu
 stops the run (nothing is saved for a cancelled run). The job lives on the server, so leaving
 the page and coming back shows it again. When the run is done the page opens its results
 (`/results/<run id>`); a failed or cancelled run stays here with its message until the next
-run starts. Without a job the page shows the newest results, or "No backtest yet".
+run starts. **Cancel closes the running view** (user 2026-10-20): once the run has really
+stopped the page swaps to the list of previous backtests with a short "Backtest cancelled"
+line that fades out. Without a job the page is that list (newest first: date, strategy,
+symbols, days, trades, net R; each row opens `/results/<run id>`), or "No backtest yet".
 """
 
 from __future__ import annotations
@@ -30,8 +33,9 @@ TITLES = {
 NO_RUN_TEXT = "No backtest yet"
 POLL_KEYS = (
     "title", "track", "fill", "pct", "detail", "elapsed", "eta", "message", "cancel_disabled",
-    "timer_disabled", "page",
+    "timer_disabled", "page", "children",
 )  # fmt: skip
+CANCELLED_TOAST = "Backtest cancelled. Nothing was saved."
 
 
 def _meta(key: str, value: str) -> html.Span:
@@ -43,6 +47,80 @@ def _stat(key: str, id_: str, value: str) -> html.Div:
         [html.Div(key, className="bj-stat-key"), html.Div(value, id=id_, className="bj-stat-val")],
         className="bj-stat",
     )
+
+
+def run_rows(results_dir: Path = RESULTS_DIR) -> list[dict]:
+    """The previous backtests, newest first: one row per results folder with a readable
+    summary.json (broken or empty ones are skipped)."""
+    rows = []
+    for option in results.list_runs(results_dir):
+        run_id = option["value"]
+        folder = Path(results_dir) / run_id
+        summary = results._read_json(folder / "summary.json")
+        if not summary:
+            continue
+        combined = summary.get("combined") or {}
+        rows.append(
+            {
+                "id": run_id,
+                "date": results.run_date(run_id, summary),
+                "strategy": results.strategy_label(results._read_json(folder / "settings.json")),
+                "symbols": ", ".join(summary.get("symbols", [])),
+                "days": f"{summary.get('start')} → {summary.get('end')}",
+                "trades": combined.get("trades"),
+                "net_r": combined.get("net_r_net"),
+            }
+        )
+    return rows
+
+
+def runs_list(results_dir: Path = RESULTS_DIR, toast: str | None = None) -> html.Div:
+    """The Backtest page without a running job: the previous backtests, each row a link."""
+    rows = run_rows(results_dir)
+    head = ["Date", "Strategy", "Symbols", "Days (UTC)", "Trades", "Net R"]
+    body = [
+        dcc.Link(
+            [
+                html.Span(r["date"]),
+                html.Span(r["strategy"]),
+                html.Span(r["symbols"]),
+                html.Span(r["days"]),
+                html.Span("—" if r["trades"] is None else f"{r['trades']:,}", className="bj-num"),
+                html.Span(
+                    results.fmt_r(r["net_r"]), className=f"bj-num {results.tone(r['net_r'])}"
+                ),
+            ],
+            href=f"{bj.RESULTS_PREFIX}{r['id']}",
+            className="bj-row",
+        )
+        for r in rows
+    ]
+    title = "Backtests" if rows else NO_RUN_TEXT
+    sub = (
+        "Click a run to open its results."
+        if rows
+        else "Start one with Run in the chart's Backtest menu."
+    )
+    card = [html.Div(title, className="bj-title"), html.Div(sub, className="bj-strategy")]
+    if rows:
+        card += [
+            html.Div([html.Span(h) for h in head], className="bj-row bj-row-head"),
+            html.Div(body, className="bj-rows"),
+        ]
+    card.append(dcc.Link("← Chart", href="/", className="bj-back"))
+    page = [html.Div(card, className="bj-card")]
+    if toast:
+        page.insert(0, html.Div(toast, className="bj-toast", id="bj-toast"))
+    return html.Div(page, className="bj-page")
+
+
+def cancel_page(snap: dict, results_dir: Path = RESULTS_DIR):
+    """The page for a poll that sees the cancel finished: the list of previous backtests with
+    the toast, and the job is forgotten. Anything else: `no_update`."""
+    if snap["state"] != "cancelled":
+        return no_update
+    bj.dismiss()
+    return runs_list(results_dir, CANCELLED_TOAST)
 
 
 def poll_outputs(snap: dict) -> dict:
@@ -60,6 +138,7 @@ def poll_outputs(snap: dict) -> dict:
         "cancel_disabled": not snap["cancellable"],
         "timer_disabled": state != "running",
         "page": snap["href"] if snap["href"] else no_update,
+        "children": no_update,
         "state": state,
     }
 
@@ -131,31 +210,18 @@ def press_cancel(clicks: int | None) -> bool:
 
 
 def page(results_dir: Path = RESULTS_DIR):
-    """What `/backtest` shows: the running (or failed / cancelled) job, else the newest results."""
+    """What `/backtest` shows: the running (or failed) job, else the list of previous
+    backtests (after a cancel with the toast; the cancelled job is forgotten)."""
     job = bj.current()
     if job is not None:
         snap = bj.snapshot(job)
+        if snap["state"] == "cancelled":
+            return cancel_page(snap, results_dir)
         if snap["state"] != "done":
             return layout(snap)
         if snap["href"]:
             return results.layout(snap["href"].removeprefix(bj.RESULTS_PREFIX), results_dir)
-    runs = results.list_runs(results_dir)
-    if runs:
-        return results.layout(runs[0]["value"], results_dir)
-    return html.Div(
-        [
-            html.Div(
-                [
-                    html.Div(NO_RUN_TEXT, className="bj-title"),
-                    html.Div("Start one with Run in the chart's Backtest menu.",
-                             className="bj-strategy"),
-                    dcc.Link("← Chart", href="/", className="bj-back"),
-                ],
-                className="bj-card",
-            )
-        ],
-        className="bj-page",
-    )  # fmt: skip
+    return runs_list(results_dir)
 
 
 def register_callbacks(app: Dash) -> None:
@@ -171,14 +237,17 @@ def register_callbacks(app: Dash) -> None:
         Output("bj-cancel", "disabled"),
         Output("bj-timer", "disabled"),
         Output("url", "pathname", allow_duplicate=True),
+        Output("page", "children", allow_duplicate=True),
         Input("bj-timer", "n_intervals"),
         prevent_initial_call=True,
     )
     def _poll(_):
         job = bj.current()
         if job is None:  # the server was restarted while the page was open
-            return (no_update,) * 9 + (True, no_update)
-        out = poll_outputs(bj.snapshot(job))
+            return (no_update,) * 9 + (True, no_update, no_update)
+        snap = bj.snapshot(job)
+        out = poll_outputs(snap)
+        out["children"] = cancel_page(snap)
         return tuple(out[k] for k in POLL_KEYS)
 
     @app.callback(

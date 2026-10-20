@@ -30,6 +30,14 @@ from backtester.data.binance import CACHE_DIR as BINANCE_CACHE_DIR
 from backtester.data.cache import DEFAULT_CACHE_DIR, MT5_CACHE_DIR
 
 
+class UnmappedSymbolError(KeyError):
+    """A symbol has no data source in `SymbolSources`. A KeyError (older callers catch that),
+    printed as a plain sentence, not as a quoted repr."""
+
+    def __str__(self) -> str:
+        return str(self.args[0]) if self.args else ""
+
+
 @dataclass(frozen=True)
 class SymbolSources:
     cache_dirs: Mapping[str, Path]  # symbol -> cache folder it is read from
@@ -58,7 +66,7 @@ class SymbolSources:
 
     def cache_dir(self, symbol: str) -> Path:
         if symbol not in self.cache_dirs:
-            raise KeyError(
+            raise UnmappedSymbolError(
                 f"no data source for {symbol}: add it to SymbolSources "
                 f"(data/sources.py, mapped: {', '.join(self.symbols)})"
             )
