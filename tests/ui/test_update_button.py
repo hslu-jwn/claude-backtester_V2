@@ -57,7 +57,7 @@ def test_finished_shows_count_and_stops_polling(fake):
     fake.snapshot.update(running=False, done=["a", "b", "c"], finished_at="2026-10-17T10:00:00")
     view = ub.refresh("tick")
     assert view["text"] == "Updated 3 · 0 errors"
-    assert view["title"] == "" or "error" not in view["title"].lower()
+    assert view["title"] == view["text"]  # no error lines: the tooltip is just the full text
     assert view["button_disabled"] is False and view["interval_disabled"] is True
 
 
@@ -79,3 +79,18 @@ def test_layout_has_button_and_status_and_callbacks_register():
     app = Dash(__name__)
     ub.register_callbacks(app)
     assert any(ub.STATUS_ID in k for k in app.callback_map)
+
+
+def test_status_does_not_overlap_and_title_has_the_full_text(fake):
+    layout = ub.layout()
+    wrap = layout[0]
+    assert wrap.className == "tb-update-wrap"  # button + status share one positioned wrapper
+    status = wrap.children[1]
+    assert status.id == ub.STATUS_ID and "tb-update-status" in status.className
+    fake.snapshot = {
+        **fake.snapshot, "finished_at": 1, "done": ["a"] * 28, "errors": ["MT5: no login"],
+    }  # fmt: skip
+    view = ub.refresh(None)
+    assert view["text"] in view["title"] and "MT5: no login" in view["title"]
+    fake.snapshot = {**fake.snapshot, "running": True, "line": "MT5 " + "X" * 300}
+    assert "X" * 300 in ub.refresh(None)["title"]

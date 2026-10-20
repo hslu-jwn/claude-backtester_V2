@@ -8,6 +8,7 @@ import json
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
+from dash import html
 
 from backtester.analytics.records import TradeRecord
 from backtester.data.sources import SymbolSources
@@ -187,7 +188,7 @@ def test_layout_has_the_side_panel_without_overlays_and_overlays_in_the_settings
     """User, 2026-10-19: the Overlays card moved into the Settings popover (same ids)."""
     page = chart.layout(SymbolSources({}), results_dir=tmp_path)
     toolbar, main = page.children[0], page.children[1]
-    side = main.children[-1]
+    side = main.children[-2]  # the last child is the right strip with the toggle
     side_ids = set(ids_in(side))
     assert "side-trades" in side_ids and "ch-card-overlays" not in side_ids
     assert {"ch-card-result", "ch-card-trades"} <= side_ids
@@ -197,7 +198,7 @@ def test_layout_has_the_side_panel_without_overlays_and_overlays_in_the_settings
     assert {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"} <= settings
     assert {"chart-sessions", "chart-day-boundary", "chart-filters"} <= settings
     tb_ids = set(ids_in(toolbar))
-    assert "chart-sessions" in tb_ids and "side-toggle" in tb_ids
+    assert "chart-sessions" in tb_ids and "side-toggle" not in tb_ids
     all_ids = ids_in(page)
     assert len(all_ids) == len(set(all_ids))  # every id once
     assert "chart-range" in all_ids and "side-collapsed" in all_ids
@@ -266,3 +267,31 @@ def test_the_app_builds_with_the_side_panel_callbacks():
     outputs = " ".join(app.callback_map)
     assert "side-trades.children" in outputs and "ch-main.className" in outputs
     assert "side-collapsed.data" in outputs
+
+
+def test_toggle_sits_in_the_right_strip_outside_the_panel():
+    """User, 2026-10-20: like TradingView, the toggle is on a slim strip at the right edge,
+    always there (also collapsed), outside the panel content."""
+    page = chart.layout(SymbolSources({}))
+    main = page.children[1]
+    strip = main.children[-1]
+    assert strip.className == "ch-strip" and strip.id == "ch-strip"
+    assert "side-toggle" in ids_in(strip)
+    assert "side-toggle" not in ids_in(main.children[-2])
+    assert "side-toggle" not in ids_in(page.children[0])
+
+
+def test_no_details_of_the_settings_popover_is_open_by_default():
+    """User, 2026-10-20: the settings popups are closed by default, at every level."""
+    page = chart.layout(SymbolSources({}))
+
+    def walk(node):
+        yield node
+        kids = getattr(node, "children", None)
+        for k in kids if isinstance(kids, list | tuple) else [kids]:
+            if k is not None and not isinstance(k, str):
+                yield from walk(k)
+
+    pop = next(c for c in walk(page) if getattr(c, "id", None) == "pop-settings")
+    found = [c for c in walk(pop) if isinstance(c, html.Details)]
+    assert len(found) >= 2 and not any(getattr(d, "open", False) for d in found)

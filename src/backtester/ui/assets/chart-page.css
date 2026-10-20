@@ -211,6 +211,22 @@ body:has(.ch-page) .dash-dropdown-search {
 .ch-main.ch-collapsed .ch-side {
   display: none;
 }
+/* right-edge widget strip (TradingView style): toggle on it, next to the panel */
+.ch-main {
+  padding-right: 0;
+}
+.ch-strip {
+  display: flex;
+  flex: 0 0 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  border-left: 1px solid var(--line);
+  margin: -14px 0;
+  padding: 14px 0 0;
+  background: var(--card);
+}
 
 /* cards */
 .ch-card {
@@ -495,14 +511,33 @@ body:has(.ch-page) .dash-dropdown-search {
   opacity: 0.5;
   cursor: default;
 }
+.ch-page .tb-update-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+/* the status floats under the button: no width in the toolbar, so it cannot overlap anything;
+   long texts are cut with an ellipsis (full text in the tooltip) */
 .ch-page .tb-update-status {
-  margin-left: 8px;
-  font-size: 12px;
-  opacity: 0.75;
-  white-space: nowrap;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 60;
+  box-sizing: border-box;
+  max-width: min(320px, 60vw);
+  margin-top: 2px;
+  padding: 3px 8px;
   overflow: hidden;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
   text-overflow: ellipsis;
-  max-width: 260px;
+  pointer-events: auto;
+}
+.ch-page .tb-update-status:empty {
+  display: none;
 }
 
 /* loading bar at the top of the chart pane (chart.js, 0-100 %) */
