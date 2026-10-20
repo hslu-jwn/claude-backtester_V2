@@ -8,8 +8,8 @@
     python -m backtester.tools.monte_carlo --run 20261020-171430_NAS100-US500 --paths 0
 
 `--run <run id>` (the Full Monte Carlo button of the results page) takes the run's trades.csv,
-symbols, period and settings.json instead of running the backtest again; it writes no trial-log
-line, so the deflated-Sharpe check is n/a; default `<out>` is `results/monte_carlo/<run id>/`.
+symbols, period and settings.json instead of running the backtest again; it writes one trial-log
+line (source "run", family = the strategy or `--family`) and check 7 uses the count; default `<out>` is `results/monte_carlo/<run id>/`.
 
 Runs the strategy (spec defaults, shared costs), then: kind A day reshuffle + FTMO 2-Step at
 0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade has the "follow" variant for it;
@@ -268,17 +268,15 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         log(f"  {len(trades)} trades")
 
     family = args.family or strategy
-    deflated = None
-    if not args.run:  # a run of the app is not a deliberately tried variant: no trial-log line
-        append(make_record(
-            family, strategy, strategy_cfg, symbols, start, end, source,
-            [t.r_net for t in trades],
-        ))  # fmt: skip
-        n_trials, sharpes = family_summary(family_trials(family))
-        deflated = deflated_sharpe(
-            trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
-        )
-        log(f"trial log: family {family}, N = {n_trials}")
+    # a report of a run (the results page's button) is a tried variant too (user, 2026-10-20)
+    append(make_record(
+        family, strategy, strategy_cfg, symbols, start, end, source, [t.r_net for t in trades],
+    ))  # fmt: skip
+    n_trials, sharpes = family_summary(family_trials(family))
+    deflated = deflated_sharpe(
+        trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
+    )
+    log(f"trial log: family {family}, N = {n_trials}")
 
     follow = None
     if strategy == GAP_FADE:
@@ -295,9 +293,7 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         "strategy": strategy, "symbols": symbols, "start": start, "end": end, "source": source,
         **({"run": args.run} if args.run else {}),
     }  # fmt: skip
-    summary = build_summary(
-        trades, follow, meta, settings, config, paths, log, deflated, None if args.run else family
-    )
+    summary = build_summary(trades, follow, meta, settings, config, paths, log, deflated, family)
     summary["meta"]["paths"] = config.paths
     return summary
 
@@ -660,7 +656,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--end", type=date.fromisoformat, default=None, help="last UTC day")
     p.add_argument("--run", default=None, metavar="RUN_ID",
                    help="a finished run in results/: its trades, symbols, period and settings "
-                   "are used (no backtest, no trial-log line); replaces SYMBOLS --start --end")  # fmt: skip
+                   "are used (no backtest; one trial-log line); replaces SYMBOLS --start --end")  # fmt: skip
     p.add_argument("--results-dir", type=Path, default=RESULTS_DIR,
                    help="folder of the runs for --run (default results)")  # fmt: skip
     p.add_argument("--strategy", choices=tuple(REGISTRY), default="session_zone_sweep",

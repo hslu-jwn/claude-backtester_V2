@@ -315,15 +315,29 @@ def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
     assert (out / "report.html").is_file()
 
 
-def test_run_option_does_not_touch_the_trial_log_and_check_7_is_not_available(tmp_path, stub):
-    from backtester.analytics.trial_log import read_all
+def test_run_option_writes_a_trial_line_and_check_7_uses_the_trial_count(tmp_path, stub):
+    from backtester.analytics.trial_log import append, count_only, family_trials, read_all
+
+    append(count_only("gap_fade", "gap_fade", 9, "earlier variants"))
+    folder = make_run(tmp_path)
+    tool.main(run_argv(folder, tmp_path / "out"))
+    (line,) = [r for r in read_all() if r.count == 1]
+    assert line.family == "gap_fade" and line.source == "run" and line.trades == 120
+    assert len(family_trials("gap_fade")) == 2
+    summary = json.loads((tmp_path / "out" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["deflated"]["n_trials"] == 10 and summary["deflated"]["family"] == "gap_fade"
+    assert "deflated_sharpe" not in summary["verdict"]["not_available"]
+
+
+def test_run_option_again_is_not_a_new_trial_and_family_overrides(tmp_path, stub):
+    from backtester.analytics.trial_log import family_trials, read_all
 
     folder = make_run(tmp_path)
     tool.main(run_argv(folder, tmp_path / "out"))
-    assert read_all() == []
-    summary = json.loads((tmp_path / "out" / "summary.json").read_text(encoding="utf-8"))
-    assert summary["deflated"] is None
-    assert "deflated_sharpe" in summary["verdict"]["not_available"]
+    tool.main(run_argv(folder, tmp_path / "out"))
+    assert len(read_all()) == 1
+    tool.main(run_argv(folder, tmp_path / "out", "--family", "mine"))
+    assert len(family_trials("mine")) == 1 and len(read_all()) == 2
 
 
 def test_run_option_other_strategy_has_no_kind_b(tmp_path, stub):

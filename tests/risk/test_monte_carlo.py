@@ -264,3 +264,48 @@ def test_stats_constants_from_trades():
     assert st["win_rate"] == 0.5
     assert st["expectancy_r"] == pytest.approx(0.25)
     assert st["profit_factor"] == pytest.approx(1.5)
+
+
+# ----- funded account loss rate (ROADMAP 12.12) -----------------------------------------
+
+
+def test_funded_exact_case_winning_every_day():
+    # +1 R each day at 1 %: 1.01**10 = 1.1046 passes P1 on day 10, 1.01**5 = 1.0510 passes P2
+    # on day 5 more (15 days), then 126 funded days without a loss; the second attempt (days
+    # 142..200) passes again but its funded watch is cut off by the data end
+    trades, s, e = one_per_day([1.0] * 200)
+    f = mc.run_monte_carlo(trades, s, e, cfg(runs=3))["risks"][0.01]["ftmo"]
+    assert f["attempts"] == 6 and f["passes"] == 6
+    assert f["median_days_to_pass"] == 15.0
+    assert f["funded_observed"] == 3 and f["funded_lost_probability"] == 0.0
+
+
+def test_funded_exact_case_losing_every_day():
+    # -1 R each day at 1 %: 0.99**10 = 0.9044 is above the 10 % max loss, 0.99**11 = 0.8953 is
+    # below it: every attempt fails after 11 days (220 days = 20 attempts), no account funded
+    trades, s, e = one_per_day([-1.0] * 220)
+    f = mc.run_monte_carlo(trades, s, e, cfg(runs=2))["risks"][0.01]["ftmo"]
+    assert f["attempts"] == 40 and f["fail_max"] == 40 and f["passes"] == 0
+    assert f["funded_observed"] == 0
+
+
+def test_funded_loss_rate_is_low_for_a_strong_strategy():
+    # one trade a day, 60 % win rate at 1:1 (+0.2 R per trade), 0.5 % risk. Independent estimate:
+    # the funded account must fall 10 % = 20 R below its start within 126 trades (daily 5 %
+    # needs 10 losses in a day: impossible with one trade). The R walk has drift +25 R and
+    # sd 11 R over 126 trades; touching -20 R is a ~4-sigma event, far below 1 %.
+    rng = np.random.default_rng(7)
+    rs = [1.0 if x < 0.6 else -1.0 for x in rng.random(1500)]
+    trades, s, e = one_per_day(rs)
+    f = mc.run_monte_carlo(trades, s, e, cfg(runs=60, risk_levels=(0.005,)))["risks"][0.005]["ftmo"]
+    assert f["funded_observed"] > 100
+    assert f["funded_lost_probability"] < 0.02
+
+
+def test_funded_loss_rate_is_high_for_a_losing_strategy():
+    # 40 % win rate at 1:1 (-0.2 R per trade), 1 % risk: the 10 % limit is 10 R, drift -25 R
+    rng = np.random.default_rng(7)
+    rs = [1.0 if x < 0.40 else -1.0 for x in rng.random(1500)]
+    trades, s, e = one_per_day(rs)
+    f = mc.run_monte_carlo(trades, s, e, cfg(runs=60, risk_levels=(0.01,)))["risks"][0.01]["ftmo"]
+    assert f["funded_observed"] == 0 or f["funded_lost_probability"] > 0.9

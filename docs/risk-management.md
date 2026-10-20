@@ -222,7 +222,7 @@ one's Sharpe by the number of trials.
 - **Trial log:** `results/trials.jsonl` (git-ignored like all results), one JSON line per backtest of a variant:
   family, strategy, the variant's settings, symbols, start, end, data source, time written, trade count, net R,
   mean / sd / skewness / kurtosis of net R per trade, Sharpe per trade. Written by `run.py`, the Monte Carlo
-  tool and `tools/gap_fade_grid.py` (one line per variant; other tools later). Append-only; a line with the same
+  tool (also with `--run`, i.e. the results page's Full Monte Carlo button) and `tools/gap_fade_grid.py` (one line per variant; other tools later). Append-only; a line with the same
   family, strategy, settings, symbols, period and source as an earlier one replaces it when read (rerunning a
   variant is not a new trial).
 - **Family** = the set of variants the chosen one was picked from. ⚙️ Default: the strategy name; `--family`
@@ -278,7 +278,7 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
     attempts), median days to pass, funded account lost within 126 days; "—" where no attempt finished. Below the
     table one line says how it is estimated (reshuffled trading days; open trades count as at their stop, so the
     daily-loss check is conservative). **Too little data** (⚙️ `PropCardConfig`: fewer than **100** trades or fewer than
-    **120** weekdays in the run's period; limits chosen by Claude 2026-10-20, to be confirmed) shows the reason instead
+    **120** weekdays in the run's period; limits accepted by the user 2026-10-20) shows the reason instead
     of numbers. The firm is a dropdown over `FIRMS` (FTMO 2-Step only for now; another firm's rules are one more preset).
   - *Speed and cache:* a run of 9,000 trades takes about 20 s, one of 17,700 trades about 40 s, so the numbers are
     computed once in a background process (`python -m backtester.risk.prop_card <run id>`, one at a time, the card
@@ -286,7 +286,9 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
     entry is reused only while its key matches: card version, firm rules (Monte Carlo config), card limits, the run's
     period and a hash of trades.csv; otherwise (or with a missing / broken file) it is recomputed and rewritten.
   - *Full Monte Carlo button:* starts `tools/monte_carlo --run <run id>` (the run's own trades.csv, symbols, period and
-    settings.json: no new backtest, no trial-log line, so check 7 / DSR is n/a; kind B and D use the run's strategy
+    settings.json: no new backtest; it writes one trial-log line (source `run`, family = the strategy or `--family`; started
+    from the button it counts as a tried variant, decided by the user 2026-10-20) and check 7 / DSR uses the family's
+    trial count like the command-line path; kind B and D use the run's strategy
     and settings) in the background, one at a time, with the running kind (and the path count in kind D), the elapsed
     time and a Cancel (kills the process tree). Job state is on the server, so it survives leaving the page. The report
     (`results/monte_carlo/<run id>/report.html` + `summary.json`) opens in a new tab from `/monte-carlo/<run id>/report.html`;

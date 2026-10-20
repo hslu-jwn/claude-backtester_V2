@@ -41,7 +41,7 @@ class FirmPreset:
 
 @dataclass(frozen=True, slots=True)
 class PropCardConfig:
-    # Fewer than this and the numbers say nothing (chosen by Claude 2026-10-20, to be confirmed):
+    # Fewer than this and the numbers say nothing (accepted by the user 2026-10-20):
     # a challenge needs two phases of at least 4 trading days and the funded watch is 126 days
     min_trades: int = 100
     min_days: int = 120  # weekdays of the run's period (about 6 months)
