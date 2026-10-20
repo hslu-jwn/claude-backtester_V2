@@ -997,7 +997,7 @@ def layout(
     focus: dict | None = None,
     results_dir: Path = RESULTS_DIR,
 ) -> html.Div:
-    symbols = sources.available_symbols()
+    symbols = [s for s in sources.available_symbols() if s not in config.hidden_symbols]
     settings = _popover(
         "pop-settings",
         "Settings",

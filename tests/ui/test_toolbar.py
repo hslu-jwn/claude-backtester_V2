@@ -89,3 +89,26 @@ def test_loading_bar_is_at_the_top_of_the_chart_pane():
     page = chart.layout(SymbolSources({}))
     pane = page.children[1].children[0].children[0]  # ch-chartcol -> tb-chart
     assert "chart-bar" in str(pane.children) and "chart-lwc" in str(pane.children)
+
+
+def test_binance_symbols_are_hidden_from_the_symbol_lists(monkeypatch):
+    # user, 2026-10-20: BTCUSDT / ETHUSDT (Binance) stay for research only, BTCUSD / ETHUSD (FTMO)
+    # are the ones on the chart and in backtests
+    shown = ["BTCUSD", "BTCUSDT", "ETHUSDT", "XAUUSD"]
+    monkeypatch.setattr(SymbolSources, "available_symbols", lambda self: shown)
+    page = chart.layout(SymbolSources({}))
+    lists = []
+
+    def walk(node):
+        if getattr(node, "id", None) in ("chart-symbol", "bt-symbols"):
+            lists.append([o if isinstance(o, str) else o["value"] for o in node.options])
+        for child in getattr(node, "children", None) or []:
+            if hasattr(child, "to_plotly_json"):
+                walk(child)
+        kids = getattr(node, "children", None)
+        if hasattr(kids, "to_plotly_json"):
+            walk(kids)
+
+    walk(page)
+    assert len(lists) == 2
+    assert all(ids == ["BTCUSD", "XAUUSD"] for ids in lists)
