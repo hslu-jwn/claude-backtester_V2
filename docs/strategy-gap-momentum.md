@@ -25,7 +25,8 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
   candle** (rule set by the user 2026-10-20): the last candle of the previous session counts as its closing candle
   when it closes within ⚙️ `close_tolerance_min` (default **10**) minutes before the session end (16:00 / 17:00 ET);
   its close is the session close. Reason: FTMO's XAUUSD M1 data ends at 16:55 ET (no 16:56-17:00 candles), so the
-  strict rule gave no trades on MT5; histdata has the 17:00 candle, so its results do not change.
+  strict rule gave no trades on MT5. Histdata XAUUSD also often lacks the 17:00 candle (113 of ~150 days in
+  2019-06..12), so the tolerance adds days there too (dev rerun: z 0.1 / stop 0.5 / 11:00 342 -> 397 trades).
 
 ## Rule (bullish described, bearish mirrored: one code path by `Direction`)
 

@@ -1684,6 +1684,13 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   274 trades (second half negative), 15 / 36 variants positive -> no confirmation. First test attempt gave 0 trades: FTMO XAUUSD
   has no candle after 16:55 ET; closing-candle tolerance of 10 min added to the spec (user, 2026-10-20), then the test runs
   (user: run it anyway). Junk trial-log lines of the aborted runs deleted (user, 2026-10-20).
+  **Test result 2026-10-20 (FTMO MT5 XAUUSD 2021-09-14..2026-10-18, spread table, 347 trades each, no swap):** stop 0.5
+  +17.8 R net (+0.051 R/trade, halves +1.3 / +16.5, max DD 10.1 R, years 2021-26 +4.3 / +2.7 / +0.8 / +3.7 / +6.4 / -0.2); stop 1.0
+  +8.2 R (+0.024, halves +0.2 / +8.1). Monte Carlo: **NO EDGE** for both (t 1.01 / 0.87, random entries 71st / 80th pct, DSR
+  0.83 / 0.79; halves, costs x1.5, without best and random fills pass). Positive but not distinguishable from luck; the first
+  half is flat. Dev rerun with the tolerance: XAUUSD fx still 36 / 36 variants net positive. **Conclusion: no proven edge;**
+  at most a weak component for the portfolio tool (12.9). Known issue: the grid logs MT5 runs with source `histdata`, so
+  its trial lines do not dedupe with the Monte Carlo lines (N 4 / 3 instead of 2; DSR stays < 0.95 either way since PSR(0) < 0.95).
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
