@@ -1,7 +1,6 @@
 # Strategy 7: Gap momentum (opening gap beyond the prior range)
 
-Research candidate I-46 (Chan, *Algorithmic Trading* ch.7 pp. 155-157; ROADMAP 11.12). **Draft 2026-10-20:
-the points marked ❓ wait for the user's decision; nothing is built before they are answered.**
+Research candidate I-46 (Chan, *Algorithmic Trading* ch.7 pp. 155-157; ROADMAP 11.12). Rules set by the user, 2026-10-20 (stop, symbols, sweep, slippage below).
 Folder `strategy/gap_momentum/`, config `GapMomentumConfig`, registry name `gap_momentum`. Day trade: flat
 before the 17:00 New York rollover (no swap).
 
@@ -29,11 +28,9 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
 - **Long** if open > prior high × (1 + ⚙️ `entry_z` × sd), default `entry_z` **0.1** (Chan); **short** if
   open < prior low × (1 − `entry_z` × sd). Otherwise no trade. One trade per day.
 - **Entry:** at the open price (the close of the 09:30 / 05:00 candle).
-- **Stop:** ❓ Chan uses none (open-to-close). Our trades need a stop for R. Options:
-  (a) ⚙️ `stop_atr` × daily ATR(14) from the entry (wide, close to Chan's no-stop; default 1.0);
-  (b) the prior high (long) / prior low (short): the breakout failed when price is back inside the range
-  (tight; costs are large in R);
-  (c) the previous close (the gap is filled).
+- **Stop:** ⚙️ `stop_atr` × daily ATR(⚙️ `atr_period` 14, Wilder, over the sessions above, known before the open)
+  from the entry, default **1.0** (rule set by the user 2026-10-20; Chan uses no stop, a wide ATR stop is the
+  closest translation that gives an R).
 - **Target:** none (Chan). ⚙️ `target_r` = 0 means none.
 - **Time exit:** ⚙️ `exit_time`, default **15:59 ET** (`index`) / **16:59 ET** (`fx`): at the close of the 1m
   candle closing at that time (signal exit); missing candle -> first later candle, as strategy 5.
@@ -41,13 +38,14 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
 
 ## Backtest options
 
-- Symbols ❓: development (histdata, before 2021-09-14): NAS100, US500 (`index`); GBPUSD, EURUSD, XAUUSD (`fx`).
+- Symbols (user, 2026-10-20): development (histdata, before 2021-09-14): NAS100, US500 (`index`); GBPUSD, EURUSD, XAUUSD (`fx`).
   Test once on FTMO MT5 data from 2021-09-14 with the variants fixed in advance (+ US30, US2000 for `index`).
 - Costs: fixed spread **and** the spread table (off by default), swap as usual (should be 0), slippage per
-  ROADMAP 12.8 once built.
+  ROADMAP 12.8 once built; until then no engine slippage, the random-fill check (Monte Carlo kind C) stands in
+  (user, 2026-10-20).
 - Monte Carlo report (verdict with all 7 checks, family `gap_momentum`), robustness report, halves at the middle of
   the period.
-- Sweep **only**: `entry_z` (0, 0.1, 0.25, 0.5), the stop option / `stop_atr` (0.5, 1, 2), `exit_time` (11:00, 12:00,
-  15:59). Every variant goes into the trial log.
+- Sweep **only** (user, 2026-10-20): `entry_z` (0, 0.1, 0.25, 0.5), `stop_atr` (0.5, 1, 2), `exit_time` (`index`:
+  11:00, 12:00, 15:59; `fx`: 08:00, 11:00, 16:59): 36 variants per mode. Every variant goes into the trial log.
 - Study part (I-09 / C-5): next to the strategy, open-to-close return per gap bucket (gap in sd units, beyond /
   inside the prior range, up / down), both directions, so continuation and fade are compared on the same days.
