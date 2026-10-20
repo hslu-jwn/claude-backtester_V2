@@ -1839,7 +1839,7 @@ time, with the bot stopped. Claude's ranking; the user decides the order.
   or a bot stuck in connect backoff (> 120 s) lets a second bot start -> duplicate orders. PID / lock file.
   **built 2026-10-20, to be checked on the demo:** `live/lock.py`, `results/live/bot.lock` (PID, stale when the PID is dead); the bot takes it in
   `main` (a second bot exits with code 3), `start_bot` refuses while it is held. Tests `tests/live/test_lock.py`.
-- ☑ **13.4b Restarting the Dash app killed the bot** (user, 2026-10-20). Cause: the bot was the app's child process
+- ☑ **13.4b Restarting the Dash app killed the bot** (user, 2026-10-20; checked live 2026-10-20 23:14 CH: app restarted, bot heartbeat went on). Cause: the bot was the app's child process
   (`taskkill /T` / a killed process tree reaches it) and lived in the app's Windows job object (a terminal / IDE host
   that kills the job takes every process in it); only `CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW` was set.
   **built 2026-10-20, to be checked on the demo:** a short-lived launcher process starts the bot (no living parent) with
