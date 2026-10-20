@@ -260,7 +260,7 @@ strategy's entries carry information at all, independent of its exit, before a f
   set, against the same scan on ⚙️ **1,000** shuffled entry times inside the strategy's own trading windows.
 - Positions that cross the 17:00 New York rollover pay the real swap (user, 2026-10-20).
 - **Pass** (all three): mean net R > 0 in ⚙️ **≥ 70 %** of the cells (N set x the variants screened); the 1R / 1R win
-  rate ⚙️ **≥ 52 %**; and the real entries beat the random-time exit (c) (above its ⚙️ **90th** percentile) on net R.
+  rate ⚙️ **≥ 52 %**; and the real entries beat the random-time exit (c) (above its ⚙️ **90th** percentile, confirmed by the user 2026-10-20) on net R.
 - Every screened variant is logged in the trial log (family `screen_<strategy>`).
 - **Output:** `results/entry_screen/<strategy>/` with a per-cell CSV (N, variant, trades, win rate, mean gross / net R,
   long / short split, halves at the middle of the period), the summary with PASS / FAIL and the reasons.
