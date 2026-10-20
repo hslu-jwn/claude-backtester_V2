@@ -241,6 +241,32 @@ one's Sharpe by the number of trials.
   denominator under the square root.
 - The report shows PSR(0), DSR, N, V, SR0 and the family name.
 
+### Entry screening (ROADMAP 12.12, idea T-13; rules set by the user, 2026-10-20)
+Why: most ideas die at the entry (Davey, *Building Winning Algorithmic Trading Systems* ch.12). The battery asks whether a
+strategy's entries carry information at all, independent of its exit, before a full strategy is tuned.
+
+- **Input:** the trades of a backtest (entry time, direction, entry price, initial stop distance = 1R, symbol, signal
+  timeframe). The strategy's own exit is replaced by the test exits below, re-simulated on the **M1** candles with the
+  engine's rules: costs from the cost model (spread, commission, swap at the 17:00 New York rollover; slippage once 12.8
+  exists), SL and TP inside one candle -> SL first, no lookahead.
+- **Test exits:**
+  (a) **N bars:** exit at the close of the N-th bar of the signal timeframe after the entry, ⚙️ N = **1, 2, 3, 5, 10, 20**;
+  the strategy's own stop stays active (user, 2026-10-20);
+  (b) **1R / 1R:** stop and target both one R from the entry (a no-edge entry wins about 50 % before costs);
+  (c) **random time:** exit at a random time drawn so the mean hold equals the strategy's mean hold, ⚙️ **1,000** seeded
+  runs (seed **42**), the strategy's own stop active; reported as the median and the strategy's percentile;
+  (d) **reversed signal:** the opposite direction with the mirrored stop, costs paid again (each test exit);
+  (e) **hit-rate scan:** share of entries whose price is above (long) / below (short) the entry x bars later, x = the N
+  set, against the same scan on ⚙️ **1,000** shuffled entry times inside the strategy's own trading windows.
+- Positions that cross the 17:00 New York rollover pay the real swap (user, 2026-10-20).
+- **Pass** (all three): mean net R > 0 in ⚙️ **≥ 70 %** of the cells (N set x the variants screened); the 1R / 1R win
+  rate ⚙️ **≥ 52 %**; and the real entries beat the random-time exit (c) (above its ⚙️ **90th** percentile) on net R.
+- Every screened variant is logged in the trial log (family `screen_<strategy>`).
+- **Output:** `results/entry_screen/<strategy>/` with a per-cell CSV (N, variant, trades, win rate, mean gross / net R,
+  long / short split, halves at the middle of the period), the summary with PASS / FAIL and the reasons.
+- **First use (user, 2026-10-20):** re-audit strategies 1-7 with their default settings on their own symbols, development
+  period only (before 2021-09-14).
+
 ### Risk sweep (`risk/sweep.py`)
 - A grid over the settings to compare results (max drawdown, return, Monte Carlo 95% drawdown).
 - Sweepable: risk per trade (e.g. 0.25–1.5%), daily stop (1–3%), **max open risk** (rule set by the user), drawdown-scaling threshold and factor.

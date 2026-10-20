@@ -1663,7 +1663,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   autocorrelation are bid / spread microstructure at the rollover, not an edge. First run's lag-grid "findings" were
   crash hours (March 2020, SNB 2015, Brexit night) and weekend-gap returns; fixed (gap returns zeroed, Spearman,
   winsorized). Conclusion: price-only time-series structure on these symbols is too small for retail costs.
-- ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+- ☑ **11.12 Gap momentum** (no edge; accepted by the user 2026-10-20) (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
   Spec `docs/strategy-gap-momentum.md` (strategy 7, rules set by the user 2026-10-20); built 2026-10-20 (`strategy/gap_momentum/`,
   `tools/gap_momentum_grid.py`, gap-bucket study, Monte Carlo kind B by side coin flip). **Development result 2015-01..2021-09-13
   (histdata, 36 variants per mode, halves split 2018-05-09):**
@@ -1786,6 +1786,9 @@ changes results, defaults changed only with the user's go.
   verdict check 7, user 2026-10-16). Back-fill (count-only, the old result files have no sd): gap_fade 36, opening_range 41.
 - ☐ **12.11 Bayesian report** (T-10): Beta posterior of the win rate and of mean R, A/B of variants, trades needed;
   prior odds 1:50 against an edge (rule set by the user, 2026-10-16).
+
+- ☐ **12.12 Entry screening battery** (T-13; user, 2026-10-20): spec `risk-management.md › Entry screening`; first use:
+  re-audit strategies 1-7 (defaults, own symbols, development period).
 
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later
