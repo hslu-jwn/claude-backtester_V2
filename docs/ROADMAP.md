@@ -1644,7 +1644,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   with buy / sell volume, delta and trade count; the raw files are deleted after each month.
 - ☑ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
 
-- ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
+- ☑ **11.11 Stationarity / half-life diagnostic** (accepted by the user 2026-10-20) (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
   Decided by the user 2026-10-19: all 21 histdata symbols 2015-01-01..2021-09-13 (GER40 only to 2020-06-12, 13.13),
   halves at the middle of the period; the time-of-day part drops the 2015-2018 US-only-DST weeks (13.12); a finding

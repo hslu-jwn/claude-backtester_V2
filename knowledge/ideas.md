@@ -102,6 +102,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-58 | Half-life z-score mean reversion (linear or Bollinger), gated by T-11 | signal | all; M15-H4 | none intraday | EC p.48-50, 70-72 | open |
 | I-59 | FX cointegration pair (AUDUSD vs CADUSD style) | signal | needs AUDUSD, USDCAD from histdata | rollover | EC p.108-112 | blocked (symbols not in the data) |
 | I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | open |
+| I-61 | Momentum after a large hourly move: after an H1 bar beyond k robust sd, trade its direction for h bars (11.11: small moves revert, big ones continue) | momentum | FX, metals, indices / H1 | none if flat by the session end | 11.11 study | open (added by the user's go 2026-10-20) |
 
 ## Suggested order (Claude's proposal, the user decides)
 1. **Tooling first** (T-01, I-22): every later test then reports robustness the Kaufman way.
@@ -613,3 +614,9 @@ AUDUSD vs CADUSD (same quote currency) with a Johansen hedge ratio on a rolling 
 sigma_h = price x RV_annual x sqrt(h/365) with h the intended holding time and RV from 20 days; stop = k1 x sigma_h, target = k2 x sigma_h with k in {0.5, 1, 1.5, 2}; compare with fixed ATR multiples. Source: JK p.161
 (exit at ±2 sigma of the 90-day horizon), 91-95. Evidence: one worked example. Fit: good as a parameterisation of stops / targets; nearly proportional to ATR scaled by sqrt(time), so the difference is the time-scaling
 (tighter for short holds, wider for long). Gives a random-walk reference hit rate (T-15). Exit framework, not an entry.
+
+### I-61 Momentum after a large hourly move (study first)
+In 11.11 the H1 lag-1 Spearman / winsorized correlation is negative (small moves revert) while the raw Pearson beta is positive for
+XAUUSD, GBPUSD, GBPJPY, US500: the big hours continue. Study first: next-h-bar return after hours beyond k = 2 / 3 / 4 robust sd, per symbol,
+half and sign, against shuffled returns; only then a rule (entry at the bar close, time exit after h bars, ATR stop). Fit: price-only, intraday;
+few events, crash hours dominate (March 2020, SNB 2015, Brexit) -> results must survive removing the top events. Source: ROADMAP 11.11.
