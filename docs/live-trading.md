@@ -75,3 +75,23 @@ runs strategy 6.
   and the logs stay in UTC.
 - **Top bar links** (user, 2026-10-17): Backtest opens the newest run's results (no run list yet); Risk
   stays greyed out until the Risk page exists.
+
+## Robustness rules (ROADMAP 13.1-13.5, built 2026-10-20)
+
+- **Nothing ends the loop silently.** An unexpected error in a cycle step, a symbol's bars, an entry or an exit is
+  logged (`error`) and sent to Telegram, and the bot goes on. An identical error is repeated only every 5 minutes
+  (`error_repeat_s`, with the number held back). After 5 cycles with errors in a row (`error_persist_cycles`) an
+  `error_persistent` message follows. A session exit that fails is retried every cycle. The demo lock and a lost
+  connection keep their own handling (stop / reconnect).
+- **Emergency beats Stop:** if both files exist in the same minute, the bot closes everything (the STOP file is
+  consumed too).
+- **Close until flat:** emergency, FTMO breach and daily stop close every own position; up to 3 tries per cycle
+  (waits 1 s, 2 s, ...), then again every cycle until none is left (`close_all_incomplete` to Telegram). After an
+  emergency or FTMO breach the bot does not exit and opens nothing while an own position is open.
+- **One bot only:** `results/live/bot.lock` holds the PID of the running bot (a dead PID is a stale lock). The bot
+  exits with code 3 when another one holds it; the Start button refuses while it is held.
+- **The bot outlives the app:** it is started by a short-lived launcher with `CREATE_BREAKAWAY_FROM_JOB` (no live
+  parent, not in the app's job object), so restarting the Dash app does not stop it.
+- **Lost order answer:** after an order without a clear answer the bot looks for a position with its MAGIC and the
+  signal's comment; a found position is managed like any other (session exit). Unclear and nothing found: looked
+  up again for 3 cycles, then skipped.

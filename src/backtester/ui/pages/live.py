@@ -27,6 +27,7 @@ from pathlib import Path
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 
+from backtester.live.lock import LOCK_NAME, lock_holder, pid_alive
 from backtester.live.status import STATUS_NAME, heartbeat_age_s, read_status
 from backtester.paths import RESULTS_DIR
 from backtester.ui import live_model as lm
@@ -74,27 +75,64 @@ def toggle_pause(out_dir: Path) -> bool:
     return True
 
 
+# Windows: the bot is started by a short-lived launcher, so it has no living parent (a restart
+# of the app that kills its process tree, taskkill /T, does not reach it), and with
+# CREATE_BREAKAWAY_FROM_JOB, so it is not in the app's job object (a terminal / IDE / service
+# host that kills the job when the app is restarted would take the bot with it). Without
+# DETACHED_PROCESS: the venv's python.exe is a launcher, and its real Python would open a new
+# (empty) console window without one; a hidden console it is.
+_LAUNCHER = """
+import subprocess, sys
+log, cmd = sys.argv[1], sys.argv[2:]
+flags = 0x00000200 | 0x08000000 | 0x01000000  # new group | no window | breakaway
+with open(log, 'ab') as out:
+    for f in (flags, flags & ~0x01000000):  # a job may forbid breakaway
+        try:
+            subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=out,
+                             stderr=subprocess.STDOUT, creationflags=f)
+            break
+        except OSError:
+            if f == flags & ~0x01000000:
+                raise
+"""
+
+
 def _spawn_detached(command: list[str], log_file: Path) -> object:
-    kwargs: dict = {}
     if sys.platform == "win32":
-        # a hidden console, not DETACHED_PROCESS: the venv's python.exe is a launcher, and
-        # its real Python would open a new (empty) console window without one
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-    else:
-        kwargs["start_new_session"] = True
+        launch = [sys.executable, "-c", _LAUNCHER, str(log_file), *command]
+        base = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        try:
+            return _popen_quiet(launch, base | subprocess.CREATE_BREAKAWAY_FROM_JOB)
+        except OSError:  # the app's job forbids breakaway: still better than not starting
+            return _popen_quiet(launch, base)
     with log_file.open("ab") as out:
         return subprocess.Popen(
-            command, stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT, **kwargs
-        )
+            command, stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )  # fmt: skip
+
+
+def _popen_quiet(command: list[str], flags: int) -> object:
+    return subprocess.Popen(
+        command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        creationflags=flags,
+    )  # fmt: skip
 
 
 def start_bot(
-    out_dir: Path, now: datetime, spawn: Spawn = _spawn_detached, settings: dict | None = None
+    out_dir: Path,
+    now: datetime,
+    spawn: Spawn = _spawn_detached,
+    settings: dict | None = None,
+    alive: Callable[[int], bool] = pid_alive,
 ) -> str:
     """Start the bot unless a fresh heartbeat shows it running. `settings` (validated, see
     `live_model.validate_settings`) become its command line. Returns a message."""
     if lm.bot_state(read_status(out_dir / STATUS_NAME), now) in ("running", "paused"):
         return "The bot is already running (fresh heartbeat); not started again."
+    holder = lock_holder(out_dir / LOCK_NAME, alive)
+    if holder is not None:  # no heartbeat yet (starting, or stuck connecting) but a bot holds it
+        return "The bot is already running (lock file held); not started again."
     out_dir.mkdir(parents=True, exist_ok=True)
     for name in ("STOP", "EMERGENCY", PAUSE_NAME):  # leftovers must not affect the new run
         (out_dir / name).unlink(missing_ok=True)

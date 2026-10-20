@@ -1805,17 +1805,37 @@ time, with the bot stopped. Claude's ranking; the user decides the order.
 **Order set by the user 2026-10-20:** 13.1-13.5 first, then 7.7, then the prop-firm card (5.6).
 
 **Live bot (could hurt the forward test)**
-- ☐ **13.1 Loop safety net:** `bot.py` `run` catches only connection errors; any other exception (tick None in
+- ☑ **13.1 Loop safety net:** `bot.py` `run` catches only connection errors; any other exception (tick None in
   `orders.py` market_order / close_volume, `account_info` None, sizer ValueError) ends the bot silently: no Telegram,
   positions keep only their server SL, no 15:55 exit (overnight swap). Log + Telegram + continue.
-- ☐ **13.2 EMERGENCY before STOP:** `cycle()` checks the STOP file first; Stop then "Close all & stop" in the same
-  minute stops without closing.
-- ☐ **13.3 Retry closes until flat:** `_close_all` (emergency, daily stop, FTMO breach) logs `close_failed` once and
-  stops / blocks; positions stay open unmanaged.
-- ☐ **13.4 Single-instance lock:** `start_bot` only checks the heartbeat; a double click before the first heartbeat
+  **built 2026-10-20, to be checked on the demo:** each cycle step, each symbol's bars, each entry and each exit is guarded; an identical error is
+  reported once per `error_repeat_s` (300 s, with the held-back count); `error_persistent` after
+  `error_persist_cycles` (5) cycles with errors in a row; a failed exit is kept and retried every cycle.
+  Tests `tests/live/test_loop_safety.py`.
+- ☑ **13.2 EMERGENCY before STOP:** `cycle()` checks the STOP file first; Stop then "Close all & stop" in the same
+  minute stops without closing. **built 2026-10-20, to be checked on the demo:** EMERGENCY is checked first and consumes a STOP file too.
+- ☑ **13.3 Retry closes until flat:** `_close_all` (emergency, daily stop, FTMO breach) logs `close_failed` once and
+  stops / blocks; positions stay open unmanaged. **built 2026-10-20, to be checked on the demo:** `_begin_flatten` / `_flatten_step`:
+  `close_attempts` (3) rounds per cycle with a wait of `close_retry_first_s` (1 s) x `close_retry_factor` (2),
+  capped at `close_retry_max_s` (10 s), then every cycle until no own position is left; Telegram
+  `close_all_incomplete`; after an emergency or FTMO breach the bot does not exit (and opens nothing) until flat.
+- ☑ **13.4 Single-instance lock:** `start_bot` only checks the heartbeat; a double click before the first heartbeat
   or a bot stuck in connect backoff (> 120 s) lets a second bot start -> duplicate orders. PID / lock file.
-- ☐ **13.5 Lost order result:** a non-DONE / None `order_send` result is treated as rejected; if the server executed
-  it, the position is orphaned (no session exit). Look up own positions by comment first.
+  **built 2026-10-20, to be checked on the demo:** `live/lock.py`, `results/live/bot.lock` (PID, stale when the PID is dead); the bot takes it in
+  `main` (a second bot exits with code 3), `start_bot` refuses while it is held. Tests `tests/live/test_lock.py`.
+- ☑ **13.4b Restarting the Dash app killed the bot** (user, 2026-10-20). Cause: the bot was the app's child process
+  (`taskkill /T` / a killed process tree reaches it) and lived in the app's Windows job object (a terminal / IDE host
+  that kills the job takes every process in it); only `CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW` was set.
+  **built 2026-10-20, to be checked on the demo:** a short-lived launcher process starts the bot (no living parent) with
+  `CREATE_BREAKAWAY_FROM_JOB` (falls back without it when the job forbids breakaway, then only the tree-kill case is
+  covered). Still no `DETACHED_PROCESS` (the venv launcher would open a console). Tests in `tests/ui/test_live_page.py`.
+  Not provable without a real restart: check once on the demo (restart the app, the heartbeat must continue).
+- ☑ **13.5 Lost order result:** a non-DONE / None `order_send` result is treated as rejected; if the server executed
+  it, the position is orphaned (no session exit). Look up own positions by comment first. **built 2026-10-20, to be checked on the demo:** after any
+  non-DONE result the own positions (MAGIC + comment) are looked up and adopted (`order_adopted`); a None / unclear
+  result (10008, 10010, 10011, 10031) or a pending own order with no position yet is rechecked for
+  `adopt_recheck_cycles` (3) cycles (`order_unclear`), then skipped. An exception after the order was sent also
+  adopts by comment. Tests `tests/live/test_lost_order.py`.
 - ☐ **13.6 Closed-bar check on server time:** `Mt5Adapter.to_candles` uses the PC clock; a PC clock > 2 s ahead lets
   the forming bar in, and it is never refreshed (lookahead / parity).
 - ☐ **13.7 Sizing on the live price:** risk uses the signal close, not the ask / bid; SL rounded to digits, not

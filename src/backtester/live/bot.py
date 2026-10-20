@@ -50,6 +50,7 @@ from backtester.data.mt5_download import DEFAULT_CLOCK, DEFAULT_NAMES
 from backtester.engine.trade import ExitReason, TradeResult
 from backtester.live.connection import ConnectionFailed, connect, scrub
 from backtester.live.credentials import CredentialStoreError, load_credentials
+from backtester.live.lock import LOCK_NAME, BotLock, lock_holder
 from backtester.live.orders import (
     MAGIC,
     RETCODE_DONE,
@@ -59,6 +60,7 @@ from backtester.live.orders import (
     confirm_close,
     confirm_open,
     market_order,
+    own_orders,
     own_positions,
     require_demo,
     retcode_text,
@@ -73,7 +75,10 @@ from backtester.strategy.opening_range.config import EntryMode, OpeningRangeConf
 from backtester.strategy.opening_range.strategy import OpeningRange
 
 CONTINUE, STOP = "continue", "stop"
-ERROR_KINDS = ("error", "disconnected", "connect_failed", "close_failed", "refused")
+ERROR_KINDS = (
+    "error", "disconnected", "connect_failed", "close_failed", "refused", "error_persistent",
+    "close_all_incomplete",
+)  # fmt: skip
 FORWARD_SYMBOLS = ("US30", "US500", "NAS100", "US2000")
 PAPER_COLUMNS = [
     "time_utc", "symbol", "side", "signal_entry", "sim_fill", "sl", "spread", "lots", "status",
@@ -111,6 +116,13 @@ class BotConfig:
     reconnect_first_s: float = 5.0
     reconnect_factor: float = 2.0
     reconnect_max_s: float = 300.0
+    error_repeat_s: float = 300.0  # an identical error is reported again only after this long
+    error_persist_cycles: int = 5  # cycles with errors in a row before "error_persistent"
+    close_attempts: int = 3  # tries per cycle to close all own positions (emergency, guard)
+    close_retry_first_s: float = 1.0  # wait between those tries, then x factor, capped
+    close_retry_factor: float = 2.0
+    close_retry_max_s: float = 10.0
+    adopt_recheck_cycles: int = 3  # cycles an unclear order result is looked up again
     verbose: bool = True
 
     @property
@@ -126,6 +138,10 @@ class BotConfig:
         return self.out_dir / "PAUSE"
 
     @property
+    def lock_file(self) -> Path:
+        return self.out_dir / LOCK_NAME
+
+    @property
     def status_file(self) -> Path:
         return self.out_dir / STATUS_NAME
 
@@ -136,6 +152,11 @@ class InitialBalanceError(RuntimeError):
 
 class BotDisconnected(RuntimeError):
     """The terminal or the account is gone; the loop reconnects."""
+
+
+# order_send answers after which the order may still have been executed (13.5)
+UNCLEAR_RETCODES = (10008, 10010, 10011, 10031)
+CONNECTION_ERRORS = (BotDisconnected, Mt5Error, ConnectionFailed, OSError)
 
 
 @dataclass
@@ -163,6 +184,26 @@ class _Trade:
     open_commission: float
     risk_money: float
     comment: str
+
+
+@dataclass
+class _Unclear:
+    """An order whose result was lost or unclear and whose position is not (yet) visible."""
+
+    sym: _Symbol
+    order: object
+    candle: Candle
+    bar_now: datetime
+    comment: str
+    left: int  # rechecks left
+
+
+@dataclass
+class _Flatten:
+    """Closing every own position is pending: retried each cycle until none is left."""
+
+    label: str
+    stop: bool  # stop the bot once flat (emergency, FTMO breach); the daily stop goes on
 
 
 class Bot:
@@ -207,6 +248,12 @@ class Bot:
         self.last_status: dict | None = None
         self.paused = False  # the PAUSE file exists: no new entries (docs/live-trading.md)
         self.setup_since: dict[str, tuple[str, str]] = {}  # symbol -> (stage, since), status.json
+        self.flatten: _Flatten | None = None  # close-all in progress (13.3)
+        self.unclear: list[_Unclear] = []  # orders with a lost / unclear result (13.5)
+        self._error_seen: dict[str, list] = {}  # key -> [last reported at, repeats held back]
+        self._cycle_failed = False
+        self._fail_streak = 0  # cycles with an error in a row (13.1)
+        self._persist_at: datetime | None = None
 
     # --- logs -------------------------------------------------------------------------------
 
@@ -419,11 +466,16 @@ class Bot:
                 try:
                     if self.cycle() == STOP:
                         break
-                except (BotDisconnected, Mt5Error, ConnectionFailed, OSError) as e:
+                except (DemoLockError, InitialBalanceError):
+                    raise
+                except CONNECTION_ERRORS as e:
                     self.note("disconnected", error=scrub(str(e), self.credentials))
                     self.mt5.shutdown()
                     self.connect()
                     continue
+                except Exception as e:  # noqa: BLE001 - nothing may end the loop silently (13.1)
+                    self._report_error("cycle", e)
+                    self._end_cycle()
                 self.sleep(self._seconds_to_next_minute())
             self.note("stopped")
             return 0
@@ -442,26 +494,96 @@ class Bot:
 
     def cycle(self) -> str:
         """Everything for one closed minute. Returns `CONTINUE` or `STOP`."""
+        self._cycle_failed = False
+        result = self._cycle()
+        self._end_cycle()
+        return result
+
+    def _cycle(self) -> str:
         cfg = self.config
-        if cfg.stop_file.exists():
+        emergency = cfg.emergency_file.exists()
+        closing_to_stop = self.flatten is not None and self.flatten.stop
+        if not emergency and not closing_to_stop and cfg.stop_file.exists():
             cfg.stop_file.unlink()
             self.note("stop_file", closed="nothing")
             return STOP
         self._check_connected()
-        if cfg.emergency_file.exists():
-            cfg.emergency_file.unlink()
+        stop_when_flat = False
+        if emergency:  # emergency wins over a STOP file of the same minute (13.2)
+            cfg.emergency_file.unlink(missing_ok=True)
+            cfg.stop_file.unlink(missing_ok=True)
             self.note("emergency_file")
-            self._close_all("emergency")
-            return STOP
-        self._check_pause()
-        if self._guard() == STOP:
-            return STOP
-        self._reconcile()
-        self._retry_exits()
+            stop_when_flat = True
+            self._begin_flatten("emergency", stop=True)
+        elif self.flatten is not None:
+            stop_when_flat = self.flatten.stop
+            self._flatten_step()
+        if stop_when_flat:  # never exit while an own position is still open (13.3)
+            if self.flatten is None:
+                return STOP
+            self.publish()
+            return CONTINUE
+        self._step("pause", self._check_pause)
+        if self._step("guard", self._guard) == STOP:
+            return STOP if self.flatten is None else CONTINUE
+        self._step("reconcile", self._reconcile)
+        self._step("unclear orders", self._recheck_unclear)
+        self._step("exit retry", self._retry_exits)
         for sym in self.symbols.values():
-            self._feed_new(sym, self._fetch_new(sym))
+            try:
+                self._feed_new(sym, self._fetch_new(sym))
+            except (DemoLockError, InitialBalanceError, *CONNECTION_ERRORS):
+                raise
+            except Exception as e:  # noqa: BLE001 - one symbol must not stop the others
+                self._report_error(f"bars {sym.name}", e)
         self.publish()
         return CONTINUE
+
+    # --- safety net: errors are reported (rate-limited), the loop goes on (13.1) ---------------
+
+    def _step(self, where: str, fn):
+        """Run one part of the cycle; an unexpected error is reported and the cycle goes on.
+        Connection errors still reach the reconnect logic, the demo lock still ends the run."""
+        try:
+            return fn()
+        except (DemoLockError, InitialBalanceError, *CONNECTION_ERRORS):
+            raise
+        except Exception as e:  # noqa: BLE001
+            self._report_error(where, e)
+            return None
+
+    def _limited(self, key: str, kind: str, **fields) -> None:
+        """`note`, but an identical event (same key) is repeated only after `error_repeat_s`;
+        the held-back count goes into the next report as `repeats`."""
+        now = self.now()
+        seen = self._error_seen.get(key)
+        if seen is not None and (now - seen[0]).total_seconds() < self.config.error_repeat_s:
+            seen[1] += 1
+            return
+        if seen is not None and seen[1]:
+            fields["repeats"] = seen[1]
+        self._error_seen[key] = [now, 0]
+        self.note(kind, **fields)
+
+    def _report_error(self, where: str, e: Exception) -> None:
+        self._cycle_failed = True
+        what = f"{where}: {type(e).__name__}: {scrub(str(e), self.credentials)}"
+        self._limited(f"error:{where}:{type(e).__name__}", "error", what=what)
+
+    def _end_cycle(self) -> None:
+        """Count cycles with errors in a row; persistent errors get their own (rate-limited)
+        report. Exits keep being managed meanwhile: nothing here stops the loop."""
+        if not self._cycle_failed:
+            self._fail_streak = 0
+            return
+        self._fail_streak += 1
+        now = self.now()
+        due = self._persist_at is None or (
+            (now - self._persist_at).total_seconds() >= self.config.error_repeat_s
+        )
+        if self._fail_streak >= self.config.error_persist_cycles and due:
+            self._persist_at = now
+            self.note("error_persistent", what=self.last_error, cycles=self._fail_streak)
 
     def _check_pause(self) -> None:
         """The PAUSE file blocks new entries only; each change is noted once."""
@@ -488,12 +610,12 @@ class Bot:
         self.status = status
         if status.breach:
             self.note("guard_breach", reason=status.reason, day_pl=round(status.day_pl, 2))
-            self._close_all("ftmo limit")
+            self._begin_flatten("ftmo limit", stop=True)
             return STOP
         if status.stop_trading and not self.blocked:
             self.blocked = status.reason
             self.note("guard_stop", reason=status.reason, day_pl=round(status.day_pl, 2))
-            self._close_all("daily stop")
+            self._begin_flatten("daily stop", stop=False)
         return CONTINUE
 
     def _balance_at(self, day_start: datetime, account, now: datetime) -> float:
@@ -542,9 +664,30 @@ class Bot:
             for ref in sym.strategy.exits():
                 self._exit(sym, ref, candle)
             for order in orders:
-                self._enter(sym, order, candle, bar_now)
+                self._safe_enter(sym, order, candle, bar_now)
 
     # --- entries ----------------------------------------------------------------------------
+
+    def _safe_enter(self, sym: _Symbol, order, candle: Candle, bar_now: datetime) -> None:
+        """`_enter`, but an unexpected error (no tick, sizer, ...) is reported, a position that
+        may have been opened meanwhile is looked up by its comment, and the loop goes on."""
+        try:
+            self._enter(sym, order, candle, bar_now)
+        except DemoLockError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            self._report_error(f"entry {sym.name}", e)
+            try:
+                comment = self._comment(bar_now)
+                found = [p for p in own_positions(self.mt5, sym.broker) if p.comment == comment]
+                if found:
+                    self._register_existing(sym, order, found[0], candle, bar_now, comment)
+                elif (sym.name, order.ref) not in self.by_ref:
+                    self._skip(sym, order, bar_now, "error during entry", spread=candle.spread)
+            except DemoLockError:
+                raise
+            except Exception as e2:  # noqa: BLE001
+                self._report_error(f"entry recovery {sym.name}", e2)
 
     def _skip(self, sym: _Symbol, order, bar_now: datetime, reason: str, **extra) -> None:
         sym.strategy.on_order_skipped(order.ref, bar_now)
@@ -628,19 +771,30 @@ class Bot:
         result, *_ = market_order(
             self.mt5, sym.broker, order.direction, sized.lots, sl, tp, self.log(), comment
         )
-        if result is None or result.retcode != RETCODE_DONE:
-            code = retcode_text(result.retcode) if result is not None else "no result"
-            self._skip(sym, order, bar_now, f"order rejected: {code}", spread=candle.spread)
-            return
+        done = result is not None and result.retcode == RETCODE_DONE
         fill = confirm_open(self.mt5, result)
         position = fill.position
-        if position is None:  # not visible in time: look for it by its comment
+        if position is None:  # not visible in time, or no / unclear result: look it up by comment
             found = [p for p in own_positions(self.mt5, sym.broker) if p.comment == comment]
             position = found[0] if found else None
         if position is None:
-            self.note("error", symbol=sym.name, what="order accepted but no position found")
-            sym.strategy.on_order_skipped(order.ref, bar_now)
+            if done:
+                self.note("error", symbol=sym.name, what="order accepted but no position found")
+                sym.strategy.on_order_skipped(order.ref, bar_now)
+                return
+            code = retcode_text(result.retcode) if result is not None else "no result"
+            pending = [o for o in own_orders(self.mt5, sym.broker) if o.comment == comment]
+            if result is None or result.retcode in UNCLEAR_RETCODES or pending:
+                self._defer_unclear(sym, order, candle, bar_now, comment, code)
+                return
+            self._skip(sym, order, bar_now, f"order rejected: {code}", spread=candle.spread)
             return
+        if not done:  # the server executed an order whose answer was lost or unclear (13.5)
+            code = retcode_text(result.retcode) if result is not None else "no result"
+            self.note(
+                "order_adopted", symbol=sym.name, ticket=position.ticket, comment=comment,
+                retcode=code,
+            )  # fmt: skip
         long = order.direction is Direction.BULLISH
         real = fill.price or position.price_open
         value = spec_from_symbol_info(info).value_per_unit
@@ -657,6 +811,44 @@ class Bot:
         )  # fmt: skip
         self._paper(sym, order, bar_now, candle.spread, "filled", sized.reason, sized.lots, real,
                     position.ticket, {})  # fmt: skip
+
+    def _defer_unclear(self, sym, order, candle, bar_now, comment, code) -> None:
+        """No result and no position (yet): do not call it rejected; look again for a few
+        cycles (`adopt_recheck_cycles`), and tell Telegram."""
+        self.unclear.append(
+            _Unclear(sym, order, candle, bar_now, comment, self.config.adopt_recheck_cycles)
+        )
+        self.note("order_unclear", symbol=sym.name, comment=comment, retcode=code)
+
+    def _recheck_unclear(self) -> None:
+        pending, self.unclear = self.unclear, []
+        for item in pending:
+            sym = item.sym
+            found = [p for p in own_positions(self.mt5, sym.broker) if p.comment == item.comment]
+            if found:
+                position = found[0]
+                self._register_existing(
+                    sym, item.order, position, item.candle, item.bar_now, item.comment
+                )
+                self._set_signal(sym, item.bar_now, "filled")
+                self.note(
+                    "order_adopted", symbol=sym.name, ticket=position.ticket,
+                    comment=item.comment, retcode="found later",
+                )  # fmt: skip
+                lots = position.volume
+                self._paper(sym, item.order, item.bar_now, item.candle.spread, "filled",
+                            "adopted", lots, position.price_open, position.ticket, {})  # fmt: skip
+            elif item.left > 1:
+                item.left -= 1
+                self.unclear.append(item)
+            else:
+                self._skip(
+                    sym,
+                    item.order,
+                    item.bar_now,
+                    "order result unclear, no position found",
+                    spread=item.candle.spread,
+                )
 
     def _register_existing(self, sym, order, position, candle, bar_now, comment) -> None:
         if position.ticket in self.by_ticket:
@@ -681,30 +873,39 @@ class Bot:
     # --- exits and closed trades ------------------------------------------------------------
 
     def _exit(self, sym: _Symbol, ref: object, candle: Candle) -> None:
-        trade = self.by_ref.get((sym.name, ref))
-        if trade is None:
-            return
-        found = self.mt5.positions_get(ticket=trade.ticket)
-        if not found:
-            return  # closed by the server; `_reconcile` reports it
-        if not self._close(found[0], "session exit", ExitReason.SIGNAL, candle.close):
+        if not self._try_exit(sym.name, ref, candle.close, "session exit"):
             self.pending_exits.append((sym.name, ref, candle.close))
 
     def _retry_exits(self) -> None:
         pending, self.pending_exits = self.pending_exits, []
         for name, ref, sim_exit in pending:
-            trade = self.by_ref.get((name, ref))
-            found = self.mt5.positions_get(ticket=trade.ticket) if trade else ()
-            if found and not self._close(
-                found[0], "session exit retry", ExitReason.SIGNAL, sim_exit
-            ):
+            if not self._try_exit(name, ref, sim_exit, "session exit retry"):
                 self.pending_exits.append((name, ref, sim_exit))
+
+    def _try_exit(self, name: str, ref: object, sim_exit: float, label: str) -> bool:
+        """Close the trade's position. False: not closed (rejected or an error), retry later."""
+        trade = self.by_ref.get((name, ref))
+        if trade is None:
+            return True
+        try:
+            found = self.mt5.positions_get(ticket=trade.ticket)
+            if not found:
+                return True  # closed by the server; `_reconcile` reports it
+            return self._close(found[0], label, ExitReason.SIGNAL, sim_exit)
+        except DemoLockError:
+            raise
+        except Exception as e:  # noqa: BLE001 - e.g. no tick; the exit must be retried
+            self._report_error("session exit", e)
+            return False
 
     def _close(self, position, label: str, reason: ExitReason, sim_exit: float | None) -> bool:
         result, _, _ = close_volume(self.mt5, position, position.volume, self.log(), label)
         if result is None or result.retcode != RETCODE_DONE:
             code = retcode_text(result.retcode) if result is not None else "no result"
-            self.note("close_failed", ticket=position.ticket, retcode=code)
+            self._limited(
+                f"close_failed:{position.ticket}", "close_failed",
+                ticket=position.ticket, retcode=code,
+            )  # fmt: skip
             return False
         fill = confirm_close(self.mt5, result, position, position.volume)
         trade = self.by_ticket.get(position.ticket)
@@ -713,10 +914,52 @@ class Bot:
             self._finish(trade, price, fill.net, reason, sim_exit, self.now())
         return True
 
-    def _close_all(self, label: str) -> None:
-        """Close every position with our MAGIC (any symbol); the user's own are left alone."""
-        for position in [p for p in (self.mt5.positions_get() or ()) if p.magic == MAGIC]:
-            self._close(position, f"close all: {label}", ExitReason.SIGNAL, None)
+    def _own_open(self) -> list:
+        """Every open position with our MAGIC (any symbol); the user's own are left alone."""
+        return [p for p in (self.mt5.positions_get() or ()) if p.magic == MAGIC]
+
+    def _begin_flatten(self, label: str, stop: bool) -> None:
+        self.flatten = _Flatten(label, stop)
+        self._flatten_step()
+
+    def _flatten_step(self) -> bool:
+        """Close every own position, up to `close_attempts` rounds with a growing wait. What is
+        left stays pending (`self.flatten`) and is tried again every cycle (13.3). True: flat."""
+        cfg, flat = self.config, self.flatten
+        assert flat is not None
+        wait, left = cfg.close_retry_first_s, -1
+        for attempt in range(max(1, cfg.close_attempts)):
+            left = self._close_round(flat.label)
+            if left == 0:
+                break
+            if attempt < cfg.close_attempts - 1:
+                self.sleep(wait)
+                wait = min(wait * cfg.close_retry_factor, cfg.close_retry_max_s)
+        if left == 0:
+            self.flatten = None
+            return True
+        self._limited(
+            f"flat:{flat.label}", "close_all_incomplete", label=flat.label, left=left,
+            what=f"{flat.label}: {left} position(s) still open, retrying every minute",
+        )  # fmt: skip
+        return False
+
+    def _close_round(self, label: str) -> int:
+        """One round over the open own positions; returns how many are left (-1: unknown)."""
+        try:
+            for position in self._own_open():
+                try:
+                    self._close(position, f"close all: {label}", ExitReason.SIGNAL, None)
+                except DemoLockError:
+                    raise
+                except Exception as e:  # noqa: BLE001 - e.g. no tick: try again next round
+                    self._report_error("close all", e)
+            return len(self._own_open())
+        except DemoLockError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            self._report_error("close all", e)
+            return -1
 
     def _reconcile(self) -> None:
         """Trades whose position is gone (SL / TP hit on the server): report them."""
@@ -825,6 +1068,17 @@ def main(argv: list[str] | None = None) -> int:
         initial_balance=args.balance,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
+    lock = BotLock(config.lock_file)
+    if not lock.acquire():  # one bot only: a second one would duplicate every order (13.4)
+        print(f"Another bot is already running (PID {lock_holder(config.lock_file)}); exiting.")
+        return 3
+    try:
+        return _run_bot(config, settings, credentials)
+    finally:
+        lock.release()
+
+
+def _run_bot(config: BotConfig, settings, credentials) -> int:
     notifier = _telegram_notifier(config)
     bot = Bot(config, load_mt5(), settings, credentials, notifier=notifier)
     if notifier is not None:

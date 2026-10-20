@@ -172,6 +172,20 @@ def format_event(kind: str, f: dict) -> str | None:
     if kind in ("error", "close_failed", "connect_failed"):
         detail = f.get("what") or f.get("error") or f.get("retcode") or ""
         return f"Error ({kind}): {detail}"
+    if kind == "error_persistent":
+        return f"Errors keep happening ({f.get('cycles', '')} cycles in a row): {f.get('what', '')}"
+    if kind == "close_all_incomplete":
+        return (
+            f"Could not close all positions ({f.get('label', '')}): {f.get('left', '?')} still "
+            "open; trying again every minute."
+        )
+    if kind == "order_adopted":
+        return (
+            f"Order of {sym} had no clear answer but is open on the server (ticket "
+            f"{f.get('ticket', '')}): now managed, exits at the session end."
+        )
+    if kind == "order_unclear":
+        return f"Order of {sym}: no clear answer ({f.get('retcode', '')}); checking the server."
     if kind == "disconnected":
         return f"Connection lost: {f.get('error', '')}; reconnecting."
     return None

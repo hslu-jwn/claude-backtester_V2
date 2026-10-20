@@ -440,3 +440,51 @@ def test_the_bars_of_the_trades_figure_carry_the_chart_link():
     fig = live.trades_figure(live.lm.trade_strip(rows, 100_000.0, "all", NOW), rows)
     assert len(fig.data[0].customdata) == 2
     assert all(str(link).startswith("/?symbol=US500") for link in fig.data[0].customdata)
+
+
+# --- 13.4b: the bot must outlive the app process ---------------------------------------------
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process flags")
+def test_spawn_breaks_away_from_the_apps_job_and_process_tree(tmp_path, monkeypatch):
+    # Restarting the app killed the bot: it was the app's child (taskkill /T) and in the app's
+    # job object. A launcher that exits starts it (no live parent), with BREAKAWAY_FROM_JOB.
+    calls = []
+    monkeypatch.setattr(live.subprocess, "Popen", lambda cmd, **kw: calls.append((cmd, kw)))
+    live._spawn_detached(["bot.exe", "-m", "bot", "--risk", "0.25"], tmp_path / "bot.log")
+    ((cmd, kw),) = calls
+    assert kw["creationflags"] & subprocess.CREATE_BREAKAWAY_FROM_JOB
+    assert kw["creationflags"] & subprocess.CREATE_NO_WINDOW
+    assert cmd[0] == sys.executable and cmd[1] == "-c"  # the launcher
+    assert cmd[3:] == [str(tmp_path / "bot.log"), "bot.exe", "-m", "bot", "--risk", "0.25"]
+    assert str(subprocess.CREATE_BREAKAWAY_FROM_JOB) in cmd[2] or "0x01000000" in cmd[2]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process flags")
+def test_spawn_falls_back_when_the_job_forbids_breakaway(tmp_path, monkeypatch):
+    calls = []
+
+    def popen(cmd, **kw):
+        calls.append(kw["creationflags"])
+        if kw["creationflags"] & subprocess.CREATE_BREAKAWAY_FROM_JOB:
+            raise PermissionError("access denied")
+        return object()
+
+    monkeypatch.setattr(live.subprocess, "Popen", popen)
+    live._spawn_detached(["x"], tmp_path / "bot.log")
+    assert len(calls) == 2 and not calls[1] & subprocess.CREATE_BREAKAWAY_FROM_JOB
+    assert calls[1] & subprocess.CREATE_NO_WINDOW
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process flags")
+def test_spawned_command_really_runs_detached_from_the_caller(tmp_path):
+    import time
+
+    marker = tmp_path / "ran.txt"
+    code = f"import time; time.sleep(1); open({str(marker)!r}, 'w').write('x')"
+    live._spawn_detached([sys.executable, "-c", code], tmp_path / "bot.log")
+    for _ in range(100):
+        if marker.exists():
+            break
+        time.sleep(0.2)
+    assert marker.exists()
