@@ -279,6 +279,28 @@ strategy's entries carry information at all, independent of its exit, before a f
 - **First use (user, 2026-10-20):** re-audit strategies 1-7 with their default settings on their own symbols, development
   period only (before 2021-09-14).
 
+### Portfolio tool (ROADMAP 12.9; rules set by the user, 2026-10-20)
+Why: combine weak, uncorrelated edges into one account without fooling ourselves (Carver, Davey, López de Prado;
+`knowledge/topics/combining-edges.md`).
+
+- **Components:** a list (strategy, settings, symbols, period, data source); the tool runs each backtest and takes its
+  trade list in R. All components share one period.
+- **Daily R:** each component's net R per FTMO day (midnight `Europe/Prague`, trades by exit day, as Monte Carlo kind A).
+  **Correlation** of the daily R between components over the whole period and in rolling ⚙️ **126**-trading-day windows
+  (about 6 months; min / median / max per pair).
+- **Weights:** ⚙️ **equal risk** per component (weight 1 / number of components; never optimised, user 2026-10-20). Each
+  trade's R is multiplied by its component's weight, so the account risk per trade is the Monte Carlo risk x weight.
+  **IDM** = 1 / sqrt(w' H w) with H the whole-period daily correlation (negative values floored at 0, ⚙️ cap **2.5**)
+  is shown; ⚙️ `apply_idm` off by default (it raises the risk, user 2026-10-20).
+- **Report:** the Monte Carlo report on the combined, weighted trade list (fan chart, numbers, FTMO pass probability) and
+  the 7-check verdict: halves at the middle of the period; random entries (kind B) and random fills (kind C) per
+  component where the strategy supports them, combined with the same weights, otherwise n/a; DSR with **N = the sum of
+  the trials logged in all component families** and V from all their Sharpes. Plus the correlation table, each
+  component's own numbers next to the combination, and the IDM.
+- **First use (user, 2026-10-20):** ORB band 0.25 ATR, no target, min_rel_volume 1.5 on US30 / US2000 / NAS100 / US500;
+  gold gap momentum (`fx`, entry_z 0.1, stop_atr 0.5, exit 11:00); gap fade defaults on NAS100 / US500; FTMO MT5 data
+  2021-09-14..today. This period was used by the ORB and gold tests: the result is a sanity check, not a fresh test.
+
 ### Risk sweep (`risk/sweep.py`)
 - A grid over the settings to compare results (max drawdown, return, Monte Carlo 95% drawdown).
 - Sweepable: risk per trade (e.g. 0.25–1.5%), daily stop (1–3%), **max open risk** (rule set by the user), drawdown-scaling threshold and factor.
