@@ -1,0 +1,12 @@
+{"components": [
+  {"name": "orb", "strategy": "opening_range",
+   "symbols": ["US30", "US2000", "NAS100", "US500"],
+   "set": {"entry_mode": "band", "band_atr": 0.25, "target_r": 0, "min_rel_volume": 1.5},
+   "families": ["opening_range", "screen_opening_range"]},
+  {"name": "gold_gap_momentum", "strategy": "gap_momentum", "symbols": ["XAUUSD"],
+   "set": {"mode": "fx", "entry_z": 0.1, "stop_atr": 0.5, "exit_time": "11:00",
+           "close_tolerance_min": 10},
+   "families": ["gap_momentum*", "screen_gap_momentum"]},
+  {"name": "gap_fade", "strategy": "gap_fade", "symbols": ["NAS100", "US500"],
+   "families": ["gap_fade", "screen_gap_fade"]}
+]}

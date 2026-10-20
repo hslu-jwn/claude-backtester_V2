@@ -1794,6 +1794,16 @@ changes results, defaults changed only with the user's go.
   correlation of daily R between strategies / variants, a combined Monte Carlo report on one account, and the
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
   positives.
+  **Built 2026-10-20** (not yet marked done by the user): `analytics/portfolio.py`, `tools/portfolio.py`
+  (`python -m backtester.tools.portfolio docs/portfolio_first.json --start 2021-09-14 --end 2026-10-19 --cache-dir
+  <mt5 cache> --spread-table <table> --family portfolio_first --trials-extra <other checkout's trials.jsonl>`; format in
+  the tool docstring), tests `tests/analytics/test_portfolio.py`, `tests/tools/test_portfolio_tool.py`; small additions
+  to `tools/monte_carlo.py` (enum `--set`, ready kind B / C results). Kind B randomises only components with an
+  alternative (gap_fade, gap_momentum); the others stay at their actual result (n/a when none has one).
+  **First use** (`results/portfolio/portfolio_first/`, MT5 2021-09-14..2026-10-19, spread table): ORB 302 trades
+  +28.3 R, gold gap momentum 347 / +17.8 R, gap fade 1858 / +11.3 R; daily-R correlations -0.01 / +0.07 / -0.01
+  (rolling 126 d between -0.25 and +0.23), IDM 1.69 (not applied); combination +19.1 R net (account R, weight 1/3
+  each), verdict NO EDGE (t 1.20, kind B 93.1 %, DSR about 0 at N = 306). A sanity check, not a fresh test.
 
 - ☑ **12.10 Trial log + deflated Sharpe** (accepted by the user 2026-10-19, "End.") (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
   11.12): every run logged with its trial family; PSR / DSR (López de Prado) on the chosen variant.

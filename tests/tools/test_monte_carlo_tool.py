@@ -317,3 +317,35 @@ def test_spread_table_option_goes_into_the_costs_of_every_run(tmp_path, monkeypa
     seen.clear()
     assert tool.main(argv(tmp_path, "--paths", "0")) == 0
     assert all(t is None for t in seen)
+
+
+# ----- enum overrides and ready kind B / C results (ROADMAP 12.9) -------------------------------
+
+
+def test_apply_overrides_sets_an_enum_setting_by_value():
+    from backtester.strategy.opening_range.config import EntryMode
+
+    cfg = tool.apply_overrides(
+        tool.default_config("opening_range"), ["entry_mode=band", "band_atr=0.25"]
+    )
+    assert cfg.entry_mode is EntryMode.BAND and cfg.band_atr == 0.25
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("opening_range"), ["entry_mode=nope"])
+
+
+def test_build_summary_takes_ready_kind_b_and_c_results():
+    from backtester.analytics.random_baseline import RandomBaselineResult
+    from backtester.analytics.random_fills import RandomFillsResult
+    from backtester.runner import RunSettings
+
+    trades = [trade("NAS100", d, 1.0 if i % 3 else -0.8) for i, d in enumerate(weekdays())]
+    base = RandomBaselineResult(10.0, (1.0, 2.0), 97.0, 1.5, 1.0, 2.0, 30)
+    fills = RandomFillsResult(10.0, (7.0, 8.0), 7.0, 7.5, 8.0)
+    s = tool.build_summary(
+        trades, None, {"strategy": "x", "symbols": ["NAS100"], "start": START, "end": END,
+                       "source": "mt5"},
+        RunSettings(), ToolConfig(runs=20), log=lambda *_: None, baseline=base, fills=fills,
+    )  # fmt: skip
+    assert s["random_entries"]["percentile"] == 97.0 and s["random_fills"]["p50"] == 7.5
+    checks = {c.key: c for c in s["verdict"].checks}
+    assert checks["random_entries"].passed and checks["random_fills"].value == 7.5

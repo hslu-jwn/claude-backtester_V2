@@ -28,6 +28,7 @@ import tempfile
 import time as clock
 from dataclasses import asdict, dataclass, fields, is_dataclass, replace
 from datetime import date, time
+from enum import Enum
 from pathlib import Path
 
 from backtester.analytics.deflated_sharpe import (
@@ -156,23 +157,25 @@ def verdict_inputs(
 def build_summary(
     trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
     paths: dict | None = None, log=print, deflated: DeflatedResult | None = None,
-    family: str | None = None,
+    family: str | None = None, baseline=None, fills=None,
 ) -> dict:  # fmt: skip
     """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
     source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
-    (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a."""
+    (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a.
+    `baseline` / `fills` (a RandomBaselineResult / RandomFillsResult) replace the kind B / C run
+    done here: the portfolio tool (ROADMAP 12.9) combines them per component."""
     start, end = meta["start"], meta["end"]
     rcfg = RobustnessConfig()
     trades = list(trades)
-    baseline = None
-    if follow_trades is not None:
+    if baseline is None and follow_trades is not None:
         baseline = random_entry_baseline(
             trades, list(follow_trades), RandomBaselineConfig(config.runs, config.seed)
         )
-    log("kind C: random fills")
-    fills = random_fills(
-        trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
-    )
+    if fills is None:
+        log("kind C: random fills")
+        fills = random_fills(
+            trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
+        )
     log("kind A: day reshuffle + FTMO")
     mc = run_monte_carlo(trades, start, end, MonteCarloConfig(config.runs, config.seed))
     inputs = verdict_inputs(
@@ -227,7 +230,13 @@ def apply_overrides(config, items: list[str]):
             raise SystemExit(f"--set {item!r}: expected key=value with a setting of the strategy: "
                              f"{', '.join(sorted(known))}")  # fmt: skip
         current = getattr(config, key)
-        if key.endswith("_time") or isinstance(current, time):
+        if isinstance(current, Enum):
+            try:
+                changes[key] = type(current)(text)
+            except ValueError:
+                raise SystemExit(f"--set {item!r}: {key} must be one of "
+                                 f"{', '.join(str(m.value) for m in type(current))}") from None  # fmt: skip
+        elif key.endswith("_time") or isinstance(current, time):
             changes[key] = time.fromisoformat(text)
         elif isinstance(current, bool):
             changes[key] = text.lower() in ("1", "true", "yes")
