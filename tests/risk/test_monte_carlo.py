@@ -266,7 +266,7 @@ def test_stats_constants_from_trades():
     assert st["profit_factor"] == pytest.approx(1.5)
 
 
-# ----- funded account loss rate (ROADMAP 12.12) -----------------------------------------
+# ----- funded account loss rate (ROADMAP 12.14) -----------------------------------------
 
 
 def test_funded_exact_case_winning_every_day():

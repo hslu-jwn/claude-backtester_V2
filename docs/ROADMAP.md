@@ -1745,9 +1745,68 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
   with buy / sell volume, delta and trade count; the raw files are deleted after each month.
 - ☑ **11.10 Opening-range breakout** (I-07 / I-08) with the tick-volume A/B (I-44), after 11.8 / 11.9 (user, 2026-10-15).
 
-- ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
+- ☑ **11.11 Stationarity / half-life diagnostic** (accepted by the user 2026-10-20) (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
-- ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+  Decided by the user 2026-10-19: all 21 histdata symbols 2015-01-01..2021-09-13 (GER40 only to 2020-06-12, 13.13),
+  halves at the middle of the period; the time-of-day part drops the 2015-2018 US-only-DST weeks (13.12); a finding
+  needs Benjamini-Hochberg at 5 % over all cells, the same sign in both halves and >= 2 sibling symbols; a seeded
+  random walk is the reference. Built in its own worktree / branch `claude/knowledge-stationarity` (app running).
+  Built 2026-10-19 (awaiting the user's check): `python -m backtester.tools.stationarity_study --cache-dir <histdata cache>` ->
+  `results/stationarity/` (adf, hurst, vr, lagcorr, time_of_day, findings .csv, summary.txt); code `analytics/stationarity.py`.
+  Findings use the robust variants (Spearman lag grid, returns clipped at 5 robust sd for VR and time of day, gap returns zeroed in lag pairs). Files with no cache day (New Year days) are bridged. Sibling rule as built: the symbol plus >= 1 same-sign sibling.
+  **Result 2026-10-19:** findings real / shuffled-returns reference (same rule): ADF 0 / 0, VR 188 / 0, lag grid 356 / 0,
+  time-of-day mean 88 / 0, time-of-day autocorrelation 516 / 0. (1) **No stationarity:** no symbol / timeframe reverts
+  to a level (0 of 105 ADF cells; core 5 p 0.14-0.98; half-lives months to years). (2) Hurst at or below the random
+  walk everywhere. (3) **Short-term reversal is real but tiny:** VR < 1 and negative lag-1 correlation on M5-H1 in
+  most FX pairs and metals (H1 k=1,h=1: XAGUSD -0.077, GBPUSD -0.042, XAUUSD -0.039, GBPJPY -0.035; both halves); the
+  next-hour move after a 1-sd hour is 0.2-0.5 of one spread -> not tradeable; small moves revert, big moves continue
+  (raw Pearson positive). Indices: no robust H1 structure. (4) The 20:30-22:00 UTC FX / silver pattern and the M5
+  autocorrelation are bid / spread microstructure at the rollover, not an edge. First run's lag-grid "findings" were
+  crash hours (March 2020, SNB 2015, Brexit night) and weekend-gap returns; fixed (gap returns zeroed, Spearman,
+  winsorized). Conclusion: price-only time-series structure on these symbols is too small for retail costs.
+- ☑ **11.12 Gap momentum** (no edge; accepted by the user 2026-10-20) (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+  Spec `docs/strategy-gap-momentum.md` (strategy 7, rules set by the user 2026-10-20); built 2026-10-20 (`strategy/gap_momentum/`,
+  `tools/gap_momentum_grid.py`, gap-bucket study, Monte Carlo kind B by side coin flip). **Development result 2015-01..2021-09-13
+  (histdata, 36 variants per mode, halves split 2018-05-09):**
+  - `index` NAS100 + US500: 16 / 36 variants net positive (spread table 8 / 36), net -0.002 R/trade; every top variant
+    positive in the first half, negative in the second (best z 0.25 / stop 0.5 / 15:59: +28.8 R, halves +48 / -19). Gap
+    buckets: following vs fading never differs (|t| < 1.5). Monte Carlo on the best: **NO EDGE** (t 1.03, random
+    entries 82nd pct, halves fail, DSR 0.12 with N 36). -> no edge.
+  - `fx` GBPUSD / EURUSD: positive 2015-18 (34 / 36, 30 / 36 variants), negative 2018-21 (7 / 36, 11 / 36): Chan's
+    edge has decayed -> no edge.
+  - `fx` **XAUUSD**: 32 / 36 variants positive in the first half, 29 / 36 in the second; with exit 11:00 ET all 12 variants
+    positive in both halves and with the spread table (e.g. z 0.1 / stop 0.5: 342 trades, +13.4 / +22.7 R, table +28.4 R);
+    exit 08:00 about 0 (the move comes 08:00-11:00 ET). Candidate, chosen among 108 symbol-variants (small sample).
+  **Test plan (user, 2026-10-20), fixed before any test data is seen:** (1) sibling check on development data: the same rule
+  unchanged on XAGUSD; (2) exactly two variants, XAUUSD `fx`, entry_z 0.1, exit 11:00 ET, stop_atr 0.5 and 1.0; (3) one test on
+  FTMO MT5 data 2021-09-14..today with the spread table, Monte Carlo report (7 checks) and robustness report; nothing tuned
+  afterwards, the result is reported as it comes.
+  **2026-10-20:** sibling XAGUSD (dev, fixed spread; no XAGUSD in the spread table): the two fixed variants -12.3 / -1.9 R net on
+  274 trades (second half negative), 15 / 36 variants positive -> no confirmation. First test attempt gave 0 trades: FTMO XAUUSD
+  has no candle after 16:55 ET; closing-candle tolerance of 10 min added to the spec (user, 2026-10-20), then the test runs
+  (user: run it anyway). Junk trial-log lines of the aborted runs deleted (user, 2026-10-20).
+  **Test result 2026-10-20 (FTMO MT5 XAUUSD 2021-09-14..2026-10-18, spread table, 347 trades each, no swap):** stop 0.5
+  +17.8 R net (+0.051 R/trade, halves +1.3 / +16.5, max DD 10.1 R, years 2021-26 +4.3 / +2.7 / +0.8 / +3.7 / +6.4 / -0.2); stop 1.0
+  +8.2 R (+0.024, halves +0.2 / +8.1). Monte Carlo: **NO EDGE** for both (t 1.01 / 0.87, random entries 71st / 80th pct, DSR
+  0.83 / 0.79; halves, costs x1.5, without best and random fills pass). Positive but not distinguishable from luck; the first
+  half is flat. Dev rerun with the tolerance: XAUUSD fx still 36 / 36 variants net positive. **Conclusion: no proven edge;**
+  at most a weak component for the portfolio tool (12.9). Known issue: the grid logs MT5 runs with source `histdata`, so
+  its trial lines do not dedupe with the Monte Carlo lines (N 4 / 3 instead of 2; DSR stays < 0.95 either way since PSR(0) < 0.95).
+
+- ☑ **11.13 Large-move momentum study** (no edge; accepted by the user 2026-10-20) (I-61; user, 2026-10-20): H1 (also M15, H4) bars whose return exceeds k = 2 / 3 / 4
+  robust sd (1.4826 x MAD over the trailing 500 bars, no lookahead; bars after a gap > 3 bars excluded); forward return over
+  h = 1, 2, 4, 8, 24 bars signed by the move (continuation > 0), in sd units and in spreads of the symbol; null: shuffled
+  event times (same symbol, count and hour of day), 1,000 runs, seed 42; a finding needs BH 5 %, the same sign in both halves,
+  >= 1 sibling and survives removing the top 1 % events; tradeable only if the mean continuation exceeds ~1.5 spreads.
+  21 histdata symbols 2015-01-01..2021-09-13 (GER40 to 2020-06-12), as 11.11 (defaults chosen by Claude from the 11.11 rules).
+  **Result 2026-10-20** (`analytics/large_move.py`, `tools/large_move_study.py`, `results/large_move/`; 945 cells, 1,090 s):
+  150 BH-significant, 130 with halves + sibling, **2 findings** after the top-1 % removal (read as: same sign and trimmed |t| >= 1.96),
+  both reversals and not tradeable (UK100 H4 k4 h1: first half 0; NZDUSD M15 k2 h1: -1.1 spreads). Shuffled data: 0 findings.
+  Continuation above 1.5 spreads in 21 cells keeps its sign without the top 1 % but loses most of the mean (e.g. USDJPY M15
+  k4 h2 +0.27 -> +0.03 sd): carried by a few extreme events. Closest: **NAS100 H1 k4 h2** n 1,636, +0.46 sd (+11.9 spreads),
+  halves +0.65 / +0.23 (decaying), without the top 1 % +0.20 sd (t 1.74). Core 5: no finding. **Conclusion: no robust
+  large-move momentum; the continuation is a few crash / news hours.** Caveat: the null keeps count and hour of day but not
+  clustering (p too small), the halves and top-1 % rules are the real guard.
 - ☑ **11.17 No-wick retest study** (I-62; user, 2026-10-21: strategy 3 with a limit at the no-wick end, many
   stops / targets / filters, ideas from a Bard FX video summary `00_Literature/Trading/no_wick_trading_strategy.pdf`).
   Research tool `tools/no_wick_retest_study.py` (no strategy, no spec): signals on M5 / M15 / M30 / H1, limit at the
@@ -1851,9 +1910,20 @@ changes results, defaults changed only with the user's go.
   `results/monte_carlo/`). `--run` takes the run's trades.csv, symbols, period and settings.json (no new backtest,
   one trial-log line since 2026-10-20 (user), check 7 (DSR) uses the family's trial count), kind B / D use the run's strategy and settings.
 - ☐ **12.9 Portfolio tool** (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
+- ☑ **12.9 Portfolio tool** (accepted by the user 2026-10-20) (user, 2026-10-16; goal: combine weak, uncorrelated edges into a significant one):
   correlation of daily R between strategies / variants, a combined Monte Carlo report on one account, and the
   number of variants tried in the verdict (deflated Sharpe, López de Prado) so combining does not produce false
   positives.
+  **Built 2026-10-20** (not yet marked done by the user): `analytics/portfolio.py`, `tools/portfolio.py`
+  (`python -m backtester.tools.portfolio docs/portfolio_first.json --start 2021-09-14 --end 2026-10-19 --cache-dir
+  <mt5 cache> --spread-table <table> --family portfolio_first --trials-extra <other checkout's trials.jsonl>`; format in
+  the tool docstring), tests `tests/analytics/test_portfolio.py`, `tests/tools/test_portfolio_tool.py`; small additions
+  to `tools/monte_carlo.py` (enum `--set`, ready kind B / C results). Kind B randomises only components with an
+  alternative (gap_fade, gap_momentum); the others stay at their actual result (n/a when none has one).
+  **First use** (`results/portfolio/portfolio_first/`, MT5 2021-09-14..2026-10-19, spread table): ORB 302 trades
+  +28.3 R, gold gap momentum 347 / +17.8 R, gap fade 1858 / +11.3 R; daily-R correlations -0.01 / +0.07 / -0.01
+  (rolling 126 d between -0.25 and +0.23), IDM 1.69 (not applied); combination +19.1 R net (account R, weight 1/3
+  each), verdict NO EDGE (t 1.20, kind B 93.1 %, DSR about 0 at N = 306). A sanity check, not a fresh test.
 
 - ☑ **12.10 Trial log + deflated Sharpe** (accepted by the user 2026-10-19, "End.") (T-08; research order agreed by the user 2026-10-16: 12.10 -> 11.11 ->
   11.12): every run logged with its trial family; PSR / DSR (López de Prado) on the chosen variant.
@@ -1862,6 +1932,40 @@ changes results, defaults changed only with the user's go.
 - ☐ **12.11 Bayesian report** (T-10): Beta posterior of the win rate and of mean R, A/B of variants, trades needed;
   prior odds 1:50 against an edge (rule set by the user, 2026-10-16).
 
+- ☑ **12.12 Entry screening battery** (accepted by the user 2026-10-20; pass item (c) = the strategy's own net R vs 1,000 random-exit runs of the same entries, confirmed by the user 2026-10-20) (T-13; user, 2026-10-20): spec `risk-management.md › Entry screening`; first use:
+  re-audit strategies 1-7 (defaults, own symbols, development period).
+  **Built 2026-10-20** (not yet marked done by the user): `analytics/entry_screen.py`, `tools/entry_screen.py`
+  (`python -m backtester.tools.entry_screen --strategy <name> --cache-dir <histdata cache> --workers 1`; use
+  `--workers 1`, the process pool hangs on a 6-year M1 job), tests `tests/analytics/test_entry_screen.py` and
+  `tests/tools/test_entry_screen_tool.py`; one small addition to `engine/costs.py` (`swap_r_nights`, `swap_r` unchanged).
+  The choices the spec leaves open are listed in `risk-management.md › Entry screening`.
+  **First audit (2015-01-02 .. 2021-09-13, histdata, defaults, fixed spread of the cost model + swap; mean net R per
+  trade of the six N cells; results in `results/entry_screen/v2/<strategy>/`):** all seven FAIL.
+
+  | Strategy (symbols) | Trades | Cells > 0 | Best N cell net / gross | 1R/1R win | Percentile vs random | Reversed (cells > 0, mean net) | Hit-rate scan, largest z |
+  |---|---|---|---|---|---|---|---|
+  | 1 session_zone_sweep (XAU, GBPUSD, GBPJPY) | 19,274 | 0/6 | N1 -0.111 / -0.009 | 49.4 % | 0.0 | 0/6, -0.081 | -8.8 (N5) |
+  | 2 ny_index_sweep (NAS100, US500) | 1,386 | 0/6 | N1 -0.042 / -0.005 | 48.3 % | 37.8 | 0/6, -0.028 | -0.9 |
+  | 3 no_wick (5 symbols) | 42,462 | 0/6 | N5 -0.108 / +0.029 | 49.3 % | 0.0 | 0/6, -0.105 | -17.5 (N1) |
+  | 4 trend_following (5 symbols) | 1,229 | 0/6 | N5 -0.014 / +0.011 | 52.3 % | 0.0 | 1/6, -0.028 | -2.7 |
+  | 5 gap_fade (NAS100, US500) | 2,443 | 1/6 | N10 +0.000 / +0.017 | 50.9 % | 89.9 | 1/6, -0.016 | +3.4 (N3) |
+  | 6 opening_range (NAS100, US500) | 3,346 | 0/6 | N1 -0.014 / +0.006 | 48.0 % | 67.1 | 2/6, -0.014 | -2.5 (N10) |
+  | 7 gap_momentum (index) | 1,044 | 0/6 | N20 -0.003 / +0.002 | 51.8 % | 98.6 | 4/6, +0.006 | -3.7 (N3) |
+
+  Reading: strategies 1 and 3 lose about 0.11-0.14 R per trade at every horizon, almost all of it costs (gross close to
+  0), and their entries are worse than random times (hit rate 45-47 % against 49-50 %); the reversed signal is no better.
+  Strategy 5 is the only one with a real forward-return signal (51-52 % in the money 2-10 minutes later against 48-49 %
+  shuffled) but the move is smaller than the costs; it misses the random-exit percentile by 0.1 (89.9 vs > 90).
+  Strategy 7 beats the random exits (98.6) but its fixed-bar exits are flat before costs (gross +0.002 at N20).
+
+- ☐ **12.13 DSR on daily R** (user, 2026-10-20): the deflated Sharpe uses the daily net R (Prague days, empty days 0)
+  instead of per-trade R, in the Monte Carlo report and the portfolio tool; trial-log lines get daily statistics.
+  **Built 2026-10-20** (not yet marked done by the user): shared helper `analytics/daily.py` (`daily_net_r`, equal to the Monte Carlo
+  kind A days; used by the trial log, `tools/monte_carlo.py`, `tools/portfolio.py`, `analytics/portfolio.py`); `make_record` now takes the
+  trades and stores `days`, `day_mean`, `day_sd`, `day_skew`, `day_kurt`, `day_sharpe`; `family_summary` returns the daily Sharpes (older
+  lines count for N only); `trials list` shows the daily V. Tests `tests/analytics/test_daily.py` and additions to the trial-log,
+  portfolio, Monte Carlo tool and trials tests.
+
 **Infrastructure order** (agreed by the user 2026-10-16: finish the infrastructure first, then find and combine
 edges): 12.8 engine slippage -> 12.2 intrabar order from M1 -> 12.9 portfolio tool -> 6.1 Strategy Simulator; later
 5.2 account simulator and 12.5 demo reconciliation (before live). Knowledge on combining edges: the user adds
@@ -1869,7 +1973,7 @@ Carver *Systematic Trading*, López de Prado *Advances in Financial Machine Lear
 Davey *Building Winning Algorithmic Trading Systems* to `00_Literature/Trading` (books are added only from the text).
 Done 2026-10-16: the four books plus Kurt and Kaeppel are in `knowledge/` (Natenberg skipped by the user).
 
-- ☑ **12.12 Funded-account loss rate looks wrong** (found 2026-10-20 while building the prop-firm card): `risk/monte_carlo.py`
+- ☑ **12.14 Funded-account loss rate looks wrong** (numbered 12.12 in its commits) (found 2026-10-20 while building the prop-firm card): `risk/monte_carlo.py`
   shows "funded account lost within 126 days" near 100 % even for strong strategies.
   Checked 2026-10-20: **no code bug**. Hand-built cases are right (tests in `tests/risk/test_monte_carlo.py`: exact
   win-every-day / lose-every-day cases, a strong one-trade-a-day case loses < 2 %). Causes of the near-100 %: (1) the

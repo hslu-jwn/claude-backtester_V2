@@ -227,12 +227,13 @@ def test_deflated_sharpe_uses_the_family_and_is_in_summary_and_report(tmp_path, 
     summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
     d = summary["deflated"]
     assert d["n_trials"] == 10 and d["family"] == "gap_fade"
-    assert d["variance"] == pytest.approx(1 / summary["meta"]["trades"])  # one Sharpe: V = 1/n
+    n_days = len([x for x in weekdays(200) if START <= x <= END])
+    assert d["variance"] == pytest.approx(1 / n_days)  # one daily Sharpe: V = 1/days
     assert 0 <= d["psr0"] <= 1 and 0 <= d["dsr"] <= 1 and d["sr0"] > 0
     check = next(c for c in summary["verdict"]["checks"] if c["key"] == "deflated_sharpe")
     assert check["available"] and check["value"] == pytest.approx(d["dsr"])
     html = (tmp_path / "report.html").read_text(encoding="utf-8")
-    for text in ("Deflated Sharpe", "PSR(0)", "DSR", "gap_fade"):
+    for text in ("Deflated Sharpe", "PSR(0)", "DSR", "gap_fade", "daily"):
         assert text in html
 
 
@@ -358,3 +359,105 @@ def test_run_option_unknown_run_is_a_clear_error(tmp_path, stub):
     with pytest.raises(SystemExit) as e:
         tool.main(["--run", "nope", "--results-dir", str(tmp_path)])
     assert "nope" in str(e.value)
+
+
+# --- gap momentum: kind B coin flips the side (ROADMAP 11.12) -------------------------------------
+
+
+def test_gap_momentum_kind_b_runs_the_fade_side_on_the_same_days(tmp_path, stub):
+    assert tool.main(argv(tmp_path, "--paths", "0", strategy="gap_momentum")) == 0
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["random_entries"]["available"] is True
+    assert [c.side for c in stub["run"][:2]] == ["momentum", "fade"]
+    assert {c.mode for c in stub["run"][:2]} == {"index"}
+
+
+def test_set_overrides_the_strategy_defaults_and_goes_into_the_trial_log(tmp_path, stub):
+    from datetime import time
+
+    from backtester.analytics.trial_log import family_trials
+
+    extra = ("--paths", "0", "--set", "entry_z=0.25", "stop_atr=2", "exit_time=11:00", "mode=fx")
+    assert tool.main(argv(tmp_path, *extra, strategy="gap_momentum")) == 0
+    cfg = stub["run"][0]
+    assert (cfg.entry_z, cfg.stop_atr, cfg.exit_time, cfg.mode) == (0.25, 2.0, time(11), "fx")
+    assert stub["run"][1].side == "fade" and stub["run"][1].entry_z == 0.25
+    [line] = family_trials("gap_momentum")
+    assert line.settings["entry_z"] == 0.25
+
+
+def test_set_refuses_an_unknown_setting_or_a_bad_item():
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("gap_momentum"), ["nope=1"])
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("gap_momentum"), ["entry_z"])
+
+
+def test_cache_dir_is_the_source_of_every_symbol(tmp_path, monkeypatch, stub):
+    seen = []
+    orig = tool.run_backtests
+
+    def spy(symbols, start, end, settings, *a, **k):
+        seen.append(k["sources"])
+        return orig(symbols, start, end, settings, *a, **k)
+
+    monkeypatch.setattr(tool, "run_backtests", spy)
+    cache = tmp_path / "cache"
+    assert tool.main(argv(tmp_path, "--paths", "0", "--cache-dir", str(cache))) == 0
+    assert seen[0].cache_dir("NAS100") == seen[0].cache_dir("US500") == cache
+
+
+def test_spread_table_option_goes_into_the_costs_of_every_run(tmp_path, monkeypatch, stub):
+    assert (
+        parse_args(["NAS100", "--start", "2020-01-01", "--end", "2020-02-01"]).spread_table is None
+    )
+    table = tmp_path / "spreads.json"
+    table.write_text(json.dumps({
+        "stat": "median", "note": "test",
+        "values": {"NAS100": {"2021": {"9": 1.5}}},
+    }), encoding="utf-8")  # fmt: skip
+    seen = []
+    orig = tool.run_backtests
+
+    def spy(symbols, start, end, settings, *a, **k):
+        seen.append(settings.engine.costs.spread_table)
+        return orig(symbols, start, end, settings, *a, **k)
+
+    monkeypatch.setattr(tool, "run_backtests", spy)
+    assert tool.main(argv(tmp_path, "--paths", "0", "--spread-table", str(table))) == 0
+    assert seen and all(t is not None for t in seen)
+    seen.clear()
+    assert tool.main(argv(tmp_path, "--paths", "0")) == 0
+    assert all(t is None for t in seen)
+
+
+# ----- enum overrides and ready kind B / C results (ROADMAP 12.9) -------------------------------
+
+
+def test_apply_overrides_sets_an_enum_setting_by_value():
+    from backtester.strategy.opening_range.config import EntryMode
+
+    cfg = tool.apply_overrides(
+        tool.default_config("opening_range"), ["entry_mode=band", "band_atr=0.25"]
+    )
+    assert cfg.entry_mode is EntryMode.BAND and cfg.band_atr == 0.25
+    with pytest.raises(SystemExit):
+        tool.apply_overrides(tool.default_config("opening_range"), ["entry_mode=nope"])
+
+
+def test_build_summary_takes_ready_kind_b_and_c_results():
+    from backtester.analytics.random_baseline import RandomBaselineResult
+    from backtester.analytics.random_fills import RandomFillsResult
+    from backtester.runner import RunSettings
+
+    trades = [trade("NAS100", d, 1.0 if i % 3 else -0.8) for i, d in enumerate(weekdays())]
+    base = RandomBaselineResult(10.0, (1.0, 2.0), 97.0, 1.5, 1.0, 2.0, 30)
+    fills = RandomFillsResult(10.0, (7.0, 8.0), 7.0, 7.5, 8.0)
+    s = tool.build_summary(
+        trades, None, {"strategy": "x", "symbols": ["NAS100"], "start": START, "end": END,
+                       "source": "mt5"},
+        RunSettings(), ToolConfig(runs=20), log=lambda *_: None, baseline=base, fills=fills,
+    )  # fmt: skip
+    assert s["random_entries"]["percentile"] == 97.0 and s["random_fills"]["p50"] == 7.5
+    checks = {c.key: c for c in s["verdict"].checks}
+    assert checks["random_entries"].passed and checks["random_fills"].value == 7.5

@@ -164,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{name}: {len(result.trades)} trades", flush=True)
         append(make_record(
             args.family or STRATEGY, STRATEGY, config, symbols, args.start, end, args.source,
-            [t.r_net for t in result.trades],
+            result.trades,
         ))  # fmt: skip
         sets = {"ALL": result.trades, **{s: r.trades for s, r in result.runs.items()}}
         for group, trades in sets.items():

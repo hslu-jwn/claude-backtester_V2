@@ -142,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     source = "histdata" if args.cache_dir is None else str(args.cache_dir)
     append(make_record(
         args.family or args.strategy, args.strategy, settings.strategy, symbols, args.start,
-        args.end, source, [t.r_net for t in result.trades],
+        args.end, source, result.trades,
     ))  # fmt: skip
     return 0
 

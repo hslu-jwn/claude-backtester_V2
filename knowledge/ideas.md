@@ -33,9 +33,9 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | T-08 ★ | Trial log + deflated Sharpe: every variant / symbol / timeframe / filter logged with its return series; PSR and DSR (effective N) on per-trade net R; shared-prior shrinkage of the best variant | tooling | all | – | LP 8.1, 11.5, 14.7; RC ch.3; WK M7 | done 2026-10-16 (ROADMAP 12.10; N = raw trial count per family, no clustering or shrinkage yet; DSR >= 0.95 is verdict check 7) |
 | T-09 | CPCV (N groups, k=2, purged + embargoed), PBO via CSCV, time-reversed run; extends T-04 | tooling | all | – | LP 7.4, 11.6, 12.4 | open |
 | T-10 ★ | Bayesian win-rate and A/B report: Beta posterior under flat / weak / strong skeptical priors, P(B > A), Bayes factor, trades needed before the MT5 test | tooling | all | – | WK ch.5, 15-17, M1-M10 | open; prior odds 1:50 against an edge (user, 2026-10-16) |
-| T-11 ★ | Stationarity / Hurst / variance ratio / half-life / lag-correlation diagnostic per symbol, timeframe and half | study | all; M5-D1 | – | EC p.41-48, 134-137; LP 17 | planned (ROADMAP 11.11, user 2026-10-16) |
+| T-11 ★ | Stationarity / Hurst / variance ratio / half-life / lag-correlation diagnostic per symbol, timeframe and half | study | all; M5-D1 | – | EC p.41-48, 134-137; LP 17 | done 2026-10-19 (ROADMAP 11.11): no stationarity; H1 reversal real but 0.2-0.5 of a spread, not tradeable |
 | T-12 | Carver forecast engine: continuous ±20 forecasts, FDM / IDM, vol-target sizing, position inertia | tooling | all | n/a | RC ch.7-11, App.B, D | open |
-| T-13 ★ | Entry-only screening battery: fixed-bar exits, equal-R stop / target, random exit, forward-return hit rate, time-frame lift, reversed signal with costs twice | tooling | all | – | KD p.88, 105-109; JK p.100 | open |
+| T-13 ★ | Entry-only screening battery: fixed-bar exits, equal-R stop / target, random exit, forward-return hit rate, time-frame lift, reversed signal with costs twice | tooling | all | – | KD p.88, 105-109; JK p.100 | built 2026-10-20 (ROADMAP 12.12); first audit of strategies 1-7: all FAIL |
 | T-14 | Matched-monkey test (random entry / exit / both, 8,000 runs, matched count, long share, hold) + random entry with vol trailing stop; extends T-02 | tooling | all | – | KD p.109-114; RC ch.13 | open |
 | T-15 | Synthetic OU / random-walk null for SL-TP heat maps and barrier-probability reference | tooling | all | – | LP 13; JK p.91-95 | open |
 | T-16 | Strategy-risk / precision calculator for FTMO: precision needed for a target Sharpe, P[precision < threshold], posterior Monte Carlo of the account | tooling | R lists | – | LP 15; RC ch.9; WK M6 | open |
@@ -87,7 +87,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | open |
 | I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | unblocked 2026-10-15 (MT5 tick volume, ROADMAP 11.5); user 2026-10-15: test it as an A/B activity filter, first on the opening-range breakout; result 2026-10-16: relative tick volume >= 1.5 improves 17 of 18 ORB variants (+0.013 R/trade) |
 | I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14; RC ch.12 (see I-52) | built as cost / stop (`CostConfig.max_cost_r`, 2026-10-14); strategy 2 at 0.10 R: net +57 R better, still negative (ROADMAP 10.5) |
-| I-46 ★ | Gap momentum: open beyond the previous high / low by 0.1 sd of daily returns, exit at the close; FX version from the London open | signal | NAS100, US500, XAUUSD; GBPUSD (05:00-17:00 ET); 5m-1h | none | EC p.155-157 | planned (ROADMAP 11.12, user 2026-10-16) |
+| I-46 ★ | Gap momentum: open beyond the previous high / low by 0.1 sd of daily returns, exit at the close; FX version from the London open | signal | NAS100, US500, XAUUSD; GBPUSD (05:00-17:00 ET); 5m-1h | none | EC p.155-157 | tested 2026-10-20 (ROADMAP 11.12): indices and GBPUSD / EURUSD no edge (decayed after 2018); XAUUSD London-open version positive on MT5 2021-26 (+17.8 R, 347 trades) but NO EDGE verdict (t 1.0) |
 | I-47 | Euro-night style fade: ATR-stretched average high / low limit entry, session exit | signal | GBPUSD, XAUUSD; 60-105m | none | KD ch.18 | open |
 | I-48 | Euro-day exhaustion fade: new 3-5 bar extreme against 70-80 bar momentum, limit beyond the extreme | signal | FX, gold, indices; 60m | none | KD ch.18 | open |
 | I-49 ★ | Volatility-percentile regime filter: decile rank of realised vol vs own history, strategies run per bucket | filter | all | – | JK p.64-72; EC p.184-186 | open |
@@ -102,6 +102,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-58 | Half-life z-score mean reversion (linear or Bollinger), gated by T-11 | signal | all; M15-H4 | none intraday | EC p.48-50, 70-72 | open |
 | I-59 | FX cointegration pair (AUDUSD vs CADUSD style) | signal | needs AUDUSD, USDCAD from histdata | rollover | EC p.108-112 | blocked (symbols not in the data) |
 | I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | open |
+| I-61 | Momentum after a large hourly move: after an H1 bar beyond k robust sd, trade its direction for h bars (11.11: small moves revert, big ones continue) | momentum | FX, metals, indices / H1 | none if flat by the session end | 11.11 study | tested 2026-10-20 (ROADMAP 11.13): no robust edge; continuation carried by the top 1 % events; NAS100 H1 k4 h2 closest (+0.20 sd trimmed, t 1.7, decaying) |
 | I-62 | No-wick retest: limit at the no-wick end of a trend candle (Bard FX video), many stops / targets / filters | signal | all; 5m-1h | none (16:55 exit) | user 2026-10-21 | **no edge** 2026-10-21 (ROADMAP 11.17): 0.4 % of 4,608 variants positive; gold H1 cluster failed out of sample (-0.02 R/trade) |
 
 ## Suggested order (Claude's proposal, the user decides)
@@ -615,6 +616,11 @@ sigma_h = price x RV_annual x sqrt(h/365) with h the intended holding time and R
 (exit at ±2 sigma of the 90-day horizon), 91-95. Evidence: one worked example. Fit: good as a parameterisation of stops / targets; nearly proportional to ATR scaled by sqrt(time), so the difference is the time-scaling
 (tighter for short holds, wider for long). Gives a random-walk reference hit rate (T-15). Exit framework, not an entry.
 
+### I-61 Momentum after a large hourly move (study first)
+In 11.11 the H1 lag-1 Spearman / winsorized correlation is negative (small moves revert) while the raw Pearson beta is positive for
+XAUUSD, GBPUSD, GBPJPY, US500: the big hours continue. Study first: next-h-bar return after hours beyond k = 2 / 3 / 4 robust sd, per symbol,
+half and sign, against shuffled returns; only then a rule (entry at the bar close, time exit after h bars, ATR stop). Fit: price-only, intraday;
+few events, crash hours dominate (March 2020, SNB 2015, Brexit) -> results must survive removing the top events. Source: ROADMAP 11.11.
 
 ### I-62 No-wick retest (user, Bard FX)
 Strategy 3's `body_end` entry (limit at the open of a no-wick trend candle) with wider stop choices, other targets,

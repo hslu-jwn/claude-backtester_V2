@@ -22,15 +22,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date, datetime, time
 
 import numpy as np
 
+from backtester.analytics.daily import PRAGUE, weekdays
 from backtester.analytics.metrics import longest_streak
 from backtester.risk.adaptive import AdaptiveRisk, budgeted_risk, risk_factor
 
-PRAGUE = ZoneInfo("Europe/Prague")
 PERCENTILES = (5, 50, 95)
 EPS = 1e-9  # float tolerance when a loss is compared with its limit
 NO_TARGET = float("inf")
@@ -75,15 +74,6 @@ class Day:
     r: np.ndarray
     events: tuple[tuple[bool, float], ...]
     ids: tuple[int, ...] = ()
-
-
-def weekdays(start: date, end: date) -> list[date]:
-    out, d = [], start
-    while d <= end:
-        if d.weekday() < 5:
-            out.append(d)
-        d += timedelta(days=1)
-    return out
 
 
 def _prague_day_start(d: date) -> float:

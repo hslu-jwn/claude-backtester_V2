@@ -395,13 +395,23 @@ class CostConfig:
         costs = self.symbols.get(symbol)
         if not self.swap_enabled or costs is None:
             return 0.0
-        long = direction is Direction.BULLISH
-        rate = costs.swap_long_per_lot if long else costs.swap_short_per_lot
-        pct = costs.swap_long_pct_year if long else costs.swap_short_pct_year
         nights = sum(
             share * rollover_nights(entry_time, at, costs.swap_triple_weekday)
             for share, at in exits
         )
+        return self.swap_r_nights(symbol, direction, risk, nights, entry)
+
+    def swap_r_nights(
+        self, symbol: str, direction: Direction, risk: float, nights: float, entry: float = 0.0
+    ) -> float:
+        """Swap in R for `nights` (share-weighted, triple nights already counted); linear in
+        `nights`, so `swap_r_nights(.., 1.0)` is the swap of one night. `swap_r` calls this."""
+        costs = self.symbols.get(symbol)
+        if not self.swap_enabled or costs is None:
+            return 0.0
+        long = direction is Direction.BULLISH
+        rate = costs.swap_long_per_lot if long else costs.swap_short_per_lot
+        pct = costs.swap_long_pct_year if long else costs.swap_short_pct_year
         usd = nights * rate / (risk * costs.value_per_price_unit)
         if not pct:
             return usd

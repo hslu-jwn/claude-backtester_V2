@@ -34,6 +34,7 @@ def test_registered_names_and_order():
         "trend_following",
         "gap_fade",
         "opening_range",
+        "gap_momentum",
     ]
 
 

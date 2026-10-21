@@ -4,6 +4,8 @@
         --strategy gap_fade
     python -m backtester.tools.monte_carlo NAS100 --start 2021-09-15 --end 2026-09-30 \\
         --strategy gap_fade --source mt5 --paths 0
+    python -m backtester.tools.monte_carlo NAS100 US500 --start 2015-01-01 --end 2021-09-13 \\
+        --strategy gap_momentum --family gap_momentum_index --set entry_z=0.1 exit_time=12:00
 
     python -m backtester.tools.monte_carlo --run 20261020-171430_NAS100-US500 --paths 0
 
@@ -12,12 +14,12 @@ symbols, period and settings.json instead of running the backtest again; it writ
 line (source "run", family = the strategy or `--family`) and check 7 uses the count; default `<out>` is `results/monte_carlo/<run id>/`.
 
 Runs the strategy (spec defaults, shared costs), then: kind A day reshuffle + FTMO 2-Step at
-0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade has the "follow" variant for it;
-other strategies show "not available for this strategy yet" and the verdict check is n/a), kind C
-random fills, kind D seeded random-walk paths (`--paths`, 0 skips; the volatility profile is
-measured on the same days as the run), and the robustness measures. Writes `<out>/report.html`
-(Plotly from the CDN) and `<out>/summary.json`; default `<out>` is
-`results/monte_carlo/<strategy>_<symbols>_<start>_<end>/`.
+0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade, "follow" variant, and the gap
+momentum, "fade" side, have one; other strategies show "not available for this strategy yet" and
+the verdict check is n/a), kind C random fills, kind D seeded random-walk paths (`--paths`, 0
+skips; the volatility profile is measured on the same days as the run), and the robustness
+measures. Writes `<out>/report.html` (Plotly from the CDN) and `<out>/summary.json`; default
+`<out>` is `results/monte_carlo/<strategy>_<symbols>_<start>_<end>/`.
 
 Spec: risk-management.md > Monte Carlo report (ROADMAP 12.7). Research only: changes no setting.
 """
@@ -31,10 +33,12 @@ import math
 import re
 import tempfile
 import time as clock
-from dataclasses import asdict, dataclass, is_dataclass, replace
-from datetime import date
+from dataclasses import asdict, dataclass, fields, is_dataclass, replace
+from datetime import date, time
+from enum import Enum
 from pathlib import Path
 
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import (
     DeflatedResult,
     DeflatedSharpeConfig,
@@ -62,13 +66,15 @@ from backtester.analytics.verdict import (
 from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.random_walk import RandomWalkConfig, load_profile, write_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
 from backtester.settings import from_dict
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
 
-GAP_FADE = "gap_fade"
+# strategies with a kind B alternative on the same days: (setting, value) of the other choice
+ALTERNATIVES = {"gap_fade": ("mode", "follow"), "gap_momentum": ("side", "fade")}
 PERCENT = 100.0
 MONTE_CARLO_DIR = "monte_carlo"
 NOT_AVAILABLE = "not available for this strategy yet"
@@ -161,23 +167,25 @@ def verdict_inputs(
 def build_summary(
     trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
     paths: dict | None = None, log=print, deflated: DeflatedResult | None = None,
-    family: str | None = None,
+    family: str | None = None, baseline=None, fills=None,
 ) -> dict:  # fmt: skip
     """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
     source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
-    (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a."""
+    (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a.
+    `baseline` / `fills` (a RandomBaselineResult / RandomFillsResult) replace the kind B / C run
+    done here: the portfolio tool (ROADMAP 12.9) combines them per component."""
     start, end = meta["start"], meta["end"]
     rcfg = RobustnessConfig()
     trades = list(trades)
-    baseline = None
-    if follow_trades is not None:
+    if baseline is None and follow_trades is not None:
         baseline = random_entry_baseline(
             trades, list(follow_trades), RandomBaselineConfig(config.runs, config.seed)
         )
-    log("kind C: random fills")
-    fills = random_fills(
-        trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
-    )
+    if fills is None:
+        log("kind C: random fills")
+        fills = random_fills(
+            trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
+        )
     log("kind A: day reshuffle + FTMO")
     mc = run_monte_carlo(trades, start, end, MonteCarloConfig(config.runs, config.seed))
     inputs = verdict_inputs(
@@ -242,6 +250,36 @@ def load_run(run_id: str, results_dir: Path = RESULTS_DIR) -> dict:
         raise SystemExit(f"run {run_id!r} is unreadable: {error}") from error
 
 
+def apply_overrides(config, items: list[str]):
+    """`config` with `key=value` items applied (types from the setting's current value; a time
+    setting is HH:MM). Research use: run one variant of a sweep. Unknown key: SystemExit."""
+    known = {f.name for f in fields(config)}
+    changes = {}
+    for item in items:
+        key, sep, text = item.partition("=")
+        if not sep or key not in known:
+            raise SystemExit(f"--set {item!r}: expected key=value with a setting of the strategy: "
+                             f"{', '.join(sorted(known))}")  # fmt: skip
+        current = getattr(config, key)
+        if isinstance(current, Enum):
+            try:
+                changes[key] = type(current)(text)
+            except ValueError:
+                raise SystemExit(f"--set {item!r}: {key} must be one of "
+                                 f"{', '.join(str(m.value) for m in type(current))}") from None  # fmt: skip
+        elif key.endswith("_time") or isinstance(current, time):
+            changes[key] = time.fromisoformat(text)
+        elif isinstance(current, bool):
+            changes[key] = text.lower() in ("1", "true", "yes")
+        elif isinstance(current, int):
+            changes[key] = int(text)
+        elif isinstance(current, float):
+            changes[key] = float(text)
+        else:
+            changes[key] = text
+    return replace(config, **changes)
+
+
 def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     if args.run:  # the run's own trades and settings; spec sources (like the app's backtests)
         run = load_run(args.run, args.results_dir)
@@ -255,13 +293,19 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     else:
         symbols, start, end, strategy = args.symbols, args.start, args.end, args.strategy
         source = args.source
-        sources = (
-            DEFAULT_SOURCES
-            if source == "histdata"
-            else SymbolSources.single(MT5_CACHE_DIR, symbols)
-        )
-        strategy_cfg = default_config(strategy)
-        settings = replace(RunSettings(), strategy=strategy_cfg)
+        if args.cache_dir is not None:
+            sources = SymbolSources.single(args.cache_dir, symbols)
+        elif source == "histdata":
+            sources = DEFAULT_SOURCES
+        else:
+            sources = SymbolSources.single(MT5_CACHE_DIR, symbols)
+        strategy_cfg = apply_overrides(default_config(strategy), args.set or [])
+        engine = RunSettings().engine
+        if args.spread_table is not None:
+            table = SpreadTable.from_dict(json.loads(args.spread_table.read_text(encoding="utf-8")))
+            engine = replace(engine, costs=replace(engine.costs, spread_table=table))
+            log(f"spread table: {table.stat} by year and New York hour, {table.note}")
+        settings = replace(RunSettings(), strategy=strategy_cfg, engine=engine)
         log(f"backtest {strategy} {symbols} {start}..{end}")
         base = run_backtests(symbols, start, end, settings, sources=sources)
         trades = list(base.trades)
@@ -270,20 +314,24 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     family = args.family or strategy
     # a report of a run (the results page's button) is a tried variant too (user, 2026-10-20)
     append(make_record(
-        family, strategy, strategy_cfg, symbols, start, end, source, [t.r_net for t in trades],
+        family, strategy, strategy_cfg, symbols, start, end, source, trades,
     ))  # fmt: skip
     n_trials, sharpes = family_summary(family_trials(family))
     deflated = deflated_sharpe(
-        trade_stats([t.r_net for t in trades]), n_trials, sharpes, DeflatedSharpeConfig()
+        trade_stats(daily_net_r(trades, start, end)),
+        n_trials,
+        sharpes,
+        DeflatedSharpeConfig(),
     )
-    log(f"trial log: family {family}, N = {n_trials}")
+    log(f"trial log: family {family}, N = {n_trials}, {len(sharpes)} daily Sharpes")
 
     follow = None
-    if strategy == GAP_FADE:
-        log("kind B: follow run")
+    if strategy in ALTERNATIVES:
+        field, value = ALTERNATIVES[strategy]
+        log(f"kind B: {field}={value} run")
         follow = list(run_backtests(
             symbols, start, end,
-            replace(settings, strategy=replace(strategy_cfg, mode="follow")), sources=sources,
+            replace(settings, strategy=replace(strategy_cfg, **{field: value})), sources=sources,
         ).trades)  # fmt: skip
     paths = None
     if config.paths > 0:
@@ -406,9 +454,9 @@ def deflated_html(summary: dict) -> str:
     ]]  # fmt: skip
     return section(
         "Deflated Sharpe",
-        "PSR(0) is the chance the true Sharpe per trade is above 0. DSR is the same after "
+        "PSR(0) is the chance the true daily Sharpe (daily net R, Prague days, empty days 0) is above 0. DSR is the same after "
         "allowing for the best of N tried variants (family): SR0 is the Sharpe the best of N "
-        "zero-skill variants would show, V the variance of the family's Sharpes. DSR >= 0.95 "
+        "zero-skill variants would show, V the variance of the family's daily Sharpes (1/days when fewer than 2 exist). DSR >= 0.95 "
         "passes check 7.",
         table(["PSR(0)", "DSR", "N", "V", "SR0", "Family"], rows),
     )
@@ -663,6 +711,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="registry name, spec defaults (default session_zone_sweep)")  # fmt: skip
     p.add_argument("--source", choices=("histdata", "mt5"), default="histdata",
                    help="candle cache: histdata (default) or FTMO's data/cache/mt5")  # fmt: skip
+    p.add_argument("--cache-dir", type=Path, default=None,
+                   help="read every symbol from this cache folder (read only; overrides --source)")  # fmt: skip
+    p.add_argument("--set", nargs="+", default=None, metavar="KEY=VALUE",
+                   help="override settings of the strategy, e.g. entry_z=0.25 stop_atr=2 "
+                   "exit_time=11:00 (one variant of a sweep; the rest stay at the spec default)")  # fmt: skip
+    p.add_argument(
+        "--spread-table",
+        type=Path,
+        default=None,
+        help="spread by year and New York hour (JSON); without it: fixed spread",
+    )
     p.add_argument("--runs", type=int, default=d.runs, help="runs for kinds A, B and C")
     p.add_argument("--seed", type=int, default=d.seed)
     p.add_argument("--paths", type=int, default=d.paths,

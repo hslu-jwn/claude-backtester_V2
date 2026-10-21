@@ -294,7 +294,7 @@ def _store_variant(
     r_net = [t.r_net for t in result.trades]
     append(make_record(
         spec.name, spec.strategy, _log_settings(spec, variant.overrides), spec.symbols, start, end,
-        SOURCE_DEV, r_net,
+        SOURCE_DEV, result.trades,
     ), trials)  # fmt: skip
     data = {
         "id": variant.id,
@@ -549,7 +549,7 @@ def run_research(
     append(make_record(
         spec.name, spec.strategy, _log_settings(spec, best["overrides"]), spec.symbols,
         cfg.cutoff, last, f"{SOURCE_RETEST}-{run_number - 1}" if is_retest else SOURCE_TEST,
-        [t.r_net for t in result.trades],
+        result.trades,
         note=f"retest {run_number - 1} of grid {rid}" if is_retest else f"test of grid {rid}",
     ), trials)  # fmt: skip
     old_rows = _test_rows(folder)

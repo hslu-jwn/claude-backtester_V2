@@ -3,7 +3,8 @@ Spec: risk-management.md > Trial log and deflated Sharpe (ROADMAP 12.10)."""
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime, time, timedelta
+from types import SimpleNamespace
 
 import pytest
 
@@ -20,12 +21,23 @@ from backtester.analytics.trial_log import (
 )
 
 R = [1.0, -1.0, 2.0, -0.5, 1.5]
+START, END = date(2020, 1, 1), date(2021, 1, 1)
+
+
+def trades_of(values, first=date(2020, 1, 6)):
+    """One trade per value, exiting at noon UTC on consecutive days from `first`."""
+    return [
+        SimpleNamespace(
+            r_net=v, exit_time=datetime.combine(first + timedelta(days=i), time(12), tzinfo=UTC)
+        )
+        for i, v in enumerate(values)
+    ]
 
 
 def rec(family="f", settings=None, r=R, strategy="s", symbols=("A",), source="histdata"):
     return make_record(
         family, strategy, settings or {"x": 1}, list(symbols),
-        date(2020, 1, 1), date(2021, 1, 1), source, r,
+        date(2020, 1, 1), date(2021, 1, 1), source, trades_of(r),
     )  # fmt: skip
 
 
@@ -39,6 +51,38 @@ def test_record_fields_and_stats():
     assert r.mean == pytest.approx(0.6) and r.sharpe == pytest.approx(r.mean / r.sd)
     assert r.start == "2020-01-01" and r.end == "2021-01-01" and r.written
     assert r.count == 1
+
+
+def test_record_daily_fields_use_weekdays_of_the_period_with_empty_days_zero():
+    import numpy as np
+
+    from backtester.analytics.daily import daily_net_r
+
+    ts = trades_of(R)  # Mon 6 Jan .. Fri 10 Jan 2020
+    r = make_record("f", "s", {}, ["A"], date(2020, 1, 6), date(2020, 1, 17), "mt5", ts)
+    assert r.days == 10  # two full weeks, five empty days are zeros
+    d = np.array([1.0, -1.0, 2.0, -0.5, 1.5, 0, 0, 0, 0, 0])
+    assert daily_net_r(ts, date(2020, 1, 6), date(2020, 1, 17)).tolist() == d.tolist()
+    assert r.day_mean == pytest.approx(d.mean()) and r.day_sd == pytest.approx(d.std(ddof=1))
+    assert r.day_sharpe == pytest.approx(d.mean() / d.std(ddof=1))
+    assert r.day_skew is not None and r.day_kurt is not None
+    assert r.net_r == pytest.approx(3.0) and r.trades == 5  # per-trade fields unchanged
+
+
+def test_old_lines_without_daily_fields_are_read_and_excluded_from_v(tmp_path):
+    import json
+
+    p = tmp_path / "t.jsonl"
+    old = {"family": "f", "strategy": "s", "settings": {"x": 0}, "symbols": ["A"],
+           "start": "2020-01-01", "end": "2021-01-01", "source": "mt5", "written": "2020",
+           "trades": 5, "net_r": 3.0, "mean": 0.6, "sd": 1.0, "skew": 0.0, "kurt": 3.0,
+           "sharpe": 0.6, "count": 1, "note": ""}  # fmt: skip
+    p.write_text(json.dumps(old) + "\n", encoding="utf-8")
+    append(rec(settings={"x": 1}), p)
+    lines = family_trials("f", p)
+    assert len(lines) == 2 and lines[0].day_sharpe is None and lines[0].days is None
+    n, sharpes = family_summary(lines)
+    assert n == 2 and sharpes == [lines[1].day_sharpe]
 
 
 def test_key_depends_on_all_identity_fields_and_sorts_settings():
@@ -89,7 +133,7 @@ def test_count_only_lines_count_for_n_but_not_v(tmp_path):
     append(rec(settings={"x": 2}, r=[2.0, -1.0, 1.0, 1.0]), p)
     append(count_only("f", "s", 8, note="old tests"), p)
     n, sharpes = family_summary(family_trials("f", p))
-    assert n == 10 and len(sharpes) == 2
+    assert n == 10 and len(sharpes) == 2  # daily Sharpes
     assert count_only("f", "s", 8, note="old tests").sharpe is None
 
 

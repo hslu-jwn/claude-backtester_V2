@@ -18,6 +18,8 @@ from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.base import Strategy
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_fade.strategy import GapFade
+from backtester.strategy.gap_momentum.config import GapMomentumConfig
+from backtester.strategy.gap_momentum.strategy import GapMomentum
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.no_wick.strategy import NoWick
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
@@ -54,6 +56,10 @@ _SPECS = (
     StrategySpec("gap_fade", "Strategy 5 · Gap fade (index open)", GapFadeConfig, GapFade),
     StrategySpec(
         "opening_range", "Strategy 6 · Opening-range breakout", OpeningRangeConfig, OpeningRange
+    ),
+    StrategySpec(
+        "gap_momentum", "Strategy 7 · Gap momentum (beyond the range)",
+        GapMomentumConfig, GapMomentum,
     ),
 )  # fmt: skip
 

@@ -288,6 +288,9 @@ def plans() -> dict[str, Plan]:
         "gap_fade": Plan(
             "gap_fade", default_config("gap_fade"), ("NAS100", "US500"), ("NAS100", "US500")
         ),
+        "gap_momentum": Plan(
+            "gap_momentum", default_config("gap_momentum"), ("NAS100", "US500"), ("NAS100", "US500")
+        ),
         "opening_range": Plan(
             "opening_range",
             forward_config(),
