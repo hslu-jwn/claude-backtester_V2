@@ -905,6 +905,9 @@ has no step yet.
   (a) scorecard + flags, (b) grid file + variant expansion, (c) development run (parallel, resumable), (d) selection
   + one test run + trial log + output, (d2) Research page, (e) reproduce `orb_grid` / gap-fade numbers, then archive
   the per-strategy grid tools. The original 6.1 / 6.2 text below is kept for history.
+  **Status 2026-10-21:** (a)-(d) built (`tools/research.py`, `analytics/scorecard.py`), (d2) Research page `/research`
+  built (to be checked by the user), speed step (2) built: candles loaded once per worker, variant chunks in a process
+  pool, 6 variants x 2 symbols 11.4 min -> ~1.5 min with identical trades. Next: (e), then plan step (3).
 - ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
   1. The user marks which settings take part (per strategy) and gives values or ranges; the settings come from the strategy's config (universal settings the same for all strategies, extra ones per strategy).
   2. A runner builds the grid (random search for big grids), runs the backtests in parallel (reusing `runner.py`) and writes every result to `results/sim/<id>/` (resumable; may take hours).
