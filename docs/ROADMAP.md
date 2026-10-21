@@ -883,6 +883,10 @@ has no step yet.
   83.9 % test (fixed 1.5 %: 63.2 / 16.4 %); flat top (45 of 100 within 1 pp): floor 0.1-0.25 matters, exact budget
   does not. Caveats: pass rate counts finished attempts only (slow low-risk variants look 100 %), best base risk is
   the grid edge 1.5 %, strategy 6 sample 177 / 302 trades. Open: time-capped pass metric, decide defaults.
+  **Decided by the user 2026-10-21:** parked until a strategy with a good edge exists ("first we need to find a good
+  edge, then we can do fine-tuning"); the goal is passing within about **3 months** (≈ 63 trading days) without
+  raising the risk to get there; the time-capped pass metric ("passed within 63 trading days") comes with the
+  fine-tuning; no grid beyond 1.5 %. Defaults unchanged.
   No trial-log lines added (a risk sweep tries no strategy variant; 12.10 counts strategy variants).
 
 ## Phase 6: Robustness (before trusting any result)
