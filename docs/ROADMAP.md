@@ -861,7 +861,7 @@ has no step yet.
   **Decided by the user 2026-10-20:** shown as a "Prop firm" card on every results page plus a "Full Monte Carlo"
   button (no separate section); new idea to add: risk that shrinks towards the loss limit (`risk-management.md` ›
   Prop-firm field). Order: after the live fixes 13.1-13.5 and the live page folds 7.7.
-  **Card + button built 2026-10-20, to be checked by the user** (FTMO 2-Step only; other firms plug into
+  **Card + button built 2026-10-20, accepted by the user 2026-10-21** (FTMO 2-Step only; other firms plug into
   `risk/prop_card.py` `FIRMS` and show in the card's dropdown): `risk/prop_card.py`, `ui/prop_firm_card.py`,
   `ui/prop_card_job.py`, `ui/process_job.py`. Big runs take 20-40 s, so the card is computed once in a background
   process and cached in `results/<run>/prop_firm.json` (details: `risk-management.md` › Prop-firm field).
@@ -870,10 +870,10 @@ has no step yet.
   field › Adaptive risk): linear room scaling (floor 0.25, never above the base), daily risk budget 3 %, in the
   challenge and the funded account; card shows fixed vs adaptive with pass probability and days to pass; then a
   variant sweep (base risk x floor x daily budget) on the trades of every strategy, dev years vs the MT5 period.
-  **Part 1 built 2026-10-20, to be checked by the user:** `risk/adaptive.py`, `monte_carlo._play_day_adaptive`
+  **Part 1 built 2026-10-20, accepted by the user 2026-10-21:** `risk/adaptive.py`, `monte_carlo._play_day_adaptive`
   (`MonteCarloConfig.adaptive`, None = fixed, bit-identical), card with fixed / adaptive columns (card version 3);
   modelling choices in `risk-management.md` › Adaptive risk.
-  **Part 2 built and run 2026-10-21, to be checked by the user (defaults NOT changed):** `tools/risk_sweep.py`
+  **Part 2 built and run 2026-10-21, accepted by the user 2026-10-21 (defaults NOT changed):** `tools/risk_sweep.py`
   (`python -m backtester.tools.risk_sweep`; 100 variants per strategy: base 0.25-1.5 % x floor 0.1/0.25/0.5/off x
   budget off/2/2.5/3/4 % + fixed baselines; 1000 reshuffles, same orders; dev 2018..2021-09-13 histdata (strategy 6:
   US30/US2000 MT5, tick volume), test 2021-09-14..2026-10-16 MT5; picks fixed on dev, played once on test). Output
@@ -1145,7 +1145,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   `chart-page.css`); newest run = newest `YYYYMMDD-HHMMSS` run id. Open polish: "Updated …" text overlaps the
   button on narrow windows; dashed "MT5" marker at the feed switch not drawn; replay bar and ⚙ dialog on the dark
   page not checked visually.
-- **7.6 Chart page: fast load, load on scroll, overlays in Settings, loading bar** (user 2026-10-19, built, to be
+- ☑ **7.6 Chart page: fast load, load on scroll, overlays in Settings, loading bar** (accepted by the user 2026-10-21, "End.") (user 2026-10-19, built, to be
   checked by the user): the day lists of the caches are kept in memory and read again only when a year folder
   changed (`cache_adapter.cached_days`; the 28-symbol page build took 5 s of directory listing, every callback
   0.1 s more); the chart loads the next days while scrolling (`extend_dates`, chunk `ChartConfig.extend_candles`,
@@ -1185,7 +1185,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
   symbols, days, trades, net R, each row opens its results; broken summaries skipped) with a "Backtest
   cancelled" line that fades out after 4 s; without a running job `/backtest` is always that list.
 
-- ◐ **7.7 Live page fold-outs** (user 2026-10-20; built 2026-10-20, Closed trades with its own Day / Week / All, to be checked by the user): every card can be folded; open by default: Open positions,
+- ☑ **7.7 Live page fold-outs** (accepted by the user 2026-10-21, "End.") (user 2026-10-20; built 2026-10-20, Closed trades with its own Day / Week / All, to be checked by the user): every card can be folded; open by default: Open positions,
   Closed trades (opens on Day), Today's signals and skips; closed by default: Recent trades, Event log, Settings
   (Setup in progress and Connection are already closed by default, 7.6). After 13.1-13.5 (user: live fixes first).
 
@@ -1804,7 +1804,7 @@ changes results, defaults changed only with the user's go.
   +14.8 R, without best +23.4 R, random fills median +7.9 R; 1 % risk: gain p50 +24.4 %, 1.19 % per month, max DD p95
   29.2 %, FTMO pass 49.6 % (0.5 %: 74.6 %); random paths no warning. Runtime 37 min (kind D most of it).
   Halves split at the middle of the run's period (user, 2026-10-15); n/a checks count neither way (user, 2026-10-15).
-  **"Full Monte Carlo" button built 2026-10-20, to be checked by the user:** on every results page; runs
+  **"Full Monte Carlo" button built 2026-10-20, accepted by the user 2026-10-21:** on every results page; runs
   `python -m backtester.tools.monte_carlo --run <run id>` in the background (`ui/monte_carlo_job.py`), progress per
   kind, Cancel, one at a time, survives leaving the page; the report opens in a new tab from
   `/monte-carlo/<run id>/report.html` (`ui/report_route.py`, only `report.html` / `summary.json` under
@@ -1855,30 +1855,30 @@ time, with the bot stopped. Claude's ranking; the user decides the order.
 - ☑ **13.1 Loop safety net:** `bot.py` `run` catches only connection errors; any other exception (tick None in
   `orders.py` market_order / close_volume, `account_info` None, sizer ValueError) ends the bot silently: no Telegram,
   positions keep only their server SL, no 15:55 exit (overnight swap). Log + Telegram + continue.
-  **built 2026-10-20, to be checked on the demo:** each cycle step, each symbol's bars, each entry and each exit is guarded; an identical error is
+  **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** each cycle step, each symbol's bars, each entry and each exit is guarded; an identical error is
   reported once per `error_repeat_s` (300 s, with the held-back count); `error_persistent` after
   `error_persist_cycles` (5) cycles with errors in a row; a failed exit is kept and retried every cycle.
   Tests `tests/live/test_loop_safety.py`.
 - ☑ **13.2 EMERGENCY before STOP:** `cycle()` checks the STOP file first; Stop then "Close all & stop" in the same
-  minute stops without closing. **built 2026-10-20, to be checked on the demo:** EMERGENCY is checked first and consumes a STOP file too.
+  minute stops without closing. **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** EMERGENCY is checked first and consumes a STOP file too.
 - ☑ **13.3 Retry closes until flat:** `_close_all` (emergency, daily stop, FTMO breach) logs `close_failed` once and
-  stops / blocks; positions stay open unmanaged. **built 2026-10-20, to be checked on the demo:** `_begin_flatten` / `_flatten_step`:
+  stops / blocks; positions stay open unmanaged. **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** `_begin_flatten` / `_flatten_step`:
   `close_attempts` (3) rounds per cycle with a wait of `close_retry_first_s` (1 s) x `close_retry_factor` (2),
   capped at `close_retry_max_s` (10 s), then every cycle until no own position is left; Telegram
   `close_all_incomplete`; after an emergency or FTMO breach the bot does not exit (and opens nothing) until flat.
 - ☑ **13.4 Single-instance lock:** `start_bot` only checks the heartbeat; a double click before the first heartbeat
   or a bot stuck in connect backoff (> 120 s) lets a second bot start -> duplicate orders. PID / lock file.
-  **built 2026-10-20, to be checked on the demo:** `live/lock.py`, `results/live/bot.lock` (PID, stale when the PID is dead); the bot takes it in
+  **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** `live/lock.py`, `results/live/bot.lock` (PID, stale when the PID is dead); the bot takes it in
   `main` (a second bot exits with code 3), `start_bot` refuses while it is held. Tests `tests/live/test_lock.py`.
 - ☑ **13.4b Restarting the Dash app killed the bot** (user, 2026-10-20; checked live 2026-10-20 23:14 CH: app restarted, bot heartbeat went on). Cause: the bot was the app's child process
   (`taskkill /T` / a killed process tree reaches it) and lived in the app's Windows job object (a terminal / IDE host
   that kills the job takes every process in it); only `CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW` was set.
-  **built 2026-10-20, to be checked on the demo:** a short-lived launcher process starts the bot (no living parent) with
+  **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** a short-lived launcher process starts the bot (no living parent) with
   `CREATE_BREAKAWAY_FROM_JOB` (falls back without it when the job forbids breakaway, then only the tree-kill case is
   covered). Still no `DETACHED_PROCESS` (the venv launcher would open a console). Tests in `tests/ui/test_live_page.py`.
   Not provable without a real restart: check once on the demo (restart the app, the heartbeat must continue).
 - ☑ **13.5 Lost order result:** a non-DONE / None `order_send` result is treated as rejected; if the server executed
-  it, the position is orphaned (no session exit). Look up own positions by comment first. **built 2026-10-20, to be checked on the demo:** after any
+  it, the position is orphaned (no session exit). Look up own positions by comment first. **built 2026-10-20, accepted by the user 2026-10-21; first live check on the demo pending:** after any
   non-DONE result the own positions (MAGIC + comment) are looked up and adopted (`order_adopted`); a None / unclear
   result (10008, 10010, 10011, 10031) or a pending own order with no position yet is rechecked for
   `adopt_recheck_cycles` (3) cycles (`order_unclear`), then skipped. An exception after the order was sent also

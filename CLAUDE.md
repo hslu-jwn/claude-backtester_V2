@@ -199,7 +199,7 @@ access; the user may supply the research). They help; they never override the ru
 - **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
 
-## Status (2026-10-17, end of session)
+## Status (2026-10-21, end of session)
 
 | Part | Status |
 |---|---|
@@ -214,10 +214,10 @@ access; the user may supply the research). They help; they never override the ru
 | Strategy 5 (gap fade, 2026-10-15) | built; 2020-26 weak positive, failed out of sample (2018-19 negative) and walk-forward: **no edge** (ROADMAP 11.4-11.7) |
 | Strategy 6 (opening-range breakout, 2026-10-15/16) | built; price-only no edge; with tick-volume filter on US indices +30 R out of sample 2021-09..2026 (+0.10 R/trade) but fading since 2024; **demo forward test candidate** (ROADMAP 11.10, 7.2) |
 | Data 2026-10-16 | 26 FTMO symbols in `data/cache/mt5/` (FX / metals from 2010), histdata 2015-2021 for 21 symbols, Binance BTC / ETH futures 1m + order flow + funding from 2020; data split cut-off 2021-09-14; spread scaled with price; FTMO % fees, Binance fees + funding |
-| Live (Phase 7, 2026-10-17) | demo test orders run clean on FTMO demo; sizer, daily guard, bot `python -m backtester.live.bot`, Telegram built; UI clean-up 7.3 done (top bar, new `/live` page with Start / Pause / Stop, settings, Connection); bot not yet run live; next: first demo day, then 7.4 chart page style |
-| Risk / FTMO (Phase 5) | sizer and daily guard built (7.2); Monte Carlo report built (12.7, other chat) |
+| Live (Phase 7, 2026-10-21) | demo forward test of strategy 6 running on the FTMO demo (new bot since 2026-10-20 22:47 CH); safety fixes 13.1-13.5 + 13.4b built (bot survives an app restart, single-instance lock); Live page folds (7.7); next: review the first demo trades, then 13.6-13.8 |
+| Risk / FTMO (Phase 5) | sizer and daily guard (7.2); Monte Carlo report (12.7) + "Full Monte Carlo" button; prop-firm card on every results page (5.6, FTMO 2-Step, fixed vs adaptive); adaptive risk (5.7) built and swept, **parked** until a strategy has a good edge |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
-| MT5 | connection, download, demo test orders run on the FTMO demo 2026-10-17 |
+| MT5 | connection, download, demo test orders run on the FTMO demo 2026-10-17; **MT5 data preferred day by day** over histdata for backtests, tools and the chart (user, 2026-10-19) |
 
 ## Working agreement with the user
 
