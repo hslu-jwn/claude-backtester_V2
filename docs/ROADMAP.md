@@ -1727,7 +1727,7 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
 - ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
-- ☑ **11.13 No-wick retest study** (I-61; user, 2026-10-21: strategy 3 with a limit at the no-wick end, many
+- ☑ **11.17 No-wick retest study** (I-62; user, 2026-10-21: strategy 3 with a limit at the no-wick end, many
   stops / targets / filters, ideas from a Bard FX video summary `00_Literature/Trading/no_wick_trading_strategy.pdf`).
   Research tool `tools/no_wick_retest_study.py` (no strategy, no spec): signals on M5 / M15 / M30 / H1, limit at the
   signal candle's open, expiry 5 candles, fills and SL / target order on M1 (SL first in one bar), exit 16:55 New York.
