@@ -11,66 +11,59 @@ never `git add -A` over another session's changes. A knowledge session works in 
 `../backtester-knowledge` on `claude/knowledge-stationarity` (11.11); it merges its own section here when it ends.
 Untracked `.vscode/` and a garbled `C…claude-notify-signalsstop` file in the root are not ours (left alone).
 
-## Last session, strategy / app chat (2026-10-19..21, "End.")
-Worked in a temporary worktree + dev app on :8051 (removed at the end), merged into this branch step by step.
-- **Data rule (user 2026-10-19):** MT5 preferred day by day, histdata for older days, for backtests, tools and the
-  chart (`data/sources.py` `preferred_dirs`; `docs/ARCHITECTURE.md`). FX research before 2021 now reads MT5 too.
-- **Doji thresholds for all 23 symbols** (median 5m range, full history, `confluences.md`); Binance BTCUSDT /
-  ETHUSDT hidden from the UI symbol lists (research only).
-- **Chart page (7.6 ☑):** 42 s -> 3 s first load (cause: the 213-field settings dialog's wildcard callbacks),
-  candles load on scroll, bottom fields removed except "Go to", overlays in ⚙ Settings (Chart Settings / Chart
-  Overlays, closed by default), loading bar, update status as a popover, side-panel toggle on a right-edge strip,
-  click a trade (results page, side panel, live page) -> chart on the strategy's timeframe with only the order
-  (entry / SL / TP); every strategy's run trades drawn from the saved trade list.
-- **Backtest page `/backtest`:** large two-phase bar (loading data / running), ETA, Cancel (also while loading,
-  nothing saved), list of previous runs when idle / after Cancel; unsupported / data-less / unmapped symbols are left
-  out with a note; results header shows the run's strategy; run-id path check fixed.
-- **Live page (7.7 ☑):** every card folds; open by default Open positions, Closed trades (own Day / Week / All),
-  Today's signals; setup funnel no longer ticks "Entered" on skipped setups (the bot had correctly skipped by volume
-  on 10-19 / 10-20; no orders were sent).
-- **Live bot fixes 13.1-13.5 + 13.4b (accepted, first demo check pending):** loop safety net, emergency before stop,
-  retry closes until flat, single-instance lock (`results/live/bot.lock`), bot started via a launcher (an app
-  restart no longer kills it — checked live 2026-10-20 23:14), adoption of orders with a lost result. The new bot
-  runs on the FTMO demo since 2026-10-20 22:47 CH.
-- **Prop-firm card + Full Monte Carlo button (5.6 / 12.7):** card on every results page (FTMO 2-Step, fixed vs
-  adaptive, pass probability, fails, avg / median days, funded lost; cached `results/<run>/prop_firm.json`); button
-  runs `tools.monte_carlo --run <id>` in the background, report served at `/monte-carlo/<id>/report.html`, written
-  to the trial log. **12.12 ☑:** funded account risks on the initial balance, profits paid out daily (user rule).
-- **Adaptive risk (5.7, parked):** spec `risk-management.md` › Adaptive risk (linear room scaling, floor 0.25, daily
-  budget 3 %); sweep tool `tools/risk_sweep.py`, result `results/risk_sweep/2026-10-21/`: only strategy 6 has an
-  edge; adaptive 1.5 % / floor 0.1 / budget 2.5 % passes 84 % on the MT5 test period vs 16 % fixed, but ~411 days on
-  average. User: park it until a strategy with a good edge exists; goal = pass within ~3 months without more risk.
-- Tests 2610 passed, 1 skipped; `ruff check` clean; `ruff format --check`: 4 test files unformatted (not touched
-  this session: tests/engine/test_backtest.py, test_percentage_costs.py, test_spread_scaling.py,
-  tests/live/test_connection.py).
+## Last session, strategy / app chat (2026-10-21, second chat, "End.")
+- **7.8 Bot positions always on the chart (☑):** the chart showed "not in the cache" for today's US500 short (the
+  cache ends yesterday). Now the bot writes its 4 symbols' finished days into the MT5 cache (from its warm-up history,
+  never overwrites, empty files for no-data days) and today's bars into `data/cache/live/` each minute; at start it
+  launches `tools.update_data` detached for the other symbols (log `results/live/update_stdout.log`). Only the chart
+  reads `live/` (`CHART_SOURCES`; backtests / tools keep `DEFAULT_SOURCES`). "Bot trades" overlay (since the current
+  bot start, on by default for bot symbols). No TP on strategy 6 orders is correct (`target_r` = 0, session-end exit).
+  Fixed in passing: the cache day-list memo and the live-file stamp missed fast rewrites on Windows (flaky tests).
+- **Live:** first demo trade 2026-10-21 US500 short 14:06 UTC, SL hit 16:40 UTC (-1.0 R); the bot was stopped with
+  "Close all & stop" 16:49 UTC and is **not running**. It needs the 7.8 code: restart from the Live page.
+- **Research tooling (6.1 + 6.2 ☑, spec `docs/research-runner.md`):** `python -m backtester.tools.research
+  research/grids/<name>.toml [--dev-only] [--retest] [--workers N]` for any registered strategy: TOML grid checked
+  against the config, development run (first cached day..2021-09-13), only the best variant (net R, >= 100 trades)
+  tested once on 2021-09-14..last day, deflated Sharpe with N = variants, verdict, flags, trial log, run folders +
+  preset. Research page `/research` (all research variants + plain runs, sortable, flags, row -> results page).
+  Speed: candles loaded once per worker, variant chunks in a process pool (11.4 min -> ~1.5 min, identical trades).
+  Contract tests for every registered strategy (`tests/strategy/test_contract.py`). The runner reproduces `orb_grid`
+  and `gap_fade_grid` exactly (`research/grids/check_*.toml`); the 7 per-strategy grid tools are archived in
+  `tools/archive/` (shared helpers `tools/grid_common.py`). 13.19 not reproduced by the contract test (noted).
+- Dev app config `backtester-app-dev` (port 8052) added to `.claude/launch.json`.
 
 ## Accepted by the user (do not ask again)
-- Everything above ("End." 2026-10-21): 7.6, 7.7, 13.1-13.5 + 13.4b, 5.6 card + button, 12.12, 5.7 parts 1-2
-  (defaults unchanged, parked). Decisions: MT5 preferred day by day; Binance symbols hidden in the UI; trade focus
-  opens the strategy's base timeframe; card data limits 100 trades / 120 days; button reports go into the trial log;
-  funded account risk on the initial balance; adaptive risk rules (linear, floor 0.25, never above base, daily budget
-  (a) 3 %, challenge + funded, FTMO limits); no daily-cap "N losses" rule; BTCUSD stays out of strategy 6 (no
-  session).
-- Earlier: knowledge chat 2026-10-19 (six books, 12.10, research order 12.10 -> 11.11 -> 11.12, DSR check 7, audit as
-  Phase 13), 2026-10-17 decisions, ROADMAP 7.1-7.5, 11.x studies, FTMO swap defaults, cut-off 2021-09-14, strategy 6
-  = forward-test candidate; strategies 1 paused, 2 / 4 parked, 3 dropped; tests first, small commits, no PR.
+- "End." 2026-10-21 (second chat): 7.8 and its rules (`live-trading.md` › Bot data and chart: overlay since the
+  current bot start, on by default; the bot updates its 4 symbols itself, the rest in the background); 6.1 + 6.2
+  research runner + page and its decisions (single best variant tested once, min 100 development trades, `--retest`
+  only explicitly and logged, command line first then page, default sort verdict -> test net R -> dev net R);
+  research-speed plan order (1) runner, (2) speed, (3) contract tests, (4) result-bias fixes 12.2, 12.8, 13.20,
+  13.12-13.15, 13.23, (5) clean-up 13.17, 13.18, 13.21, 13.22, (6) portfolio tool 12.9; old grid tools archived.
+- First chat 2026-10-21 ("End."): 7.6, 7.7, 13.1-13.5 + 13.4b, 5.6 card + button, 12.12, 5.7 parts 1-2 (parked);
+  MT5 preferred day by day; Binance symbols hidden in the UI; funded risk on the initial balance; adaptive risk rules.
+- Earlier: knowledge chat 2026-10-19, 2026-10-17 decisions, ROADMAP 7.1-7.5, 11.x studies, FTMO swap defaults,
+  cut-off 2021-09-14, strategy 6 = forward-test candidate; strategies 1 paused, 2 / 4 parked, 3 dropped; tests
+  first, small commits, no PR.
 
 ## Open (needs the user)
-1. **Demo forward test** of strategy 6 runs (new bot since 2026-10-20 22:47). Watch the Live page / Telegram; first
-   trades will show in Closed trades with "Chart →". First live check of 13.1-13.5 happens with the first real
-   events (an error, a stop, a close).
-2. **Research:** 11.11 stationarity / half-life study (T-11) is running in the knowledge session, then 11.12 gap
-   momentum (I-46).
-3. **Remaining audit items** 13.6-13.23 (live clock, live-price sizing, wall-clock fallback exit, data clock issues,
-   …); the user decides the order.
-- **Known issues / polish:** 4 unformatted test files (above); an adopted position (13.5) misses the entry commission
-  in its net R; PID reuse can fool the lock (rare); Monte Carlo kind A pass rate counts finished attempts only (13.23,
-  matters for 5.7 later); strategy 6 sweep samples are small (177 / 302 trades); the remote branch
+1. **Restart the bot** from the Live page (it was stopped 2026-10-21 18:49 CH); with 7.8 it then writes its bars.
+2. **Research:** 11.11 stationarity study (T-11) in the knowledge session, then 11.12 gap momentum (I-46). New ideas
+   now go through `tools.research` (one grid file each). The user offered to supply papers; suggested topics:
+   backtest overfitting / PBO / White's Reality Check / Hansen SPA; intraday momentum and ORB in index futures (Gao
+   et al., Zarattini / Aziz); volume as a breakout filter; combining weak edges (vol targeting, meta-labeling);
+   retail CFD cost models.
+3. **Remaining audit items** 13.6-13.23 for the live bot and data.
+- **Known issues / polish:** 4 unformatted test files (tests/engine/test_backtest.py, test_percentage_costs.py,
+  test_spread_scaling.py, tests/live/test_connection.py); variant results pages opened from the Research page have
+  no prop-firm card / Monte Carlo button (the chosen variant's run has them); research batches lose up to 8 variants'
+  work on an interrupt (chunked); the chart does not auto-refresh live candles (reload); an adopted position (13.5)
+  misses the entry commission; PID reuse can fool the lock (rare); 13.23 Monte Carlo pass rate; the remote branch
   `origin/claude/ui-polish` (merged) can be deleted.
 
 ## Next step
-Research for an edge (`Continue.Knowledge`, 11.11 then 11.12) while the demo forward test runs. Strategy / app work
-(`Continue.`): review the demo's first trades, then audit items 13.6-13.8 for the live bot.
+Strategy / app work (`Continue.`): research-speed plan step (4), the result-bias fixes (12.2 intrabar M1 order, 12.8
+engine slippage, 13.20 time-exit slippage, 13.12-13.15 data clock / holes, 13.23), then 13.6-13.8 for the live bot.
+Research (`Continue.Knowledge`): 11.11 then 11.12, using `tools.research`.
 
 ## First prompt for the next chat
-`Continue.Knowledge` (research) — or `Continue.` for the demo review / live fixes.
+`Continue.` (step 4, result-bias fixes) — or `Continue.Knowledge` for research.

@@ -891,7 +891,7 @@ has no step yet.
 
 ## Phase 6: Robustness (before trusting any result)
 
-- **Research-speed plan (user, 2026-10-21):** goal = test many strategy ideas fast with little new code. Order:
+- **Research-speed plan (user, 2026-10-21; steps (1)-(3) done and accepted 2026-10-21, "End."):** goal = test many strategy ideas fast with little new code. Order:
   (1) one research runner for every registered strategy (6.1 + 6.2 merged, command line first, a UI page later);
   (2) speed (load candles once per symbol for all variants); (3) automatic contract tests for every registered
   strategy (no lookahead, deterministic, R only, sweepable settings); (4) result-bias fixes 12.2, 12.8, 13.19, 13.20,
@@ -899,7 +899,7 @@ has no step yet.
   `gap_fade_walk_forward`, `no_wick_grid`, `trend_grid`, `strategy2_sweep_grid`, `s2_volume_ab`, ...) are archived
   once the runner reproduces their results (checked on strategy 6 and the gap fade first), plus 13.17, 13.18, 13.21,
   13.22; (6) later the portfolio tool 12.9.
-- ◐ **6.1 + 6.2 Research runner + Research page** (user 2026-10-21, spec `docs/research-runner.md`; decisions:
+- ☑ **6.1 + 6.2 Research runner + Research page** (accepted by the user 2026-10-21, "End.") (user 2026-10-21, spec `docs/research-runner.md`; decisions:
   test only the single best development variant, min 100 development trades to be ranked, a second test of the
   same grid only with `--retest` (logged), Research page right after the runner, command line first). Steps:
   (a) scorecard + flags, (b) grid file + variant expansion, (c) development run (parallel, resumable), (d) selection
@@ -910,8 +910,9 @@ has no step yet.
   pool, 6 variants x 2 symbols 11.4 min -> ~1.5 min with identical trades. (e) built 2026-10-21: the runner reproduces
   `orb_grid` (4 variants, NAS100 + US500, 2015-01-02..2021-09-13: trades and net R identical, `research/grids/check_orb.toml`)
   and `gap_fade_grid` (4 variants, identical, `check_gap_fade.toml`); the per-strategy grid tools are archived in
-  `tools/archive/` (`python -m backtester.tools.archive.<name>`), shared helpers in `tools/grid_common.py`. Next: plan step (3).
-- ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
+  `tools/archive/` (`python -m backtester.tools.archive.<name>`), shared helpers in `tools/grid_common.py`. Plan step (3)
+  built 2026-10-21: contract tests for every registered strategy (`tests/strategy/test_contract.py`). Next: plan step (4).
+- ☑ **6.1 Strategy Simulator** (superseded by "6.1 + 6.2 Research runner" above, 2026-10-21) (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
   1. The user marks which settings take part (per strategy) and gives values or ranges; the settings come from the strategy's config (universal settings the same for all strategies, extra ones per strategy).
   2. A runner builds the grid (random search for big grids), runs the backtests in parallel (reusing `runner.py`) and writes every result to `results/sim/<id>/` (resumable; may take hours).
   3. Ranking by **max net R** (user), with a minimum trade count against lucky settings; other metrics shown next to it.
@@ -919,7 +920,7 @@ has no step yet.
   5. The best settings are saved as a preset (`results/presets/`) and shown after the run.
   6. Settings of a Simulator result can be loaded on the chart (Trades overlay) to check them visually.
   Open: sweep settings join only after the sweep rework (`confluences.md` › Liquidity sweep).
-- ☐ **6.2** In-sample / out-of-sample split: tune settings on one period, judge them only on
+- ☑ **6.2** (superseded by "6.1 + 6.2 Research runner" above, 2026-10-21) In-sample / out-of-sample split: tune settings on one period, judge them only on
   a later period the tuning never saw. Walk-forward later.
 - ☑ **6.3** Results per year / per quarter, to see if the edge is stable or one lucky period.
   **Speed with years of data (2026-10-09, confirmed by the user).** Before: a backtest

@@ -121,6 +121,7 @@ python -m backtester.data.histdata data/raw/histdata/  # import histdata files (
 python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
+python -m backtester.tools.research research/grids/orb_example.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
 python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
 python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
@@ -199,7 +200,7 @@ access; the user may supply the research). They help; they never override the ru
 - **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
 
-## Status (2026-10-21, end of session)
+## Status (2026-10-21, end of session 2)
 
 | Part | Status |
 |---|---|
@@ -214,7 +215,8 @@ access; the user may supply the research). They help; they never override the ru
 | Strategy 5 (gap fade, 2026-10-15) | built; 2020-26 weak positive, failed out of sample (2018-19 negative) and walk-forward: **no edge** (ROADMAP 11.4-11.7) |
 | Strategy 6 (opening-range breakout, 2026-10-15/16) | built; price-only no edge; with tick-volume filter on US indices +30 R out of sample 2021-09..2026 (+0.10 R/trade) but fading since 2024; **demo forward test candidate** (ROADMAP 11.10, 7.2) |
 | Data 2026-10-16 | 26 FTMO symbols in `data/cache/mt5/` (FX / metals from 2010), histdata 2015-2021 for 21 symbols, Binance BTC / ETH futures 1m + order flow + funding from 2020; data split cut-off 2021-09-14; spread scaled with price; FTMO % fees, Binance fees + funding |
-| Live (Phase 7, 2026-10-21) | demo forward test of strategy 6 running on the FTMO demo (new bot since 2026-10-20 22:47 CH); safety fixes 13.1-13.5 + 13.4b built (bot survives an app restart, single-instance lock); Live page folds (7.7); next: review the first demo trades, then 13.6-13.8 |
+| Live (Phase 7, 2026-10-21) | demo forward test of strategy 6 on the FTMO demo; first trade 2026-10-21 US500 short, SL -1.0 R; bot stopped by the user 18:49 CH (restart from the Live page); safety fixes 13.1-13.5 + 13.4b; 7.8: bot writes its symbols' bars (finished days -> MT5 cache, today -> `data/cache/live/`, chart only), starts the cache update at start, "Bot trades" chart overlay; next: 13.6-13.8 |
+| Research tooling (2026-10-21) | one runner for every strategy: `python -m backtester.tools.research research/grids/<name>.toml` (spec `docs/research-runner.md`: develop before 2021-09-14, best variant tested once on MT5 data, scorecard + flags, trial log); Research page `/research`; ~6x faster (candles loaded once per worker); contract tests for every registered strategy; old per-strategy grid tools in `tools/archive/` |
 | Risk / FTMO (Phase 5) | sizer and daily guard (7.2); Monte Carlo report (12.7) + "Full Monte Carlo" button; prop-firm card on every results page (5.6, FTMO 2-Step, fixed vs adaptive); adaptive risk (5.7) built and swept, **parked** until a strategy has a good edge |
 | Strategy Simulator (6.1) | planned, before any MT5/prop-firm work (Phase 7) |
 | MT5 | connection, download, demo test orders run on the FTMO demo 2026-10-17; **MT5 data preferred day by day** over histdata for backtests, tools and the chart (user, 2026-10-19) |
