@@ -1,0 +1,13 @@
+# Reproduction check ROADMAP 6.1 (e): strategy 6 against tools/orb_grid.py (4 variants, NAS100 + US500).
+# Old: python -m backtester.tools.orb_grid --start 2015-01-02 --end 2021-09-13 --symbols NAS100 US500 --no-shocks --out <scratch> --variants "range 15m T0" "range 15m T1" "range 30m T0" "range 30m T1"
+# New: python -m backtester.tools.research research/grids/check_orb.toml --dev-only --results-dir <scratch>
+strategy = "opening_range"
+symbols = ["NAS100", "US500"]
+min_trades = 1
+
+[base]
+entry_mode = "range"
+
+[grid]
+range_minutes = [15, 30]
+target_r = [0, 1]

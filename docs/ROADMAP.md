@@ -907,7 +907,10 @@ has no step yet.
   the per-strategy grid tools. The original 6.1 / 6.2 text below is kept for history.
   **Status 2026-10-21:** (a)-(d) built (`tools/research.py`, `analytics/scorecard.py`), (d2) Research page `/research`
   built (to be checked by the user), speed step (2) built: candles loaded once per worker, variant chunks in a process
-  pool, 6 variants x 2 symbols 11.4 min -> ~1.5 min with identical trades. Next: (e), then plan step (3).
+  pool, 6 variants x 2 symbols 11.4 min -> ~1.5 min with identical trades. (e) built 2026-10-21: the runner reproduces
+  `orb_grid` (4 variants, NAS100 + US500, 2015-01-02..2021-09-13: trades and net R identical, `research/grids/check_orb.toml`)
+  and `gap_fade_grid` (4 variants, identical, `check_gap_fade.toml`); the per-strategy grid tools are archived in
+  `tools/archive/` (`python -m backtester.tools.archive.<name>`), shared helpers in `tools/grid_common.py`. Next: plan step (3).
 - ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
   1. The user marks which settings take part (per strategy) and gives values or ranges; the settings come from the strategy's config (universal settings the same for all strategies, extra ones per strategy).
   2. A runner builds the grid (random search for big grids), runs the backtests in parallel (reusing `runner.py`) and writes every result to `results/sim/<id>/` (resumable; may take hours).
@@ -993,10 +996,10 @@ has no step yet.
   commission + swap, × 1.5; swap income not scaled; no re-run), shock days (true range of a daily bar
   > 3.5 × the mean true range of the 10 days before; trades belong to the UTC date they exit on;
   more than half of the shock days with a closing trade profitable = risk understated). Used by
-  `python -m backtester.tools.trend_grid`: new `robustness.csv` (variant × symbol group) and `grid.csv`
+  `python -m backtester.tools.archive.trend_grid`: new `robustness.csv` (variant × symbol group) and `grid.csv`
   (per signal × timeframe family and over all variants), a printed family table, and `--no-shocks`.
   Tests: `tests/analytics/test_robustness.py`, `tests/tools/test_trend_grid.py`. The Strategy
-  Simulator (6.1) reuses the functions. Check: `python -m backtester.tools.trend_grid --symbols
+  Simulator (6.1) reuses the functions. Check: `python -m backtester.tools.archive.trend_grid --symbols
   XAUUSD NAS100 --timeframes D1 H4 --signals breakout sma --out results/trend_check2` and look at
   `grid.csv` / the family table.
 - ☑ **6.5 R split by time** (knowledge base I-22; user, 2026-10-14). **Built 2026-10-14, waiting for the
@@ -1457,11 +1460,11 @@ Rules set by the user 2026-10-13, spec `strategy-no-wick.md`. Plain 1:1, one fol
 
 - ☑ **9.1 Build and compare** (accepted by the user 2026-10-14, strategy dropped, no variant has an edge). Spec, tests first (`tests/strategy/no_wick/`, limit fills in
   `tests/engine/test_backtest.py`), engine support for limit fills (`Order.limit_fill`, SL first in the
-  fill candle), strategy + config, registry entry, `python -m backtester.tools.no_wick_grid`
+  fill candle), strategy + config, registry entry, `python -m backtester.tools.archive.no_wick_grid`
   (entry timeframe 5m / 15m / 30m / 1h x trend higher / same x entry close / body_end / middle, 2020-22
   against 2023-26). Results recorded here after the user has looked at them.
 
-  **First full grid (2026-10-13, `python -m backtester.tools.no_wick_grid`, 5 symbols, 2020-01-01 to
+  **First full grid (2026-10-13, `python -m backtester.tools.archive.no_wick_grid`, 5 symbols, 2020-01-01 to
   2026-09-30, spec defaults: sl_buffer 10%, rr 1, expiry 6, wick share 0).** Every one of the 24 variants
   is negative, gross as well as net, in both halves (2020-22 and 2023-26):
 
@@ -1495,10 +1498,10 @@ the pages could not be read, so the rules in `strategy-trend-following.md` were 
 - ☑ **10.2 Build strategy 4.** Signals `breakout` / `sma` / `kama`, ATR protective stop, stop-and-reverse,
   timeframes 15m / 30m / 1h / 4h / 1d. Tests first (`tests/strategy/trend_following/`), no-lookahead test,
   registry entry.
-- ☑ **10.3 Compare.** `python -m backtester.tools.trend_grid`: signal x timeframe x parameter sweep,
+- ☑ **10.3 Compare.** `python -m backtester.tools.archive.trend_grid`: signal x timeframe x parameter sweep,
   5 symbols, 2020-22 vs 2023-26, gross / net (swap not modelled). Results recorded here.
 
-  **First full grid (2026-10-14, `python -m backtester.tools.trend_grid`, 5 symbols, 2020-01-01 to
+  **First full grid (2026-10-14, `python -m backtester.tools.archive.trend_grid`, 5 symbols, 2020-01-01 to
   2026-09-30, stop 3 x ATR(20), swap not modelled).** Net R (sum), with the 2020-22 / 2023-26 halves:
 
   | variant | trades | win % | avg R net | sum R net | 20-22 | 23-26 |

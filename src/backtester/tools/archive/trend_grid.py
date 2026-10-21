@@ -1,8 +1,8 @@
 """Run strategy 4 (trend following) over its variants and compare the results.
 
-    python -m backtester.tools.trend_grid
-    python -m backtester.tools.trend_grid --signals breakout --timeframes H4 D1 --symbols XAUUSD
-    python -m backtester.tools.trend_grid --no-sweep --start 2026-08-01 --end 2026-08-31
+    python -m backtester.tools.archive.trend_grid
+    python -m backtester.tools.archive.trend_grid --signals breakout --timeframes H4 D1 --symbols XAUUSD
+    python -m backtester.tools.archive.trend_grid --no-sweep --start 2026-08-01 --end 2026-08-31
 
 Variants = signal x timeframe, each with the spec's parameter sweep (breakout 20 / 55 /
 100, SMA 20 / 50 / 100 / 200, SMA 50 and 200 with band 0.5 / 1.0 ATR, momentum 5 / 20 / 63 /
@@ -36,7 +36,6 @@ value). Spec: strategy-trend-following.md.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
@@ -58,10 +57,9 @@ from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.trend_following.config import TIMEFRAMES, Signal, TrendFollowingConfig
+from backtester.tools.grid_common import HALVES, SYMBOLS, write_csv
 
-SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 FIRST_HALF_END_YEAR = RobustnessConfig().first_half_end_year  # in sample: up to this year
-HALVES = ("2020-22", "2023-26")
 # the spec's parameter sweep (strategy-trend-following.md › Evaluation)
 SWEEP_BREAKOUT = (20, 55, 100)
 SWEEP_SMA = (20, 50, 100, 200)
@@ -119,14 +117,6 @@ def swap_rates_note(costs: CostConfig, symbols: Sequence[str]) -> str:
         for s, c in used.items()
     ]
     return "swap rates (USD per lot per night): " + "; ".join(parts)
-
-
-def write_csv(path: Path, rows: list[dict]) -> None:
-    cols = list(dict.fromkeys(k for r in rows for k in r))
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        w.writerows(rows)
 
 
 def variants(

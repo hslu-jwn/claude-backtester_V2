@@ -1,0 +1,10 @@
+# Reproduction check ROADMAP 6.1 (e): strategy 5 against tools/gap_fade_grid.py (4 variants, NAS100 + US500).
+# Old: python -m backtester.tools.gap_fade_grid --start 2015-01-02 --end 2021-09-13 --buckets 0.1-1 --stop-mults 0.75 1.5 --exit-times 11:00 16:00 --no-shocks --out <scratch>
+# New: python -m backtester.tools.research research/grids/check_gap_fade.toml --dev-only --results-dir <scratch>
+strategy = "gap_fade"
+symbols = ["NAS100", "US500"]
+min_trades = 1
+
+[grid]
+stop_gap_mult = [0.75, 1.5]
+exit_time = ["11:00", "16:00"]

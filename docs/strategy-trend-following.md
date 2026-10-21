@@ -86,7 +86,7 @@ result is reported with and without swap.
 
 ## Evaluation ("Appendix B": performance measurement and parameter sensitivity)
 
-Grid tool `python -m backtester.tools.trend_grid`: every signal × timeframe on the 5 symbols, gross
+Grid tool `python -m backtester.tools.archive.trend_grid`: every signal × timeframe on the 5 symbols, gross
 and net, 2020-22 vs 2023-26, plus a small parameter sweep per signal (breakout 20 / 55 / 100, SMA
 20 / 50 / 100 / 200, SMA 50 and 200 with band 0.5 / 1.0 ATR, momentum 5 / 20 / 63 / 252, KAMA filter
 0.0 / 0.1 / 0.5, dunnigan without parameters) to check that the result is not one lucky

@@ -6,7 +6,7 @@
 
 Per strategy (its own symbols) the R trade list of (a) the development period (histdata, from
 2018 up to 2021-09-13) and (b) the test period (FTMO MT5, 2021-09-14 up to `test_end`) is
-backtested (in pieces at the days histdata.com has no file for, `orb_grid.run_variant`; indicator
+backtested (in pieces at the days histdata.com has no file for, `grid_common.run_variant`; indicator
 history restarts there) with the spec defaults (strategy 6: the forward-test candidate) and cached under
 `<out>/trades/`; a rerun reads the cache. Grid (`SweepConfig`): base risk x floor x daily
 budget (+ the fixed-risk baseline per base risk), each cell played through
@@ -52,7 +52,7 @@ from backtester.risk.monte_carlo import (
 from backtester.runner import RunSettings
 from backtester.strategy.opening_range.config import EntryMode, OpeningRangeConfig
 from backtester.strategy.registry import REGISTRY, default_config
-from backtester.tools.orb_grid import run_variant
+from backtester.tools.grid_common import run_variant
 
 SWEEP_DIR = "risk_sweep"
 TRADES_DIR = "trades"

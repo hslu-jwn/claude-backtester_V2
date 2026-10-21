@@ -13,8 +13,8 @@ import pytest
 
 from backtester.core.models import Direction, Timeframe
 from backtester.strategy.trend_following.config import Signal
-from backtester.tools import trend_grid
-from backtester.tools.trend_grid import (
+from backtester.tools.archive import trend_grid
+from backtester.tools.archive.trend_grid import (
     avg_holding_hours,
     family_key,
     grid_rows,
@@ -27,7 +27,7 @@ from backtester.tools.trend_grid import (
     variants,
     year_rows,
 )
-from backtester.tools.trend_grid import (
+from backtester.tools.archive.trend_grid import (
     load_shocks as real_load_shocks,
 )
 

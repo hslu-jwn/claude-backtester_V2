@@ -1,7 +1,7 @@
 """Run strategy 3 (no-wick candle in the trend) over its variants and compare the results.
 
-    python -m backtester.tools.no_wick_grid
-    python -m backtester.tools.no_wick_grid --timeframes M15 H1 --entries close --symbols XAUUSD
+    python -m backtester.tools.archive.no_wick_grid
+    python -m backtester.tools.archive.no_wick_grid --timeframes M15 H1 --entries close --symbols XAUUSD
 
 Variants = entry timeframe x trend source x entry mode (spec defaults for everything else).
 Every variant is a full backtest with the same data and costs. Written to

@@ -1,8 +1,8 @@
 """Run strategy 6 (opening-range breakout) over its sweep and compare the results.
 
-    python -m backtester.tools.orb_grid --start 2015-01-01 --end 2021-09-13 --first-half-end-year 2018
-    python -m backtester.tools.orb_grid --source mt5 --volume --no-filters --symbols EURUSD US30
-    python -m backtester.tools.orb_grid --no-sweep --spread-table
+    python -m backtester.tools.archive.orb_grid --start 2015-01-01 --end 2021-09-13 --first-half-end-year 2018
+    python -m backtester.tools.archive.orb_grid --source mt5 --volume --no-filters --symbols EURUSD US30
+    python -m backtester.tools.archive.orb_grid --no-sweep --spread-table
 
 Variants (spec: strategy-opening-range.md > Entry, Filters): the base grid is entry_mode `range`
 with range_minutes 5 / 15 / 30 and `band` with band_atr 0.25 / 0.5 / 1.0, each x target_r 0 / 1 / 2
@@ -28,9 +28,8 @@ import csv
 import json
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
-from types import SimpleNamespace
 
 from backtester.analytics.metrics import summarize
 from backtester.analytics.robustness import RobustnessConfig, trade_robustness
@@ -38,9 +37,9 @@ from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
-from backtester.runner import RunSettings, run_backtests
+from backtester.runner import RunSettings
 from backtester.strategy.opening_range.config import EntryMode, NarrowDay, OpeningRangeConfig
-from backtester.tools.trend_grid import (
+from backtester.tools.archive.trend_grid import (
     grid_rows,
     load_shocks,
     print_grid,
@@ -51,6 +50,8 @@ from backtester.tools.trend_grid import (
     swap_rates_note,
     write_csv,
 )
+from backtester.tools.grid_common import run_variant
+from backtester.tools.research import segments  # noqa: F401  (kept importable from here)
 
 SYMBOLS = (
     "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "EURJPY", "GBPJPY",
@@ -219,38 +220,6 @@ def volume_pairs(summary: Sequence[dict]) -> list[dict]:
             }
         )  # fmt: skip
     return pairs
-
-
-def segments(
-    symbol: str, start: date, end: date, sources: SymbolSources = DEFAULT_SOURCES
-) -> list[tuple[date, date]]:
-    """The runs of consecutive cached days of `symbol` inside [start, end]. The runner needs
-    every day of a range in the cache; histdata.com has no file for a closed 1 January, so a
-    long range is run in pieces at such days (the daily ATR restarts after the gap)."""
-    cached = sorted(d for d in set(sources.cached_days(symbol)) if start <= d <= end)
-    out: list[list[date]] = []
-    for d in cached:
-        if out and d - out[-1][1] == timedelta(days=1):
-            out[-1][1] = d
-        else:
-            out.append([d, d])
-    return [(a, b) for a, b in out]
-
-
-def run_variant(symbols, start, end, settings, sources, workers) -> SimpleNamespace:
-    """`run_backtests` over each cached segment of each symbol; trades merged per symbol."""
-    groups: dict[tuple[date, date], list[str]] = {}
-    for symbol in symbols:
-        for seg in segments(symbol, start, end, sources):
-            groups.setdefault(seg, []).append(symbol)
-    per_symbol: dict[str, list] = {}
-    for (a, b), names in sorted(groups.items()):
-        result = run_backtests(names, a, b, settings, sources=sources, workers=workers)
-        for name, run in result.runs.items():
-            per_symbol.setdefault(name, []).extend(run.trades)
-    runs = {s: SimpleNamespace(trades=tuple(per_symbol[s])) for s in symbols if s in per_symbol}
-    trades = sorted((t for r in runs.values() for t in r.trades), key=lambda t: t.entry_time)
-    return SimpleNamespace(trades=tuple(trades), runs=runs)
 
 
 def _part(text: str) -> tuple[int, int]:

@@ -37,7 +37,30 @@ from backtester.strategy.base import Order, Strategy
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.ny_index_sweep.windows import WindowConfig, WindowTimes
-from backtester.tools.strategy2_sweep_grid import VARIANTS
+
+# strategy 2 sweep-rule variants (also used by the archived tools/archive/strategy2_sweep_grid)
+VARIANTS: dict[str, dict] = {
+    "base": {},
+    "strict (max of N)": {"sweep_equal_highs": True},
+    "tol 0.5 ATR": {"sweep_equal_highs": True, "sweep_equal_tolerance_atr": 0.5},
+    "breakout 2 closes": {"sweep_breakout_closes": 2},
+    "breakout wick+close": {"sweep_breakout_closes": 2, "sweep_breakout_wick_first": True},
+    "BoS before top": {"bos_before_top": True},
+    "tol 0.5 + wick+close": {
+        "sweep_equal_highs": True,
+        "sweep_equal_tolerance_atr": 0.5,
+        "sweep_breakout_closes": 2,
+        "sweep_breakout_wick_first": True,
+    },
+    "tol 0.5 + wick+close + BoS before top": {
+        "sweep_equal_highs": True,
+        "sweep_equal_tolerance_atr": 0.5,
+        "sweep_breakout_closes": 2,
+        "sweep_breakout_wick_first": True,
+        "bos_before_top": True,
+    },
+}
+
 
 OUT = RESULTS_DIR / "strategy2_explore"
 # wide windows around the open, so any narrower window can be cut out afterwards

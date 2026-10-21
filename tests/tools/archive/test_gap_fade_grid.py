@@ -12,8 +12,8 @@ import pytest
 
 from backtester.core.models import Direction
 from backtester.strategy.gap_fade.config import GapFadeConfig
-from backtester.tools import gap_fade_grid
-from backtester.tools.gap_fade_grid import family_key, variant_name, variants
+from backtester.tools.archive import gap_fade_grid
+from backtester.tools.archive.gap_fade_grid import family_key, variant_name, variants
 
 
 @pytest.fixture(autouse=True)

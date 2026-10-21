@@ -1,0 +1,41 @@
+"""Helpers shared by the live research tools and the archived per-strategy grid tools
+(`tools/archive/`, archived 2026-10-21): symbol list, half labels, CSV writer, and
+`run_variant` (a backtest over the cached pieces of each symbol; `research.segments` owns
+the piece logic)."""
+
+from __future__ import annotations
+
+import csv
+from datetime import date
+from pathlib import Path
+from types import SimpleNamespace
+
+from backtester.runner import run_backtests
+from backtester.tools.research import segments
+
+SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
+HALVES = ("2020-22", "2023-26")
+
+
+def write_csv(path: Path, rows: list[dict]) -> None:
+    cols = list(dict.fromkeys(k for r in rows for k in r))
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def run_variant(symbols, start, end, settings, sources, workers) -> SimpleNamespace:
+    """`run_backtests` over each cached segment of each symbol; trades merged per symbol."""
+    groups: dict[tuple[date, date], list[str]] = {}
+    for symbol in symbols:
+        for seg in segments(symbol, start, end, sources):
+            groups.setdefault(seg, []).append(symbol)
+    per_symbol: dict[str, list] = {}
+    for (a, b), names in sorted(groups.items()):
+        result = run_backtests(names, a, b, settings, sources=sources, workers=workers)
+        for name, run in result.runs.items():
+            per_symbol.setdefault(name, []).extend(run.trades)
+    runs = {s: SimpleNamespace(trades=tuple(per_symbol[s])) for s in symbols if s in per_symbol}
+    trades = sorted((t for r in runs.values() for t in r.trades), key=lambda t: t.entry_time)
+    return SimpleNamespace(trades=tuple(trades), runs=runs)

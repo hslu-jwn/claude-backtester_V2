@@ -1,9 +1,9 @@
 """Run strategy 5 (gap fade) over its sweep and compare the results.
 
-    python -m backtester.tools.gap_fade_grid                 # 36 variants, fixed spread
-    python -m backtester.tools.gap_fade_grid --spread-table  # with data/spreads/ftmo_spread_median.json
-    python -m backtester.tools.gap_fade_grid --source mt5 --start 2021-09-15  # FTMO's candles
-    python -m backtester.tools.gap_fade_grid --no-sweep --start 2026-08-01 --end 2026-08-31
+    python -m backtester.tools.archive.gap_fade_grid                 # 36 variants, fixed spread
+    python -m backtester.tools.archive.gap_fade_grid --spread-table  # with data/spreads/ftmo_spread_median.json
+    python -m backtester.tools.archive.gap_fade_grid --source mt5 --start 2021-09-15  # FTMO's candles
+    python -m backtester.tools.archive.gap_fade_grid --no-sweep --start 2026-08-01 --end 2026-08-31
 
 Variants = gap bucket (min_gap_atr-max_gap_atr: 0.1-0.25, 0.25-0.5, 0.5-1, 0.1-1) x
 `stop_gap_mult` (0.75, 1, 1.5) x `exit_time` (11:00, 12:00, 16:00) = 36; the spec default is
@@ -35,7 +35,7 @@ from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.gap_fade.config import GapFadeConfig
-from backtester.tools.trend_grid import (
+from backtester.tools.archive.trend_grid import (
     HALVES,
     grid_rows,
     half_rows,

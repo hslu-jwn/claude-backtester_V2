@@ -1,7 +1,7 @@
 """Gap fade walk-forward (ROADMAP 11.7): each year trades the variant that was best before it.
 
-    python -m backtester.tools.gap_fade_walk_forward
-    python -m backtester.tools.gap_fade_walk_forward --source mt5 --start 2021-09-15
+    python -m backtester.tools.archive.gap_fade_walk_forward
+    python -m backtester.tools.archive.gap_fade_walk_forward --source mt5 --start 2021-09-15
 
 Runs the 36 variants of `tools/gap_fade_grid.py` once each over the whole period and splits their
 trades by entry year (equal to per-year runs except for the daily ATR: the runner seeds it from
@@ -32,7 +32,7 @@ from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.gap_fade.config import GapFadeConfig
-from backtester.tools.gap_fade_grid import SYMBOLS, last_cached_day, variant_name, variants
+from backtester.tools.archive.gap_fade_grid import SYMBOLS, last_cached_day, variant_name, variants
 from backtester.tools.monte_carlo import ToolConfig, build_summary, jsonable, write_outputs
 
 START = date(2018, 1, 1)

@@ -1,7 +1,7 @@
 """Run strategy 2 with different liquidity sweep rules and compare the results.
 
-    python -m backtester.tools.strategy2_sweep_grid --start 2023-01-01 --end 2026-09-30
-    python -m backtester.tools.strategy2_sweep_grid --only base "tol 0.5" --out results/grid_a
+    python -m backtester.tools.archive.strategy2_sweep_grid --start 2023-01-01 --end 2026-09-30
+    python -m backtester.tools.archive.strategy2_sweep_grid --only base "tol 0.5" --out results/grid_a
 
 Every variant is a full strategy-2 backtest (NAS100 and US500, spec defaults except the
 sweep rule) with the same data and costs. Written to `<out>/summary.csv` (variant x
@@ -22,30 +22,9 @@ from backtester.analytics.metrics import by_period, by_year, summarize
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.tools.strategy2_explore import VARIANTS
 
 SYMBOLS = ("NAS100", "US500")
-
-VARIANTS: dict[str, dict] = {
-    "base": {},
-    "strict (max of N)": {"sweep_equal_highs": True},
-    "tol 0.5 ATR": {"sweep_equal_highs": True, "sweep_equal_tolerance_atr": 0.5},
-    "breakout 2 closes": {"sweep_breakout_closes": 2},
-    "breakout wick+close": {"sweep_breakout_closes": 2, "sweep_breakout_wick_first": True},
-    "BoS before top": {"bos_before_top": True},
-    "tol 0.5 + wick+close": {
-        "sweep_equal_highs": True,
-        "sweep_equal_tolerance_atr": 0.5,
-        "sweep_breakout_closes": 2,
-        "sweep_breakout_wick_first": True,
-    },
-    "tol 0.5 + wick+close + BoS before top": {
-        "sweep_equal_highs": True,
-        "sweep_equal_tolerance_atr": 0.5,
-        "sweep_breakout_closes": 2,
-        "sweep_breakout_wick_first": True,
-        "bos_before_top": True,
-    },
-}
 
 
 def write_csv(path: Path, rows: list[dict]) -> None:

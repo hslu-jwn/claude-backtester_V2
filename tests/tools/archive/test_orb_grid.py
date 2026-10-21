@@ -12,8 +12,9 @@ import pytest
 
 from backtester.core.models import Direction
 from backtester.strategy.opening_range.config import EntryMode, NarrowDay, OpeningRangeConfig
-from backtester.tools import orb_grid
-from backtester.tools.orb_grid import (
+from backtester.tools import grid_common
+from backtester.tools.archive import orb_grid
+from backtester.tools.archive.orb_grid import (
     family_key,
     half_labels,
     market_class,
@@ -27,7 +28,7 @@ real_segments = orb_grid.segments
 
 @pytest.fixture(autouse=True)
 def no_real_data(monkeypatch):
-    monkeypatch.setattr(orb_grid, "segments", lambda symbol, start, end, sources: [(start, end)])
+    monkeypatch.setattr(grid_common, "segments", lambda symbol, start, end, sources: [(start, end)])
     monkeypatch.setattr(orb_grid, "load_shocks", lambda *a, **k: ({}, ""))
     monkeypatch.setattr(
         orb_grid, "last_cached_day", lambda symbols, sources=None: date(2021, 9, 13)
@@ -167,7 +168,7 @@ def test_smoke_run_writes_all_files_with_symbol_class_and_configured_halves(
     tmp_path, monkeypatch, capsys
 ):
     seen = []
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory(seen))
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run_factory(seen))
     out = tmp_path / "o"
     argv = ["--no-sweep", "--symbols", "NAS100", "EURUSD", "--first-half-end-year", "2018",
             "--start", "2015-01-01", "--out", str(out)]  # fmt: skip
@@ -203,7 +204,7 @@ def test_smoke_run_writes_all_files_with_symbol_class_and_configured_halves(
 
 
 def test_default_output_folder_depends_on_cost_mode_and_source(tmp_path, monkeypatch):
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory([]))
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run_factory([]))
     monkeypatch.setattr(orb_grid, "RESULTS_DIR", tmp_path)
     assert orb_grid.main(["--no-sweep", "--symbols", "NAS100"]) == 0
     assert (tmp_path / "orb" / "fixed" / "summary.csv").exists()
@@ -213,7 +214,7 @@ def test_default_output_folder_depends_on_cost_mode_and_source(tmp_path, monkeyp
 
 def test_full_sweep_with_volume_runs_41_variants_and_writes_ab(tmp_path, monkeypatch):
     seen = []
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory(seen))
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run_factory(seen))
     assert orb_grid.main(["--volume", "--symbols", "NAS100", "--out", str(tmp_path)]) == 0
     assert len(seen) == 41
     with (tmp_path / "ab_volume.csv").open(encoding="utf-8") as f:
@@ -232,7 +233,7 @@ def test_source_option_reads_the_mt5_cache(tmp_path, monkeypatch):
         used.append(kwargs.get("sources", DEFAULT_SOURCES))
         return SimpleNamespace(trades=(), runs={s: SimpleNamespace(trades=()) for s in symbols})
 
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run)
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run)
     monkeypatch.setattr(orb_grid, "RESULTS_DIR", tmp_path)
     assert orb_grid.main(["--no-sweep", "--symbols", "US30"]) == 0
     assert used[-1] is DEFAULT_SOURCES
@@ -282,8 +283,8 @@ def test_run_variant_runs_each_distinct_segment_and_merges_the_trades(monkeypatc
         runs = {s: SimpleNamespace(trades=(trade(s, 2020, r_net=start.day),)) for s in symbols}
         return SimpleNamespace(trades=tuple(t for r in runs.values() for t in r.trades), runs=runs)
 
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run)
-    monkeypatch.setattr(orb_grid, "segments", real_segments)
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run)
+    monkeypatch.setattr(grid_common, "segments", real_segments)
     result = orb_grid.run_variant(
         ["A", "B"], date(2020, 1, 1), date(2020, 1, 20), RunSettingsStub(), src, 1
     )
@@ -303,7 +304,7 @@ def RunSettingsStub():
 
 def test_part_runs_every_nth_variant_and_merge_rebuilds_grid_and_ab(tmp_path, monkeypatch):
     seen = []
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory(seen))
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run_factory(seen))
     for k in (1, 2, 3):
         argv = [
             "--volume",
@@ -344,7 +345,7 @@ def test_part_argument_is_validated():
 
 def test_variants_option_runs_only_the_named_variants_without_other_flags(tmp_path, monkeypatch):
     seen = []
-    monkeypatch.setattr(orb_grid, "run_backtests", fake_run_factory(seen))
+    monkeypatch.setattr(grid_common, "run_backtests", fake_run_factory(seen))
     names = ["band 0.5atr T0 vol1.5", "band 0.25atr T0 vol1.5"]
     argv = ["--variants", *names, "--symbols", "NAS100", "--out", str(tmp_path)]
     assert orb_grid.main(argv) == 0

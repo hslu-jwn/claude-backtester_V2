@@ -1,7 +1,7 @@
 """A/B test of strategy 2's tick-volume filter: spec defaults against `min_rel_volume`.
 
-    python -m backtester.tools.s2_volume_ab --source mt5 --symbols US30 US2000 --end 2021-09-13
-    python -m backtester.tools.s2_volume_ab --source mt5 --symbols NAS100 US500 --start 2021-09-14
+    python -m backtester.tools.archive.s2_volume_ab --source mt5 --symbols US30 US2000 --end 2021-09-13
+    python -m backtester.tools.archive.s2_volume_ab --source mt5 --symbols NAS100 US500 --start 2021-09-14
 
 Two variants on the same data and costs (real spread scaled by price, FTMO swap): the spec
 defaults and the entry candle's tick volume >= `--min-rel-volume` (1.5) x its usual value over
@@ -31,7 +31,7 @@ from backtester.detectors.swings import SwingConfig, equivalent_doji_body
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
-from backtester.tools.trend_grid import (
+from backtester.tools.archive.trend_grid import (
     HALVES,
     half_rows,
     load_shocks,

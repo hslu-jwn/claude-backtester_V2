@@ -11,7 +11,7 @@ import pytest
 
 from backtester.core.models import Direction
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
-from backtester.tools import s2_volume_ab
+from backtester.tools.archive import s2_volume_ab
 
 
 @pytest.fixture(autouse=True)

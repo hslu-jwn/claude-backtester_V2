@@ -12,8 +12,8 @@ import pytest
 
 from backtester.core.models import Direction
 from backtester.strategy.gap_fade.config import GapFadeConfig
-from backtester.tools import gap_fade_walk_forward as tool
-from backtester.tools.gap_fade_grid import variant_name
+from backtester.tools.archive import gap_fade_walk_forward as tool
+from backtester.tools.archive.gap_fade_grid import variant_name
 
 DEFAULT = variant_name(GapFadeConfig())
 # best every year; its three exit times tie, the first in the variant order (11:00) wins
