@@ -1,0 +1,12 @@
+# Example research grid (docs/research-runner.md): strategy 6, opening-range breakout.
+# Run: python -m backtester.tools.research research/grids/orb_example.toml
+strategy = "opening_range"
+symbols = ["US500", "NAS100"]
+min_trades = 100
+
+[base]
+entry_mode = "range"
+
+[grid]
+range_minutes = [5, 15, 30]
+target_r = [0, 1]

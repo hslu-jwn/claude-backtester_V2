@@ -40,6 +40,14 @@ red). Net R includes the swap.
 high win rate but small edge (win rate >= 70 % and average R < 0.1); one half not profitable; not profitable
 with costs x 1.5; not profitable without the best trade; test failed (test net R <= 0 or verdict red).
 
+## Defaults decided while building (2026-10-21)
+
+`max_variants` 200, seed 1; enum values by name, any case; a combination the config rejects stops the run
+naming the variant; the test row's verdict uses the 5 available checks (random-entry and random-fill checks
+n/a), deflated Sharpe with N = variants run and their development Sharpes; profit factor empty without a
+losing trade; "test failed" only on the test row; research id = `<grid file>_<hash of strategy, symbols,
+base, variants>` (re-running resumes; the retest guard uses it).
+
 ## Output
 
 `results/research/<id>/`: `research.json` (grid, periods, symbols, variant count, seed, chosen variant, test
