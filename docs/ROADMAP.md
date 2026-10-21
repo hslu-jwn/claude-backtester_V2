@@ -891,6 +891,20 @@ has no step yet.
 
 ## Phase 6: Robustness (before trusting any result)
 
+- **Research-speed plan (user, 2026-10-21):** goal = test many strategy ideas fast with little new code. Order:
+  (1) one research runner for every registered strategy (6.1 + 6.2 merged, command line first, a UI page later);
+  (2) speed (load candles once per symbol for all variants); (3) automatic contract tests for every registered
+  strategy (no lookahead, deterministic, R only, sweepable settings); (4) result-bias fixes 12.2, 12.8, 13.19, 13.20,
+  13.12-13.15, 13.23; (5) clean-up: the per-strategy grid tools (`orb_grid`, `gap_fade_grid`,
+  `gap_fade_walk_forward`, `no_wick_grid`, `trend_grid`, `strategy2_sweep_grid`, `s2_volume_ab`, ...) are archived
+  once the runner reproduces their results (checked on strategy 6 and the gap fade first), plus 13.17, 13.18, 13.21,
+  13.22; (6) later the portfolio tool 12.9.
+- ◐ **6.1 + 6.2 Research runner + Research page** (user 2026-10-21, spec `docs/research-runner.md`; decisions:
+  test only the single best development variant, min 100 development trades to be ranked, a second test of the
+  same grid only with `--retest` (logged), Research page right after the runner, command line first). Steps:
+  (a) scorecard + flags, (b) grid file + variant expansion, (c) development run (parallel, resumable), (d) selection
+  + one test run + trial log + output, (d2) Research page, (e) reproduce `orb_grid` / gap-fade numbers, then archive
+  the per-strategy grid tools. The original 6.1 / 6.2 text below is kept for history.
 - ☐ **6.1 Strategy Simulator** (user, 2026-10-12; replaces "parameter sweeps"; must be done before Phase 7). Automatic backtests over many settings of one strategy instead of making every preset by hand. Sub-steps, each test-first:
   1. The user marks which settings take part (per strategy) and gives values or ranges; the settings come from the strategy's config (universal settings the same for all strategies, extra ones per strategy).
   2. A runner builds the grid (random search for big grids), runs the backtests in parallel (reusing `runner.py`) and writes every result to `results/sim/<id>/` (resumable; may take hours).
