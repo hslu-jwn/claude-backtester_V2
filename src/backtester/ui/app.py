@@ -19,7 +19,7 @@ import argparse
 
 from dash import Dash, Input, Output, State, dcc, html
 
-from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.data.sources import CHART_SOURCES, SymbolSources
 from backtester.ui import backtest_job, nav, report_route
 from backtester.ui.pages import backtest, chart, live, results
 
@@ -37,7 +37,7 @@ def page_for(pathname: str | None, sources: SymbolSources, search: str | None = 
     return chart.layout(sources, focus=chart.focus_from_query(search))
 
 
-def create_app(sources: SymbolSources = DEFAULT_SOURCES) -> Dash:
+def create_app(sources: SymbolSources = CHART_SOURCES) -> Dash:
     app = Dash(__name__, title="Backtester", suppress_callback_exceptions=True)
     app.layout = html.Div([dcc.Location(id="url"), nav.layout(), html.Div(id="page")])
     app.validation_layout = html.Div(

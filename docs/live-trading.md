@@ -95,3 +95,14 @@ runs strategy 6.
 - **Lost order answer:** after an order without a clear answer the bot looks for a position with its MAGIC and the
   signal's comment; a found position is managed like any other (session exit). Unclear and nothing found: looked
   up again for 3 cycles, then skipped.
+
+## Bot data and chart (rules set by the user, 2026-10-21; ROADMAP 7.8)
+
+- Every bot position, open or closed since the current bot start, can be opened on the chart (entry, SL, TP
+  if any, exit; a rough drawing is enough).
+- At start the bot brings its own symbols' MT5 cache up to yesterday from its warm-up history (no extra
+  download) and launches the cache update of all other symbols in the background.
+- While running it rewrites today's M1 bars of its symbols into `data/cache/live/` each minute; finished UTC
+  days go into the MT5 cache. The chart reads `live/` only for days the MT5 / histdata caches lack.
+- "Bot trades" chart overlay: trades since the current bot start (`status.json` `started_at`), on by default
+  for the bot's symbols.

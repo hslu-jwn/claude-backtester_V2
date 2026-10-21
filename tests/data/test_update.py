@@ -186,3 +186,27 @@ def test_select_import_files_keeps_the_period_with_the_last_day_and_later_ones(t
     picked = select_import_files(files, D("2025-12-31"))
     assert [f.month for f in picked] == [D("2025-01-01"), D("2026-08-01"), D("2026-09-01"),
                                          D("2026-10-01")]  # fmt: skip
+
+
+def test_plan_ignores_the_live_cache(tmp_path):
+    """Live days are partial and rewritten by the bot: never a base for 'last cached day'
+    (ROADMAP 7.8). The plan only reads the dirs it is given."""
+    import pandas as pd
+
+    from backtester.data.cache import LIVE_CACHE_DIR
+
+    mt5 = tmp_path / "mt5" / "US500" / "2026"
+    mt5.mkdir(parents=True)
+    pd.DataFrame({"ts": []}).to_parquet(mt5 / "2026-10-18.parquet")
+    live = tmp_path / "live" / "US500" / "2026"
+    live.mkdir(parents=True)
+    pd.DataFrame({"ts": []}).to_parquet(live / "2026-10-21.parquet")
+    assert LIVE_CACHE_DIR.name == "live"
+    plan = plan_update(
+        date(2026, 10, 22),
+        mt5_dir=tmp_path / "mt5",
+        binance_dir=tmp_path / "none",
+        histdata_dir=tmp_path / "none",
+    )
+    task = next(t for t in plan.tasks if t.symbol == "US500")
+    assert (task.first, task.last) == (date(2026, 10, 19), date(2026, 10, 21))

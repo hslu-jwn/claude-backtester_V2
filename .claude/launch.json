@@ -4,8 +4,23 @@
     {
       "name": "backtester-app",
       "runtimeExecutable": ".venv/Scripts/python.exe",
-      "runtimeArgs": ["-m", "backtester.ui.app"],
+      "runtimeArgs": [
+        "-m",
+        "backtester.ui.app"
+      ],
       "port": 8050
+    },
+    {
+      "name": "backtester-app-dev",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "backtester.ui.app",
+        "--port",
+        "8052"
+      ],
+      "port": 8052,
+      "autoPort": false
     }
   ]
 }

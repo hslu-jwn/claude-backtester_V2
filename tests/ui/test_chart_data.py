@@ -28,7 +28,7 @@ from backtester.ui.overlays import DEFAULT_SETTINGS, OVERLAYS
 from backtester.ui.pages import chart  # noqa: F401  (registers every overlay)
 
 FULL = LONDON + NY_SETUP + TO_TARGET
-KEYS = list(OVERLAYS)
+KEYS = [k for k in OVERLAYS if k != "bot"]  # the bot overlay reads results/live (no data here)
 STAMP = re.compile(r"(\d{4}-)?(\d{2}-\d{2} \d{2}:\d{2})")
 
 

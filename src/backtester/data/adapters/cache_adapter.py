@@ -111,17 +111,31 @@ class CacheAdapter(DataAdapter):
 
 
 class PreferredCacheAdapter(CacheAdapter):
-    """Reads a day from `preferred_dir` when that day file exists there, else from `cache_dir`.
+    """Reads a day from `preferred_dir` when that day file exists there, else from `cache_dir`,
+    else from `last_dir` (the live bot's folder, ROADMAP 7.8). Either extra folder may be None.
     A day file is read from exactly one folder, so days are never duplicated or overlapped;
-    D / W / 4h candles spanning a seam are built from both feeds."""
+    D / W / 4h candles spanning a seam are built from all feeds."""
 
-    def __init__(self, cache_dir: str | Path, preferred_dir: str | Path):
+    def __init__(
+        self,
+        cache_dir: str | Path,
+        preferred_dir: str | Path | None = None,
+        last_dir: str | Path | None = None,
+    ):
         super().__init__(cache_dir)
-        self.preferred_dir = Path(preferred_dir)
+        self.preferred_dir = None if preferred_dir is None else Path(preferred_dir)
+        self.last_dir = None if last_dir is None else Path(last_dir)
 
     def _path(self, symbol: str, day: date) -> Path:
-        preferred = cache_path(self.preferred_dir, symbol, day)
-        return preferred if preferred.exists() else super()._path(symbol, day)
+        if self.preferred_dir is not None:
+            preferred = cache_path(self.preferred_dir, symbol, day)
+            if preferred.exists():
+                return preferred
+        main = super()._path(symbol, day)
+        if main.exists() or self.last_dir is None:
+            return main
+        last = cache_path(self.last_dir, symbol, day)
+        return last if last.exists() else main
 
 
 def candles_from_frame(frame: pd.DataFrame) -> list[Candle]:
@@ -173,18 +187,25 @@ _DAY_LISTS: dict[tuple[str, str], tuple[tuple, tuple[date, ...]]] = {}
 
 
 def _signature(symbol_dir: Path) -> tuple:
-    """Every year folder's name and modification time: it changes when a day file is added."""
+    """Every year folder's name and modification time, plus the newest year's file count:
+    Windows does not always update a folder's time at once when a day file is added, and new days
+    (the live bot's, "Update data") land in the newest year."""
     try:
         with os.scandir(symbol_dir) as entries:
-            return tuple(sorted((e.name, e.stat().st_mtime_ns) for e in entries if e.is_dir()))
+            years = sorted((e.name, e.stat().st_mtime_ns) for e in entries if e.is_dir())
+        if not years:
+            return ()
+        with os.scandir(symbol_dir / years[-1][0]) as files:
+            newest = sum(1 for _ in files)
     except OSError:
         return ()
+    return (*years, newest)
 
 
 def _scan_days(symbol_dir: Path) -> tuple[tuple, tuple[date, ...]]:
     signature = _signature(symbol_dir)  # taken first: a day added meanwhile triggers a rescan
     days = []
-    for year, _ in signature:
+    for year, _ in signature[:-1]:
         with os.scandir(symbol_dir / year) as files:  # scandir: much faster than glob
             days += [date.fromisoformat(f.name[:-8]) for f in files if f.name.endswith(".parquet")]
     return signature, tuple(sorted(days))

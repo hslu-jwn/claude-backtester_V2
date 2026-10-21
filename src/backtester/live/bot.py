@@ -35,10 +35,11 @@ from __future__ import annotations
 import argparse
 import contextlib
 import csv
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import ModuleType
 
@@ -46,10 +47,18 @@ from backtester.cli import utf8_output
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.mt5_adapter import Mt5Adapter, Mt5Error, ServerClock, load_mt5
-from backtester.data.mt5_download import DEFAULT_CLOCK, DEFAULT_NAMES
+from backtester.data.cache import (
+    LIVE_CACHE_DIR,
+    MT5_CACHE_DIR,
+    cache_path,
+    empty_cache_frame,
+    write_atomic,
+)
+from backtester.data.mt5_download import DEFAULT_CLOCK, DEFAULT_NAMES, candle_day_frames
 from backtester.engine.trade import ExitReason, TradeResult
 from backtester.live.connection import ConnectionFailed, connect, scrub
 from backtester.live.credentials import CredentialStoreError, load_credentials
+from backtester.live.detached import spawn_detached
 from backtester.live.lock import LOCK_NAME, BotLock, lock_holder
 from backtester.live.orders import (
     MAGIC,
@@ -123,6 +132,10 @@ class BotConfig:
     close_retry_factor: float = 2.0
     close_retry_max_s: float = 10.0
     adopt_recheck_cycles: int = 3  # cycles an unclear order result is looked up again
+    mt5_cache_dir: Path = MT5_CACHE_DIR  # finished UTC days of the bot's symbols (ROADMAP 7.8)
+    live_cache_dir: Path = LIVE_CACHE_DIR  # today's bars, rewritten each cycle with new bars
+    update_cache_at_start: bool = True  # launch tools.update_data in the background at start
+    update_log_name: str = "update_stdout.log"  # in out_dir
     verbose: bool = True
 
     @property
@@ -165,6 +178,8 @@ class _Symbol:
     broker: str
     strategy: OpeningRange
     candles: list[Candle] = field(default_factory=list)
+    cache_day: date | None = None  # UTC day for which the finished days were put in the cache
+    live_len: int = 0  # len(candles) when today's bars were last written
 
 
 @dataclass
@@ -216,9 +231,10 @@ class Bot:
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         sleep: Callable[[float], None] = time.sleep,
         notifier=None,  # Telegram: anything with `event(kind, fields)`; never blocks (telegram.py)
+        spawn: Callable[[list[str], Path], object] = spawn_detached,  # (command, log file)
     ):
         self.config, self.mt5, self.settings, self.credentials = config, mt5, settings, credentials
-        self.now, self.sleep = now, sleep
+        self.now, self.sleep, self.spawn = now, sleep, spawn
         clock = settings.server_clock or DEFAULT_CLOCK
         names = {s: DEFAULT_NAMES.get(s, s) for s in config.symbols}
         names.update({s: n for s, n in settings.symbols.items() if s in names and n != s})
@@ -406,6 +422,8 @@ class Bot:
                 continue
             self._feed_new(sym, candles)
             self.note("warm_up", symbol=sym.name, bars=len(sym.candles), last=sym.candles[-1].ts)
+            self._cache_safe(sym)
+        self._launch_update()
 
     def _warm_history(self, sym: _Symbol, begin: datetime, now: datetime) -> list[Candle]:
         """The warm-up history. The terminal downloads history asynchronously, so a first
@@ -536,6 +554,7 @@ class Bot:
                 raise
             except Exception as e:  # noqa: BLE001 - one symbol must not stop the others
                 self._report_error(f"bars {sym.name}", e)
+            self._cache_safe(sym)
         self.publish()
         return CONTINUE
 
@@ -665,6 +684,59 @@ class Bot:
                 self._exit(sym, ref, candle)
             for order in orders:
                 self._safe_enter(sym, order, candle, bar_now)
+
+    # --- bot data for the chart (ROADMAP 7.8) -----------------------------------------------
+
+    def _cache_safe(self, sym: _Symbol) -> None:
+        """`_store_cache`; a write error is reported (rate-limited) and never stops trading."""
+        try:
+            self._store_cache(sym)
+        except Exception as e:  # noqa: BLE001
+            self._report_error(f"cache {sym.name}", e)
+
+    def _store_cache(self, sym: _Symbol) -> None:
+        """Finished UTC days go into the MT5 cache (only where no day file exists; the first
+        day of the history is cut by the warm-up start and never written), today's bars into the
+        live cache (rewritten when new bars came)."""
+        candles, cfg = sym.candles, self.config
+        if not candles:
+            return
+        today = self.now().astimezone(UTC).date()
+        if sym.cache_day != today:
+            first = candles[0].ts.date()
+            frames = candle_day_frames(c for c in candles if first < c.ts.date() < today)
+            written = 0
+            for i in range(1, (today - first).days):  # no-data days: empty file, like the download
+                day = first + timedelta(days=i)
+                path = cache_path(cfg.mt5_cache_dir, sym.name, day)
+                if not path.exists():
+                    write_atomic(frames.get(day, empty_cache_frame()), path)
+                    written += 1
+            sym.cache_day = today
+            if written:
+                self.note("cache_days", symbol=sym.name, written=written)
+        if len(candles) != sym.live_len:
+            todays = []
+            for c in reversed(candles):
+                if c.ts.date() != today:
+                    break
+                todays.append(c)
+            if todays:
+                frame = candle_day_frames(reversed(todays))[today]
+                write_atomic(frame, cache_path(cfg.live_cache_dir, sym.name, today))
+            sym.live_len = len(candles)
+
+    def _launch_update(self) -> None:
+        """Start the full cache update of all other symbols in the background; only noted."""
+        if not self.config.update_cache_at_start:
+            return
+        log = self.config.out_dir / self.config.update_log_name
+        command = [sys.executable, "-m", "backtester.tools.update_data"]
+        try:
+            self.spawn(command, log)
+            self.note("update_started", log=str(log))
+        except Exception as e:  # noqa: BLE001
+            self.note("update_failed", error=scrub(str(e), self.credentials))
 
     # --- entries ----------------------------------------------------------------------------
 

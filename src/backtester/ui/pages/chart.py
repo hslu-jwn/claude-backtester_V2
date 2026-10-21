@@ -118,6 +118,7 @@ from backtester.strategy.registry import REGISTRY
 from backtester.ui import (
     backtest_job,
     bos_overlay,  # noqa: F401  (registers the BOS + trend overlay)
+    bot_overlay,
     bpr_overlay,  # noqa: F401  (registers the BPR overlay)
     breaker_overlay,  # noqa: F401  (registers the Breaker block overlay)
     chart_side,
@@ -207,7 +208,9 @@ def _load_frame(sources, symbol, timeframe, start_date, end_date, config):
 
 
 @lru_cache(maxsize=8)
-def _cached_replay(sources, symbol, timeframe, start_date, end_date, config):
+def _cached_replay(sources, symbol, timeframe, start_date, end_date, config, live_stamp=()):
+    """`live_stamp` (the live folder's files and times) only keys the cache: today's live day
+    is rewritten every minute and must be read again."""
     frame, message = _load_frame(sources, symbol, timeframe, start_date, end_date, config)
     if frame is None:
         return None, message
@@ -430,7 +433,8 @@ def load_replay(
 ) -> tuple[Replay | None, str]:
     """(Replay over the chosen candles or None, message). Kept in memory for the next steps
     (restart the app to see days downloaded while it runs)."""
-    return _cached_replay(sources, symbol, timeframe, start_date, end_date, config)
+    stamp = sources.fallback_stamp(symbol) if symbol in sources.fallback_dirs else ()
+    return _cached_replay(sources, symbol, timeframe, start_date, end_date, config, stamp)
 
 
 def default_start(replay: Replay) -> int:
@@ -782,7 +786,9 @@ def start_backtest(
         return "Pick one or more symbols and the days.", no_update
     first, last = date.fromisoformat(start_date[:10]), date.fromisoformat(end_date[:10])
     try:
-        backtest_job.start(symbols, first, last, settings, sources, preset, starter=start)
+        # no live fallback in backtests: today's partial day is for the chart only (7.8)
+        no_live = replace(sources, fallback_dirs={}) if sources is not None else None
+        backtest_job.start(symbols, first, last, settings, no_live, preset, starter=start)
     except backtest_job.JobRunning:
         return "A backtest is already running. Open it with Backtest in the top bar.", no_update
     return "", BACKTEST_PATH
@@ -1324,6 +1330,7 @@ def layout(
             dcc.Store(id="chart-replay-span"),
             dcc.Store(id="chart-focus", data=focus),
             dcc.Store(id="chart-order"),
+            dcc.Store(id="chart-bot-seen", storage_type="local", data=[]),
             dcc.Store(id="chart-order-draw"),
             dcc.Store(id="chart-order-done"),
             dcc.Store(id="chart-viewport"),
@@ -1533,6 +1540,24 @@ def register_callbacks(
         symbol = focus.get("symbol") if focus else None
         cached = sources.cached_days(symbol) if symbol else []
         return focus_outputs(focus, overlay_types, cached, config)
+
+    @app.callback(
+        Output("chart-overlays", "value", allow_duplicate=True),
+        Output("chart-overlay-types", "value", allow_duplicate=True),
+        Output("chart-bot-seen", "data"),
+        Input("chart-symbol", "value"),
+        State("chart-overlay-types", "value"),
+        State("chart-overlays", "value"),
+        State("chart-bot-seen", "data"),
+        prevent_initial_call="initial_duplicate",
+    )
+    def _bot_overlay_default(symbol, types, master, seen):
+        """Bot trades on by default: switched on once for each symbol the bot trades (the
+        user's later choice stays)."""
+        chosen = bot_overlay.default_selection(
+            symbol, types or [], master or [], seen or [], bot_overlay.bot_symbols()
+        )
+        return no_update if chosen is None else chosen
 
     @app.callback(
         Output("chart-order", "data", allow_duplicate=True),

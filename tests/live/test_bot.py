@@ -114,6 +114,9 @@ class World:
                 entry_mode=EntryMode.BAND, band_atr=0.25, min_rel_volume=0.0
             ),
             out_dir=self.out,
+            mt5_cache_dir=self.out.parent / "cache_mt5",
+            live_cache_dir=self.out.parent / "cache_live",
+            update_cache_at_start=False,
             verbose=False,
         )
         return BotConfig(**{**base, **kw})

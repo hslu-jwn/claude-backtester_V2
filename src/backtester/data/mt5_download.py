@@ -30,13 +30,14 @@ feeds `Candle.spread`.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 
-from backtester.core.models import Timeframe
+from backtester.core.models import Candle, Timeframe
 from backtester.data.adapters.mt5_adapter import Mt5Adapter, Mt5Error, ServerClock
 from backtester.data.cache import (
     COLUMNS,
@@ -83,6 +84,24 @@ def cache_frame(bars: pd.DataFrame) -> pd.DataFrame:
     out["ask_volume"] = volume
     out["ts"] = pd.DatetimeIndex(bars["ts"]).tz_convert("UTC")
     return out[COLUMNS]
+
+
+def candle_day_frames(candles: Iterable[Candle]) -> dict[date, pd.DataFrame]:
+    """M1 `candles` (UTC, `spread` in price units, 0 = not recorded) -> one cache frame per UTC
+    day, exactly as the download writes them (live bot, ROADMAP 7.8)."""
+    candles = list(candles)
+    if not candles:
+        return {}
+    bars = pd.DataFrame(
+        {
+            "ts": pd.to_datetime([c.ts for c in candles], utc=True),
+            "open": [c.open for c in candles], "high": [c.high for c in candles],
+            "low": [c.low for c in candles], "close": [c.close for c in candles],
+            "volume": [c.volume for c in candles], "spread": [c.spread for c in candles],
+        }
+    )  # fmt: skip
+    by_day = bars.groupby(bars["ts"].dt.date)
+    return {day: cache_frame(part.reset_index(drop=True)) for day, part in by_day}
 
 
 def utc_bars(adapter: Mt5Adapter, symbol: str, first: date, last: date) -> pd.DataFrame:
