@@ -99,14 +99,17 @@ class SymbolSources:
         return sorted(days)
 
     def fallback_stamp(self, symbol: str) -> tuple:
-        """(name, modification time) of the fallback folder's day files: part of the chart's
-        cache key, so a day the bot rewrites is read again. () without a fallback folder."""
+        """(name, modification time, file id, size) of the fallback folder's day files: part of
+        the chart's cache key, so a day the bot rewrites is read again (Windows file times move in
+        ~15 ms steps; an atomic rewrite always gets a new file id). () without a fallback folder."""
         folder = self.fallback_dirs.get(symbol)
         if folder is None:
             return ()
         stamp = []
         for year in sorted((Path(folder) / symbol).glob("[0-9]*")):
-            stamp += [(f.name, f.stat().st_mtime_ns) for f in sorted(year.glob("*.parquet"))]
+            for f in sorted(year.glob("*.parquet")):
+                st = f.stat()
+                stamp.append((f.name, st.st_mtime_ns, st.st_ino, st.st_size))
         return tuple(stamp)
 
     def feed_switch(self, symbol: str) -> date | None:

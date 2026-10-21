@@ -36,13 +36,13 @@ import json
 import shutil
 import sys
 import time as clock
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
 from backtester.analytics.scorecard import SCORE_KEYS, ScorecardConfig, flags, scorecard
-from backtester.analytics.trial_log import append, make_record
+from backtester.analytics.trial_log import TRIALS_FILE, append, make_record
 from backtester.analytics.verdict import (
     EDGE,
     NO_EDGE,
@@ -59,6 +59,8 @@ from backtester.runner import (
     RunResult,
     RunSettings,
     SymbolRun,
+    combine_runs,
+    iter_symbol_runs,
     merge_trades,
     new_run_id,
     run_backtests,
@@ -144,6 +146,40 @@ def _join(symbol: str, runs: list) -> SymbolRun:
     )
 
 
+def _pieces(
+    symbols: Sequence[str], start: date, end: date, sources: SymbolSources
+) -> dict[tuple[date, date], list[str]]:
+    groups: dict[tuple[date, date], list[str]] = {}
+    for symbol in symbols:
+        for piece in segments(symbol, start, end, sources):
+            groups.setdefault(piece, []).append(symbol)
+    if not groups:
+        raise ResearchError(f"no cached day between {start} and {end} for {', '.join(symbols)}")
+    return groups
+
+
+def _assemble(
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    settings: RunSettings,
+    sources: SymbolSources,
+    results: Sequence[RunResult],
+) -> RunResult:
+    """The pieces' results (`run_backtests` of each piece), trades merged per symbol."""
+    per_symbol: dict[str, list] = {}
+    notes: list[str] = []
+    for result in results:
+        notes += result.notes
+        for name, run in result.runs.items():
+            per_symbol.setdefault(name, []).append(run)
+    runs = {s: _join(s, per_symbol[s]) for s in symbols if s in per_symbol}
+    return RunResult(
+        tuple(runs), start, end, settings, sources, runs, merge_trades(list(runs.values())),
+        tuple(notes),
+    )  # fmt: skip
+
+
 def run_period(
     symbols: Sequence[str],
     start: date,
@@ -153,24 +189,42 @@ def run_period(
     workers: int | None,
 ) -> RunResult:
     """`run_backtests` over each cached piece of each symbol, trades merged per symbol."""
-    groups: dict[tuple[date, date], list[str]] = {}
-    for symbol in symbols:
-        for piece in segments(symbol, start, end, sources):
-            groups.setdefault(piece, []).append(symbol)
-    if not groups:
-        raise ResearchError(f"no cached day between {start} and {end} for {', '.join(symbols)}")
-    per_symbol: dict[str, list] = {}
-    notes: list[str] = []
-    for (a, b), names in sorted(groups.items()):
-        result = run_backtests(names, a, b, settings, sources=sources, workers=workers)
-        notes += result.notes
-        for name, run in result.runs.items():
-            per_symbol.setdefault(name, []).append(run)
-    runs = {s: _join(s, per_symbol[s]) for s in symbols if s in per_symbol}
-    return RunResult(
-        tuple(runs), start, end, settings, sources, runs, merge_trades(list(runs.values())),
-        tuple(notes),
-    )  # fmt: skip
+    groups = _pieces(symbols, start, end, sources)
+    results = [
+        run_backtests(names, a, b, settings, sources=sources, workers=workers)
+        for (a, b), names in sorted(groups.items())
+    ]
+    return _assemble(symbols, start, end, settings, sources, results)
+
+
+def run_period_many(
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    settings_list: Sequence[RunSettings],
+    sources: SymbolSources,
+    workers: int | None,
+) -> Iterator[tuple[int, RunResult]]:
+    """`run_period` for every settings, as `(index, result)` in completion order: the candles of
+    each symbol piece are loaded once for all variants and the (piece x variant chunk) runs are
+    spread over `workers` processes (`runner.iter_symbol_runs`). Same trades as `run_period`."""
+    groups = sorted(_pieces(symbols, start, end, sources).items())
+    tasks = [(name, a, b) for (a, b), names in groups for name in names]
+    slots = {task: i for i, task in enumerate(tasks)}
+    got: dict[int, dict[int, object]] = {}
+    for v, t, outcome in iter_symbol_runs(tasks, settings_list, sources, workers):
+        got.setdefault(v, {})[t] = outcome
+        if len(got[v]) < len(tasks):
+            continue
+        outcomes = got.pop(v)
+        results = [
+            combine_runs(
+                names, a, b, settings_list[v], sources,
+                {name: outcomes[slots[(name, a, b)]] for name in names},
+            )
+            for (a, b), names in groups
+        ]  # fmt: skip
+        yield v, _assemble(symbols, start, end, settings_list[v], sources, results)
 
 
 # --- small helpers -------------------------------------------------------------------------------
@@ -215,33 +269,33 @@ def _log_settings(spec: GridSpec, overrides: dict) -> dict:
 # --- development ---------------------------------------------------------------------------------
 
 
-def _run_variant(
+def _finished_variant(vdir: Path) -> dict | None:
+    """The stored development result of a finished variant (a scorecard file); the folder of
+    one without (an interrupted write) is removed, it runs again."""
+    done = _read_json(vdir / SCORECARD_FILE)
+    if done is None and vdir.exists():
+        shutil.rmtree(vdir)
+    return done
+
+
+def _store_variant(
     spec: GridSpec,
     variant: Variant,
+    result: RunResult,
     periods: dict,
-    sources: SymbolSources,
-    workers: int | None,
     folder: Path,
     sc_cfg: ScorecardConfig,
-) -> tuple[dict, bool]:
-    """(the variant's stored development result, whether it ran now). A variant with a
-    scorecard file is finished; one without (an interrupted write) is run again."""
+    trials: Path,
+) -> dict:
+    """Write a variant's development run, trial log line and scorecard; returns the result."""
     vdir = folder / "variants" / variant.id
-    done = _read_json(vdir / SCORECARD_FILE)
-    if done is not None:
-        return done, False
-    if vdir.exists():
-        shutil.rmtree(vdir)
     start, end = periods["dev_start"], periods["dev_end"]
-    result = run_period(
-        spec.symbols, start, end, variant_settings(spec, variant), sources, workers
-    )  # fmt: skip
     write_results(result, folder / "variants", variant.id)
     r_net = [t.r_net for t in result.trades]
     append(make_record(
         spec.name, spec.strategy, _log_settings(spec, variant.overrides), spec.symbols, start, end,
         SOURCE_DEV, r_net,
-    ))  # fmt: skip
+    ), trials)  # fmt: skip
     data = {
         "id": variant.id,
         "name": variant.name,
@@ -250,7 +304,7 @@ def _run_variant(
         "sharpe": trade_stats(r_net).sharpe,
     }
     _dump(vdir / SCORECARD_FILE, data)
-    return data, True
+    return data
 
 
 def _rank(rows: list[dict], min_trades: int) -> list[dict]:
@@ -402,17 +456,30 @@ def run_research(
         f"development {first}..{dev_end}"
     )
 
-    rows: list[dict] = []
-    for i, variant in enumerate(variants, 1):
-        started = clock.perf_counter()
-        data, ran = _run_variant(spec, variant, periods, sources, workers, folder, sc_cfg)
-        row = _variant_row(spec, data, sc_cfg)
-        rows.append(row)
-        took = f"{clock.perf_counter() - started:.0f}s" if ran else "done before"
+    trials = results_dir / TRIALS_FILE
+    done: dict[str, dict] = {}
+    for variant in variants:
+        data = _finished_variant(folder / "variants" / variant.id)
+        if data is not None:
+            done[variant.id] = data
+            log(f"[{len(done)}/{len(variants)}] {variant.id} {variant.name}: "
+                f"{data['scorecard']['trades']} trades, net {data['scorecard']['net_r']:+.1f} R "
+                "(done before)")  # fmt: skip
+    pending = [v for v in variants if v.id not in done]
+    started = clock.perf_counter()
+    for index, result in run_period_many(
+        spec.symbols, periods["dev_start"], periods["dev_end"],
+        [variant_settings(spec, v) for v in pending], sources, workers,
+    ) if pending else ():  # fmt: skip
+        variant = pending[index]
+        data = _store_variant(spec, variant, result, periods, folder, sc_cfg, trials)
+        done[variant.id] = data
+        card = data["scorecard"]
         log(
-            f"[{i}/{len(variants)}] {variant.id} {variant.name}: {row['trades']} trades, "
-            f"net {row['net_r']:+.1f} R ({took})"
+            f"[{len(done)}/{len(variants)}] {variant.id} {variant.name}: {card['trades']} trades, "
+            f"net {card['net_r']:+.1f} R ({clock.perf_counter() - started:.0f}s since start)"
         )
+    rows = [_variant_row(spec, done[v.id], sc_cfg) for v in variants]
     rows = _rank(rows, spec.min_trades)
     ranked = [r for r in rows if r["rank"] is not None]
     info["ranked"] = len(ranked)
@@ -484,7 +551,7 @@ def run_research(
         cfg.cutoff, last, f"{SOURCE_RETEST}-{run_number - 1}" if is_retest else SOURCE_TEST,
         [t.r_net for t in result.trades],
         note=f"retest {run_number - 1} of grid {rid}" if is_retest else f"test of grid {rid}",
-    ))  # fmt: skip
+    ), trials)  # fmt: skip
     old_rows = _test_rows(folder)
     _write_csv(
         folder / "test.csv", [*TEST_COLUMNS, *_set_columns(spec)],
@@ -577,7 +644,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument("grid", type=Path, help="research/grids/<name>.toml")
     p.add_argument("--workers", type=int, default=None,
-                   help="processes per backtest (default: one per symbol, up to the CPUs)")  # fmt: skip
+                   help="worker processes (default: all CPUs but one)")  # fmt: skip
     p.add_argument("--retest", action="store_true",
                    help="allow a second test run of this grid (recorded in the trial log)")  # fmt: skip
     p.add_argument("--dev-only", action="store_true",

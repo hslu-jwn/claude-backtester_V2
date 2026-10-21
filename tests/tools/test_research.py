@@ -249,6 +249,10 @@ class Fakes:
             sources=sources, runs=runs, trades=merged, notes=(),
         )  # fmt: skip
 
+    def run_many(self, symbols, start, end, settings_list, sources, workers):
+        for i, settings in enumerate(settings_list):
+            yield i, self.run(symbols, start, end, settings, sources, workers)
+
     def write(self, result, out_dir=None, run_id=None, preset=None):
         from backtester.runner import new_run_id
 
@@ -269,6 +273,7 @@ class Fakes:
 def fakes(monkeypatch):
     f = Fakes()
     monkeypatch.setattr(research, "run_backtests", f.run)
+    monkeypatch.setattr(research, "run_period_many", f.run_many)
     monkeypatch.setattr(research, "write_results", f.write)
     monkeypatch.setattr(research, "cached_span", lambda symbols, sources: f.span)
     monkeypatch.setattr(research, "segments", lambda symbol, a, b, sources: [(a, b)])
@@ -370,7 +375,9 @@ def test_retest_runs_the_test_again_and_is_logged_as_a_retest(tmp_path, fakes):
     assert out["status"] == "done" and len(fakes.calls) == calls + 1  # only the test run
     info = json.loads((research_folder(tmp_path) / "research.json").read_text())
     assert info["test"]["retests"] == 1 and info["test"]["run"] == 2
-    lines = [r for r in trial_log.read_all() if r.family == "idea"]
+    lines = [
+        r for r in trial_log.read_all(tmp_path / "results" / "trials.jsonl") if r.family == "idea"
+    ]
     assert any("retest" in r.note and "retest" in r.source for r in lines)
     assert [r["test_run"] for r in read_csv(research_folder(tmp_path) / "test.csv")] == ["1", "2"]
 
@@ -479,7 +486,9 @@ def test_test_scorecard_has_deflated_sharpe_and_a_verdict(tmp_path, fakes):
 
 def test_trial_log_gets_every_variant_and_the_test(tmp_path, fakes):
     run_research(tmp_path)
-    lines = [r for r in trial_log.read_all() if r.family == "idea"]
+    lines = [
+        r for r in trial_log.read_all(tmp_path / "results" / "trials.jsonl") if r.family == "idea"
+    ]
     assert len(lines) == 6 + 1
     assert {r.strategy for r in lines} == {"opening_range"}
     dev = [r for r in lines if r.end == "2021-09-13"]
@@ -487,7 +496,16 @@ def test_trial_log_gets_every_variant_and_the_test(tmp_path, fakes):
     (test,) = [r for r in lines if r.start == "2021-09-14"]
     assert test.end == "2026-09-30" and test.source == "research-test"
     run_research(tmp_path, dev_only=True)  # a rerun is not a new trial (last line per key wins)
-    assert len([r for r in trial_log.read_all() if r.family == "idea"]) == 7
+    assert (
+        len(
+            [
+                r
+                for r in trial_log.read_all(tmp_path / "results" / "trials.jsonl")
+                if r.family == "idea"
+            ]
+        )
+        == 7
+    )
 
 
 def test_main_exit_codes_and_messages(tmp_path, fakes, capsys):
@@ -501,3 +519,9 @@ def test_main_exit_codes_and_messages(tmp_path, fakes, capsys):
     assert research.main([str(bad), *out_dir]) == 2
     assert "range_minutes" in capsys.readouterr().err
     assert research.main([str(tmp_path / "missing.toml"), *out_dir]) == 2
+
+
+def test_trial_log_follows_the_results_dir(tmp_path, fakes):
+    run_research(tmp_path, dev_only=True)
+    assert (tmp_path / "results" / "trials.jsonl").is_file()
+    assert trial_log.read_all() == []  # the default log (results/trials.jsonl) is untouched

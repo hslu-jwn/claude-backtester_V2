@@ -40,11 +40,12 @@ import os
 import shutil
 import threading
 import time as clock_time
-from collections.abc import Callable, Mapping, Sequence
-from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, as_completed, wait
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from enum import Enum
+from itertools import pairwise
 from pathlib import Path
 from types import MappingProxyType
 
@@ -198,6 +199,7 @@ def _load(
     end: date,
     settings: RunSettings,
     step: StepProgress | None = None,
+    cache: SeriesCache | None = None,
 ) -> _Job:
     cached = set(sources.cached_days(symbol))
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -220,13 +222,48 @@ def _load(
     end = _midnight(last + timedelta(1))
     timeframes = tuple(dict.fromkeys(strategy.timeframes))
     series = tuple(
-        _load_timeframe(
-            adapter, symbol, tf, _midnight(history if tf in full else warm), end, h4,
-            lambda share, k=k: step((k + share) / len(timeframes)) if step else None,
+        _timeframe_series(
+            cache, sources, adapter, symbol, tf, _midnight(history if tf in full else warm), end,
+            h4, lambda share, k=k: step((k + share) / len(timeframes)) if step else None,
         )
         for k, tf in enumerate(timeframes)
     )  # fmt: skip
     return _Job(symbol, first, last, warm, series, settings, tuple(notes))
+
+
+class SeriesCache:
+    """Loaded candle series of ONE symbol and range, shared by the variants run on it.
+    Series are immutable (`CandleSeries` holds a tuple, views only read), so every variant
+    gets a new strategy and engine on the same series. Holds the last scope only (memory):
+    a request for another (symbol, range end) drops the old series."""
+
+    def __init__(self) -> None:
+        self._scope: tuple | None = None
+        self._items: dict[tuple, CandleSeries] = {}
+
+    def get(self, scope: tuple, key: tuple, load: Callable[[], CandleSeries]) -> CandleSeries:
+        if scope != self._scope:
+            self._items.clear()
+            self._scope = scope
+        if key not in self._items:
+            self._items[key] = load()
+        return self._items[key]
+
+    def clear(self) -> None:
+        self._items.clear()
+        self._scope = None
+
+
+def _timeframe_series(
+    cache, sources, adapter, symbol, tf, start, end, h4, step: StepProgress
+) -> CandleSeries:
+    if cache is None:
+        return _load_timeframe(adapter, symbol, tf, start, end, h4, step)
+    return cache.get(
+        (symbol, end, sources),
+        (tf, start, h4),
+        lambda: _load_timeframe(adapter, symbol, tf, start, end, h4, step),
+    )
 
 
 def _load_timeframe(adapter, symbol, tf, start, end, h4, step: StepProgress) -> CandleSeries:
@@ -321,14 +358,8 @@ def run_backtests(
             skipped.append((s, e))
         loaded(i, 1.0)
     if not jobs:
-        if len(skipped) == 1:
-            raise skipped[0][1]
-        text = "; ".join(str(e) for _, e in skipped)
-        if all(isinstance(e, UnsupportedSymbolError) for _, e in skipped):
-            raise UnsupportedSymbolError(text)
-        raise ValueError(text)
+        raise _nothing_to_run(skipped)
     symbols = tuple(j.symbol for j in jobs)
-    left_out = tuple(f"{s} left out: {e}" for s, e in skipped)
     total = sum(j.base_candles for j in jobs)
     done = dict.fromkeys(symbols, 0)
 
@@ -343,17 +374,39 @@ def run_backtests(
         runs = [_run_job(j, lambda n, _t, s=j.symbol: report(s, n)) for j in jobs]
     else:
         runs = _run_parallel(jobs, workers, report, cancel)
-    by_symbol = {r.symbol: r for r in runs}
+    outcomes = {**dict(skipped), **{r.symbol: r for r in runs}}
+    return combine_runs(requested, start, end, settings, sources, outcomes)
+
+
+def _nothing_to_run(skipped: Sequence[tuple[str, Exception]]) -> Exception:
+    """The error of a run where no symbol could run: the symbol's own for a single one."""
+    if len(skipped) == 1:
+        return skipped[0][1]
+    text = "; ".join(str(e) for _, e in skipped)
+    if all(isinstance(e, UnsupportedSymbolError) for _, e in skipped):
+        return UnsupportedSymbolError(text)
+    return ValueError(text)
+
+
+def combine_runs(
+    requested: Sequence[str],
+    start: date,
+    end: date,
+    settings: RunSettings,
+    sources: SymbolSources,
+    outcomes: Mapping[str, SymbolRun | Exception],
+) -> RunResult:
+    """The `RunResult` of `requested` symbols from their outcomes: a `SymbolRun`, or the
+    error that left the symbol out (a note; raised when no symbol could run)."""
+    runs = {s: o for s in requested if isinstance(o := outcomes[s], SymbolRun)}
+    skipped = [(s, o) for s in requested if isinstance(o := outcomes[s], Exception)]
+    if not runs:
+        raise _nothing_to_run(skipped)
+    left_out = tuple(f"{s} left out: {e}" for s, e in skipped)
     return RunResult(
-        symbols,
-        start,
-        end,
-        settings,
-        sources,
-        by_symbol,
-        merge_trades(list(by_symbol.values())),
+        tuple(runs), start, end, settings, sources, runs, merge_trades(list(runs.values())),
         left_out,
-    )
+    )  # fmt: skip
 
 
 def _check_cancel(cancel: threading.Event | None) -> None:
@@ -387,11 +440,125 @@ def _run_parallel(
                 report(futures[f].symbol, futures[f].base_candles)
         return [f.result() for f in futures]
     except BaseException:  # cancelled or failed: stop the workers, don't wait for them
-        for process in list(getattr(pool, "_processes", {}).values()):
-            process.terminate()
+        _kill_workers(pool)
         raise
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
+
+
+def _kill_workers(pool: ProcessPoolExecutor) -> None:
+    for process in list(getattr(pool, "_processes", {}).values()):
+        process.terminate()
+
+
+# --- many variants on one loaded series (research runner) ------------------------------
+
+
+@dataclass(frozen=True)
+class ManyConfig:
+    # most variants one worker task runs on a series it loaded once: a finished task is a
+    # resumable unit for the research runner, so a long grid is cut into tasks of this size
+    max_chunk: int = 8
+
+
+MANY = ManyConfig()
+
+Task = tuple[str, date, date]  # symbol and its range of consecutive cached days
+Outcome = SymbolRun | Exception  # the run, or why the symbol is left out of it
+_SERIES = SeriesCache()  # this process' loaded series (worker processes keep their own)
+
+
+def default_workers() -> int:
+    """All CPUs but one (the machine stays usable); at least one."""
+    return max(1, (os.cpu_count() or 1) - 1)
+
+
+def _chunk_symbol_run(
+    task: Task, items: Sequence[tuple[int, RunSettings]], sources: SymbolSources
+) -> Iterator[tuple[int, Outcome]]:
+    """`items` (variant index, settings) on one symbol's range; the series is loaded once and
+    shared (`SeriesCache`), strategy and engine are new for every variant."""
+    symbol, start, end = task
+    for index, settings in items:
+        try:
+            job = _load(sources, symbol, start, end, settings, cache=_SERIES)
+        except (UnsupportedSymbolError, NoDataError, UnmappedSymbolError) as e:
+            yield index, e
+        else:
+            yield index, _run_job(job)
+
+
+def _run_chunk_in_worker(task, items, sources) -> list[tuple[int, Outcome]]:
+    return list(_chunk_symbol_run(task, items, sources))
+
+
+def iter_symbol_runs(
+    tasks: Sequence[Task],
+    settings_list: Sequence[RunSettings],
+    sources: SymbolSources = DEFAULT_SOURCES,
+    workers: int | None = None,
+) -> Iterator[tuple[int, int, Outcome]]:
+    """Every task (symbol, first day, last day) with every settings, as `(variant index, task
+    index, outcome)` in completion order. Tasks run in parallel processes (`workers`, default
+    `default_workers()`); the variants of a task run in chunks (`ManyConfig`) on one loading of
+    its candles. A symbol the strategy has no rules for, or without a cached day, is an
+    `Outcome` error like in `run_backtests`; any other error is raised (the workers stop)."""
+    n = len(settings_list)
+    if n == 0:
+        return
+    workers = workers or default_workers()
+    chunks = max(-(-n // MANY.max_chunk), min(n, workers // max(1, len(tasks))))
+    bounds = [round(i * n / chunks) for i in range(chunks + 1)]
+    units = [  # chunk by chunk, so early variants finish first
+        (t, [(v, settings_list[v]) for v in range(lo, hi)])
+        for lo, hi in pairwise(bounds)
+        if hi > lo
+        for t in range(len(tasks))
+    ]
+    if workers <= 1 or len(units) == 1:
+        try:
+            for t, items in units:
+                for v, outcome in _chunk_symbol_run(tasks[t], items, sources):
+                    yield v, t, outcome
+        finally:
+            _SERIES.clear()
+        return
+    ctx = multiprocessing.get_context("spawn")
+    pool = ProcessPoolExecutor(min(workers, len(units)), ctx)
+    try:
+        futures = {pool.submit(_run_chunk_in_worker, tasks[t], i, sources): t for t, i in units}
+        for future in as_completed(futures):
+            for v, outcome in future.result():  # a worker's error is raised here
+                yield v, futures[future], outcome
+    except BaseException:  # failed or the consumer stopped: stop the workers
+        _kill_workers(pool)
+        raise
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
+
+def run_backtests_many(
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    settings_list: Sequence[RunSettings],
+    sources: SymbolSources = DEFAULT_SOURCES,
+    workers: int | None = None,
+) -> Iterator[tuple[int, RunResult]]:
+    """`run_backtests(symbols, start, end, settings, sources)` for every settings, as `(index,
+    result)` in completion order, with the candles of a symbol loaded once for all of them and
+    the (symbol, variant) runs spread over `workers` processes."""
+    requested = tuple(dict.fromkeys(symbols))
+    if not requested:
+        raise ValueError("no symbols")
+    if end < start:
+        raise ValueError(f"end {end} is before start {start}")
+    tasks = [(s, start, end) for s in requested]
+    got: dict[int, dict[str, Outcome]] = {}
+    for v, t, outcome in iter_symbol_runs(tasks, settings_list, sources, workers):
+        got.setdefault(v, {})[requested[t]] = outcome
+        if len(got[v]) == len(requested):
+            yield v, combine_runs(requested, start, end, settings_list[v], sources, got.pop(v))
 
 
 # --- results folder --------------------------------------------------------------------
