@@ -102,6 +102,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-58 | Half-life z-score mean reversion (linear or Bollinger), gated by T-11 | signal | all; M15-H4 | none intraday | EC p.48-50, 70-72 | open |
 | I-59 | FX cointegration pair (AUDUSD vs CADUSD style) | signal | needs AUDUSD, USDCAD from histdata | rollover | EC p.108-112 | blocked (symbols not in the data) |
 | I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | open |
+| I-61 | No-wick retest: limit at the no-wick end of a trend candle (Bard FX video), many stops / targets / filters | signal | all; 5m-1h | none (16:55 exit) | user 2026-10-21 | **no edge** 2026-10-21 (ROADMAP 11.13): 0.4 % of 4,608 variants positive; gold H1 cluster failed out of sample (-0.02 R/trade) |
 
 ## Suggested order (Claude's proposal, the user decides)
 1. **Tooling first** (T-01, I-22): every later test then reports robustness the Kaufman way.
@@ -613,3 +614,11 @@ AUDUSD vs CADUSD (same quote currency) with a Johansen hedge ratio on a rolling 
 sigma_h = price x RV_annual x sqrt(h/365) with h the intended holding time and RV from 20 days; stop = k1 x sigma_h, target = k2 x sigma_h with k in {0.5, 1, 1.5, 2}; compare with fixed ATR multiples. Source: JK p.161
 (exit at ±2 sigma of the 90-day horizon), 91-95. Evidence: one worked example. Fit: good as a parameterisation of stops / targets; nearly proportional to ATR scaled by sqrt(time), so the difference is the time-scaling
 (tighter for short holds, wider for long). Gives a random-walk reference hit rate (T-15). Exit framework, not an entry.
+
+
+### I-61 No-wick retest (user, Bard FX)
+Strategy 3's `body_end` entry (limit at the open of a no-wick trend candle) with wider stop choices, other targets,
+a clean-structure trend filter, 4h agreement and the video's session windows. Tested 2026-10-21 (ROADMAP 11.13): no
+edge on any symbol class. Lesson: the limit fills mostly when price returns through the candle with momentum (adverse
+selection); tight stops make costs and the cost model dominate, and a gold "edge" came only from unpriced overnight
+holds and the default spread at the daily reopen.

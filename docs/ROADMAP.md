@@ -1727,6 +1727,18 @@ with the cost-to-target (I-45) and free-path (I-37) filters.
 - ☐ **11.11 Stationarity / half-life diagnostic** (T-11; user, 2026-10-16, after 12.10): ADF, half-life, Hurst,
   variance ratio and lag-correlation grid per symbol, timeframe and half, development years only (before 2021-09-14).
 - ☐ **11.12 Gap momentum** (I-46, Chan; user, 2026-10-16, after 11.11): the opposite side of the failed gap fade.
+- ☑ **11.13 No-wick retest study** (I-61; user, 2026-10-21: strategy 3 with a limit at the no-wick end, many
+  stops / targets / filters, ideas from a Bard FX video summary `00_Literature/Trading/no_wick_trading_strategy.pdf`).
+  Research tool `tools/no_wick_retest_study.py` (no strategy, no spec): signals on M5 / M15 / M30 / H1, limit at the
+  signal candle's open, expiry 5 candles, fills and SL / target order on M1 (SL first in one bar), exit 16:55 New York.
+  Variants: trend none / BOS / BOS + clean HH-HL structure / BOS + 4h agreement (or 2 breaks), PDF session windows on /
+  off, wick share 0 / 0.05, stop swing +10 / 25 / 50 %, previous swing, previous candle, ATR(14) x 0.5 / 1 / 1.5 / 2;
+  target 0.5-3 R, last opposite swing, none. Scoring skips trades with costs > 0.3 R (tiny stops) and overnight holds.
+  **Result: no edge.** Development 2015-01..2021-09-13 (18 symbols): 0.4 % of 4,608 variants net positive (best
+  +0.002 R/trade). XAUUSD looked strong before the real FTMO spread table and without overnight trades (+0.85 R/trade,
+  lottery profile); with them, a cluster H1 / BOS + 4h stayed (+0.19 R/trade, t 3.3). Pre-registered test (XAUUSD H1,
+  BOS + 4h, PDF windows, swing +10 %, 3 R, cost <= 0.2 R, median spread) on MT5 2021-09-14..2026-09-30: -0.023 R/trade
+  (680 trades), 12.5 % of that family positive. Recorded 2026-10-21; outputs `results/no_wick_retest/` (git-ignored).
 
 ## Phase 12: Backtest realism and Monte Carlo (user, 2026-10-15)
 
