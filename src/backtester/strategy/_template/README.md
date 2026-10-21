@@ -16,7 +16,10 @@
 6. **Tests** in `tests/strategy/<name>/` first: hand-built candle fixtures with the answer
    written in the test, and a no-lookahead test (appending future candles never changes an
    order already given). `tests/strategy/test_registry.py` checks the contract.
-7. **Run:** `python -m backtester.run SYMBOL --start ... --end ... --strategy <name>`.
+7. **Contract tests run by themselves:** once the strategy is in `REGISTRY`, `tests/strategy/test_contract.py`
+   checks it (config, no lookahead, deterministic, R only, sweepable). Add an entry to its `FIXTURES`
+   (symbol, hours, days) if the strategy makes no trade on the generic data; the test says so.
+8. **Run:** `python -m backtester.run SYMBOL --start ... --end ... --strategy <name>`.
 
 Not done by the registry yet (ROADMAP C.3, open): the settings menu, presets and the chart's
 Trades overlay are strategy 1 only.

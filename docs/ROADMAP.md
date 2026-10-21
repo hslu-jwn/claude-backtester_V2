@@ -1959,6 +1959,9 @@ time, with the bot stopped. Claude's ranking; the user decides the order.
 **Engine / analytics**
 - ☐ **13.19 no_wick limit fill is lookahead** (strategy 3 orders a limit inside the candle it just saw close and the
   engine fills it in that candle). Strategy 3 is dropped; remove or block the path.
+  **2026-10-21:** not reproduced by the contract test `tests/strategy/test_contract.py`
+  (`test_limit_orders_are_not_decided_from_the_candle_they_fill_in`: the level is fixed at the signal candle, so the
+  order could have rested during the fill candle; a mutation that decides from the fill candle fails the test).
 - ☐ **13.20 Kind C random fills never slip time exits** (`signal`, `end_of_data`), the main exits of strategies 5 / 6;
   together with 12.8 (engine slippage still not applied) all net R stays optimistic.
 - ☐ **13.21 Parallel runner progress race** (`runner.py` drain with `queue.empty()`): progress can step backwards ->
