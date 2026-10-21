@@ -48,6 +48,9 @@ from backtester.ui import prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
 
 _RUN_ID = re.compile(r"[A-Za-z0-9_.-]+")
+# a research variant's run folder: results/research/<id>/variants/<variant id> (Research page)
+VARIANT_PREFIX = "research~"
+_VARIANT_ID = re.compile(r"research~([A-Za-z0-9_.-]+)~([A-Za-z0-9_.-]+)")
 ALL = "__all__"  # symbol filter value for every symbol
 TABS = (
     ("overview", "Overview"),
@@ -59,7 +62,14 @@ UP, DOWN, MUTED, ACCENT = "#089981", "#f23645", "#787b86", "#2962ff"  # TradingV
 
 
 def run_folder(run_id: str, results_dir: Path = RESULTS_DIR) -> Path | None:
-    """The run's folder, or None for a name that isn't a run folder (no paths outside)."""
+    """The run's folder, or None for a name that isn't a run folder (no paths outside).
+    `research~<research id>~<variant id>` is a research variant's folder."""
+    variant = _VARIANT_ID.fullmatch(run_id or "")
+    if variant:
+        if {".", ".."} & set(variant.groups()):
+            return None
+        folder = Path(results_dir) / "research" / variant[1] / "variants" / variant[2]
+        return folder if (folder / "summary.json").is_file() else None
     if not _RUN_ID.fullmatch(run_id or "") or run_id in (".", ".."):
         return None
     folder = Path(results_dir) / run_id
@@ -626,7 +636,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
     selector = dcc.Dropdown(
         id="rs-run",
         options=runs,
-        value=folder.name if folder else None,
+        value=run_id if folder else None,
         clearable=False,
         searchable=True,
         placeholder="Open a run",
@@ -700,7 +710,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
                 ],
                 className="rs-body",
             ),
-            dcc.Store(id="rs-run-id", data=folder.name),
+            dcc.Store(id="rs-run-id", data=run_id),
             dcc.Store(id="rs-equity-data"),
             dcc.Store(id="rs-equity-done"),
         ],

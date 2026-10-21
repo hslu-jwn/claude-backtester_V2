@@ -1,14 +1,15 @@
 """Dash app entry point: `python -m backtester.ui.app` → http://127.0.0.1:8050
 
-One top bar on every page (ui/nav.py): Chart · Backtest · Risk · Live; Live is red while the
-bot runs and the app opens on `/live` then (ROADMAP 7.3).
+One top bar on every page (ui/nav.py): Chart · Backtest · Research · Risk · Live; Live is red
+while the bot runs and the app opens on `/live` then (ROADMAP 7.3).
 
 Pages: the running backtest (`/backtest`, pages/backtest.py: progress bar, Cancel; ROADMAP 7.6),
 chart (`/`, pages/chart.py; `/?symbol=…&from=…&to=…&t0=…&t1=…` opens it focused on
 one trade, from the results page) and a backtest's results (`/results/<run id>`,
 pages/results.py, opened when a backtest started from the toolbar finishes). The Risk &
 Prop Firm page (pages/risk.py) comes in Phase 5. The demo bot's monitor and account
-connection are `/live` (pages/live.py, ROADMAP 7.2 / 7.3). Each symbol is read from the cache of its
+connection are `/live` (pages/live.py, ROADMAP 7.2 / 7.3); the research table is `/research`
+(pages/research.py, ROADMAP 6.2). Each symbol is read from the cache of its
 own data source (`data/sources.py`). A page is built when it is opened, so symbols cached
 while the app runs appear after a reload.
 """
@@ -21,7 +22,7 @@ from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import CHART_SOURCES, SymbolSources
 from backtester.ui import backtest_job, nav, report_route
-from backtester.ui.pages import backtest, chart, live, results
+from backtester.ui.pages import backtest, chart, live, research, results
 
 RESULTS_PREFIX = "/results/"
 LIVE_PATH = "/live"
@@ -30,6 +31,8 @@ LIVE_PATH = "/live"
 def page_for(pathname: str | None, sources: SymbolSources, search: str | None = None):
     if pathname == LIVE_PATH:
         return live.layout()
+    if pathname == research.PATH:
+        return research.layout()
     if pathname == backtest.PATH:
         return backtest.page()
     if pathname and pathname.startswith(RESULTS_PREFIX):
@@ -48,6 +51,7 @@ def create_app(sources: SymbolSources = CHART_SOURCES) -> Dash:
             chart.layout(sources),
             results.layout(""),
             live.layout(),
+            research.layout(),
             backtest.layout(backtest_job.PLACEHOLDER),
         ]
     )
@@ -62,6 +66,7 @@ def create_app(sources: SymbolSources = CHART_SOURCES) -> Dash:
     results.register_callbacks(app)
     backtest.register_callbacks(app)
     live.register_callbacks(app)
+    research.register_callbacks(app)
     return app
 
 

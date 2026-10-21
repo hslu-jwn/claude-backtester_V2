@@ -1,4 +1,4 @@
-"""The top bar on every page: Chart · Backtest · Risk · Live and the bot status (ROADMAP 7.3).
+"""The top bar on every page: Chart · Backtest · Research · Risk · Live and the bot status (ROADMAP 7.3).
 
 Spec: docs/live-trading.md › App layout and Live page. The Live link turns red while the bot runs
 (fresh heartbeat in `results/live/status.json`, read every few seconds). The app opens on `/live`
@@ -24,13 +24,16 @@ LIVE_DIR = RESULTS_DIR / "live"
 REFRESH_MS = 3000
 BOOT_DELAY_MS = 200  # the landing check runs once, this long after the page is shown
 RESULTS_PREFIX = "/results/"
+RESEARCH_PATH = "/research"  # the research table (pages/research.py)
 BACKTEST_PATH = "/backtest"  # the running backtest, else the newest results
 
 
 def section_of(pathname: str | None) -> str:
-    """Which top-bar entry is active for a path: chart, backtest or live."""
+    """Which top-bar entry is active for a path: chart, backtest, research or live."""
     if pathname == live_model.LIVE_PATH:
         return "live"
+    if pathname == RESEARCH_PATH:
+        return "research"
     if pathname == BACKTEST_PATH or (pathname and pathname.startswith(RESULTS_PREFIX)):
         return "backtest"
     return "chart"
@@ -39,7 +42,7 @@ def section_of(pathname: str | None) -> str:
 def link_classes(pathname: str | None, bot_live: bool) -> dict[str, str]:
     section = section_of(pathname)
     out = {name: "nav-link" + (" active" if section == name else "") for name in
-           ("chart", "backtest", "live")}  # fmt: skip
+           ("chart", "backtest", "research", "live")}  # fmt: skip
     if bot_live:
         out["live"] += " nav-red"
     return out
@@ -58,6 +61,7 @@ def layout() -> html.Div:
             html.Div("BACKTESTER", className="nav-brand"),
             dcc.Link("Chart", id="nav-chart", href="/", className="nav-link"),
             dcc.Link("Backtest", id="nav-backtest", href=BACKTEST_PATH, className="nav-link"),
+            dcc.Link("Research", id="nav-research", href=RESEARCH_PATH, className="nav-link"),
             html.Span("Risk", className="nav-link nav-off", title="Not built yet"),
             dcc.Link("Live", id="nav-live", href=live_model.LIVE_PATH, className="nav-link"),
             html.Div(className="nav-spacer"),
@@ -71,6 +75,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
     @app.callback(
         Output("nav-chart", "className"),
         Output("nav-backtest", "className"),
+        Output("nav-research", "className"),
         Output("nav-live", "className"),
         Output("nav-status", "children"),
         Output("nav-status", "className"),
@@ -83,6 +88,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
         return (
             cls["chart"],
             cls["backtest"],
+            cls["research"],
             cls["live"],
             view["text"],
             f"nav-status nav-{view['level']}",

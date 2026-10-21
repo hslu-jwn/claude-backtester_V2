@@ -1,0 +1,65 @@
+/* Research page (ROADMAP 6.2): dark table, same tokens as /live and /backtest */
+:root:has(.rr-page) body,
+body:has(.rr-page) {
+  background: #0b1220;
+}
+.rr-page {
+  min-height: calc(100vh - var(--nav-h));
+  box-sizing: border-box;
+  padding: 14px 24px 24px;
+  background: #0b1220;
+  color: #e6ebf5;
+  font-size: 13px;
+}
+.rr-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.rr-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.rr-hint,
+.rr-count {
+  color: #7d8aa5;
+}
+.rr-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.rr-select {
+  min-width: 190px;
+  color: #111a2b;
+}
+.rr-radio label {
+  margin-right: 12px;
+  color: #c4cde0;
+}
+.rr-label {
+  color: #c4cde0;
+}
+.rr-input {
+  width: 70px;
+  padding: 4px 6px;
+  background: #111a2b;
+  border: 1px solid #1d2a40;
+  border-radius: 6px;
+  color: #e6ebf5;
+}
+.rr-button {
+  padding: 5px 14px;
+  background: #172238;
+  border: 1px solid #1d2a40;
+  border-radius: 6px;
+  color: #e6ebf5;
+  cursor: pointer;
+}
+.rr-button:hover {
+  background: #1d2a40;
+}
