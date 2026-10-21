@@ -1188,7 +1188,7 @@ fully automatic vs. signal mode, two TPs as two half positions, notifications):
 - ☑ **7.7 Live page fold-outs** (accepted by the user 2026-10-21, "End.") (user 2026-10-20; built 2026-10-20, Closed trades with its own Day / Week / All, to be checked by the user): every card can be folded; open by default: Open positions,
   Closed trades (opens on Day), Today's signals and skips; closed by default: Recent trades, Event log, Settings
   (Setup in progress and Connection are already closed by default, 7.6). After 13.1-13.5 (user: live fixes first).
-- ◐ **7.8 Bot positions always on the chart** (user 2026-10-21; spec `docs/live-trading.md` › Bot data and chart):
+- ☑ **7.8 Bot positions always on the chart** (accepted by the user 2026-10-21) (user 2026-10-21; spec `docs/live-trading.md` › Bot data and chart):
   a US500 short of 2026-10-21 14:06 could not be opened ("not in the cache": the cache ends yesterday). (a) the bot
   writes its finished warm-up / live days of its symbols into the MT5 cache and today's bars into
   `data/cache/live/` each minute; at start it launches the full cache update for the other symbols in the
