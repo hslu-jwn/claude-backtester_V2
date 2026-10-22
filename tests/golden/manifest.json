@@ -1,0 +1,84 @@
+{
+  "start": "2023-01-01",
+  "end": "2023-12-31",
+  "strategies": {
+    "session_zone_sweep": {
+      "symbols": [
+        "XAUUSD",
+        "GBPUSD",
+        "GBPJPY"
+      ],
+      "trade_count": 2808,
+      "runtime_seconds": 33.37055099999998,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "ny_index_sweep": {
+      "symbols": [
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 221,
+      "runtime_seconds": 106.27120719999948,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "no_wick": {
+      "symbols": [
+        "XAUUSD",
+        "GBPUSD",
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 4202,
+      "runtime_seconds": 3.4689824000015506,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "trend_following": {
+      "symbols": [
+        "XAUUSD",
+        "GBPUSD",
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 136,
+      "runtime_seconds": 0.8344773999997415,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "gap_fade": {
+      "symbols": [
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 379,
+      "runtime_seconds": 6.249815300001501,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "opening_range": {
+      "symbols": [
+        "US30",
+        "US2000",
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 1009,
+      "runtime_seconds": 13.865662700001849,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    },
+    "gap_momentum": {
+      "symbols": [
+        "XAUUSD"
+      ],
+      "trade_count": 91,
+      "runtime_seconds": 4.166629200000898,
+      "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+      "date": "2026-10-22T19:50:34+00:00"
+    }
+  },
+  "git_commit": "8daa7fe31a2c593dcb61e8540a900662e830c532",
+  "date": "2026-10-22T19:50:34+00:00"
+}
