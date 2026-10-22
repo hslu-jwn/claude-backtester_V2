@@ -9,21 +9,31 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   (reads the diff, runs the tests; a model's "done, tests pass" does not count), merges,
   commits and talks to the user. It writes or reviews code itself only when the others fail or
   the task touches no-lookahead, the engine or risk.
-- **Codex** writes and reviews code, writes specs and test-case lists, designs strategies from
-  the research (`knowledge/` entries with sources) and gives a second opinion on decisions.
-- **Gemini** does the large workloads: literature / web / study research, simple code that Codex
-  or Opus planned, writing and running tests, short write-ups of results.
-- Codex never calls Gemini. When Codex plans work for Gemini it writes a task brief file
-  (`briefs/<name>.md`) and Opus hands it on.
-- **Cross-review:** no model approves its own work. Codex writes -> Gemini or Opus reviews /
-  tests; Gemini writes -> Codex reviews. Tests (written first, from the spec) and the
-  implementation come from different models where possible.
-- **Escalation:** Gemini (2 tries) -> Codex (2 tries) -> Opus; raise effort or model one level
-  after a failed try before passing the task on.
-- **Hard limits for Codex and Gemini:** never commit, push or create branches; never read,
-  print or ask for credentials (they live only in the Windows Credential Manager); never edit
-  `src/backtester/live/` (order and bot code) or `.env`. `python -m backtester.tools.ai_dispatch`
-  enforces this and logs every call to `results/ai_calls.jsonl`.
+- **Codex** writes all production code (strategies, fixes, speed-ups), specs and test-case
+  lists, designs strategies from the research (`knowledge/` entries with sources) and gives a
+  second opinion on decisions. Runs in shell mode (edits files, runs pytest / ruff itself).
+- **Claude 4.6** (Sonnet 4.6 / Opus 4.6 through the Antigravity CLI, on the Google quota):
+  reviews Codex's code, is the second coding lane when Codex is busy or at its limit, and the
+  next step in the escalation chain before Opus.
+- **Gemini** (3.8 Flash through the Antigravity CLI) does the bulk work that is not production
+  code: literature / web / study research, `knowledge/` write-ups, writing tests from a
+  test-case list, running tests and sweeps, research-card write-ups.
+- Codex never calls the others. When Codex plans work for another model it writes a task brief
+  file (`briefs/<name>.md`) and Opus hands it on.
+- **Cross-review:** no model approves its own work. Codex writes code -> Claude 4.6 reviews it
+  and Gemini tests it; Claude 4.6 writes -> Codex reviews; Gemini writes tests -> Codex
+  reviews them. Tests (written first, from the spec) and the implementation come from
+  different models.
+- **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
+  **Research / tests:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
+  model one level after a failed try before passing the task on.
+- **Hard limits for Codex, Claude 4.6 and Gemini:** never commit, push or create branches;
+  never read, print or ask for credentials (they live only in the Windows Credential
+  Manager); never edit `src/backtester/live/` (order and bot code) or `.env`.
+  `python -m backtester.tools.ai_dispatch` enforces this after every call (commits, resets,
+  branches, pushes, protected paths, any change on a read-only task) and logs every call to
+  `results/ai_calls.jsonl`. The CLIs' own sandboxes are not a hard wall (tools are
+  auto-approved headless); the guard is.
 - Every answer ends with a short report: what was done, files changed, test results, open
   questions. A trading rule that is unclear is reported, never guessed.
 

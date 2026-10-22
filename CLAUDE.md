@@ -50,8 +50,9 @@ graphify is no longer used (user, 2026-10-22).
   (also for CLAUDE.md, code, tests, config) ask before changing anything.
 - Small commits on the session's feature branch; no PR unless asked.
 - **Models and subagents (rule set by the user, 2026-10-22; roles in `AGENTS.md` › Team):**
-  Opus orchestrates and dispatches Codex and Gemini through the project skills `codex-helper`
-  and `gemini-helper` (`python -m backtester.tools.ai_dispatch`). Before asking the user
+  Opus orchestrates and dispatches Codex, Claude 4.6 and Gemini through the project skills
+  `codex-helper` and `gemini-helper` (`python -m backtester.tools.ai_dispatch
+  codex|claude46|gemini`). Before asking the user
   anything, ask Codex. Pick the cheapest model and lowest effort that does the task well;
   escalate one level after a failed try:
 
@@ -59,14 +60,16 @@ graphify is no longer used (user, 2026-10-22).
   |---|---|
   | Orchestrating, check-ins, merges, routine checks | Opus medium |
   | Code review (phase 4), specs, strategy design, regime classifier, hard bugs, anything touching no-lookahead / engine / risk | Opus high + Codex high |
-  | Normal coding, normal reviews | Codex medium |
-  | Simple pre-planned code, writing and running tests | Gemini high (`gemini-3.8-flash-high`) |
+  | Normal coding (all production code), specs, test-case lists | Codex medium |
+  | Review of Codex's code; second coding lane; first escalation step | Claude 4.6: `claude46` medium = Sonnet 4.6, high = Opus 4.6 |
+  | Writing tests from a test-case list, running tests | Gemini high (`gemini-3.8-flash-high`) |
   | Reading literature, web research, summaries, card write-ups | Gemini medium (high for hard papers / books) |
   | Claude subagents: mechanical edits, searches, running commands | Haiku, low effort |
   | Claude subagents: writing code / tests, debugging, backtests needing judgment | Sonnet, medium (high for hard bugs) |
   | Claude subagents: only if Sonnet failed or the task is critical | Opus, high |
 
-  Antigravity offers no Gemini Pro on this account; Flash high stands in for "Pro". Opus's own
+  Antigravity offers no Gemini Pro model on this account (2026-10-22; `agy models`); Flash high
+  stands in for "Pro". Claude 4.6 and Gemini share the Google quota. Opus's own
   level is set by the user in the app: tell the user when a phase would clearly benefit from high.
   **Usage limits:** dispatch exit 4 = limit hit; the other tools take over its tasks; if two
   are out, pause the loop and resume later. Save Claude and Codex tokens: short high-value

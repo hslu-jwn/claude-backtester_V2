@@ -8,11 +8,13 @@ from backtester.tools.ai_dispatch import (
     DispatchConfig,
     RepoState,
     Task,
+    _fresh_path,
     build_agy_cmd,
     build_codex_cmd,
     child_env,
     guard_violations,
     hit_limit,
+    parse_agy_output,
     parse_porcelain_z,
     prompt_for,
 )
@@ -68,11 +70,22 @@ def test_agy_effort_picks_the_flash_variant(effort):
     assert cmd[cmd.index("-p") + 1].startswith("Follow AGENTS.md")
 
 
-def test_agy_only_write_tasks_auto_approve_tools():
-    read = build_agy_cmd("agy.exe", task(tool="gemini"), CFG)
-    write = build_agy_cmd("agy.exe", task(tool="gemini", write=True), CFG)
-    assert "--dangerously-skip-permissions" not in read
-    assert "--dangerously-skip-permissions" in write
+def test_agy_tools_run_inside_its_sandbox_and_answer_as_json():
+    """Headless agy auto-denies every tool permission (even `git diff`), so tools are approved
+    and run inside --sandbox; read-only is enforced by the guard, as for Codex."""
+    for write in (False, True):
+        cmd = build_agy_cmd("agy.exe", task(tool="gemini", write=write), CFG)
+        assert "--sandbox" in cmd and "--dangerously-skip-permissions" in cmd
+        assert cmd[cmd.index("--output-format") + 1] == "json"
+
+
+def test_agy_json_answer_is_unpacked():
+    ok = '{"status":"SUCCESS","response":"APPROVE\\n","denied_actions":[]}'
+    assert parse_agy_output(ok) == ("APPROVE\n", True, "")
+    denied = '{"status":"SUCCESS","response":"","denied_actions":[{"action":"command"}]}'
+    assert parse_agy_output(denied) == ("", False, "denied: command")
+    assert parse_agy_output('{"status":"ERROR","response":"x"}') == ("x", False, "status ERROR")
+    assert parse_agy_output("not json") == ("not json", False, "no json answer")
 
 
 @pytest.mark.parametrize(
@@ -108,6 +121,11 @@ def test_prompt_carries_the_limits_and_the_task():
 
 
 # --- environment ---------------------------------------------------------------------------
+
+
+def test_fresh_path_is_unchanged_off_windows(monkeypatch):
+    monkeypatch.setattr("backtester.tools.ai_dispatch.sys.platform", "linux")
+    assert _fresh_path("a;b") == "a;b"
 
 
 def test_child_env_drops_secrets_and_sets_system_ca():

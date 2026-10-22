@@ -121,10 +121,27 @@ def build_codex_cmd(exe: str, task: Task, cfg: DispatchConfig, out_file: str) ->
 def build_agy_cmd(exe: str, task: Task, cfg: DispatchConfig) -> list[str]:
     models = cfg.claude46_models if task.tool == "claude46" else cfg.gemini_models
     model = task.model or models[_effort(task, models)]
-    cmd = [exe, "--model", model, "--sandbox", "--output-format", "text"]
-    if task.write:
-        cmd.append("--dangerously-skip-permissions")  # tools run inside --sandbox
-    return [*cmd, "-p", prompt_for(task, cfg)]
+    # Headless agy auto-denies every tool (even `git diff`): tools are approved and run inside
+    # --sandbox; read-only tasks are enforced by guard_violations, as for Codex.
+    return [
+        exe, "--model", model, "--sandbox", "--dangerously-skip-permissions",
+        "--output-format", "json", "-p", prompt_for(task, cfg),
+    ]  # fmt: skip
+
+
+def parse_agy_output(text: str) -> tuple[str, bool, str]:
+    """(answer, ok, note) from agy's JSON answer; text mode prints nothing after tool use."""
+    try:
+        data = json.loads(text.strip().splitlines()[-1] if text.strip() else "")
+    except (json.JSONDecodeError, IndexError):
+        return text, False, "no json answer"
+    response = data.get("response", "")
+    if data.get("status") != "SUCCESS":
+        return response, False, f"status {data.get('status')}"
+    denied = [d.get("action", "?") for d in data.get("denied_actions") or []]
+    if denied:
+        return response, False, f"denied: {', '.join(denied)}"
+    return response, True, ""
 
 
 def child_env(env: Mapping[str, str], cfg: DispatchConfig = DEFAULT) -> dict[str, str]:
@@ -253,7 +270,13 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
     except subprocess.TimeoutExpired as e:
         stdout, stderr, code = str(e.stdout or ""), f"timeout after {cfg.timeout_s}s", 124
     seconds = round(time.monotonic() - start)
-    if task.tool != "codex" or not out.exists():
+    note = ""
+    if task.tool != "codex":
+        answer, ok, note = parse_agy_output(stdout)
+        out.write_text(answer, encoding="utf-8")
+        if code == 0 and not ok:
+            code = 1
+    elif not out.exists():
         out.write_text(stdout, encoding="utf-8")
     violations = guard_violations(before, repo_state(task.cwd), cfg, write=task.write)
     limited = code != 0 and hit_limit(stdout + stderr, cfg)
@@ -262,7 +285,7 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
         "time": stamp, "tool": task.tool, "label": label, "model": cmd[cmd.index(
             "-m" if task.tool == "codex" else "--model") + 1], "effort": task.effort,
         "write": task.write, "seconds": seconds, "exit": code, "status": status,
-        "violations": violations, "answer": str(out),
+        "violations": violations, "note": note, "answer": str(out),
     }  # fmt: skip
     with (results / "ai_calls.jsonl").open("a", encoding="utf-8") as log:
         log.write(json.dumps(entry) + "\n")
