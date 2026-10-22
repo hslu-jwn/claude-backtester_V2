@@ -1334,7 +1334,7 @@ in its results reported).
   breakout filter (`two_closes_cancel`, `cancel_closes` 2 / 3, `cancel_wick_first`),
   `bos_before_top`, doji as a share of the candle's range (`SwingConfig.doji_range_share`);
   temporary **Sweep** menu in the chart toolbar; the same options in strategy 2's config
-  (Settings › Entry). Tools: `tools/sweep_study.py` (35,000 sweeps, outcome per rule),
+  (Settings › Entry). Tools: `tools/sweep_study.py` (removed 2026-10-22, in git history; 35,000 sweeps, outcome per rule),
   `analytics/sweep_quality.py`, `tools/strategy2_sweep_grid.py`, `tools/strategy2_explore.py`
   (entry time, AM / PM, window size, exit structures). Results (spec: `confluences.md` ›
   Liquidity sweep, `strategy-ny-indices.md` › Backtest options): sweeps are a coin flip after
