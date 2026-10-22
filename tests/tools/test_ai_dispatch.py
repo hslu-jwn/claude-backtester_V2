@@ -34,10 +34,13 @@ def task(**kw) -> Task:
 # --- command lines -------------------------------------------------------------------------
 
 
-def test_codex_read_only_task_uses_read_only_sandbox_model_and_effort():
+def test_codex_runs_in_shell_mode_with_model_and_effort():
+    """Shell mode (approved by the user, 2026-10-22): on Windows Codex's plain sandboxes block
+    every command, so it runs with --approve-for-me (workspace-write sandbox + automatic
+    reviewer). Read-only tasks are enforced by the guard."""
     cmd = build_codex_cmd("codex.cmd", task(), CFG, out_file="C:/out.md")
     assert cmd[:2] == ["codex.cmd", "exec"]
-    assert cmd[cmd.index("-s") + 1] == "read-only"
+    assert "--approve-for-me" in cmd and "-s" not in cmd
     assert cmd[cmd.index("-m") + 1] == CFG.codex_model
     assert 'model_reasoning_effort="medium"' in cmd
     assert cmd[cmd.index("-C") + 1] == "C:/repo"
@@ -46,10 +49,10 @@ def test_codex_read_only_task_uses_read_only_sandbox_model_and_effort():
     assert "--dangerously-bypass-approvals-and-sandbox" not in cmd
 
 
-def test_codex_write_task_gets_workspace_write_never_full_access():
+def test_codex_never_gets_full_access():
     cmd = build_codex_cmd("codex.cmd", task(write=True), CFG, out_file="o.md")
-    assert cmd[cmd.index("-s") + 1] == "workspace-write"
     assert "danger-full-access" not in cmd
+    assert "--dangerously-bypass-approvals-and-sandbox" not in cmd
 
 
 def test_codex_model_override():
@@ -70,6 +73,17 @@ def test_agy_only_write_tasks_auto_approve_tools():
     write = build_agy_cmd("agy.exe", task(tool="gemini", write=True), CFG)
     assert "--dangerously-skip-permissions" not in read
     assert "--dangerously-skip-permissions" in write
+
+
+@pytest.mark.parametrize(
+    ("effort", "model"),
+    [("low", "claude-sonnet-4-6"), ("medium", "claude-sonnet-4-6"),
+     ("high", "claude-opus-4-6-thinking")],
+)  # fmt: skip
+def test_claude46_runs_through_agy_with_sonnet_or_opus(effort, model):
+    cmd = build_agy_cmd("agy.exe", task(tool="claude46", effort=effort, write=True), CFG)
+    assert cmd[cmd.index("--model") + 1] == model
+    assert "--sandbox" in cmd and "--dangerously-skip-permissions" in cmd
 
 
 def test_unknown_effort_is_refused():

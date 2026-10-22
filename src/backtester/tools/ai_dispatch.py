@@ -1,4 +1,4 @@
-"""Call Codex or Gemini (Antigravity CLI) non-interactively for one task. Spec: AGENTS.md › Team.
+"""Call Codex, Gemini or Claude 4.6 (both via Antigravity CLI) non-interactively for one task. Spec: AGENTS.md › Team.
 
     python -m backtester.tools.ai_dispatch codex  --effort medium --brief briefs/x.md
     python -m backtester.tools.ai_dispatch gemini --effort high --write --prompt "Write tests ..."
@@ -40,6 +40,13 @@ class DispatchConfig:
             "high": "gemini-3.8-flash-high",
         }
     )
+    claude46_models: Mapping[str, str] = field(  # older Claude models on the Google quota
+        default_factory=lambda: {
+            "low": "claude-sonnet-4-6",
+            "medium": "claude-sonnet-4-6",
+            "high": "claude-opus-4-6-thinking",
+        }
+    )
     codex_efforts: tuple[str, ...] = ("low", "medium", "high", "xhigh")
     protected: tuple[str, ...] = ("src/backtester/live/", ".env")  # models never write here
     secret_env: str = (
@@ -58,7 +65,7 @@ DEFAULT = DispatchConfig()
 
 @dataclass(frozen=True)
 class Task:
-    tool: str  # "codex" | "gemini"
+    tool: str  # "codex" | "gemini" | "claude46" (the last two run through agy)
     prompt: str
     effort: str = "medium"
     write: bool = False  # may edit files (still never commit)
@@ -96,10 +103,13 @@ def _effort(task: Task, allowed) -> str:
 
 def build_codex_cmd(exe: str, task: Task, cfg: DispatchConfig, out_file: str) -> list[str]:
     effort = _effort(task, cfg.codex_efforts)
+    # Shell mode (user, 2026-10-22): Windows blocks every command in Codex's plain sandboxes;
+    # --approve-for-me runs them in workspace-write with an automatic reviewer. Read-only
+    # tasks are enforced by guard_violations.
     return [
         exe, "exec",
         "-C", task.cwd,
-        "-s", "workspace-write" if task.write else "read-only",
+        "--approve-for-me",
         "-m", task.model or cfg.codex_model,
         "-c", f'model_reasoning_effort="{effort}"',
         "--color", "never",
@@ -109,7 +119,8 @@ def build_codex_cmd(exe: str, task: Task, cfg: DispatchConfig, out_file: str) ->
 
 
 def build_agy_cmd(exe: str, task: Task, cfg: DispatchConfig) -> list[str]:
-    model = task.model or cfg.gemini_models[_effort(task, cfg.gemini_models)]
+    models = cfg.claude46_models if task.tool == "claude46" else cfg.gemini_models
+    model = task.model or models[_effort(task, models)]
     cmd = [exe, "--model", model, "--sandbox", "--output-format", "text"]
     if task.write:
         cmd.append("--dangerously-skip-permissions")  # tools run inside --sandbox
@@ -267,7 +278,7 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("tool", choices=["codex", "gemini"])
+    p.add_argument("tool", choices=["codex", "gemini", "claude46"])
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--prompt", help="task text")
     src.add_argument("--brief", type=Path, help="task brief file (markdown)")
