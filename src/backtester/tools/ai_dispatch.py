@@ -303,9 +303,8 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("tool", choices=["codex", "gemini", "claude46"])
-    src = p.add_mutually_exclusive_group(required=True)
-    src.add_argument("--prompt", help="task text")
-    src.add_argument("--brief", type=Path, help="task brief file (markdown)")
+    p.add_argument("--prompt", help="task text (appended to --brief when both are given)")
+    p.add_argument("--brief", type=Path, help="task brief file (markdown)")
     p.add_argument("--effort", default="medium")
     p.add_argument("--model", help="override the default model")
     p.add_argument("--write", action="store_true", help="allow file edits (never commits)")
@@ -313,7 +312,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--label", default="task", help="short name for the answer file and log")
     p.add_argument("--results", type=Path, default=Path("results"))
     a = p.parse_args(argv)
-    prompt = a.prompt if a.prompt else a.brief.read_text(encoding="utf-8")
+    if not (a.prompt or a.brief):
+        p.error("give --prompt, --brief or both")
+    parts = [a.brief.read_text(encoding="utf-8-sig") if a.brief else "", a.prompt or ""]
+    prompt = "\n\n".join(x for x in parts if x)
     task = Task(a.tool, prompt, a.effort, a.write, a.cwd, a.model)
     return run(task, DispatchConfig(), a.results, a.label)
 
