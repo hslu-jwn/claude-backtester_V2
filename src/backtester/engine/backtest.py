@@ -18,8 +18,9 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
    the new orders are filled (stop-and-reverse, strategy 4). Unknown refs are ignored.
 4. New orders are filled at candle i's close and managed from candle i + 1, unless the
    cost filter skips them (`CostConfig.max_cost_r`; `strategy.on_order_skipped`). A limit order
-   (`Order.limit_fill`) is filled at its level inside candle i; in that candle only its SL
-   counts (SL first, a TP there is not counted), then it is managed from candle i + 1.
+   (`Order.limit_fill`) must be in the previous step's `pending_limit_orders` snapshot.
+   It is filled at its level inside candle i; in that candle only its SL counts (SL first,
+   a TP there is not counted), then it is managed from candle i + 1.
 
 Trades still open after the last candle are closed at its close (END_OF_DATA).
 Output: closed trades in R, in entry order. `progress(done, total)` (optional) is called
@@ -32,7 +33,7 @@ from __future__ import annotations
 import math
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from backtester.core.models import Candle, Direction, Timeframe
@@ -111,6 +112,7 @@ class Backtest:
         replay = self._replay
         last_step, last_time = 0, clock() if progress is not None else 0.0
         open_trades: list[OpenTrade] = []
+        pending_limits: list[Order] = []
         closed: list[TradeResult] = []
         total = len(replay)
         for cursor in range(total):
@@ -140,7 +142,7 @@ class Backtest:
             orders = self._strategy.on_candle(now, views)
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
-                trade = self._fill(order, candle, now)
+                trade = self._fill(order, candle, now, pending_limits)
                 if self._config.costs.too_expensive(
                     trade.symbol, trade.risk, trade.entry_time, trade.entry
                 ):
@@ -154,12 +156,15 @@ class Backtest:
                     self._strategy.on_trade_closed(trade.ref, result)
                 else:
                     open_trades.append(trade)
+            pending_limits = list(self._strategy.pending_limit_orders())
         if open_trades:
             last = replay.view(len(replay) - 1).current
             now = replay.close_time(len(replay) - 1)
             for trade in open_trades:
                 trade.close_all(last, now, last.close, ExitReason.END_OF_DATA)
-                closed.append(self._result(trade))
+                result = self._result(trade)
+                closed.append(result)
+                self._strategy.on_trade_closed(trade.ref, result)
         if progress is not None:
             progress(total, total)
         closed.sort(key=lambda t: t.entry_time)
@@ -189,11 +194,38 @@ class Backtest:
             views[tf] = self._replay.higher_view(cursor, tf)
         return views
 
-    def _fill(self, order: Order, candle: Candle, now: datetime) -> OpenTrade:
+    @staticmethod
+    def _consume_pending_limit(order: Order, candle: Candle, pending: list[Order]) -> None:
+        """Require prior placement; allow the existing gap fill at the open.
+
+        Spec: strategy-no-wick.md › Entry; AGENTS.md › Invariant #1.
+        """
+        for index, placed in enumerate(pending):
+            expected = placed
+            gapped = (
+                candle.high < placed.entry
+                if placed.direction is Direction.BULLISH
+                else candle.low > placed.entry
+            )
+            if gapped:
+                expected = replace(placed, entry=candle.open)
+            if order == expected:
+                pending.pop(index)
+                return
+        raise ValueError("limit order must have been placed at the previous step")
+
+    def _fill(
+        self, order: Order, candle: Candle, now: datetime, pending_limits: list[Order]
+    ) -> OpenTrade:
         """Enter at the close of the current base candle (spec: "enter at that close"), or
         for a limit order at its level, which the candle must have traded through."""
+        for name in ("entry", "stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
+            price = getattr(order, name)
+            if price is not None and not math.isfinite(price):
+                raise ValueError(f"order {name} must be finite")
         entry = order.entry if order.limit_fill else candle.close
         if order.limit_fill:
+            self._consume_pending_limit(order, candle, pending_limits)
             if not candle.low <= entry <= candle.high:
                 raise ValueError(f"limit entry {entry} outside the candle at {now}")
         elif not math.isclose(order.entry, entry):
@@ -209,13 +241,19 @@ class Backtest:
         if order.take_profit_2 is not None:
             if sign * (order.take_profit_2 - order.take_profit) <= 0:
                 raise ValueError(f"TP2 {order.take_profit_2} not beyond TP1 {order.take_profit}")
-            if not 0 < order.tp1_share < 1:
+            if not math.isfinite(order.tp1_share) or not 0 < order.tp1_share < 1:
                 raise ValueError(f"tp1_share {order.tp1_share} must be in (0, 1) with a TP2")
         if order.take_profit_3 is not None:
             tp2 = order.take_profit_2
             if tp2 is None or sign * (order.take_profit_3 - tp2) <= 0:
                 raise ValueError(f"TP3 {order.take_profit_3} not beyond TP2 {tp2}")
-            if not order.tp2_share or 1 - order.tp1_share - order.tp2_share <= 1e-12:
+            if (
+                order.tp2_share is None
+                or not math.isfinite(order.tp2_share)
+                or order.tp2_share <= 0
+            ):
+                raise ValueError("tp2_share must be finite and positive with a TP3")
+            if 1 - order.tp1_share - order.tp2_share <= 1e-12:
                 raise ValueError("tp1_share + tp2_share must leave a share for TP3")
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol, now, entry)

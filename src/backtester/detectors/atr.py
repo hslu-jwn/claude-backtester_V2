@@ -9,6 +9,7 @@ of the n candles BEFORE it, so a big candle doesn't raise its own threshold.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 from backtester.core.models import Candle
 from backtester.core.series import SeriesView
@@ -28,9 +29,17 @@ class StrongMoveConfig:
 
 def true_range(candle: Candle, prev_close: float | None) -> float:
     """max(high - low, |high - prev close|, |low - prev close|); high - low if no previous."""
+    if not all(isfinite(price) for price in (candle.open, candle.high, candle.low, candle.close)):
+        raise ValueError("ATR input prices must be finite")
+    if prev_close is not None and not isfinite(prev_close):
+        raise ValueError("ATR previous close must be finite")
     if prev_close is None:
-        return candle.range
-    return max(candle.range, abs(candle.high - prev_close), abs(candle.low - prev_close))
+        tr = candle.range
+    else:
+        tr = max(candle.range, abs(candle.high - prev_close), abs(candle.low - prev_close))
+    if not isfinite(tr):
+        raise ValueError("ATR true range must be finite")
+    return tr
 
 
 def is_strong_move(candle: Candle, atr: float | None, k: float) -> bool:

@@ -88,6 +88,10 @@ class NoWick(Strategy):
         self._structures = {t: Structure(doji) for t in self.timeframes}
         self._pending: list[Pending] = []
 
+    def pending_limit_orders(self) -> list[Order]:
+        """Limits already placed at this close. Spec: strategy-no-wick.md › Entry."""
+        return [p.order for p in self._pending]
+
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         for tf, structure in self._structures.items():
             structure.update(views[tf])

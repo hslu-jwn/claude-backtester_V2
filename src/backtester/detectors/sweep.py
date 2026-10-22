@@ -45,6 +45,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from datetime import datetime
+from numbers import Integral
 
 from backtester.core.models import Candle, Direction
 from backtester.core.series import SeriesView
@@ -89,8 +90,13 @@ class SweepConfig:
     bos_before_top: bool = False
 
     def __post_init__(self) -> None:
-        if self.equal_tolerance_atr is not None and self.equal_tolerance_atr < 0:
-            raise ValueError("equal_tolerance_atr must be >= 0")
+        for name in ("lookback_swings", "bos_within", "atr_period", "cancel_closes"):
+            if not isinstance(getattr(self, name), Integral):
+                raise TypeError(f"{name} must be an integer")
+        if self.equal_tolerance_atr is not None and (
+            math.isnan(self.equal_tolerance_atr) or self.equal_tolerance_atr < 0
+        ):
+            raise ValueError("equal_tolerance_atr must be >= 0 and not NaN")
         if self.atr_period < 1:
             raise ValueError("atr_period must be >= 1")
         if self.cancel_closes < 1:

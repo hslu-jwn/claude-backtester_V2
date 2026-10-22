@@ -98,6 +98,8 @@ class SeriesView:
 
     def window(self, start: int, stop: int) -> tuple[Candle, ...]:
         """Absolute indices [start, stop). `stop` may not exceed cursor + 1."""
+        if stop < 0:
+            raise IndexError("window stop before start of history")
         if stop > self._cursor + 1:
             raise LookaheadError(f"window stop {stop} is in the future (cursor={self._cursor})")
         return self._series._candles[max(0, start) : stop]

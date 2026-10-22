@@ -546,17 +546,25 @@ def test_the_strategy_hears_when_its_trade_closed_before_its_next_candle():
 
 
 class LimitAt(Strategy):
-    """At base cursor `at`, emit one limit order (filled at `entry`, inside this candle)."""
+    """Place before `at`, then emit the limit fill at `entry` inside candle `at`."""
 
     base_timeframe = Timeframe.M5
     timeframes = (Timeframe.M5,)
 
     def __init__(self, at, direction, entry, stop_loss, take_profit):
         self._args = (at, direction, entry, stop_loss, take_profit)
+        self._cursor = -1
+
+    def pending_limit_orders(self):
+        at, direction, entry, stop_loss, take_profit = self._args
+        if self._cursor == at - 1:
+            return [Order(direction, entry, stop_loss, take_profit, limit_fill=True)]
+        return []
 
     def on_candle(self, now, views):
         at, direction, entry, stop_loss, take_profit = self._args
-        if views[Timeframe.M5].cursor != at:
+        self._cursor = views[Timeframe.M5].cursor
+        if self._cursor != at:
             return []
         return [Order(direction, entry, stop_loss, take_profit, limit_fill=True)]
 

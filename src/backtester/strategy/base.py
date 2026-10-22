@@ -43,7 +43,8 @@ class Order:
     tp2_share: float | None = None
     ref: object = None  # the strategy's handle, passed back in on_trade_closed
     # a limit order that traded at `entry` inside the current candle (low <= entry <= high):
-    # filled at `entry`, not at the close. In its fill candle only the SL counts.
+    # must have been exposed by pending_limit_orders() at the previous step. Filled at
+    # `entry`, not at the close. In its fill candle only the SL counts.
     limit_fill: bool = False
 
 
@@ -72,6 +73,15 @@ class Strategy(ABC):
 
     def on_trade_closed(self, ref: object, result: TradeResult) -> None:
         """The trade of the order with `ref` has closed (all parts). Default: nothing."""
+
+    def pending_limit_orders(self) -> list[Order]:
+        """Unfilled limits placed by this close, eligible from the next candle only.
+
+        The engine snapshots these after each step. A later on_candle may return each
+        order once, unchanged except for an entry at the open when a candle gaps past
+        its limit (Spec: strategy-no-wick.md › Entry). Omit cancelled/expired orders.
+        """
+        return []
 
     def exits(self) -> list[object]:
         """Refs (`Order.ref`) of open trades to close at the current base candle's close.

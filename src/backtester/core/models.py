@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+from math import isfinite
 
 
 class Direction(Enum):
@@ -47,6 +48,10 @@ class Candle:
     spread: float = 0.0
 
     def __post_init__(self) -> None:
+        if not all(isfinite(price) for price in (self.open, self.high, self.low, self.close)):
+            raise ValueError(f"OHLC prices must be finite at {self.ts}")
+        if self.ts.tzinfo is None or self.ts.utcoffset() is None:
+            raise ValueError("Candle timestamp must be timezone-aware")
         if self.high < max(self.open, self.close) or self.low > min(self.open, self.close):
             raise ValueError(f"Inconsistent OHLC at {self.ts}: {self}")
         if self.high < self.low:

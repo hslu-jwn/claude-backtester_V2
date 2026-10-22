@@ -135,7 +135,9 @@ def test_closed_callback_runs_before_the_new_order_is_filled_and_reverse_works()
     assert second.entry == 103.0 and second.entry_time == first.exit_time  # same close
     assert second.exit_reason is ExitReason.END_OF_DATA
     closed = [e for e in strategy.events if e[0] == "closed"]
-    assert closed == [("closed", 2, (0, 0), ExitReason.SIGNAL)]
+    assert closed[0] == ("closed", 2, (0, 0), ExitReason.SIGNAL)
+    # end-of-data closes call back too (review engine #10, 2026-10-22)
+    assert len(closed) == 2 and closed[1][-1] is ExitReason.END_OF_DATA
     # order inside candle 2: on_candle, then exits, then the closed callback
     inside = [e[0] for e in strategy.events if e[1] == 2]
     assert inside == ["candle", "exits", "closed"]
