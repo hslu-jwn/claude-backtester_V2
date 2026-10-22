@@ -48,7 +48,7 @@ def test_dst_change_days_have_23_and_25_hours():
 
 def test_naive_time_is_rejected():
     with pytest.raises(ValueError):
-        prague_day_start(datetime(2026, 1, 1))  # noqa: DTZ001
+        prague_day_start(datetime(2026, 1, 1))
 
 
 def test_no_loss_no_stop():

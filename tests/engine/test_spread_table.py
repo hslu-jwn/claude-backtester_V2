@@ -77,7 +77,7 @@ def test_unknown_symbol_is_none():
 
 def test_naive_time_is_rejected():
     with pytest.raises(ValueError):
-        table().spread_at("XAUUSD", datetime(2026, 7, 1, 13, 30))  # noqa: DTZ001
+        table().spread_at("XAUUSD", datetime(2026, 7, 1, 13, 30))
 
 
 def test_json_round_trip_keeps_the_values():

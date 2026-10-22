@@ -81,8 +81,8 @@ def test_naive_datetimes_are_treated_as_utc(cache):
     naive = CacheAdapter(cache).fetch(
         "XAUUSD",
         Timeframe.M30,
-        datetime(2026, 9, 2, 22),  # noqa: DTZ001
-        datetime(2026, 9, 3),  # noqa: DTZ001
+        datetime(2026, 9, 2, 22),
+        datetime(2026, 9, 3),
     )
     assert [c.ts for c in naive] == [ts(2, 22), ts(2, 23)]
 

@@ -144,4 +144,4 @@ def test_start_times_come_from_the_config():
 
 def test_naive_or_non_utc_times_are_rejected():
     with pytest.raises(ValueError):
-        session_of(datetime(2026, 7, 15, 12, 0))  # noqa: DTZ001
+        session_of(datetime(2026, 7, 15, 12, 0))
