@@ -11,6 +11,27 @@ never `git add -A` over another session's changes. `claude/knowledge-stationarit
 and its worktree `../backtester-knowledge` removed; knowledge sessions now work on this branch too.
 Untracked `.vscode/` and a garbled `C…claude-notify-signalsstop` file in the root are not ours (left alone).
 
+**All branches merged (user, 2026-10-22):** this branch now contains `main` (ponytail-audit skill), `claude/ui-polish`,
+`claude/knowledge-stationarity` and `sweep-most-extreme-level` (merged with `-s ours`: its 2026-10-11 rule was later
+rebuilt as the `equal_tolerance_atr` option, off by default, so its old code was not taken). `main` was fast-forwarded
+to this branch and pushed, so a fresh clone of `main` has everything.
+
+## Moving to another PC (user, 2026-10-22)
+Git holds the code, specs, knowledge base and research grids. Not in git, set up by hand on the new PC:
+1. `git clone <repo>`, then `python -m venv .venv`, `.venv\Scripts\activate`,
+   `pip install -e ".[dev,ui,data,risk,mt5]"` (the old `.venv` is not portable).
+2. **Copy the git-ignored folders** from the old PC into the same paths: `data/raw/`, `data/cache/` (histdata, mt5,
+   binance*, live) and `results/` (runs, trial log, live logs, `trading.json`). Without them no backtest, study or
+   chart works (or re-import: `python -m backtester.data.histdata data/raw/histdata/` and the MT5 download).
+3. **MT5:** install the FTMO terminal, log in to the demo, enter login / password / server again in the app's
+   Settings ⚙ → Trading (they live in the Windows Credential Manager, not copied). Then `python -m backtester.tools.mt5_info`.
+4. **graphify:** install it, run `graphify update .` (`graphify-out/` is git-ignored). Fix the Windows path in the
+   `.claude/settings.json` PreToolUse hook if the new PC's user folder differs.
+5. Optional: Claude's memory folder `~/.claude/projects/<project-path>/memory/` (2 notes, both also in CLAUDE.md /
+   knowledge/README.md).
+6. Check: `pytest` (2026-10-22: 3218 passed, 5 skipped, 1 xfailed, ~37 min), `python -m backtester.ui.app`, chart shows US500.
+The bot is **not running** (stopped 2026-10-21); start it only on the new PC, never on both.
+
 ## Last session, strategy / app chat (2026-10-21, second chat, "End.")
 - **7.8 Bot positions always on the chart (☑):** the chart showed "not in the cache" for today's US500 short (the
   cache ends yesterday). Now the bot writes its 4 symbols' finished days into the MT5 cache (from its warm-up history,
@@ -105,4 +126,4 @@ engine slippage, 13.20 time-exit slippage, 13.12-13.15 data clock / holes, 13.23
 Research (`Continue.Knowledge`): paused until the demo has data; then 12.11 or new ideas via `tools.research`.
 
 ## First prompt for the next chat
-`Continue.` (step 4, result-bias fixes) — or `Continue.Knowledge` for research.
+`Continue.` on the new PC after the setup above (step 4, result-bias fixes) — or `Continue.Knowledge` for research.

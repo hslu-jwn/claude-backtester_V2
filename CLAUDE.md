@@ -166,7 +166,7 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 ## Claude Code tools in this project
 
 graphify is a user-level tool on the user's PC. The project skills are in `.claude/skills/`:
-`ponytail`, `ponytail-review`, `backtester-testing`, `backtest-evaluation-research` (needs web
+`ponytail`, `ponytail-review`, `ponytail-audit`, `backtester-testing`, `backtest-evaluation-research` (needs web
 access; the user may supply the research). They help; they never override the rules above.
 
 ### graphify (code map in `graphify-out/`)
@@ -197,7 +197,7 @@ access; the user may supply the research). They help; they never override the ru
   numbers), every detector still gets its no-lookahead test, and bullish/bearish stays one
   code path.
 - **Before each commit:** run `/ponytail-review` on the change and fix the "Must fix" items.
-- **Occasionally:** `/ponytail-audit` (not installed in `.claude/skills/` yet) for a whole-repo report. It only reports; turn its
+- **Occasionally:** `/ponytail-audit` (in `.claude/skills/` since the 2026-10-22 merge of main) for a whole-repo report. It only reports; turn its
   findings into ROADMAP steps rather than fixing them all at once.
 
 ## Status (2026-10-21, end of session 2)
