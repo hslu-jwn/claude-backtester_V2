@@ -90,6 +90,7 @@ def prompt_for(task: Task, cfg: DispatchConfig) -> str:
         "never read, print or ask for credentials (passwords, tokens, keys); "
         f"never edit {', '.join(cfg.protected)}. "
         "If a trading rule is unclear, stop and say so instead of guessing. "
+        "Work alone: no subagents or parallel tasks (they burn the quota). "
         "End with a short report: what you did, files changed, test results, open questions."
     )
     return f"{limits}\n\nTASK:\n{task.prompt}"

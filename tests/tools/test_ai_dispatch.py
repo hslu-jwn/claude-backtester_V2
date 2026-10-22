@@ -116,6 +116,7 @@ def test_prompt_carries_the_limits_and_the_task():
         "credentials",
         "src/backtester/live/",
         "Write tests for 3.2",
+        "no subagents",  # Claude 4.6 burned its weekly quota on four parallel subagents
     ):
         assert must in p
 
