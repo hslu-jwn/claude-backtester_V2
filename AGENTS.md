@@ -39,13 +39,19 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
 
 ## What this is
 
-A Python backtester for rule-based price-action trading strategies (session zones, FVGs,
-order blocks, BOS, liquidity sweeps). It replays historical candles one at a time, detects
-patterns with hard-coded rules, simulates trades in **R multiples**, and turns them into
-account results (balance, drawdown, Monte Carlo; the FTMO / prop-firm field comes later). Results are shown in a Dash web app with a
-TradingView Lightweight Charts chart. History comes from histdata.com M1 files the user downloads into `data/raw/histdata/`
-(Dukascopy is no longer used and was removed); MetaTrader 5 (FTMO) for feed comparison and
-later live trading. Symbols: XAUUSD, GBPUSD, GBPJPY (strategy 1), NAS100, US500 (strategy 2).
+A Python backtester and research platform for rule-based trading strategies. It replays
+historical M1 candles one at a time (no lookahead), runs the strategies in `strategy/`
+(7 so far: session zone sweep, NY index sweep, no-wick, Kaufman trend following, gap fade,
+opening-range breakout, gap momentum), simulates trades in **R multiples** with real costs
+and swap, and turns them into account results (balance, drawdown, Monte Carlo, FTMO /
+prop-firm pass probability). A research runner sweeps variants with a fixed data split
+(develop before 2021-09-14, test once on MT5 data after) and a trial log. Results show in a
+Dash app with a TradingView Lightweight Charts chart.
+
+Data: MetaTrader 5 (FTMO) M1 history in `data/cache/mt5/` (26 symbols, preferred day by day),
+histdata.com M1 files for older years, Binance BTC / ETH futures. Live: a demo-only forward
+test bot on the FTMO demo (`live/`). Goal of V2: a library of research-based strategies and a
+portfolio of them that balances itself across market regimes.
 
 ## Specs are the source of truth
 
@@ -60,10 +66,12 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-trend-following.md` | Strategy 4: trend following after Kaufman (breakout / SMA + band / momentum / KAMA / Dunnigan, ATR stop, stop-and-reverse, no TP) |
 | `docs/strategy-gap-fade.md` | Strategy 5: fade the index cash-open gap (0.1-1 ATR) to the previous close, stop at the mirror level, exit 16:00 (ROADMAP 11.4) |
 | `docs/strategy-opening-range.md` | Strategy 6: opening-range breakout (range / ATR band, session-end exit, narrow-range and tick-volume filters) (ROADMAP 11.10) |
+| `docs/strategy-gap-momentum.md` | Strategy 7: gap momentum (opening gap beyond the prior range, day trade) |
+| `docs/research-runner.md` | Research runner: data split, grids, scorecard, flags, trial log |
 | `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
-| `docs/ROADMAP.md` | Phases and numbered steps; what to build next and its status |
+| `docs/ROADMAP.md` | What to build next and its status; V1 history in `docs/archive/ROADMAP-v1.md` (step IDs like "ROADMAP 11.4" point there) |
 
 **Knowledge base (background, not rules):** `knowledge/` holds what the trading books in
 `00_Literature/Trading` teach: `README.md` (index, how to add a book), `topics/` (synthesis per
@@ -129,12 +137,13 @@ src/backtester/
                helpers in data/cache.py), MT5 adapter
   detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
   sessions.py  Tokyo/London/New York session clock (DST-aware)
-  strategy/    Strategy interface + session_zone_sweep/ (strategy 1), ny_index_sweep/ (strategy 2)
+  strategy/    Strategy interface, registry.py, one folder per strategy (_template/ to copy)
   engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
   risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
   live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
-  tools/       Command-line tools: data check / show, MT5 info, feed comparison (app level)
+  tools/       Command-line tools: data check / show / update, research runner, Monte Carlo,
+               portfolio, studies, ai_dispatch (archive/ = old grid runners)
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -146,11 +155,11 @@ docs/          Specs (source of truth)
 
 ```bash
 python -m venv .venv            # then activate it (.venv\Scripts\activate on Windows)
-pip install -e ".[dev,ui,data,risk]"
+pip install -e ".[dev,ui,data,risk,mt5]"
 pytest                          # all tests
 pytest tests/detectors -q       # one area
 ruff check . && ruff format .   # lint + format
-python -m backtester.ui.app     # start the Dash app (once implemented)
+python -m backtester.ui.app     # start the Dash app (or restart_app.bat)
 python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 python -m backtester.data.histdata data/raw/histdata/  # import histdata files (all pair subfolders) -> cache
 python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)

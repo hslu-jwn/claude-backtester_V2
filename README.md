@@ -1,43 +1,37 @@
-# backtester-claude
+# backtester-claude V2
 
-Rule-based price-action strategy backtester (session zones, FVGs, order blocks, BOS,
-liquidity sweeps) with a strict **no-lookahead** guarantee, an FTMO challenge simulator,
-and a Dash app with a TradingView Lightweight Charts chart.
+Backtester and research platform for rule-based trading strategies, with a strict
+**no-lookahead** guarantee, real costs and swap, Monte Carlo and FTMO / prop-firm simulation,
+a research runner with a fixed development / test data split, and a Dash app with a
+TradingView Lightweight Charts chart.
 
-- Trading rules: [`docs/`](docs/) (source of truth)
-- Architecture and build order: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- Working with Claude Code: [`CLAUDE.md`](CLAUDE.md)
+- Project rules for people and AI models: [`AGENTS.md`](AGENTS.md) (Claude: [`CLAUDE.md`](CLAUDE.md))
+- Trading rules: [`docs/`](docs/) (source of truth); what's next: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- Current state: [`docs/HANDOFF.md`](docs/HANDOFF.md)
 
-## Setup
+## Setup (Windows)
 
 ```bash
-git clone https://github.com/hslu-jwn/backtester-claude.git
-cd backtester-claude
-python -m venv .venv
-.venv\Scripts\activate          # Windows  (macOS/Linux: source .venv/bin/activate)
-pip install -e ".[dev,ui,data,risk]"
+git clone https://github.com/hslu-jwn/claude-backtester_V2.git
+cd claude-backtester_V2
+py -3.13 -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[dev,ui,data,risk,mt5]"
 pytest
-```
-
-Historical data comes from **histdata.com** M1 files (MetaTrader format) that you download
-yourself into `data/raw/histdata/<SYMBOL>/` (XAUUSD, GBPUSD, GBPJPY, NAS100, US500; histdata's
-NSXUSD / SPXUSD files go into `NAS100/` / `US500/`). Import them into the local cache and check
-them (`pip install -e ".[data]"`, see `docs/ARCHITECTURE.md` › Data sources):
-
-```bash
-python -m backtester.data.histdata data/raw/histdata/
-python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500
 python -m backtester.ui.app
 ```
 
-Dukascopy is no longer used (its downloader was removed). MetaTrader 5 (FTMO) is used for feed
-comparison and later live trading: `pip install -e ".[mt5]"` (Windows only); the login is
-entered in the app (Settings ⚙ → Trading) and kept in the Windows Credential Manager, never
-in a file. Data files are not committed.
+Market data and results are not in git: copy `data/` and `results/` from the previous PC, or
+re-import histdata.com files (`python -m backtester.data.histdata data/raw/histdata/`) and
+download MT5 history (`python -m backtester.tools.update_data`). Check the data with
+`python -m backtester.tools.check <SYMBOL> ...`.
+
+The MT5 (FTMO demo) login is entered in the app (Settings ⚙ → Trading) and kept in the
+Windows Credential Manager, never in a file. Orders are demo-only.
 
 ## Status
 
-Built and tested: data import and data check, chart with replay and confluence overlays,
-the detectors, strategy 1 (session zone sweep) and strategy 2 (NY Open index sweep)
-backtests with a results page, and the settings menu with presets. Not built yet: the risk
-and FTMO account simulation (Phase 5). Step status: `docs/ROADMAP.md`.
+Built: data import / check / update (histdata, MT5, Binance), chart with replay and
+overlays, detectors, 7 strategies, backtest engine with costs and swap, results page, risk
+and FTMO simulation (sizer, account simulator, Monte Carlo, adaptive risk), research runner
+and Research page, portfolio tool, demo forward-test bot. Step status: `docs/ROADMAP.md`.
