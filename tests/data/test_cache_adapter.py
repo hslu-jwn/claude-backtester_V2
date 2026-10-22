@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, date, datetime
 
 import pandas as pd
@@ -193,17 +194,31 @@ def test_cached_days_list_is_remembered_until_the_folder_changes(cache, monkeypa
     only after a day was added (e.g. by "Update data") or a new year folder appeared."""
     from backtester.data.adapters import cache_adapter
 
+    def settle(symbol: str = "XAUUSD") -> None:
+        """Windows can update a folder's time ~1 ms after a file lands in it; wait until it holds
+        still, so one added day is one change (otherwise a second, late change adds a rescan)."""
+        folder, kept = cache / symbol, None
+        for _ in range(100):
+            seen = cache_adapter._signature(folder)
+            if seen == kept:
+                return
+            kept = seen
+            time.sleep(0.01)
+
     scans = []
     real = cache_adapter._scan_days
     monkeypatch.setattr(cache_adapter, "_scan_days", lambda *a: scans.append(a) or real(*a))
+    settle()
     first = cached_days("XAUUSD", cache)
     assert cached_days("XAUUSD", cache) == first and len(scans) == 1
     first.append(date(1999, 1, 1))  # a caller changing its list never changes the cache
     assert date(1999, 1, 1) not in cached_days("XAUUSD", cache)
 
     write_day(cache, date(2026, 9, 4), empty_cache_frame())  # new day in a known year
+    settle()
     assert cached_days("XAUUSD", cache)[-1] == date(2026, 9, 4) and len(scans) == 2
     write_day(cache, date(2027, 1, 4), empty_cache_frame())  # new year folder
+    settle()
     assert cached_days("XAUUSD", cache)[-1] == date(2027, 1, 4) and len(scans) == 3
     assert cached_days("GBPUSD", cache) == []  # a symbol without a folder, then one with
     write_day(cache, date(2026, 9, 2), empty_cache_frame(), symbol="GBPUSD")
