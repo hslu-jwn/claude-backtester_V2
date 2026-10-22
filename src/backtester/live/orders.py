@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -221,12 +221,16 @@ def own_orders(mt5: ModuleType, symbol: str) -> list:
     return [o for o in (mt5.orders_get(symbol=symbol) or ()) if o.magic == MAGIC]
 
 
-def close_own_positions(mt5: ModuleType, symbol: str, log: OrderLog) -> int:
-    """Close every position of `symbol` the backtester opened (MAGIC). Returns how many
-    were closed. The user's own positions are never touched."""
+def close_own_positions(
+    mt5: ModuleType, symbol: str, log: OrderLog, keep: Collection[int] = ()
+) -> int:
+    """Close every position of `symbol` the backtester opened (MAGIC), except the tickets in
+    `keep`. Returns how many were closed. The user's own positions are never touched."""
     require_demo(mt5)
     closed = 0
     for position in own_positions(mt5, symbol):
+        if position.ticket in keep:
+            continue
         result, _, _ = close_volume(mt5, position, position.volume, log, "cleanup close")
         closed += result is not None and result.retcode == RETCODE_DONE
     return closed

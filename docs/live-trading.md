@@ -82,7 +82,9 @@ runs strategy 6.
   logged (`error`) and sent to Telegram, and the bot goes on. An identical error is repeated only every 5 minutes
   (`error_repeat_s`, with the number held back). After 5 cycles with errors in a row (`error_persist_cycles`) an
   `error_persistent` message follows. A session exit that fails is retried every cycle. The demo lock and a lost
-  connection keep their own handling (stop / reconnect).
+  connection keep their own handling (stop / reconnect); a `LookaheadError` (a bug) is never caught and ends the
+  run. A bar that fails is reported and the rest of its batch is still fed; a failing log write never stops
+  reporting or trading.
 - **Emergency beats Stop:** if both files exist in the same minute, the bot closes everything (the STOP file is
   consumed too).
 - **Close until flat:** emergency, FTMO breach and daily stop close every own position; up to 3 tries per cycle
@@ -94,7 +96,25 @@ runs strategy 6.
   parent, not in the app's job object), so restarting the Dash app does not stop it.
 - **Lost order answer:** after an order without a clear answer the bot looks for a position with its MAGIC and the
   signal's comment; a found position is managed like any other (session exit). Unclear and nothing found: looked
-  up again for 3 cycles, then skipped.
+  up again for 3 cycles, then skipped. An order the server accepted (DONE) is never skipped: looked up every cycle
+  (comment, ticket, opening deal) until found.
+
+## Review fixes (docs/review/live.md, 2026-10-22; safest option where the spec was silent)
+
+- A bar counts as closed only when the terminal's last quote (`symbol_info.time`, server clock) is at or after its
+  close, so a PC clock running ahead never admits a forming bar; no quote time known: the PC clock alone.
+- Lots from the executable price (ask for a buy, bid for a sell) to the SL; R stays measured over the signal's
+  entry-SL distance. SL / TP are rounded to the tick size; a stop on the wrong side of the price or inside the
+  symbol's stops level is a skip, never sent. A partial fill is tracked with the filled lots.
+- Session exit by the clock: a trade still open `exit_fallback_s` (60 s) after its session exit, because no exit
+  bar came, is closed at the current quote.
+- A failed MT5 query (None with an error) is never "nothing": no flat after a failed position query, an
+  unconfirmed close is retried, a failed deal-history read blocks entries until the day-start balance is read.
+- The daily stop is kept in `results/live/daily_stop.json` (account, FTMO day): a restart the same day stays
+  blocked. PAUSE is read and an EMERGENCY file blocks entries before the start-up replay.
+- A trade's money is the net of all its position's deals (entry and exit commission, fee, swap).
+- The bot refuses to start with risk or daily stop outside the Live page's limits (> 0, <= 2 % / <= 5 %),
+  non-finite values or a non-positive `--balance`.
 
 ## Bot data and chart (rules set by the user, 2026-10-21; ROADMAP 7.8)
 
