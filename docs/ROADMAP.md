@@ -12,7 +12,9 @@ Status: ☐ open · ◐ in progress · ☑ done (update this file when a step is
 
 Status as written in V1. Note: 5.1-5.7 are still marked open there, but `risk/` (sizer,
 account simulator, Monte Carlo, risk sweep, risk page, prop-firm card, adaptive risk) was
-built in V1 (V1 status table); the user confirms them before they are marked ☑. Phase 13 are
+built in V1 (V1 status table). **Decision (user, 2026-10-22): 5.1-5.7 stay as they are**
+(not completed further, not ticked); the parts in use (Monte Carlo, prop-firm pass
+probability, adaptive risk) are checked in the V2.4 review. Phase 13 are
 findings of the 2026-10-19 audit, input for the V2.4 review.
 
 - ☐ **3.3d Review mode** (Phase 3)
