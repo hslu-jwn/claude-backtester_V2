@@ -122,7 +122,14 @@ def state(head="a1", branch="main", dirty=()):
 
 
 def test_clean_run_has_no_violations():
-    assert guard_violations(state(), state(dirty={"tests/x.py"}), CFG) == []
+    assert guard_violations(state(), state(dirty={"tests/x.py"}), CFG, write=True) == []
+
+
+def test_read_only_task_must_not_change_files():
+    before = state(dirty={"docs/a.md"})  # Opus's own edit, not the model's
+    assert guard_violations(before, state(dirty={"docs/a.md"}), CFG, write=False) == []
+    found = guard_violations(before, state(dirty={"docs/a.md", "tests/x.py"}), CFG, write=False)
+    assert found == ["read-only task changed: tests/x.py"]
 
 
 def test_commit_branch_switch_and_live_edits_are_violations():
@@ -134,6 +141,7 @@ def test_commit_branch_switch_and_live_edits_are_violations():
             dirty={"src/backtester/live/orders.py", "src/backtester/live/bot.py", ".env"},
         ),
         CFG,
+        write=True,
     )
     text = "\n".join(found)
     assert "commit" in text and "branch" in text
@@ -159,3 +167,8 @@ def test_limit_messages_are_recognised(text):
 
 def test_normal_output_is_not_a_limit():
     assert not hit_limit("All 12 tests passed; the limit order code is unchanged.")
+
+
+def test_limit_detection_ignores_case():
+    assert hit_limit("USAGE LIMIT reached") is True
+    assert hit_limit("Rate Limit") is True

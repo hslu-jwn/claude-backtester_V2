@@ -119,14 +119,18 @@ def child_env(env: Mapping[str, str], cfg: DispatchConfig = DEFAULT) -> dict[str
     return kept
 
 
-def guard_violations(before: RepoState, after: RepoState, cfg: DispatchConfig) -> list[str]:
+def guard_violations(
+    before: RepoState, after: RepoState, cfg: DispatchConfig, *, write: bool
+) -> list[str]:
     found = []
     if after.head != before.head:
         found.append(f"commit made: HEAD {before.head[:8]} -> {after.head[:8]}")
     if after.branch != before.branch:
         found.append(f"branch switched: {before.branch} -> {after.branch}")
     for path in sorted(after.dirty - before.dirty):
-        if any(path == p or path.startswith(p) for p in cfg.protected):
+        if not write:
+            found.append(f"read-only task changed: {path}")
+        elif any(path == p or path.startswith(p) for p in cfg.protected):
             found.append(f"protected path changed: {path}")
     return found
 
@@ -153,6 +157,30 @@ def repo_state(cwd: str) -> RepoState:
     )
 
 
+def _fresh_path(path: str) -> str:
+    """PATH plus the machine and user PATH saved in the registry now: a process started before
+    Node / the CLIs were installed (e.g. a long research loop) still finds them."""
+    if sys.platform != "win32":
+        return path
+    import winreg
+
+    saved = []
+    for hive, key in (
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
+        ),
+        (winreg.HKEY_CURRENT_USER, "Environment"),
+    ):
+        try:
+            with winreg.OpenKey(hive, key) as k:
+                saved.append(os.path.expandvars(winreg.QueryValueEx(k, "Path")[0]))
+        except OSError:
+            continue
+    parts = [p for p in os.pathsep.join([path, *saved]).split(os.pathsep) if p]
+    return os.pathsep.join(dict.fromkeys(parts))
+
+
 def _exe(tool: str, cfg: DispatchConfig) -> str:
     if tool == "codex":
         found = shutil.which("codex.cmd") or shutil.which("codex")
@@ -176,11 +204,13 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
         cmd, stdin = build_codex_cmd(exe, task, cfg, str(out)), prompt_for(task, cfg)
     else:
         cmd, stdin = build_agy_cmd(exe, task, cfg), None
+    env = child_env(os.environ, cfg)
+    env["PATH"] = _fresh_path(env.get("PATH", ""))
     before = repo_state(task.cwd)
     start = time.monotonic()
     try:
         proc = subprocess.run(
-            cmd, check=False, input=stdin, cwd=task.cwd, env=child_env(os.environ, cfg), capture_output=True,
+            cmd, check=False, input=stdin, cwd=task.cwd, env=env, capture_output=True,
             text=True, encoding="utf-8", errors="replace", timeout=cfg.timeout_s,
         )  # fmt: skip
         stdout, stderr, code = proc.stdout, proc.stderr, proc.returncode
@@ -189,7 +219,7 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
     seconds = round(time.monotonic() - start)
     if task.tool != "codex" or not out.exists():
         out.write_text(stdout, encoding="utf-8")
-    violations = guard_violations(before, repo_state(task.cwd), cfg)
+    violations = guard_violations(before, repo_state(task.cwd), cfg, write=task.write)
     limited = code != 0 and hit_limit(stdout + stderr, cfg)
     status = "violation" if violations else "limit" if limited else "ok" if code == 0 else "error"
     entry = {
