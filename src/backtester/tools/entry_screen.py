@@ -17,7 +17,6 @@ Spec: risk-management.md > Entry screening.
 from __future__ import annotations
 
 import argparse
-import csv
 import itertools
 import json
 from dataclasses import fields, replace
@@ -43,6 +42,7 @@ from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.registry import REGISTRY, make_strategy
+from backtester.tools.grid_common import write_csv
 
 START = date(2015, 1, 1)
 DEV_END = date(2021, 9, 13)  # the day before the data split cut-off 2021-09-14
@@ -156,14 +156,6 @@ def load_m1(symbol: str, sources: SymbolSources, start: date, end: date) -> M1Da
 
 
 # --- output ---------------------------------------------------------------------------------------------
-
-
-def write_csv(path: Path, rows: list[dict]) -> None:
-    cols = list(dict.fromkeys(k for r in rows for k in r))
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        w.writerows(rows)
 
 
 def summary_rows(v: VariantScreen) -> list[dict]:

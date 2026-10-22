@@ -13,7 +13,6 @@ Spec: strategy-ny-indices.md › Sweep; confluences.md › Liquidity sweep.
 from __future__ import annotations
 
 import argparse
-import csv
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -22,17 +21,10 @@ from backtester.analytics.metrics import by_period, by_year, summarize
 from backtester.paths import RESULTS_DIR
 from backtester.runner import RunSettings, run_backtests
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+from backtester.tools.grid_common import write_csv
 from backtester.tools.strategy2_explore import VARIANTS
 
 SYMBOLS = ("NAS100", "US500")
-
-
-def write_csv(path: Path, rows: list[dict]) -> None:
-    cols = list(dict.fromkeys(k for r in rows for k in r))
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        w.writerows(rows)
 
 
 def main(argv: list[str] | None = None) -> int:

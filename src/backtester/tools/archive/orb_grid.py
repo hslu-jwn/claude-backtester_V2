@@ -50,7 +50,7 @@ from backtester.tools.archive.trend_grid import (
     swap_rates_note,
     write_csv,
 )
-from backtester.tools.grid_common import run_variant
+from backtester.tools.grid_common import last_cached_day, run_variant
 from backtester.tools.research import segments  # noqa: F401  (kept importable from here)
 
 SYMBOLS = (
@@ -268,10 +268,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         if unknown:
             p.error(f"unknown variant(s) {unknown}; valid names: {valid}")
     return args
-
-
-def last_cached_day(symbols: list[str], sources: SymbolSources = DEFAULT_SOURCES) -> date:
-    return max(max(sources.cached_days(s)) for s in symbols)
 
 
 def finish(out: Path, summary: list[dict], entries: list, volume: bool, rcfg) -> None:

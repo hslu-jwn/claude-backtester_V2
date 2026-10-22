@@ -11,7 +11,6 @@ Times: everything on the page is shown in Swiss time ("CH", Europe/Zurich, DST-a
 from __future__ import annotations
 
 import csv
-import math
 import re
 import sys
 from datetime import UTC, datetime, timedelta
@@ -21,6 +20,7 @@ from zoneinfo import ZoneInfo
 from backtester.live.bot import FORWARD_SYMBOLS, BotConfig
 from backtester.live.status import STALE_S, heartbeat_age_s, is_fresh
 from backtester.risk.prop_rules import GuardConfig
+from backtester.ui.numbers import _number
 
 SWISS = ZoneInfo("Europe/Zurich")
 DASH = "–"
@@ -62,14 +62,6 @@ def _parse_utc(text) -> datetime | None:
     except ValueError:
         return None
     return when.astimezone(UTC) if when.tzinfo is not None else None
-
-
-def _number(value) -> float | None:
-    try:
-        x = float(value)
-    except (TypeError, ValueError):
-        return None
-    return x if math.isfinite(x) else None
 
 
 def fmt_duration(seconds: float) -> str:

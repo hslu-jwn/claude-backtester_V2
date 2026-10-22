@@ -27,7 +27,6 @@ is switched on.
 from __future__ import annotations
 
 import json
-import math
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
@@ -44,6 +43,7 @@ from backtester.strategy.registry import REGISTRY, make_strategy
 from backtester.ui.chart_config import ChartConfig
 from backtester.ui.chart_data import encode
 from backtester.ui.drawing import Box, Drawing, Label, Line, Marker
+from backtester.ui.numbers import _number
 
 DEFAULT_TIMEFRAME = Timeframe.M5.name  # a run whose settings can't be read
 LIVE_TIMEFRAME = OpeningRange.base_timeframe.name  # the demo bot trades the opening-range breakout
@@ -78,14 +78,6 @@ def _time(text) -> datetime | None:
         return _utc(datetime.fromisoformat(str(text)))
     except ValueError:
         return None
-
-
-def _number(value) -> float | None:
-    try:
-        x = float(value)
-    except (TypeError, ValueError):
-        return None
-    return x if math.isfinite(x) else None
 
 
 def make_order(

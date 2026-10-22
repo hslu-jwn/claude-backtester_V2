@@ -40,6 +40,7 @@ from backtester.tools.archive.trend_grid import (
     swap_rates_note,
     write_csv,
 )
+from backtester.tools.grid_common import last_cached_day
 
 SYMBOLS = ("NAS100", "US500")
 SPEC_SYMBOLS = frozenset(SYMBOLS)
@@ -102,10 +103,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--workers", type=int, default=WORKERS)
     p.add_argument("--out", type=Path, default=None)
     return p.parse_args(argv)
-
-
-def last_cached_day(symbols: list[str], sources: SymbolSources = DEFAULT_SOURCES) -> date:
-    return max(max(sources.cached_days(s)) for s in symbols)
 
 
 def ab_row(name: str, summary: dict, robust: dict, halves: list[dict]) -> dict:

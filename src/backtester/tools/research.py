@@ -37,12 +37,13 @@ import shutil
 import sys
 import time as clock
 from collections.abc import Callable, Iterator, Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
 from backtester.analytics.scorecard import SCORE_KEYS, ScorecardConfig, flags, scorecard
 from backtester.analytics.trial_log import TRIALS_FILE, append, make_record
+from backtester.analytics.trial_log import now_iso as _now
 from backtester.analytics.verdict import (
     EDGE,
     NO_EDGE,
@@ -228,10 +229,6 @@ def run_period_many(
 
 
 # --- small helpers -------------------------------------------------------------------------------
-
-
-def _now() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _read_json(path: Path) -> dict | None:

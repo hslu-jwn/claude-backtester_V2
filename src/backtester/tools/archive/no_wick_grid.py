@@ -14,7 +14,6 @@ Spec: strategy-no-wick.md.
 from __future__ import annotations
 
 import argparse
-import csv
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -29,17 +28,10 @@ from backtester.strategy.no_wick.config import (
     NoWickConfig,
     TrendSource,
 )
+from backtester.tools.grid_common import write_csv
 
 SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 FIRST_HALF_END_YEAR = 2022  # in sample: up to and including this year
-
-
-def write_csv(path: Path, rows: list[dict]) -> None:
-    cols = list(dict.fromkeys(k for r in rows for k in r))
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        w.writerows(rows)
 
 
 def variant_name(config: NoWickConfig) -> str:

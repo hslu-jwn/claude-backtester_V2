@@ -1,5 +1,5 @@
 """Helpers shared by the live research tools and the archived per-strategy grid tools
-(`tools/archive/`, archived 2026-10-21): symbol list, half labels, CSV writer, and
+(`tools/archive/`, archived 2026-10-21): symbol list, half labels, CSV writer, last cached day, and
 `run_variant` (a backtest over the cached pieces of each symbol; `research.segments` owns
 the piece logic)."""
 
@@ -10,6 +10,7 @@ from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
+from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.runner import run_backtests
 from backtester.tools.research import segments
 
@@ -23,6 +24,10 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         w.writerows(rows)
+
+
+def last_cached_day(symbols: list[str], sources: SymbolSources = DEFAULT_SOURCES) -> date:
+    return max(max(sources.cached_days(s)) for s in symbols)
 
 
 def run_variant(symbols, start, end, settings, sources, workers) -> SimpleNamespace:
