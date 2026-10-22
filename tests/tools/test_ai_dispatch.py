@@ -1,4 +1,4 @@
-"""ai_dispatch: how Opus calls Codex and Gemini (Antigravity CLI). Spec: AGENTS.md â€º Team."""
+"""ai_dispatch: how Opus calls Codex and Gemini (Antigravity CLI). Spec: AGENTS.md › Team."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from backtester.tools.ai_dispatch import (
     child_env,
     guard_violations,
     hit_limit,
+    parse_porcelain_z,
     prompt_for,
 )
 
@@ -105,11 +106,22 @@ def test_child_env_drops_secrets_and_sets_system_ca():
             "GH_TOKEN": "t",
             "MY_SECRET": "s",
             "USERPROFILE": "u",
+            "AWS_ACCESS_KEY_ID": "a",
+            "SSH_PRIVATE_KEY": "k",
         }
     )
     assert env["PATH"] == "p" and env["USERPROFILE"] == "u"
     assert (
-        not {"TELEGRAM_TOKEN", "MT5_PASSWORD", "SOME_API_KEY", "GH_TOKEN", "MY_SECRET"} & env.keys()
+        not {
+            "TELEGRAM_TOKEN",
+            "MT5_PASSWORD",
+            "SOME_API_KEY",
+            "GH_TOKEN",
+            "MY_SECRET",
+            "AWS_ACCESS_KEY_ID",
+            "SSH_PRIVATE_KEY",
+        }
+        & env.keys()
     )
     assert env["NODE_OPTIONS"] == "--use-system-ca"
 
@@ -117,8 +129,32 @@ def test_child_env_drops_secrets_and_sets_system_ca():
 # --- guard ---------------------------------------------------------------------------------
 
 
-def state(head="a1", branch="main", dirty=()):
-    return RepoState(head=head, branch=branch, dirty=frozenset(dirty))
+def state(head="a1", branch="main", dirty=(), refs=("a1 refs/heads/main",), reflog=5):
+    return RepoState(head, branch, frozenset(dirty), frozenset(refs), reflog)
+
+
+def test_commit_then_reset_new_branch_and_push_are_violations():
+    """HEAD back where it was still leaves a reflog entry; a push moves a remote-tracking ref."""
+    found = guard_violations(
+        state(refs={"a1 refs/heads/main", "a1 refs/remotes/origin/main"}),
+        state(
+            refs={"a1 refs/heads/main", "b2 refs/heads/x", "b2 refs/remotes/origin/main"}, reflog=7
+        ),
+        CFG,
+        write=True,
+    )
+    text = "\n".join(found)
+    assert "reflog" in text and "refs/heads/x" in text and "refs/remotes/origin/main" in text
+
+
+def test_protected_paths_match_regardless_of_case():
+    found = guard_violations(state(), state(dirty={"SRC/Backtester/Live/bot.py"}), CFG, write=True)
+    assert found == ["protected path changed: SRC/Backtester/Live/bot.py"]
+
+
+def test_porcelain_z_keeps_the_first_character_and_skips_rename_sources():
+    z = " M src/a.py\0?? new file.md\0R  docs/new.md\0docs/old.md\0"
+    assert parse_porcelain_z(z) == {"src/a.py", "new file.md", "docs/new.md"}
 
 
 def test_clean_run_has_no_violations():

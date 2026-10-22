@@ -1,4 +1,4 @@
-"""Call Codex or Gemini (Antigravity CLI) non-interactively for one task. Spec: AGENTS.md â€º Team.
+"""Call Codex or Gemini (Antigravity CLI) non-interactively for one task. Spec: AGENTS.md › Team.
 
     python -m backtester.tools.ai_dispatch codex  --effort medium --brief briefs/x.md
     python -m backtester.tools.ai_dispatch gemini --effort high --write --prompt "Write tests ..."
@@ -42,7 +42,9 @@ class DispatchConfig:
     )
     codex_efforts: tuple[str, ...] = ("low", "medium", "high", "xhigh")
     protected: tuple[str, ...] = ("src/backtester/live/", ".env")  # models never write here
-    secret_env: str = r"TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|APIKEY|CREDENTIAL"
+    secret_env: str = (
+        r"TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|APIKEY|CREDENTIAL|ACCESS_KEY|PRIVATE_KEY"
+    )
     limit_patterns: str = r"usage limit|rate limit|quota exceeded|resource_exhausted|\b429\b"
     timeout_s: int = 3600
     agy_fallback: str = (
@@ -69,6 +71,8 @@ class RepoState:
     head: str
     branch: str
     dirty: frozenset[str]
+    refs: frozenset[str] = frozenset()  # "<sha> <ref>" for every branch, tag and remote ref
+    reflog: int = 0  # HEAD reflog entries: a commit undone by a reset still adds some
 
 
 def prompt_for(task: Task, cfg: DispatchConfig) -> str:
@@ -127,10 +131,15 @@ def guard_violations(
         found.append(f"commit made: HEAD {before.head[:8]} -> {after.head[:8]}")
     if after.branch != before.branch:
         found.append(f"branch switched: {before.branch} -> {after.branch}")
+    if after.reflog != before.reflog:
+        found.append(f"HEAD moved during the run (reflog {before.reflog} -> {after.reflog})")
+    for ref in sorted(after.refs ^ before.refs):
+        found.append(f"ref created, moved or deleted (commit / branch / push): {ref}")
+    protected = tuple(p.lower() for p in cfg.protected)
     for path in sorted(after.dirty - before.dirty):
         if not write:
             found.append(f"read-only task changed: {path}")
-        elif any(path == p or path.startswith(p) for p in cfg.protected):
+        elif path.lower().startswith(protected):  # Windows paths ignore case
             found.append(f"protected path changed: {path}")
     return found
 
@@ -142,18 +151,34 @@ def hit_limit(text: str, cfg: DispatchConfig = DEFAULT) -> bool:
 # --- running -------------------------------------------------------------------------------
 
 
+def parse_porcelain_z(z: str) -> frozenset[str]:
+    """Paths from `git status --porcelain -z` ("XY path" records; a rename or copy is followed
+    by its source path, which is skipped)."""
+    paths, records = [], iter(z.split("\0"))
+    for record in records:
+        if len(record) < 4:
+            continue
+        paths.append(record[3:])
+        if record[0] in "RC":
+            next(records, None)
+    return frozenset(paths)
+
+
 def _git(cwd: str, *args: str) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=cwd, capture_output=True, text=True, check=True
-    ).stdout.strip()
+    out = subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", check=True
+    )
+    return out.stdout
 
 
 def repo_state(cwd: str) -> RepoState:
-    lines = _git(cwd, "status", "--porcelain", "--untracked-files=all").splitlines()
     return RepoState(
-        head=_git(cwd, "rev-parse", "HEAD"),
-        branch=_git(cwd, "branch", "--show-current"),
-        dirty=frozenset(line[3:].strip('"').replace("\\", "/") for line in lines),
+        head=_git(cwd, "rev-parse", "HEAD").strip(),
+        branch=_git(cwd, "branch", "--show-current").strip(),
+        dirty=parse_porcelain_z(_git(cwd, "status", "--porcelain", "-z", "--untracked-files=all")),
+        refs=frozenset(_git(cwd, "for-each-ref", "--format=%(objectname) %(refname)").split("\n"))
+        - {""},
+        reflog=len(_git(cwd, "reflog", "--format=%H").splitlines()),
     )
 
 

@@ -16,8 +16,12 @@ answer file; Opus then checks the result itself (diff + tests), never trusting "
     (--prompt "<task>" | --brief briefs/<name>.md)
 ```
 
-- **Read-only by default** (`-s read-only`): reviews, specs drafted as answer text, second
-  opinions. Add `--write` for code / spec / test edits (`workspace-write` sandbox, no network).
+- **Codex has no working shell on this PC:** on Windows its sandbox blocks every command,
+  reads included (2026-10-22). So **paste what it needs into the brief** (the source file, the
+  diff from `git diff`, the spec section) and ask for findings or a unified diff as the answer;
+  Opus applies a diff with `git apply`, then tests. It still auto-loads `AGENTS.md`.
+- **Read-only by default** (`-s read-only`; the guard also fails the call if any file changed).
+  `--write` (`workspace-write`) only helps once commands work.
 - **Effort** (CLAUDE.md › Models and subagents): `medium` for normal coding and reviews,
   `high` for specs, strategy design, hard bugs, anything touching no-lookahead / engine / risk.
   After a failed try raise one level (`xhigh`, then `--model gpt-6-astra`) before escalating
