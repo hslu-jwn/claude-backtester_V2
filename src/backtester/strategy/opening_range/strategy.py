@@ -388,6 +388,12 @@ class OpeningRange(Strategy):
         out, self._to_close = self._to_close, []
         return out
 
+    def exit_at(self, ref: object) -> datetime | None:
+        """The session-exit instant of an open trade (None: unknown or already queued). Reads
+        state only; the live bot closes by the clock when no exit candle comes."""
+        entry = self._open.get(ref)
+        return entry[1] if entry is not None else None
+
     def on_order_skipped(self, ref: object, now: datetime) -> None:
         entry = self._open.pop(ref, None)  # never filled (cost filter): the session is used up
         if entry is not None:

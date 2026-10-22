@@ -196,6 +196,12 @@ def run_test(mt5: ModuleType, symbol: str, name: str, log: OrderLog) -> list[str
     others = [p for p in (mt5.positions_get(symbol=name) or ()) if p.magic != MAGIC]
     if others:
         lines.append(f"({len(others)} position(s) of your own on {name}: left alone)")
+    # the bot's positions and orders open before the test are not the test's: never closed,
+    # not counted in the end check (review live #12)
+    before = {p.ticket for p in own_positions(mt5, name)}
+    orders_before = {o.ticket for o in own_orders(mt5, name)}
+    if before:
+        lines.append(f"({len(before)} bot position(s) on {name} open before the test: left alone)")
     try:
         for side in (Direction.BULLISH, Direction.BEARISH):
             lines += run_side(mt5, name, side, log)
@@ -204,10 +210,11 @@ def run_test(mt5: ModuleType, symbol: str, name: str, log: OrderLog) -> list[str
     except Exception as e:  # noqa: BLE001 - reported, then cleaned up below
         lines.append(f"Stopped by an error: {type(e).__name__}: {e}")
     finally:
-        closed = close_own_positions(mt5, name, log)
+        closed = close_own_positions(mt5, name, log, keep=before)
         if closed:
             lines.append(f"Cleanup: closed {closed} position(s) the test had left open")
-    positions, orders = own_positions(mt5, name), own_orders(mt5, name)
+    positions = [p for p in own_positions(mt5, name) if p.ticket not in before]
+    orders = [o for o in own_orders(mt5, name) if o.ticket not in orders_before]
     lines.append(
         "End check: nothing open"
         if not positions and not orders

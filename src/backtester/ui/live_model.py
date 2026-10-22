@@ -17,7 +17,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from backtester.live.bot import FORWARD_SYMBOLS, BotConfig
+from backtester.live.bot import (
+    FORWARD_SYMBOLS,
+    MAX_DAILY_STOP_PERCENT,
+    MAX_RISK_PERCENT,
+    BotConfig,
+)
 from backtester.live.status import STALE_S, heartbeat_age_s, is_fresh
 from backtester.risk.prop_rules import GuardConfig
 from backtester.ui.numbers import _number
@@ -25,9 +30,8 @@ from backtester.ui.numbers import _number
 SWISS = ZoneInfo("Europe/Zurich")
 DASH = "–"
 
-# Limits of the editable settings (user, 2026-10-17: "risk > 0 and <= 2, daily stop > 0 and <= 5").
-MAX_RISK_PERCENT = 2.0
-MAX_DAILY_STOP_PERCENT = 5.0
+# Limits of the editable settings (user, 2026-10-17: "risk > 0 and <= 2, daily stop > 0 and <= 5"):
+# MAX_RISK_PERCENT, MAX_DAILY_STOP_PERCENT, the bot's own (it refuses to start outside them).
 DEFAULT_RISK = BotConfig.risk_percent
 _GUARD = GuardConfig()  # slots dataclass: read defaults from an instance
 DEFAULT_DAILY_STOP = _GUARD.daily_stop_percent

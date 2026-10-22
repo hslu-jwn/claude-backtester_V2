@@ -3,8 +3,9 @@
 World: US500 (FTMO name US500.cash), server clock = UTC, winter (New York = UTC-5). 15 earlier
 sessions each have high 105 / low 95 / close 100, so the daily ATR is 10 and the band (0.25 ATR)
 is 100 +/- 2.5. On 2026-01-12 the bar 09:40 New York (14:40 UTC, closes 14:41) closes at 103:
-a long at 103, stop 97.5. Risk 0.25 % of 100000 = 250 over 5.5 points at 1.0 per point = 45.45
-lots -> 45.4 (step 0.1). The session exit is the bar closing 15:55 New York = 20:55 UTC.
+a long at 103, stop 97.5. Risk 0.25 % of 100000 = 250 over the 5.7 points from the ask 103.2 to
+the stop at 1.0 per point = 43.86 lots -> 43.8 (step 0.1); R is measured over the signal's 5.5.
+The session exit is the bar closing 15:55 New York = 20:55 UTC.
 """
 
 from __future__ import annotations
@@ -195,7 +196,8 @@ def test_one_order_per_signal_with_sl_lots_and_magic(world):
         world.at(ny(DAY, 9, minute) + timedelta(seconds=3))
         bot.cycle()
     (request,) = world.opens()
-    assert request["volume"] == 45.4
+    # sized from the executable ask 103.2 (review live #7): 250 / (103.2 - 97.5) = 43.86 -> 43.8
+    assert request["volume"] == 43.8
     assert request["sl"] == 97.5 and request["tp"] == 0.0
     assert request["magic"] == MAGIC and request["comment"].startswith("orb ")
     assert request["type"] == world.fake.ORDER_TYPE_BUY
