@@ -1,0 +1,18 @@
+Paths below are relative to `src/backtester/strategy/`. “Unknown” means golden-list impact is unverified.
+
+| # | severity | category | file:line | finding | evidence | fix | changes results? |
+|---|---|---|---|---|---|---|---|
+| 1 | high | correctness | `session_zone_sweep/zones.py:243` | Active zones expire 30 minutes early, suppressing valid entries. | `_end_session()` removes zones at the last 30m close before session end. Identical setups enter at 22:40 UTC but fail at 23:40, although NY ends at 00:00. | Keep active setups until the actual session boundary. | unknown |
+| 2 | high | correctness | `session_zone_sweep/zones.py:177` | Ignored weekend candles still alter swing state. | Swing update precedes the weekend guard. Adding an ignored Sunday green candle creates a Monday high zone `[111,120]`; omitting it produces no zone. | Exclude ignored candles from session-zone swing state. | unknown |
+| 3 | high | correctness | `ny_index_sweep/setup.py:140` | HTF close-beyond cancellation stops working after the setup BoS. | With `sweep_close_beyond_counts=False`, an H1 close at 98.9 below swept level 99 leaves the advanced setup `TAPPED`, contradicting spec AM step 3. | Check the originating HTF close throughout the setup’s lifetime. | no—option disabled in golden defaults |
+| 4 | high | correctness | `ny_index_sweep/strategy.py:184` | Missing cutoff-day candles can postpone the rollover exit another day. | Cutoff uses today’s date. A Wednesday trade whose next available close is Thursday 09:00 ET queues no exit. | Store the cutoff derived from each trade’s entry date. | no—option disabled in golden defaults |
+| 5 | medium | correctness | `ny_index_sweep/setup.py:278` | Events arriving after deadlines are accepted following data gaps. | Reproduced BoS accepted at 18:40 after an 18:35 deadline, and tap at 19:52 after 19:50. Both transitions precede timeout checks. | Reject events beyond the deadline before transitioning; preserve inclusive boundaries. | unknown |
+| 6 | medium | correctness | `session_zone_sweep/strategy.py:103` | Equal obstacle and limit timeframes silently disable limit tracking. | Valid config with both set to H1 shares one cursor: obstacle detector processes one candle, limit detector processes zero. | Track progress separately for each tracker. | no—golden timeframes differ |
+| 7 | medium | speed | `session_zone_sweep/journal.py:148` | Journal export repeatedly scans all history for every session. | Runner exports every variant. With five confluences/session, 750/1,500/3,000 sessions took 0.57/2.24/8.84 seconds. | Group records by session in one pass. | no |
+| 8 | low | speed | `trend_following/strategy.py:143` | Every candle updates all five signal indicators regardless of selected signal. | For 100,000 candles, current event processing took 0.517 seconds versus 0.065 for breakout-only processing. | Update only the configured signal indicator and ATR. | no |
+
+- Checked all seven strategies, registry/template, their tests and cited specs; closed-view, mirror, DST and SL-first integration checks passed.
+- Audit 13.19 refuted for current code: pending limit levels precede fill candles. Strategy exit fallback works; live 13.8 and Kind-C 13.20 remain unverified outside scope.
+- Tests: **587 passed, 4 skipped, 1 xfailed**; additional in-memory examples reproduced the six correctness findings.
+- Files changed: **none**; pytest cache, bytecode and temporary-log writes were disabled.
+- Open: golden-list impact remains unverified where marked unknown; no trading rules were guessed.

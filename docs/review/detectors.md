@@ -1,0 +1,13 @@
+| # | severity | category | file:line | finding (one line) | evidence | fix (one line) | changes results? |
+|---|---|---|---|---|---|---|---|
+| 1 | medium | correctness | `src/backtester/detectors/swings.py:116` | Floating-point rounding misclassifies exact-threshold dojis and can emit a false BOS. | Open `4400.065`, close `4400.13`: body becomes `0.06500000000050932`; reproduced bullish BOS above `4400.1`, although the decimal body equals the inclusive `0.065` threshold. | Use a precision-aware inclusive comparison; cover different price magnitudes. | unknown |
+| 2 | medium | correctness | `src/backtester/detectors/sweep.py:91` | Numeric validation accepts settings that later crash detection. | `equal_tolerance_atr=NaN` reaches `min([])` at line 210; `lookback_swings=1.5` raises `TypeError` at line 195. Both reproduced. | Reject NaN and non-integral counters; retain explicitly supported infinite tolerance. | no |
+| 3 | medium | correctness | `src/backtester/detectors/atr.py:63` | One NaN candle permanently poisons ATR without reporting faulty data. | With period 1, valid/NaN-high/valid/valid candles produce `[2.0, nan, nan, nan]`; subsequent strong-move comparisons silently fail. | Reject non-finite price inputs or true ranges before updating state. | unknown |
+| 4 | medium | speed | `src/backtester/detectors/sweep.py:221` | Breakout cancellation repeatedly scans entire doji runs, producing quadratic work. | With `two_closes_cancel=True`, 1,000/2,000/4,000 consecutive dojis caused approximately 0.51/2.01/8.03 million candle reads. | Maintain incremental non-doji streak state instead of walking backward each update. | no |
+| 5 | medium | speed | `src/backtester/detectors/bpr.py:55`; `order_block.py:99`; `breaker.py:52` | Detector composition repeats identical FVG and structure calculations. | Strategy 2’s `Frame` processed 10,000 candles with 20,000 FVG updates and 30,000 BOS updates; FVG calls consumed 0.557 s of a 1.402 s profile. | Share same-view FVG/BOS events between consumers while preserving event order. | no |
+
+- Checked every detector and its tests against the cited specs; confirming-candle timing, prefix invariance, mirrored cases, and validation ordering passed.
+- Tests: **208 passed** with filesystem writes blocked; additional read-only snippets reproduced the findings.
+- Audit 13.6–13.23: none directly targets this module; those external findings remain unverified here.
+- Files changed: **none**. No commits, pushes, branches, or subagents.
+- Open: golden-list effects for rows marked **unknown** remain unverified; documented deferred trading rules were not reinterpreted.
