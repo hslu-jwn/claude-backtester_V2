@@ -130,6 +130,19 @@ def test_monthly_gains_blocks():
     assert mc.monthly_gains(bal[:10], 21) == []
 
 
+def test_post_ruin_statistics_no_nan_or_zero_division():
+    import math
+
+    gains = mc.monthly_gains([100.0, 0.0, 0.0], 1)
+    assert gains == [-1.0, 0.0]
+
+    d1 = mc.Day(np.array([-100.0]), ())
+    d2 = mc.Day(np.zeros(0), ())
+    run_res = mc._one_run([d1, d2], np.array([0, 1]), 0.01, mc.MonteCarloConfig())
+    assert not math.isnan(run_res["worst_day"])
+    assert run_res["worst_day"] == -1.0
+
+
 def test_monthly_stats_in_result():
     trades, s, e = one_per_day([1.0] * 42)
     st = mc.run_monte_carlo(trades, s, e, cfg())["risks"][0.01]["stats"]

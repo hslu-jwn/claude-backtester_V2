@@ -20,6 +20,7 @@ from backtester.data.cache import (
     read_cached_days,
     write_atomic,
 )
+from backtester.paths import DATA_DIR
 
 
 def day_frame(day: date, minutes: int, price: float = 1.0) -> pd.DataFrame:
@@ -41,7 +42,8 @@ def test_columns_are_ts_then_bid_then_ask_ohlcv():
 
 
 def test_default_cache_dir_is_the_histdata_cache():
-    assert DEFAULT_CACHE_DIR == Path("data/cache/histdata")
+    # anchored to the project root, not the working folder (audit 13.17, 2026-10-23)
+    assert DEFAULT_CACHE_DIR == DATA_DIR / "cache" / "histdata"
 
 
 def test_cache_path_layout():

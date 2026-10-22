@@ -43,14 +43,15 @@ from pathlib import Path
 import pandas as pd
 
 from backtester.data.cache import COLUMNS, cache_path, empty_cache_frame, write_atomic
+from backtester.paths import DATA_DIR
 
 BASE_URL = "https://data.binance.vision/data/futures/um"
 DEFAULT_SYMBOLS = ("BTCUSDT", "ETHUSDT")
 FIRST_MONTH = date(2020, 1, 1)
-CACHE_DIR = Path("data/cache/binance")
-FLOW_DIR = Path("data/cache/binance_flow")
-FUNDING_DIR = Path("data/cache/binance_funding")
-TMP_DIR = Path("data/raw/binance_tmp")
+CACHE_DIR = DATA_DIR / "cache/binance"
+FLOW_DIR = DATA_DIR / "cache/binance_flow"
+FUNDING_DIR = DATA_DIR / "cache/binance_funding"
+TMP_DIR = DATA_DIR / "raw/binance_tmp"
 FLOW_COLUMNS = ["ts", "volume", "buy_volume", "sell_volume", "delta", "trades"]
 FUNDING_COLUMNS = ["calc_time", "funding_interval_hours", "last_funding_rate"]
 TRADE_COLUMNS = (

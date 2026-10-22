@@ -74,6 +74,7 @@ class Day:
     r: np.ndarray
     events: tuple[tuple[bool, float], ...]
     ids: tuple[int, ...] = ()
+    weights: tuple[float, ...] = ()  # event stop-risk weights; empty means all 1 (legacy days)
 
 
 def _prague_day_start(d: date) -> float:
@@ -82,6 +83,11 @@ def _prague_day_start(d: date) -> float:
 
 def build_days(trades: Sequence, start: date, end: date) -> list[Day]:
     """The weekdays of start..end with their trades (exit day in Prague time)."""
+    for trade in trades:
+        for name in ("entry_time", "exit_time"):
+            stamp = getattr(trade, name)
+            if stamp.tzinfo is None or stamp.utcoffset() is None:
+                raise ValueError(f"{name} must be timezone-aware")
     wd = weekdays(start, end)
     if not wd:
         return []
@@ -99,14 +105,16 @@ def build_days(trades: Sequence, start: date, end: date) -> list[Day]:
         for n, t, d in bucket:
             t_in, t_out = t.entry_time.timestamp(), t.exit_time.timestamp()
             t_in = max(t_in, _prague_day_start(d))  # open since the day start
-            ev.append(((t_in, -1 if t_in == t_out else 1, n), True, t.r_net))
-            ev.append(((t_out, 0, n), False, t.r_net))
+            weight = getattr(t, "risk_weight", 1.0)
+            ev.append(((t_in, -1 if t_in == t_out else 1, n), True, t.r_net, weight))
+            ev.append(((t_out, 0, n), False, t.r_net, weight))
         ev.sort(key=lambda e: e[0])
         days.append(
             Day(
                 np.array([t.r_net for _, t, _ in bucket], dtype=float),
-                tuple((a, b) for _, a, b in ev),
-                tuple(k[2] for k, _, _ in ev),
+                tuple((a, b) for _, a, b, _ in ev),
+                tuple(k[2] for k, _, _, _ in ev),
+                tuple(w for _, _, _, w in ev),
             )
         )
     return days
@@ -122,9 +130,12 @@ def reshuffle_orders(n_days: int, config: MonteCarloConfig) -> np.ndarray:
 
 def monthly_gains(balances: Sequence[float], month_days: int) -> list[float]:
     """Gain of each full block of `month_days` days; `balances` = start + one value per day.
-    A last partial block is dropped."""
+    A last partial block is dropped. Once ruined (start balance <= 0), post-ruin gain is 0.0."""
     b = list(balances)
-    return [b[k + month_days] / b[k] - 1 for k in range(0, len(b) - month_days, month_days)]
+    return [
+        (b[k + month_days] / b[k] - 1) if b[k] > 0 else 0.0
+        for k in range(0, len(b) - month_days, month_days)
+    ]
 
 
 def _pct(values, q=PERCENTILES) -> dict:
@@ -219,7 +230,13 @@ def _one_run(days: list[Day], order, risk: float, config: MonteCarloConfig) -> d
     counts = np.array([len(days[i].r) for i in order], dtype=int)
     path = _path(r_seq, risk, config.start_balance)
     day_bal = _day_balances(path, counts)
-    ratio = day_bal[1:] / day_bal[:-1] - 1 if len(day_bal) > 1 else np.zeros(1)
+    if len(day_bal) > 1:
+        prev, curr = day_bal[:-1], day_bal[1:]
+        # Post-ruin (prev == 0): return is 0.0. When dropping to 0 from > 0: return is -1.0.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratio = np.where(prev > 0, curr / prev - 1, 0.0)
+    else:
+        ratio = np.zeros(1)
     return {
         "day_bal": day_bal,
         "final": float(day_bal[-1]),
@@ -262,11 +279,12 @@ def _play_day(
     day_start, open_units = bal, 0.0
     daily_lim = config.daily_loss * init - EPS
     max_lim = config.max_loss * init - EPS
-    for is_entry, r in day.events:
+    weights = day.weights or (1.0,) * len(day.events)
+    for (is_entry, r), weight in zip(day.events, weights, strict=True):
         if is_entry:
-            open_units += max(1.0, -r)
+            open_units += max(weight, -r)
         else:
-            open_units -= max(1.0, -r)
+            open_units -= max(weight, -r)
             bal = bal + r * risk * init if fixed else bal * max(0.0, 1.0 + r * risk)
         worst = bal - open_units * risk * (init if fixed else bal)
         if day_start - worst >= daily_lim:
@@ -310,10 +328,11 @@ def _play_day_adaptive(
     budget = ad.daily_budget * init
     open_: dict[int, tuple[float, float]] = {}  # trade id -> (risk$, exposure at its stop)
     skipped: set[int] = set()
-    for (is_entry, r), tid in zip(day.events, day.ids, strict=True):
+    weights = day.weights or (1.0,) * len(day.events)
+    for (is_entry, r), tid, weight in zip(day.events, day.ids, weights, strict=True):
         if is_entry:
             stats["entries"] = stats.get("entries", 0) + 1
-            base = risk * (init if fixed else bal)
+            base = risk * (init if fixed else bal) * weight
             desired = base * risk_factor(bal, init, config.max_loss, ad.floor)
             allowed = budget - max(0.0, day_start - bal) - open_units
             got = budgeted_risk(desired, ad.floor * base, allowed)
@@ -321,7 +340,7 @@ def _play_day_adaptive(
                 skipped.add(tid)
                 stats["skipped"] = stats.get("skipped", 0) + 1
                 continue
-            exposure = got * max(1.0, -r)
+            exposure = got * max(1.0, -r / weight) if weight > 0 else 0.0
             open_[tid] = (got, exposure)
             open_units += exposure
         else:
@@ -329,7 +348,7 @@ def _play_day_adaptive(
                 continue
             got, exposure = open_.pop(tid)
             open_units = open_units - exposure if open_ else 0.0
-            bal = max(0.0, bal + r * got)
+            bal = max(0.0, bal + r / weight * got) if weight > 0 else bal
         worst = bal - open_units
         if day_start - worst >= daily_lim:
             return "daily", worst

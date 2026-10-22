@@ -19,14 +19,16 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset
 
+from backtester.paths import DATA_DIR
+
 _PRICE_FIELDS = ("open", "high", "low", "close")
 COLUMNS = ["ts"] + [f"{s}_{f}" for s in ("bid", "ask") for f in (*_PRICE_FIELDS, "volume")]
 
-DEFAULT_CACHE_DIR = Path("data/cache/histdata")
-MT5_CACHE_DIR = Path("data/cache/mt5")  # FTMO M1 bars, written by `data/mt5_download.py`
+DEFAULT_CACHE_DIR = DATA_DIR / "cache" / "histdata"
+MT5_CACHE_DIR = DATA_DIR / "cache" / "mt5"  # FTMO M1 bars, written by `data/mt5_download.py`
 # Today's (unfinished) FTMO M1 bars of the live bot's symbols, rewritten by the bot each
 # minute; read only for days the MT5 / histdata caches lack (ROADMAP 7.8).
-LIVE_CACHE_DIR = Path("data/cache/live")
+LIVE_CACHE_DIR = DATA_DIR / "cache" / "live"
 
 
 def cache_path(cache_dir: Path, symbol: str, day: date) -> Path:

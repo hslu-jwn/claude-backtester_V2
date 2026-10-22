@@ -86,3 +86,32 @@ def test_invalid_config_and_balance():
         GuardConfig(daily_stop_percent=0)
     with pytest.raises(ValueError):
         evaluate(CFG, 0, 100)
+
+
+@pytest.mark.parametrize("val", [float("nan"), float("inf"), float("-inf")])
+def test_guard_rejects_non_finite_inputs(val):
+    with pytest.raises(ValueError):
+        evaluate(CFG, 100_000, val)
+    with pytest.raises(ValueError):
+        evaluate(CFG, val, 100_000)
+    with pytest.raises(ValueError):
+        evaluate(CFG, 100_000, 100_000, initial_balance=val)
+    with pytest.raises(ValueError):
+        GuardConfig(daily_stop_percent=val)
+    with pytest.raises(ValueError):
+        GuardConfig(initial_balance=val)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["daily_stop_percent", "ftmo_daily_loss_percent", "ftmo_max_loss_percent", "initial_balance"],
+)
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_all_guard_config_numbers_must_be_finite(field, value):
+    with pytest.raises(ValueError):
+        GuardConfig(**{field: value})
+
+
+def test_nonfinite_daily_stop_keeps_caller_error_description():
+    with pytest.raises(ValueError, match="daily stop"):
+        GuardConfig(daily_stop_percent=float("inf"))

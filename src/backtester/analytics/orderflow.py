@@ -142,11 +142,11 @@ def _clean(x, y) -> tuple[np.ndarray, np.ndarray]:
 
 def decile_table(feature, target, n: int, overlap: int = 1) -> pd.DataFrame:
     """Per bucket: n, mean, median, hit_rate (share target > 0), t (mean / (sd / sqrt(n / overlap)))."""
-    x, y = _clean(feature, target)
-    codes = bucket(x, n)
+    codes = bucket(feature, n)
+    y = np.asarray(target, dtype=float)
     rows = []
     for c in range(codes.max() + 1 if len(codes) else 0):
-        v = y[codes == c]
+        v = y[(codes == c) & ~np.isnan(y)]
         if len(v) == 0:
             continue
         sd = v.std(ddof=1) if len(v) > 1 else np.nan
@@ -163,10 +163,11 @@ def spread(codes: np.ndarray, target) -> float:
     y = np.asarray(target, dtype=float)
     ok = (codes >= 0) & ~np.isnan(y)
     c, y = codes[ok], y[ok]
-    if len(c) == 0:
+    valid = codes[codes >= 0]
+    if len(valid) == 0:
         return float("nan")
-    lo, hi = c.min(), c.max()
-    if lo == hi:
+    lo, hi = valid.min(), valid.max()
+    if lo == hi or not np.any(c == lo) or not np.any(c == hi):
         return float("nan")
     return float(y[c == hi].mean() - y[c == lo].mean())
 
@@ -191,6 +192,9 @@ def shuffle_p95(codes: np.ndarray, target, shuffles: int, seed: int, q: float = 
     if len(c) == 0 or c.min() == c.max():
         return float("nan")
     lo, hi = c.min(), c.max()
+    valid = codes[codes >= 0]
+    if lo != valid.min() or hi != valid.max():
+        return float("nan")
     rng = np.random.default_rng(seed)
     vals = np.empty(shuffles)
     for i in range(shuffles):
@@ -214,6 +218,9 @@ def shift_p95(
     if len(c) < 4 or c.min() == c.max():
         return float("nan")
     lo, hi = c.min(), c.max()
+    valid = codes[codes >= 0]
+    if lo != valid.min() or hi != valid.max():
+        return float("nan")
     rng = np.random.default_rng(seed)
     low = max(1, int(len(c) * min_frac))
     vals = np.empty(shuffles)

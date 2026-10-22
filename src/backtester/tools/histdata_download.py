@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Protocol
 
 from backtester.data.histdata import SYMBOL_NAMES
+from backtester.paths import DATA_DIR
 
 SITE = "http://www.histdata.com"
 PAGE_URL = SITE + "/download-free-forex-historical-data/?/metatrader/1-minute-bar-quotes/"
@@ -62,7 +63,7 @@ DEFAULT_PAIRS = [
     "BCOUSD",
     "UDXUSD",
 ]
-DEFAULT_ROOT = Path("data/raw/histdata")
+DEFAULT_ROOT = DATA_DIR / "raw/histdata"
 
 
 class DownloadError(Exception):

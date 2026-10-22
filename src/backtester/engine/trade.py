@@ -96,6 +96,7 @@ class TradeResult:
     tp2_share: float | None = None  # with a TP3
     swap_r: float = 0.0  # already inside r_net (negative = cost)
     funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
+    risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
 
     @property
     def risk(self) -> float:

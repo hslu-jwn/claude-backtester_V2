@@ -36,8 +36,9 @@ from backtester.core.models import Timeframe
 from backtester.data.adapters.mt5_adapter import Mt5Adapter, ServerClock
 from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 from backtester.engine.spread_table import STATS, SpreadTable
+from backtester.paths import DATA_DIR
 
-DEFAULT_OUT = Path("data") / "spreads"
+DEFAULT_OUT = DATA_DIR / "spreads"
 DEFAULT_NAMES = {"NAS100": "US100.cash", "US500": "US500.cash"}
 DEFAULT_CLOCK = ServerClock("America/New_York", 7)
 DEFAULT_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")

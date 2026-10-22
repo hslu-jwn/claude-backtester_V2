@@ -7,7 +7,8 @@ Pure functions, no plotting. Works on anything with `entry_time`, `exit_time` an
 - Daily R: a component's net R per weekday, cut at midnight `Europe/Prague`, trades by exit day
   (the Monte Carlo kind A days, `risk.monte_carlo.build_days`).
 - Correlation: Pearson over the whole period and over rolling `window_days` windows (min / median /
-  max per pair); a series without variance has correlation 0 (not NaN) to every other series.
+  max per pair); an empty series or one without variance has correlation 0 (not NaN) to every
+  other series, and diagonal 1. IDM then follows the usual formula (sqrt(N) for N empty series).
 - Weights: equal (1 / number of components, never optimised). Each trade's R fields are multiplied by
   its component's weight, times the IDM only when `apply_idm`.
 - N and V for the deflated Sharpe: the trials of all component families (`component_trials`).
@@ -65,7 +66,7 @@ def daily_r(trades: Sequence, start: date, end: date) -> np.ndarray:
 
 
 def _corr(a: np.ndarray, b: np.ndarray) -> float | None:
-    if a.std() == 0 or b.std() == 0:
+    if len(a) == 0 or len(b) == 0 or a.std() == 0 or b.std() == 0:
         return None
     return float(np.corrcoef(a, b)[0, 1])
 
@@ -123,6 +124,7 @@ def weighted_trades(
     for trades, weight in zip(components, weights, strict=True):
         for t in trades:
             c = copy.copy(t)
+            object.__setattr__(c, "risk_weight", getattr(t, "risk_weight", 1.0) * weight * factor)
             for name in R_FIELDS:
                 if hasattr(t, name):
                     object.__setattr__(c, name, getattr(t, name) * weight * factor)

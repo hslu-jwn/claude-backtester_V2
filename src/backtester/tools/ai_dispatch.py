@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from backtester.paths import RESULTS_DIR
+
 EXIT_VIOLATION = 3
 EXIT_LIMIT = 4
 
@@ -310,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--write", action="store_true", help="allow file edits (never commits)")
     p.add_argument("--cwd", default=".", help="repo or worktree to work in")
     p.add_argument("--label", default="task", help="short name for the answer file and log")
-    p.add_argument("--results", type=Path, default=Path("results"))
+    p.add_argument("--results", type=Path, default=RESULTS_DIR)
     a = p.parse_args(argv)
     if not (a.prompt or a.brief):
         p.error("give --prompt, --brief or both")

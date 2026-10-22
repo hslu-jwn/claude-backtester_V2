@@ -205,6 +205,9 @@ clear verdict.
   funded loss rate counts only accounts lost or watched the full 126 days. **Known gap:** a trade open across
   midnight Prague counts only from the start of its exit day, not on its entry day (daily loss slightly
   undercounted for overnight trades; none for the gap fade).
+  **Post-ruin statistics:** a daily or full-month block starting with a non-positive balance has
+  return 0%; the block that first falls from a positive balance to zero returns -100%. Ruin is
+  absorbing in the compounded path, so later blocks contribute zero rather than undefined returns.
 - **B. Random entries** (12.1): ⚙️ 1,000 runs. Gap fade: the same gap days with the same stop and exit, a coin
   flip per day between fading and following the gap (follow = the fade trade mirrored: same distances, the
   other direction). Other strategies: random entry times inside the strategy's own window with its own stop and
@@ -297,6 +300,9 @@ Why: combine weak, uncorrelated edges into one account without fooling ourselves
 - **Daily R:** each component's net R per FTMO day (midnight `Europe/Prague`, trades by exit day, as Monte Carlo kind A).
   **Correlation** of the daily R between components over the whole period and in rolling ⚙️ **126**-trading-day windows
   (about 6 months; min / median / max per pair).
+  Empty or constant daily series have zero correlation with other components and diagonal 1.
+  Empty rolling windows are omitted. The usual IDM formula still applies; for N empty components
+  it gives sqrt(N), subject to the same cap.
 - **Weights:** ⚙️ **equal risk** per component (weight 1 / number of components; never optimised, user 2026-10-20). Each
   trade's R is multiplied by its component's weight, so the account risk per trade is the Monte Carlo risk x weight.
   **IDM** = 1 / sqrt(w' H w) with H the whole-period daily correlation (negative values floored at 0, ⚙️ cap **2.5**)

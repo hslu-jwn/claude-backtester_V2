@@ -47,13 +47,14 @@ from types import MappingProxyType
 
 from backtester.core.models import Direction
 from backtester.engine.spread_table import SpreadTable
+from backtester.paths import DATA_DIR
 from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 
 ROLLOVER_WEEKDAYS = range(5)  # New York Mon-Fri; no rollover on Saturday / Sunday dates
 WEDNESDAY = 2  # datetime.weekday(): Monday = 0
 SWAP_TRIPLE_NIGHTS = 3
 DAYS_PER_YEAR = 365  # percentage swap is quoted per year, charged per night
-FUNDING_DIR = Path("data/cache/binance_funding")
+FUNDING_DIR = DATA_DIR / "cache" / "binance_funding"
 COST_FILTER_TOLERANCE = 1e-12  # floating point: a cost equal to the limit is filled
 
 

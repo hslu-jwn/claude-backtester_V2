@@ -63,6 +63,43 @@ def test_bad_spec_raises():
         SymbolSpec(0.0, 1.0, 0.01, 0.01, 1)
     with pytest.raises(ValueError):
         SymbolSpec(0.01, 1.0, 0.0, 0.01, 1)
+    with pytest.raises(ValueError):
+        SymbolSpec(0.01, 1.0, 0.01, 0.01, 0.001)  # volume_min > volume_max
+    with pytest.raises(ValueError):
+        SymbolSpec(0.01, 1.0, 0.01, 2.0, 1.0)  # volume_step > volume_max
+
+
+def test_capped_volume_rounded_down_to_step():
+    # Step/min 0.3, max 1.0: raw = 5.0 lots -> capped at max 1.0, rounded down to step 0.9
+    spec = SymbolSpec(
+        tick_size=0.01, tick_value=1.0, volume_min=0.3, volume_step=0.3, volume_max=1.0
+    )
+    s = lots_for_risk(10_000, 1.0, 0.20, spec)  # 100 / (0.20 * 100) = 5.0 raw lots
+    assert s.lots == 0.9 and "capped" in s.reason
+
+    # Capped volume rounded down to step falls below volume_min:
+    spec_under = SymbolSpec(
+        tick_size=0.01, tick_value=1.0, volume_min=0.8, volume_step=0.5, volume_max=0.9
+    )
+    s_under = lots_for_risk(
+        10_000, 1.0, 0.20, spec_under
+    )  # raw 5.0 -> capped 0.9 -> step 0.5 < min 0.8
+    assert s_under.lots is None and "below the minimum" in s_under.reason
+
+
+@pytest.mark.parametrize("field", ["volume_min", "volume_step", "volume_max"])
+@pytest.mark.parametrize("value", [0.0, -1.0, float("nan"), float("inf"), float("-inf")])
+def test_invalid_volume_spec_is_rejected(field, value):
+    values = {
+        "tick_size": 0.01,
+        "tick_value": 1.0,
+        "volume_min": 0.01,
+        "volume_step": 0.01,
+        "volume_max": 1.0,
+    }
+    values[field] = value
+    with pytest.raises(ValueError):
+        SymbolSpec(**values)
 
 
 def test_spec_from_symbol_info():

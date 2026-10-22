@@ -581,7 +581,8 @@ def find_findings(cells: Sequence[dict], cfg: StationarityConfig) -> tuple[list[
             if 1 + len(siblings) < cfg.min_siblings:
                 continue
             counts[fam]["findings"] += 1
-            sib_txt = "; ".join(f"{o['symbol']} {o['value']:+.4g} (p={o['p_value']:.2g})"
+            sib_txt = "; ".join(f"{o['symbol']} {o['value']:+.4g} (p="
+                                + ("n/a" if o['p_value'] is None else f"{o['p_value']:.2g}") + ")"
                                 for o in siblings)  # fmt: skip
             findings.append(
                 {

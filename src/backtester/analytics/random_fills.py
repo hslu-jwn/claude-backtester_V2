@@ -6,7 +6,7 @@ Spec: risk-management.md > Monte Carlo report, C (ROADMAP 12.6). Every market fi
 the trade's stop distance |entry - initial_stop| and subtracted from `r_net`. Take profits are
 limit orders: no slippage. The engine applies no slippage to signal (time) exits and the spec
 names only entries and stop hits, so `slipped_exit_reasons` is stop loss and break-even (a
-stop order) by default. A partially closed trade is treated by its last exit reason only.
+stop order) by default. Each stopped exit part gets its own draw, weighted by its share.
 
 Works on any objects with `symbol`, `entry`, `initial_stop`, `exit_reason` (an `ExitReason` or
 its string value) and `r_net` (TradeResult, TradeRecord).
@@ -54,7 +54,19 @@ def _reason(trade) -> str:
 
 def market_fills(trade, config: RandomFillsConfig) -> int:
     """Number of market fills of a trade: the entry, plus the exit if it is a stop."""
-    return 1 + (_reason(trade) in config.slipped_exit_reasons)
+    return 1 + len(_stop_shares(trade, config))
+
+
+def _stop_shares(trade, config: RandomFillsConfig) -> list[float]:
+    parts = getattr(trade, "parts", ())
+    if not parts:
+        return [1.0] if _reason(trade) in config.slipped_exit_reasons else []
+    shares = []
+    for part in parts:
+        reason = part["reason"] if isinstance(part, dict) else part.reason
+        if getattr(reason, "value", reason) in config.slipped_exit_reasons:
+            shares.append(part["share"] if isinstance(part, dict) else part.share)
+    return shares
 
 
 def max_slippage_r(trade, slippage: float, config: RandomFillsConfig | None = None) -> list[float]:
@@ -63,7 +75,8 @@ def max_slippage_r(trade, slippage: float, config: RandomFillsConfig | None = No
     risk = abs(trade.entry - trade.initial_stop)
     if risk <= 0:
         raise ValueError("the trade has no stop distance")
-    return [cfg.factor * slippage / risk] * market_fills(trade, cfg)
+    bound = cfg.factor * slippage / risk
+    return [bound, *(bound * share for share in _stop_shares(trade, cfg))]
 
 
 def random_fills(

@@ -10,6 +10,7 @@ from m1_frames import m1
 
 from backtester.data.cache import cache_path
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
+from backtester.paths import DATA_DIR
 from backtester.ui.pages.chart import base_payload
 
 
@@ -30,11 +31,11 @@ def sources(tmp_path):
 
 
 def test_default_reads_gold_from_dukascopy_and_gbp_pairs_from_histdata():
-    assert DEFAULT_SOURCES.cache_dir("XAUUSD") == Path("data/cache/histdata")
-    assert DEFAULT_SOURCES.cache_dir("GBPUSD") == Path("data/cache/histdata")
-    assert DEFAULT_SOURCES.cache_dir("GBPJPY") == Path("data/cache/histdata")
-    assert DEFAULT_SOURCES.cache_dir("NAS100") == Path("data/cache/histdata")
-    assert DEFAULT_SOURCES.cache_dir("US500") == Path("data/cache/histdata")
+    assert DEFAULT_SOURCES.cache_dir("XAUUSD") == DATA_DIR / "cache" / "histdata"
+    assert DEFAULT_SOURCES.cache_dir("GBPUSD") == DATA_DIR / "cache" / "histdata"
+    assert DEFAULT_SOURCES.cache_dir("GBPJPY") == DATA_DIR / "cache" / "histdata"
+    assert DEFAULT_SOURCES.cache_dir("NAS100") == DATA_DIR / "cache" / "histdata"
+    assert DEFAULT_SOURCES.cache_dir("US500") == DATA_DIR / "cache" / "histdata"
 
 
 def test_symbols_with_cached_days_each_from_its_own_folder(sources):
@@ -107,17 +108,17 @@ BINANCE_NAMES = ["BTCUSDT", "ETHUSDT"]
 
 @pytest.mark.parametrize("symbol", HISTDATA_NAMES)
 def test_new_histdata_symbols_default_to_histdata(symbol):
-    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/histdata")
+    assert DEFAULT_SOURCES.cache_dir(symbol) == DATA_DIR / "cache" / "histdata"
 
 
 @pytest.mark.parametrize("symbol", MT5_ONLY_NAMES)
 def test_symbols_only_on_ftmo_default_to_the_mt5_cache(symbol):
-    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/mt5")
+    assert DEFAULT_SOURCES.cache_dir(symbol) == DATA_DIR / "cache" / "mt5"
 
 
 @pytest.mark.parametrize("symbol", BINANCE_NAMES)
 def test_binance_symbols_default_to_the_binance_cache(symbol):
-    assert DEFAULT_SOURCES.cache_dir(symbol) == Path("data/cache/binance")
+    assert DEFAULT_SOURCES.cache_dir(symbol) == DATA_DIR / "cache" / "binance"
 
 
 def test_every_default_symbol_has_price_digits_and_costs():

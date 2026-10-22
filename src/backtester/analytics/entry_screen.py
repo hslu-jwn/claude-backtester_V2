@@ -345,13 +345,24 @@ def random_exit_runs(
 # --- (e) hit-rate scan ----------------------------------------------------------------------------
 
 
-def _hit_signs(m1: M1Data, refs: np.ndarray, ref_price: np.ndarray, bars: int, bar_minutes: int):
+def _hit_signs(
+    m1: M1Data,
+    refs: np.ndarray,
+    ref_price: np.ndarray,
+    bars: int,
+    bar_minutes: int,
+    entry_s: np.ndarray | None = None,
+):
     """Sign (-1, 0, +1) of the price `bars` bars after each reference candle, vs its close."""
     later = (
-        np.searchsorted(m1.close_s, m1.close_s[refs] + bars * bar_minutes * 60, side="right") - 1
+        np.searchsorted(
+            m1.close_s,
+            (m1.close_s[refs] if entry_s is None else entry_s) + bars * bar_minutes * 60,
+            side="right",
+        )
+        - 1
     )
-    later = np.maximum(later, refs + 1)
-    ok = later < len(m1)
+    ok = (later > refs) & (later < len(m1))
     out = np.zeros(len(refs), dtype=np.int8)
     out[ok] = np.sign(m1.close[later[ok]] - ref_price[ok]).astype(np.int8)
     return out
@@ -535,8 +546,9 @@ def _hit_scan(usable, m1s, bar_minutes: int, cfg: EntryScreenConfig) -> list[dic
         refs = np.array([_entry_index(m1, t) - 1 for t in ts])
         refs = np.maximum(refs, 0)
         entry = np.array([t.entry for t in ts])
+        entry_s = np.array([t.entry_time.timestamp() for t in ts])
         for j, n in enumerate(cfg.bars):
-            real_hits[j] += np.sum(_hit_signs(m1, refs, entry, n, bar_minutes) == signs)
+            real_hits[j] += np.sum(_hit_signs(m1, refs, entry, n, bar_minutes, entry_s) == signs)
         cand = _window_candidates(m1, [t.entry_time for t in ts], cfg.window_bucket_minutes)
         if len(cand) == 0:
             continue

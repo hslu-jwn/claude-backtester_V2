@@ -118,6 +118,8 @@ def read_all(path: Path | None = None) -> list[TrialRecord]:
             continue
         try:
             data = json.loads(line)
+            if not isinstance(data, dict):
+                raise TypeError("trial record must be an object")
             record = TrialRecord(**{k: v for k, v in data.items() if k in known})
         except (ValueError, TypeError):
             warnings.warn(f"trials log {path}: skipped bad line {number}", stacklevel=2)

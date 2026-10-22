@@ -65,6 +65,7 @@ class TradeRecord:
     tp2_share: float | None = None
     swap_r: float = 0.0  # inside r_net (files before swap: 0)
     funding_r: float = 0.0  # inside r_net (files before funding: 0)
+    risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:

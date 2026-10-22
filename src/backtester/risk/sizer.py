@@ -24,8 +24,10 @@ class SymbolSpec:
 
     def __post_init__(self) -> None:
         for name in ("tick_size", "tick_value", "volume_min", "volume_step", "volume_max"):
-            if not getattr(self, name) > 0:
+            if not (math.isfinite(getattr(self, name)) and getattr(self, name) > 0):
                 raise ValueError(f"{name} must be > 0")
+        if self.volume_min > self.volume_max or self.volume_step > self.volume_max:
+            raise ValueError("volume_min and volume_step must be <= volume_max")
 
     @property
     def value_per_unit(self) -> float:
@@ -58,14 +60,12 @@ def lots_for_risk(
         raise ValueError("balance, risk_percent and sl_distance must be > 0")
     per_lot = sl_distance * spec.value_per_unit
     raw = balance * risk_percent / 100 / per_lot
-    steps = math.floor(raw / spec.volume_step + STEP_TOLERANCE)
+    reason = f"capped at the maximum lot {spec.volume_max:g}" if raw > spec.volume_max else ""
+    steps = math.floor(min(raw, spec.volume_max) / spec.volume_step + STEP_TOLERANCE)
     lots = round(steps * spec.volume_step, 8)
     if lots < spec.volume_min - STEP_TOLERANCE:
         return Sized(
             None,
             reason=f"{raw:.4f} lots is below the minimum lot {spec.volume_min:g}",
         )
-    reason = ""
-    if lots > spec.volume_max:
-        lots, reason = spec.volume_max, f"capped at the maximum lot {spec.volume_max:g}"
     return Sized(lots, lots * per_lot, reason)

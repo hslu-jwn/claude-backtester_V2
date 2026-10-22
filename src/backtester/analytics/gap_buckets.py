@@ -59,10 +59,25 @@ def gap_days(
     )
     out: list[GapDay] = []
     pending: dict | None = None
+    last: tuple[datetime, float] | None = None
+
+    def finalize() -> None:
+        if pending is None or last is None or last[0].date() != pending["day"]:
+            return
+        deadline = datetime.combine(pending["day"], config.session_close)
+        lag = (deadline - last[0].replace(tzinfo=None)).total_seconds()
+        if 0 <= lag <= config.close_tolerance_min * 60:
+            out.append(GapDay(close=last[1], **pending))
+
     for close_time, high, low, close in bars:
         local = close_time.astimezone(tz)
         t = local.time()
+        if pending and (local.date() != pending["day"] or t > config.session_close):
+            finalize()
+            pending, last = None, None
         if t == config.session_open:
+            finalize()
+            last = None
             stats.finish()
             sd, atr = stats.vol_sd(), stats.atr
             known = stats.prev_regular and sd is not None and atr is not None and atr > 0
@@ -76,9 +91,8 @@ def gap_days(
         elif config.session_open < t <= config.session_close:
             candle = Candle(ts=close_time, open=close, high=high, low=low, close=close)
             stats.take_in(local.date(), t, candle)
-            if t == config.session_close and pending and pending["day"] == local.date():
-                out.append(GapDay(close=close, **pending))
-                pending = None
+            last = local, close
+    finalize()
     return out
 
 

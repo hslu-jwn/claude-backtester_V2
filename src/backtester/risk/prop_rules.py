@@ -13,6 +13,7 @@ docs/risk-management.md › Daily & account protection, Prop-firm field.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
@@ -36,8 +37,10 @@ class GuardConfig:
             "ftmo_max_loss_percent",
             "initial_balance",
         ):
-            if not getattr(self, name) > 0:
-                raise ValueError(f"{name} must be > 0")
+            val = getattr(self, name)
+            if not (math.isfinite(val) and val > 0):
+                label = f"{name} (daily stop)" if name == "daily_stop_percent" else name
+                raise ValueError(f"{label} must be finite and > 0")
         ZoneInfo(self.zone)
 
 
@@ -66,8 +69,13 @@ def evaluate(
     initial_balance: float | None = None,
 ) -> GuardStatus:
     """Today's P/L against the personal stop and the FTMO limits."""
-    if day_start_balance <= 0:
+    if not math.isfinite(day_start_balance) or day_start_balance <= 0:
         raise ValueError("day_start_balance must be > 0")
+
+    if not math.isfinite(equity):
+        raise ValueError("equity must be finite")
+    if initial_balance is not None and (not math.isfinite(initial_balance) or initial_balance <= 0):
+        raise ValueError("initial_balance must be > 0")
     initial = config.initial_balance if initial_balance is None else initial_balance
     day_pl = equity - day_start_balance
     percent = day_pl / day_start_balance * 100

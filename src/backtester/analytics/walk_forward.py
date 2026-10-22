@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 ANCHORED, ROLLING = "anchored", "rolling"
 
@@ -52,8 +53,15 @@ class WalkForwardResult:
         return tuple(t for p in self.picks for t in p.test_trades)
 
 
-def _net(trades: Sequence, years: set[int]) -> float:
-    return sum(t.r_net for t in trades if t.entry_time.year in years)
+def _net(trades: Sequence, years: set[int], test_year: int) -> float:
+    # Entry-only historical inputs represent outcomes realized at entry. Real trade
+    # records carry exit_time and must have closed strictly before the test year.
+    return sum(
+        t.r_net
+        for t in trades
+        if t.entry_time.year in years
+        and getattr(t, "exit_time", t.entry_time) < datetime(test_year, 1, 1, tzinfo=UTC)
+    )
 
 
 def walk_forward(
@@ -81,7 +89,7 @@ def walk_forward(
         train_set = set(train)
         best_name, best_net = None, 0.0
         for name, trades in variants.items():
-            net = _net(trades, train_set)
+            net = _net(trades, train_set, test)
             if best_name is None or net > best_net:  # strict: a tie keeps the first
                 best_name, best_net = name, net
         chosen = tuple(t for t in variants[best_name] if t.entry_time.year == test)

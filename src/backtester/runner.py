@@ -311,6 +311,9 @@ _worker_queue = None  # set in each worker process
 def _init_worker(queue) -> None:
     global _worker_queue
     _worker_queue = queue
+    # Progress items are informational: never wait at exit until they are read, or a finished
+    # worker and the exiting main process wait for each other (hang found 2026-10-23).
+    queue.cancel_join_thread()
 
 
 def _run_in_worker(job: _Job) -> SymbolRun:
