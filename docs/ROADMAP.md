@@ -56,7 +56,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 
 - ☑ **V2.1 Set up this PC** (tools, venv, data check, baseline tests).
 - ☑ **V2.2 Team setup** (AGENTS.md, Codex / Claude 4.6 / Gemini through `tools/ai_dispatch.py`).
-- ◐ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
+- ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
 - ☐ **V2.4 Full Codex review and speed-up:** golden trade lists of all strategies first; review
   core -> detectors -> engine -> risk -> analytics -> strategies -> ui -> live (correctness,
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
