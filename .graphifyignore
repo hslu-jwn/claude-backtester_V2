@@ -1,3 +1,0 @@
-# Files graphify skips when building graphify-out/ (gitignore syntax).
-# Vendored, minified TradingView Lightweight Charts: not our code, only adds noise.
-src/backtester/ui/assets/lightweight-charts-*.js

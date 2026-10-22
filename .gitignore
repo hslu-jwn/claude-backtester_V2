@@ -21,8 +21,6 @@ results/
 .env
 *.secret
 
-# graphify knowledge graph (rebuild with: graphify update .)
-graphify-out/
 
 # Stray files from Windows paths glued into a name
 CUsers*

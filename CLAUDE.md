@@ -165,30 +165,10 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 
 ## Claude Code tools in this project
 
-graphify is a user-level tool on the user's PC. The project skills are in `.claude/skills/`:
+The project skills are in `.claude/skills/`:
 `ponytail`, `ponytail-review`, `ponytail-audit`, `backtester-testing`, `backtest-evaluation-research` (needs web
 access; the user may supply the research). They help; they never override the rules above.
-
-### graphify (code map in `graphify-out/`)
-
-- **Orient with the graph, then read the source.** For "where/how is X done" questions run
-  `graphify query "<question>"`, `graphify explain "<symbol>"` or `graphify path "<A>" "<B>"`
-  first; they return a small subgraph instead of grep dumps. Add `--budget` or narrow the
-  question if the output says TRUNCATED. Skip the graph when you already know the exact
-  file and line to edit. Read `graphify-out/GRAPH_REPORT.md` only for whole-architecture
-  reviews.
-- **The graph is approximate** (inferred and missing edges). Confirm an edge in the source
-  before relying on it.
-- **Spec headings are in the graph, the rules are not.** The `.md` files (`docs/`, README,
-  CLAUDE.md) appear only as section-heading nodes, which is useful for finding the code
-  behind a spec section. Trading rules always come from reading `docs/` itself, never from
-  the graph.
-- **Keep it current:** after changing code, run `graphify update .` (local AST build, no API
-  keys, no cost). `.graphifyignore` skips the vendored Lightweight Charts bundle;
-  `graphify-out/` is git-ignored.
-- The PreToolUse hook in `.claude/settings.json` (`graphify hook-guard`, Windows path of the
-  user's PC, it fails harmlessly in the cloud) reminds you of
-  this before Bash/Grep/Read/Glob calls. It only reminds; it never blocks.
+graphify is no longer used (user, 2026-10-22).
 
 ### ponytail
 
@@ -231,7 +211,7 @@ access; the user may supply the research). They help; they never override the ru
   designs, manages and reviews; coding and testing go to subagents (`Agent` tool). Claude picks
   the subagent model per task and saves tokens: **Sonnet** for writing code and tests, hard
   debugging and backtest runs that need judgment; **Haiku** for mechanical edits, searches,
-  reading files/books and running commands (pytest, ruff, graphify). One subagent per
+  reading files/books and running commands (pytest, ruff). One subagent per
   independent piece; give each a complete brief (files, spec section, test cases, done = tests
   green + ruff) because it starts without this chat's context. The main session checks the
   result (diff, test output) before committing. Trivial one-line edits and git commands stay
@@ -278,7 +258,7 @@ access; the user may supply the research). They help; they never override the ru
   Do all of it yourself: full tests + ruff (report failures honestly, record them as known issues),
   mark the finished steps ☑ in the ROADMAP, write all decisions and accepted points into `docs/`,
   rewrite `docs/HANDOFF.md` (last session, accepted, open, next step), commit, push, make sure
-  `git status` is clean, run `graphify update .` if available. In the cloud, unpushed work is lost.
+  `git status` is clean. In the cloud, unpushed work is lost.
 - **Reply at the end** (max 10 lines): done, not done, recorded decisions, next step, how to check,
   and the exact first prompt for the next chat (normally just `Continue.`).
 
