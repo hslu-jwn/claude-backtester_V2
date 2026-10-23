@@ -260,13 +260,48 @@ def test_the_settings_panel_settings_reach_the_trades_overlay():
     assert detect_trades(replay, OverlaySettings(strategy=to_json(tiny_sl)), sources) == []
 
 
-def test_strategy_2_settings_say_the_overlay_is_not_there_yet():
+def test_other_strategies_trades_come_from_the_backtest_runner(monkeypatch):
+    """Rule of 2026-10-23: every strategy's trades on the chart (the trade itself, no
+    confluences), from the same run a backtest from the shown range's first day gives."""
+    from types import SimpleNamespace
+
     from backtester.runner import RunSettings
-    from backtester.settings import to_json
     from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+    from backtester.ui import trades_overlay
+
+    ref, replay, sources = one_trade()
+    calls = []
+
+    def fake_run(symbols, first, last, settings, srcs, workers):
+        calls.append((symbols, first, last, type(settings.strategy), workers))
+        return SimpleNamespace(trades=(ref.trade,))
+
+    monkeypatch.setattr(trades_overlay, "run_backtests", fake_run)
+    ny = OverlaySettings(strategy=to_json(RunSettings(strategy=NyIndexSweepConfig())))
+    [e] = detect_trades(replay, ny, sources)
+    day = date(2026, 1, 5)
+    assert calls == [(["XAUUSD"], day, day, NyIndexSweepConfig, 1)]  # clipped to the cache
+    assert e.decision is None and e.trade is ref.trade
+    assert (e.entry_x, e.exit_x) == (ref.entry_x, ref.exit_x)
+    layers = by_layer(draw_trades([e], ctx(len(FULL) - 1, frozenset({"confluences"}))))
+    assert boxes(layers["Trade target"]) and boxes(layers["Trade risk"])
+    hover = hovers(layers["Trade"])[-1]
+    assert hover.splitlines()[0] == "Long" and "result +1.20R before costs" in hover
+    assert "Trade zone" not in layers and "Trade BOS" not in layers
+
+
+def test_other_strategies_without_rules_for_the_symbol_say_so(monkeypatch):
+    from backtester.runner import RunSettings
+    from backtester.strategy.base import UnsupportedSymbolError
+    from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
+    from backtester.ui import trades_overlay
     from backtester.ui.overlays import OverlayUnavailable
 
+    def fake_run(*args, **kwargs):
+        raise UnsupportedSymbolError("XAUUSD: no index rules")
+
+    monkeypatch.setattr(trades_overlay, "run_backtests", fake_run)
     sources = FakeSources(FULL)
     ny = OverlaySettings(strategy=to_json(RunSettings(strategy=NyIndexSweepConfig())))
-    with pytest.raises(OverlayUnavailable, match="strategy 2"):
+    with pytest.raises(OverlayUnavailable, match="no index rules"):
         detect_trades(sources.chart(), ny, sources)

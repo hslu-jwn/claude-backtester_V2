@@ -66,6 +66,11 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research
   runner.
+- ◐ **V2.4a Trades of every strategy on the chart** (rule set by the user, 2026-10-23: show
+  the trades of any strategy on the chart; the trade itself is enough, confluences only when
+  the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
+  backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
+  Open: the user's look in the browser.
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the

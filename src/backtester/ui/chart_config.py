@@ -94,7 +94,7 @@ class ChartConfig:
     session_zone_min_timeframe: Timeframe = Timeframe.M5  # 30m zones shown down to this
     # higher timeframes loaded with the chart for overlays built on them (session zones)
     higher_timeframes: tuple[Timeframe, ...] = (Timeframe.M30,)
-    # trades (strategy 1, ROADMAP 3.3b): TradingView-style position boxes
+    # trades (every strategy, ROADMAP 3.3b): TradingView-style position boxes
     trade_profit_color: str = "#089981"  # entry -> TP
     trade_loss_color: str = "#f23645"  # entry -> SL
     trade_box_opacity: float = 0.2
