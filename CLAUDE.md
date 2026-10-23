@@ -87,7 +87,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   - Topic given: research only that. Otherwise the next open idea from
     `docs/research-log.md` / `knowledge/ideas.md`.
   - Rules: every strategy comes from research (book, paper, study) cited in its `docs/` spec;
-    Opus checks the source exists before any code. Vary only the settings of a researched
+    Opus checks the source exists before any code. One parameter set pooled across all
+    markets by default; per-market parameters with re-optimisation only as a walk-forward
+    variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the settings of a researched
     idea. Do not judge pass / fail: record every strategy with all metrics; the user decides.
     Develop before 2021-09-14, test the best variant once on MT5 data from 2021-09-14 (rule set
     by the user, 2026-10-15); every variant in the trial log; DSR, robustness report, real

@@ -77,6 +77,20 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
   market, expectation haircut.
+- ☐ **V2.4d Book requirements** (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
+  `docs/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
+  net R series of every variant (trial log / runner); (2) daily returns marked to market (open
+  trades valued each day, not booked at exit); (3) take profits and limit entries fill only on
+  penetration by a per-symbol distance: built as a setting first, its effect measured on the
+  golden lists of all 7 strategies, then the user picks the default (rule set by the user
+  2026-10-23); (4) drawdown Monte Carlo as Masters' double bootstrap (kind A only permutes
+  the historic days and is optimistic); (5) best-of-N significance in the runner (White's
+  Reality Check / Monte Carlo permutation over the variants' daily series); (6) walk-forward
+  with month-based windows, walk-forward efficiency and the open-trade boundary rule;
+  (7) detrended benchmark and long / short position bias; (8) bootstrap (BCa) bounds of the
+  mean and log profit factor; (9) prices rounded to the tick in the engine. Later (V2.6 /
+  V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
+  for the portfolio's member selection.
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
