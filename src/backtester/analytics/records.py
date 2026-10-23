@@ -66,6 +66,7 @@ class TradeRecord:
     swap_r: float = 0.0  # inside r_net (files before swap: 0)
     funding_r: float = 0.0  # inside r_net (files before funding: 0)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
+    limit_fill: bool = False  # older CSVs have no entry kind: assume market
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:
@@ -100,6 +101,7 @@ class TradeRecord:
             tp2_share=_float(row.get("tp2_share")),
             swap_r=float(row.get("swap_r") or 0.0),
             funding_r=float(row.get("funding_r") or 0.0),
+            limit_fill=str(row.get("limit_fill", False)).lower() == "true",
         )
 
 

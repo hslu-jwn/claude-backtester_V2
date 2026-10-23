@@ -83,10 +83,13 @@ def test_the_scenario_trade_with_its_chart_positions():
     t = e.trade
     assert (t.entry, t.initial_stop, t.take_profit) == (110.0, 109.1, pytest.approx(111.08))
     assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.2)
-    # costs on (XAUUSD): spread 0.25 / 0.9 and 0.0007 % per side of entry 110.0 / exit 111.08
+    # B4/B6: scaled spread + entry slippage, commission on actual fill notionals.
     # (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
     spread = 0.25 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price  # scaled (2026-10-16)
-    assert t.r_net == pytest.approx(1.2 - spread / 0.9 - 0.000007 * (110.0 + 111.08) / 0.9)
+    slip = 0.1 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
+    assert t.r_net == pytest.approx(
+        1.2 - (spread + slip) / 0.9 - 0.000007 * (110.0 + spread + slip + 111.08) / 0.9
+    )
     assert e.entry_x == ENTRY_INDEX and e.exit_x == ENTRY_INDEX + 1
     assert e.decision.signal.confluence.kind.value == "fvg"
     assert e.zone_x0 == 6  # the London 08:00 swing candle (5m 08:00 is candle 6)
@@ -250,7 +253,9 @@ def test_the_settings_panel_settings_reach_the_trades_overlay():
         {"engine.costs.spread_enabled": False, "engine.costs.commission_enabled": False}
     )
     [e] = detect_trades(replay, OverlaySettings(strategy=to_json(no_costs)), sources)
-    assert e.trade.r_net == pytest.approx(e.trade.r_gross)
+    # Spread/commission switches leave the configured market entry slippage active (B4).
+    slip = 0.1 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
+    assert e.trade.r_net == pytest.approx(e.trade.r_gross - slip / 0.9)
     tiny_sl = settings_from_values({"strategy.max_sl_atr_mult": 0.01})  # every SL too wide
     assert detect_trades(replay, OverlaySettings(strategy=to_json(tiny_sl)), sources) == []
 

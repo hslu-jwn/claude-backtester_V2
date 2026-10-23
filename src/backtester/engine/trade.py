@@ -8,7 +8,8 @@ result on the chart (entry and exit at the chart levels, no costs):
     long:  r_gross = (exit - entry) / risk        short: mirrored
 
 Net R takes the fills (long: enter at ask = bid + spread, exit at bid; short: enter at bid,
-exit at ask) and the commission:  r_net = r_gross - spread_r - commission_r + swap_r.
+exit at ask), adverse market-fill slippage and commission. Net R sums the weighted fill
+results, subtracts commission and adds swap/funding (ARCHITECTURE.md > Engine costs).
 `swap_r` (engine/costs.py: nights across the 17:00 New York rollover, signed: negative =
 cost) is part of net R only, never of gross.
 
@@ -20,7 +21,8 @@ part is a `PartialExit`; the trade's R is the share-weighted sum of its parts, g
 net (spread and commission are paid once per unit, so they stay as for one exit).
 After TP1 the rest's SL may move to the break-even level (with costs): from the next
 candle on, or in the TP1 candle itself if that candle closes back beyond the level (then
-the level was certainly hit after TP1).
+the level was certainly hit after TP1). The level must lie strictly behind TP1; otherwise
+the original SL stays (rule set by the user, 2026-10-22).
 
 Times: `entry_time` / `exit_time` are when the engine acted, i.e. the CLOSE time of the
 entry candle and of the candle in which SL / TP was hit. `entry_candle` / `exit_candle` are
@@ -70,13 +72,13 @@ class TradeResult:
     entry_time: datetime
     entry_candle: datetime
     entry: float  # chart (bid) price: the entry candle's close
-    entry_fill: float  # long: ask, short: bid
+    entry_fill: float  # ask/bid plus adverse slippage for market entries
     initial_stop: float
     take_profit: float | None  # TP1 (the whole position when take_profit_2 is None); None: no TP
     exit_time: datetime  # the last part's
     exit_candle: datetime
     exit_price: float  # chart (bid) price
-    exit_fill: float  # long: bid, short: ask
+    exit_fill: float  # bid/ask plus adverse slippage for non-TP exits
     exit_reason: ExitReason
     r_gross: float  # share-weighted sum of the parts
     r_net: float
@@ -97,6 +99,7 @@ class TradeResult:
     swap_r: float = 0.0  # already inside r_net (negative = cost)
     funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
+    limit_fill: bool = False  # Kind C: a limit entry gets no market-fill draw
 
     @property
     def risk(self) -> float:
@@ -152,7 +155,7 @@ class OpenTrade:
     stop_loss: float  # current SL (may move to the break-even level once)
     take_profit: float | None  # TP1; None: no take profit
     break_even_check: datetime | None  # next session start; None once checked or if off
-    break_even_level: float  # where a hit is 0R net: entry + spread + commission (long)
+    break_even_level: float  # chart stop solved for 0R net after fill costs (without a gap)
     tags: frozenset[str] = field(default_factory=frozenset)
     reason: str = ""
     confluence: str = ""  # entry confluence type (Order.confluence)
@@ -163,10 +166,12 @@ class OpenTrade:
     tp2_share: float | None = None
     ref: object = None  # Order.ref
     spread: float = 0.0  # added to a short's exit (fills at ask)
+    slippage: float = 0.0  # scaled at entry; adverse on every non-TP exit
     break_even_time: datetime | None = None
     mae_r: float = 0.0
     mfe_r: float = 0.0
     parts: list[PartialExit] = field(default_factory=list)
+    limit_fill: bool = False
 
     @property
     def risk(self) -> float:
@@ -199,7 +204,21 @@ class OpenTrade:
         return self.sign * (price - self.entry) / self.risk
 
     def track_excursion(self, candle: Candle) -> None:
+        """Spec: ARCHITECTURE.md > Engine excursions (B7, user, 2026-10-22).
+
+        Stop/TP fills at the open exclude later extremes. A partial TP leaves exposure;
+        a later SL in the candle still wins over any TP under the SL-first rule.
+        """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
+        stop_at_open = self.sign * (candle.open - self.stop_loss) <= 0
+        targets = self.targets
+        tp_at_open = (
+            bool(targets)
+            and self._beyond(candle.open, targets[-1][0])
+            and self.sign * (worst - self.stop_loss) > 0
+        )
+        if stop_at_open or tp_at_open:
+            worst = best = candle.open
         self.mae_r = min(self.mae_r, self.r_at(worst))
         self.mfe_r = max(self.mfe_r, self.r_at(best))
 
@@ -234,7 +253,11 @@ class OpenTrade:
             hit_tp1 = hit_tp1 or i == 0
         if self.is_closed:
             return
-        if hit_tp1 and self.break_even_after_tp1:
+        if (
+            hit_tp1
+            and self.break_even_after_tp1
+            and self.sign * (self.take_profit - self.break_even_level) > 0
+        ):
             self.move_to_break_even(now)
             if not self._beyond(candle.close, self.break_even_level):
                 # closed back beyond break-even after TP1: the level was hit in this candle
@@ -258,6 +281,8 @@ class OpenTrade:
         self, share: float, candle: Candle, now: datetime, price: float, reason: ExitReason
     ) -> None:
         fill = price if self.sign > 0 else price + self.spread
+        if reason is not ExitReason.TAKE_PROFIT:
+            fill -= self.sign * self.slippage
         r_fills = self.sign * (fill - self.entry_fill) / self.risk
         self.parts.append(
             PartialExit(share, now, candle.ts, price, fill, reason, self.r_at(price), r_fills)
@@ -306,4 +331,5 @@ class OpenTrade:
             tp2_share=self.tp2_share,
             swap_r=swap_r,
             funding_r=funding_r,
+            limit_fill=self.limit_fill,
         )

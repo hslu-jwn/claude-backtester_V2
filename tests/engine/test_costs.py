@@ -41,10 +41,11 @@ def test_swap_defaults_are_ftmo_rates_of_2026_10_14(symbol, long, short, triple)
 
 
 @pytest.mark.parametrize("symbol", ["NAS100", "US500"])
-def test_indices_have_no_commission_so_break_even_is_the_spread(symbol):
+def test_indices_break_even_is_spread_plus_two_slips_without_commission(symbol):
     config = CostConfig()
     assert config.commission_r(symbol, risk=20.0) == 0
-    assert config.break_even_offset(symbol) == DEFAULT_SYMBOL_COSTS[symbol].spread
+    costs = DEFAULT_SYMBOL_COSTS[symbol]
+    assert config.break_even_offset(symbol) == costs.spread + 2 * costs.slippage
 
 
 # --- ROADMAP 11.8 / 11.9: FTMO costs of the new symbols (read from the terminal 2026-10-15) ----

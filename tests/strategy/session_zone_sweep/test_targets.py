@@ -305,7 +305,8 @@ def test_two_tps_order_and_weighted_result():
     assert order.tp1_share == 0.5 and order.break_even_after_tp1
     assert trade.exit_reason is ExitReason.END_OF_DATA
     assert trade.r_gross == pytest.approx(0.5 * 1.5 / 0.9 + 0.5 * 2.8 / 0.9)
-    assert trade.break_even_stop == 110.0  # no costs: the entry
+    # Spread/commission off; entry and stop still pay scaled slippage (B4).
+    assert trade.break_even_stop == pytest.approx(110 + 2 * 0.1 * 110 / 4342.74)
     share = SessionZoneSweepConfig(tp_cap_r=4.0, tp1_share=0.3, break_even_after_tp1=False)
     strategy, _ = run(ohlc, share, extra_levels=[Level(111.5, SWING)])
     order = strategy.decisions[0].order

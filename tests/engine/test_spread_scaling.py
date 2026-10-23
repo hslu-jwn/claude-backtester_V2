@@ -99,7 +99,9 @@ def test_spread_r_uses_the_scaled_spread():
 def test_break_even_offset_uses_the_scaled_spread():
     cfg = CostConfig(commission_enabled=False)
     price = SILVER.reference_price / 2
-    assert cfg.break_even_offset("XAGUSD", AT, price) == pytest.approx(SILVER.spread / 2)
+    assert cfg.break_even_offset("XAGUSD", AT, price) == pytest.approx(
+        (SILVER.spread + 2 * SILVER.slippage) / 2
+    )
 
 
 def test_cost_filter_uses_the_scaled_spread():

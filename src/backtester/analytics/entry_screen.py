@@ -8,7 +8,9 @@ M1 with the engine's rules (`engine/trade.py`, `engine/costs.py`):
 - a candle opening beyond the stop fills at its open, otherwise at the stop; SL and TP inside one
   candle -> SL first; only candles that open at or after the entry time are used (no lookahead);
 - spread on the fills (the entry spread is also paid at the exit), commission, and swap for every
-  17:00 New York rollover between the entry time and the exit candle's close time.
+  17:00 New York rollover between the entry time and the exit candle's close time;
+- adverse slippage on market entries and non-target exits, percentage commission on actual
+  entry/exit fills (B4/B6, rule set by the user, 2026-10-22).
 
 Test exits: (a) close of bar N of the signal timeframe after the entry, own stop active;
 (b) 1R / 1R bracket; (c) random exit time, mean hold matched, own stop active; (d) the reversed
@@ -229,10 +231,13 @@ def _costed(
     """Gross and net R of a leg that exits at chart price `price` (engine formulas)."""
     risk, entry, symbol = trade.risk, trade.entry, trade.symbol
     spread = costs.spread(symbol, trade.entry_time, entry)
+    slip = costs.slippage(symbol, entry)
     fill = price if sign > 0 else price + spread
-    entry_fill = entry + spread if sign > 0 else entry
+    if reason != "target":
+        fill -= sign * slip
+    entry_fill = entry + (spread if sign > 0 else 0.0) + sign * slip
     direction = _direction(sign)
-    commission = costs.commission_r(symbol, risk, entry, [(1.0, fill)])
+    commission = costs.commission_r(symbol, risk, entry_fill, [(1.0, fill)])
     swap = costs.swap_r(symbol, direction, risk, trade.entry_time, [(1.0, exit_time)], entry)
     funding = costs.funding_r(symbol, direction, risk, trade.entry_time, [(1.0, exit_time)], entry)
     net = sign * (fill - entry_fill) / risk - commission + swap + funding
@@ -324,12 +329,13 @@ def random_exit_runs(
         price = np.where(stopped, _stop_fill(m1, stop_idx, sign, stop), price)
         exit_s = np.where(stopped, float(m1.close_s[stop_idx]), exit_s)
     spread = costs.spread(symbol, trade.entry_time, entry)
-    fill = price if sign > 0 else price + spread
-    entry_fill = entry + spread if sign > 0 else entry
+    slip = costs.slippage(symbol, entry)
+    fill = price + (spread if sign < 0 else 0.0) - sign * slip
+    entry_fill = entry + (spread if sign > 0 else 0.0) + sign * slip
     gross = sign * (price - entry) / risk
     # commission in R is linear in the exit fill (percentage commission): read it at 0 and 1
-    base = costs.commission_r(symbol, risk, entry, [(1.0, 0.0)])
-    slope = costs.commission_r(symbol, risk, entry, [(1.0, 1.0)]) - base
+    base = costs.commission_r(symbol, risk, entry_fill, [(1.0, 0.0)])
+    slope = costs.commission_r(symbol, risk, entry_fill, [(1.0, 1.0)]) - base
     commission = base + slope * fill
     times, cum = rollover_schedule(
         trade.entry_time, datetime.fromtimestamp(float(exit_s.max()), tz=UTC),

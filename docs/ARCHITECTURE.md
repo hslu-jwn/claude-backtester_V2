@@ -59,6 +59,40 @@ result)` before the next `on_candle` (strategy 2: one open trade per setup, re-e
 The break-even at the next session start (step 2) is strategy 1's rule: a strategy with
 `uses_session_break_even = False` (strategy 2) skips it.
 
+### Engine costs (rule set by the user, 2026-10-22)
+
+- **B4:** `SymbolCosts.slippage` worsens each market entry, stop fill (including a gap
+  stop), and time / signal / end-of-data exit. Limit entries and TP fills have no
+  slippage. Scale the configured slippage by the chart entry / reference price under
+  `CostConfig.spread_price_scaling`, independently of the spread switch and spread table;
+  keep that entry-scaled amount for the trade's exits, like the fixed spread. An unset
+  reference price or disabled scaling uses the configured amount. Gross R and order
+  levels remain chart prices; net R uses the adverse fills and costs. Kind C random fills
+  also draws extra slippage for time / signal / end-of-data exit parts. Trade results and
+  CSV records preserve `limit_fill` so Kind C skips limit-entry draws; older records
+  without that field retain the market-entry assumption.
+- **B5:** after TP1, move the remaining stop to break-even only if that level lies
+  strictly behind TP1 (long: BE < TP1; short: BE > TP1). At equality or beyond TP1,
+  keep the original SL; never manufacture an exit at an unreachable BE level.
+- **B6:** percentage entry commission uses the actual entry fill, including spread and
+  entry slippage. Percentage exit commission uses each part's exit fill. Solve the
+  break-even stop so the remaining portion alone nets zero after spread, entry/stop
+  slippage, and fixed plus percentage commission. With direction `s` (+1 long, -1 short),
+  entry fill `E`, round-turn fixed commission in price units `F`, and per-side rate `p`,
+  the exit fill `X` solves `s * (X - E) = F + p * (E + X)`. Convert that fill back to the
+  chart stop by removing short-side spread and reversing adverse stop slippage. Prior
+  TP profits do not subsidise the remaining portion. Swap/funding are excluded from the
+  BE level; a gap through that stop may still produce a loss.
+
+### Engine excursions (rule set by the user, 2026-10-22)
+
+**B7:** an exit at the candle open counts MAE/MFE only through that open, retaining
+excursions from earlier candles. Ignore the exit candle's later high/low. This includes
+stop gaps and a final TP reached at the open (the TP still fills at its planned limit).
+A partial TP leaves exposure, so continue tracking that candle for the remaining
+portion. SL-first still applies whenever SL and TP share a candle; all decisions use
+only the current closed candle and previously known order levels.
+
 `runner.py` picks the strategy from its config (`strategy/registry.py`: `make_strategy` looks
 the config class up in the registry, `StrategySpec` per strategy; a new strategy is one folder,
 started from `strategy/_template/`, plus one registry entry). `RunSettings` holds the shared

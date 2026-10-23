@@ -117,10 +117,10 @@ def test_signal_exit_costs_long_bid_short_ask():
     ohlc = [ENTRY, QUIET, (100.2, 100.3, 98.9, 99.0)]  # XAUUSD spread 0.25, risk 2 -> 0.125 R
     [long] = run(ohlc, {0: [(LONG, 98.0)]}, {2: [(0, 0)]}, SPREAD_ONLY, "XAUUSD")[0]
     [short] = run(ohlc, {0: [(SHORT, 102.0)]}, {2: [(0, 0)]}, SPREAD_ONLY, "XAUUSD")[0]
-    assert long.exit_fill == 99.0 and long.r_gross == pytest.approx(-0.5)
-    assert long.r_net == pytest.approx(-0.625)  # in at ask 100.25, out at bid 99
-    assert short.exit_fill == 99.25 and short.r_gross == pytest.approx(0.5)
-    assert short.r_net == pytest.approx(0.375)  # in at bid 100, out at ask 99.25
+    assert long.exit_fill == pytest.approx(98.9) and long.r_gross == pytest.approx(-0.5)
+    assert long.r_net == pytest.approx(-0.725)  # entry 100.35, exit 98.90
+    assert short.exit_fill == pytest.approx(99.35) and short.r_gross == pytest.approx(0.5)
+    assert short.r_net == pytest.approx(0.275)  # entry 99.90, exit 99.35
 
 
 def test_closed_callback_runs_before_the_new_order_is_filled_and_reverse_works():

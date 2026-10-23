@@ -9,7 +9,7 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
    rest's SL may move to break-even after TP1, see engine/trade.py).
 2. Break-even rule: the first candle closing at or after the first session start after a
    trade's entry decides. Break-even includes the costs: the level where a hit ends at 0R
-   net (long: entry + spread + commission as a price distance). Close beyond that level ->
+   net (solved using the entry fill, exit commission and slippage). Close beyond that level ->
    the SL moves there from the next candle on; otherwise the original SL stays for good.
 3. `strategy.on_candle(now, views)`; views of every declared timeframe, higher ones only
    with candles closed at `now`. The strategy owns and updates its detectors itself.
@@ -144,7 +144,7 @@ class Backtest:
             for order in orders:
                 trade = self._fill(order, candle, now, pending_limits)
                 if self._config.costs.too_expensive(
-                    trade.symbol, trade.risk, trade.entry_time, trade.entry
+                    trade.symbol, trade.risk, trade.entry_time, trade.entry, trade.entry_fill
                 ):
                     self._strategy.on_order_skipped(order.ref, now)
                     continue
@@ -257,6 +257,10 @@ class Backtest:
                 raise ValueError("tp1_share + tp2_share must leave a share for TP3")
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol, now, entry)
+        slippage = self._config.costs.slippage(symbol, entry)
+        entry_fill = entry + (spread if sign > 0 else 0.0)
+        if not order.limit_fill:
+            entry_fill += sign * slippage
         check = None
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
@@ -266,13 +270,14 @@ class Backtest:
             entry_time=now,
             entry_candle=candle.ts,
             entry=entry,
-            entry_fill=entry + spread if sign > 0 else entry,
+            entry_fill=entry_fill,
             initial_stop=order.stop_loss,
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
             break_even_level=entry
-            + sign * self._config.costs.break_even_offset(symbol, now, entry),
+            + sign
+            * self._config.costs.break_even_offset(symbol, now, entry, order.direction, entry_fill),
             tags=order.tags,
             reason=order.reason,
             confluence=order.confluence,
@@ -283,6 +288,8 @@ class Backtest:
             tp2_share=order.tp2_share if order.take_profit_3 is not None else None,
             ref=order.ref,
             spread=spread,
+            slippage=slippage,
+            limit_fill=order.limit_fill,
         )
 
     @staticmethod
@@ -303,6 +310,6 @@ class Backtest:
             trade.symbol, trade.direction, trade.risk, trade.entry_time, exits, trade.entry
         )
         commission_r = costs.commission_r(
-            trade.symbol, trade.risk, trade.entry, [(p.share, p.fill) for p in trade.parts]
+            trade.symbol, trade.risk, trade.entry_fill, [(p.share, p.fill) for p in trade.parts]
         )
         return trade.result(commission_r, swap_r, funding_r)

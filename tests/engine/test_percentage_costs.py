@@ -88,7 +88,7 @@ def test_percentage_commission_without_exits_assumes_the_exit_at_the_entry():
     c = config(sym(commission_pct_per_side=0.0005))
     assert c.commission_r("TEST", 2.0, 100.0) == pytest.approx(0.05)
     assert c.commission_price("TEST", 100.0) == pytest.approx(0.1)  # round turn in price units
-    assert c.break_even_offset("TEST", None, 100.0) == pytest.approx(0.1)
+    assert c.break_even_offset("TEST", None, 100.0) == pytest.approx(0.1 / (1 - 0.0005))
 
 
 def test_percentage_commission_needs_a_price_and_can_be_switched_off():

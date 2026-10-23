@@ -61,11 +61,16 @@ SETTINGS = RunSettings(  # read-only mappings like the defaults (pickled for the
         )
     ),
 )
-# spread 0.25 / 1R 0.9; XAUUSD commission 0.0007 % per side of entry 110.0 and exit 111.08
+# Spread and market entry slippage; commission 0.0007 % per side on actual fills (B4/B6).
 # (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
 # the fixed spread 0.25 is scaled to the entry price 110 (rule of 2026-10-16: x price / reference)
 SPREAD_AT_110 = 0.25 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
-NET = 1.2 - SPREAD_AT_110 / 0.9 - 0.000007 * (110.0 + 111.08) / 0.9
+SLIPPAGE_AT_110 = 0.1 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
+NET = (
+    1.2
+    - (SPREAD_AT_110 + SLIPPAGE_AT_110) / 0.9
+    - 0.000007 * (110.0 + SPREAD_AT_110 + SLIPPAGE_AT_110 + 111.08) / 0.9
+)
 
 
 def write_day(cache: Path, symbol: str, day: date, ohlc) -> None:

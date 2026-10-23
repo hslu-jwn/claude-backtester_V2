@@ -27,8 +27,8 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   (as before). `CostConfig.spread_price_scaling` (default **True**) switches it off to reproduce old results. The spread
   table (per year and hour, ROADMAP 6.7) is a measurement and is **not** scaled; where it has no value the scaled fixed spread
   is used. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
-  (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage is not applied by the engine
-  yet; when it is (ROADMAP 12.8) it follows the spread's scaling. FX is scaled the same way (no special case).
+  (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage follows the same entry-price
+  scaling (rule set by the user, 2026-10-22; B4), independently of the spread switch/table. FX is scaled the same way (no special case).
   Reference prices (`REFERENCE_PRICES` in `engine/costs.py`): median M1 bid close over the last 60 cached days of the FTMO MT5
   history (`data/cache/mt5/<SYM>`, 2026-08-16 to 2026-10-14), measured 2026-10-16:
 
@@ -87,10 +87,13 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   them"). Commission and swap can now also be a **percentage of the notional**, and Binance funding is a third cost. Everything is in R,
   net only (gross = chart prices); lots and contract size cancel, so only prices and the SL distance matter:
 
-  commission_R = `commission_pct_per_side` x (entry + sum(share x exit fill)) / SL distance (+ the fixed USD part as before)
+  commission_R = `commission_pct_per_side` x (entry fill + sum(share x exit fill)) / SL distance (+ the fixed USD part as before)
   swap_R = nights x `swap_*_pct_year` / 365 x entry / SL distance (+ the USD part as before; triple day as before)
   funding_R = - sign x sum(share x sum of the funding rates with entry < timestamp <= exit of that part) x entry / SL distance
   (sign +1 long, -1 short: longs pay a positive rate, shorts receive it; notional approximated at the entry price)
+
+  **B6 (rule set by the user, 2026-10-22):** entry commission uses the actual fill price,
+  including spread and adverse entry slippage; each exit uses its own fill price.
 
   | Symbol group | Commission | Swap | Funding |
   |---|---|---|---|
@@ -119,7 +122,12 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   and the next signal event tries again. Equal to the limit is filled. Strategies 1 and 3 have no hook yet: for their
   per-session limits a skipped order counts as taken (both are paused / dropped). The filter studied on strategy 2's
   trades: ROADMAP 10.5.
-- ⚙️ **Slippage** in points per fill, applied to **entries and SL hits** (market fills); TPs are limit orders, no slippage. Defaults (rough starting estimates, to be checked against FTMO demo fills):
+  Percentage commission is estimated with both sides at the actual entry fill, while spread scaling uses the chart entry
+  (B6; rule set by the user, 2026-10-22). Slippage is not added as a separate filter cost.
+- ⚙️ **Slippage** (B4; rule set by the user, 2026-10-22): `SymbolCosts.slippage` in price units per fill, always
+  against the trader on **market entries, stop fills (including gap stops), and time / signal / end-of-data exits**.
+  Never on limit entries or TP fills. Scale at the chart entry price like the fixed spread and reuse that amount at exits.
+  Spread/commission switches do not disable slippage; a zero symbol setting does. Defaults (rough starting estimates, to be checked against FTMO demo fills):
 
   | Symbol | Slippage per fill |
   |---|---|
@@ -129,7 +137,13 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   | GBPUSD | 0.2 pip |
   | GBPJPY | 0.3 pip |
 
-- Break-even "including costs" (strategy rules) uses the same spread, commission and slippage.
+- **Break-even including costs** (B5/B6; rule set by the user, 2026-10-22): solve the remaining portion's net result
+  for exactly zero using actual entry fill, adverse stop slippage, spread, and commission at the exit fill.
+  For sign `s`, entry fill `E`, fixed round-turn commission in price units `F`, per-side rate `p`, solve
+  `s * (X - E) = F + p * (E + X)` for exit fill `X`; the chart stop is `X - short_spread + s * slippage`.
+  This excludes swap/funding and previously realised TP profits; stop gaps can still lose money.
+  After TP1, move the stop only if BE is strictly behind TP1 (long BE < TP1, short BE > TP1).
+  At equality or beyond TP1 the original SL stays.
 
 ### Daily & account protection
 - ⚙️ **Personal daily stop:** **−2%** of the balance at the start of the day. Counts **closed trades plus floating P/L** (rule set by the user). When reached: no new entries for the rest of the day; open trades keep running with their SL/TP. Day = midnight to midnight `Europe/Prague` (CE(S)T), like FTMO. (The earlier "or 2 losses" rule is dropped.)
@@ -227,9 +241,12 @@ clear verdict.
   other direction). Other strategies: random entry times inside the strategy's own window with its own stop and
   exit (built when a strategy needs it). Random baseline on non-gap days: dropped (user, 2026-10-15). Output:
   percentile of the strategy's net R, mean and 5 / 95 % of the random runs.
-- **C. Random fills** (12.6): ⚙️ 1,000 runs; each market fill (entry, stop exit) gets an extra slippage drawn
+- **C. Random fills** (12.6; B4, rule set by the user, 2026-10-22): ⚙️ 1,000 runs; each market fill
+  (entry, stop / time / signal / end-of-data exit) gets an extra slippage drawn
   uniform from 0 to ⚙️ **2** x the symbol's slippage setting, in R of the trade's stop distance. Output: net R
-  5 / 50 / 95 %.
+  5 / 50 / 95 %. Each market exit part gets its own draw, weighted by its share; TP parts get no exit draw.
+  Limit entries receive no entry draw. `limit_fill` is preserved in trade results and `trades.csv`;
+  historical CSVs without this field retain the market-entry assumption.
 - **D. Random price paths**: ⚙️ **20** seeded random-walk M1 paths per symbol with the symbol's real volatility
   per hour of day, ⚙️ **2** years each, run through the same strategy and costs. Expected: net R per trade about
   minus the mean cost; clearly more is reported as a warning (bug or lookahead), not as an edge.
@@ -273,8 +290,8 @@ strategy's entries carry information at all, independent of its exit, before a f
 
 - **Input:** the trades of a backtest (entry time, direction, entry price, initial stop distance = 1R, symbol, signal
   timeframe). The strategy's own exit is replaced by the test exits below, re-simulated on the **M1** candles with the
-  engine's rules: costs from the cost model (spread, commission, swap at the 17:00 New York rollover; slippage once 12.8
-  exists), SL and TP inside one candle -> SL first, no lookahead.
+  engine's rules: costs from the cost model (spread, commission, swap at the 17:00 New York rollover, adverse market-fill
+  slippage per B4), SL and TP inside one candle -> SL first, no lookahead.
 - **Test exits:**
   (a) **N bars:** exit at the close of the N-th bar of the signal timeframe after the entry, ⚙️ N = **1, 2, 3, 5, 10, 20**;
   the strategy's own stop stays active (user, 2026-10-20);

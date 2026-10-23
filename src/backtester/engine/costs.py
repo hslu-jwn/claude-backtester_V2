@@ -21,7 +21,7 @@ charge its commission as a share of the notional per side (`commission_pct_per_s
 and exit notional at their fill prices) and its swap as a share of the notional per year per
 night (`swap_*_pct_year`, notional at the entry price). Lots and contract size cancel, so in R:
 
-    commission_R = pct x (entry + sum(share x exit fill)) / SL distance
+    commission_R = pct x (entry fill + sum(share x exit fill)) / SL distance
     swap_R       = nights x pct_year / 365 x entry / SL distance
 
 Binance funding (`SymbolCosts.funding`, rates from `data/cache/binance_funding/<SYM>.csv`):
@@ -30,8 +30,8 @@ positive rate, shorts receive it); notional approximated at the entry price:
 
     funding_R = - sign x sum(share x sum(rates while open)) x entry / SL distance
 
-Slippage is stored per symbol here but not yet applied: the account simulator (`risk/`,
-Phase 5) will use it.
+Slippage applies against the trader to market entries and every non-TP exit, scaled at
+the chart entry price like the fixed spread (rule set by the user, 2026-10-22).
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ class SymbolCosts:
     commission_per_lot: float  # USD per 1.0 lot, round turn
     contract_size: float  # units of the base asset per 1.0 lot (100 oz, 100,000 GBP)
     quote_to_usd: float = 1.0  # USD per 1 unit of the quote currency (fixed approximation)
-    # price units per market fill (entries and SL hits; TPs are limit orders), rough
+    # price units per market fill (entries and non-TP exits), rough
     # starting estimates to check against FTMO demo fills (risk-management.md › Costs)
     slippage: float = 0.0
     swap_long_per_lot: float = 0.0  # USD per 1.0 lot per night (negative = cost)
@@ -280,7 +280,7 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
 
 @dataclass(frozen=True, slots=True)
 class CostConfig:
-    spread_enabled: bool = True  # off: no spread on fills (gross = net apart from commission)
+    spread_enabled: bool = True  # off: no spread; commission/slippage remain independent
     commission_enabled: bool = True  # off: no commission
     swap_enabled: bool = True  # off: swap_r is 0
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
@@ -327,6 +327,19 @@ class CostConfig:
     ) -> float:
         return self.spread(symbol, at, price) / risk
 
+    def slippage(self, symbol: str, price: float = 0.0) -> float:
+        """Market-fill slippage, scaled at entry like the fixed spread.
+
+        Spec: risk-management.md > Costs (B4, user, 2026-10-22). Independent of the
+        spread switch/table; a synthetic symbol without cost settings has no slippage.
+        """
+        costs = self.symbols.get(symbol)
+        if costs is None:
+            return 0.0
+        if self.spread_price_scaling and costs.reference_price and price > 0:
+            return costs.slippage * price / costs.reference_price
+        return costs.slippage
+
     def commission_price(self, symbol: str, price: float = 0.0) -> float:
         """Round-turn commission as a price distance per lot (0 when switched off). A
         percentage commission needs the `price` (both sides at it)."""
@@ -345,11 +358,37 @@ class CostConfig:
         return costs.commission_pct_per_side * (entry + exit_price)
 
     def break_even_offset(
-        self, symbol: str, at: datetime | None = None, price: float = 0.0
+        self,
+        symbol: str,
+        at: datetime | None = None,
+        price: float = 0.0,
+        direction: Direction = Direction.BULLISH,
+        entry_fill: float | None = None,
     ) -> float:
-        """Distance from the entry (chart price) to the break-even stop, so a hit there
-        ends at 0R after spread and commission (strategy-session-zones.md › Stop loss)."""
-        return self.spread(symbol, at, price) + self.commission_price(symbol, price)
+        """Directional chart distance to a stop that nets zero on the remaining share.
+
+        Spec: risk-management.md > Costs (B6, user, 2026-10-22). Solve
+        sign * (exit_fill - entry_fill) = fixed + pct * (entry_fill + exit_fill).
+        Swap/funding are excluded; a gap through the stop can still lose money.
+        `entry_fill` supplies the actual fill, including a limit entry's zero slippage.
+        """
+        sign = 1 if direction is Direction.BULLISH else -1
+        spread = self.spread(symbol, at, price)
+        slip = self.slippage(symbol, price)
+        if entry_fill is None:
+            entry_fill = price + (spread if sign > 0 else 0.0) + sign * slip
+        fixed, pct = 0.0, 0.0
+        if self.commission_enabled:
+            costs = self.for_symbol(symbol)
+            fixed = costs.commission_per_lot / costs.value_per_price_unit
+            pct = costs.commission_pct_per_side
+            if pct and entry_fill <= 0:
+                raise ValueError("a percentage commission needs the entry price")
+            if pct >= 1:
+                raise ValueError("break-even needs commission_pct_per_side < 1")
+        # Solve the distance rather than subtracting nearly equal fill prices.
+        fill_distance = (fixed + 2 * pct * entry_fill) / (1 - sign * pct)
+        return sign * (entry_fill - price) + fill_distance + slip + (spread if sign < 0 else 0)
 
     def commission_r(
         self,
@@ -359,7 +398,7 @@ class CostConfig:
         exits: Iterable[tuple[float, float]] | None = None,
     ) -> float:
         """Commission in R for an SL distance of `risk` (price units). `entry` and `exits`
-        ((share, fill price) per closed part) are the notional prices of a percentage
+        ((share, fill price) per closed part) are the actual fill notionals of a percentage
         commission; without `exits` the exit notional is taken at the entry price."""
         if not self.commission_enabled:
             return 0.0
@@ -369,12 +408,22 @@ class CostConfig:
         return (fixed + self._pct_price(costs, entry, exit_notional)) / risk
 
     def too_expensive(
-        self, symbol: str, risk: float, at: datetime | None = None, entry: float = 0.0
+        self,
+        symbol: str,
+        risk: float,
+        at: datetime | None = None,
+        entry: float = 0.0,
+        entry_fill: float | None = None,
     ) -> bool:
-        """Cost filter: spread + commission in R above `max_cost_r` (never when it is 0)."""
+        """Spread + estimated round-turn commission above `max_cost_r` (0: off).
+
+        Spec: risk-management.md > Costs. Estimate both commission notionals at the
+        actual entry fill when supplied; spread scaling still uses the chart entry.
+        """
         if not self.max_cost_r:
             return False
-        cost = self.spread_r(symbol, risk, at, entry) + self.commission_r(symbol, risk, entry)
+        notional = entry if entry_fill is None else entry_fill
+        cost = self.spread_r(symbol, risk, at, entry) + self.commission_r(symbol, risk, notional)
         return cost > self.max_cost_r + COST_FILTER_TOLERANCE
 
     def swap_r(

@@ -55,11 +55,11 @@ def test_take_profit_gets_only_entry_slippage():
     assert all(0.9 <= r <= 1.0 for r in res.run_net_r) and min(res.run_net_r) < 1.0
 
 
-def test_time_exit_gets_no_exit_slippage_by_default_but_can_be_configured():
+def test_time_exit_gets_exit_slippage_by_default_but_can_be_configured():
     t = trade(ExitReason.SIGNAL, 0.5)
-    assert len(max_slippage_r(t, 0.1)) == 1
-    cfg = RandomFillsConfig(slipped_exit_reasons=frozenset({"stop_loss", "signal"}))
-    assert len(max_slippage_r(t, 0.1, cfg)) == 2
+    assert len(max_slippage_r(t, 0.1)) == 2
+    cfg = RandomFillsConfig(slipped_exit_reasons=frozenset({"stop_loss"}))
+    assert len(max_slippage_r(t, 0.1, cfg)) == 1
 
 
 def test_string_exit_reason_like_trades_csv_is_supported():

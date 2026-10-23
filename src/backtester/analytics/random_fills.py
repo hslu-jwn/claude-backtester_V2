@@ -1,12 +1,14 @@
 """Random-fills test (kind C of the Monte Carlo report): does the result survive worse fills?
 
 Spec: risk-management.md > Monte Carlo report, C (ROADMAP 12.6). Every market fill of a trade
-(the entry, and the exit when it is a stop) gets an extra slippage drawn uniform from 0 to
+(the entry, and stop / time / signal / end-of-data exits) gets extra slippage uniform from 0 to
 `factor` x the symbol's slippage setting (`SymbolCosts.slippage`, price units), converted to R by
 the trade's stop distance |entry - initial_stop| and subtracted from `r_net`. Take profits are
-limit orders: no slippage. The engine applies no slippage to signal (time) exits and the spec
-names only entries and stop hits, so `slipped_exit_reasons` is stop loss and break-even (a
-stop order) by default. Each stopped exit part gets its own draw, weighted by its share.
+limit orders: no slippage. `slipped_exit_reasons` includes stop loss, break-even, signal and
+end of data (rule set by the user, 2026-10-22). Each market exit part gets its own draw,
+weighted by its share.
+Limit entries (`limit_fill`) receive no entry draw; older records without the field are
+treated as market entries.
 
 Works on any objects with `symbol`, `entry`, `initial_stop`, `exit_reason` (an `ExitReason` or
 its string value) and `r_net` (TradeResult, TradeRecord).
@@ -29,7 +31,9 @@ class RandomFillsConfig:
     runs: int = 1000  # spec: 1,000 runs
     seed: int = 42  # spec: every random draw seeded with 42
     factor: float = 2.0  # slippage per fill uniform in [0, factor x setting]
-    slipped_exit_reasons: frozenset[str] = frozenset({"stop_loss", "break_even"})
+    slipped_exit_reasons: frozenset[str] = frozenset(
+        {"stop_loss", "break_even", "signal", "end_of_data"}
+    )
 
     def __post_init__(self) -> None:
         if self.runs < 1:
@@ -53,11 +57,11 @@ def _reason(trade) -> str:
 
 
 def market_fills(trade, config: RandomFillsConfig) -> int:
-    """Number of market fills of a trade: the entry, plus the exit if it is a stop."""
-    return 1 + len(_stop_shares(trade, config))
+    """Number of market fills: entry plus each configured market exit part."""
+    return int(not getattr(trade, "limit_fill", False)) + len(_market_exit_shares(trade, config))
 
 
-def _stop_shares(trade, config: RandomFillsConfig) -> list[float]:
+def _market_exit_shares(trade, config: RandomFillsConfig) -> list[float]:
     parts = getattr(trade, "parts", ())
     if not parts:
         return [1.0] if _reason(trade) in config.slipped_exit_reasons else []
@@ -76,7 +80,8 @@ def max_slippage_r(trade, slippage: float, config: RandomFillsConfig | None = No
     if risk <= 0:
         raise ValueError("the trade has no stop distance")
     bound = cfg.factor * slippage / risk
-    return [bound, *(bound * share for share in _stop_shares(trade, cfg))]
+    entry = [] if getattr(trade, "limit_fill", False) else [bound]
+    return [*entry, *(bound * share for share in _market_exit_shares(trade, cfg))]
 
 
 def random_fills(
