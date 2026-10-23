@@ -54,3 +54,9 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
   11:00, 12:00, 15:59; `fx`: 08:00, 11:00, 16:59): 36 variants per mode. Every variant goes into the trial log.
 - Study part (I-09 / C-5): next to the strategy, open-to-close return per gap bucket (gap in sd units, beyond /
   inside the prior range, up / down), both directions, so continuation and fade are compared on the same days.
+
+Research runner commands (development only):
+
+- `python -m backtester.tools.research research/grids/gap_momentum_index.toml --dev-only`
+- `python -m backtester.tools.research research/grids/gap_momentum_fx.toml --dev-only`
+- `python -m backtester.tools.gap_bucket_study --mode index` (or `--mode fx`): descriptive `gap_buckets.csv`.

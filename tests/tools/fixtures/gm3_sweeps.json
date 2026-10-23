@@ -1,0 +1,5844 @@
+{
+  "orb": [
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.15,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.3,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "NR4",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "INSIDE",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 1,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 5,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "RANGE",
+      "range_minutes": 30,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 0.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 1.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.25,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 0.5,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    },
+    {
+      "entry_mode": "BAND",
+      "range_minutes": 15,
+      "band_atr": 1.0,
+      "atr_period": 14,
+      "entry_window_minutes": 120,
+      "max_reversals": 0,
+      "target_r": 2.0,
+      "max_range_atr": 0.0,
+      "narrow_day_filter": "OFF",
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sessions": {
+        "us_index": {
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        },
+        "frankfurt_index": {
+          "frankfurt": {
+            "zone": "Europe/Berlin",
+            "open_time": "09:00:00",
+            "exit_time": "17:25:00"
+          }
+        },
+        "london_index": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "16:25:00"
+          }
+        },
+        "tokyo_index": {
+          "tokyo": {
+            "zone": "Asia/Tokyo",
+            "open_time": "09:00:00",
+            "exit_time": "14:55:00"
+          }
+        },
+        "fx_metal": {
+          "london": {
+            "zone": "Europe/London",
+            "open_time": "08:00:00",
+            "exit_time": "12:00:00"
+          },
+          "new_york": {
+            "zone": "America/New_York",
+            "open_time": "09:30:00",
+            "exit_time": "15:55:00"
+          }
+        }
+      }
+    }
+  ],
+  "gap_fade": [
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 0.75,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 0.75,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 0.75,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.0,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.0,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.0,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.5,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.5,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 0.25,
+      "stop_gap_mult": 1.5,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 0.75,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 0.75,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 0.75,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.0,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.0,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.0,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.5,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.5,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.25,
+      "max_gap_atr": 0.5,
+      "stop_gap_mult": 1.5,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.5,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 0.75,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.0,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "11:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "12:00:00",
+      "mode": "fade"
+    },
+    {
+      "zone": "America/New_York",
+      "cash_open": "09:30:00",
+      "cash_close": "16:00:00",
+      "atr_period": 14,
+      "min_gap_atr": 0.1,
+      "max_gap_atr": 1.0,
+      "stop_gap_mult": 1.5,
+      "exit_time": "16:00:00",
+      "mode": "fade"
+    }
+  ],
+  "no_wick": [
+    {
+      "timeframe": "M5",
+      "trend_source": "HIGHER",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M5",
+      "trend_source": "HIGHER",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M5",
+      "trend_source": "HIGHER",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M5",
+      "trend_source": "SAME",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M5",
+      "trend_source": "SAME",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M5",
+      "trend_source": "SAME",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "HIGHER",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "HIGHER",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "HIGHER",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "SAME",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "SAME",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M15",
+      "trend_source": "SAME",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "HIGHER",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "HIGHER",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "HIGHER",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "SAME",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "SAME",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "M30",
+      "trend_source": "SAME",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "HIGHER",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "HIGHER",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "HIGHER",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "SAME",
+      "entry_mode": "CLOSE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "SAME",
+      "entry_mode": "BODY_END",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    },
+    {
+      "timeframe": "H1",
+      "trend_source": "SAME",
+      "entry_mode": "MIDDLE",
+      "max_wick_share": 0.0,
+      "sl_buffer": 0.1,
+      "rr": 1.0,
+      "order_expiry_candles": 6
+    }
+  ],
+  "trend_following": [
+    {
+      "timeframe": "M15",
+      "signal": "BREAKOUT",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "BREAKOUT",
+      "breakout_period": 55,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "BREAKOUT",
+      "breakout_period": 100,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 20,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 100,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 5,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 63,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 252,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "DUNNIGAN",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.0,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M15",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.5,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "BREAKOUT",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "BREAKOUT",
+      "breakout_period": 55,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "BREAKOUT",
+      "breakout_period": 100,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 20,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 100,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 5,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 63,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 252,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "DUNNIGAN",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.0,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "M30",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.5,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "BREAKOUT",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "BREAKOUT",
+      "breakout_period": 55,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "BREAKOUT",
+      "breakout_period": 100,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 20,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 100,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 5,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 63,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 252,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "DUNNIGAN",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.0,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.5,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "BREAKOUT",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "BREAKOUT",
+      "breakout_period": 55,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "BREAKOUT",
+      "breakout_period": 100,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 20,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 100,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 5,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 63,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 252,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "DUNNIGAN",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.0,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "H4",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.5,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "BREAKOUT",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "BREAKOUT",
+      "breakout_period": 55,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "BREAKOUT",
+      "breakout_period": 100,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 20,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 100,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 0.5,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "SMA",
+      "breakout_period": 20,
+      "sma_period": 200,
+      "sma_band_atr": 1.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 5,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 63,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "MOMENTUM",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 252,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "DUNNIGAN",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.0,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.1,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    },
+    {
+      "timeframe": "D1",
+      "signal": "KAMA",
+      "breakout_period": 20,
+      "sma_period": 50,
+      "sma_band_atr": 0.0,
+      "momentum_period": 20,
+      "kama_er_period": 10,
+      "kama_fast": 2,
+      "kama_slow": 30,
+      "kama_filter": 0.5,
+      "kama_filter_period": 20,
+      "atr_period": 20,
+      "stop_atr_mult": 3.0
+    }
+  ],
+  "ny_index_sweep": [
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": true,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": true,
+      "sweep_equal_tolerance_atr": 0.5,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 2,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 2,
+      "sweep_breakout_wick_first": true,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": true,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": true,
+      "sweep_equal_tolerance_atr": 0.5,
+      "sweep_breakout_closes": 2,
+      "sweep_breakout_wick_first": true,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": true,
+      "sweep_equal_tolerance_atr": 0.5,
+      "sweep_breakout_closes": 2,
+      "sweep_breakout_wick_first": true,
+      "bos_before_top": true,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    }
+  ],
+  "ny_index_volume": [
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 0.0,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    },
+    {
+      "windows": {
+        "am": {
+          "start": "09:00:00",
+          "end": "11:30:00",
+          "open": "09:30:00",
+          "best_start": "09:50:00",
+          "best_end": "10:10:00"
+        },
+        "pm": {
+          "start": "13:30:00",
+          "end": "16:00:00",
+          "open": "14:00:00",
+          "best_start": "13:50:00",
+          "best_end": "14:10:00"
+        },
+        "zone": "America/New_York"
+      },
+      "include_best_time_trades": true,
+      "max_trades_per_session": 1,
+      "trend_filter": {
+        "enabled": false,
+        "timeframe": "H1",
+        "sma_period": 50,
+        "band_atr": 1.0,
+        "atr_period": 20
+      },
+      "close_before_rollover": false,
+      "rollover_close_minutes": 45,
+      "min_rel_volume": 1.5,
+      "volume_lookback": 20,
+      "sweep_lookback": 3,
+      "sweep_close_beyond_counts": true,
+      "sweep_equal_highs": false,
+      "sweep_equal_tolerance_atr": 0.0,
+      "sweep_breakout_closes": 0,
+      "sweep_breakout_wick_first": false,
+      "bos_before_top": false,
+      "bos_within_am": 10,
+      "bos_within_pm": 10,
+      "tap_timeout": 25,
+      "confluence_kinds": [
+        "BPR",
+        "BREAKER",
+        "EQUILIBRIUM",
+        "FVG",
+        "ORDER_BLOCK"
+      ],
+      "entry_tf_confluence": true,
+      "sl_buffer": 0.1,
+      "narrow_confluence_atr_mult": 0.0,
+      "cluster_r": 0.2,
+      "min_tp1_r": 1.2,
+      "ath_mode": "FIB",
+      "fib_levels": [
+        1.382,
+        1.5,
+        1.618,
+        2.0
+      ],
+      "fixed_r_levels": [
+        1.2,
+        1.5,
+        1.8
+      ],
+      "atr_period": 14
+    }
+  ],
+  "gap_momentum_index": [
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "12:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "index",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "15:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    }
+  ],
+  "gap_momentum_fx": [
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 0.5,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 1.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "08:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "11:00:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.0,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.1,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.25,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    },
+    {
+      "mode": "fx",
+      "zone": "America/New_York",
+      "entry_z": 0.5,
+      "vol_days": 90,
+      "atr_period": 14,
+      "stop_atr": 2.0,
+      "target_r": 0.0,
+      "exit_time": "16:59:00",
+      "side": "momentum",
+      "close_tolerance_min": 10
+    }
+  ]
+}

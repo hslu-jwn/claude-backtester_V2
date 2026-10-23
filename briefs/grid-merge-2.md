@@ -1,7 +1,7 @@
 # Brief: grid merge 2 of 3 — sensitivity, filter twins, scorecard additions
 
 Context: `docs/review/backtest-audit.md` (2026-10-23) › Order 1 lists checklist points that
-belong in the research runner. Brief 1 (`briefs/grid-merge-1.md`) is in the working tree and
+belong in the research runner. Brief 1 (`docs/archive/briefs/grid-merge-1.md`) is in the working tree and
 reviewed: combined grids (`[[grids]]`, families), `tools/research_diagnostics.py`, grid.csv,
 breakdowns, shock days. Build on it; spec `docs/research-runner.md`.
 

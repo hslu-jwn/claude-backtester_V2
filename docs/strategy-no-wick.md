@@ -62,4 +62,4 @@ the trade is managed from the next candle. The recorded entry time is the close 
 ## Backtest options
 
 Entry timeframe, trend source, entry mode, wick share, SL buffer, rr, order expiry. Compared
-with `tools/no_wick_grid.py` (all variants, per year, 2020-22 vs 2023-26).
+with `python -m backtester.tools.research research/grids/no_wick.toml --dev-only` (all variants on development data, per year and development scorecard halves; chosen variant tested once).

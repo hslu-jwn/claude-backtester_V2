@@ -38,7 +38,7 @@ from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.ny_index_sweep.strategy import NyIndexSweep
 from backtester.strategy.ny_index_sweep.windows import WindowConfig, WindowTimes
 
-# strategy 2 sweep-rule variants (also used by the archived tools/archive/strategy2_sweep_grid)
+# Strategy 2 sweep-rule variants (mirrored in research/grids/ny_index_sweep.toml).
 VARIANTS: dict[str, dict] = {
     "base": {},
     "strict (max of N)": {"sweep_equal_highs": True},

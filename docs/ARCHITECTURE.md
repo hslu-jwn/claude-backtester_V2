@@ -340,3 +340,16 @@ the MT5 cache days after the last histdata day (`ui/chart_data.py` `FeedFillAdap
 See `docs/ROADMAP.md`. Phases: 0 historical data (histdata.com) → 1 chart with replay → 2 confluences on the
 chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
 6 robustness → 7 live trading via MT5 → 8 strategy 2 (NY Open index sweep).
+
+## Research tools (V2.4 grid merge)
+
+`tools/research.py` executes registered strategy grids from `research/grids/`.
+For example: `python -m backtester.tools.research research/grids/orb.toml --dev-only`.
+Combined families, robustness, shock days, filter twins and sensitivity use shared
+analytics. Optional `--walk-forward` reads the saved development variant trades;
+it never executes another backtest or reads the untouched test period.
+`tools/research_helpers.py` supplies CSV and segmented-run helpers used by studies
+and risk sweeps. `python -m backtester.tools.gap_bucket_study --mode index` (or
+`--mode fx`) produces gap-bucket analytics independently of strategy backtests.
+Previous per-strategy sweep executables were removed after four identical
+old/new development results; migration evidence is in `results/gm3_*.log`.

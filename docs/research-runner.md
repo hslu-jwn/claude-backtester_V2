@@ -159,3 +159,50 @@ Runs are resumable: a finished variant is not run again. Every research run is w
 - Flags shown as small warning badges next to the numbers; a row click opens its results page (and from
   there the chart).
 - Command-line runner first, then the page (user, 2026-10-21).
+
+## Walk-forward (V2.4, grid merge 3)
+
+Optional top-level `walk_forward = "anchored" | "rolling"`, with `train_years`
+(a positive integer, default 3, rolling window length). `--walk-forward` enables
+anchored mode when the grid does not specify a mode. Disabled by default.
+Use only the saved development trades, never additional backtests or test-period data.
+Yearly windows and max training net R selection use `analytics/walk_forward.py`:
+anchored trains on all preceding development years; rolling uses up to train_years
+preceding years. One training year is sufficient. Ties keep file variant order;
+all development variants participate, independent of the overall min_trades ranking.
+Only trades closed before the test year's start contribute to training net R.
+
+`walk_forward.csv`: test_year, picked_variant, train_years, train_net_r, net_r,
+chosen_variant, chosen_net_r, trades. The comparison is the overall development
+selection (empty if no variant qualifies), not an extra run of default settings.
+Include calendar years from the development start to end, including empty and partial
+years. The report includes the chained OOS scorecard over the OOS dates, clipped to
+the development end. Efficiency = (chained OOS net R / number of OOS years) /
+mean(pick's training net R / number of its training years). Calendar years count
+as one even when partial. Efficiency is n/a when mean annual training net R <= 0
+or no OOS years exist. No picks yields an empty CSV and an explanatory report.
+This diagnostic does not change the research ID, ranking, trials, DSR or test guard.
+
+## Standalone gap-bucket study and sweep grids (grid merge 3)
+
+`python -m backtester.tools.gap_bucket_study --mode index` (or `--mode fx`)
+writes `gap_buckets.csv`, preserving the gap-bucket analytics, warmup and session
+loader. Supports symbols, start/end, cache-dir and out; end after 2021-09-13
+requires explicit `--allow-test-period`. Default start is 2015-01-01.
+No strategies are backtested and no trials are logged by this descriptive study.
+
+Replacements for the previous sweep commands live in `research/grids/`:
+orb, gap_fade, no_wick, trend_following, ny_index_sweep, ny_index_volume,
+gap_momentum_index and gap_momentum_fx. Run each with
+`python -m backtester.tools.research research/grids/<name>.toml --dev-only`.
+Headers record former commands and options without runner equivalents.
+Archive deletion requires identical trade counts and net R for two NAS100 ORB
+and two XAUUSD trend variants using the same development data and costs.
+
+Migration details: SMA plain and banded products have separate families because
+only periods 50 and 200 had bands in the former sweep; a single Cartesian family
+would introduce extra configurations. The eight replacement files resolve to
+41 / 36 / 24 / 95 / 8 / 2 / 36 / 36 variants respectively (order listed above).
+Active studies retain their existing CSV and segmented-run behavior through
+`tools/research_helpers.py`. Historical briefs and former command provenance are
+preserved under `docs/archive/`.

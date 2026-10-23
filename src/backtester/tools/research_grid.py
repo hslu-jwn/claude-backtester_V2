@@ -50,6 +50,8 @@ TOP_LEVEL = (
     "grids",
     "shocks",
     "sensitivity",
+    "walk_forward",
+    "train_years",
 )
 ID_HASH_LENGTH = 8
 
@@ -95,6 +97,8 @@ class GridSpec:
     shocks: bool = True
     duplicates: list[dict] = field(default_factory=list, compare=False)
     sensitivity: bool = True
+    walk_forward: str | None = None
+    train_years: int = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -265,6 +269,9 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("shocks must be true or false")
     if not isinstance(data.get("sensitivity", True), bool):
         raise GridError("sensitivity must be true or false")
+    if "walk_forward" in data and data["walk_forward"] not in ("anchored", "rolling"):
+        raise GridError("walk_forward must be anchored or rolling")
+    train_years = _number(data, "train_years", 3, 1)
     families = []
     if "grids" in data:
         raw = data["grids"]
@@ -309,6 +316,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         grids=tuple(families),
         shocks=data.get("shocks", True),
         sensitivity=data.get("sensitivity", True),
+        walk_forward=data.get("walk_forward"),
+        train_years=train_years,
     )
     return spec
 

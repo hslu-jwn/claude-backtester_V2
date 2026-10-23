@@ -1,0 +1,14 @@
+# Old tool: no_wick_grid.py
+# Default command: python -m backtester.tools.no_wick_grid
+# not carried over: --start/--end (fixed development/test split),
+# --source/--cache-dir (runner uses DEFAULT_SOURCES), --spread-table (no grid equivalent),
+# --out/--family (runner controls results and trials). --workers remains a runner option.
+# --no-sweep/--only/parameter CLI axes: edit grid settings instead.
+# --no-shocks: set shocks = false; split-year overrides: runner scorecard halves.
+strategy = "no_wick"
+symbols = ["XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"]
+max_variants = 10000
+[grid]
+"timeframe" = ["M5", "M15", "M30", "H1"]
+"trend_source" = ["HIGHER", "SAME"]
+"entry_mode" = ["CLOSE", "BODY_END", "MIDDLE"]

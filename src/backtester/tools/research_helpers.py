@@ -1,7 +1,7 @@
-"""Helpers shared by the live research tools and the archived per-strategy grid tools
-(`tools/archive/`, archived 2026-10-21): symbol list, half labels, CSV writer, last cached day, and
-`run_variant` (a backtest over the cached pieces of each symbol; `research.segments` owns
-the piece logic)."""
+"""Shared CSV and cached-piece helpers for research and standalone studies.
+
+Spec: research-runner.md > Standalone gap-bucket study and sweep grids.
+"""
 
 from __future__ import annotations
 

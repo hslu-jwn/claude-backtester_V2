@@ -67,7 +67,7 @@ from backtester.runner import (
     run_backtests,
     write_results,
 )
-from backtester.tools import research_diagnostics, research_stability
+from backtester.tools import research_diagnostics, research_stability, research_walk_forward
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
@@ -487,6 +487,7 @@ def run_research(
     workers: int | None = None,
     retest: bool = False,
     dev_only: bool = False,
+    walk_forward: bool = False,
     sources: SymbolSources = DEFAULT_SOURCES,
     config: ResearchConfig | None = None,
     log: Log = print,
@@ -592,6 +593,21 @@ def run_research(
                 ],
                 pairs,
             )
+        mode = spec.walk_forward or ("anchored" if walk_forward else None)
+        if mode:
+            wf_rows, info["walk_forward"] = research_walk_forward.from_saved(
+                folder,
+                variants,
+                ranked[0]["variant_id"] if ranked else None,
+                first,
+                dev_end,
+                mode,
+                spec.train_years,
+            )
+            _write_csv(folder / "walk_forward.csv", research_walk_forward.COLUMNS, wf_rows)
+        else:
+            info.pop("walk_forward", None)
+            (folder / "walk_forward.csv").unlink(missing_ok=True)
         _dump(folder / "research.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
@@ -835,6 +851,7 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             f"net {row['net_r_total']:+.3f} R, without shocks "
             f"{row['net_r_without_shocks']:+.3f} R."
         )
+    lines += research_walk_forward.report(info.get("walk_forward"))
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -854,6 +871,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="allow a second test run of this grid (recorded in the trial log)")  # fmt: skip
     p.add_argument("--dev-only", action="store_true",
                    help="development and selection only; the test stays unspent")  # fmt: skip
+    p.add_argument(
+        "--walk-forward",
+        action="store_true",
+        help="yearly walk-forward diagnostics from saved development trades",
+    )
     p.add_argument("--results-dir", type=Path, default=RESULTS_DIR, help=argparse.SUPPRESS)
     return p.parse_args(argv)
 
@@ -863,7 +885,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         out = run_research(
             args.grid, results_dir=args.results_dir, workers=args.workers, retest=args.retest,
-            dev_only=args.dev_only,
+            dev_only=args.dev_only, walk_forward=args.walk_forward,
         )  # fmt: skip
     except (GridError, ResearchError) as e:
         print(f"error: {e}", file=sys.stderr)

@@ -144,7 +144,7 @@ src/backtester/
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
   live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
   tools/       Command-line tools: data check / show / update, research runner, Monte Carlo,
-               portfolio, studies, ai_dispatch (archive/ = old grid runners)
+               portfolio, studies, gap_bucket_study, ai_dispatch (grids in research/grids/)
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -166,7 +166,7 @@ python -m backtester.data.histdata data/raw/histdata/  # import histdata files (
 python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
-python -m backtester.tools.research research/grids/orb_example.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
+python -m backtester.tools.research research/grids/orb.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
 python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
 python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/

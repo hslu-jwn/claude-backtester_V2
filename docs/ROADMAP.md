@@ -61,7 +61,10 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
 - ◐ **V2.4 Full Codex review and speed-up** (2026-10-23: golden lists, review of all 8
   modules (84 findings, `docs/review/`), groups A + B fixed, speed 1 + 2 (partial) done;
-  speed 2 complete; open: the archived grid tools merge, the user's check of the UI fixes): golden trade lists of all strategies first; review
+  speed 2 complete; grid tools merged into the research runner 2026-10-23 (combined grids,
+  grid robustness, shock days, breakdowns, sensitivity, filter twins, walk-forward, old sweeps as
+  `research/grids/*.toml`, identical trades on the reproduction check; archive deleted); open:
+  the user's check of the UI fixes): golden trade lists of all strategies first; review
   core -> detectors -> engine -> risk -> analytics -> strategies -> ui -> live (correctness,
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research

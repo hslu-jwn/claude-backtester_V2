@@ -47,7 +47,7 @@ from backtester.analytics.open_gap import (
 from backtester.core.models import Timeframe
 from backtester.data.sources import DEFAULT_SOURCES
 from backtester.paths import RESULTS_DIR
-from backtester.tools.grid_common import write_csv
+from backtester.tools.research_helpers import write_csv
 
 SYMBOLS = ("NAS100", "US500")
 CLAIM_SAME_DAY, CLAIM_DAY3 = 0.48, 0.76  # Hougaard, DAX, unsourced

@@ -64,8 +64,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Next step
 
-`Continue.Code`: (1) last V2.4 item: merge the archived grid tools into the research runner
-(Codex); (2) V2.4b slippage from the demo fills (needs demo trades; the bot is not running);
+`Continue.Code`: (1) V2.4c honesty tooling and V2.4d book requirements (ROADMAP; grid merge
+done 2026-10-23); (2) V2.4b slippage from the demo fills (needs demo trades; the bot is not running);
 (3) V2.5 app redesign per `docs/design/ui-proposal.md`. Then `Continue.Research` for V2.6
 (regime classifier first, spec accepted) and V2.7.
 

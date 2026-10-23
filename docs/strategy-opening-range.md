@@ -81,3 +81,7 @@ FX and metals trade both of their sessions, each with its own range and its own 
 - An order skipped by the cost filter uses up the session's one trade.
 - `min_rel_volume` > 0 on a candle without volume (histdata: 0), with fewer than `volume_lookback`
   sessions of history, or with a usual volume of 0 skips the session: it never passes silently.
+
+Research runner commands (development only):
+
+- `python -m backtester.tools.research research/grids/orb.toml --dev-only`

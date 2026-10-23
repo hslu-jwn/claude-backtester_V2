@@ -141,8 +141,8 @@ def snapshot(trades):
 
 
 def write_csv(path, rows, columns=()):
-    # Lazy import: grid_common's execution helpers import research.
-    from backtester.tools.grid_common import write_csv as shared_write_csv
+    # Lazy import: research_helpers's execution helpers import research.
+    from backtester.tools.research_helpers import write_csv as shared_write_csv
 
     if rows:
         shared_write_csv(path, rows)
