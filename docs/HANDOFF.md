@@ -9,7 +9,7 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   `hslu-jwn/claude-backtester_V2` (only remote). V1 is read-only, frozen as backup.
 - **Branches:** `main` = V2.1-V2.3. **`v2-review`** = V2.4 work (pushed), not merged yet.
   `v2-setup`, `v2-live` (merged into v2-review), `wip-a2a3-gemini` (superseded) can go.
-- **Tests:** 3721 passed, 5 skipped, 1 xfailed (~3 min); ruff clean. Golden trade lists
+- **Tests:** 3742 passed, 5 skipped, 1 xfailed (~3 min); ruff clean. Golden trade lists
   (`tests/golden/`, 7 strategies, 2023): `python -m backtester.tools.golden --check`.
 - **PC quirks:** long runs in a terminal tab must write to a log file (unread output stalls
   the process); `NODE_OPTIONS=--use-system-ca` is set (TLS interception).
