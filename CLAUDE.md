@@ -14,7 +14,7 @@ in `AGENTS.md`; they apply in full:
 | Costs | FTMO spreads / fees / swap of 2026-10-14 are the defaults; spread table off by default |
 | Data | MT5 cache 26 symbols to 2026-10-19 (preferred day by day), histdata 2015-2021, Binance BTC / ETH |
 | Live | demo forward test of strategy 6 on the FTMO demo; bot **not running** (stopped 2026-10-21) |
-| V2 | phases V2.1-V2.3 (setup, team, clean-up) in `docs/ROADMAP.md`; next V2.4 review + speed-up |
+| V2 | V2.1-V2.3 done; V2.4 review + speed-up done except the grid-tool merge (`docs/review/`); next V2.4b slippage from demo fills, V2.5 redesign, V2.6 research (`docs/ROADMAP.md`) |
 
 Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`.
 

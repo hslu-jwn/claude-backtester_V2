@@ -1,4 +1,9 @@
-# Market regime classifier (DRAFT, needs the user's ok before it is fixed)
+# Market regime classifier
+
+**Accepted 2026-10-23** (the user left the three open choices to Opus, rule set by the user
+2026-10-23): daily candles for every strategy, efficiency ratio as the trend measure (ADX as
+an option), ER 0.30 over 20 closed days, volatility split at the median of the last 2 years.
+Build it in V2.6.
 
 Shared tool in `analytics/regime.py`, used by every strategy's results, research cards and the
 portfolio (V2.6 / V2.7). It labels each **trade** with the market regime at its entry, so every
@@ -56,9 +61,9 @@ result can be split by regime ("works in trends", "works in quiet sideways marke
   sideways), the no-lookahead test (appending future days never changes a past label; the
   entry day's own candle is never used), DST / weekend days, unknown with short history.
 
-## Questions for the user
+## Decisions (2026-10-23)
 
-1. Daily candles for every strategy (proposed), or the strategy's own higher timeframe?
-2. ER (proposed) or ADX as the default trend measure?
-3. Thresholds: ER 0.30 over 20 days; volatility split at the median of 2 years. Ok, or
-   per-symbol thresholds (e.g. ER above the symbol's own median)?
+1. Daily candles for every strategy.
+2. ER is the default trend measure; ADX stays a config option.
+3. ER 0.30 over 20 days; volatility split at the median of 2 years (one setting for all
+   symbols; per-symbol thresholds only if the user asks later).

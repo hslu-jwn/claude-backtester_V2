@@ -1,5 +1,12 @@
 # UI redesign proposal (look and clarity only, content stays)
 
+**Decisions (rule set by the user, 2026-10-23; items marked "Opus" were left to Opus):**
+dark only, no light switch; Monte Carlo and prop-firm pass only for the chosen variant of a
+research run; the grey Risk tab is merged into Backtest; the one-line idea is a field in the
+grid file (`idea = "..."`), written from the spec's source (Opus); best regime and parameter
+stability show "–" until V2.6 computes them (Opus); Backtest run form and Strategy move to
+tabs below the chart (Opus). The tables below are the accepted list.
+
 Reference: `docs/design/app-v2.png` (dark terminal, top tabs, key-number strip above a big chart, side panel, tabs below the chart, green/red accents). Code read: `ui/app.py`, `nav.py`, `pages/{chart,backtest,results,research,live,risk}.py`, `chart_side.py`, `settings_panel.py`, `trading_panel.py`, `prop_firm_card.py`, `research_model.py`, `tools/research.py`, `analytics/scorecard.py`.
 
 ## Summary (10 lines)

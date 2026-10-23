@@ -7,8 +7,9 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2` (only remote). V1 is read-only, frozen as backup.
-- **Branches:** `main` = V2.1-V2.3. **`v2-review`** = V2.4 work (pushed), not merged yet.
-  `v2-setup`, `v2-live` (merged into v2-review), `wip-a2a3-gemini` (superseded) can go.
+- **Branches:** `main` has everything up to V2.4 (v2-review merged 2026-10-23). `v2-setup`,
+  `v2-live`, `v2-review` are merged; `wip-a2a3-gemini` is superseded; all can be deleted.
+  Start the next phase on a new branch from `main`.
 - **Tests:** 3742 passed, 5 skipped, 1 xfailed (~3 min); ruff clean. Golden trade lists
   (`tests/golden/`, 7 strategies, 2023): `python -m backtester.tools.golden --check`.
 - **PC quirks:** long runs in a terminal tab must write to a log file (unread output stalls
@@ -40,43 +41,33 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - 2026-10-22: V2 setup; team (Codex shell mode, Claude 4.6 lane, split); Phase 3 inventory;
   ROADMAP 5.1-5.7 stay as they are; v2-setup merged into main; all nine B decisions
   (`docs/review/README.md` › B); continue autonomously, questions collected for 7:30.
+- 2026-10-23 (answers to the 7:30 questions): slippage always on, no switch, values to be
+  measured from the demo bot's fills (ROADMAP V2.4b); merge v2-review into main; live-bot
+  defaults of the review fixes accepted (MT5 `None` only "empty" when last_error is success,
+  60 s wall-clock exit fallback, restored daily stop closes own positions); V2.5 decisions in
+  `docs/design/ui-proposal.md` (dark only, Monte Carlo / prop pass only for the chosen
+  variant, Risk tab merged into Backtest, rest chosen by Opus); regime classifier spec
+  accepted (`docs/regime-classifier.md`, choices left to Opus).
 - Everything accepted in V1 (`docs/archive/ROADMAP-v1.md`, specs in `docs/`).
 
-## Open: questions for the user (7:30)
+## Open (needs the user)
 
-1. **Slippage size.** The cost presets carried slippage (~half the spread, marked "rough" in
-   `engine/costs.py`) that the engine never applied; now it does (B4), and it costs e.g.
-   opening_range -0.028 R per trade in 2023. Keep these values, set them from data (e.g. the
-   demo bot's fills vs signal prices), or lower them? Add a slippage on/off switch in the
-   settings panel like spread / commission (today it can't be switched off)?
-2. **Merge `v2-review` into `main`** now (all green), or after your visual check?
-3. **Visual check** of the UI fixes when convenient: replay no longer shows future exits /
-   results ("Trades in view"); presets keep costs of hidden symbols.
-4. **Live bot decisions by the fix (safe side, check them):** an MT5 answer `None` counts as
-   "nothing found" only when `last_error()` says success; the wall-clock session exit fires
-   60 s after the planned exit if no bar came; restoring a same-day daily stop after a restart
-   also closes own positions again.
-5. **Phase 5 (redesign):** the list of essential vs "Details" per page is in
-   `docs/design/ui-proposal.md` (please look); its 6 questions: dark only or a light switch;
-   who writes the one-line idea per research card; regime / parameter stability now or "-"
-   first; Monte Carlo + prop pass for the chosen variant only (proposed) or all; the grey
-   Risk tab (keep / hide / merge into Backtest); Backtest + Strategy as tabs below the chart
-   (proposed) or popovers.
-6. **Regime classifier (V2.6) spec draft** `docs/regime-classifier.md` (Kaufman efficiency
-   ratio, Wilder ADX / ATR, Kaeppel volatility rank): daily candles for all strategies?
-   ER (proposed) or ADX? thresholds ER 0.30 / 20 days, volatility split at the 2-year median,
-   or per-symbol thresholds?
-7. **AI quotas:** Antigravity's weekly quota is far too small for "Gemini does the bulk"
-   (one 13-min task emptied it). Options: accept (plain Python + Codex do the bulk), or a
-   paid Gemini API key for the Gemini CLI. Codex said "Upgrade to Pro" at its limit: is the
-   ChatGPT account Plus or Pro?
-8. Old known issues stay: 4 unformatted test files; research's own DSR per trade vs the trial
-   log's daily DSR; chart does not auto-refresh live candles; remote branch `claude/ui-polish`.
+1. **UI fixes not visible yet:** the user saw no changes on 2026-10-23. The fixes are
+   behavioural, not a new look (the look comes with V2.5): in chart replay, exits / results
+   after the cursor stay hidden (overlay and "Trades in view"); loading a preset keeps the costs
+   of symbols not shown in the panel. The app must be restarted on `main` to load them
+   (`restart_app.bat`). Check again in the next chat; if still nothing, investigate.
+2. **AI quotas:** the user checks whether the ChatGPT account is Plus or Pro, and decides
+   between accepting Antigravity's small weekly quota and a paid Gemini API key.
+3. Old known issues: 4 unformatted test files; research's own DSR per trade vs the trial log's
+   daily DSR; chart does not auto-refresh live candles; remote branch `claude/ui-polish`.
 
 ## Next step
 
-Last V2.4 item: merge the archived grid tools into the research runner (Codex). Then V2.5
-(after question 5) and V2.6 (after question 6).
+`Continue.Code`: (1) last V2.4 item: merge the archived grid tools into the research runner
+(Codex); (2) V2.4b slippage from the demo fills (needs demo trades; the bot is not running);
+(3) V2.5 app redesign per `docs/design/ui-proposal.md`. Then `Continue.Research` for V2.6
+(regime classifier first, spec accepted) and V2.7.
 
 ## First prompt for the next chat
 

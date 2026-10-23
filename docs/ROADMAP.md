@@ -67,7 +67,12 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research
   runner.
-- ☐ **V2.5 App redesign** after `docs/design/app-v2.png`: dark trading-terminal look, essential
+- ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
+  always applied, no on/off switch (most realistic scenario); measure it per symbol from the
+  demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
+  `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)
+  stay.
+- ☐ **V2.5 App redesign** (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
   vs "Details" per page (list to the user first), research page as one vertical list of
   cards, Fast mode (headless) vs Visual mode with identical trade lists.
 - ☐ **V2.6 Continuous research:** research-based strategies only, job queue (≈8 workers,

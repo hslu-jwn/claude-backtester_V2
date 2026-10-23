@@ -61,6 +61,10 @@ The break-even at the next session start (step 2) is strategy 1's rule: a strate
 
 ### Engine costs (rule set by the user, 2026-10-22)
 
+- Slippage is always applied, there is no switch to turn it off (most realistic scenario);
+  its per-symbol values are to be measured from the demo bot's fills (rule set by the user,
+  2026-10-23; ROADMAP V2.4b).
+
 - **B4:** `SymbolCosts.slippage` worsens each market entry, stop fill (including a gap
   stop), and time / signal / end-of-data exit. Limit entries and TP fills have no
   slippage. Scale the configured slippage by the chart entry / reference price under
