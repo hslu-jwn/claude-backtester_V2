@@ -33,33 +33,36 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☐ **12.4 Parameter heat map** (Phase 12)
 - ☐ **12.5 Demo reconciliation** (Phase 12)
 - ☐ **12.6 Stressed fills** (Phase 12)
-- ☐ **12.8 Engine slippage** (Phase 12)
+- ☑ **12.8 Engine slippage** (Phase 12) — fixed in V2.4 (B4), 2026-10-23
 - ☐ **12.9 Portfolio tool** (Phase 12)
 - ☐ **12.11 Bayesian report** (Phase 12)
 - ☐ **12.13 DSR on daily R** (Phase 12)
-- ☐ **13.6 Closed-bar check on server time** (Phase 13)
-- ☐ **13.7 Sizing on the live price** (Phase 13)
-- ☐ **13.8 Wall-clock fallback exit** (Phase 13)
-- ☐ **13.9 Validate CLI risk** (Phase 13)
+- ☑ **13.6 Closed-bar check on server time** (Phase 13) — fixed in V2.4 (live #1), 2026-10-23
+- ☑ **13.7 Sizing on the live price** (Phase 13) — fixed in V2.4 (live #7), 2026-10-23
+- ☑ **13.8 Wall-clock fallback exit** (Phase 13) — fixed in V2.4 (live #8), 2026-10-23
+- ☑ **13.9 Validate CLI risk** (Phase 13) — fixed in V2.4 (live #18), 2026-10-23
 - ☐ **13.12 histdata clock 2015-2018** (Phase 13)
 - ☐ **13.13 GER40 histdata changes instrument on 2020-06-15** (Phase 13)
 - ☐ **13.14 MT5 cache before 2020** (Phase 13)
 - ☐ **13.15 One-day holes on 1 January** (Phase 13)
 - ☐ **13.16 MT5 downloader swallows errors** (Phase 13)
-- ☐ **13.17 Paths relative to the working folder** (Phase 13)
+- ☑ **13.17 Paths relative to the working folder** (Phase 13) — fixed in V2.4 (A2), 2026-10-23
 - ☐ **13.18 Output folders** (Phase 13)
-- ☐ **13.19 no_wick limit fill is lookahead** (Phase 13)
-- ☐ **13.20 Kind C random fills never slip time exits** (Phase 13)
-- ☐ **13.21 Parallel runner progress race** (Phase 13)
+- ☑ **13.19 no_wick limit fill is lookahead** (Phase 13) — refuted by two V2.4 reviews (pending limits precede the fill candle; now enforced by the engine, A1), 2026-10-23
+- ☑ **13.20 Kind C random fills never slip time exits** (Phase 13) — fixed in V2.4 (B4), 2026-10-23
+- ☑ **13.21 Parallel runner progress race** (Phase 13) — fixed in V2.4 (A5), 2026-10-23
 - ☐ **13.22 `tests/tools/test_s2_volume_ab.py`** (Phase 13)
-- ☐ **13.23 Monte Carlo FTMO pass rate** (Phase 13)
+- ☑ **13.23 Monte Carlo FTMO pass rate** (Phase 13) — fixed in V2.4 (B2), 2026-10-23
 
 ## V2 phases (user, 2026-10-22)
 
 - ☑ **V2.1 Set up this PC** (tools, venv, data check, baseline tests).
 - ☑ **V2.2 Team setup** (AGENTS.md, Codex / Claude 4.6 / Gemini through `tools/ai_dispatch.py`).
 - ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
-- ☐ **V2.4 Full Codex review and speed-up:** golden trade lists of all strategies first; review
+- ◐ **V2.4 Full Codex review and speed-up** (2026-10-23: golden lists, review of all 8
+  modules (84 findings, `docs/review/`), groups A + B fixed, speed 1 + 2 (partial) done;
+  open: rest of speed 2, the archived grid tools merge, the user's visual check of the UI
+  fixes): golden trade lists of all strategies first; review
   core -> detectors -> engine -> risk -> analytics -> strategies -> ui -> live (correctness,
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research
