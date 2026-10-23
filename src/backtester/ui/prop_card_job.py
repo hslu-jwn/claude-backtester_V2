@@ -21,7 +21,7 @@ from backtester.ui.process_job import ProcessJob, kill_tree, spawn_process
 NO_CARD_TEXT = "The calculation finished without a result."
 
 _lock = threading.Lock()
-_jobs: dict[tuple[str, str, str], ProcessJob] = {}  # (results dir, run id, firm)
+_jobs: dict[tuple[str, str, str, str | None], ProcessJob] = {}  # folder, run, firm, inputs
 
 
 def reset() -> None:
@@ -56,7 +56,11 @@ def request(
     cached = pc.cached_card(folder, firm, preset, card)
     if cached is not None:
         return {"state": "ready", "card": cached}
-    key = (str(folder.parent), folder.name, firm)
+    try:
+        signature = pc.cache_key(folder, firm, preset or pc.FIRMS[firm], card or pc.DEFAULT_CARD)
+    except (OSError, ValueError, KeyError):
+        signature = None
+    key = (str(folder.parent), folder.name, firm, signature)
     with _lock:
         job = _jobs.get(key)
         if job is not None and not job.finished:

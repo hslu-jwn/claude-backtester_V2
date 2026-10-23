@@ -449,9 +449,8 @@ def store_json(store: Mapping | None) -> str:
 
 
 def _values_of(settings: RunSettings) -> dict[str, Any]:
-    """The form values of the settings the panel shows (not the unused ones)."""
-    shown = {leaf.path for leaf in strategy_leaves(strategy_name(settings.strategy))}
-    return {p: v for p, v in form_values(settings).items() if p in shown}
+    """All settings, including costs for symbols without panel widgets."""
+    return form_values(settings)
 
 
 def preset_values(
@@ -523,20 +522,23 @@ def form_update(
     message = None
 
     def widgets_for(vals):
-        return {p: to_widget(by_path[p].kind, v) for p, v in vals.items()}
+        return {p: to_widget(by_path[p].kind, v) for p, v in vals.items() if p in by_path}
 
     if trigger is None:
         saved = dict((store or {}).get("values") or {})
-        values = {p: saved.get(p, leaf.default) for p, leaf in by_path.items()}
+        values = {**_values_of(base), **saved}
         new_widgets = widgets_for(values)
     else:
-        values = {p: from_widget(by_path[p].kind, w) for p, w in widgets.items() if p in by_path}
+        values = {
+            **_values_of(store_settings(store) if store else base),
+            **{p: from_widget(by_path[p].kind, w) for p, w in widgets.items() if p in by_path},
+        }
         new_widgets = None
         if switched:
-            preset, values = DEFAULT_PRESET, {p: leaf.default for p, leaf in by_path.items()}
+            preset, values = DEFAULT_PRESET, _values_of(base)
             new_widgets = widgets_for(values)
         elif trigger == "reset-all":
-            values = {p: leaf.default for p, leaf in by_path.items()}
+            values = _values_of(base)
             new_widgets = widgets_for(values)
         elif isinstance(trigger, Mapping) and trigger.get("reset") in by_path:
             values[trigger["reset"]] = by_path[trigger["reset"]].default
@@ -549,7 +551,7 @@ def form_update(
             else:
                 preset, values = wanted or DEFAULT_PRESET, {**values, **loaded}
                 new_widgets = widgets_for(values)
-    changed = [p for p, v in values.items() if v != by_path[p].default]
+    changed = [p for p, v in values.items() if p in by_path and v != by_path[p].default]
     try:
         settings = settings_from_values(values, base)
     except SettingsError as e:
@@ -592,7 +594,7 @@ def form_update(
         "changed": changed,
         "error": None,
         "preset": preset,
-        "modified": saved is not None and saved != values,
+        "modified": saved is not None and saved != _values_of(settings),
         "presets": list_presets(folder, strategy),
         "message": message,
     }

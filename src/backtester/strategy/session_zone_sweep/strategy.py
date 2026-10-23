@@ -68,7 +68,7 @@ class SessionZoneSweep(Strategy):
         doji = self.setups.doji_max_body
         self.obstacles = ObstacleTracker(doji, detectors.order_block)
         self.limits = UnmitigatedOrderBlocks(doji, detectors.order_block)
-        self._cursors = {config.obstacle_timeframe: -1, config.limit_timeframe: -1}
+        self._cursors = {self.obstacles: -1, self.limits: -1}
         self.decisions: list[Decision] = []
         self.journal = SessionJournal()
 
@@ -100,9 +100,9 @@ class SessionZoneSweep(Strategy):
         """Feed `tracker` every candle of `view`'s timeframe closed since the last call."""
         if view is None:
             return
-        for cursor in range(self._cursors[view.timeframe] + 1, view.cursor + 1):
+        for cursor in range(self._cursors[tracker] + 1, view.cursor + 1):
             tracker.update(view.at(cursor))
-        self._cursors[view.timeframe] = view.cursor
+        self._cursors[tracker] = view.cursor
 
     def _order(self, signal: EntrySignal, now: datetime) -> Order | None:
         state = self.setups.state

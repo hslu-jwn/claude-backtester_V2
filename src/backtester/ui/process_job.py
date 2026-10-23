@@ -72,6 +72,10 @@ class ProcessJob:
             if line.strip():
                 with self._lock:
                     self._lines.append(line)
+                    self._on_line(line)
+
+    def _on_line(self, line: str) -> None:
+        """Update consumer state under the output lock before log lines expire."""
 
     @property
     def returncode(self) -> int | None:

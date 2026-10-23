@@ -1486,9 +1486,12 @@ def register_callbacks(
         Output("side-trades", "children"),
         Input("chart-range", "data"),
         Input("chart-symbol", "value"),
+        Input("chart-replay", "data"),
     )
-    def _side_trades(rng, symbol):
+    def _side_trades(rng, symbol, replay_state):
         """Trades of the newest run whose entry is inside the visible range."""
+        if replay_state and replay_state.get("on"):
+            return html.Div("Trades in view are hidden during replay.", className="side-empty")
         folder = chart_side.newest_run(results_dir)
         if folder is None:
             return chart_side.trades_body([], has_run=False)

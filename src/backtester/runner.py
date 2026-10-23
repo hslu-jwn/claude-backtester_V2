@@ -370,7 +370,7 @@ def run_backtests(
 
     def report(symbol: str, n: int) -> None:
         _check_cancel(cancel)
-        done[symbol] = n
+        done[symbol] = max(done[symbol], n)
         if progress is not None:
             progress(sum(done.values()), total)
 

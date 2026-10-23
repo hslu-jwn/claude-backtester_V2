@@ -23,12 +23,12 @@ from pathlib import Path
 from backtester.paths import RESULTS_DIR
 from backtester.ui import process_job as pj
 from backtester.ui.process_job import ProcessJob
+from backtester.ui.run_paths import run_folder
 
 MONTE_CARLO_DIR = "monte_carlo"
 REPORT = "report.html"
 SUMMARY = "summary.json"
 REPORT_PREFIX = "/monte-carlo/"
-RUN_ID = re.compile(r"[A-Za-z0-9_.-]+")
 KINDS = {
     "A": "day reshuffle + FTMO",
     "B": "random entries",
@@ -51,8 +51,26 @@ class RunNotFound(ValueError):
     """No such run folder (or not a run id)."""
 
 
+class _MonteCarloProcessJob(ProcessJob):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._kind_line = ""
+        self._paths: dict[str, str] = {}
+
+    def _on_line(self, line: str) -> None:
+        if _KIND_LINE.match(line.strip()):
+            self._kind_line = line
+            self._paths.clear()
+        elif match := _PATH_LINE.search(line):
+            self._paths[match.group(1)] = line
+
+    def progress(self, symbols: int) -> tuple[str, float | None]:
+        with self._lock:
+            return _progress([self._kind_line, *self._paths.values()], symbols)
+
+
 _lock = threading.Lock()
-_current: tuple[str, int, ProcessJob] | None = None  # (run id, symbols, job)
+_current: tuple[str, int, _MonteCarloProcessJob] | None = None  # (run id, symbols, job)
 
 
 def current() -> ProcessJob | None:
@@ -92,23 +110,18 @@ def start(
 ) -> ProcessJob:  # fmt: skip
     """Start the full report for a run in the background."""
     global _current
-    folder = Path(results_dir) / run_id
-    if (
-        not RUN_ID.fullmatch(run_id or "")
-        or run_id in (".", "..")
-        or not (folder / "trades.csv").is_file()
-        or not (folder / "summary.json").is_file()
-    ):
+    folder = run_folder(run_id, results_dir)
+    if folder is None or not (folder / "trades.csv").is_file():
         raise RunNotFound(f"no run {run_id!r}")
     with _lock:
         if _current is not None and not _current[2].finished:
             raise AlreadyRunning(BUSY_TEXT.format(run=_current[0]))
         argv = [
-            sys.executable, "-m", "backtester.tools.monte_carlo", "--run", run_id,
-            "--results-dir", str(results_dir), "--out", str(out_dir(run_id, results_dir)),
+            sys.executable, "-m", "backtester.tools.monte_carlo", "--run", folder.name,
+            "--results-dir", str(folder.parent), "--out", str(out_dir(run_id, results_dir)),
             *extra_args,
         ]  # fmt: skip
-        job = ProcessJob.start(argv, spawn=spawn, killer=killer)
+        job = _MonteCarloProcessJob.start(argv, spawn=spawn, killer=killer)
         _current = (run_id, _symbol_count(folder), job)
         return job
 
@@ -135,16 +148,16 @@ def _progress(lines: list[str], symbols: int) -> tuple[str, float | None]:
     text = f"Kind {kind} · {KINDS[kind]}"
     if kind != "D":
         return text, None
-    done, total, last = 0, 0, ""
+    paths, total, last = {}, 0, ""
     for line in lines:
         m = _PATH_LINE.search(line)
         if m:
-            done += 1
+            paths[m.group(1)] = max(paths.get(m.group(1), 0), int(m.group(2)))
             total = int(m.group(3)) * symbols
             last = f"{m.group(1)} path {m.group(2)}/{m.group(3)}"
     if not total:
         return text, None
-    return f"{text} · {last}", min(done / total, 1.0) * 100
+    return f"{text} · {last}", min(sum(paths.values()) / total, 1.0) * 100
 
 
 def format_elapsed(seconds: float) -> str:
@@ -174,7 +187,7 @@ def snapshot(run_id: str, results_dir: Path = RESULTS_DIR, now: float | None = N
             snap.update(state="busy", message=BUSY_TEXT.format(run=job_run))
         return snap
     if not job.finished:
-        detail, percent = _progress(job.lines(), symbols)
+        detail, percent = job.progress(symbols)
         snap.update(state="running", detail=detail, percent=percent)
     elif job.cancel_requested:
         snap.update(state="cancelled", message=CANCELLED_TEXT)

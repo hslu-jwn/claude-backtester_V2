@@ -141,6 +141,15 @@ class Setup:
             self._sweep(ctx)
             return None
         frames, d = ctx.frames, self.direction
+        sweep_frame = frames[self.sweep_tf]
+        # Spec: strategy-ny-indices.md > AM step 3: valid throughout the setup.
+        if (
+            not ctx.config.sweep_close_beyond_counts
+            and sweep_frame.closed
+            and beyond(d, sweep_frame.current.close, self.level)
+        ):
+            self.end("sweep-TF close beyond the swept level")
+            return None
         low = wick(d, ctx.candle)
         if ctx.now > self.bos.confirmed_at and (
             self.deepest is None or beyond(d, low, self.deepest)

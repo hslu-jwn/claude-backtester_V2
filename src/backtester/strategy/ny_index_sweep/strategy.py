@@ -179,14 +179,21 @@ class NyIndexSweep(Strategy):
         return out
 
     def _close_before_rollover(self, now: datetime) -> None:
-        """Open trades entered before today's cutoff (17:00 ET minus the setting) close at
-        the first close at or after it (spec › Close before the rollover)."""
-        day = now.astimezone(ROLLOVER_ZONE).date()
-        cutoff = datetime.combine(day, ROLLOVER_TIME, ROLLOVER_ZONE) - timedelta(
-            minutes=self.config.rollover_close_minutes
-        )
-        if now >= cutoff:
-            self._to_close += [ref for ref, entry in self._open if entry < cutoff]
+        """Use the entry date's cutoff, even if its candles are missing.
+
+        Spec: strategy-ny-indices.md > Close before the rollover.
+        """
+        for ref, entry in self._open:
+            day = entry.astimezone(ROLLOVER_ZONE).date()
+            cutoff = datetime.combine(day, ROLLOVER_TIME, ROLLOVER_ZONE) - timedelta(
+                minutes=self.config.rollover_close_minutes
+            )
+            if entry >= cutoff:
+                cutoff = datetime.combine(
+                    day + timedelta(days=1), ROLLOVER_TIME, ROLLOVER_ZONE
+                ) - timedelta(minutes=self.config.rollover_close_minutes)
+            if now >= cutoff:
+                self._to_close.append(ref)
 
     # --- windows, sweeps -------------------------------------------------------------
 

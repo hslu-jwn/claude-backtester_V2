@@ -28,6 +28,7 @@ from backtester.risk import prop_card
 from backtester.ui import monte_carlo_job as mj
 from backtester.ui import prop_card_job as pj
 from backtester.ui.monte_carlo_job import format_elapsed
+from backtester.ui.run_paths import run_folder
 
 PERCENT = 100.0
 DASH = "—"
@@ -135,8 +136,8 @@ def timer_disabled(status: dict) -> bool:
 
 def poll_card(run_id: str | None, firm: str, results_dir: Path = RESULTS_DIR):
     """(card content, timer disabled) for one poll; starts the calculation when none exists."""
-    folder = Path(results_dir) / (run_id or "")
-    if not run_id or not (folder / "trades.csv").is_file():
+    folder = run_folder(run_id, results_dir)
+    if folder is None or not (folder / "trades.csv").is_file():
         return no_update, True
     status = pj.request(folder, firm)
     return card_body(status), timer_disabled(status)

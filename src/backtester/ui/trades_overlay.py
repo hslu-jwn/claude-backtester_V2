@@ -213,9 +213,11 @@ def detect_trades(
             continue  # entered in the warm-up or after the chart
         entry_x = containing(trade.entry_time)
         decision = run.decisions.get((trade.entry_time, trade.direction))
-        be_x = None if trade.break_even_time is None else containing(trade.break_even_time)
-        exit_x = min(containing(trade.exit_time), len(opens) - 1)
-        part_xs = tuple(min(containing(p.time), len(opens) - 1) for p in trade.parts)
+        # Event positions use actual close times, including a sentinel beyond the chart.
+        # Only drawing geometry is clipped; future outcomes stay hidden in replay.
+        be_x = None if trade.break_even_time is None else bisect_left(closes, trade.break_even_time)
+        exit_x = bisect_left(closes, trade.exit_time)
+        part_xs = tuple(bisect_left(closes, p.time) for p in trade.parts)
         zone_x0 = zone_fill_x = bos_x0 = bos_x1 = confluence_x0 = leg_x = entry_x
         if decision is not None:
             signal = decision.signal

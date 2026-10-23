@@ -46,11 +46,10 @@ from backtester.runner import RESULTS_DIR
 from backtester.strategy.registry import REGISTRY
 from backtester.ui import prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
+from backtester.ui.run_paths import run_folder
 
-_RUN_ID = re.compile(r"[A-Za-z0-9_.-]+")
 # a research variant's run folder: results/research/<id>/variants/<variant id> (Research page)
 VARIANT_PREFIX = "research~"
-_VARIANT_ID = re.compile(r"research~([A-Za-z0-9_.-]+)~([A-Za-z0-9_.-]+)")
 ALL = "__all__"  # symbol filter value for every symbol
 TABS = (
     ("overview", "Overview"),
@@ -61,24 +60,10 @@ HISTOGRAM_BIN_R = 0.25
 UP, DOWN, MUTED, ACCENT = "#089981", "#f23645", "#787b86", "#2962ff"  # TradingView colors
 
 
-def run_folder(run_id: str, results_dir: Path = RESULTS_DIR) -> Path | None:
-    """The run's folder, or None for a name that isn't a run folder (no paths outside).
-    `research~<research id>~<variant id>` is a research variant's folder."""
-    variant = _VARIANT_ID.fullmatch(run_id or "")
-    if variant:
-        if {".", ".."} & set(variant.groups()):
-            return None
-        folder = Path(results_dir) / "research" / variant[1] / "variants" / variant[2]
-        return folder if (folder / "summary.json").is_file() else None
-    if not _RUN_ID.fullmatch(run_id or "") or run_id in (".", ".."):
-        return None
-    folder = Path(results_dir) / run_id
-    return folder if (folder / "summary.json").is_file() else None
-
-
 def _read_json(path: Path) -> dict:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
         return {}
 
@@ -99,6 +84,8 @@ def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
     options = []
     for p in runs:
         s = _read_json(p / "summary.json")
+        if not s:
+            continue
         symbols = ", ".join(s.get("symbols", []))
         options.append(
             {"label": f"{p.name} · {symbols} · {s.get('start')} → {s.get('end')}", "value": p.name}
@@ -704,7 +691,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
             html.Div(
                 [
                     header,
-                    prop_firm_card.layout(folder.name, folder, results_dir),
+                    prop_firm_card.layout(run_id, folder, results_dir),
                     tabs,
                     html.Div(id="rs-content", className="rs-content"),
                 ],
