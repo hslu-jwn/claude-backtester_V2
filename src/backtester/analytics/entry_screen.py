@@ -391,7 +391,7 @@ def _window_candidates(
     stamp = pd.to_datetime(m1.close_s[in_range], unit="s", utc=True).tz_convert(zone)
     minute_of_day = stamp.hour * 60 + stamp.minute
     ok = np.isin(minute_of_day // bucket_minutes, list(buckets)) & np.isin(
-        stamp.dayofweek, list(weekdays)
+        stamp.day_of_week, list(weekdays)
     )
     return np.flatnonzero(in_range)[np.asarray(ok)]
 

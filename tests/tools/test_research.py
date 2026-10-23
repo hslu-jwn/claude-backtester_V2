@@ -273,9 +273,11 @@ class Fakes:
 
 @pytest.fixture
 def fakes(monkeypatch):
-    from backtester.tools import research_diagnostics
+    from backtester.tools import research_diagnostics, research_monkeys
 
     f = Fakes()
+    # These tests use deliberately skeletal CSV files, without entry prices or stops.
+    monkeypatch.setattr(research_monkeys, "calculate", lambda *a, **kw: {"available": False})
     monkeypatch.setattr(research_diagnostics, "load_shocks", lambda *args: {})
     monkeypatch.setattr(research, "run_backtests", f.run)
     monkeypatch.setattr(research, "run_period_many", f.run_many)
@@ -288,6 +290,38 @@ def fakes(monkeypatch):
 def run_research(tmp_path, text=GRID, **kw):
     kw.setdefault("log", lambda *a, **k: None)
     return research.run_research(write_grid(tmp_path, text), results_dir=tmp_path / "results", **kw)
+
+
+def test_monkeys_chosen_development_only_and_flag(tmp_path, fakes, monkeypatch):
+    from backtester.tools import research_monkeys
+
+    calls = []
+
+    def calculate(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"available": False, "flags": ["monkey_beaten"]}
+
+    monkeypatch.setattr(research_monkeys, "calculate", calculate)
+    out = run_research(tmp_path, dev_only=True)
+    assert len(calls) == 1
+    assert calls[0][0][2] == out["chosen"]["id"]
+    assert calls[0][0][4] == date(2021, 9, 13)
+    folder = out["folder"]
+    assert (folder / "monkeys.json").is_file()
+    assert "monkey_beaten" in (folder / "variants.csv").read_text()
+    assert "Matched monkeys" in (folder / "report.md").read_text()
+    assert out["test"]["status"] == "not_run"
+
+
+def test_monkeys_opt_out(tmp_path, fakes, monkeypatch):
+    from backtester.tools import research_monkeys
+
+    def forbidden(*a, **kw):
+        pytest.fail("monkeys=false must skip M1 loading and simulations")
+
+    monkeypatch.setattr(research_monkeys, "calculate", forbidden)
+    out = run_research(tmp_path, GRID.replace("[base]", "monkeys = false\n\n[base]"), dev_only=True)
+    assert out["chosen"] is not None
 
 
 def research_folder(tmp_path) -> Path:

@@ -190,15 +190,54 @@ Kept in the base backtest (rule set by the user).
 - **Output:** distribution of max drawdown and final balance, e.g. "in 95% of the runs the max drawdown stays below X%", a fan of simulated equity curves. Main use: choosing a safe risk %.
 
 ### Monte Carlo report (ROADMAP 12.7; rules set by the user, 2026-10-15)
+
 One HTML report per backtest run (`python -m backtester.tools.monte_carlo <run-id>` ->
 `results/<run-id>/monte_carlo/report.html`), built from the run's trade list (R). All four kinds of Monte Carlo
 (`knowledge/topics/backtest-frameworks.md`), every random draw seeded (⚙️ seed **42**). It ends every test with a
 clear verdict.
 
+#### Matched monkeys (V2.4c T-14, accepted 2026-10-23)
+
+For every strategy, compare its actual trade list with three seeded null models on the
+same symbols' M1 data. Preserve trade count and long count exactly per symbol in every run.
+
+1. Random entries: uniformly sample M1 closes with replacement from `_window_candidates`
+   (observed New York weekdays and 15-minute time buckets within the entry date range).
+   Permute the real (initial stop distance, elapsed hold seconds) pairs onto those entries.
+2. Random exits: keep real entries and stops; independently permute real elapsed holds.
+3. Both random: sample entries as in 1; independently permute stops and holds.
+
+All permutations are per symbol (Opus clarification, 2026-10-23). Direction slots retain the
+real long/short counts; stop distance is mirrored around the sampled bid close. No target.
+Use entry-screen exit replay and costs, including stop gaps at the open, slippage, spread,
+commission and swap. Only candles opening at or after the entry close can resolve an exit.
+Holds use the last M1 close by the deadline, at least the first subsequent candle, and are
+clipped to available data as in entry screening. Exclude final candle closes from random
+candidates because they have no subsequent exit candle. Reject invalid trades or missing
+symbol data explicitly; empty lists are unavailable, never passing.
+
+Defaults: 1,000 runs, seed 42 (8,000 is configurable); runner: 200 development runs on the
+chosen variant only, skipped by grid `monkeys = false`. Report total net R and max drawdown
+in additive R, ordered by exit time (stable input order for simultaneous exits), including
+the initial zero equity peak. Each statistic reports median, 5th and 95th percentiles and
+the real result's percentile (half credit for ties within 1e-12). Lower DD is better.
+Each kind passes iff both favorable percentiles are >= 90; any failure flags `monkey_beaten`.
+This diagnostic does not alter selection, DSR, trial counts or golden lists. Standalone
+tool logs one source backtest per variant, not the synthetic runs; refuses test dates
+without `--allow-test-period`, writes `summary.json` and `report.md` under
+`results/monkeys/<strategy>_<time>/`, and supports sequential `--workers 1`.
+
+Monte Carlo verdict check 2 keeps its existing >= 95 threshold: gap fade uses kind B where
+available; other strategies use matched-monkey kind 1 net-R percentile. Missing data must
+be reported as unavailable, never replaced by a different period's percentile.
+
+#### Report and verdict
+
 - **Verdict** (first thing in the report): **EDGE** when all seven checks pass, **WEAK** when one or two fail,
   **NO EDGE** otherwise:
   1. mean net R per trade > 0 with t = mean / (sd / sqrt(n)) ≥ ⚙️ **2**;
-  2. net R above ⚙️ **95 %** of the random-entry runs (kind B);
+  2. net R above ⚙️ **95 %** of random-entry runs (gap fade kind B where available,
+     matched-monkey kind 1 for all other strategies; see Matched monkeys);
   3. both halves of the run's own period (split at the middle date of start..end; rule set by the user,
      2026-10-15) net positive;
   4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);

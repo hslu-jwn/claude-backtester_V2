@@ -21,6 +21,7 @@ Written to `results/research/<id>/` (id = grid file name + a hash of what is tes
 - `variants.csv`   the development scorecards, ranked first (`set.<setting>` columns: the grid);
 - `test.csv`       the test scorecards (row per test run: 1 = the test, 2.. = retests);
 - `report.md`      short summary;
+- `monkeys.json`   chosen development variant's matched-null diagnostics (unless disabled);
 - `variants/<id>/` the development run of each variant (a normal run folder + scorecard.json).
 The chosen variant's development run and test run are also written as normal run folders
 `results/<run-id>/` (results page, chart) and its settings as a preset. Every variant and every
@@ -71,6 +72,7 @@ from backtester.runner import (
 from backtester.tools import (
     research_bayes,
     research_diagnostics,
+    research_monkeys,
     research_series,
     research_significance,
     research_stability,
@@ -649,6 +651,33 @@ def run_research(
         info.update(status=status, chosen=chosen, test=test_info, updated=_now())
         # Keep the once-only test guard durable even if optional reporting fails.
         _dump(folder / "research.json", info)
+        info["monkeys"] = None
+        if chosen is not None and spec.monkeys:
+            variant = next(v for v in variants if v.id == chosen["id"])
+            info["monkeys"] = research_monkeys.calculate(
+                folder,
+                spec,
+                chosen["id"],
+                first,
+                dev_end,
+                variant_settings(spec, variant),
+                sources,
+            )
+            _dump(folder / "monkeys.json", info["monkeys"])
+            selected = next(r for r in rows if r["variant_id"] == chosen["id"])
+            selected["flags"] = ";".join(
+                dict.fromkeys(
+                    filter(
+                        None,
+                        [
+                            *selected["flags"].split(";"),
+                            *info["monkeys"].get("flags", []),
+                        ],
+                    )
+                )
+            )
+        else:
+            (folder / "monkeys.json").unlink(missing_ok=True)
         for saved in _test_rows(folder):
             number = int(saved["test_run"])
             variant = next(v for v in variants if v.id == saved["variant_id"])
@@ -683,18 +712,30 @@ def run_research(
             folder, spec, variants, rows, info, results_dir, sources
         )
         pairs, info["twins"] = research_stability.twin_rows(spec, variants, rows)
-        info['bayes'] = research_bayes.calculate(
-            folder, results_dir, spec, variants,
-            chosen['id'] if chosen else None, _test_rows(folder), pairs,
-            reader=read_trades, config=bayes_config,
+        info["bayes"] = research_bayes.calculate(
+            folder,
+            results_dir,
+            spec,
+            variants,
+            chosen["id"] if chosen else None,
+            _test_rows(folder),
+            pairs,
+            reader=read_trades,
+            config=bayes_config,
         )
-        _dump(folder / 'bayes.json', info['bayes'])
+        _dump(folder / "bayes.json", info["bayes"])
         if chosen is not None:
-            selected = next(r for r in rows if r['variant_id'] == chosen['id'])
-            selected['flags'] = ';'.join(filter(None, [
-                selected['flags'], *info['bayes']['flags'],
-            ]))
-            _write_csv(folder / 'variants.csv', [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
+            selected = next(r for r in rows if r["variant_id"] == chosen["id"])
+            selected["flags"] = ";".join(
+                filter(
+                    None,
+                    [
+                        selected["flags"],
+                        *info["bayes"]["flags"],
+                    ],
+                )
+            )
+            _write_csv(folder / "variants.csv", [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
         if any(f.compare_to for f in families(spec)):
             _write_csv(
                 folder / "twins.csv",
@@ -898,7 +939,10 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             research_stability.haircut(selected.get("avg_r"), info["live_expectation_range"]),
         ]
     lines += research_significance.markdown(info.get("significance"))
-    lines += research_bayes.markdown(info.get('bayes'))
+    lines += research_bayes.markdown(info.get("bayes"))
+    from backtester.analytics.monkeys import markdown as monkey_markdown
+
+    lines += monkey_markdown(info.get("monkeys"))
     sensitivity = info.get("sensitivity")
     if sensitivity is not None:
         lines += [

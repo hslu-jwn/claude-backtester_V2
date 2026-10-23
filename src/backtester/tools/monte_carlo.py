@@ -14,9 +14,9 @@ symbols, period and settings.json instead of running the backtest again; it writ
 line (source "run", family = the strategy or `--family`) and check 7 uses the count; default `<out>` is `results/monte_carlo/<run id>/`.
 
 Runs the strategy (spec defaults, shared costs), then: kind A stationary day bootstrap + FTMO 2-Step at
-0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade, "follow" variant, and the gap
-momentum, "fade" side, have one; other strategies show "not available for this strategy yet" and
-the verdict check is n/a), kind C random fills, kind D seeded random-walk paths (`--paths`, 0
+0.5 / 1 / 1.5 % risk, legacy kind B random entries (gap fade "follow" and gap momentum "fade"),
+matched monkeys for every strategy (verdict check 2: gap fade kind B takes precedence,
+monkey kind 1 otherwise), kind C random fills, kind D seeded random-walk paths (`--paths`, 0
 skips; the volatility profile is measured on the same days as the run), and the robustness
 measures. Writes `<out>/report.html` (Plotly from the CDN) and `<out>/summary.json`; default
 `<out>` is `results/monte_carlo/<strategy>_<symbols>_<start>_<end>/`.
@@ -61,6 +61,7 @@ from backtester.analytics.verdict import (
     evaluate,
     middle_date,
     period_halves,
+    random_entry_percentile,
     t_statistic,
 )
 from backtester.data.cache import MT5_CACHE_DIR
@@ -172,13 +173,14 @@ def verdict_inputs(
 def build_summary(
     trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
     paths: dict | None = None, log=print, deflated: DeflatedResult | None = None,
-    family: str | None = None, baseline=None, fills=None, daily_folder=None,
+    family: str | None = None, baseline=None, fills=None, daily_folder=None, monkeys=None,
 ) -> dict:  # fmt: skip
     """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
     source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
     (kind D result) None = skipped; `deflated` (ROADMAP 12.10) None = check 7 is n/a.
     `baseline` / `fills` (a RandomBaselineResult / RandomFillsResult) replace the kind B / C run
-    done here: the portfolio tool (ROADMAP 12.9) combines them per component."""
+    done here: the portfolio tool (ROADMAP 12.9) combines them per component. `monkeys` supplies
+    matched-model diagnostics and verdict precedence for the strategy tool's M1 replay."""
     start, end = meta["start"], meta["end"]
     rcfg = RobustnessConfig()
     trades = list(trades)
@@ -212,6 +214,10 @@ def build_summary(
     inputs = verdict_inputs(
         trades, baseline, fills, rcfg, start, end, None if deflated is None else deflated.dsr
     )
+    if monkeys is not None:
+        inputs = replace(
+            inputs, percentile=random_entry_percentile(meta["strategy"], baseline, monkeys)
+        )
     verdict = evaluate(inputs, VerdictConfig())
     rob = trade_robustness(trades, rcfg)
     first, second = period_halves(trades, start, end)
@@ -245,6 +251,7 @@ def build_summary(
             else {"available": True, **asdict(baseline)}
         ),
         "random_fills": asdict(fills),
+        "monkeys": monkeys,
         "monte_carlo": mc,
         "drawdown_bounds": bounds,
         "random_paths": paths,
@@ -363,6 +370,14 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         "strategy": strategy, "symbols": symbols, "start": start, "end": end, "source": source,
         **({"run": args.run} if args.run else {}),
     }  # fmt: skip
+    from backtester.analytics.monkeys import MonkeyConfig, matched_monkeys
+    from backtester.tools.entry_screen import load_m1
+
+    log("matched monkeys: entry / exit / both")
+    m1s = {s: load_m1(s, sources, start, end) for s in sorted({t.symbol for t in trades})}
+    monkeys = matched_monkeys(
+        trades, m1s, settings.engine.costs, MonkeyConfig(runs=config.runs, seed=config.seed)
+    )
     summary = build_summary(
         trades,
         follow,
@@ -374,6 +389,7 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         deflated,
         family,
         daily_folder=args.results_dir / args.run if args.run else None,
+        monkeys=monkeys,
     )
     summary["meta"]["paths"] = config.paths
     return summary
@@ -672,6 +688,47 @@ def random_fills_html(summary: dict) -> str:
     )
 
 
+def monkeys_html(summary: dict) -> str:
+    """Matched-model percentiles, including which source supplies verdict check 2."""
+    result = summary.get("monkeys")
+    if not result or not result.get("available"):
+        return section("Matched monkeys", "", "<p>Unavailable (no M1 input or no trades).</p>")
+    rows = []
+    for kind in result["kinds"]:
+        for key in ("net_r", "max_dd_r"):
+            s = kind[key]
+            rows.append(
+                [
+                    str(kind["kind"]),
+                    esc(kind["name"]),
+                    key,
+                    *[f"{s[k]:.3f}" for k in ("real", "p5", "median", "p95")],
+                    f"{s['percentile']:.1f}%",
+                    str(kind["passed"]),
+                ]
+            )
+    return section(
+        "Matched monkeys",
+        "Matched count and long share per symbol; permutations of observed stops and holds. "
+        "Favorable percentiles, lower DD is better; both must be at least 90%. "
+        "Verdict check 2 uses kind B for gap fade where available, monkey 1 otherwise (95%).",
+        table(
+            [
+                "Kind",
+                "Model",
+                "Statistic",
+                "Real R",
+                "p5 R",
+                "Median R",
+                "p95 R",
+                "Percentile",
+                "Pass",
+            ],
+            rows,
+        ),
+    )
+
+
 def random_paths_html(summary: dict) -> str:
     how = (
         "the strategy on seeded random-walk prices with the symbol's real volatility has no "
@@ -721,7 +778,7 @@ def render_report(summary: dict) -> str:
     body = "".join((
         verdict_html(summary), deflated_html(summary), fan_html(summary), numbers_html(summary), ftmo_html(summary),
         random_entries_html(summary), random_fills_html(summary), random_paths_html(summary),
-        robustness_html(summary), drawdown_bounds_html(summary),
+        robustness_html(summary), drawdown_bounds_html(summary), monkeys_html(summary),
     ))  # fmt: skip
     m = summary["meta"]
     title = f"Monte Carlo {m['strategy']} {'-'.join(m['symbols'])}"

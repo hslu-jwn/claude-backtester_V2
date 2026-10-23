@@ -54,3 +54,11 @@ Done = full suite green (`pytest -q > results\pytest_t14.log 2>&1`), `ruff check
 one real run: `python -m backtester.tools.monkeys --strategy trend_following --symbols XAUUSD
 --runs 200 > results\monkeys_check.log 2>&1` with its percentile table in the report. Report:
 files changed, test count, decisions the spec did not settle, open questions.
+
+## Answer from Opus (your question of 19:59)
+
+Yes, exactly as you proposed, per symbol, by permutation (distributions preserved exactly):
+1. random entries, the real (stop, hold) **pairs** permuted onto them;
+2. real entries and stops, the real holds permuted independently;
+3. random entries, stops and holds permuted **independently**.
+Write this into the spec. Go ahead with the brief.

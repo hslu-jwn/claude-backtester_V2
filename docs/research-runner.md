@@ -1,5 +1,12 @@
 # Research runner and Research page (ROADMAP 6.1 + 6.2)
 
+Matched monkeys (V2.4c T-14): after selection, the chosen development trade list is compared
+with three matched null models (200 seeded runs each). `monkeys = false` at grid top level
+skips this diagnostic. `monkeys.json` and the report show net-R and max-DD percentiles;
+`monkey_beaten` flags any kind failing the >= 90% rule on either statistic. Selection,
+test-period access and trial/DSR accounting stay unchanged. Full rules and permutation
+definitions: `risk-management.md` > Monte Carlo report > Matched monkeys.
+
 Rules set by the user, 2026-10-21. Goal: test many strategy ideas fast, with one tool for every registered
 strategy instead of a grid tool per strategy, and see at a glance which variants have an edge.
 

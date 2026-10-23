@@ -52,6 +52,7 @@ TOP_LEVEL = (
     "sensitivity",
     "walk_forward",
     "train_years",
+    "monkeys",
 )
 ID_HASH_LENGTH = 8
 
@@ -99,6 +100,7 @@ class GridSpec:
     sensitivity: bool = True
     walk_forward: str | None = None
     train_years: int = 3
+    monkeys: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -269,6 +271,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("shocks must be true or false")
     if not isinstance(data.get("sensitivity", True), bool):
         raise GridError("sensitivity must be true or false")
+    if not isinstance(data.get("monkeys", True), bool):
+        raise GridError("monkeys must be true or false")
     if "walk_forward" in data and data["walk_forward"] not in ("anchored", "rolling"):
         raise GridError("walk_forward must be anchored or rolling")
     train_years = _number(data, "train_years", 3, 1)
@@ -318,6 +322,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         sensitivity=data.get("sensitivity", True),
         walk_forward=data.get("walk_forward"),
         train_years=train_years,
+        monkeys=data.get("monkeys", True),
     )
     return spec
 
