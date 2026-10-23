@@ -103,15 +103,16 @@ class StrongMoveFilter:
     closed candle before asking `is_strong`.
     """
 
-    def __init__(self, config: StrongMoveConfig | None = None):
+    def __init__(self, config: StrongMoveConfig | None = None, *, atr: Atr | None = None):
         self.config = config = config or StrongMoveConfig()
-        self.atr = Atr(config.atr_period)
+        self.atr = atr if atr is not None else Atr(config.atr_period)
         self._strong: list[bool] = []
 
     def update(self, view: SeriesView) -> bool:
         """Process `view.current`; return whether it is a strong move."""
-        prior_atr = self.atr.current  # ATR of the candles before this one
+        # A sibling filter may already have fed the shared ATR this same closed view.
         self.atr.update(view)
+        prior_atr = self.atr.at(view.cursor - 1) if view.cursor else None
         strong = is_strong_move(view.current, prior_atr, self.config.atr_mult)
         self._strong.append(strong)
         return strong

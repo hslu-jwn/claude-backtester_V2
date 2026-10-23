@@ -22,20 +22,23 @@ still open. A session's record is final once the session is over.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 
 from backtester.core.models import Direction
 from backtester.core.series import SeriesView
-from backtester.detectors.zone import ZoneBox, ZoneState, ZoneTransition
+from backtester.detectors.zone import ZoneBox, ZoneKey, ZoneState, ZoneTransition, zone_key
 from backtester.sessions import SessionInstance
 from backtester.strategy.session_zone_sweep.signals import SetupLink
 from backtester.strategy.session_zone_sweep.zones import (
     SessionZone,
     SessionZoneEvent,
+    SessionZoneKey,
     ZoneBreak,
     ZoneExpired,
     ZoneRoleSet,
+    session_zone_key,
 )
 
 
@@ -64,11 +67,11 @@ class ConfluenceRecord:
 
 class SessionJournal:
     def __init__(self):
-        self._zones: dict[SessionZone, ZoneRecord] = {}
-        self._confluences: dict[tuple[SessionInstance, ZoneBox], ConfluenceRecord] = {}
+        self._zones: dict[SessionZoneKey, ZoneRecord] = {}
+        self._confluences: dict[tuple[SessionInstance, ZoneKey], ConfluenceRecord] = {}
         # the records not ended yet (an end is final), so a candle only looks at those and
         # the time per candle doesn't grow with the history (ROADMAP 6.3 speed)
-        self._open: dict[tuple[SessionInstance, ZoneBox], ConfluenceRecord] = {}
+        self._open: dict[tuple[SessionInstance, ZoneKey], ConfluenceRecord] = {}
         self._sessions: set[SessionInstance] = set()
 
     def on_candle(
@@ -95,16 +98,16 @@ class SessionJournal:
 
     def on_signal(self, session: SessionInstance, confluence: ZoneBox, traded: bool) -> None:
         """A setup of `session` triggered on `confluence`; `traded`: it became an order."""
-        record = self._confluences.get((session, confluence))
+        record = self._confluences.get((session, zone_key(confluence)))
         if record is not None:
             record.traded = record.traded or traded
 
     def _on_zone_event(self, e: SessionZoneEvent, v30: SeriesView | None) -> None:
         if isinstance(e, SessionZone):
             self._sessions.add(e.active_in)
-            self._zones[e] = ZoneRecord(e, v30[e.start_index].ts)
+            self._zones[session_zone_key(e)] = ZoneRecord(e, v30[e.start_index].ts)
             return
-        record = self._zones[e.zone]
+        record = self._zones[session_zone_key(e.zone)]
         if isinstance(e, ZoneRoleSet):
             record.role, record.role_set_at = e.role.value, e.confirmed_at
         elif isinstance(e, ZoneBreak):
@@ -123,7 +126,7 @@ class SessionJournal:
 
     def _on_link(self, link: SetupLink, now: datetime, v5: SeriesView) -> None:
         session = link.zone.active_in
-        key = (session, link.confluence)
+        key = (session, zone_key(link.confluence))
         record = self._confluences.get(key)
         if record is None:
             box = link.confluence
@@ -135,8 +138,9 @@ class SessionJournal:
 
     def _finish(self, t: ZoneTransition) -> None:
         end = "confirmed" if t.state is ZoneState.CONFIRMED else "invalidated"
+        box_key = zone_key(t.zone)
         for key, record in list(self._open.items()):
-            if key[1] == t.zone:
+            if key[1] == box_key:
                 record.end_time, record.end = t.confirmed_at, end
                 del self._open[key]
 
@@ -144,9 +148,15 @@ class SessionJournal:
         """One JSON-ready dict per session that had zones, oldest first. Records still open
         end at `run_end` (`run_end` reason)."""
         out = []
+        zones_by_session = defaultdict(list)
+        confluences_by_session = defaultdict(list)
+        for record in self._zones.values():
+            zones_by_session[record.zone.active_in].append(record)
+        for (session, _), record in self._confluences.items():
+            confluences_by_session[session].append(record)
         for session in sorted(self._sessions, key=lambda s: s.start):
-            zones = [r for r in self._zones.values() if r.zone.active_in == session]
-            confluences = [r for (s, _), r in self._confluences.items() if s == session]
+            zones = zones_by_session[session]
+            confluences = confluences_by_session[session]
             out.append(
                 {
                     "session": session.session.value,

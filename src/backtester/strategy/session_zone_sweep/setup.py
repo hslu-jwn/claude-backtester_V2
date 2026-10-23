@@ -62,8 +62,8 @@ class StructureTracker:
     """5m swings, BOS and with-trend breaks. `update(view)` once per closed candle, in
     order. Same BOS rule as detectors/bos.py; `trend` = direction of the last real BOS."""
 
-    def __init__(self, doji_max_body: float):
-        self._swings = SwingDetector(doji_max_body)
+    def __init__(self, doji_max_body: float, *, swings: SwingDetector | None = None):
+        self._swings = swings if swings is not None else SwingDetector(doji_max_body)
         self.doji_max_body = doji_max_body
         self._open: dict[Direction, SwingPoint | None] = dict.fromkeys(Direction)
         self.trend: Direction | None = None

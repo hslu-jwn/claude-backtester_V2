@@ -78,6 +78,26 @@ class ZoneBox:
         return self.bottom if self.direction is Direction.BULLISH else self.top
 
 
+ZoneKey = tuple[str, str, float, float, int, int, datetime]
+
+
+def zone_key(zone: ZoneBox) -> ZoneKey:
+    """Cheap value identity, including different BPR ranges formed at the same close.
+
+    Spec: confluences.md > Validation. Equal boxes remain the same zone; primitive
+    enum values avoid frozen-dataclass/enum hashing in hot membership checks.
+    """
+    return (
+        zone.kind.value,
+        zone.direction.value,
+        zone.top,
+        zone.bottom,
+        zone.start_index,
+        zone.created_index,
+        zone.created_at,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ZoneTransition(Event):
     """A zone's state change, confirmed by the candle that caused it."""

@@ -39,14 +39,22 @@ from datetime import datetime
 
 from backtester.core.models import Direction
 from backtester.core.series import SeriesView
-from backtester.detectors.atr import Atr
-from backtester.detectors.bpr import BalancedPriceRange, BprConfig, BprDetector
-from backtester.detectors.breaker import BreakerBlock, BreakerDetector
+from backtester.detectors.bpr import BalancedPriceRange, BprConfig
+from backtester.detectors.breaker import BreakerBlock
 from backtester.detectors.equilibrium import deepest_wick, equilibrium_box
-from backtester.detectors.fvg import FairValueGap, FvgDetector
-from backtester.detectors.order_block import OrderBlock, OrderBlockDetector
+from backtester.detectors.fvg import FairValueGap
+from backtester.detectors.order_block import OrderBlock
 from backtester.detectors.settings import DetectorSettings
-from backtester.detectors.zone import ZoneBook, ZoneBox, ZoneKind, ZoneState, ZoneTransition
+from backtester.detectors.shared import DetectorPool
+from backtester.detectors.zone import (
+    ZoneBook,
+    ZoneBox,
+    ZoneKey,
+    ZoneKind,
+    ZoneState,
+    ZoneTransition,
+    zone_key,
+)
 from backtester.sessions import Session, session_of
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import (
@@ -60,10 +68,12 @@ from backtester.strategy.session_zone_sweep.zones import (
     Role,
     SessionZone,
     SessionZoneEvent,
+    SessionZoneKey,
     SessionZoneTracker,
     ZoneBreak,
     ZoneExpired,
     ZoneRoleSet,
+    session_zone_key,
 )
 
 ROLE_DIRECTION = {Role.SUPPORT: Direction.BULLISH, Role.RESISTANCE: Direction.BEARISH}
@@ -109,18 +119,17 @@ class SetupTracker:
         self.detectors = detectors = detectors or DetectorSettings()
         doji = detectors.swings.doji_threshold(symbol)
         self.doji_max_body = doji
-        self.structure = StructureTracker(doji)
-        self._fvg = FvgDetector(doji, detectors.fvg)
-        self._ob = OrderBlockDetector(doji, detectors.order_block)
-        self._bpr = BprDetector(doji, BprConfig(detectors.fvg))
-        self._breaker = (
-            BreakerDetector(doji) if ZoneKind.BREAKER in config.confluence_kinds else None
-        )
-        self._atr = Atr(config.strong_move.atr_period)
+        pool = DetectorPool(doji)
+        self.structure = StructureTracker(doji, swings=pool.swings)
+        self._fvg = pool.fvg(detectors.fvg)
+        self._ob = pool.order_block(detectors.order_block)
+        self._bpr = pool.bpr(BprConfig(detectors.fvg))
+        self._breaker = pool.breaker() if ZoneKind.BREAKER in config.confluence_kinds else None
+        self._atr = pool.atr(config.strong_move.atr_period)
         self._zones = SessionZoneTracker(doji, config)
         self._zone_cursor = -1
-        self._live: dict[SessionZone, LiveZone] = {}
-        self._usable: set[ZoneBox] = set()  # open confluences a setup may use
+        self._live: dict[SessionZoneKey, LiveZone] = {}
+        self._usable: dict[ZoneKey, ZoneBox] = {}  # open confluences, insertion order
         self._recent: list[StructureBreak] = []  # 5m breaks of the last 30m
         self._eq_book = ZoneBook(doji)
         self._eq_confirmed_before = False  # the last candle confirmed an equilibrium
@@ -158,17 +167,18 @@ class SetupTracker:
         for e in events:
             if isinstance(e, ZoneTransition):
                 self.zone_transitions.append(e)
-                if e.state is ZoneState.CONFIRMED and e.zone in self._usable:
+                key = zone_key(e.zone)
+                if e.state is ZoneState.CONFIRMED and key in self._usable:
                     confirmed.append(e.zone)
                 if e.state.finished:
-                    self._usable.discard(e.zone)
+                    self._usable.pop(key, None)
             elif e.zone.kind not in kinds:
                 continue
             elif isinstance(e, FairValueGap):
                 if self.structure.trend is e.direction:  # trend after candle 3
-                    self._usable.add(e.zone)
+                    self._usable[zone_key(e.zone)] = e.zone
             elif isinstance(e, OrderBlock | BreakerBlock | BalancedPriceRange):
-                self._usable.add(e.zone)
+                self._usable[zone_key(e.zone)] = e.zone
         if self.config.use_equilibrium:
             confirmed += self._update_equilibria(v5, breaks)
         return breaks, confirmed
@@ -183,8 +193,10 @@ class SetupTracker:
         # drop out after a transition now or a confirmation by the previous candle, so the
         # filter (which grows with the history) only runs then
         if transitions or self._eq_confirmed_before:
-            still = {*self._eq_book.open_zones, *confirmed}
-            self._equilibrium = {k: z for k, z in self._equilibrium.items() if z in still}
+            # The book and transitions retain the original boxes; membership needs
+            # only object ids, never recursive hashes of immutable zone values.
+            still = {id(z) for z in (*self._eq_book.open_zones, *confirmed)}
+            self._equilibrium = {k: z for k, z in self._equilibrium.items() if id(z) in still}
         self._eq_confirmed_before = bool(confirmed)
         candle = v5.current
         for b in breaks:
@@ -210,43 +222,46 @@ class SetupTracker:
         self._zone_cursor = v30.cursor
         # Spec: strategy-session-zones.md › Session zones, B8. A configured boundary
         # (or missing 30m candle) may fall between zone updates: entries still stop then.
-        self._live = {zone: live for zone, live in self._live.items() if now < zone.active_in.end}
+        self._live = {
+            key: live for key, live in self._live.items() if now < live.zone.active_in.end
+        }
         return touched
 
     def _on_30m(self, view: SeriesView) -> set[Setup]:
         candle = view.current
         closed_at = candle.ts + view.timeframe.duration
-        flipped: set[SessionZone] = set()
+        flipped: set[SessionZoneKey] = set()
         with_trend = self.config.entry_bos_with_trend
         events = self._zones.update(view)
         self.session_zone_events += events
         for e in events:
             if isinstance(e, SessionZone):
-                self._live[e] = LiveZone(e)
+                self._live[session_zone_key(e)] = LiveZone(e)
             elif isinstance(e, ZoneRoleSet):
-                live = self._live[e.zone]
+                live = self._live[session_zone_key(e.zone)]
                 live.role = e.role
                 live.setup = Setup(e.zone, ROLE_DIRECTION[e.role], with_trend)
             elif isinstance(e, ZoneBreak):
                 if e.killed:
-                    self._live.pop(e.zone, None)
+                    self._live.pop(session_zone_key(e.zone), None)
                     continue
-                live = self._live[e.zone]
+                live = self._live[session_zone_key(e.zone)]
                 live.role = e.role
                 live.setup = Setup(e.zone, ROLE_DIRECTION[e.role], with_trend)
-                flipped.add(e.zone)
+                flipped.add(session_zone_key(e.zone))
                 is_reaction = candle.is_red if e.role is Role.RESISTANCE else candle.is_green
                 if is_reaction:
                     live.setup.start_from_flip(candle)
             elif isinstance(e, ZoneExpired):
-                self._live.pop(e.zone, None)
+                self._live.pop(session_zone_key(e.zone), None)
         touched = set()
         session = session_of(closed_at, self.config.sessions)
-        for zone, live in self._live.items():
+        for key, live in self._live.items():
+            zone = live.zone
             setup = live.setup
             if setup is None or session != zone.active_in or not self._trades_in(zone):
                 continue
-            if zone in flipped:
+            if key in flipped:
                 reacted = setup.reaction_open == candle.ts
             else:
                 reacted = setup.on_30m(candle, closed_at, self.doji_max_body)
@@ -266,7 +281,7 @@ class SetupTracker:
             if setup is None or setup.step is not Step.CONFLUENCE or not self._trades_in(live.zone):
                 continue
             own = self.equilibrium_of(setup.bos)
-            open_ = [z for z in self._usable if z.direction is setup.direction]
+            open_ = [z for z in self._usable.values() if z.direction is setup.direction]
             if own is not None and own not in confirmed:
                 open_.append(own)
             for z in open_:

@@ -93,11 +93,20 @@ class OrderBlockDetector(Detector[OrderBlock | ZoneTransition]):
     """Incremental: `update(view)` once per closed candle, in order. Emits the transitions
     of earlier OBs caused by this candle, then an OB that exists from this candle."""
 
-    def __init__(self, doji_max_body: float, config: OrderBlockConfig | None = None):
+    def __init__(
+        self,
+        doji_max_body: float,
+        config: OrderBlockConfig | None = None,
+        *,
+        bos: BosDetector | None = None,
+        strong_move: StrongMoveFilter | None = None,
+    ):
         self.config = config = config or OrderBlockConfig()
         self.doji_max_body = doji_max_body
-        self._bos = BosDetector(SwingDetector(doji_max_body))
-        self._filter = StrongMoveFilter(config.strong_move)
+        self._bos = bos if bos is not None else BosDetector(SwingDetector(doji_max_body))
+        self._filter = (
+            strong_move if strong_move is not None else StrongMoveFilter(config.strong_move)
+        )
         self._book = ZoneBook(doji_max_body)
         self._pending: list[_Pending] = []
 
@@ -117,9 +126,8 @@ class OrderBlockDetector(Detector[OrderBlock | ZoneTransition]):
 
     def update(self, view: SeriesView) -> list[OrderBlock | ZoneTransition]:
         # the swing detector inside checks the call order (once per candle, in order)
-        swings_before = len(self._bos.swings)
         breaks = self._bos.update(view)
-        new_swings = self._bos.swings[swings_before:]
+        new_swings = self._bos.new_swings
         self._filter.update(view)
         events: list[OrderBlock | ZoneTransition] = list(self._book.on_candle(view))
 

@@ -24,6 +24,10 @@ import numpy as np
 from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, SymbolCosts
 
 LOW_PCT, MID_PCT, HIGH_PCT = 5.0, 50.0, 95.0
+# NumPy's contiguous float64 pairwise reduction uses 128-value leaves, splitting
+# larger spans at a multiple of eight. Keep that addition order for identical totals.
+PAIRWISE_BLOCK = 128
+PAIRWISE_LANES = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,13 +97,31 @@ def random_fills(
     cfg = config or RandomFillsConfig()
     rng = np.random.default_rng(cfg.seed)
     base = np.array([t.r_net for t in trades], dtype=float)
-    reduction = np.zeros((cfg.runs, len(trades)))
-    for i, t in enumerate(trades):
-        if t.symbol not in costs:
-            raise KeyError(f"no slippage setting for symbol {t.symbol}")
-        for bound in max_slippage_r(t, costs[t.symbol].slippage, cfg):
-            reduction[:, i] += rng.uniform(0.0, bound, cfg.runs) if bound > 0 else 0.0
-    runs = (base - reduction).sum(axis=1)
+
+    def totals(start: int, stop: int) -> np.ndarray:
+        """Stream trades in their original RNG order, retaining only a small leaf.
+
+        Spec: risk-management.md > Monte Carlo report, C. Reproduce the original
+        matrix sum's pairwise tree, including its floating-point addition order.
+        """
+        size = stop - start
+        if size > PAIRWISE_BLOCK:
+            half = size // 2
+            middle = start + half - half % PAIRWISE_LANES
+            left = totals(start, middle)
+            left += totals(middle, stop)
+            return left
+        reduction = np.zeros((cfg.runs, size))
+        for i in range(start, stop):
+            trade = trades[i]
+            if trade.symbol not in costs:
+                raise KeyError(f"no slippage setting for symbol {trade.symbol}")
+            for bound in max_slippage_r(trade, costs[trade.symbol].slippage, cfg):
+                reduction[:, i - start] += rng.uniform(0.0, bound, cfg.runs) if bound > 0 else 0.0
+        np.subtract(base[start:stop], reduction, out=reduction)
+        return reduction.sum(axis=1)
+
+    runs = totals(0, len(trades))
     p5, p50, p95 = np.percentile(runs, [LOW_PCT, MID_PCT, HIGH_PCT])
     return RandomFillsResult(
         base_net_r=float(base.sum()),

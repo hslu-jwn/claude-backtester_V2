@@ -81,6 +81,19 @@ class SessionZone(Event):
         return self.bottom if role is Role.SUPPORT else self.top
 
 
+SessionZoneKey = tuple[datetime, int, str]
+
+
+def session_zone_key(zone: SessionZone) -> SessionZoneKey:
+    """One high and one low at most are emitted per forming session.
+
+    Spec: strategy-session-zones.md > Session zones. After a data gap two sessions
+    can finalize at one close, so the forming session is part of the identity.
+    Roles/flips retain this identity.
+    """
+    return zone.formed_in.start, zone.confirmed_index, zone.side.value
+
+
 @dataclass(frozen=True, slots=True)
 class ZoneRoleSet(Event):
     """The zone's first role: at its session's start, or by the first close outside it."""

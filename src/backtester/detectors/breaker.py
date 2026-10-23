@@ -47,9 +47,9 @@ class BreakerDetector(Detector[BreakerBlock | ZoneTransition]):
     """Incremental: `update(view)` once per closed candle, in order. Emits the transitions
     of earlier breakers caused by this candle, then a breaker made by this candle's BOS."""
 
-    def __init__(self, doji_max_body: float):
+    def __init__(self, doji_max_body: float, *, bos: BosDetector | None = None):
         self.doji_max_body = doji_max_body
-        self._bos = BosDetector(SwingDetector(doji_max_body))
+        self._bos = bos if bos is not None else BosDetector(SwingDetector(doji_max_body))
         self._book = ZoneBook(doji_max_body)
 
     @classmethod

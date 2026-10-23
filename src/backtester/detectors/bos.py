@@ -68,6 +68,7 @@ class BosDetector(Detector[BreakOfStructure]):
     def __init__(self, swing_detector: SwingDetector):
         self._swing_detector = swing_detector
         self.swings: list[SwingPoint] = []
+        self.new_swings: list[SwingPoint] = []
         # most recent swing of each direction's kind that is not broken yet
         self._open: dict[Direction, SwingPoint | None] = dict.fromkeys(Direction)
         self.trend: Direction | None = None  # direction of the last BOS (None: no BOS yet)
@@ -78,7 +79,7 @@ class BosDetector(Detector[BreakOfStructure]):
 
     def update(self, view: SeriesView) -> list[BreakOfStructure]:
         # the swing detector checks the call order (once per candle, in order)
-        new_swings = self._swing_detector.update(view)
+        self.new_swings = new_swings = self._swing_detector.update(view)
         candle = view.current
         events = []
         for direction, swing in self._open.items():

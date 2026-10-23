@@ -50,9 +50,15 @@ class BprDetector(Detector[BalancedPriceRange | ZoneTransition]):
     """Incremental: `update(view)` once per closed candle, in order. Emits the transitions
     of earlier BPRs caused by this candle, then the BPRs that exist from this candle."""
 
-    def __init__(self, doji_max_body: float, config: BprConfig | None = None):
+    def __init__(
+        self,
+        doji_max_body: float,
+        config: BprConfig | None = None,
+        *,
+        fvg: FvgDetector | None = None,
+    ):
         self.config = config = config or BprConfig()
-        self._fvg = FvgDetector(doji_max_body, config.fvg)
+        self._fvg = fvg if fvg is not None else FvgDetector(doji_max_body, config.fvg)
         self._book = ZoneBook(doji_max_body)
         # FVGs invalidated by one of the last 3 candles and not paired yet: (zone, index)
         self._invalidated: list[tuple[ZoneBox, int]] = []

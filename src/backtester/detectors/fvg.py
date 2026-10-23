@@ -59,9 +59,17 @@ class FvgDetector(Detector[FairValueGap | ZoneTransition]):
     """Incremental: `update(view)` once per closed candle, in order. Emits the
     transitions of earlier FVGs caused by this candle, then an FVG confirmed by it."""
 
-    def __init__(self, doji_max_body: float, config: FvgConfig | None = None):
+    def __init__(
+        self,
+        doji_max_body: float,
+        config: FvgConfig | None = None,
+        *,
+        strong_move: StrongMoveFilter | None = None,
+    ):
         self.config = config = config or FvgConfig()
-        self._filter = StrongMoveFilter(config.strong_move)
+        self._filter = (
+            strong_move if strong_move is not None else StrongMoveFilter(config.strong_move)
+        )
         self._book = ZoneBook(doji_max_body)
         self._next = 0  # cursor expected next
 

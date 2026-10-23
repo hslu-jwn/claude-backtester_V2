@@ -17,14 +17,13 @@ from zoneinfo import ZoneInfo
 
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
-from backtester.detectors.atr import Atr
-from backtester.detectors.bos import BosDetector, BreakOfStructure
-from backtester.detectors.bpr import BprConfig, BprDetector
-from backtester.detectors.breaker import BreakerDetector
-from backtester.detectors.fvg import FvgConfig, FvgDetector
-from backtester.detectors.order_block import OrderBlockConfig, OrderBlockDetector
-from backtester.detectors.swings import SwingDetector, SwingKind, SwingPoint
-from backtester.detectors.zone import ZoneBox, ZoneTransition
+from backtester.detectors.bos import BreakOfStructure
+from backtester.detectors.bpr import BprConfig
+from backtester.detectors.fvg import FvgConfig
+from backtester.detectors.order_block import OrderBlockConfig
+from backtester.detectors.shared import DetectorPool
+from backtester.detectors.swings import SwingKind, SwingPoint
+from backtester.detectors.zone import ZoneBox, ZoneKey, ZoneTransition, zone_key
 
 NEW_YORK = ZoneInfo("America/New_York")
 RECENT = timedelta(days=3)  # zones kept for "inside the BoS move" (moves are hours long)
@@ -72,21 +71,22 @@ class Frame:
         atr_period: int | None = None,
     ):
         self.tf = tf
-        self.structure = BosDetector(SwingDetector(doji_max_body))
+        pool = DetectorPool(doji_max_body)
+        self.structure = pool.bos
         self._zone_detectors = (
-            FvgDetector(doji_max_body, fvg),
-            OrderBlockDetector(doji_max_body, ob),
-            BreakerDetector(doji_max_body),
-            BprDetector(doji_max_body, BprConfig(fvg)),
+            pool.fvg(fvg),
+            pool.order_block(ob),
+            pool.breaker(),
+            pool.bpr(BprConfig(fvg)),
         )
-        self._atr = Atr(atr_period) if atr_period else None
+        self._atr = pool.atr(atr_period) if atr_period else None
         self.tp_levels = tp_levels
         self.view: SeriesView | None = None
         self._cursor = -1
         self._trend_times: list[datetime] = []  # close time of each BoS
         self._trends: list[Direction] = []  # the trend from then on
         self.recent: list[Zone] = []  # zones formed in the last RECENT
-        self.untapped: dict[ZoneBox, Zone] = {}  # tp_levels: never tapped since formed
+        self.untapped: dict[ZoneKey, Zone] = {}  # tp_levels: never tapped since formed
         # tp_levels: swings no later wick reached, sorted by how soon a wick reaches them
         self._highs: list[tuple[float, int, SwingPoint]] = []  # (price, n, swing) ascending
         self._lows: list[tuple[float, int, SwingPoint]] = []  # (-price, n, swing) ascending
@@ -131,13 +131,13 @@ class Frame:
         for detector in self._zone_detectors:
             for e in detector.update(view):
                 if isinstance(e, ZoneTransition):
-                    self.untapped.pop(e.zone, None)
+                    self.untapped.pop(zone_key(e.zone), None)
                     continue
                 zone = Zone(e.zone, self.tf, view[e.zone.start_index].ts)
                 self.recent.append(zone)
                 self.new_zones.append(zone)
                 if self.tp_levels:
-                    self.untapped[e.zone] = zone
+                    self.untapped[zone_key(e.zone)] = zone
         if self.tp_levels:
             del self._highs[: bisect_right(self._highs, (candle.high, float("inf")))]
             del self._lows[: bisect_right(self._lows, (-candle.low, float("inf")))]

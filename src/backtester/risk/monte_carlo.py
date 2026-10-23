@@ -20,6 +20,7 @@ Choices (simplifications until the account simulator, ROADMAP 5.2):
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, time
@@ -97,7 +98,7 @@ def build_days(trades: Sequence, start: date, end: date) -> list[Day]:
         d = t.exit_time.astimezone(PRAGUE).date()
         i = index.get(d)
         if i is None:  # weekend or outside the period
-            i = next((k for k, w in enumerate(wd) if w >= d), len(wd) - 1)
+            i = min(bisect_left(wd, d), len(wd) - 1)
         buckets[i].append((n, t, d))
     days = []
     for bucket in buckets:
@@ -225,11 +226,34 @@ def _day_balances(path: np.ndarray, counts: np.ndarray) -> np.ndarray:
     return path[np.concatenate(([0], np.cumsum(counts)))]
 
 
-def _one_run(days: list[Day], order, risk: float, config: MonteCarloConfig) -> dict:
+@dataclass(frozen=True, slots=True)
+class _RunSequence:
+    r: np.ndarray
+    counts: np.ndarray
+    streak: int
+
+
+def _run_sequence(days: list[Day], order) -> _RunSequence:
+    """Risk-independent order data, reused across risks for just this permutation.
+
+    Spec: risk-management.md > Monte Carlo report, A. No run-by-trade cache is kept.
+    """
     r_seq = np.concatenate([days[i].r for i in order]) if len(order) else np.zeros(0)
     counts = np.array([len(days[i].r) for i in order], dtype=int)
-    path = _path(r_seq, risk, config.start_balance)
-    day_bal = _day_balances(path, counts)
+    return _RunSequence(r_seq, counts, longest_streak(r_seq, -1))
+
+
+def _one_run(
+    days: list[Day],
+    order,
+    risk: float,
+    config: MonteCarloConfig,
+    *,
+    sequence: _RunSequence | None = None,
+) -> dict:
+    sequence = sequence if sequence is not None else _run_sequence(days, order)
+    path = _path(sequence.r, risk, config.start_balance)
+    day_bal = _day_balances(path, sequence.counts)
     if len(day_bal) > 1:
         prev, curr = day_bal[:-1], day_bal[1:]
         # Post-ruin (prev == 0): return is 0.0. When dropping to 0 from > 0: return is -1.0.
@@ -243,7 +267,7 @@ def _one_run(days: list[Day], order, risk: float, config: MonteCarloConfig) -> d
         "max_dd": _max_dd(path),
         "dd_days": _longest_underwater(day_bal),
         "worst_day": float(ratio.min()),
-        "streak": longest_streak(r_seq, -1),
+        "streak": sequence.streak,
         "months": monthly_gains(day_bal, config.month_days),
     }
 
@@ -468,16 +492,17 @@ def ftmo_by_risk(days: list[Day], orders, config: MonteCarloConfig) -> dict:
     """The FTMO 2-Step summary (`_ftmo_summary`) for each risk level over the reshuffled
     `orders`; no account statistics (the pass-probability card needs only this)."""
     n = len(days)
-    out = {}
-    for risk in config.risk_levels:
-        acc = {"attempts": 0, "unfinished_attempts": 0, "passes": 0,
+    accumulators = {
+        risk: {"attempts": 0, "unfinished_attempts": 0, "passes": 0,
                "fail_daily": 0, "fail_max": 0, "days_to_pass": [],
-               "funded_observed": 0, "funded_lost": 0}  # fmt: skip
-        for o in orders:
-            seq = [(p, days[i]) for p, i in enumerate(o) if len(days[i].r)]
+               "funded_observed": 0, "funded_lost": 0}
+        for risk in config.risk_levels
+    }  # fmt: skip
+    for o in orders:
+        seq = [(p, days[i]) for p, i in enumerate(o) if len(days[i].r)]
+        for risk, acc in accumulators.items():
             _ftmo_run(seq, n, risk, config, acc)
-        out[risk] = _ftmo_summary(acc)
-    return out
+    return {risk: _ftmo_summary(acc) for risk, acc in accumulators.items()}
 
 
 def run_monte_carlo(
@@ -496,10 +521,16 @@ def run_monte_carlo(
     actual_order = np.arange(n)
     result: dict = {"config": config, "days": n, "risks": {}}
     ftmo = ftmo_by_risk(days, orders, config)
+    runs_by_risk = {risk: [] for risk in config.risk_levels}
+    for order in orders:
+        sequence = _run_sequence(days, order)
+        for risk, runs in runs_by_risk.items():
+            runs.append(_one_run(days, order, risk, config, sequence=sequence))
+    sequence = _run_sequence(days, actual_order)
     for risk in config.risk_levels:
-        runs = [_one_run(days, o, risk, config) for o in orders]
+        runs = runs_by_risk[risk]
         mat = np.array([x["day_bal"] for x in runs])
-        actual = _one_run(days, actual_order, risk, config)["day_bal"]
+        actual = _one_run(days, actual_order, risk, config, sequence=sequence)["day_bal"]
         result["risks"][risk] = {
             "stats": _risk_stats(runs, const, config),
             "fan": _fan(mat, actual, config),

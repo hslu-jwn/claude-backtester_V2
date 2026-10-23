@@ -10,6 +10,7 @@ the two equal).
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Sequence
 from datetime import date, timedelta
 from zoneinfo import ZoneInfo
@@ -34,8 +35,11 @@ def daily_net_r(trades: Sequence, start: date, end: date) -> np.ndarray:
     out = np.zeros(len(days))
     if not days:
         return out
+    index = {day: i for i, day in enumerate(days)}
     for t in trades:
         day = t.exit_time.astimezone(PRAGUE).date()
-        i = next((k for k, w in enumerate(days) if w >= day), len(days) - 1)
+        i = index.get(day)
+        if i is None:
+            i = min(bisect_left(days, day), len(days) - 1)
         out[i] += t.r_net
     return out

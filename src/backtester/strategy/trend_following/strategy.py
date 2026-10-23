@@ -140,20 +140,16 @@ class TrendFollowing(Strategy):
 
     def _event(self, candle: Candle, atr: float | None) -> Direction | None:
         signal = self.config.signal
-        # every indicator is fed every candle, whatever the signal
-        channel = self._channel.update(candle)
-        sma_cross = self._sma_cross.update(candle.close, atr)
-        self._kama.update(candle.close)
-        momentum = self._momentum.update(candle.close)
-        dunnigan = self._dunnigan.update(candle)
         if signal is Signal.SMA:
-            return sma_cross
+            return self._sma_cross.update(candle.close, atr)
         if signal is Signal.KAMA:
+            self._kama.update(candle.close)
             return self._kama.signal
         if signal is Signal.MOMENTUM:
-            return momentum
+            return self._momentum.update(candle.close)
         if signal is Signal.DUNNIGAN:
-            return dunnigan
+            return self._dunnigan.update(candle)
+        channel = self._channel.update(candle)
         if channel is None:  # breakout
             return None
         for direction, level in ((Direction.BULLISH, channel[0]), (Direction.BEARISH, channel[1])):

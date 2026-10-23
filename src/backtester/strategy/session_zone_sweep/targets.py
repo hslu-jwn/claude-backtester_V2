@@ -33,7 +33,8 @@ from backtester.core.series import SeriesView
 from backtester.detectors.equilibrium import EquilibriumConfig, equilibrium_stop_loss
 from backtester.detectors.order_block import OrderBlockConfig, OrderBlockDetector
 from backtester.detectors.settings import DEFAULT_DETECTORS
-from backtester.detectors.swings import SwingDetector, SwingKind, SwingPoint
+from backtester.detectors.shared import DetectorPool
+from backtester.detectors.swings import SwingKind, SwingPoint
 from backtester.detectors.zone import ZoneBox, ZoneState, ZoneTransition
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.setup import EntrySignal
@@ -61,9 +62,15 @@ class UnmitigatedOrderBlocks:
     """Order blocks never tapped so far. `update(view)` once per closed candle, in order."""
 
     def __init__(
-        self, doji_max_body: float, order_block: OrderBlockConfig = DEFAULT_DETECTORS.order_block
+        self,
+        doji_max_body: float,
+        order_block: OrderBlockConfig = DEFAULT_DETECTORS.order_block,
+        *,
+        detector: OrderBlockDetector | None = None,
     ):
-        self._ob = OrderBlockDetector(doji_max_body, order_block)
+        self._ob = (
+            detector if detector is not None else OrderBlockDetector(doji_max_body, order_block)
+        )
         self.zones: list[ZoneBox] = []
 
     def update(self, view: SeriesView) -> None:
@@ -89,8 +96,11 @@ class ObstacleTracker:
     def __init__(
         self, doji_max_body: float, order_block: OrderBlockConfig = DEFAULT_DETECTORS.order_block
     ):
-        self._swings = SwingDetector(doji_max_body)
-        self._obs = UnmitigatedOrderBlocks(doji_max_body, order_block)
+        pool = DetectorPool(doji_max_body)
+        self._swings = pool.swings
+        self._obs = UnmitigatedOrderBlocks(
+            doji_max_body, order_block, detector=pool.order_block(order_block)
+        )
         self._untouched: list[SwingPoint] = []
 
     def update(self, view: SeriesView) -> None:

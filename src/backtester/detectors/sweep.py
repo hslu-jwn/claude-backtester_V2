@@ -43,6 +43,8 @@ Edge cases (confirmed by the user, spec › Liquidity sweep):
 from __future__ import annotations
 
 import math
+from bisect import bisect_left, bisect_right, insort
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from numbers import Integral
@@ -141,6 +143,57 @@ class _Side:
     candidate: _Candidate | None = None
 
 
+class _BreakoutWindow:
+    """Last N non-doji candles, with rolling wick extremes and ordered closes.
+
+    Spec: confluences.md > Liquidity sweep, two closes cancel / wick first.
+    Candidates can change levels even during a doji run: queries use the current
+    level, while each non-doji candle enters and leaves the window only once.
+    """
+
+    def __init__(self, size: int):
+        self.size = size
+        self._next = 0
+        self._candles: deque[tuple[int, float]] = deque()
+        self._closes: list[float] = []
+        self._highs: deque[tuple[int, float]] = deque()  # increasing highs
+        self._lows: deque[tuple[int, float]] = deque()  # decreasing lows
+
+    def add(self, candle: Candle) -> None:
+        index = self._next
+        self._next += 1
+        self._candles.append((index, candle.close))
+        insort(self._closes, candle.close)
+        if len(self._candles) > self.size:
+            _, close = self._candles.popleft()
+            del self._closes[bisect_left(self._closes, close)]
+        for queue, price, sign in ((self._highs, candle.high, 1), (self._lows, candle.low, -1)):
+            while queue and sign * queue[-1][1] >= sign * price:
+                queue.pop()
+            queue.append((index, price))
+            while queue[0][0] <= index - self.size:
+                queue.popleft()
+
+    def accepted(self, direction: Direction, level: float, wick_first: bool) -> float | None:
+        if len(self._candles) < self.size:
+            return None
+        if not beyond(direction, self._candles[-1][1], level):
+            return None
+        bearish = direction is Direction.BEARISH
+        if wick_first:
+            extreme = self._highs[0][1] if bearish else self._lows[0][1]
+            if not beyond(direction, extreme, level):
+                return None
+            i = (
+                bisect_right(self._closes, level)
+                if bearish
+                else bisect_left(self._closes, level) - 1
+            )
+            return self._closes[i]  # at least the newest close qualifies
+        accepted = self._closes[0] if bearish else self._closes[-1]
+        return accepted if beyond(direction, accepted, level) else None
+
+
 class SweepDetector(Detector[LiquiditySweep]):
     """Incremental: `update(view)` once per closed candle, in order. Runs its own BOS
     detector on the same view (`bos`); the current candle's BOS are in `breaks`."""
@@ -151,6 +204,7 @@ class SweepDetector(Detector[LiquiditySweep]):
         self.bos = BosDetector(SwingDetector(doji_max_body))
         self._atr = Atr(self.config.atr_period)
         self._sides = {d: _Side() for d in Direction}
+        self._breakout = _BreakoutWindow(self.config.cancel_closes)
         self.breaks: list[BreakOfStructure] = []
 
     @classmethod
@@ -167,6 +221,8 @@ class SweepDetector(Detector[LiquiditySweep]):
         self.breaks = self.bos.update(view)
         breaks = {b.direction: b for b in self.breaks}
         new_swings = self.bos.swings[swings_before:]
+        if self.config.two_closes_cancel and not is_doji(view.current, self.doji_max_body):
+            self._breakout.add(view.current)
         events = []
         for direction, side in self._sides.items():
             c = side.candidate
@@ -222,24 +278,11 @@ class SweepDetector(Detector[LiquiditySweep]):
         c = side.candidate
         if c is None:
             return
-        level = c.swept[-1].price
-        counted, closes = 0, []
-        for i in range(view.cursor, -1, -1):
-            candle = view[i]
-            if is_doji(candle, self.doji_max_body):
-                continue
-            closed = beyond(direction, candle.close, level)
-            wick_only = self.config.cancel_wick_first and counted > 0
-            if not (beyond(direction, wick(direction, candle), level) if wick_only else closed):
-                return
-            counted += 1
-            if closed:
-                closes.append(candle.close)
-            if counted == self.config.cancel_closes:
-                break
-        else:
+        accepted = self._breakout.accepted(
+            direction, c.swept[-1].price, self.config.cancel_wick_first
+        )
+        if accepted is None:
             return
-        accepted = min(closes) if direction is Direction.BEARISH else max(closes)
         side.levels = [s for s in side.levels if not beyond(direction, accepted, s.price)]
         side.candidate = None
 
