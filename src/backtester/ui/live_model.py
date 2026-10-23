@@ -160,14 +160,16 @@ def today_bar(status: dict) -> dict:
 def ftmo_bars(status: dict) -> list[dict]:
     """[daily, max]: loss used against FTMO's 5 % daily and 10 % max limits.
 
+    Spec: live-trading.md > FTMO daily loss (rule set by the user, 2026-10-22).
+    Both monetary limits use the initial balance; daily loss comes from day P/L money.
     `used` is None when the numbers are missing (the page shows "–")."""
     guard = status.get("guard") or {}
     daily_limit = _number(guard.get("ftmo_daily_percent")) or _GUARD.ftmo_daily_loss_percent
     max_limit = _number(guard.get("ftmo_max_percent")) or _GUARD.ftmo_max_loss_percent
-    pl = _number(status.get("day_pl_percent"))
+    pl = _number(status.get("day_pl"))
     equity = _number(status.get("equity"))
     initial = _number(status.get("initial_balance"))
-    daily_used = None if pl is None else max(0.0, -pl)
+    daily_used = None if pl is None or not initial else max(0.0, -pl / initial * 100)
     max_used = None
     if equity is not None and initial:
         max_used = max(0.0, (initial - equity) / initial * 100)

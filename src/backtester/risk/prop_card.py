@@ -37,7 +37,8 @@ from backtester.risk.monte_carlo import (
 
 # 2: funded account risks on the initial balance (2026-10-20); 3: fixed and adaptive lines,
 # average days to pass (ROADMAP 5.7); bump when the card's numbers or format change
-CARD_VERSION = 3
+# 4: B1-B3 decisions (2026-10-22): full passing days, unfinished share, entry-known risk
+CARD_VERSION = 4
 CACHE_FILE = "prop_firm.json"
 DEFAULT_FIRM = "ftmo_2step"
 
@@ -84,6 +85,9 @@ def _row(risk: float, ftmo: dict) -> dict:
     return {
         "risk": risk,
         "attempts": ftmo["attempts"],
+        "unfinished_attempts": ftmo["unfinished_attempts"],
+        "total_attempts": ftmo["total_attempts"],
+        "unfinished_share": ftmo["unfinished_share"],
         "passes": ftmo["passes"],
         "pass_probability": ftmo["pass_probability"],
         "fail_daily": ftmo["fail_daily"],

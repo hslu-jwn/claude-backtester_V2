@@ -134,13 +134,13 @@ def test_new_trade_is_cut_to_the_remaining_budget():
     assert bal == pytest.approx(102_250.0) and stats.get("skipped", 0) == 0
 
 
-def test_open_trade_counts_at_realised_loss_beyond_one_r():
-    # trade 0 will lose 1.5 R: it counts 1,500 while open; budget 3 %: 1,500 left for trade 1
+def test_open_trade_counts_at_initial_risk_even_if_it_later_loses_more():
+    # Trade 0 reserves 1,000 while open. Its later 1.5 R loss is unknown at trade 1's entry.
     d = day(("in", 0, -1.5), ("in", 1, 1.0), ("out", 1, 1.0), ("out", 0, -1.5))
-    _, bal, _ = play(d, adaptive=AdaptiveRisk(daily_budget=0.025))  # 1,000 left -> full 1,000
+    _, bal, _ = play(d, adaptive=AdaptiveRisk(daily_budget=0.025))  # 1,500 left -> full 1,000
     assert bal == pytest.approx(100_000.0 - 1_500.0 + 1_000.0)
-    _, bal, _ = play(d, adaptive=AdaptiveRisk(daily_budget=0.0225))  # 750 left -> cut to 750
-    assert bal == pytest.approx(100_000.0 - 1_500.0 + 750.0)
+    _, bal, _ = play(d, adaptive=AdaptiveRisk(daily_budget=0.0225))  # 1,250 left -> full 1,000
+    assert bal == pytest.approx(100_000.0 - 1_500.0 + 1_000.0)
 
 
 def test_loss_so_far_uses_up_the_budget():
@@ -178,7 +178,7 @@ def test_breach_is_still_detected_with_a_daily_limit_below_the_budget():
     assert status == "daily"
 
 
-# ----- fixed-risk path unchanged -----------------------------------------------------------
+# ----- fixed-risk regression after B2 ------------------------------------------------------
 
 
 @dataclass
@@ -205,15 +205,17 @@ def golden_trades():
     return trades, days[0], days[-1]
 
 
-# numbers of the code before ROADMAP 5.7, same trades, seed 11 / MC seed 42, 30 runs
+# B2 (user, 2026-10-22): play passing days to the close. Account-path statistics are unchanged;
+# FTMO counts/times now include later trades on those days (see test_review_b_risk.py).
+# Same trades, seed 11 / MC seed 42, 30 runs.
 GOLDEN = {
-    0.005: (38, 38, 0, 0, 73.0, 27, 0.0, 157526.51649220887, 6.627505823080764),
-    0.01: (64, 63, 0, 1, 40.0, 43, 0.46511627906976744, 244683.78272027196, 12.906836610244342),
-    0.015: (126, 106, 0, 20, 26.0, 90, 0.9777777777777777, 374816.91141752165, 18.85956405435207),
+    0.005: (35, 35, 0, 0, 74.0, 26, 0.0, 157526.51649220887, 6.627505823080764),
+    0.01: (62, 60, 0, 2, 42.0, 41, 0.43902439024390244, 244683.78272027196, 12.906836610244342),
+    0.015: (124, 101, 1, 22, 29.0, 85, 0.9764705882352941, 374816.91141752165, 18.85956405435207),
 }  # fmt: skip
 
 
-def test_fixed_risk_numbers_are_bit_identical_to_before():
+def test_fixed_risk_regression_with_full_passing_days():
     trades, s, e = golden_trades()
     res = mc.run_monte_carlo(trades, s, e, MonteCarloConfig(runs=30, fan_paths=0))
     for risk, want in GOLDEN.items():

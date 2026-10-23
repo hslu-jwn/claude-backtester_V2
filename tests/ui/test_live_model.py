@@ -100,7 +100,8 @@ def test_heartbeat_stale():
 
 
 def test_ftmo_bars():
-    status = {"equity": 96_000.0, "initial_balance": 100_000.0, "day_pl_percent": -2.5,
+    status = {"equity": 96_000.0, "initial_balance": 100_000.0, "day_pl": -2_500.0,
+              "day_pl_percent": -2_500 / 98_500 * 100,
               "guard": {"ftmo_daily_percent": 5.0, "ftmo_max_percent": 10.0}}  # fmt: skip
     daily, mx = m.ftmo_bars(status)
     assert daily["used"] == 2.5 and daily["fraction"] == 0.5 and daily["left"] == 2.5
@@ -109,10 +110,10 @@ def test_ftmo_bars():
 
 
 def test_ftmo_bars_gain_and_breach_and_missing():
-    gain = m.ftmo_bars({"equity": 105_000.0, "initial_balance": 100_000.0, "day_pl_percent": 3.0})
+    gain = m.ftmo_bars({"equity": 105_000.0, "initial_balance": 100_000.0, "day_pl": 3_000.0})
     assert gain[0]["used"] == 0 and gain[1]["used"] == 0 and gain[0]["fraction"] == 0
     breach = m.ftmo_bars({"equity": 89_000.0, "initial_balance": 100_000.0,
-                          "day_pl_percent": -6.0})  # fmt: skip
+                          "day_pl": -6_000.0})  # fmt: skip
     assert breach[0]["level"] == "breach" and breach[0]["fraction"] == 1.0
     assert breach[1]["level"] == "breach" and breach[1]["left"] == 0
     none = m.ftmo_bars({})

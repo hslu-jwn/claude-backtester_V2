@@ -573,12 +573,16 @@ def ftmo_html(summary: dict) -> str:
     ft = [d["ftmo"] for d in risks.values()]
 
     def share(f, key):
-        return f"{f[key]} ({f[key] / f['attempts'] * PERCENT:.0f} %)" if f["attempts"] else "-"
+        total = f["total_attempts"]
+        return f"{f[key]} ({f[key] / total * PERCENT:.0f} %)" if total else "-"
 
     rows = [
-        ["Attempts simulated", *[str(f["attempts"]) for f in ft]],
+        ["Attempts simulated (all)", *[str(f["total_attempts"]) for f in ft]],
+        ["Finished attempts", *[str(f["attempts"]) for f in ft]],
         ["Pass probability (both phases)",
-         *[fmt(f["pass_probability"] * PERCENT, ".1f", " %") for f in ft]],
+         *[fmt(f["pass_probability"] * PERCENT, ".1f", " %") if f["attempts"] else "-" for f in ft]],
+        ["Unfinished attempts (share of all)",
+         *[f"{f['unfinished_attempts']} ({f['unfinished_share'] * PERCENT:.1f} %)" for f in ft]],
         ["Failed: daily loss", *[share(f, "fail_daily") for f in ft]],
         ["Failed: max loss", *[share(f, "fail_max") for f in ft]],
         ["Median days to pass", *[fmt(f["median_days_to_pass"], ".0f") for f in ft]],
@@ -590,7 +594,9 @@ def ftmo_html(summary: dict) -> str:
         f"each reshuffled order is played as FTMO challenge attempts (Phase 1 +"
         f"{cfg.p1_target * PERCENT:g} %, Phase 2 +{cfg.p2_target * PERCENT:g} %, daily loss "
         f"{cfg.daily_loss * PERCENT:g} %, max loss {cfg.max_loss * PERCENT:g} %). Open trades "
-        "count as if at their stop, so the pass rate is a little too low.",
+        "reserve their initial risk in adaptive replay; fixed replay uses the conservative "
+        "stop-loss approximation. Passing days are played to the close. Pass probability "
+        "uses finished attempts; unfinished attempts are a count and share of all attempts.",
         table(head, rows),
     )
 

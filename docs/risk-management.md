@@ -189,9 +189,14 @@ clear verdict.
 - **FTMO 2-Step** on each reshuffled run (rules in › Prop-firm field): Phase 1 +10 %, Phase 2 +5 %, daily loss
   5 % and max loss 10 % (static) of the initial balance, at least 4 trading days (days with a trade). Attempts
   follow each other along the run (a new attempt starts the day after the last one ended, fresh balance).
+  **Daily-loss base** (rule set by the user, 2026-10-22): daily loss = balance at FTMO midnight
+  Europe/Prague minus current equity; the limit = `daily_loss` x initial balance, regardless of the
+  day-start balance. The live guard uses `ftmo_daily_loss_percent / 100` for this fraction.
   **Daily loss approximation** (user, 2026-10-15): the R list has no floating P/L, so a trade still open counts
   as if at its stop: the day's worst point is checked at every entry and exit of the day as closed P/L of the
   day so far minus, for each open trade, the risk x max(1, -r_net). Conservative (pass rate a bit too low).
+  Adaptive replay instead reserves only each open trade's initial risk money; its eventual R is applied
+  only at its exit (rule set by the user, 2026-10-22; see Adaptive risk below).
   Output per risk: pass probability (both phases), fails split daily / max loss, median days to pass,
   P(funded account lost within ⚙️ **126** trading days).
   **Funded account** (rule set by the user, 2026-10-20): risk per trade = risk x the **initial** balance (not the
@@ -200,9 +205,18 @@ clear verdict.
   Implementation details (chosen by Claude 2026-10-15, `risk/monte_carlo.py`): max drawdown on the closed balance
   after every trade, fan / worst day / months on day-end balances; only full 21-day months; a trade exiting on a
   weekend moves to the next weekday; reaching a limit counts as a breach, daily loss checked before max loss;
-  a phase passes at the first exit with the target reached and >= 4 trade days; each phase and the funded account
-  start fresh, a new attempt starts the next day; unfinished attempts at the data end are not counted; the
-  funded loss rate counts only accounts lost or watched the full 126 days. **Known gap:** a trade open across
+  **Passing days and unfinished attempts** (rule set by the user, 2026-10-22): a phase passes only
+  after the whole day is played without a breach, with the target reached on its closing balance and
+  >= 4 trade days. Later trades that day can lose the target or breach a limit. Each phase and the funded
+  account start fresh, a new attempt starts the next day. At the data end, an attempt still in either
+  challenge phase is unfinished and reported separately as a count and share of all attempts. No attempt
+  starts without a remaining trading day. `attempts` retains the finished count; `unfinished_attempts`
+  is the unfinished count; `total_attempts` is their sum; `unfinished_share` is unfinished / total
+  (0 when there are no attempts). Pass probability = passes / finished attempts (0 when none finish;
+  the UI shows "—"), with unfinished share displayed alongside it, for fixed and adaptive risk.
+  The full Monte Carlo HTML report and adaptive-risk sweep (JSON, CSV, Markdown) also retain
+  unfinished count and share (rule set by the user, 2026-10-22).
+  The funded loss rate counts only accounts lost or watched the full 126 days. **Known gap:** a trade open across
   midnight Prague counts only from the start of its exit day, not on its entry day (daily loss slightly
   undercounted for overnight trades; none for the gap fade).
   **Post-ruin statistics:** a daily or full-month block starting with a non-positive balance has
@@ -344,9 +358,10 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
     Base risk in the challenge = a % of the current balance as before; in the funded account a % of the initial
     balance (12.14); the factor applies on top.
   - **Daily risk budget** ⚙️ **3 %** of the initial balance (rule (a), user 2026-10-20): a new trade's risk is cut
-    so that today's loss so far + the risk of every open trade (at its stop, as in the daily-loss approximation) +
+    so that today's loss so far + the initial risk money of every open trade +
     the new trade's risk stays ≤ 3 %; if not even the floor risk fits, the trade is skipped. With stops holding a day
-    cannot lose more than 3 %, so the 5 % daily limit is out of reach.
+    cannot lose more than 3 %, so the 5 % daily limit is out of reach. Losses beyond the stop can still breach
+    at the exit; they cannot be anticipated at entry (rule set by the user, 2026-10-22).
   - Same limits in the challenge and the funded account (FTMO 2-Step: 5 % daily, 10 % static max loss).
   - **Shown:** the prop-firm card has, per base risk, a line "fixed" and a line "adaptive" (pass probability, fails
     daily / max, average and median days to pass, funded lost, and for adaptive the share of trades the budget skipped).
@@ -354,10 +369,13 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
     to be confirmed): (1) the equity at the entry is the *closed balance* then (the R list has no floating P/L); (2)
     the risk $ of a trade is fixed at its entry (factor x base) and its exit P/L = r x that risk $; exits are matched
     to entries by a trade id on the day's events; (3) "today's loss so far" = day start balance minus closed
-    balance, not below 0; (4) the new trade counts at 1 x its risk $ against the budget (its own r is not used, that
-    would skip losers by hindsight), open trades at risk $ x max(1, -r); (5) a skipped trade's R is not taken and
+    balance, not below 0; (4) every entry decision and the open-risk loss approximation use only the initial
+    risk money fixed at each open trade's entry, never its later result (rule set by the user, 2026-10-22).
+    This includes portfolio weights: the weighted initial risk is reserved once; weighted R is converted
+    back to the trade's R only on exit. The new trade also counts at 1 x its initial risk money;
+    (5) a skipped trade's R is not taken and
     the day still counts as a trading day; (6) a trade open from an earlier day is entered at the day start with the
-    risk of that moment. Fixed risk (`adaptive=None`) is bit-identical to the numbers before 5.7.
+    risk of that moment. Fixed and adaptive paths both apply the day-end pass rule above.
   - **Variant sweep** (user, 2026-10-20: "we need to backtest all these variants"): base risk, floor and daily budget
     are swept on the trades of **every strategy**; best variant chosen on the development years (before the
     2021-09-14 cut-off), checked once on the later MT5 period and across strategies; the defaults above stay until
@@ -369,8 +387,10 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
   **Built 2026-10-20 (to be checked by the user):**
   - *Card* (`risk/prop_card.py`, `ui/prop_firm_card.py`): the run's R trades (trades.csv, all symbols as one account) go
     through kind A (day reshuffle, ⚙️ 1,000 runs, seed 42) and the FTMO 2-Step simulation at 0.5 / 1 / 1.5 % risk
-    (the `MonteCarloConfig` defaults). Rows: pass probability (both phases), failed daily loss / max loss (share of all
-    attempts), median days to pass, funded account lost within 126 days; "—" where no attempt finished. Below the
+    (the `MonteCarloConfig` defaults). Rows: pass probability (both phases, passes / finished attempts),
+    unfinished share of all attempts (rule set by the user, 2026-10-22), failed daily loss / max loss (share of all
+    attempts), median days to pass, funded account lost within 126 days; "—" for pass probability where no attempt
+    finished, while unfinished share is still shown. Below the
     table one line says how it is estimated (reshuffled trading days; open trades count as at their stop, so the
     daily-loss check is conservative). **Too little data** (⚙️ `PropCardConfig`: fewer than **100** trades or fewer than
     **120** weekdays in the run's period; limits accepted by the user 2026-10-20) shows the reason instead
@@ -398,7 +418,10 @@ An extra field in the backtest, added later (rule set by the user): simulates FT
 | Max loss | 10%, static | 10%, end-of-day trailing |
 | Other | min. 4 trading days | Best Day Rule: best day ≤ 50% of positive days' profit |
 
-The daily loss counts closed trades plus floating P/L and resets at midnight CE(S)T.
+The daily loss counts closed trades plus floating P/L and resets at midnight Europe/Prague.
+Daily loss is day-start balance minus current equity; its monetary limit is the daily-loss
+percentage x initial balance (rule set by the user, 2026-10-22). The personal daily stop remains
+a percentage of the day-start balance.
 
 ## Components (`risk/`)
 1. **RiskConfig** (`config.py`): all settings above, plus per-symbol contract specs and costs. Fully editable in the UI.

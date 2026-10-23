@@ -18,6 +18,13 @@ Windows Credential Manager, DEMO LOCK in every order function, `OrderLog`).
   rounded down to the volume step; below the minimum lot -> no trade, logged.
 - **Daily stop -2 %** (closed + open P/L since the FTMO day start, midnight Europe/Prague): close own
   positions, no new orders until the next day. FTMO's own limits (5 % daily, 10 % max) stay checked too.
+- **FTMO daily loss** (rule set by the user, 2026-10-22): loss = balance at midnight Europe/Prague
+  minus current equity (closed and floating P/L); the limit is the configured daily-loss percentage
+  x **initial balance**, not a percentage of the day-start balance. Reaching the limit is a breach.
+  The bot applies this through `risk/prop_rules.py`; its personal daily stop keeps the day-start base.
+  On the Live page, daily loss used in % = loss / initial balance x 100, and the used fraction of
+  the limit = loss / (daily-loss percentage / 100 x initial balance), floored at zero for gains.
+  If initial balance or day-loss money is missing, the FTMO daily bar shows no value.
 - **Emergency stop:** close all own positions (by `MAGIC`) and stop the bot; from the Live page and Telegram.
 
 ## Where it runs

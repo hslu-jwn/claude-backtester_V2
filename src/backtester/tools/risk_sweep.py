@@ -157,6 +157,8 @@ def _play(group: tuple) -> list[dict]:
         rows.append({
             "label": v.label, "fixed": v.is_fixed, "base": base, "floor": floor, "budget": budget,
             "pass_probability": s["pass_probability"], "attempts": s["attempts"],
+            "unfinished_attempts": s["unfinished_attempts"],
+            "total_attempts": s["total_attempts"], "unfinished_share": s["unfinished_share"],
             "fail_daily": s["fail_daily"], "fail_max": s["fail_max"],
             "average_days_to_pass": s["average_days_to_pass"],
             "median_days_to_pass": s["median_days_to_pass"],
@@ -463,13 +465,18 @@ def _num(x, digits: int = 1) -> str:
 
 def _row_cells(r: dict) -> str:
     return (
-        f"{_pct(r['pass_probability'])} | {r['fail_daily']} / {r['fail_max']} | "
+        f"{_pct(r['pass_probability'])} | "
+        f"{r['unfinished_attempts']} ({_pct(r['unfinished_share'])}) | "
+        f"{r['fail_daily']} / {r['fail_max']} | "
         f"{_num(r['average_days_to_pass'])} / {_num(r['median_days_to_pass'])} | "
         f"{r['skipped_trades']} | {_pct(r['funded_lost_probability'])}"
     )
 
 
-HEAD = "pass | fails daily / max | days to pass avg / median | skipped | funded lost"
+HEAD = (
+    "pass (finished attempts) | unfinished (share of all) | fails daily / max | "
+    "days to pass avg / median | skipped | funded lost"
+)
 
 
 def _strategy_section(name: str, s: dict, cfg: dict) -> list[str]:
@@ -502,7 +509,7 @@ def _strategy_section(name: str, s: dict, cfg: dict) -> list[str]:
         ),
         "",
         f"| variant | {HEAD} |",
-        "|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|",
     ]
     lines += [f"| {r['label']} | {_row_cells(r)} |" for r in top]
     if "picks" in s:
@@ -511,7 +518,7 @@ def _strategy_section(name: str, s: dict, cfg: dict) -> list[str]:
             "Picks, development vs test (never tuned on the test period):",
             "",
             f"| pick | period | variant | {HEAD} |",
-            "|---|---|---|---|---|---|---|",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
         for kind, p in s["picks"].items():
             for period in ("dev", "test"):
@@ -565,7 +572,8 @@ def write_outputs(res: dict, folder: Path) -> None:
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "summary.json").write_text(json.dumps(res, indent=1, default=str), encoding="utf8")
     cols = ["strategy", "period", "label", "fixed", "base", "floor", "budget", "pass_probability",
-            "attempts", "fail_daily", "fail_max", "average_days_to_pass", "median_days_to_pass",
+            "attempts", "unfinished_attempts", "total_attempts", "unfinished_share",
+            "fail_daily", "fail_max", "average_days_to_pass", "median_days_to_pass",
             "skipped_trades", "trades_seen", "funded_lost_probability"]  # fmt: skip
     with (folder / "variants.csv").open("w", newline="", encoding="utf8") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")

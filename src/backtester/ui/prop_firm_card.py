@@ -48,9 +48,11 @@ HOW_TEXT = (
     "Estimated by reshuffling the {days} trading days {runs:,} times and playing every order as "
     "{label} challenge attempts (Phase 1, Phase 2, then a funded account). Trades still open "
     "count as if at their stop, so the daily-loss check is conservative and the pass rate a "
-    "little too low. Adaptive: the risk shrinks with the room to the max-loss line (down to "
-    "{floor:g} x the base risk, never above it) and a day's loss plus open risk stays within "
-    "{budget:g} % of the initial balance (trades that do not fit are skipped)."
+    "little too low. Pass probability uses finished attempts; unfinished attempts are shown "
+    "as a share of all attempts. Passing days are played to their end. "
+    "Adaptive: open trades reserve their initial risk; the risk shrinks with the room to the "
+    "max-loss line (down to {floor:g} x the base risk, never above it). New entries fit a daily "
+    "budget of {budget:g} % of the initial balance (trades that do not fit are skipped)."
 )
 WAITING_TEXT = "Waiting for another calculation to finish …"
 
@@ -85,8 +87,9 @@ def _table(card: dict) -> html.Table:
     funded = f"Funded account lost within {card['funded_days']} days"
     cells = [
         (CARD_ROWS[0], [_pct(r["pass_probability"]) if r["attempts"] else DASH for r, _ in cols]),
-        (CARD_ROWS[1], [_share(r["fail_daily"], r["attempts"]) for r, _ in cols]),
-        (CARD_ROWS[2], [_share(r["fail_max"], r["attempts"]) for r, _ in cols]),
+        ("Unfinished attempts (share of all)", [_pct(r.get("unfinished_share")) for r, _ in cols]),
+        (CARD_ROWS[1], [_share(r["fail_daily"], r.get("total_attempts", r["attempts"])) for r, _ in cols]),
+        (CARD_ROWS[2], [_share(r["fail_max"], r.get("total_attempts", r["attempts"])) for r, _ in cols]),
         (CARD_ROWS[3], [_days(r.get("average_days_to_pass")) for r, _ in cols]),
         (CARD_ROWS[4], [_days(r["median_days_to_pass"]) for r, _ in cols]),
         (funded, [_pct(r["funded_lost_probability"]) for r, _ in cols]),

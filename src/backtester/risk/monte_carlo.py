@@ -262,7 +262,8 @@ def _play_day(
     stats: dict | None = None,
 ) -> tuple[str | None, float]:
     """Play one day. Returns (status, closing balance): status None, "daily", "max" (the
-    attempt is over) or "pass" (closed balance >= `target_bal` and `tdays` + 1 trading days).
+    attempt is over) or "pass" (day-end balance >= `target_bal` and enough trading days).
+    A passing day is played to its end (rule set by the user, 2026-10-22).
 
     Daily-loss approximation (user, 2026-10-15): at every entry and exit of the day the worst
     point is the closed balance minus, for each trade still open, risk$ x max(1, -r_net), with
@@ -291,8 +292,8 @@ def _play_day(
             return "daily", worst
         if init - worst >= max_lim:
             return "max", worst
-        if not is_entry and bal >= target_bal - EPS and tdays + 1 >= config.min_trading_days:
-            return "pass", bal
+    if len(day.r) and bal >= target_bal - EPS and tdays + 1 >= config.min_trading_days:
+        return "pass", bal
     return None, bal
 
 
@@ -312,12 +313,13 @@ def _play_day_adaptive(
       daily budget; its exit P/L = r x that risk$. Modelling choice: the equity at the entry is
       the closed balance (the R list has no floating P/L), neutral rather than conservative.
     - Daily budget (`adaptive.daily_budget` x the initial balance): today's closed loss
-      (day start - balance, not below 0) + every open trade at its stop (risk$ x max(1, -r),
-      the daily-loss approximation) + the new trade's risk$ must fit; the new trade counts at
-      1 x its risk$ (its own r is not used: that would skip losers by hindsight). Cut to what
-      is left, skipped when not even floor x base risk fits; a skipped trade's exit is
+      (day start - balance, not below 0) + every open trade's initial risk$ + the new trade's
+      risk$ must fit. No eventual result is used before that trade exits (rule set by the
+      user, 2026-10-22). Cut to what is left, skipped when not even floor x base risk fits;
+      a skipped trade's exit is
       ignored (its R is not taken). A day with only skipped trades still counts as a trading day.
-    - The worst point uses each open trade's own risk$. Loss limits and pass test as before.
+    - The worst point uses each open trade's initial risk$. Actual losses beyond the stop
+      count at the exit. Loss limits and the day-end pass test are as in the fixed path.
     """
     ad = config.adaptive
     init = config.start_balance
@@ -326,7 +328,7 @@ def _play_day_adaptive(
     daily_lim = config.daily_loss * init - EPS
     max_lim = config.max_loss * init - EPS
     budget = ad.daily_budget * init
-    open_: dict[int, tuple[float, float]] = {}  # trade id -> (risk$, exposure at its stop)
+    open_: dict[int, float] = {}  # trade id -> initial risk$, known at entry
     skipped: set[int] = set()
     weights = day.weights or (1.0,) * len(day.events)
     for (is_entry, r), tid, weight in zip(day.events, day.ids, weights, strict=True):
@@ -340,22 +342,21 @@ def _play_day_adaptive(
                 skipped.add(tid)
                 stats["skipped"] = stats.get("skipped", 0) + 1
                 continue
-            exposure = got * max(1.0, -r / weight) if weight > 0 else 0.0
-            open_[tid] = (got, exposure)
-            open_units += exposure
+            open_[tid] = got
+            open_units += got
         else:
             if tid in skipped:
                 continue
-            got, exposure = open_.pop(tid)
-            open_units = open_units - exposure if open_ else 0.0
+            got = open_.pop(tid)
+            open_units = open_units - got if open_ else 0.0
             bal = max(0.0, bal + r / weight * got) if weight > 0 else bal
         worst = bal - open_units
         if day_start - worst >= daily_lim:
             return "daily", worst
         if init - worst >= max_lim:
             return "max", worst
-        if not is_entry and bal >= target_bal - EPS and tdays + 1 >= config.min_trading_days:
-            return "pass", bal
+    if len(day.r) and bal >= target_bal - EPS and tdays + 1 >= config.min_trading_days:
+        return "pass", bal
     return None, bal
 
 
@@ -400,6 +401,8 @@ def _ftmo_run(seq: list, n_days: int, risk: float, config: MonteCarloConfig, acc
     pos, j = 0, 0
     while True:
         j = next((k for k in range(j, len(seq)) if seq[k][0] >= pos), len(seq))
+        if j == len(seq):
+            return  # no new attempt without a remaining trading day
         start, status = pos, "pass"
         for target in (config.p1_target, config.p2_target):
             status, j, end = _run_phase(seq, j, risk, target, config, acc)
@@ -407,6 +410,7 @@ def _ftmo_run(seq: list, n_days: int, risk: float, config: MonteCarloConfig, acc
                 break
             pos = end + 1
         if status == "open":
+            acc["unfinished_attempts"] += 1
             return
         acc["attempts"] += 1
         if status == "daily":
@@ -428,10 +432,20 @@ def _ftmo_run(seq: list, n_days: int, risk: float, config: MonteCarloConfig, acc
 
 
 def _ftmo_summary(acc: dict) -> dict:
+    """Finished-attempt pass rate, plus unfinished count/share of all attempts.
+
+    Spec: risk-management.md > Passing days and unfinished attempts (2026-10-22).
+    `attempts` retains its finished-only meaning; `total_attempts` includes unfinished ones.
+    """
     n = acc["attempts"]
+    unfinished = acc["unfinished_attempts"]
+    total = n + unfinished
     days = acc["days_to_pass"]
     return {
         "attempts": n,
+        "unfinished_attempts": unfinished,
+        "total_attempts": total,
+        "unfinished_share": unfinished / total if total else 0.0,
         "passes": acc["passes"],
         "pass_probability": acc["passes"] / n if n else 0.0,
         "fail_daily": acc["fail_daily"],
@@ -456,7 +470,8 @@ def ftmo_by_risk(days: list[Day], orders, config: MonteCarloConfig) -> dict:
     n = len(days)
     out = {}
     for risk in config.risk_levels:
-        acc = {"attempts": 0, "passes": 0, "fail_daily": 0, "fail_max": 0, "days_to_pass": [],
+        acc = {"attempts": 0, "unfinished_attempts": 0, "passes": 0,
+               "fail_daily": 0, "fail_max": 0, "days_to_pass": [],
                "funded_observed": 0, "funded_lost": 0}  # fmt: skip
         for o in orders:
             seq = [(p, days[i]) for p, i in enumerate(o) if len(days[i].r)]

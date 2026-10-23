@@ -351,7 +351,7 @@ class Bot:
         self.status: GuardStatus | None = None
         self.blocked = ""  # reason; empty: trading allowed
         self.notifier = notifier
-        self.initial_balance: float | None = None  # FTMO max loss is measured from it
+        self.initial_balance: float | None = None  # base of both FTMO loss limits
         # state for status.json (live/status.py)
         self.running = False
         self.connected = False

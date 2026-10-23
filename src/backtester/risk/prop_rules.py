@@ -5,8 +5,9 @@ docs/risk-management.md › Daily & account protection, Prop-firm field.
   change are 23 / 25 h long. Never a fixed UTC offset.
 - Day P/L = equity now - balance at the day's start (closed + floating).
 - Personal daily stop (default -2 %): no new orders, own positions closed, until the next day.
-- FTMO limits (2-Step): daily loss 5 % of the day-start balance, max loss 10 % static of the
-  initial balance. Reaching a limit counts as a breach.
+- FTMO limits (2-Step): daily loss 5 % of the initial balance, measured from the day-start
+  balance; max loss 10 % static of the initial balance. Reaching a limit counts as a breach
+  (rule set by the user, 2026-10-22).
 
 (The preset list for other firms and the prop-firm field of the backtest come later, ROADMAP 5.6.)
 """
@@ -27,7 +28,7 @@ class GuardConfig:
     daily_stop_percent: float = 2.0  # personal stop (rule set by the user)
     ftmo_daily_loss_percent: float = 5.0  # FTMO 2-Step
     ftmo_max_loss_percent: float = 10.0  # FTMO 2-Step, static
-    initial_balance: float = 100_000.0  # the challenge size the max loss is measured from
+    initial_balance: float = 100_000.0  # challenge size: base of both FTMO loss limits
     zone: str = FTMO_ZONE
 
     def __post_init__(self) -> None:
@@ -81,7 +82,7 @@ def evaluate(
     percent = day_pl / day_start_balance * 100
     if equity <= initial * (1 - config.ftmo_max_loss_percent / 100) + EPS:
         return GuardStatus(day_pl, percent, True, True, "FTMO max loss reached")
-    if percent <= -config.ftmo_daily_loss_percent + EPS:
+    if -day_pl >= initial * config.ftmo_daily_loss_percent / 100 - EPS:
         return GuardStatus(day_pl, percent, True, True, "FTMO daily loss reached")
     if percent <= -config.daily_stop_percent + EPS:
         return GuardStatus(day_pl, percent, True, False, f"daily stop reached ({percent:.2f} %)")
