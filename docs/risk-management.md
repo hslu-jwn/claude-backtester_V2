@@ -358,6 +358,17 @@ one's Sharpe by the number of trials.
   weighted daily R).
 - The report shows PSR(0), DSR, N, V, SR0 and the family name.
 
+#### Effective sample counts (V2.4d item 5 / T-19)
+
+Research significance reports effective variant N beside the actual N, using aligned
+development marked-to-market daily correlations: max(1, N / (1 + (N - 1) * mean
+pairwise correlation)). It also reports the chosen variant's average trade uniqueness
+and sum of uniqueness weights from daily concurrent trade intervals. Exact conventions
+and unavailable cases: research-runner.md > Significance of the best variant.
+These are diagnostics only: the trial log, DSR's actual N and variance, t-statistics,
+selection and existing daily statistics remain unchanged. Substituting effective N
+into DSR requires a later user decision.
+
 ### Entry screening (ROADMAP 12.12, idea T-13; rules set by the user, 2026-10-20)
 Why: most ideas die at the entry (Davey, *Building Winning Algorithmic Trading Systems* ch.12). The battery asks whether a
 strategy's entries carry information at all, independent of its exit, before a full strategy is tuned.

@@ -71,6 +71,7 @@ from backtester.runner import (
 from backtester.tools import (
     research_diagnostics,
     research_series,
+    research_significance,
     research_stability,
     research_walk_forward,
 )
@@ -620,6 +621,24 @@ def run_research(
     rows = _rank(rows, spec.min_trades)
     ranked = [r for r in rows if r["rank"] is not None]
     info["ranked"] = len(ranked)
+    info["significance"] = research_significance.calculate(
+        folder,
+        [v.id for v in variants],
+        ranked[0]["variant_id"] if ranked else None,
+        reader=read_trades,
+    )
+    _dump(folder / "significance.json", info["significance"])
+    if ranked:
+        selected = ranked[0]
+        selected["flags"] = ";".join(
+            filter(
+                None,
+                [
+                    selected["flags"],
+                    *info["significance"]["flags"],
+                ],
+            )
+        )
     _write_csv(folder / "variants.csv", [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
 
     def finish(status: str, message: str, chosen: dict | None) -> dict:
@@ -864,6 +883,7 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             "",
             research_stability.haircut(selected.get("avg_r"), info["live_expectation_range"]),
         ]
+    lines += research_significance.markdown(info.get("significance"))
     sensitivity = info.get("sensitivity")
     if sensitivity is not None:
         lines += [

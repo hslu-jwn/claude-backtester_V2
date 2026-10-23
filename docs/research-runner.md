@@ -143,6 +143,54 @@ deflated Sharpe. Older CSVs lacking entry fill reconstruct it from the saved spr
 older partial exits lacking fill details use their saved chart prices and spread, with
 unrecoverable fill-cost residuals settled on final exit day. New CSVs retain fill details.
 
+### Significance of the best variant
+
+V2.4d item 5 / V2.4c T-09, T-19: after development, recompute
+`significance.json` from all completed development grid variants' aligned `net_r_mtm`
+daily series, including unranked variants, excluding sensitivity neighbours and tests.
+The report block "Is the best variant better than luck?" is diagnostic only: selection,
+test guard, trial log, DSR and all existing statistics retain their current definitions.
+Missing series are unavailable, never silently replaced with exit-booked returns.
+
+- **White's Reality Check:** observed statistic = maximum mean daily R. Centre each
+  column separately to zero; stationary-bootstrap day indices with mean block length
+  5, the same indices across every variant. Default 2,000 resamples, seed 42;
+  p = (1 + count(null maximum >= observed maximum)) / (boots + 1).
+  At least two days and one variant are required. No SPA approximation is reported.
+  The unchanged stationary sampler lives in analytics/bootstrap.py and is re-exported
+  by risk/bootstrap.py, preserving the risk API/random stream and the layer direction.
+- **CSCV / PBO:** default S = 16 even ordered blocks; distribute remainder days to
+  the earliest blocks without discarding observations. Evaluate every C(S,S/2) IS
+  combination. Rank by nonannualised daily sample Sharpe; constant columns have score
+  zero (Sharpe is unestimable). IS ties choose the first input variant; OOS ties use
+  average ascending ranks (worst = 1), relative rank = rank / (N + 1).
+  Logit = log(rank_fraction / (1 - rank_fraction)); PBO = share <= 0, including ties
+  at the median. Report median relative OOS rank, IS/OOS Sharpe pairs, and OLS slope
+  of OOS on IS (n/a for constant IS scores). Purge 5 observations from the OOS side
+  of every internal block boundary: trim both ends of an OOS block where a neighbour
+  exists, including an OOS neighbour; do not trim outer dataset endpoints.
+  Require >= 2 variants and >= 2 observations in every block after its potential
+  purge; otherwise n/a with a reason. Odd S or invalid inputs raise clear errors.
+- **Effective trials:** report N, average pairwise daily correlation and
+  N_eff = max(1, N / (1 + (N - 1) * mean correlation)). Identical columns correlate
+  one, including identical constants; other constant pairs correlate zero. N=1 gives
+  one; no observations or a nonpositive denominator gives n/a with a reason.
+  Negative correlation may give N_eff > N; do not silently cap it or substitute it
+  into DSR.
+- **Effective trades:** use the chosen development variant's saved trade intervals,
+  rather than net signed positions (opposite trades can cancel). On each Prague
+  calendar day touched by [entry, exit), count concurrent trades without direction or
+  size netting; average reciprocal concurrency over each trade's days. A zero-duration
+  trade occupies its entry day. Include weekends for held trades. Report all uniqueness
+  weights, their average, and their sum (effective trade count); no trades gives zero.
+- Add chosen development row flags `rc_not_significant` for p > 0.05 and `pbo_high`
+  for PBO >= 0.5. Thresholds and sampling settings live in frozen config dataclasses.
+  Unavailable diagnostics never add a flag. Recompute on resume without new trials.
+
+No saved-return sign-flip or permutation test is valid here. Monte Carlo permutation
+of the **whole optimisation**, re-running variants on permuted prices, is deferred
+to V2.6 with the job queue (Aronson ch.6 / Masters ch.7).
+
 ### Additional diagnostics (V2.4, grid merge 1)
 
 - `grid.csv` and a report block: development `grid_stats` over all variants, including

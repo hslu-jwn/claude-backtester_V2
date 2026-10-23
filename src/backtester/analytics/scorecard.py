@@ -49,6 +49,8 @@ FLAG_LABELS = {
     FLAG_STRESSED: "not profitable with higher costs",
     FLAG_WITHOUT_BEST: "not profitable without the best trade",
     FLAG_TEST_FAILED: "test failed",
+    "rc_not_significant": "best variant not significant (Reality Check)",
+    "pbo_high": "high probability of backtest overfitting",
 }
 
 

@@ -43,6 +43,8 @@ RESEARCH_DIR = "research"
 VARIANT_PREFIX = "research~"  # results page id of a variant folder (pages/results.py)
 RESULTS_PREFIX = "/results/"
 FLAG_SHORT = {
+    "rc_not_significant": "RC p > 0.05",
+    "pbo_high": "PBO >= 0.5",
     FLAG_TOO_FEW: "few trades",
     FLAG_HIGH_WIN_SMALL_EDGE: "win rate / small edge",
     FLAG_HALF: "one half",
