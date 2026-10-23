@@ -261,7 +261,8 @@ def test_zone_expires_at_the_end_of_its_session_and_is_not_checked_after():
     s = series((LONDON, LONDON_SWINGS + ny()), (tokyo, [red(109.5, 100.0), *[doji(100)] * 3]))
     events = low_zone_events(run(s))
     (expired,) = of(events, ZoneExpired)
-    assert (expired.confirmed_index, expired.last_index) == (NY_LAST, NY_LAST)
+    # B8 (user 2026-10-22): expiry at 00:00, not the last 30m close at 23:30.
+    assert (expired.confirmed_index, expired.last_index) == (NY_LAST + 1, NY_LAST)
     assert of(events, ZoneBreak) == []  # Tokyo's close below 107 comes too late
 
 

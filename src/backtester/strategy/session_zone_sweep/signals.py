@@ -89,7 +89,10 @@ class SetupLink:
 
 @dataclass
 class SignalState:
-    """What the signal side knows at the current candle (read by SL / TP)."""
+    """Zones active at the current close and ATR (read by SL / TP).
+
+    Spec: strategy-session-zones.md › Session zones: valid only in their active session.
+    """
 
     live_zones: list[LiveZone] = field(default_factory=list)
     atr: float | None = None  # 5m ATR at the current close
@@ -134,7 +137,10 @@ class SetupTracker:
         for live in self._live.values():
             if live.setup is not None and live.setup not in touched:
                 live.setup.on_breaks(breaks)
-        self.state = SignalState(list(self._live.values()), self._atr.current)
+        self.state = SignalState(
+            [live for live in self._live.values() if live.zone.active_in.contains(now)],
+            self._atr.current,
+        )
         self.links = self._links(v5, confirmed)
         return self._entries(v5, now, confirmed)
 
@@ -202,6 +208,9 @@ class SetupTracker:
             view = v30.at(cursor)
             touched |= self._on_30m(view)
         self._zone_cursor = v30.cursor
+        # Spec: strategy-session-zones.md › Session zones, B8. A configured boundary
+        # (or missing 30m candle) may fall between zone updates: entries still stop then.
+        self._live = {zone: live for zone, live in self._live.items() if now < zone.active_in.end}
         return touched
 
     def _on_30m(self, view: SeriesView) -> set[Setup]:

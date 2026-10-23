@@ -29,7 +29,8 @@ Described for support (the bullish case), resistance mirrored. The tracker is in
 like a detector: `update(view)` once per closed 30m candle, in order. A session's zones are
 emitted once it is known to be over: at the close of a candle after which the next candle
 would close in a later session, or (after a data gap, e.g. the weekend) at the first
-candle of a later session, before that candle is checked.
+candle of a later session, before that candle is checked. Finalizing the forming session
+does not expire zones active in it: expiry waits until the real session end (B8).
 """
 
 from __future__ import annotations
@@ -174,8 +175,8 @@ class SessionZoneTracker(Detector[SessionZoneEvent]):
         self._next += 1
         candle = view.current
         closed_at = candle.ts + view.timeframe.duration
-        swings = self._swings.update(view)  # every candle, so its state stays continuous
         session = session_of(closed_at, self.config.sessions)
+        swings = self._swings.update(view, ignore=session is None)
         if session is None:
             return []  # closes on the weekend, before Tokyo's start: ignored
         out: list[SessionZoneEvent] = []
@@ -236,12 +237,13 @@ class SessionZoneTracker(Detector[SessionZoneEvent]):
         return [ZoneExpired(cursor, closed_at, live.zone, last_index) for live in expired]
 
     def _end_session(self, cursor: int, closed_at: datetime) -> list[SessionZoneEvent]:
-        """The forming session is over: zones active in it expire, its own zones form."""
+        """Finalize forming zones; active zones expire only at their real session end.
+
+        Spec: strategy-session-zones.md › Session zones (B8, user 2026-10-22).
+        """
         formed, best = self._forming, self._best
         self._forming, self._best = None, {}
-        out: list[SessionZoneEvent] = list(
-            self._expire(lambda z: z.active_in.end <= formed.end, cursor, closed_at)
-        )
+        out: list[SessionZoneEvent] = []
         friday_ny = formed.session is Session.NEW_YORK and formed.trading_date.weekday() == _FRIDAY
         if friday_ny and not self.config.friday_ny_carries_to_monday_tokyo:
             return out

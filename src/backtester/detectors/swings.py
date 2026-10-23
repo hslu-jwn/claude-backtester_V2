@@ -18,6 +18,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from math import isfinite
 from types import MappingProxyType
 
 from backtester.core.models import Candle
@@ -29,6 +30,7 @@ from backtester.detectors.base import Detector, Event
 # share of their own median 5m range (spec: confluences.md › Swing high / low).
 DOJI_REFERENCE_SYMBOL = "XAUUSD"
 DOJI_RANGE_SHARE = 0.065 / 4.255
+DEFAULT_DOJI_RELATIVE_TOLERANCE = 1e-9
 
 # Median 5m candle range (high - low) the other pairs' defaults come from, measured with
 # `tools.check.history_median_m5_range` (bid, flat zero-volume minutes dropped, read through
@@ -69,8 +71,13 @@ class SwingConfig:
     # 0 = off (the fixed amounts above). > 0 (user, 2026-10-12): a doji is a body of at most
     # this share of the candle's own range, on every timeframe and symbol (e.g. 0.1)
     doji_range_share: float = 0.0
+    # Spec: confluences.md › Swing high / low (B9, user 2026-10-22).
+    # Inclusive comparison slack as a share of max(abs(open), abs(close)); 0 = strict.
+    doji_relative_tolerance: float = DEFAULT_DOJI_RELATIVE_TOLERANCE
 
     def __post_init__(self) -> None:
+        if not isfinite(self.doji_relative_tolerance) or self.doji_relative_tolerance < 0:
+            raise ValueError("doji_relative_tolerance must be finite and >= 0")
         if not 0 <= self.doji_range_share <= 1:
             raise ValueError("doji_range_share must be between 0 and 1")
         for symbol, value in self.doji_max_body.items():
@@ -79,13 +86,13 @@ class SwingConfig:
 
     def doji_threshold(self, symbol: str) -> float:
         if self.doji_range_share > 0:
-            return RangeShare(self.doji_range_share)
+            return RangeShare(self.doji_range_share, self.doji_relative_tolerance)
         if symbol not in self.doji_max_body:
             raise KeyError(
                 f"no doji threshold for {symbol}: set SwingConfig.doji_max_body "
                 f"(default: {DOJI_RANGE_SHARE:.4f} x its median 5m candle range)"
             )
-        return self.doji_max_body[symbol]
+        return DojiThreshold(self.doji_max_body[symbol], self.doji_relative_tolerance)
 
 
 def equivalent_doji_body(median_m5_range: float) -> float:
@@ -103,7 +110,19 @@ class SwingPoint(Event):
     first_index: int  # first turn candle (the green one for a high); last = confirmed_index
 
 
-class RangeShare(float):
+class DojiThreshold(float):
+    """Price threshold carrying its comparison tolerance through shared consumers.
+
+    Spec: confluences.md › Swing high / low. Retains the float threshold interface.
+    """
+
+    def __new__(cls, value: float, relative_tolerance: float = DEFAULT_DOJI_RELATIVE_TOLERANCE):
+        threshold = super().__new__(cls, value)
+        threshold.relative_tolerance = relative_tolerance
+        return threshold
+
+
+class RangeShare(DojiThreshold):
     """A doji threshold that is a share of the candle's own range, not a price amount. A
     float subclass so it travels through every `doji_max_body: float` unchanged."""
 
@@ -111,9 +130,15 @@ class RangeShare(float):
 
 
 def is_doji(candle: Candle, max_body: float) -> bool:
+    """Inclusive threshold with price-relative slack (spec: confluences.md › Swing high / low)."""
+    threshold = max_body
     if isinstance(max_body, RangeShare):
-        return candle.body <= max_body * (candle.high - candle.low)
-    return candle.body <= max_body
+        threshold = max_body * (candle.high - candle.low)
+    body = candle.body
+    if body <= threshold:
+        return True
+    relative = getattr(max_body, "relative_tolerance", DEFAULT_DOJI_RELATIVE_TOLERANCE)
+    return body - threshold <= relative * max(abs(candle.open), abs(candle.close))
 
 
 def _extreme(kind: SwingKind, a: tuple[int, Candle], b: tuple[int, Candle]):
@@ -141,13 +166,20 @@ class SwingDetector(Detector[SwingPoint]):
     def for_symbol(cls, symbol: str, config: SwingConfig | None = None) -> SwingDetector:
         return cls((config or SwingConfig()).doji_threshold(symbol))
 
-    def update(self, view: SeriesView) -> list[SwingPoint]:
+    def update(self, view: SeriesView, *, ignore: bool = False) -> list[SwingPoint]:
+        """Consume one closed candle; ignored candles advance order without altering swings.
+
+        Spec: strategy-session-zones.md › Session zones (ignored weekend candles).
+        The caller owns the session policy; this detector remains timeframe-agnostic.
+        """
         if view.cursor != self._next:
             raise ValueError(
                 f"SwingDetector.update must be called once per candle in order: "
                 f"expected cursor {self._next}, got {view.cursor}"
             )
         self._next += 1
+        if ignore:
+            return []
         candle = view.current
         if is_doji(candle, self.doji_max_body):
             return []

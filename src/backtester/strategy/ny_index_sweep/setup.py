@@ -180,6 +180,13 @@ class Setup:
         sweep_frame = ctx.frames[self.sweep_tf]
         if cfg.sweep_breakout_closes and sweep_frame.closed and self._breakout(ctx, sweep_frame):
             return
+        # Spec: strategy-ny-indices.md › Rules, B8: equality counts, late gap events do not.
+        deadline = candle_open(self.sweep_tf, self.extreme_ts) + self.sweep_tf.duration * (
+            1 + self.route.bos_within
+        )
+        if ctx.now > deadline:
+            self.end("no setup-TF BoS in time")
+            return
         setup_frame = ctx.frames[self.route.setup_tf]
         bos = next((b for b in setup_frame.breaks if b.direction is d), None)
         if bos is not None and bos.confirmed_at >= self.extreme_ts + BASE.duration:
@@ -195,9 +202,6 @@ class Setup:
         ):
             self.end("sweep-TF close beyond the swept level")
             return
-        deadline = candle_open(self.sweep_tf, self.extreme_ts) + self.sweep_tf.duration * (
-            1 + self.route.bos_within
-        )
         if ctx.now >= deadline:
             self.end("no setup-TF BoS in time")
 
@@ -285,6 +289,11 @@ class Setup:
             self.end("every 3rd confluence closed through")
 
     def _wait_tap(self, ctx: Context) -> None:
+        # Spec: strategy-ny-indices.md › Rules, B8: reject post-gap taps before transitioning.
+        timeout = self.bos.confirmed_at + self.route.setup_tf.duration * ctx.config.tap_timeout
+        if ctx.now > timeout:
+            self.end("3rd confluence not tapped in time")
+            return
         d, entry = self.direction, ctx.frames[self.route.entry_tf]
         if entry.closed and ctx.now > self.bos.confirmed_at:
             low = wick(d, entry.current)
@@ -294,7 +303,6 @@ class Setup:
                 self.tap_at = ctx.now
                 self.step = Step.TAPPED
                 return
-        timeout = self.bos.confirmed_at + self.route.setup_tf.duration * ctx.config.tap_timeout
         if ctx.now >= timeout:
             self.end("3rd confluence not tapped in time")
 

@@ -53,6 +53,7 @@
 
 ## Rules
 - **New setup = new sweep.** A new setup can start at any time, even while a trade of an earlier setup is open.
+- **Inclusive event deadlines, including data gaps** (rule set by the user, 2026-10-22; B8): a setup-TF BoS must arrive no later than the close of the sweep-TF candle containing the latest sweep extreme plus `bos_within` sweep-TF durations. A deeper sweep wick updates that extreme and restarts this clock. The 3rd-confluence tapping candle must close no later than the original BoS close plus `tap_timeout` setup-TF durations, also for re-entries. Events exactly at either deadline count; an event arriving after it is rejected before any transition, even when missing candles skipped the deadline. With no qualifying event at the deadline, the setup times out there.
 - **One open trade per setup at a time.** No entries on several overlapping confluences of the same setup.
 - **3rd confluence invalidated** (close through it): use the next 3rd confluence in the same move.
 - **Entry confluence invalidated or not confirmed:** wait for another one, as long as the 3rd confluence is still valid.
