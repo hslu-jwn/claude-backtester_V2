@@ -14,6 +14,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 | Claude Opus 4.6 (agy) | high | 3 | 4 | one review | the 4 subagents it started emptied the weekly quota |
 | Claude subagents (this app) | Opus high / Sonnet medium | 2 | - | live-bot fixes (19 findings, 45 tests), UI proposal draft | yes; live code is Opus-only |
 
+| Codex gpt-6.1-sol | medium | 3 | 50 | grid merge 1-3 (2026-10-23) | yes: exact reproduction; Opus fixed a slow shock-day read (31 s -> 2 s), a misleading haircut on losses, legacy test fixtures |
+| Claude subagent (this app) | Sonnet | 1 | 4 | merge of the Pardo / Masters / Aronson notes into knowledge/topics | yes for knowledge merges |
+| Opus (this app) | medium | - | - | V2.4a trades overlay for every strategy, backtest audit, book-claim check | small UI change cheaper than a brief |
+
 Limits seen: Codex hit its limit twice (about 20:50 and 04:25; reset after ~4.5 h);
 Antigravity (Gemini + Claude 4.6, one shared weekly quota) is empty until about 2026-10-29.
 
