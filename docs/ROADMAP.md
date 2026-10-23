@@ -70,6 +70,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the trades of any strategy on the chart; the trade itself is enough, confluences only when
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
+- ☐ **V2.4c Honesty tooling before V2.6** (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
+  effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1;
+  then measure the spread table's effect on the golden lists (default stays off unless the
+  user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
+  items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
+  market, expectation haircut.
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
