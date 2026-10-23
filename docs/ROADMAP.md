@@ -61,8 +61,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
 - ◐ **V2.4 Full Codex review and speed-up** (2026-10-23: golden lists, review of all 8
   modules (84 findings, `docs/review/`), groups A + B fixed, speed 1 + 2 (partial) done;
-  open: rest of speed 2, the archived grid tools merge, the user's visual check of the UI
-  fixes): golden trade lists of all strategies first; review
+  speed 2 complete; open: the archived grid tools merge, the user's check of the UI fixes): golden trade lists of all strategies first; review
   core -> detectors -> engine -> risk -> analytics -> strategies -> ui -> live (correctness,
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research
@@ -81,3 +80,74 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   research cards, `docs/research-log.md`.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
+
+## V2.5-V2.7 in detail (the user's brief of 2026-10-22, kept here so no chat needs it again)
+
+### V2.5 App redesign (content stays, look and clarity change)
+- Restyle the Dash app after `docs/design/app-v2.png` (look only, no brand names or logos):
+  dark trading-terminal theme, top navigation tabs, a compact strip of key numbers above a large
+  chart, a side panel, tabs below the chart, green / red accents, little text.
+- Per page: essential items always visible, the rest behind a collapsible "Details"
+  (`docs/design/ui-proposal.md`, decisions of 2026-10-23).
+- Research page: one vertical, scrollable list, NO horizontal scrolling; each research run a
+  compact card with: strategy + source, idea in one line, period, trades, net R, R/trade, win
+  rate, max drawdown, profit factor, out-of-sample result, Monte Carlo drawdown and prop-firm
+  pass probability, best market regime, parameter stability, warning flags. Click a card to
+  expand the full details.
+- Two modes with a switch / CLI flag: Fast mode = headless, no chart, for automated research;
+  Visual mode = the app. Both give identical trade lists for the same settings (test).
+- Codex reviews the redesign code. Done = tests green and the user looked at it in the browser
+  and said ok.
+
+### V2.6 Continuous research
+Goal: a library of tested, research-based strategies. Do NOT judge pass / fail; record every
+strategy with all metrics; the user decides later.
+- Every strategy comes from research (book, paper, study, reputable source), cited in its
+  `docs/` spec; Opus checks the source exists before any code. Never invent or data-mine rules
+  (e.g. entering at an arbitrary time because it backtests well). Vary only the settings of a
+  researched idea (R:R, stop / target method, session windows, timeframes, symbols, filters).
+- Safeguards: develop before 2021-09-14, test the best variant ONCE on MT5 data from
+  2021-09-14, every variant in the trial log, DSR, robustness report (halves, stressed costs,
+  best trade removed), real costs + swap + slippage.
+- Every strategy also gets: Monte Carlo (drawdown spread incl. worst 5 %, longest losing
+  streak, prop-firm pass probability and typical time to pass), parameter stability (do
+  neighbouring settings also work, or only one exact combination?), regime breakdown
+  (`docs/regime-classifier.md`).
+- Flag suspicious results automatically: win rate > 80 %, < 100 trades, profit from a few
+  trades, big gap between development and test, isolated best parameter.
+- Pipeline per idea: (1) research -> idea file with sources (Gemini; while its quota is empty:
+  Codex / Opus); (2) pick idea, spec in `docs/` + test-case list (Codex); (3) tests, then
+  strategy code (per AGENTS.md › Team); (4) review of the diff for lookahead and spec (Codex /
+  Claude 4.6 / Opus); (5) sweep, robustness, one-time MT5 test, Monte Carlo, parameter
+  stability, regime breakdown, research card: Python job queue (no AI tokens); (6) short
+  write-up + warning flags on the card; (7) merge + update `knowledge/ideas.md`, ROADMAP,
+  `docs/research-log.md` (Opus).
+- Parallel lanes: 3 lanes, each in its own git worktree, each on one idea; a lane touches only
+  `strategy/<its_name>/`, its spec and its tests; shared code is read-only (a needed shared
+  change goes through Opus); Opus merges the `strategy/registry.py` entry. The trial log
+  (`results/trials.jsonl`) gets a file lock so parallel writes are safe.
+- Job queue (plain Python, built in V2.6): all sweeps in one queue, about 8 worker processes
+  (room for the AI lanes, the app and Windows). Lanes run no heavy backtests themselves.
+  Temperature guard: read the CPU temperature; above about 85 °C pause starting new jobs until
+  it cools down; Telegram if the queue stops or stays paused. Queue state in files, resumes
+  after a restart.
+- Opus rhythm: check in every 2-3 hours (scheduled): lanes and queue, assign work, verify and
+  merge finished strategies, update the log, Telegram if something is very promising. Keep
+  `docs/research-log.md` current after every step.
+- Strategy 4 (Kaufman trend following) passed a prop-firm challenge in some tests, but slowly:
+  keep it as a portfolio candidate.
+- Regime classifier: `analytics/regime.py` per `docs/regime-classifier.md` (accepted
+  2026-10-23); every research card and results page shows net R, R/trade and win rate per
+  regime and names the best regime.
+
+### V2.7 Portfolio (main goal)
+- Combine strategies that balance each other (e.g. trend following + range / mean reversion,
+  chosen by their regime breakdown) for a smoother equity curve and a higher prop-firm pass
+  probability. Base: `analytics/portfolio.py`; computing in the job queue; Codex helps pick
+  the combinations.
+- Per candidate set: combined equity curve, correlation matrix of daily R, regime breakdown,
+  max drawdown, Monte Carlo prop-firm pass probability, and the same with each strategy
+  removed. Present the best combinations; the user decides.
+- Telegram only for: a decision on rules / defaults / risk, a blocker Codex can't solve, a
+  crash or long pause of the loop / queue, a very promising strategy; plus one short evening
+  summary while research runs.
