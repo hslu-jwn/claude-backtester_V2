@@ -623,6 +623,8 @@ def run_research(
     _write_csv(folder / "variants.csv", [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
 
     def finish(status: str, message: str, chosen: dict | None) -> dict:
+        from backtester.tools import drawdown_report
+
         info.update(status=status, chosen=chosen, test=test_info, updated=_now())
         # Keep the once-only test guard durable even if optional reporting fails.
         _dump(folder / "research.json", info)
@@ -639,6 +641,23 @@ def run_research(
                 trials,
                 f"{SOURCE_RETEST}-{number - 1}" if number > 1 else SOURCE_TEST,
             )
+        info["drawdown_bounds"] = {}
+        if chosen is not None:
+            vdir = folder / "variants" / chosen["id"]
+            bounds = drawdown_report.calculate([], first, dev_end, vdir)
+            drawdown_report.write(bounds, vdir)
+            drawdown_report.write(bounds, results_dir / chosen["dev_run"])
+            info["drawdown_bounds"]["development"] = bounds
+            for saved in _test_rows(folder):
+                target = results_dir / saved["run_folder"]
+                bounds = drawdown_report.calculate(
+                    [],
+                    date.fromisoformat(saved["start"]),
+                    date.fromisoformat(saved["end"]),
+                    target,
+                )
+                drawdown_report.write(bounds, target)
+                info["drawdown_bounds"][f"test {saved['test_run']}"] = bounds
         research_diagnostics.write_diagnostics(
             folder, spec, variants, rows, info, results_dir, sources
         )
@@ -926,6 +945,10 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             f"{row['net_r_without_shocks']:+.3f} R."
         )
     lines += research_walk_forward.report(info.get("walk_forward"))
+    from backtester.tools import drawdown_report
+
+    for label, bounds in info.get("drawdown_bounds", {}).items():
+        lines += drawdown_report.markdown(bounds, label)
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

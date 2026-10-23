@@ -316,6 +316,43 @@ def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
     assert (out / "report.html").is_file()
 
 
+def test_run_bounds_use_saved_mtm_and_cli_configuration(tmp_path, stub):
+    from backtester.analytics.daily import weekdays as period_weekdays
+
+    folder = make_run(tmp_path)
+    (folder / "daily.csv").write_text(
+        "date,net_r_mtm\n" + "".join(f"{d},1\n" for d in period_weekdays(START, END)),
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    assert (
+        tool.main(
+            run_argv(
+                folder,
+                out,
+                "--sampling",
+                "permutation",
+                "--block-days",
+                "2",
+                "--bounds-outer",
+                "3",
+                "--bounds-inner",
+                "8",
+                "--horizon-days",
+                "4",
+            )
+        )
+        == 0
+    )
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    bounds = summary["drawdown_bounds"]
+    assert bounds["source"] == "marked_to_market"
+    assert bounds["config"]["outer"] == 3 and bounds["config"]["inner"] == 8
+    assert bounds["config"]["horizon_days"] == 4 and bounds["config"]["block_days"] == 2
+    assert all(v == 0 for row in bounds["rows"] for v in row["bounds_r"].values())
+    assert summary["monte_carlo"]["config"]["sampling"] == "permutation"
+
+
 def test_run_option_writes_a_trial_line_and_check_7_uses_the_trial_count(tmp_path, stub):
     from backtester.analytics.trial_log import append, count_only, family_trials, read_all
 

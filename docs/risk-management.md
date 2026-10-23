@@ -186,7 +186,7 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Monte Carlo (`risk/monte_carlo.py`)
 Kept in the base backtest (rule set by the user).
-- Reshuffles the order of **whole trading days** (not single trades, so bad days stay realistic) ⚙️ **1,000** times (default) and simulates the account for each order with the same settings.
+- Samples **whole trading days** ⚙️ **1,000** times and simulates the account for each order with the same settings (sampling rules below).
 - **Output:** distribution of max drawdown and final balance, e.g. "in 95% of the runs the max drawdown stays below X%", a fan of simulated equity curves. Main use: choosing a safe risk %.
 
 ### Monte Carlo report (ROADMAP 12.7; rules set by the user, 2026-10-15)
@@ -211,7 +211,16 @@ clear verdict.
   banner only, not part of the verdict.
   7. **Deflated Sharpe** DSR ≥ ⚙️ **0.95** (7th check, rule set by the user 2026-10-16; see › Trial log and
      deflated Sharpe). With seven checks, WEAK still means one or two failed.
-- **A. Day reshuffle** (the Monte Carlo above): ⚙️ **1,000** runs. A "day" = a weekday of the run's period
+- **A. Day sampling** (V2.4d item 4, accepted 2026-10-23): ⚙️ **1,000** runs.
+  `MonteCarloConfig.sampling="block_bootstrap"` is the default: stationary bootstrap
+  (Politis–Romano), starting uniformly at a historic day, continuing to the next day modulo
+  the history length with probability `1 - 1/block_days`, otherwise restarting uniformly.
+  Block lengths are geometric, mean `block_days` (default **5**, finite and >= 1).
+  Every path has the historic number of days; replacement permits repeats and omissions.
+  `sampling="permutation"` retains the exact historic seeded permutations for comparison.
+  The same orders feed account statistics, drawdown duration, fan, FTMO challenges/funded
+  phase, adaptive risk, prop cards and risk sweeps. Reports name sampling and block length.
+  A "day" = a weekday of the run's period
   (midnight to midnight `Europe/Prague`; days without trades included, so days and months are real calendar
   lengths); trades belong to their exit day and keep their order and times inside it. Account per run: start
   ⚙️ **100,000 USD**, risk ⚙️ **0.5 / 1 / 1.5 %** of the current balance per trade, shown **side by side**
@@ -224,6 +233,22 @@ clear verdict.
     median; a month = ⚙️ **21** trading days), share of profitable months, max drawdown (median and 95 %),
     P(max drawdown > 10 %), longest drawdown in days, worst day, longest losing streak, profit factor, win
     rate, expectancy, trades per month.
+- **Double-bootstrap drawdown bounds** (`risk/drawdown_bounds.py`, Masters ch.6): separate
+  additive daily-R calculation, independent of the compounded account replay. Use the run's
+  complete `daily.csv` MTM column when present (V2.4d 1+2), otherwise exit-booked daily R;
+  label the source. Reject malformed/nonfinite daily data rather than silently falling back.
+  Outer **200** stationary-bootstrap histories of the original length; per outer history,
+  inner **1,000** stationary-bootstrap future paths of **126** days. Both use mean block
+  length **5**, seeded **42**, configurable in a frozen config. Include the initial zero
+  equity peak: max drawdown R = max(running peak of cumulative R minus cumulative R).
+  For q = **0.50 / 0.90 / 0.95 / 0.99**, take each outer history's inner q-quantile;
+  report its outer median and one-sided **90 % / 95 %** upper bounds (numpy linear
+  quantiles). Table in R and percent balance at each configured risk: `R * risk * 100`,
+  fixed fraction without compounding. Empty input is explicitly unavailable; a nonnegative
+  series gives zero. These are estimates for the stated future horizon, not guarantees.
+  Monte Carlo HTML + JSON include the table. Research writes `drawdown_bounds.json` beside
+  the chosen development run and each completed test run, with blocks in `report.md`;
+  no test is triggered solely to calculate bounds. Defaults must run well under one minute.
 - **FTMO 2-Step** on each reshuffled run (rules in › Prop-firm field): Phase 1 +10 %, Phase 2 +5 %, daily loss
   5 % and max loss 10 % (static) of the initial balance, at least 4 trading days (days with a trade). Attempts
   follow each other along the run (a new attempt starts the day after the last one ended, fresh balance).

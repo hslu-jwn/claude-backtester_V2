@@ -42,7 +42,8 @@ def one_per_day(rs: list[float]) -> tuple[list[T], date, date]:
 
 
 def cfg(**kw) -> MonteCarloConfig:
-    base = {"runs": 20, "fan_paths": 5, "risk_levels": (0.01,)}
+    # Legacy permutation cases retain their original numbers (V2.4d item 4).
+    base = {"runs": 20, "fan_paths": 5, "risk_levels": (0.01,), "sampling": "permutation"}
     base.update(kw)
     return MonteCarloConfig(**base)
 

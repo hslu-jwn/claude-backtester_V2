@@ -125,6 +125,12 @@ Runs are resumable: a finished variant is not run again. Every research run is w
 
 ### Daily series (V2.4d items 1?2)
 
+The chosen development variant and each completed test run also retain
+`drawdown_bounds.json` (V2.4d item 4). The chosen development file is copied to its
+published run folder. `report.md` includes the double-bootstrap tables for development
+and completed tests; this reporting never starts an unspent test. Defaults and the
+MTM/exit-booked fallback follow `risk-management.md` > Monte Carlo report.
+
 Every development variant retains variants/<id>/daily.csv: date, net_r_exit_booked,
 net_r_mtm, position, including empty weekdays. Sensitivity neighbours retain the same
 file in sensitivity/<id>/; each test/retest retains it in its own normal run folder.

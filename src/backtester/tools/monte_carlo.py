@@ -13,7 +13,7 @@
 symbols, period and settings.json instead of running the backtest again; it writes one trial-log
 line (source "run", family = the strategy or `--family`) and check 7 uses the count; default `<out>` is `results/monte_carlo/<run id>/`.
 
-Runs the strategy (spec defaults, shared costs), then: kind A day reshuffle + FTMO 2-Step at
+Runs the strategy (spec defaults, shared costs), then: kind A stationary day bootstrap + FTMO 2-Step at
 0.5 / 1 / 1.5 % risk, kind B random entries (only the gap fade, "follow" variant, and the gap
 momentum, "fade" side, have one; other strategies show "not available for this strategy yet" and
 the verdict check is n/a), kind C random fills, kind D seeded random-walk paths (`--paths`, 0
@@ -33,7 +33,7 @@ import math
 import re
 import tempfile
 import time as clock
-from dataclasses import asdict, dataclass, fields, is_dataclass, replace
+from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
@@ -68,10 +68,12 @@ from backtester.data.random_walk import RandomWalkConfig, load_profile, write_pa
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.engine.spread_table import SpreadTable
 from backtester.paths import RESULTS_DIR
+from backtester.risk.drawdown_bounds import DrawdownBoundsConfig
 from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
 from backtester.settings import from_dict
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
+from backtester.tools import drawdown_report
 
 # strategies with a kind B alternative on the same days: (setting, value) of the other choice
 ALTERNATIVES = {"gap_fade": ("mode", "follow"), "gap_momentum": ("side", "fade")}
@@ -88,6 +90,9 @@ class ToolConfig:
     # kind D warning: mean net R per trade on random paths above this is a bug warning. The
     # spec says "clearly more than minus the mean cost"; clearly = above 0 net (Claude, 2026-10-15)
     warn_net_r: float = 0.0
+    sampling: str = "block_bootstrap"
+    block_days: float = 5.0
+    bounds: DrawdownBoundsConfig = field(default_factory=DrawdownBoundsConfig)
 
 
 # ----- kind D ------------------------------------------------------------------------------
@@ -167,7 +172,7 @@ def verdict_inputs(
 def build_summary(
     trades, follow_trades, meta: dict, settings: RunSettings, config: ToolConfig,
     paths: dict | None = None, log=print, deflated: DeflatedResult | None = None,
-    family: str | None = None, baseline=None, fills=None,
+    family: str | None = None, baseline=None, fills=None, daily_folder=None,
 ) -> dict:  # fmt: skip
     """The report numbers of a ready trade list. `meta` needs strategy, symbols, start, end and
     source. `follow_trades` (kind B alternative, same days) None = kind B not available; `paths`
@@ -187,7 +192,23 @@ def build_summary(
             trades, RandomFillsConfig(config.runs, config.seed), settings.engine.costs.symbols
         )
     log("kind A: day reshuffle + FTMO")
-    mc = run_monte_carlo(trades, start, end, MonteCarloConfig(config.runs, config.seed))
+    mc_config = MonteCarloConfig(
+        config.runs, config.seed, sampling=config.sampling, block_days=config.block_days
+    )
+    mc = run_monte_carlo(trades, start, end, mc_config)
+    log("double-bootstrap drawdown bounds")
+    bounds = drawdown_report.calculate(
+        trades,
+        start,
+        end,
+        daily_folder,
+        replace(
+            config.bounds,
+            seed=config.seed,
+            block_days=config.block_days,
+            risk_levels=mc_config.risk_levels,
+        ),
+    )
     inputs = verdict_inputs(
         trades, baseline, fills, rcfg, start, end, None if deflated is None else deflated.dsr
     )
@@ -225,6 +246,7 @@ def build_summary(
         ),
         "random_fills": asdict(fills),
         "monte_carlo": mc,
+        "drawdown_bounds": bounds,
         "random_paths": paths,
     }
 
@@ -341,7 +363,18 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         "strategy": strategy, "symbols": symbols, "start": start, "end": end, "source": source,
         **({"run": args.run} if args.run else {}),
     }  # fmt: skip
-    summary = build_summary(trades, follow, meta, settings, config, paths, log, deflated, family)
+    summary = build_summary(
+        trades,
+        follow,
+        meta,
+        settings,
+        config,
+        paths,
+        log,
+        deflated,
+        family,
+        daily_folder=args.results_dir / args.run if args.run else None,
+    )
     summary["meta"]["paths"] = config.paths
     return summary
 
@@ -517,8 +550,10 @@ def fan_html(summary: dict) -> str:
         legend={"orientation": "h", "y": -0.18}, template="plotly_white",
     )  # fmt: skip
     return section(
-        "Fan chart (kind A, day reshuffle)",
-        f"each thin line is one reshuffled order of the trading days from "
+        "Fan chart (kind A, day sampling)",
+        f"sampling={summary['monte_carlo']['config'].sampling}, "
+        f"block_days={summary['monte_carlo']['config'].block_days:g}. "
+        f"Each thin line is one sampled order of the trading days from "
         f"{start_balance:,.0f} USD; the shaded band holds 90 % of all runs, the dashed line is "
         f"the median, the bold black line is the real order. Pick the risk per trade in the menu.",
         fig.to_html(full_html=False, include_plotlyjs="cdn"),
@@ -591,7 +626,7 @@ def ftmo_html(summary: dict) -> str:
     ]  # fmt: skip
     return section(
         "FTMO 2-Step (kind A orders)",
-        f"each reshuffled order is played as FTMO challenge attempts (Phase 1 +"
+        f"each sampled order is played as FTMO challenge attempts (Phase 1 +"
         f"{cfg.p1_target * PERCENT:g} %, Phase 2 +{cfg.p2_target * PERCENT:g} %, daily loss "
         f"{cfg.daily_loss * PERCENT:g} %, max loss {cfg.max_loss * PERCENT:g} %). Open trades "
         "reserve their initial risk in adaptive replay; fixed replay uses the conservative "
@@ -686,7 +721,7 @@ def render_report(summary: dict) -> str:
     body = "".join((
         verdict_html(summary), deflated_html(summary), fan_html(summary), numbers_html(summary), ftmo_html(summary),
         random_entries_html(summary), random_fills_html(summary), random_paths_html(summary),
-        robustness_html(summary),
+        robustness_html(summary), drawdown_bounds_html(summary),
     ))  # fmt: skip
     m = summary["meta"]
     title = f"Monte Carlo {m['strategy']} {'-'.join(m['symbols'])}"
@@ -695,6 +730,31 @@ def render_report(summary: dict) -> str:
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         f"<title>{esc(title)}</title><style>{CSS}</style></head><body><main>"
         f"<h1>{esc(title)}</h1>{body}</main></body></html>"
+    )
+
+
+def drawdown_bounds_html(summary: dict) -> str:
+    result = summary.get("drawdown_bounds")
+    if result is None:
+        return ""
+    rows = []
+    for row in result["rows"]:
+        for unit, values in [
+            ("R", row["bounds_r"]),
+            *((f"% balance at {float(r) * 100:g}% risk", v) for r, v in row["bounds_pct"].items()),
+        ]:
+            rows.append([f"{row['q']:.0%}", esc(unit), *(fmt(v, ".3f") for v in values.values())])
+    cfg = result["config"]
+    mc_cfg = summary["monte_carlo"]["config"]
+    return section(
+        "Double-bootstrap drawdown bounds",
+        f"Kind A sampling={mc_cfg.sampling}, block_days={mc_cfg.block_days:g}. "
+        f"Bounds: stationary bootstrap, {result['source']}, {result['days']} historic days; "
+        f"horizon {cfg['horizon_days']} days, outer={cfg['outer']}, inner={cfg['inner']}, "
+        f"seed={cfg['seed']}. Fixed fraction, no compounding; estimates for this horizon.",
+        table(["DD quantile", "Units", "Median", "90% upper", "95% upper"], rows)
+        if result["status"] == "ok"
+        else esc(result["reason"]),
     )
 
 
@@ -730,6 +790,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument("--runs", type=int, default=d.runs, help="runs for kinds A, B and C")
     p.add_argument("--seed", type=int, default=d.seed)
+    p.add_argument("--sampling", choices=("block_bootstrap", "permutation"), default=d.sampling)
+    p.add_argument("--block-days", type=float, default=d.block_days)
+    p.add_argument("--bounds-outer", type=int, default=d.bounds.outer)
+    p.add_argument("--bounds-inner", type=int, default=d.bounds.inner)
+    p.add_argument("--horizon-days", type=int, default=d.bounds.horizon_days)
     p.add_argument("--paths", type=int, default=d.paths,
                    help="random price paths per symbol (kind D), 0 = skip")  # fmt: skip
     p.add_argument("--family", default=None,
@@ -758,7 +823,16 @@ def write_outputs(summary: dict, out: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    config = ToolConfig(runs=args.runs, seed=args.seed, paths=args.paths)
+    config = ToolConfig(
+        runs=args.runs,
+        seed=args.seed,
+        paths=args.paths,
+        sampling=args.sampling,
+        block_days=args.block_days,
+        bounds=DrawdownBoundsConfig(
+            outer=args.bounds_outer, inner=args.bounds_inner, horizon_days=args.horizon_days
+        ),
+    )
     out = args.out or default_out(args)
     t0 = clock.time()
     summary = analyse(args, config)

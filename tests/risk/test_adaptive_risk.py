@@ -217,7 +217,9 @@ GOLDEN = {
 
 def test_fixed_risk_regression_with_full_passing_days():
     trades, s, e = golden_trades()
-    res = mc.run_monte_carlo(trades, s, e, MonteCarloConfig(runs=30, fan_paths=0))
+    res = mc.run_monte_carlo(
+        trades, s, e, MonteCarloConfig(runs=30, fan_paths=0, sampling="permutation")
+    )
     for risk, want in GOLDEN.items():
         f, st = res["risks"][risk]["ftmo"], res["risks"][risk]["stats"]
         got = (
