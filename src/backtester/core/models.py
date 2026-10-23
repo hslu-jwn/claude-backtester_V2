@@ -25,9 +25,12 @@ class Timeframe(Enum):
     D1 = 1440
     W1 = 10080
 
+    def __init__(self, minutes: int) -> None:
+        self._duration = timedelta(minutes=minutes)
+
     @property
     def duration(self) -> timedelta:
-        return timedelta(minutes=self.value)
+        return self._duration
 
 
 @dataclass(frozen=True, slots=True)

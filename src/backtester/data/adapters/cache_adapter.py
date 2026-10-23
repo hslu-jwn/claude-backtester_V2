@@ -21,13 +21,16 @@ import os
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
+import numpy as np
 import pandas as pd
 
 from backtester.core.models import Candle, Timeframe
 from backtester.data.adapters.base import DataAdapter
 from backtester.data.cache import DEFAULT_CACHE_DIR, cache_path, read_cached_days
 from backtester.data.resample import (
+    CANDLE_COLUMNS,
     DEFAULT_BOUNDARY,
     DayBoundary,
     H4Alignment,
@@ -139,7 +142,31 @@ class PreferredCacheAdapter(CacheAdapter):
 
 
 def candles_from_frame(frame: pd.DataFrame) -> list[Candle]:
-    """Rows of a `fetch_frame` result as `Candle`s."""
+    """Rows of a `fetch_frame` result as `Candle`s.
+
+    Spec: ARCHITECTURE.md, data sources; docs/review/speed.md step 3.
+    Standard UTC cache frames are validated together before any construction.
+    Other layouts/dtypes and invalid batches use the original constructor path,
+    preserving its first error, including timestamp and OHLC validation order.
+    """
+    if len(frame) == 0:
+        return []
+    if _valid_candle_frame(frame):
+        # The same OHLC and timestamp checks as Candle.__post_init__ have passed
+        # for every row. Keep the bypass private to this validated loading path.
+        new, set_field = object.__new__, object.__setattr__
+        candles = []
+        for row in frame.itertuples(index=False):
+            candle = new(Candle)
+            set_field(candle, "ts", row.ts.to_pydatetime())
+            set_field(candle, "open", row.open)
+            set_field(candle, "high", row.high)
+            set_field(candle, "low", row.low)
+            set_field(candle, "close", row.close)
+            set_field(candle, "volume", row.volume)
+            set_field(candle, "spread", row.spread)
+            candles.append(candle)
+        return candles
     return [
         Candle(
             ts=row.ts.to_pydatetime(),
@@ -152,6 +179,34 @@ def candles_from_frame(frame: pd.DataFrame) -> list[Candle]:
         )
         for row in frame.itertuples(index=False)
     ]
+
+
+def _valid_candle_frame(frame: pd.DataFrame) -> bool:
+    """Vectorized Candle checks for the canonical float64, aware-UTC cache schema.
+
+    Restrict the fast path to native float64 prices to avoid coercing object,
+    nullable or mixed integer/float columns and changing their validation.
+    Candle accepts other aware zones, too; those retain the constructor path.
+    Volume and spread are deliberately not validated, just as in Candle.
+    """
+    if list(frame.columns) != CANDLE_COLUMNS:
+        return False
+    ts = frame["ts"]
+    if not isinstance(ts.dtype, pd.DatetimeTZDtype):
+        return False
+    tz = ts.dt.tz
+    is_utc = tz == UTC or (isinstance(tz, ZoneInfo) and tz.key == "UTC")
+    if not is_utc or ts.isna().any():
+        return False
+    prices = frame[["open", "high", "low", "close"]]
+    if not all(dtype == np.dtype("float64") for dtype in prices.dtypes):
+        return False
+    values = prices.to_numpy(copy=False)
+    o, h, lo, c = values.T
+    return bool(
+        np.isfinite(values).all()
+        and ((h >= lo) & (h >= o) & (h >= c) & (lo <= o) & (lo <= c)).all()
+    )
 
 
 def _utc(dt: datetime) -> datetime:

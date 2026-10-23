@@ -138,7 +138,7 @@ class Backtest:
                     self._check_break_even(trade, candle, now)
                     still_open.append(trade)
             open_trades = still_open
-            views = self._views(cursor, view)
+            views = self._views(now, view)
             orders = self._strategy.on_candle(now, views)
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
@@ -188,10 +188,10 @@ class Backtest:
                 keep.append(trade)
         return keep
 
-    def _views(self, cursor: int, view: SeriesView) -> dict[Timeframe, SeriesView | None]:
+    def _views(self, now: datetime, view: SeriesView) -> dict[Timeframe, SeriesView | None]:
         views: dict[Timeframe, SeriesView | None] = {self._replay.timeframe: view}
         for tf in self._higher:
-            views[tf] = self._replay.higher_view(cursor, tf)
+            views[tf] = self._replay.higher_view_at(now, tf)
         return views
 
     @staticmethod

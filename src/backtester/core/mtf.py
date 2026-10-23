@@ -20,6 +20,7 @@ class HigherTimeframeClock:
         dur = series.timeframe.duration
         # close time of every HTF candle, in order
         self._close_times: list[datetime] = [c.ts + dur for c in series._candles]
+        self._view: SeriesView | None = None
 
     def view_at(self, now: datetime) -> SeriesView | None:
         """Most recent HTF view whose last candle closed at or before `now`.
@@ -30,4 +31,8 @@ class HigherTimeframeClock:
         idx = bisect_right(self._close_times, now) - 1
         if idx < 0:
             return None
-        return self._series.view(idx)
+        # Reuse a snapshot only while its cursor is unchanged. Never advance a
+        # previously returned view: detectors and chart replay may retain it.
+        if self._view is None or self._view.cursor != idx:
+            self._view = self._series.view(idx)
+        return self._view

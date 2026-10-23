@@ -37,6 +37,7 @@ class Replay:
         if len(base) == 0:
             raise ValueError("Replay needs at least one candle")
         self._base = base
+        self._duration = base.timeframe.duration
         self._base_clock = HigherTimeframeClock(base)  # close time -> base cursor
         self._clocks: dict[Timeframe, HigherTimeframeClock] = {}
         for series in higher:
@@ -69,7 +70,9 @@ class Replay:
 
     def close_time(self, cursor: int) -> datetime:
         """`now` at `cursor`: the close time of base candle `cursor`."""
-        return self.view(cursor).current.ts + self.timeframe.duration
+        if not 0 <= cursor < len(self._base):
+            raise IndexError(f"cursor {cursor} out of range 0..{len(self._base) - 1}")
+        return self._base._candles[cursor].ts + self._duration
 
     def cursor_at(self, now: datetime) -> int | None:
         """Cursor of the latest base candle closed at or before `now` (None: none yet)."""
@@ -81,6 +84,15 @@ class Replay:
         if timeframe not in self._clocks:
             raise KeyError(f"no {timeframe.name} series in this replay")
         return self._clocks[timeframe].view_at(self.close_time(cursor))
+
+    def higher_view_at(self, now: datetime, timeframe: Timeframe) -> SeriesView | None:
+        """Closed HTF candles at the base close time already computed by the engine.
+
+        Spec: ARCHITECTURE.md, closed-only higher-timeframe alignment.
+        """
+        if timeframe not in self._clocks:
+            raise KeyError(f"no {timeframe.name} series in this replay")
+        return self._clocks[timeframe].view_at(now)
 
     @property
     def overall_timeframe(self) -> Timeframe | None:
