@@ -44,6 +44,16 @@ RC = Carver, JK = Kaeppel.
   in one half only is not an edge (this is how strategy 4 failed).
 - Regimes defined after the fact are not tradable (K p.694). A regime filter must be computed from
   closed bars only (our invariant #1) and its threshold pre-declared.
+- **Risk premiums outlast inefficiencies** (DA p.331-385): profits that pay for carrying risk (the hedging-risk transfer paid to
+  trend followers in futures; a liquidity premium for buying from distressed sellers; price discovery) last longer than mispricings
+  that get arbitraged away. A backtest without a theory is an isolated fact. Behavioural versions: under-reaction → trends,
+  over-reaction → reversals. Trend following works worse in stocks than futures, fits K's noise ranking above; trend followers lose
+  50-65 % of signals with DD up to 30 %. Random-walk charts show convincing "trends" (DA p.33-163).
+- Less mature markets look more predictable (Hsu and Kuan: significant rules on NASDAQ and Russell 2000, none on the Dow or S&P)
+  (DA p.441-475).
+- **Market types** (RP ch.6): bull, bear, cyclic (range), congested; congestion is the worst and usually holds the max drawdown. A
+  test window should contain all four; one-way history flatters (see Data and sample in
+  [testing-and-robustness.md](testing-and-robustness.md)).
 
 ## Volatility regimes
 - Volatility clusters and changes the meaning of any fixed point size; make every threshold
@@ -91,3 +101,9 @@ Sources: EC ch.2, 6 (p.41-48, 134-137), LP ch.17-18, 13. Tool: T-11 in [../ideas
   sigma units); a win rate at 1R : 2R not above 33 % means no edge before costs. Probability of touching a level before time h is about
   twice that of finishing beyond it (reflection principle; JK p.91-95 for the finish-beyond tables). Null reference, not a forecast: real
   returns have fat tails and volatility clusters.
+- **STATN run lengths** (TM ch.2): count how many bars in a row an indicator (trend = regression slope, volatility = ATR) stays above
+  or below its median, in bins 1, 2, 4 ... 512, > 512. Many runs over 256 bars = slow wandering (non-stationary); OEX raw volatility
+  had six runs above 512. Fixes: indicator minus its value `lookback` bars ago, short minus long version, or a moving median and IQR.
+- **Relative entropy of an indicator** (TM ch.2): H / log(K) over about 20 equal-width bins; want >= 0.5, below 0.1 is serious (outliers
+  or clumps). Cures: no division by tiny values, monotonic transforms only, compress only the outer 1-10 % tails (raw jump 0.48 →
+  0.96 after cleaning the outer 5 %), rank transform. Not the return-encoding entropy above (LP 18).

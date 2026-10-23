@@ -90,6 +90,14 @@ checklist that uses them is in [testing-and-robustness.md](testing-and-robustnes
   variants (empirical Bayes); the best variant then shrinks toward the group mean and the winner's curse
   disappears. Simple version: skeptical prior for all, stricter threshold (posterior > 0.95 for the best)
   or prior odds divided by the number of variants.
+- **Max-of-N sampling distribution** (DA p.255-330): the statistic of a data-mined winner is the maximum of N means, biased upward;
+  its p-value comes from the distribution of that maximum (White's bootstrap with common day indices, or the permutation max), not
+  from the single-rule distribution. Bias grows roughly with log N and shrinks with more observations (artificial rules, best of
+  1,024: about 84 % a year with 10 months of data, under 12 % with 1,000). Same family as the sqrt(2 ln N) rule above, but taken
+  from the actual return series.
+- **Markowitz-Xu shrinkage:** H' = R_mean + B (H - R_mean), the best variant's return pulled toward the average of all tested
+  variants, B in [0, 1] from within-/between-variance, N and the observation count; a rough guide, sometimes badly wrong
+  (DA p.255-330). Compare the empirical-Bayes shared prior above.
 - The Bayesian answer does not remove the garden of forking paths; the variants tried must enter the
   prior (WK notes). Davey's 70 %-of-grid heuristic (KD p.106) is descriptive and complementary.
 
@@ -111,6 +119,32 @@ checklist that uses them is in [testing-and-robustness.md](testing-and-robustnes
   sigma about 30 times in 1914-2014, RC ch.1). Use the Beta for rates, not the normal (WK ch.12).
 - Expect the live Sharpe at best about half the backtest (EC p.7); Carver's pessimism factors are 65-75 %
   (RC Table 14, ch.4).
+## Bootstrap, permutation and bounds (Masters, Aronson, Pardo)
+- Use log returns: +10 % then the move back is -9.1 %, so percent returns make a flat system look profitable (TM ch.1). Win rate
+  means nothing without the win/loss sizes: target 1 and stop 9 on a random walk wins 90 % with E = 0 (TM ch.1).
+- Standard error = SD/sqrt(N); plan with mean - SE; 30 trades is the floor (RP ch.6). **Lower bound of the mean:** LB = mean - t ×
+  SD/sqrt(n); H0 "no skill" is rejected exactly when LB > 0 (n=100, mean 8, SD 5, p .95 → 7.17). A t-test survives skew but one wild
+  outlier ruins it: look at the histogram (TM ch.6).
+- Statistical is not practical significance: with thousands of days tiny returns become significant; show the effect size (R a
+  year, net) next to p. Fix alpha in advance (0.05 significant, 0.01 very); a p-value is not P(system is worthless) and cannot rank
+  systems, because it depends on sample length (TM ch.6; DA p.217-253, 389-440).
+- **Bootstrap:** percentile, pivot (least reliable), BCa (bias and acceleration corrected); sample size = original, B >= 10,000
+  for serious work. **Bootstrap log(PF), not PF or Sharpe:** with 50 returns the PF lower bound is useless and the upper bound is
+  violated 4× too often; fewer than about 100 returns is unreliable for ratios (TM ch.6). Single rule: zero-centre the rule's daily
+  returns and resample (DA p.217-253).
+- **Permutation p** = (k+1)/(m+1), k = permuted runs at least as good, m >= 100, usually 1,000+; every permutation must be a plausible
+  outcome under the null (TM ch.7). For one rule: keep its +1/-1 positions in order against shuffled detrended market changes
+  (DA p.217-253). Best-of-N and training-process versions: [testing-and-robustness.md](testing-and-robustness.md).
+- **Order-statistic bounds on grouped returns** (monthly / quarterly, for monitoring): lower bound = m-th smallest of n OOS returns,
+  m = n·p (conservative) or (n+1)·p; needs >= 100 returns. The bound itself is uncertain: P(m-th smallest > q-quantile) =
+  1 - I_q(m, n-m+1) (incomplete beta); n=200, p .1 → with probability .999 the true failure rate is <= 18 %. Add an upper bound
+  that about 40 % of periods should reach; too few reaching it signals decay (TM ch.6).
+- **Double-bootstrap drawdown bound:** outer loop resamples the whole OOS set; inner loop (about 10,000) draws N-bar sequences from
+  it and takes the DD quantile at DD_conf (0.90-0.999); the Bound_conf percentile (0.6-0.9) of the outer quantiles is the bound. A
+  plain bootstrap treats the OOS sample as the truth and underestimates catastrophic DD by more than 10× on short samples (63
+  returns, p .001: 13.65×), about 2× on moderate ones, and is fine only with ~2,500 returns and modest p (TM ch.6). **Disagreement:**
+  Davey's plain resample of the walk-forward trades (KD ch.7, 14) is of this anti-conservative kind; Masters' double bootstrap
+  is the correction. Measure DD in log-equity units; the bound holds for one stated period, not "ever".
 
 See also: [testing-and-robustness.md](testing-and-robustness.md), [combining-edges.md](combining-edges.md),
 [position-sizing-and-risk.md](position-sizing-and-risk.md).

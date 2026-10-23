@@ -47,6 +47,26 @@ RC = Carver, EC = Chan, KD = Davey, WK = Kurt. Page numbers are the book's own; 
 - Walk-forward is **one path** and can be re-run until it looks good (LP 11.6, 12.2); a rule that works only forward
   in time and fails on the time-reversed series is suspect (LP 12.2). Chan: true OOS starts only when the rule is
   frozen; expect live Sharpe at best about half the backtest (EC p.2-7).
+- **Walk-forward efficiency (WFE)** = annualized OOS profit / annualized IS profit: about 25 % = overfit or unsound, 50-60 % or
+  more = robust, above 100 % happens and proves nothing alone. Expected live profit ≈ WFE × the latest IS annual profit; live
+  efficiency below the WFE hints at mild overfit (RP ch.11, 13). Fits K's "OOS about half of IS" above; the cut-offs are Pardo's
+  rules of thumb, no data shown.
+- **Many windows, short IS:** 10-20 years of data and 10-20+ walk-forwards; the strength comes from the total concatenated OOS
+  length. IS 1-2 years for fast systems, 3-6 for slow; OOS 25-35 % of IS; step = OOS length so every bar is OOS exactly once.
+  Report a per-window table (IS period, chosen parameters, IS and OOS result, WFE, DD) and max DD per IS and OOS window: OOS DD is
+  more realistic because optimization rejects high-DD sets (RP ch.11). Live trading re-optimizes on the same schedule.
+- **Window sizes are parameters**, so tuning them is itself a search; one walk-forward path can still be overfit (RP ch.13; LP 11.6,
+  12.2). Retrain-frequency study: rerun the walk-forward with test windows of 1, 2, ... bars and plot OOS performance against test
+  length; the fall-off shows how often retraining is needed (TM ch.5; RP ch.11: trade 1/8 to 1/3 of the optimization window).
+- **Open trades at the IS end** (rule systems with "hold until the exit fires"): letting IS trades run past the IS end is a future
+  leak. Options: force-close at the IS end; max holding time H plus no new trades H bars before the end (Masters' choice); best,
+  bar-by-bar marked-to-market returns with the last IS position handed to the first OOS bar (TM ch.5-6). EMAs and rules that depend
+  on earlier trades have an unbounded lookback and leak across window edges (TM ch.5). Every grid variant starts on the same bar
+  and warm-up history is loaded before each window (TM ch.4; RP ch.13).
+- **Nested walk-forward** whenever a "choose the best X" step sits on top of the first stage (market, portfolio member, criterion,
+  regime switch): level 1 gives OOS returns per competitor, the selector picks from their recent OOS, and only the level-2 OOS bars
+  count (TM ch.5). Choosing among systems by their OOS result makes that OOS optimistic again: keep a second untouched OOS, or use
+  train / test / validation segments (test chooses the complexity, validation stays untouched) (TM ch.5; DA p.441-475).
 
 ## Parameter grids and surfaces
 - Pre-declare ranges; use **geometric spacing** (5, 10, 20, 40, 80, 160 or ×1.5), not equal steps,
@@ -61,6 +81,25 @@ RC = Carver, EC = Chan, KD = Davey, WK = Kurt. Page numbers are the book's own; 
 - A new rule must improve the **average of all tests** (or cut dispersion at the same mean). If it
   only lifts the peak or touches 1-2 trades, it is overfit (K p.937). Compare % profitable combos
   with and without the filter (K p.989).
+- **Optimization profile** (RP ch.10): share of profitable sets (< 5 % reject, >= 20 % with significant profit marginal); mean > 0,
+  mean - 1 SD > 0, mean - 3 SD > 0 (very strong), top set within 1 SD of the mean, small max-min range; shape = smooth hill whose
+  top has profitable neighbours. **Disagreement:** Pardo's 20 % bar is far looser than K's about 70 % and Davey's 70 % gate (K p.945;
+  KD p.106); our checklist keeps the stricter one. Overscanning (steps too fine) fills the set with near-copies and inflates the
+  % profitable while shrinking the SD (RP ch.13).
+- **Neighbour-averaged objective** (RP ch.10): average each cell with its two neighbours; his spike (12.5k, neighbours -0.5k and 3k
+  → 5.0k) loses to the plateau (7k, 6.5k, 5k → 6.2k). Same idea as K's smoothing above.
+- **Objective function:** Pardo ranks by PROM (pessimistic return on margin; penalises small samples) or CECPP with floors and
+  ceilings (min trades a year, max DD); Masters finds profit factor on bar returns gives the smallest training bias and mean return
+  the largest, with little difference when data is plentiful (RP ch.9; TM ch.5). They differ, and our runner uses max net R; all
+  agree not to rank by raw net profit alone.
+- **Sensitivity curves** (minimum due diligence): vary one parameter at a time around the optimum; a broad smooth peak is good, a
+  narrow one falls off as the market drifts, several close peaks are luck (TM ch.4). A prioritized one-at-a-time scan costs the sum
+  of the steps, not their product, and shows each parameter's impact; a flat one is fixed or dropped (RP ch.9).
+- **Degrees of freedom:** remaining DF % = 100 × (1 - used/available), each lookback bar and rule uses one; keep >= 90 % (a 30-bar
+  MA on 100 bars leaves 70 %: skip it). Warm-up bars bias small-sample optimization toward short lookbacks. Scan steps proportional
+  in %, with similar candidate counts per parameter (RP ch.6, 10, 13).
+- **Per-market parameters + periodic re-optimization (RP ch.6, 11) vs one pooled parameter set (Kaufman; Carver, see "Whole
+  classes" below):** open conflict; Pardo's preference is untested here. Needs the user's decision.
 - Count every variant ever tried. One good configuration in 1000 is not significant (K p.945). Log them all with
   their return series, so the Sharpe can be deflated (LP 11.5, 14.7; RC Tables 3-4); see the next section.
 
@@ -73,6 +112,11 @@ RC = Carver, EC = Chan, KD = Davey, WK = Kurt. Page numbers are the book's own; 
 - **Outliers:** remove the best trade / best move and look again; study the 10 biggest wins and
   losses. Many big wins and no big losses = overfit (K p.941). Kurtosis of daily returns above about
   7-8 is a warning sign (K p.43).
+- **Consistency (Pardo):** remove the maximum and recompute the mean; a drop of more than 1-2 SD means one outlier carries the
+  result. Year table: falling profit with rising DD = decay, one big year hiding losses = reject. MDD above about 3 × the average DD
+  needs an explanation; it should occur in hostile conditions (chop), an MDD in run-up-like conditions is an alarm. Model efficiency
+  = net / Perfect Profit (sum of all swings), 5 %+ very good, stable per year (RP ch.12). One parameter set on 5-10 uncorrelated
+  markets × five 2-year segments as a table (RP ch.8, 10).
 - **Shocks:** mark shock days (range > 3.5-5 × ATR(10)). If more than half of them were profitable,
   the risk is understated; show P/L with shock days removed or reversed (K p.970-975).
 - **Surprisingly small max drawdown** = overfit or tiny sample (K p.941).
@@ -93,14 +137,21 @@ Sources: LP ch.7, 11-14, RC ch.3, KD ch.12-14, EC ch.1. Math in [statistics-and-
   k groups: C(N,k) splits, phi = C(N-1,k-1) full backtest paths, one Sharpe per path (N=6, k=2 gives 15 splits and
   5 paths; for k=2, N = phi + 1). Every training set is purged and embargoed (LP 12.4). More, less correlated paths
   mean less selection bias (LP 12.5). → T-09
+- **Disagreement on cross-validation:** Masters distrusts CV for performance estimates (it uses future data, optimistic under
+  non-stationarity, wildly different from walk-forward) and keeps it only for structure choices nested inside a walk-forward
+  (TM ch.5); López de Prado prefers purged CPCV above. Both reject a single unpurged split.
 - **PBO via CSCV** (LP 11.6): matrix of PnL series (T periods x N trial configurations); split time into S blocks
   (S=16 gives 12,780 half-half combinations); pick the in-sample best, take its out-of-sample rank omega, logit =
   ln(omega/(1-omega)); PBO = share of combinations with logit < 0 (the in-sample winner ends below the OOS median).
   Needs every trial's synchronous PnL, so it relies on the trial log. → T-09
+  Masters' version: rows must come from grid or random trials, never a guided search (GA, DE); the result is relative to the
+  competitor set (absurd candidates flatter it, a too narrow set hurts) and says nothing about risk/reward (TM ch.5).
 - **Purging and embargo.** For any split of trades whose outcomes span time: purge training trades whose span
   overlaps a test span, and drop about 1 % of bars after each test block (embargo). No embargo needed before the test
   block; in plain walk-forward only purging. If performance keeps improving as the number of folds grows toward T,
   the split leaks (LP 7.4). Shuffled k-fold gives scores far above the realistic purged ones (LP 7 exercises).
+  Purging must be exact: off by one bar still leaks (random walk, lookahead 10: omit 8 → median t 1.88; omit 9 → 31 % "significant"
+  at 0.1; omit 9 and skip 9 → 10.1 %, correct) (TM ch.5).
 - **Overlapping trades** are not independent: the effective sample is lower than the trade count; count bets, weight
   by uniqueness (LP 4, 14.3). → T-19
 - **Whole classes, not one instrument.** An effect that appears in one instrument only is probably false; model asset
@@ -112,6 +163,27 @@ Sources: LP ch.7, 11-14, RC ch.3, KD ch.12-14, EC ch.1. Math in [statistics-and-
   equal length (LP 13.5-13.6). → T-15
 - **Tests that use every bar.** ADF, Hurst, variance ratio and half-life do not depend on entry and exit rules and
   have far more power than a backtest with few round trips; run them before writing rules (EC p.41-48). → T-11
+- **Best-of-N has its own null.** The best of N rules is the maximum of N means; judged against a single-rule distribution it looks
+  significant, against the max-of-N distribution it does not (50 useless rules, best +37 %: p < 0.05 vs p > 0.45). Aronson's 6,402
+  S&P rules (1980-2005): best +10.25 %/yr, White's Reality Check p 0.816; a naive test gave p 0.0005 and about 320 rules looked
+  significant (DA p.255-330, 441-475). Five factors set the bias: more rules, fewer observations (maybe the biggest), lower
+  correlation between rules, heavier positive tails, similar true merit (DA p.255-330). Observed performance is a fine **selection**
+  criterion but a biased **estimate** of the winner.
+- **White's Reality Check** (zero-centred daily returns, the same resampled day indices for all variants, distribution of the
+  max, >= 500 replications) and the **Monte Carlo permutation best-of-N** (one permutation of the detrended market changes applied
+  to every variant's positions, distribution of the max). Both need the full daily series (and positions) of every variant ever
+  tested; Romano-Wolf stepwise adds power and joint CIs. Rules borrowed from books count as trials (DA p.255-330, 389-440;
+  TM ch.7). → T-08
+- **Detrended benchmark** (DA p.15-31): a no-skill rule earns [p(long) - p(short)] × average daily change, so a long bias looks good
+  in a bull market. Compute rule returns on market returns minus their mean (signals still use real prices) and report raw and
+  detrended; report the long / short time share. S&P 1976-2004: random rule 90 % long 7.31 %/yr, 60 % long 1.78 %/yr.
+- **MCPT of the training process** (TM ch.7): re-optimize the whole grid on each permuted IS dataset; p = (k+1)/(m+1), m >= 100,
+  p <= 0.05 wanted. An overfit system also looks great on permuted data, so the original does not stand out. Same for the whole
+  walk-forward (permute everything after the first training fold, which gets its own permutation). Selection-bias version: p for a
+  competitor = share of permutations whose best result >= its original. Return partition: total = Skill + Trend + TrainingBias,
+  with TrainingBias read from permuted retrains (Skill 0) and Trend = (n_long - n_short) × mean log change. Permute log-price
+  changes (same permutation for all symbols; OHLC bars as two series, gaps and intra-bar moves). Where Davey's matched monkeys test a
+  fixed system, this also tests the optimization. → T-14
 
 ## The Davey funnel: screening before building
 Source: KD ch.5-14, 17-19 (futures, one 4-year example; the gates are the useful part, numbers are his).
@@ -136,6 +208,9 @@ Source: KD ch.5-14, 17-19 (futures, one 4-year example; the gates are the useful
   reported (KD ch.7, 14); then 3-6 months incubation as another OOS period, compare walk-forward and incubation trades
   by t-test and equity curve (KD ch.14, 19). Red flags in any backtest: fills at exact bar lows/highs, limit orders filled
   on touch, same-bar stop and target, exotic bars (KD ch.14).
+  **Disagreement:** Davey resamples the walk-forward trade list; Masters shows a plain resample underestimates catastrophic
+  drawdown (by more than 10× on short samples), so use his double bootstrap for DD bounds (TM ch.6;
+  [statistics-and-bayes.md](statistics-and-bayes.md)).
 - **Live monitoring:** performance cone of cumulative P&L against Monte Carlo percentile bands (10 % line = warning,
   below the 0 percentile = stop), return efficiency and drawdown efficiency on a one-unit basis, quit rule written in
   advance (KD ch.20, 23). → T-17
@@ -218,6 +293,14 @@ Derived from K ch.21-24 (full version with page refs: `books/kaufman-tsm-ch21-24
     result is treated as a bug (RC, EC p.7, WK ch.12).
 32. Live: written quit rule (1.5 x worst walk-forward DD averaged with the 95th-percentile Monte Carlo DD), performance
     cone with Monte Carlo bands, incubation of 3-6 months on MT5 data (KD ch.14, 20, 23; T-17).
+33. Walk-forward efficiency (annualized OOS / IS) per run and over the concatenated OOS windows (many windows, step = OOS); about
+    25 % = overfit, 50-60 %+ = robust; expected live profit ≈ WFE × latest IS (RP ch.11).
+34. Best-of-N significance: White's Reality Check or Monte Carlo permutation max-test over the daily series of every variant in
+    the trial log, not a single-rule p-value (DA p.255-330; TM ch.7).
+35. MCPT of the training process: re-optimize on >= 100-1,000 permuted datasets, p = (k+1)/(m+1) <= 0.05 (TM ch.7).
+36. Detrended benchmark and position bias: raw and detrended returns side by side, share of time long vs short (DA p.15-31; TM ch.7).
+37. Drawdown bounds from a double bootstrap (outer: the OOS set, inner: next-N-bar sequences), not a plain resample (TM ch.6).
+38. Limit orders fill only on penetration by X ticks, not on a touch; report the share touched but not filled (RP ch.6).
 
 See also: [costs-and-execution.md](costs-and-execution.md), [position-sizing-and-risk.md](position-sizing-and-risk.md),
 `.claude/skills/backtest-evaluation-research` (online research on the same question).

@@ -48,11 +48,15 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | KD | Kevin J. Davey, *Building Winning Algorithmic Trading Systems* (Wiley 2014) | [notes](books/davey-winning-algo-systems.md) | Practitioner pipeline of hard gates (limited test, walk-forward, monkeys, Monte Carlo, incubation); results net of costs but futures and one 4-year example |
 | WK | Will Kurt, *Bayesian Statistics the Fun Way* (No Starch 2019) | [notes](books/kurt-bayesian-statistics.md) | Intro Bayesian statistics (Beta posterior, A/B test, Bayes factor); no trading content, methods translated to our win rates in the notes |
 | JK | Jay Kaeppel, *The Option Trader's Guide to Probability, Volatility, and Timing* (Wiley 2002) | [notes](books/kaeppel-option-probability-volatility.md) | Options recipes with one showcase trade each, no statistics; only the volatility-rank and barrier-probability tools transfer. **The PDF is named "Option_Volatility_n_Pricing_-_Sheldon_Natenberg.pdf" but contains this book; Natenberg has not been read; the user decided 2026-10-16 not to add it.** |
+| RP | Robert Pardo, *The Evaluation and Optimization of Trading Strategies*, 2nd ed. (Wiley 2008) | [notes](books/pardo-evaluation-optimization.md) | Practitioner's development pipeline; walk-forward analysis and walk-forward efficiency, optimization profile, PROM; rules of thumb, futures examples, no data behind the thresholds; ebook without page numbers (cite by chapter) |
+| TM | Timothy Masters, *Testing and Tuning Market Trading Systems* (Apress 2018) | [notes](books/masters-testing-tuning.md) | Algorithm book with C++ code: training/selection bias, correct and nested walk-forward, permutation tests, bootstrap bounds, double-bootstrap drawdown; demos gross of costs; cite by chapter/section |
+| DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
 (Douglas, Hougaard, Aziz and Coulling texts have no page numbers; Volman is cited by chapter),
 `LP 3.6` (López de Prado chapter.section, ebook has no pages), `RC p.71` (Carver), `EC p.156` (Chan),
-`KD p.109` (Davey), `WK ch.16` (Kurt, by chapter), `JK p.105` (Kaeppel).
+`KD p.109` (Davey), `WK ch.16` (Kurt, by chapter), `JK p.105` (Kaeppel), `RP ch.11` (Pardo, by
+chapter), `TM 5.3` (Masters, chapter.section), `DA p.270` (Aronson).
 
 ## What the books say about our results so far
 - **Strategy 4 (trend following) failing on indices is expected:** equity indices are the noisiest
