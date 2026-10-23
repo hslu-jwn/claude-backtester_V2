@@ -57,8 +57,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
    after the cursor stay hidden (overlay and "Trades in view"); loading a preset keeps the costs
    of symbols not shown in the panel. The app must be restarted on `main` to load them
    (`restart_app.bat`). Check again in the next chat; if still nothing, investigate.
-2. **AI quotas:** the user checks whether the ChatGPT account is Plus or Pro, and decides
-   between accepting Antigravity's small weekly quota and a paid Gemini API key.
+2. **AI quotas:** settled 2026-10-23: ChatGPT Plus + Gemini Plus only; work placed by the
+   limits seen (CLAUDE.md › Models › Plans).
 3. Old known issues: 4 unformatted test files; research's own DSR per trade vs the trial log's
    daily DSR; chart does not auto-refresh live candles; remote branch `claude/ui-polish`.
 

@@ -1,5 +1,12 @@
-"""Trades overlay (strategy 1). Spec: ROADMAP.md › 3.3b,
+"""Trades overlay (every strategy). Spec: ROADMAP.md › 3.3b,
 strategy-session-zones.md › Trades on the chart.
+
+Any other strategy than strategy 1 (rule set by the user, 2026-10-23: the trade itself is
+enough): its trades come from the backtest runner (`run_backtests`, the same run a backtest
+from the shown range's first day gives, with the strategy's own warm-up) over the shown range
+plus `RUN_AFTER`, and are drawn as position boxes with hover; no confluences.
+
+Strategy 1:
 
 Runs strategy 1 (`SessionZoneSweep`) and the backtest engine on the shown symbol, with the
 current strategy settings (ROADMAP 4.1, `OverlaySettings.strategy`): 5m base
@@ -53,7 +60,7 @@ from backtester.detectors.zone import ZoneKind
 from backtester.engine.backtest import run_backtest
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
-from backtester.runner import RunSettings
+from backtester.runner import RunSettings, run_backtests
 from backtester.settings import from_json
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
@@ -82,8 +89,8 @@ EXIT_LABELS = {
 class StrategyRun:
     trades: tuple[TradeResult, ...]
     decisions: dict[tuple[datetime, Direction], Decision]  # by entry time and direction
-    m5: CandleSeries
-    m30: CandleSeries
+    m5: CandleSeries | None  # strategy 1 only (the confluences' candles)
+    m30: CandleSeries | None
 
 
 def run_strategy(
@@ -145,6 +152,27 @@ def _cached_run(sources, symbol, first_day, last_day, settings_json="") -> Strat
     return run_strategy(sources, symbol, first_day, last_day, from_json(settings_json))
 
 
+def registered_run(
+    sources: SymbolSources,
+    symbol: str,
+    first_shown: date,
+    last_shown: date,
+    settings_json: str = "",
+) -> StrategyRun:
+    """Any registered strategy's trades entered from first_shown on, run to a week after
+    last_shown (within the cached days), as a backtest over that range gives them."""
+    block_last = cached_block(set(sources.cached_days(symbol)), first_shown)[1]
+    last = min(last_shown + RUN_AFTER, block_last)
+    return _cached_registered(sources, symbol, first_shown, last, settings_json)
+
+
+@lru_cache(maxsize=8)
+def _cached_registered(sources, symbol, first_day, last_day, settings_json="") -> StrategyRun:
+    settings = from_json(settings_json)
+    result = run_backtests([symbol], first_day, last_day, settings, sources, workers=1)
+    return StrategyRun(result.trades, {}, None, None)
+
+
 @dataclass(frozen=True, slots=True)
 class ChartTrade(Event):
     """A trade placed on the chart. `confirmed_index` is the chart candle containing the
@@ -175,11 +203,7 @@ def detect_trades(
 ) -> list[ChartTrade]:
     if sources is None:
         raise OverlayUnavailable("needs the chart's data sources")
-    if not isinstance(from_json(settings.strategy).strategy, SessionZoneSweepConfig):
-        raise OverlayUnavailable(
-            "Trades: only for strategy 1 so far (strategy 2's overlay is ROADMAP 8.6); "
-            "the backtest runs strategy 2"
-        )
+    strategy_1 = isinstance(from_json(settings.strategy).strategy, SessionZoneSweepConfig)
     candles = list(replay.view(len(replay) - 1))
     opens = [c.ts for c in candles]
     duration = replay.timeframe.duration
@@ -190,11 +214,12 @@ def detect_trades(
             f"Trades: shown for ranges up to {config.trades_max_days} days (the strategy runs "
             "about 40 s per year of 5m candles); pick a shorter range or run a backtest"
         )
+    run_for = chart_run if strategy_1 else registered_run
     try:
-        run = chart_run(sources, replay.symbol, first_shown, last_shown, settings.strategy)
-    except KeyError as e:
+        run = run_for(sources, replay.symbol, first_shown, last_shown, settings.strategy)
+    except KeyError as e:  # also an unmapped symbol
         raise OverlayUnavailable(e.args[0]) from e
-    except ValueError as e:  # e.g. no 5m candles
+    except ValueError as e:  # e.g. no 5m candles, no rules for the symbol, no cached day
         raise OverlayUnavailable(str(e)) from e
 
     def containing(close: datetime) -> int:
@@ -205,8 +230,8 @@ def detect_trades(
         """Chart candle containing `ts` (an open time); 0 if before the chart."""
         return max(bisect_right(opens, ts) - 1, 0)
 
-    m5 = run.m5.view(len(run.m5) - 1)
-    m30 = run.m30.view(len(run.m30) - 1)
+    m5 = None if run.m5 is None else run.m5.view(len(run.m5) - 1)
+    m30 = None if run.m30 is None else run.m30.view(len(run.m30) - 1)
     out = []
     for trade in run.trades:
         if not opens[0] < trade.entry_time <= closes[-1]:

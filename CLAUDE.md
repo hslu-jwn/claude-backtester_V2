@@ -45,8 +45,16 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   - Gemini = 3.8 Flash (no Pro model on this account; `agy models`). Claude 4.6 has a small
     **weekly** quota (Opus 4.6 ran out after one review with subagents on 2026-10-22): use it
     for short reviews; models work alone (no subagents).
+  - **Plans (the user, 2026-10-23): ChatGPT Plus and Google AI (Gemini) Plus, nothing more.**
+    Work is placed by the limits seen (`docs/research-log.md` › Model usage): Codex Plus
+    lasts ~2 h of high effort per ~5 h window -> Codex medium by default, high only for
+    engine / no-lookahead / risk, one brief at a time, the brief small and exact. Antigravity
+    (Gemini + Claude 4.6) is one small weekly quota -> only short reviews or one research
+    summary per week, never bulk writing. Small UI / glue changes (well under an hour of
+    Codex): Opus writes them directly (a brief + review costs more than the change). Bulk =
+    plain Python (job queue, sweeps), no AI tokens.
   - **Usage limits:** dispatch exit 4 = limit; the others take over; two out -> pause the loop
-    and resume later. Save Claude and Codex tokens; Gemini and plain Python do the bulk.
+    and resume later. Save Claude and Codex tokens; plain Python does the bulk.
   - Record model and effort per task in `docs/research-log.md` (the dispatcher logs every call
     in `results/ai_calls.jsonl`). Tell the user when a phase would clearly benefit from Opus high.
   - Shell gotcha: never put backticks in inline PowerShell (they are escape characters); edit

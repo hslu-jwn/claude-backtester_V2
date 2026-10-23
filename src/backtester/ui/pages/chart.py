@@ -49,8 +49,9 @@ built from FVGs). Zone overlays (FVG, Order block, BPR) have indented
 sub-entries "↳ ★ confirmations" / "↳ ✕ invalidations" that show their ★ / ✕ markers
 (drawing only); they can only be ticked while their type is.
 
-Trades (ROADMAP.md › 3.3b): the "Trades" overlay runs strategy 1 and the engine on the
-shown symbol and range (with warm-up) and draws position boxes, see `ui/trades_overlay.py`.
+Trades (ROADMAP.md › 3.3b): the "Trades" overlay runs the selected strategy and the engine
+on the shown symbol and range (with warm-up) and draws position boxes, see
+`ui/trades_overlay.py` (confluences: strategy 1 only).
 It and the backtest use the settings panel's current settings (ROADMAP.md › 4.1,
 `ui/settings_panel.py`, store `settings-current`); the browser re-requests the overlays
 when their key changes.
