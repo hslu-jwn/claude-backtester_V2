@@ -51,6 +51,7 @@ FLAG_LABELS = {
     FLAG_TEST_FAILED: "test failed",
     "rc_not_significant": "best variant not significant (Reality Check)",
     "pbo_high": "high probability of backtest overfitting",
+    "bayes_weak": "weak Bayesian evidence for positive mean R",
 }
 
 

@@ -191,6 +191,51 @@ No saved-return sign-flip or permutation test is valid here. Monte Carlo permuta
 of the **whole optimisation**, re-running variants on permuted prices, is deferred
 to V2.6 with the job queue (Aronson ch.6 / Masters ch.7).
 
+### Bayesian view (V2.4c T-10)
+
+Diagnostic only: recompute `bayes.json` from saved trades on resume, for the chosen
+development variant, every completed test/retest, and development `compare_to` twins.
+Never spend a test, add trials, change selection, DSR or existing statistics.
+
+- Win = net R > 0; scratches are nonwins. Estimate p* = L / (W + L) from the same
+  list's positive-win mean W and absolute strictly-negative-loss mean L. Without
+  both signs p* and win-rate inference are unavailable, with a reason (no invented payoff).
+  Report Beta(1,1), weak Beta(20*p*,20*(1-p*)), and strong skeptical Beta with
+  strength 100. **100 is the Opus choice requested in the brief**, configurable via
+  frozen `BayesConfig.strong_strength`; the user can change it (card range 100-200),
+  passed to `run_research(..., bayes_config=BayesConfig(...))`.
+  Flat is uniform, not generally centred at p*. Add actual wins and nonwins to
+  each prior; show posterior parameters, mean, equal-tail 95% interval, P(p > p*).
+- Mean R: Normal(0, 0.075 R) prior (0.075 is standard deviation), normal-normal
+  update treating the sample variance (ddof=1) as known. Likelihood variance of
+  the mean = sample variance / effective trades, using `trade_uniqueness` in
+  `analytics/effective_n.py`; report raw and effective counts, shrinkage, posterior
+  mean, sd, equal-tail 95% interval and P(mean R > 0). Fewer than two trades or
+  zero sample variance is unavailable rather than falsely certain. Nonfinite R
+  or invalid intervals are errors. Empty lists are explicitly unavailable.
+- Edge Bayes factor: H0 is point p*. H1 is the **strong skeptical Beta prior
+  restricted to p > p***. Integrate its likelihood once; do not reuse a fitted
+  posterior as a prior. Log BF = log B(a+w,b+l) - log B(a,b) - log likelihood(H0)
+  + log posterior Beta upper-tail mass - log prior Beta upper-tail mass.
+  Prior edge:no-edge odds are **1:50** (user, 2026-10-16); posterior odds = BF/50.
+  Retain log values for extreme evidence; unrepresentable numeric odds are null.
+  Required trades is the total expected count, ceil(log(10/(1/50))/KL(p_hat||p*)),
+  using the observed positive edge as a fixed hypothetical alternative. Also show
+  remaining trades beyond raw n. This planning approximation differs from integrated
+  BF. No positive edge gives n/a. 55% vs 50% gives 1,241 for target 10:1;
+  the card's approximately 1,400 uses target 20:1 (1,380).
+- Twins: A = compare_to, B = comparing family. Sample independent mean-R and strong
+  Beta posteriors, seed 42, 20,000 draws; report P(B > A) per matched occurrence.
+  Family probabilities are equal-weight means of available pair probabilities;
+  report unavailable/unmatched counts. Resolve deduplicated occurrences to saved
+  retained runs. Do not pool repeated trades across grid settings. Independent
+  posterior draws are an approximation: filters share signals, so this is not a
+  paired causal filter test and does not adjust for selection or multiple testing.
+- Add `bayes_weak` only to the chosen development row if available skeptical
+  P(mean R > 0) < 0.9 (strict). All settings above live in frozen `BayesConfig`.
+  The report block **Bayesian view** shows periods, priors, odds, sample planning,
+  twin probabilities and limitations. Unavailable results never add a flag.
+
 ### Additional diagnostics (V2.4, grid merge 1)
 
 - `grid.csv` and a report block: development `grid_stats` over all variants, including

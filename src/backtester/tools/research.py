@@ -69,6 +69,7 @@ from backtester.runner import (
     write_results,
 )
 from backtester.tools import (
+    research_bayes,
     research_diagnostics,
     research_series,
     research_significance,
@@ -534,6 +535,7 @@ def run_research(
     walk_forward: bool = False,
     sources: SymbolSources = DEFAULT_SOURCES,
     config: ResearchConfig | None = None,
+    bayes_config=None,
     log: Log = print,
 ) -> dict:
     """Run the grid file; returns the outcome: `status` ("done", "dev_only", "no_test",
@@ -681,6 +683,18 @@ def run_research(
             folder, spec, variants, rows, info, results_dir, sources
         )
         pairs, info["twins"] = research_stability.twin_rows(spec, variants, rows)
+        info['bayes'] = research_bayes.calculate(
+            folder, results_dir, spec, variants,
+            chosen['id'] if chosen else None, _test_rows(folder), pairs,
+            reader=read_trades, config=bayes_config,
+        )
+        _dump(folder / 'bayes.json', info['bayes'])
+        if chosen is not None:
+            selected = next(r for r in rows if r['variant_id'] == chosen['id'])
+            selected['flags'] = ';'.join(filter(None, [
+                selected['flags'], *info['bayes']['flags'],
+            ]))
+            _write_csv(folder / 'variants.csv', [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
         if any(f.compare_to for f in families(spec)):
             _write_csv(
                 folder / "twins.csv",
@@ -884,6 +898,7 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             research_stability.haircut(selected.get("avg_r"), info["live_expectation_range"]),
         ]
     lines += research_significance.markdown(info.get("significance"))
+    lines += research_bayes.markdown(info.get('bayes'))
     sensitivity = info.get("sensitivity")
     if sensitivity is not None:
         lines += [
