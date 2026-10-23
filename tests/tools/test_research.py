@@ -28,6 +28,7 @@ from backtester.tools.research_grid import (
 GRID = """
 strategy = "opening_range"
 symbols = ["US500", "NAS100"]
+sensitivity = false  # these tests count the grid runs only (brief 2)
 min_trades = 4
 
 [base]
@@ -441,7 +442,8 @@ def test_output_files_and_their_fields(tmp_path, fakes):
     assert list(variants[0]) == [
         "variant_id", "variant", "rank", "trades", "win_rate", "avg_r", "net_r", "profit_factor",
         "max_dd_r", "half_first_net_r", "half_second_net_r", "net_r_stressed",
-        "net_r_without_best", "flags", "set.range_minutes", "set.target_r",
+        "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "flags", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert variants[0]["rank"] == "1" and variants[0]["set.range_minutes"] == "30"
     test = read_csv(folder / "test.csv")
@@ -449,7 +451,8 @@ def test_output_files_and_their_fields(tmp_path, fakes):
     assert list(test[0]) == [
         "test_run", "variant_id", "variant", "start", "end", "trades", "win_rate", "avg_r",
         "net_r", "profit_factor", "max_dd_r", "half_first_net_r", "half_second_net_r",
-        "net_r_stressed", "net_r_without_best", "t_stat", "deflated_sharpe", "verdict",
+        "net_r_stressed", "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "t_stat", "deflated_sharpe", "verdict",
         "verdict_label", "n_variants", "flags", "run_folder", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert test[0]["n_variants"] == "6" and test[0]["variant_id"] == info["chosen"]["id"]

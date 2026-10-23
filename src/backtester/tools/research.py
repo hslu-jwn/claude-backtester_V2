@@ -67,7 +67,7 @@ from backtester.runner import (
     run_backtests,
     write_results,
 )
-from backtester.tools import research_diagnostics
+from backtester.tools import research_diagnostics, research_stability
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
@@ -309,6 +309,79 @@ def _store_variant(
     return data
 
 
+def _sensitivity(
+    spec: GridSpec,
+    chosen: Variant,
+    best: dict,
+    periods: dict,
+    folder: Path,
+    sc_cfg: ScorecardConfig,
+    trials: Path,
+    sources: SymbolSources,
+    workers: int | None,
+    log: Log,
+) -> dict | None:
+    """Spec: research-runner.md > Parameter sensitivity. No selection or test-period inputs."""
+    if not spec.sensitivity:
+        return None
+    rows = research_stability.neighbours(spec, chosen)
+    completed = {}
+    pending = {}
+    for row in rows:
+        if row["status"] == "skipped":
+            log(f"sensitivity skipped {row['setting']}={row['value']}: {row['reason']}")
+            continue
+        sid = row["id"]
+        if sid in pending or sid in completed:
+            continue
+        data = _finished_variant(folder / "sensitivity" / sid)
+        if data is not None:
+            completed[sid] = data
+        else:
+            pending[sid] = row
+    todo = list(pending.values())
+    for index, result in run_period_many(
+        spec.symbols, periods["dev_start"], periods["dev_end"],
+        [variant_settings(spec, Variant(r["id"], r["id"], r["overrides"])) for r in todo],
+        sources, workers,
+    ) if todo else ():  # fmt: skip
+        row = todo[index]
+        sid = row["id"]
+        write_results(result, folder / "sensitivity", sid)
+        card = scorecard(result.trades, sc_cfg, periods["dev_start"], periods["dev_end"])
+        append(
+            make_record(
+                f"{spec.name}-sensitivity",
+                spec.strategy,
+                _log_settings(spec, row["overrides"]),
+                spec.symbols,
+                periods["dev_start"],
+                periods["dev_end"],
+                "research-sensitivity",
+                result.trades,
+            ),
+            trials,
+        )
+        completed[sid] = {"scorecard": card}
+        _dump(folder / "sensitivity" / sid / SCORECARD_FILE, completed[sid])
+        log(f"sensitivity {row['setting']}={row['value']}: net {card['net_r']:+.3f} R")
+    for row in rows:
+        if row["status"] == "skipped":
+            continue
+        card = completed[row["id"]]["scorecard"]
+        row.update(
+            card,
+            status="done",
+            net_r_share=card["net_r"] / best["net_r"] if best["net_r"] else None,
+        )
+    _write_csv(
+        folder / "sensitivity.csv",
+        ["id", "setting", "change", "value", "status", "reason", *SCORE_KEYS, "net_r_share"],
+        rows,
+    )
+    return research_stability.sensitivity_summary(rows, best["net_r"])
+
+
 def _rank(rows: list[dict], min_trades: int) -> list[dict]:
     """Rows with a `rank` (1 = best net R) when they have at least `min_trades` trades, else
     None; ranked rows first, then the others by id."""
@@ -453,6 +526,9 @@ def run_research(
     }  # fmt: skip
     if spec.grids:
         info["grids"] = [{"name": f.name, "base": f.base, "grid": f.grid} for f in spec.grids]
+        for entry, family in zip(info["grids"], spec.grids, strict=True):
+            entry["compare_to"] = family.compare_to
+    info["live_expectation_range"] = cfg.live_expectation_range
     _dump(folder / "research.json", info)
     log(
         f"research {rid}: {spec.strategy} {','.join(spec.symbols)}, {len(variants)} variants"
@@ -499,6 +575,23 @@ def run_research(
         research_diagnostics.write_diagnostics(
             folder, spec, variants, rows, info, results_dir, sources
         )
+        pairs, info["twins"] = research_stability.twin_rows(spec, variants, rows)
+        if any(f.compare_to for f in families(spec)):
+            _write_csv(
+                folder / "twins.csv",
+                [
+                    "family",
+                    "variant_id",
+                    "twin_id",
+                    "status",
+                    "net_r",
+                    "twin_net_r",
+                    "difference",
+                    "trades",
+                    "twin_trades",
+                ],
+                pairs,
+            )
         _dump(folder / "research.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
@@ -516,6 +609,18 @@ def run_research(
         return finish("no_test", message, None)
 
     best = ranked[0]
+    info["sensitivity"] = _sensitivity(
+        spec,
+        next(v for v in variants if v.id == best["variant_id"]),
+        best,
+        periods,
+        folder,
+        sc_cfg,
+        trials,
+        sources,
+        workers,
+        log,
+    )
     if dev_only:
         info["chosen"] = previous.get("chosen") if previous.get("chosen") else None
         test_info.setdefault("status", "not_run")
@@ -645,6 +750,34 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             f"net {chosen['dev_net_r']:+.1f} R; preset `{chosen['preset']}`, "
             f"development run `{chosen['dev_run']}`."
         )
+        selected = next((r for r in rows if r["variant_id"] == chosen["id"]), {})
+        lines += [
+            "",
+            research_stability.haircut(selected.get("avg_r"), info["live_expectation_range"]),
+        ]
+    sensitivity = info.get("sensitivity")
+    if sensitivity is not None:
+        lines += [
+            "",
+            f"Sensitivity: **{sensitivity['status']}**. Failed settings: "
+            + (
+                ", ".join(sensitivity["failed_settings"])
+                or ("no numeric settings" if not sensitivity["rows"] else "none")
+            )
+            + ".",
+        ]
+    else:
+        lines += ["", "Sensitivity: disabled or no chosen variant."]
+    for twin in info.get("twins", []):
+        lines += [
+            "",
+            (
+                f"Filter twins {twin['family']} vs {twin['compare_to']}: "
+                f"{twin['matched']} matched; mean net R {_cell(twin['mean_net_r'])} vs "
+                f"{_cell(twin['mean_twin_net_r'])}; lifts the average: "
+                f"{twin['lifts_average'] or 'n/a'}."
+            ),
+        ]
     test = info["test"]
     lines += ["", "## Test", ""]
     if test.get("status") == "done":
@@ -654,6 +787,8 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             f"deflated Sharpe {test['deflated_sharpe']} with N = {test['n_variants']}. "
             f"{test['verdict_reason']} Run `{test['run_folder']}`. Test runs so far: {len(tests)}."
         )
+        average = float(tests[-1]["avg_r"]) if tests and tests[-1].get("avg_r") else None
+        lines += ["", research_stability.haircut(average, info["live_expectation_range"])]
     else:
         lines.append(f"Not run ({test.get('status')}). {test.get('reason', '')}".strip())
     lines += [

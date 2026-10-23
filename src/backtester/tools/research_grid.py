@@ -49,6 +49,7 @@ TOP_LEVEL = (
     "grid",
     "grids",
     "shocks",
+    "sensitivity",
 )
 ID_HASH_LENGTH = 8
 
@@ -63,12 +64,20 @@ class ResearchConfig:
     max_variants: int = 200  # above this many variants a seeded random sample is run
     seed: int = 1  # seed of that sample
     cutoff: date = date(2021, 9, 14)  # first test day (data split rule of 2026-10-15)
+    live_expectation_range: tuple[float, float] = (0.50, 0.75)
 
     def __post_init__(self) -> None:
         if self.min_trades < 0:
             raise ValueError("min_trades must be >= 0")
         if self.max_variants < 1:
             raise ValueError("max_variants must be >= 1")
+        bounds = self.live_expectation_range
+        if (
+            len(bounds) != 2
+            or not all(math.isfinite(v) for v in bounds)
+            or not (0 <= bounds[0] <= bounds[1] <= 1)
+        ):
+            raise ValueError("live_expectation_range must have finite bounds 0 <= low <= high <= 1")
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +94,7 @@ class GridSpec:
     grids: tuple[Family, ...] = ()
     shocks: bool = True
     duplicates: list[dict] = field(default_factory=list, compare=False)
+    sensitivity: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +102,7 @@ class Family:
     name: str
     base: dict
     grid: dict
+    compare_to: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,6 +263,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("[base] and [grid] must be tables")
     if not isinstance(data.get("shocks", True), bool):
         raise GridError("shocks must be true or false")
+    if not isinstance(data.get("sensitivity", True), bool):
+        raise GridError("sensitivity must be true or false")
     families = []
     if "grids" in data:
         raw = data["grids"]
@@ -259,8 +272,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
             raise GridError("use either [grid] or non-empty [[grids]] tables")
         for i, item in enumerate(raw, 1):
             where = f"grids[{i}]"
-            if not isinstance(item, dict) or set(item) - {"name", "base", "grid"}:
-                raise GridError(f"{where}: only name, base and grid are allowed")
+            if not isinstance(item, dict) or set(item) - {"name", "base", "grid", "compare_to"}:
+                raise GridError(f"{where}: only name, base, grid and compare_to are allowed")
             name = item.get("name", f"grid{i}")
             if not isinstance(name, str) or not name.strip() or name == "all":
                 raise GridError(f"{where}: name must be non-empty and cannot be 'all'")
@@ -273,8 +286,16 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
                     name,
                     _check_table(item.get("base", {}), strategy, where, table, False),
                     _check_table(item.get("grid", {}), strategy, where, table, True),
+                    item.get("compare_to"),
                 )
             )
+    for family in families:
+        if family.compare_to is not None and (
+            not isinstance(family.compare_to, str)
+            or family.compare_to == family.name
+            or family.compare_to not in {f.name for f in families}
+        ):
+            raise GridError(f"{family.name}: compare_to must name another existing family")
     spec = GridSpec(
         name=path.stem,
         strategy=strategy,
@@ -287,6 +308,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         path=path,
         grids=tuple(families),
         shocks=data.get("shocks", True),
+        sensitivity=data.get("sensitivity", True),
     )
     return spec
 

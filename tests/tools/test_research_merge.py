@@ -27,6 +27,7 @@ fakes = research_fakes
 COMBINED = """
 strategy = "opening_range"
 symbols = ["US500", "NAS100"]
+sensitivity = false  # these tests count the grid runs only (brief 2)
 min_trades = 4
 [base]
 entry_mode = "range"

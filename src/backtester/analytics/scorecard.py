@@ -23,7 +23,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime, time, timedelta
+from math import sqrt
+from statistics import stdev
 
 from backtester.analytics.metrics import summarize
 from backtester.analytics.robustness import RobustnessConfig, stressed_net, without_best
@@ -31,6 +33,7 @@ from backtester.analytics.robustness import RobustnessConfig, stressed_net, with
 SCORE_KEYS = (
     "trades", "win_rate", "avg_r", "net_r", "profit_factor", "max_dd_r",
     "half_first_net_r", "half_second_net_r", "net_r_stressed", "net_r_without_best",
+    "se_avg_r", "time_in_market", "avg_hold_hours",
 )  # fmt: skip
 
 FLAG_TOO_FEW = "too_few_trades"
@@ -65,6 +68,47 @@ class ScorecardConfig:
             raise ValueError("cost_stress must be >= 1")
 
 
+def _weekday_seconds(start: datetime, end: datetime) -> float:
+    """Elapsed UTC weekday seconds in [start, end)."""
+    total = 0.0
+    while start < end:
+        boundary = min(datetime.combine(start.date() + timedelta(days=1), time(), UTC), end)
+        if start.weekday() < 5:
+            total += (boundary - start).total_seconds()
+        start = boundary
+    return total
+
+
+def _holding_metrics(trades: Sequence, start: date | None, end: date | None) -> tuple:
+    """Spec: research-runner.md > Scorecard additions: UTC weekday interval union."""
+    intervals = sorted((t.entry_time.astimezone(UTC), t.exit_time.astimezone(UTC)) for t in trades)
+    if any(b < a for a, b in intervals):
+        raise ValueError("exit_time must not precede entry_time")
+    average = (
+        sum((b - a).total_seconds() for a, b in intervals) / len(intervals) / 3600
+        if intervals
+        else None
+    )
+    first = start or (intervals[0][0].date() if intervals else None)
+    last = end or (max(b for _, b in intervals).date() if intervals else None)
+    if first is None or last is None:
+        return None, average
+    left = datetime.combine(first, time(), UTC)
+    right = datetime.combine(last + timedelta(days=1), time(), UTC)
+    denominator = _weekday_seconds(left, right)
+    merged = []
+    for a, b in intervals:
+        a, b = max(a, left), min(b, right)
+        if b <= a:
+            continue
+        if merged and a <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(b, merged[-1][1]))
+        else:
+            merged.append((a, b))
+    occupied = sum(_weekday_seconds(a, b) for a, b in merged)
+    return (occupied / denominator if denominator else None), average
+
+
 def scorecard(
     trades: Sequence,
     config: ScorecardConfig | None = None,
@@ -81,6 +125,7 @@ def scorecard(
         else (0, 0)
     )
     middle = (years[0] + years[1]) // 2
+    occupancy, hold = _holding_metrics(trades, start, end)
     return {
         "trades": s["trades"],
         "win_rate": s["win_rate"],
@@ -92,6 +137,9 @@ def scorecard(
         "half_second_net_r": sum(t.r_net for t in trades if t.entry_time.year > middle),
         "net_r_stressed": stressed_net(trades, cfg.cost_stress),
         "net_r_without_best": without_best(trades)["net_without_best"],
+        "se_avg_r": stdev(t.r_net for t in trades) / sqrt(len(trades)) if len(trades) > 1 else None,
+        "time_in_market": occupancy,
+        "avg_hold_hours": hold,
     }
 
 

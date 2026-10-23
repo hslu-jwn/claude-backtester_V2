@@ -17,7 +17,7 @@ strategy instead of a grid tool per strategy, and see at a glance which variants
 ### Combined grids (V2.4, grid merge 1)
 
 Use either `[grid]` or a non-empty array of `[[grids]]` tables, never both.
-Each sub-grid accepts `name`, `base`, and `grid`; its base overrides the top-level base.
+Each sub-grid accepts `name`, `base`, `grid`, and optional `compare_to`; its base overrides the top-level base.
 Missing names become `grid1`, `grid2`, etc.; names must be unique non-empty strings
 (`all` is reserved for the overall diagnostic row).
 Products follow file order and each axis's value order. IDs retain full product positions,
@@ -49,6 +49,59 @@ trades, win rate, average net R per trade, net R, profit factor (gross win R / g
 in R, net R of the two halves (split at the period's middle year), net R with costs x 1.5, net R without the
 best trade; for the test row also t, deflated Sharpe and the verdict (`analytics/verdict.py`, green / yellow /
 red). Net R includes the swap.
+
+### Scorecard additions (grid merge 2)
+
+Append `se_avg_r`, `time_in_market`, `avg_hold_hours` to `SCORE_KEYS`. SE is sample standard
+deviation of net R divided by sqrt(n), empty for fewer than two trades. Mean holding time is
+exit minus entry in elapsed hours, empty without trades. Time in market is the union of
+all symbols' [entry, exit) intervals, clipped to the period and UTC weekdays, divided by
+the period's UTC weekday seconds. Period dates are inclusive (end means next midnight);
+without explicit dates use the earliest entry day through the latest exit day. No trades
+means zero occupancy for a positive denominator; zero weekday time means empty. Reject
+negative holding durations. Legacy saved scorecards load with empty cells for absent keys.
+
+### Parameter sensitivity (grid merge 2)
+
+Top-level `sensitivity` is boolean, default true; false disables sensitivity. It does not
+change the research ID or test guard. After development selection, including `--dev-only`,
+perturb each numeric axis in the chosen variant's own family grid by -20%, -10%, +10%, +20%,
+one setting at a time. Booleans, enums and other nonnumeric settings are excluded.
+Integers round to nearest (ties away from zero), at least one integer step in the requested
+direction; zero integers therefore get -1/-1/+1/+1. Zero floats have zero-valued neighbours.
+Repeated rounded settings reuse one run and trial, retaining a CSV row per requested change.
+Rejected configurations are skipped with setting, value and rejection reason recorded.
+
+`sensitivity.csv` has id, setting, change (fraction), value, status, reason, scorecard columns,
+and `net_r_share` (neighbour net R / chosen development net R, empty if chosen net R is zero).
+Completed runs resume from `sensitivity/<id>/scorecard.json`; IDs include chosen ID, setting
+and value. Each unique valid neighbour is a trial in family `<grid name>-sensitivity`.
+Sensitivity trials never enter ranking, chosen settings, selection's DSR N or its Sharpes.
+The report says **gentle** only if at least one neighbour ran and every requested neighbour
+is valid, positive and retains >=50% of chosen net R with a positive chosen baseline;
+otherwise **sharp**, listing failed settings (or no numeric settings). Skips are failures.
+
+### Filter twins (grid merge 2)
+
+A `[[grids]]` table may set `compare_to = "<family>"`, naming another existing family;
+self-reference and unknown names are errors. Match each family product occurrence to the
+first product occurrence in the target family with identical resolved settings except keys
+in the comparing family's own `base` (top-level base is not excluded). Deduplicated runs
+can supply either occurrence's score; sampled-out settings cannot and are unmatched.
+`twins.csv` records family, variant ID, twin ID, matched/unmatched status, both net R,
+difference (family minus twin), and both trade counts. Per-family report means use matched
+pairs only, weighting each occurrence equally. "lifts the average": yes only when family
+mean strictly exceeds twin mean; no for ties; empty/n/a without matched pairs. Diagnostics
+do not change the research ID, selection, trial logging or DSR.
+
+### Expectation haircut (grid merge 2)
+
+`ResearchConfig.live_expectation_range` defaults to `(0.50, 0.75)`, with finite bounds
+0 <= lower <= upper <= 1. Under the chosen variant and completed test, print:
+"Live expectation: 50-75 % of the backtest's average R per trade = <a> to <b> R per trade".
+Use that period's average net R and configured bounds; empty averages print n/a. A zero or
+negative average prints "no positive edge to discount" (a haircut would make a loss look
+smaller; Opus, 2026-10-23).
 
 **Warning flags** (thresholds in a config dataclass, these defaults): too few trades (< `min_trades`);
 high win rate but small edge (win rate >= 70 % and average R < 0.1); one half not profitable; not profitable
