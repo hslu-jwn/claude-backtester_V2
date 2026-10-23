@@ -13,11 +13,12 @@ the current close with `exits` (ExitReason.SIGNAL); an order may have no take pr
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from backtester.core.models import Direction, Timeframe
+from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
 
@@ -54,6 +55,9 @@ class UnsupportedSymbolError(ValueError):
 
 
 class Strategy(ABC):
+    # Engine-supplied execution check, before the strategy consumes a pending limit.
+    # None preserves touch fills. Spec: risk-management.md > Costs > Limit penetration.
+    limit_fill_check: Callable[[Order, Candle, datetime], bool] | None = None
     base_timeframe: Timeframe
     timeframes: tuple[Timeframe, ...]  # all timeframes the strategy needs, incl. base
     # the engine's break-even at the next session start (strategy 1's rule)

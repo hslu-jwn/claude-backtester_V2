@@ -237,6 +237,8 @@ LABELS = {
     "strategy.friday_ny_carries_to_monday_tokyo": "Friday NY → Monday Tokyo",
     "engine.costs.spread_enabled": "Spread",
     "engine.costs.commission_enabled": "Commission",
+    "engine.costs.tp_penetration": "TP / limit penetration (spread multiple)",
+    "engine.costs.short_tp_on_ask": "Short TP triggered by ask",
     "warmup_days": "Warm-up days",
 }
 LEAF_LABELS = {  # by the last part of the path

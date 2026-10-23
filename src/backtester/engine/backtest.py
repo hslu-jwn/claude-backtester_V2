@@ -100,6 +100,9 @@ class Backtest:
             raise ValueError(f"no series for {sorted(tf.name for tf in missing)}")
         self._strategy = strategy
         self._config = config
+        strategy.limit_fill_check = (
+            self._limit_fill_allowed if config.costs.tp_penetration else None
+        )
         self._higher = tuple(tf for tf in strategy.timeframes if tf is not strategy.base_timeframe)
         self._replay = Replay(by_tf[strategy.base_timeframe], [by_tf[tf] for tf in self._higher])
 
@@ -143,6 +146,8 @@ class Backtest:
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
                 trade = self._fill(order, candle, now, pending_limits)
+                if trade is None:
+                    continue
                 if self._config.costs.too_expensive(
                     trade.symbol, trade.risk, trade.entry_time, trade.entry, trade.entry_fill
                 ):
@@ -195,7 +200,7 @@ class Backtest:
         return views
 
     @staticmethod
-    def _consume_pending_limit(order: Order, candle: Candle, pending: list[Order]) -> None:
+    def _consume_pending_limit(order: Order, candle: Candle, pending: list[Order]) -> Order:
         """Require prior placement; allow the existing gap fill at the open.
 
         Spec: strategy-no-wick.md › Entry; AGENTS.md › Invariant #1.
@@ -211,12 +216,28 @@ class Backtest:
                 expected = replace(placed, entry=candle.open)
             if order == expected:
                 pending.pop(index)
-                return
+                return placed
         raise ValueError("limit order must have been placed at the previous step")
+
+    def _limit_fill_allowed(self, placed: Order, candle: Candle, now: datetime) -> bool:
+        """Current candle only; keep the placed level when existing gap pricing applies.
+
+        Spec: risk-management.md > Costs > Limit penetration. Strategies use this before
+        consuming pending orders, so insufficient penetration retains their expiry rules.
+        """
+        sign = 1 if placed.direction is Direction.BULLISH else -1
+        extreme = candle.low if sign > 0 else candle.high
+        entry = placed.entry
+        if not candle.low <= entry <= candle.high:
+            entry = candle.open
+        distance = self._config.costs.tp_penetration * self._config.costs.spread(
+            self._replay.symbol, now, entry
+        )
+        return sign * (extreme - (placed.entry - sign * distance)) <= 0
 
     def _fill(
         self, order: Order, candle: Candle, now: datetime, pending_limits: list[Order]
-    ) -> OpenTrade:
+    ) -> OpenTrade | None:
         """Enter at the close of the current base candle (spec: "enter at that close"), or
         for a limit order at its level, which the candle must have traded through."""
         for name in ("entry", "stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
@@ -225,9 +246,13 @@ class Backtest:
                 raise ValueError(f"order {name} must be finite")
         entry = order.entry if order.limit_fill else candle.close
         if order.limit_fill:
-            self._consume_pending_limit(order, candle, pending_limits)
+            placed = self._consume_pending_limit(order, candle, pending_limits)
             if not candle.low <= entry <= candle.high:
                 raise ValueError(f"limit entry {entry} outside the candle at {now}")
+            if self._config.costs.tp_penetration and not self._limit_fill_allowed(
+                placed, candle, now
+            ):
+                return None
         elif not math.isclose(order.entry, entry):
             raise ValueError(f"order entry {order.entry} is not the candle close {entry} at {now}")
         sign = 1 if order.direction is Direction.BULLISH else -1
@@ -290,6 +315,8 @@ class Backtest:
             spread=spread,
             slippage=slippage,
             limit_fill=order.limit_fill,
+            tp_penetration=self._config.costs.tp_penetration,
+            short_tp_on_ask=self._config.costs.short_tp_on_ask,
         )
 
     @staticmethod

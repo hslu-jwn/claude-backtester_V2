@@ -46,3 +46,14 @@ results\golden_v24d3.log 2>&1`). No lookahead. Never edit `src/backtester/live/`
 Done = full suite green (`pytest -q > results\pytest_v24d3.log 2>&1`), golden check identical,
 `ruff check .` clean, the measurement table in the report. Report: files changed, test count,
 decisions the spec did not settle, open questions.
+
+## Answers from Opus (your questions of 16:05)
+
+1. `short_tp_on_ask = True`: the fill is the TP level itself (the ask reached the buy limit's
+   level, so it fills there; no extra spread on that exit). Off: today's rule (bid touch, fill
+   TP + spread) stays exactly as it is.
+2. Touched but not filled: count each TP level once per trade if it was ever touched (old rule)
+   in a candle where it was not filled (new rule), also when it fills later. Report per run:
+   levels touched-not-filled / levels touched.
+
+Go ahead with the brief.

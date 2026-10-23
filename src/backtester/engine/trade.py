@@ -100,6 +100,8 @@ class TradeResult:
     funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
     limit_fill: bool = False  # Kind C: a limit entry gets no market-fill draw
+    tp_levels_touched: int = 0
+    tp_levels_touched_not_filled: int = 0
 
     @property
     def risk(self) -> float:
@@ -172,6 +174,10 @@ class OpenTrade:
     mfe_r: float = 0.0
     parts: list[PartialExit] = field(default_factory=list)
     limit_fill: bool = False
+    tp_penetration: float = 0.0
+    short_tp_on_ask: bool = False
+    _tp_touched: set[int] = field(default_factory=set)
+    _tp_not_filled: set[int] = field(default_factory=set)
 
     @property
     def risk(self) -> float:
@@ -226,6 +232,12 @@ class OpenTrade:
         """`price` reached `level` in the trade's direction (long: price >= level)."""
         return self.sign * (price - level) >= 0
 
+    def _tp_reached(self, bid: float, level: float) -> bool:
+        """Spec: risk-management.md > Costs > Limit penetration / Short TP on ask."""
+        distance = self.tp_penetration * self.spread
+        quote = bid + self.spread if self.sign < 0 and self.short_tp_on_ask else bid
+        return self.sign * (quote - (level + self.sign * distance)) >= 0
+
     def on_candle(self, candle: Candle, now: datetime) -> None:
         """Close the parts whose SL / TP is hit inside `candle`.
 
@@ -235,16 +247,24 @@ class OpenTrade:
         one candle (no SL): all are filled.
         """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
+        targets = self.targets
+        # Observe outstanding levels once each, independently of SL-first precedence.
+        # This measures the changed price threshold; with both defaults misses are zero.
+        for i in range(len(self.parts), len(targets)):
+            price, _ = targets[i]
+            if self._beyond(best, price):
+                self._tp_touched.add(i)
+                if not self._tp_reached(best, price):
+                    self._tp_not_filled.add(i)
         if self.sign * (worst - self.stop_loss) <= 0:
             gap_fill = self.stop_loss if self._beyond(candle.open, self.stop_loss) else candle.open
             reason = ExitReason.BREAK_EVEN if self.break_even_time else ExitReason.STOP_LOSS
             self._exit(self.open_share, candle, now, gap_fill, reason)
             return
-        targets = self.targets
         hit_tp1 = False
         for i in range(len(self.parts), len(targets)):  # every part closed so far was a TP
             price, share = targets[i]
-            if not self._beyond(best, price):
+            if not self._tp_reached(best, price):
                 break
             rest = i == len(targets) - 1
             self._exit(
@@ -281,6 +301,8 @@ class OpenTrade:
         self, share: float, candle: Candle, now: datetime, price: float, reason: ExitReason
     ) -> None:
         fill = price if self.sign > 0 else price + self.spread
+        if reason is ExitReason.TAKE_PROFIT and self.sign < 0 and self.short_tp_on_ask:
+            fill = price
         if reason is not ExitReason.TAKE_PROFIT:
             fill -= self.sign * self.slippage
         r_fills = self.sign * (fill - self.entry_fill) / self.risk
@@ -332,4 +354,6 @@ class OpenTrade:
             swap_r=swap_r,
             funding_r=funding_r,
             limit_fill=self.limit_fill,
+            tp_levels_touched=len(self._tp_touched),
+            tp_levels_touched_not_filled=len(self._tp_not_filled),
         )

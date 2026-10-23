@@ -37,6 +37,7 @@ the chart entry price like the fixed spread (rule set by the user, 2026-10-22).
 from __future__ import annotations
 
 import csv
+import math
 from bisect import bisect_right
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -294,8 +295,14 @@ class CostConfig:
     # fixed spread x (fill price / SymbolCosts.reference_price) (rule set by the user,
     # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
     spread_price_scaling: bool = True
+    # TP and limit-entry penetration as a multiple of the trade's spread (0: touch fills)
+    tp_penetration: float = 0.0
+    # Short TP needs ask <= target minus penetration; fills at target without extra spread
+    short_tp_on_ask: bool = False
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.tp_penetration) or self.tp_penetration < 0:
+            raise ValueError("tp_penetration must be finite and >= 0")
         if self.max_cost_r < 0:
             raise ValueError("max_cost_r must be >= 0 (0 = off)")
 

@@ -598,6 +598,7 @@ TRADE_COLUMNS = (
     "exit_time", "exit_candle", "exit_price", "exit_fill", "exit_reason", "r_gross", "r_net",
     "spread_r", "commission_r", "swap_r", "funding_r", "break_even_time", "break_even_stop", "mae_r", "mfe_r",
     "tags", "confluence", "reason", "parts", "limit_fill",
+    "tp_levels_touched", "tp_levels_touched_not_filled",
 )  # fmt: skip
 
 

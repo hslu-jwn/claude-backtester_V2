@@ -16,6 +16,29 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 - The trade's R result is recalculated from the lots actually used per part.
 
 ### Costs (per symbol)
+- **Limit penetration** (V2.4d item 3, user 2026-10-23):
+  `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0**.
+  With `d = tp_penetration * spread`, use the spread actually fixed for the trade at entry
+  (fixed, price-scaled or table spread; zero when spread is disabled). A long TP needs
+  bid high >= TP + d; a short TP needs bid low <= TP - d. Partial TPs, TP2/TP3 and the
+  move to break-even after TP1 require this same fill test. Gap opens beyond the threshold
+  still fill at the TP level. MAE/MFE tracking and SL-first precedence stay unchanged.
+  Buy limits need low <= entry - d; sell limits need high >= entry + d. An insufficient
+  penetration leaves the order pending under its existing expiry/cancellation rules.
+  Existing entry gap pricing remains; test penetration against the placed limit, using
+  the spread of the candidate fill (including its existing gap entry price).
+- **Short TP on ask:** `CostConfig.short_tp_on_ask`, default **False**. When enabled,
+  short TPs need bid low + the trade's spread <= TP - d and fill at TP itself, with no
+  additional exit spread. When disabled, preserve bid triggering and fill at TP + spread.
+  TP fills have no slippage. Both defaults reproduce existing fills exactly; the user
+  chooses any future default after measuring all seven golden setups.
+- **TP touch diagnostics:** `tp_levels_touched` counts each outstanding TP level once per
+  trade when the old bid-touch rule reaches it. `tp_levels_touched_not_filled` counts each
+  such level once if it fails the new price threshold in any candle, even if filled later.
+  These are price-threshold diagnostics; SL-first precedence and the entry fill candle's
+  exclusion of TPs remain in force. Already filled levels are no longer observed.
+  Both counts are written to `trades.csv`; summary `tp_touched_not_filled_share` is the
+  sum of missed levels divided by the sum of touched levels (0 when none were touched).
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
 - ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.14): the fixed spread is today's FTMO
   value, which is far too large in R in years with lower prices (XAGUSD 2015 at about $15 against $65 now). In the fixed-spread
