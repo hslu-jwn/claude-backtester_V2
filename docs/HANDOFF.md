@@ -31,8 +31,9 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   Golden net R 2023 old -> new: opening_range -6.8 -> -35.6, session_zone_sweep -310.7 ->
   -443.8 (+156 trades from the zone lifetime), no_wick -719 -> -1014, ny_index_sweep -23.6 ->
   -31.6, gap_fade -10.9 -> -16.6, trend_following 7.3 -> 6.8, gap_momentum 6.8 -> 6.4.
-- Speed: profile in `docs/review/speed.md`; speed 1 + 2 (partial): 2023 golden run times
-  sweep 16.1 -> 12.7 s, ny 70.5 -> 54.7 s, orb 17.9 -> 14.9 s; identical trades.
+- Speed: profile in `docs/review/speed.md`; speed 1 + 2 done (profiled dev-period runs:
+  opening_range 51.6 -> 37.5 s, ny_index_sweep 328 -> 224 s, session_zone_sweep 103 -> 61 s);
+  identical trades.
 
 ## Accepted by the user (do not ask again)
 
@@ -74,9 +75,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Next step
 
-When Codex is back: finish speed 2 (`briefs/phase4-speed-2.md`), merge the archived grid
-tools into the research runner, final profile. Then V2.5 (after question 5) and V2.6 (after
-question 6).
+Last V2.4 item: merge the archived grid tools into the research runner (Codex). Then V2.5
+(after question 5) and V2.6 (after question 6).
 
 ## First prompt for the next chat
 
