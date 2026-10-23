@@ -86,7 +86,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   trades valued each day, not booked at exit); (3) take profits and limit entries fill only on
   penetration by a per-symbol distance: built as a setting first, its effect measured on the
   golden lists of all 7 strategies, then the user picks the default (rule set by the user
-  2026-10-23); (4) drawdown Monte Carlo as Masters' double bootstrap (kind A only permutes
+  2026-10-23); **done: default 0.5 x spread + short TP on the ask (set by the user 2026-10-23;
+  golden net R 2023: session zones -443.8 -> -484.9, no-wick -1013.9 -> -1036.2, gap fade
+  -16.6 -> -21.1, NY indices -31.6 -> -30.9, the others without TPs unchanged)**; (4) drawdown Monte Carlo as Masters' double bootstrap (kind A only permutes
   the historic days and is optimistic); (5) best-of-N significance in the runner (White's
   Reality Check / Monte Carlo permutation over the variants' daily series); (6) walk-forward
   with month-based windows, walk-forward efficiency and the open-trade boundary rule;

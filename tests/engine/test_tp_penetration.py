@@ -53,6 +53,8 @@ class Scripted(Strategy):
 
 
 def costs(**kwargs):
+    # touch fills unless a test sets them (the default is 0.5 / ask since 2026-10-23)
+    kwargs = {"tp_penetration": 0.0, "short_tp_on_ask": False, **kwargs}
     return CostConfig(symbols={"TEST": SymbolCosts(2, 0, 1)}, **kwargs)
 
 
@@ -303,12 +305,13 @@ def test_invalid_penetration_is_rejected(bad):
 
 def test_settings_leaves_and_values():
     found = {leaf.path: leaf for leaf in leaves()}
-    assert found["engine.costs.tp_penetration"].default == 0
-    assert found["engine.costs.short_tp_on_ask"].default is False
+    # defaults set by the user 2026-10-23
+    assert found["engine.costs.tp_penetration"].default == 0.5
+    assert found["engine.costs.short_tp_on_ask"].default is True
     values = form_values()
-    values.update({"engine.costs.tp_penetration": 0.5, "engine.costs.short_tp_on_ask": True})
+    values.update({"engine.costs.tp_penetration": 0.0, "engine.costs.short_tp_on_ask": False})
     cfg = settings_from_values(values).engine.costs
-    assert cfg.tp_penetration == 0.5 and cfg.short_tp_on_ask
+    assert cfg.tp_penetration == 0.0 and not cfg.short_tp_on_ask
 
 
 def test_panel_and_research_grid_expose_both_settings(tmp_path):

@@ -17,7 +17,8 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Costs (per symbol)
 - **Limit penetration** (V2.4d item 3, user 2026-10-23):
-  `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0**.
+  `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0.5** (rule set by
+  the user 2026-10-23 after the measurement in `results/tp_penetration.md`; 0 = touch fills as before).
   With `d = tp_penetration * spread`, use the spread actually fixed for the trade at entry
   (fixed, price-scaled or table spread; zero when spread is disabled). A long TP needs
   bid high >= TP + d; a short TP needs bid low <= TP - d. Partial TPs, TP2/TP3 and the
@@ -27,7 +28,7 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   penetration leaves the order pending under its existing expiry/cancellation rules.
   Existing entry gap pricing remains; test penetration against the placed limit, using
   the spread of the candidate fill (including its existing gap entry price).
-- **Short TP on ask:** `CostConfig.short_tp_on_ask`, default **False**. When enabled,
+- **Short TP on ask:** `CostConfig.short_tp_on_ask`, default **True** (rule set by the user 2026-10-23). When enabled,
   short TPs need bid low + the trade's spread <= TP - d and fill at TP itself, with no
   additional exit spread. When disabled, preserve bid triggering and fill at TP + spread.
   TP fills have no slippage. Both defaults reproduce existing fills exactly; the user

@@ -296,9 +296,9 @@ class CostConfig:
     # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
     spread_price_scaling: bool = True
     # TP and limit-entry penetration as a multiple of the trade's spread (0: touch fills)
-    tp_penetration: float = 0.0
+    tp_penetration: float = 0.5  # default set by the user 2026-10-23
     # Short TP needs ask <= target minus penetration; fills at target without extra spread
-    short_tp_on_ask: bool = False
+    short_tp_on_ask: bool = True  # default set by the user 2026-10-23
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.tp_penetration) or self.tp_penetration < 0:

@@ -35,7 +35,8 @@ import pytest
 from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.resample import resample
-from backtester.engine.backtest import Backtest, run_backtest
+from backtester.engine.backtest import Backtest, EngineConfig, run_backtest
+from backtester.engine.costs import CostConfig
 from backtester.engine.trade import TradeResult
 from backtester.runner import RunSettings, candles_from_frame, jsonable
 from backtester.settings import HIDDEN, from_json, to_json
@@ -306,7 +307,9 @@ def test_limit_orders_are_not_decided_from_the_candle_they_fill_in(name, label):
         return orders
 
     strategy.on_candle = recording
-    Backtest(strategy, series).run()
+    # the flat-candle probe only touches the level: run with touch fills
+    touch = EngineConfig(costs=CostConfig(tp_penetration=0.0, short_tp_on_ask=False))
+    Backtest(strategy, series, touch).run()
     if not seen:
         return
     for now, order in seen[:2]:
@@ -318,7 +321,7 @@ def test_limit_orders_are_not_decided_from_the_candle_they_fill_in(name, label):
             real2, n, v, now, again
         )
         cut = _prefix(flat, now)
-        Backtest(probe, cut).run()
+        Backtest(probe, cut, touch).run()
         same = [o for o in again if o.limit_fill and o.entry == order.entry]
         assert same, (
             f"{name}/{label}: the limit order at {now} (level {order.entry}) disappears when the "
