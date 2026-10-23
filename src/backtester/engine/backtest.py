@@ -6,7 +6,8 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
 
 1. Open trades are checked against candle i's OHLC only (`OpenTrade.on_candle`: SL before
    TP when both are inside the candle; an order with two TPs closes in two parts, and the
-   rest's SL may move to break-even after TP1, see engine/trade.py).
+   rest's SL may move to break-even after TP1, see engine/trade.py). The optional
+   M1 resolution follows ARCHITECTURE.md > Intrabar resolution after this base close.
 2. Break-even rule: the first candle closing at or after the first session start after a
    trade's entry decides. Break-even includes the costs: the level where a hit ends at 0R
    net (solved using the entry fill, exit commission and slippage). Close beyond that level ->
@@ -52,6 +53,11 @@ class EngineConfig:
     # › Stop loss)
     break_even_at_next_session: bool = True
     sessions: SessionConfig = DEFAULT_SESSIONS
+    intrabar: str = "sl_first"  # Ambiguous candles: sl_first (legacy) or m1 replay
+
+    def __post_init__(self) -> None:
+        if self.intrabar not in ("sl_first", "m1"):
+            raise ValueError("intrabar must be sl_first or m1")
 
 
 DEFAULT_ENGINE = EngineConfig()
@@ -71,6 +77,7 @@ class ProgressThrottle:
 DEFAULT_THROTTLE = ProgressThrottle()
 
 Progress = Callable[[int, int], None]  # (base candles done, total)
+IntrabarSource = Callable[[str, datetime, datetime], Sequence[Candle]]
 
 
 def run_backtest(
@@ -78,9 +85,11 @@ def run_backtest(
     series: Sequence[CandleSeries],
     config: EngineConfig = DEFAULT_ENGINE,
     progress: Progress | None = None,
+    *,
+    intrabar_source: IntrabarSource | None = None,
 ) -> list[TradeResult]:
     """Run `strategy` over `series` (one per timeframe it declares, same symbol)."""
-    return Backtest(strategy, series, config).run(progress)
+    return Backtest(strategy, series, config, intrabar_source=intrabar_source).run(progress)
 
 
 class Backtest:
@@ -89,6 +98,8 @@ class Backtest:
         strategy: Strategy,
         series: Sequence[CandleSeries],
         config: EngineConfig = DEFAULT_ENGINE,
+        *,
+        intrabar_source: IntrabarSource | None = None,
     ):
         by_tf = {s.timeframe: s for s in series}
         if len(by_tf) != len(series):
@@ -100,6 +111,7 @@ class Backtest:
             raise ValueError(f"no series for {sorted(tf.name for tf in missing)}")
         self._strategy = strategy
         self._config = config
+        self._intrabar_source = intrabar_source
         strategy.limit_fill_check = (
             self._limit_fill_allowed if config.costs.tp_penetration else None
         )
@@ -131,8 +143,7 @@ class Backtest:
             now = replay.close_time(cursor)
             still_open = []
             for trade in open_trades:
-                trade.track_excursion(candle)
-                trade.on_candle(candle, now)
+                self._manage_candle(trade, candle, now)
                 if trade.is_closed:
                     result = self._result(trade)
                     closed.append(result)
@@ -145,16 +156,17 @@ class Backtest:
             orders = self._strategy.on_candle(now, views)
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
-                trade = self._fill(order, candle, now, pending_limits)
-                if trade is None:
+                filled = self._fill(order, candle, now, pending_limits)
+                if filled is None:
                     continue
+                trade, placed = filled
                 if self._config.costs.too_expensive(
                     trade.symbol, trade.risk, trade.entry_time, trade.entry, trade.entry_fill
                 ):
                     self._strategy.on_order_skipped(order.ref, now)
                     continue
                 if order.limit_fill:
-                    trade.on_fill_candle(candle, now)
+                    self._manage_candle(trade, candle, now, placed=placed)
                 if trade.is_closed:
                     result = self._result(trade)
                     closed.append(result)
@@ -174,6 +186,82 @@ class Backtest:
             progress(total, total)
         closed.sort(key=lambda t: t.entry_time)
         return closed
+
+    def _manage_candle(
+        self, trade: OpenTrade, candle: Candle, now: datetime, *, placed: Order | None = None
+    ) -> None:
+        """Spec: ARCHITECTURE.md > Intrabar resolution. Default execution stays intact."""
+        ambiguous = self._replay.timeframe is not Timeframe.M1 and trade.ambiguous(
+            candle, limit_fill=placed is not None
+        )
+        if ambiguous:
+            trade.intrabar_ambiguous += 1
+            if self._config.intrabar == "m1":
+                minutes = self._minutes(candle, now)
+                if minutes and self._replay_minutes(trade, minutes, placed=placed):
+                    return
+                trade.intrabar = "fallback"
+                trade.intrabar_fallbacks += 1
+        if placed is not None:
+            trade.on_fill_candle(candle, now)
+        else:
+            trade.track_excursion(candle)
+            trade.on_candle(candle, now)
+
+    def _minutes(self, candle: Candle, now: datetime) -> list[Candle]:
+        """Validate the whole interval before mutating a position; never replay future data."""
+        if self._intrabar_source is None:
+            return []
+        duration = Timeframe.M1.duration
+        minutes = [
+            c
+            for c in self._intrabar_source(self._replay.symbol, candle.ts, now)
+            if candle.ts <= c.ts and c.ts + duration <= now
+        ]
+        expected = int((now - candle.ts) / duration)
+        if len(minutes) != expected or any(
+            c.ts != candle.ts + i * duration for i, c in enumerate(minutes)
+        ):
+            return []
+        return minutes
+
+    def _replay_minutes(
+        self, trade: OpenTrade, minutes: Sequence[Candle], *, placed: Order | None = None
+    ) -> bool:
+        """Spec: ARCHITECTURE.md > Intrabar resolution; strategies never see this replay."""
+        first = 0
+        if placed is not None:
+            threshold = placed.entry - trade.sign * trade.tp_penetration * trade.spread
+            first = next(
+                (
+                    i for i, minute in enumerate(minutes)
+                    if trade.sign * (
+                        (minute.low if trade.sign > 0 else minute.high) - threshold
+                    ) <= 0
+                ),
+                -1,
+            )
+            if first < 0:
+                return False  # inconsistent M1 coverage: preserve the base fill atomically
+            trade.entry_time = minutes[first].ts + Timeframe.M1.duration
+        before = len(trade.parts)
+        for i in range(first, len(minutes)):
+            minute = minutes[i]
+            now = minute.ts + Timeframe.M1.duration
+            trade.track_excursion(minute)
+            if placed is not None and i == first:
+                trade.on_fill_candle(minute, now)
+            else:
+                trade.on_candle(minute, now, intrabar=True)
+            if trade.is_closed:
+                break
+        if len(trade.parts) > before:
+            tp_first = trade.parts[before].reason is ExitReason.TAKE_PROFIT
+            trade.intrabar_tp_first += int(tp_first)
+            trade.intrabar_sl_first += int(not tp_first)
+            if not trade.intrabar:
+                trade.intrabar = "tp_first" if tp_first else "sl_first"
+        return True
 
     def _signal_exits(
         self, open_trades: list[OpenTrade], candle: Candle, now: datetime, closed: list
@@ -237,7 +325,7 @@ class Backtest:
 
     def _fill(
         self, order: Order, candle: Candle, now: datetime, pending_limits: list[Order]
-    ) -> OpenTrade | None:
+    ) -> tuple[OpenTrade, Order | None] | None:
         """Enter at the close of the current base candle (spec: "enter at that close"), or
         for a limit order at its level, which the candle must have traded through."""
         for name in ("entry", "stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
@@ -245,6 +333,7 @@ class Backtest:
             if price is not None and not math.isfinite(price):
                 raise ValueError(f"order {name} must be finite")
         entry = order.entry if order.limit_fill else candle.close
+        placed = None
         if order.limit_fill:
             placed = self._consume_pending_limit(order, candle, pending_limits)
             if not candle.low <= entry <= candle.high:
@@ -289,7 +378,7 @@ class Backtest:
         check = None
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
-        return OpenTrade(
+        trade = OpenTrade(
             symbol=symbol,
             direction=order.direction,
             entry_time=now,
@@ -318,6 +407,7 @@ class Backtest:
             tp_penetration=self._config.costs.tp_penetration,
             short_tp_on_ask=self._config.costs.short_tp_on_ask,
         )
+        return trade, placed
 
     @staticmethod
     def _check_break_even(trade: OpenTrade, candle: Candle, now: datetime) -> None:

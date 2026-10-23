@@ -27,6 +27,9 @@ the original SL stays (rule set by the user, 2026-10-22).
 Times: `entry_time` / `exit_time` are when the engine acted, i.e. the CLOSE time of the
 entry candle and of the candle in which SL / TP was hit. `entry_candle` / `exit_candle` are
 those candles' open times (`Candle.ts`), for drawing the position box on the chart.
+With M1 resolution, exit times and replayed limit entry times refer to the resolving
+minute, processed at the base close; entry_candle stays at the base open
+(Spec: ARCHITECTURE.md > Intrabar resolution).
 """
 
 from __future__ import annotations
@@ -102,6 +105,11 @@ class TradeResult:
     limit_fill: bool = False  # Kind C: a limit entry gets no market-fill draw
     tp_levels_touched: int = 0
     tp_levels_touched_not_filled: int = 0
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @property
     def risk(self) -> float:
@@ -178,6 +186,11 @@ class OpenTrade:
     short_tp_on_ask: bool = False
     _tp_touched: set[int] = field(default_factory=set)
     _tp_not_filled: set[int] = field(default_factory=set)
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @property
     def risk(self) -> float:
@@ -238,13 +251,30 @@ class OpenTrade:
         quote = bid + self.spread if self.sign < 0 and self.short_tp_on_ask else bid
         return self.sign * (quote - (level + self.sign * distance)) >= 0
 
-    def on_candle(self, candle: Candle, now: datetime) -> None:
+    def ambiguous(self, candle: Candle, *, limit_fill: bool = False) -> bool:
+        """Spec: ARCHITECTURE.md > Intrabar resolution; use actual fill thresholds."""
+        worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
+        outstanding = self.targets[len(self.parts) :]
+        if not any(self._tp_reached(best, price) for price, _ in outstanding):
+            return False
+        stop = self.sign * (worst - self.stop_loss) <= 0
+        new_be = (
+            not self.tp1_done
+            and self.break_even_after_tp1
+            and len(self.targets) > 1
+            and self.sign * (self.take_profit - self.break_even_level) > 0
+            and self.sign * (worst - self.break_even_level) <= 0
+        )
+        return limit_fill or stop or new_be
+
+    def on_candle(self, candle: Candle, now: datetime, *, intrabar: bool = False) -> None:
         """Close the parts whose SL / TP is hit inside `candle`.
 
         Only this candle's OHLC is used. SL and a TP both inside the candle: SL first
         (conservative). A candle that opens beyond the SL (gap) fills at its open; one that
         opens beyond a TP fills at the TP (never better than planned). Several TPs inside
         one candle (no SL): all are filled.
+        During intrabar replay, new BE stops are checked from the next M1 candle only.
         """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
         targets = self.targets
@@ -279,7 +309,7 @@ class OpenTrade:
             and self.sign * (self.take_profit - self.break_even_level) > 0
         ):
             self.move_to_break_even(now)
-            if not self._beyond(candle.close, self.break_even_level):
+            if not intrabar and not self._beyond(candle.close, self.break_even_level):
                 # closed back beyond break-even after TP1: the level was hit in this candle
                 self._exit(
                     self.open_share, candle, now, self.break_even_level, ExitReason.BREAK_EVEN
@@ -356,4 +386,9 @@ class OpenTrade:
             limit_fill=self.limit_fill,
             tp_levels_touched=len(self._tp_touched),
             tp_levels_touched_not_filled=len(self._tp_not_filled),
+            intrabar=self.intrabar,
+            intrabar_ambiguous=self.intrabar_ambiguous,
+            intrabar_tp_first=self.intrabar_tp_first,
+            intrabar_sl_first=self.intrabar_sl_first,
+            intrabar_fallbacks=self.intrabar_fallbacks,
         )

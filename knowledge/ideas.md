@@ -25,7 +25,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 |---|---|---|---|---|---|---|
 | T-01 | Robustness report: plateau heat map, % profitable combos, halves t-test, shock days, 3 cost levels | tooling | all | – | K ch.21; KD p.106-109 (70 % gate) | done 2026-10-15 (ROADMAP 6.4; heat map via plateau on a family, stressed costs x1.5 instead of 3 levels) |
 | T-02 ★ | Random-entry baseline (Monte Carlo of entries): percentile of net R vs 1,000 seeded random-entry runs | tooling | all | – | VectorBT; KD p.109-114; EC p.16-22 (see T-14) | done 2026-10-16 (ROADMAP 12.1, in tools/monte_carlo.py) |
-| T-03 | SL and TP inside one candle: resolve the order from M1 instead of "SL first" | tooling | all | – | NautilusTrader | open (ROADMAP 12.2) |
+| T-03 | SL and TP inside one candle: resolve the order from M1 instead of "SL first" | tooling | all | – | NautilusTrader | measured on 2023 golden setups (2026-10-23, results/intrabar.md); default sl_first; limit-entry timestamp decision and Opus review pending (ROADMAP 12.2 / V2.4c) |
 | T-04 | Shared walk-forward splitter (rolling / anchored) | tooling | all | – | VectorBT; K ch.21; LP 11.6, 12.2; KD ch.13 (see T-09) | done 2026-10-16 (ROADMAP 12.3, analytics/walk_forward.py) |
 | T-05 | Parameter heat map on the results page | tooling | all | – | VectorBT; K ch.21 | open (ROADMAP 12.4) |
 | T-06 | Demo vs engine reconciliation of the same trades | tooling | FTMO symbols | – | HftBacktest; prediction-market-backtesting | open (ROADMAP 12.5, before Phase 7) |

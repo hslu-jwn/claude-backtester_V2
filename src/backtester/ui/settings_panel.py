@@ -73,6 +73,7 @@ DEFAULT_PRESET = DEFAULT
 
 # (path or path prefix ending in ".", group), first match wins
 _GROUP_RULES = (
+    ("engine.intrabar", "Backtest"),
     ("strategy.entry_bos_with_trend", "Entry"),
     ("strategy.max_trades_per_session", "Entry"),
     ("strategy.sweep_lookback", "Entry"),
@@ -218,6 +219,7 @@ LABELS = {
     "detectors.equilibrium.sl_at_deepest_wick": "EQ SL beyond the deepest wick",
     "strategy.strong_move.atr_period": "ATR period (5m)",
     "engine.break_even_at_next_session": "Break-even at the next session",
+    "engine.intrabar": "Intrabar SL / TP resolution",
     "strategy.tp_cap_r": "TP cap (R)",
     "strategy.min_rr": "Minimum R:R (TP1)",
     "strategy.obstacles_passable": "Levels TP2 may pass",
@@ -659,10 +661,15 @@ def _widget(leaf: Leaf, widget_path: str):
         return dcc.Checklist(
             id=id_, options=[{"label": "", "value": "on"}], value=start, className="st-switch"
         )
-    if leaf.kind == "enum":
+    if leaf.kind == "enum" or leaf.path == "engine.intrabar":
         return dcc.Dropdown(
             id=id_,
-            options=options_of(leaf, owner),
+            options=[
+                {"label": "SL first", "value": "sl_first"},
+                {"label": "Resolve from M1", "value": "m1"},
+            ]
+            if leaf.path == "engine.intrabar"
+            else options_of(leaf, owner),
             value=start,
             clearable=False,
             searchable=False,

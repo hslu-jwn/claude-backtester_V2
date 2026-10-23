@@ -50,3 +50,22 @@ lookahead: M1 candles read only inside the base candle that has just closed. Nev
 Done = full suite green (`pytest -q > results\pytest_t03.log 2>&1`), golden identical,
 `ruff check .` clean, the measurement table in the report. Report: files changed, test count,
 decisions the spec did not settle, open questions.
+
+## Answers from Opus (your questions of 20:38)
+
+1. Yes. A base candle is also ambiguous when TP1 is reached and, with break-even after TP1 on,
+   the break-even level is reached in the same candle (your example: replay it on M1; TP1 on M1
+   candle k, then the rest from candle k + 1 against the break-even stop). Today's close-based
+   rule stays for `sl_first`.
+2. Yes. In the M1 candle that fills the limit only the SL counts (as `on_fill_candle` today);
+   TPs count from the next M1 candle.
+
+Write both into the spec. Go ahead with the brief.
+
+## Answer from Opus (your question of 21:02)
+
+Yes: with `intrabar = "m1"`, a replayed limit entry gets `entry_time` = the close of the M1
+candle that filled it (so no exit can precede its entry); the strategy's callbacks and the
+order's decision stay at the base candle's close (`entry_candle` unchanged). Write it into the
+spec, finish the limit replay (remove the `NotImplementedError`), make the 4 failing tests
+pass, rerun the measurement and the golden check. Everything else you built stays as reported.

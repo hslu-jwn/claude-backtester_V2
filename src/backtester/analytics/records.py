@@ -70,6 +70,11 @@ class TradeRecord:
     entry_fill: float | None = None  # preserve actual fill for MTM; old files reconstruct spread
     tp_levels_touched: int = 0  # old files did not track touches
     tp_levels_touched_not_filled: int = 0
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:
@@ -108,6 +113,11 @@ class TradeRecord:
             entry_fill=_float(row.get("entry_fill")),
             tp_levels_touched=int(row.get("tp_levels_touched") or 0),
             tp_levels_touched_not_filled=int(row.get("tp_levels_touched_not_filled") or 0),
+            intrabar=row.get("intrabar") or "",
+            intrabar_ambiguous=int(row.get("intrabar_ambiguous") or 0),
+            intrabar_tp_first=int(row.get("intrabar_tp_first") or 0),
+            intrabar_sl_first=int(row.get("intrabar_sl_first") or 0),
+            intrabar_fallbacks=int(row.get("intrabar_fallbacks") or 0),
         )
 
 

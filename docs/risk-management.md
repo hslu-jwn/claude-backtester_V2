@@ -15,6 +15,21 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 - **Several TPs** (strategy 2: 3 equal parts; strategy 1: TP1 share): each part is rounded down to the lot step; the **remainder goes to TP1** (rule set by the user). If the position is too small to split into all parts (less than parts × minimum lot), it trades with **fewer TPs**: the first TPs get the lots, the later ones are dropped (the last remaining TP closes the rest). Below one minimum lot → trade skipped, logged as "too small".
 - The trade's R result is recalculated from the lots actually used per part.
 
+### Intrabar execution (V2.4c T-03)
+
+The setting `engine.intrabar` is `"sl_first"` by default (unchanged golden execution),
+or `"m1"` to resolve ambiguous closed base candles from M1. See
+ARCHITECTURE.md > How a backtest steps through time > Intrabar resolution for the
+execution and diagnostic contract. Penetration and short ask triggering apply on M1
+too; levels, partial shares and fill costs remain the same. SL still wins within an
+ambiguous M1 candle. After TP1, break-even starts on the next M1 candle; on a limit's
+filling M1 candle only SL counts, then TPs start on the next minute. Missing M1 falls
+back conservatively and is counted. M1-base strategies keep existing behaviour.
+A replayed limit records `entry_time` at its filling M1 candle's close; `entry_candle`
+stays at the base candle's open. Decisions and callbacks still run at the base close,
+and no exit precedes entry (Opus clarification, 2026-10-23 21:02).
+The seven-strategy 2023 measurement informs a later user decision on the default.
+
 ### Costs (per symbol)
 - **Limit penetration** (V2.4d item 3, user 2026-10-23):
   `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0.5** (rule set by
@@ -37,7 +52,8 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
   trade when the old bid-touch rule reaches it. `tp_levels_touched_not_filled` counts each
   such level once if it fails the new price threshold in any candle, even if filled later.
   These are price-threshold diagnostics; SL-first precedence and the entry fill candle's
-  exclusion of TPs remain in force. Already filled levels are no longer observed.
+  exclusion of TPs remain in force on the execution timeframe (base by default, M1
+  during intrabar resolution). Already filled levels are no longer observed.
   Both counts are written to `trades.csv`; summary `tp_touched_not_filled_share` is the
   sum of missed levels divided by the sum of touched levels (0 when none were touched).
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
