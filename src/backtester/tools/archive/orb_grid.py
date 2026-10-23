@@ -31,6 +31,7 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
+from backtester.analytics.market_classes import INDEX_CLASSES
 from backtester.analytics.metrics import summarize
 from backtester.analytics.robustness import RobustnessConfig, trade_robustness
 from backtester.data.cache import MT5_CACHE_DIR
@@ -68,10 +69,6 @@ MIN_REL_VOLUME = 1.5
 DEFAULT_SPREAD_TABLE = Path("data") / "spreads" / "ftmo_spread_median.json"
 WORKERS = 1  # the process pool stalled on the long 1-minute runs; in-process is reliable
 
-INDEX_CLASSES = {
-    **dict.fromkeys(("NAS100", "US500", "US30", "US2000"), "US indices"),
-    **dict.fromkeys(("GER40", "EU50", "UK100", "JP225"), "EU/UK/JP indices"),
-}
 METALS = ("XAUUSD", "XAGUSD")
 SESSION_LABEL = {"london": "London", "new_york": "NY"}
 FX_LABEL = {"london": "FX London", "new_york": "FX New York"}

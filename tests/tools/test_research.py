@@ -271,7 +271,10 @@ class Fakes:
 
 @pytest.fixture
 def fakes(monkeypatch):
+    from backtester.tools import research_diagnostics
+
     f = Fakes()
+    monkeypatch.setattr(research_diagnostics, "load_shocks", lambda *args: {})
     monkeypatch.setattr(research, "run_backtests", f.run)
     monkeypatch.setattr(research, "run_period_many", f.run_many)
     monkeypatch.setattr(research, "write_results", f.write)

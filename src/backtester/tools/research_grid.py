@@ -31,7 +31,7 @@ import math
 import random
 import re
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, time
 from pathlib import Path
 
@@ -39,7 +39,17 @@ from backtester.runner import RunSettings
 from backtester.settings import Leaf, SettingsError, leaves, settings_from_values
 from backtester.strategy.registry import REGISTRY, default_config
 
-TOP_LEVEL = ("strategy", "symbols", "min_trades", "max_variants", "seed", "base", "grid")
+TOP_LEVEL = (
+    "strategy",
+    "symbols",
+    "min_trades",
+    "max_variants",
+    "seed",
+    "base",
+    "grid",
+    "grids",
+    "shocks",
+)
 ID_HASH_LENGTH = 8
 
 
@@ -72,6 +82,16 @@ class GridSpec:
     max_variants: int
     seed: int
     path: Path | None = None
+    grids: tuple[Family, ...] = ()
+    shocks: bool = True
+    duplicates: list[dict] = field(default_factory=list, compare=False)
+
+
+@dataclass(frozen=True, slots=True)
+class Family:
+    name: str
+    base: dict
+    grid: dict
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +99,7 @@ class Variant:
     id: str  # v0000: the index in the full product
     name: str  # "range_minutes=15 target_r=1" (the grid's own settings only)
     overrides: dict  # base + this variant's grid values, setting name -> value
+    family: str = "grid"
 
 
 # --- setting names and values -------------------------------------------------------------
@@ -229,6 +250,31 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
     grid = data.get("grid", {})
     if not isinstance(base, dict) or not isinstance(grid, dict):
         raise GridError("[base] and [grid] must be tables")
+    if not isinstance(data.get("shocks", True), bool):
+        raise GridError("shocks must be true or false")
+    families = []
+    if "grids" in data:
+        raw = data["grids"]
+        if "grid" in data or not isinstance(raw, list) or not raw:
+            raise GridError("use either [grid] or non-empty [[grids]] tables")
+        for i, item in enumerate(raw, 1):
+            where = f"grids[{i}]"
+            if not isinstance(item, dict) or set(item) - {"name", "base", "grid"}:
+                raise GridError(f"{where}: only name, base and grid are allowed")
+            name = item.get("name", f"grid{i}")
+            if not isinstance(name, str) or not name.strip() or name == "all":
+                raise GridError(f"{where}: name must be non-empty and cannot be 'all'")
+            if any(f.name == name for f in families):
+                raise GridError(f"{where}: duplicate family name {name!r}")
+            if not all(isinstance(item.get(k, {}), dict) for k in ("base", "grid")):
+                raise GridError(f"{where}: base and grid must be tables")
+            families.append(
+                Family(
+                    name,
+                    _check_table(item.get("base", {}), strategy, where, table, False),
+                    _check_table(item.get("grid", {}), strategy, where, table, True),
+                )
+            )
     spec = GridSpec(
         name=path.stem,
         strategy=strategy,
@@ -239,6 +285,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         max_variants=_number(data, "max_variants", cfg.max_variants, 1),
         seed=_number(data, "seed", cfg.seed, 0),
         path=path,
+        grids=tuple(families),
+        shocks=data.get("shocks", True),
     )
     return spec
 
@@ -247,6 +295,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
 
 
 def grid_size(spec: GridSpec) -> int:
+    if spec.grids:
+        return sum(math.prod(len(v) for v in f.grid.values()) for f in spec.grids)
     return math.prod(len(v) for v in spec.grid.values())
 
 
@@ -260,13 +310,39 @@ def _fmt(value) -> str:
     return str(value)
 
 
-def _combination(spec: GridSpec, index: int) -> dict:
+def _combination(spec: GridSpec | Family, index: int) -> dict:
     """The index-th combination of the product (first setting varies slowest)."""
     picks = {}
     for name in reversed(list(spec.grid)):
         index, i = divmod(index, len(spec.grid[name]))
         picks[name] = spec.grid[name][i]
     return {name: picks[name] for name in spec.grid}
+
+
+def families(spec: GridSpec) -> tuple[Family, ...]:
+    return spec.grids or (Family("grid", {}, spec.grid),)
+
+
+def family_variants(spec: GridSpec):
+    """Full products, in file order. Spec: research-runner.md > Combined grids."""
+    offset = 0
+    for family in families(spec):
+        size = math.prod(len(v) for v in family.grid.values())
+        for index in range(size):
+            combo = _combination(family, index)
+            name = " ".join(f"{k}={_fmt(v)}" for k, v in combo.items()) or "base"
+            yield Variant(
+                f"v{offset + index:04d}", name, {**spec.base, **family.base, **combo}, family.name
+            )
+        offset += size
+
+
+def resolved_values(spec: GridSpec, variant: Variant) -> dict:
+    return {_name_of(leaf): leaf.default for leaf in leaves(variant_settings(spec, variant))}
+
+
+def resolved_key(spec: GridSpec, variant: Variant) -> str:
+    return json.dumps(resolved_values(spec, variant), sort_keys=True, default=str)
 
 
 def variant_settings(spec: GridSpec, variant: Variant) -> RunSettings:
@@ -284,6 +360,25 @@ def expand(spec: GridSpec) -> tuple[list[Variant], int, bool]:
     """(variants, size of the full grid, sampled). Above `max_variants` a seeded random sample
     of the full product (kept in product order)."""
     size = grid_size(spec)
+    if spec.grids:
+        unique = {}
+        spec.duplicates.clear()
+        for variant in family_variants(spec):
+            key = resolved_key(spec, variant)
+            if key in unique:
+                spec.duplicates.append(
+                    {"id": variant.id, "family": variant.family, "retained": unique[key].id}
+                )
+            else:
+                unique[key] = variant
+        variants = list(unique.values())
+        sampled = len(variants) > spec.max_variants
+        if sampled:
+            indexes = sorted(
+                random.Random(spec.seed).sample(range(len(variants)), spec.max_variants)
+            )
+            variants = [variants[i] for i in indexes]
+        return variants, size, sampled
     sampled = size > spec.max_variants
     indexes = (
         sorted(random.Random(spec.seed).sample(range(size), spec.max_variants))

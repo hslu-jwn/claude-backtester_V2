@@ -67,12 +67,14 @@ from backtester.runner import (
     run_backtests,
     write_results,
 )
+from backtester.tools import research_diagnostics
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
     ResearchConfig,
     Variant,
     expand,
+    families,
     grid_id,
     load_grid,
     variant_settings,
@@ -252,11 +254,13 @@ def _write_csv(path: Path, columns: Sequence[str], rows: Sequence[dict]) -> None
 
 
 def _set_columns(spec: GridSpec) -> list[str]:
-    return [f"set.{name}" for name in spec.grid]
+    return (["family"] if spec.grids else []) + list(
+        dict.fromkeys(f"set.{name}" for family in families(spec) for name in family.grid)
+    )
 
 
 def _setting_cells(spec: GridSpec, overrides: dict) -> dict:
-    return {f"set.{name}": overrides[name] for name in spec.grid}
+    return research_diagnostics.setting_cells(spec, overrides)
 
 
 def _log_settings(spec: GridSpec, overrides: dict) -> dict:
@@ -288,6 +292,7 @@ def _store_variant(
     vdir = folder / "variants" / variant.id
     start, end = periods["dev_start"], periods["dev_end"]
     write_results(result, folder / "variants", variant.id)
+    _dump(vdir / "diagnostics.json", research_diagnostics.snapshot(result.trades))
     r_net = [t.r_net for t in result.trades]
     append(make_record(
         spec.name, spec.strategy, _log_settings(spec, variant.overrides), spec.symbols, start, end,
@@ -446,6 +451,8 @@ def run_research(
         },
         "ranked": 0, "chosen": previous.get("chosen"), "test": test_info,
     }  # fmt: skip
+    if spec.grids:
+        info["grids"] = [{"name": f.name, "base": f.base, "grid": f.grid} for f in spec.grids]
     _dump(folder / "research.json", info)
     log(
         f"research {rid}: {spec.strategy} {','.join(spec.symbols)}, {len(variants)} variants"
@@ -477,6 +484,9 @@ def run_research(
             f"net {card['net_r']:+.1f} R ({clock.perf_counter() - started:.0f}s since start)"
         )
     rows = [_variant_row(spec, done[v.id], sc_cfg) for v in variants]
+    if spec.grids:
+        for row, variant in zip(rows, variants, strict=True):
+            row["family"] = variant.family
     rows = _rank(rows, spec.min_trades)
     ranked = [r for r in rows if r["rank"] is not None]
     info["ranked"] = len(ranked)
@@ -484,6 +494,11 @@ def run_research(
 
     def finish(status: str, message: str, chosen: dict | None) -> dict:
         info.update(status=status, chosen=chosen, test=test_info, updated=_now())
+        # Keep the once-only test guard durable even if optional reporting fails.
+        _dump(folder / "research.json", info)
+        research_diagnostics.write_diagnostics(
+            folder, spec, variants, rows, info, results_dir, sources
+        )
         _dump(folder / "research.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
@@ -537,12 +552,17 @@ def run_research(
     log(f"test: {best['variant_id']} {best['variant']} on {cfg.cutoff}..{last}")
     result = run_period(spec.symbols, cfg.cutoff, last, settings, sources, workers)
     run_folder = write_results(result, results_dir, preset=preset).name
+    _dump(
+        results_dir / run_folder / "diagnostics.json", research_diagnostics.snapshot(result.trades)
+    )
     run_number = int(test_info.get("run", 0)) + 1
     is_retest = run_number > 1
     row = _test_row(
         spec, chosen | {"variant_id": best["variant_id"], "variant": best["variant"]}, result,
         cfg.cutoff, last, run_number, run_folder, rows, sc_cfg,
     )  # fmt: skip
+    if spec.grids:
+        row["family"] = next(v.family for v in variants if v.id == best["variant_id"])
     append(make_record(
         spec.name, spec.strategy, _log_settings(spec, best["overrides"]), spec.symbols,
         cfg.cutoff, last, f"{SOURCE_RETEST}-{run_number - 1}" if is_retest else SOURCE_TEST,
@@ -576,6 +596,15 @@ def _test_rows(folder: Path) -> list[dict]:
         return []
     with path.open(encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
+
+
+def _cell(value) -> str:
+    """A report table cell: floats to 2 decimals, None empty."""
+    if value is None:
+        return ""
+    if isinstance(value, float):
+        return f"{value:.2f}"
+    return str(value)
 
 
 def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict]) -> None:
@@ -627,6 +656,50 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
         )
     else:
         lines.append(f"Not run ({test.get('status')}). {test.get('reason', '')}".strip())
+    lines += [
+        "",
+        "## Development grid robustness",
+        "",
+        "| family | n | profitable share | mean | sd | mean - sd | robust | plateau | smoothed net R |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    notes = []
+    for row in info.get("grid_robustness", []):
+        lines.append(
+            "| "
+            + " | ".join(
+                _cell(row.get(k))
+                for k in (
+                    "family",
+                    "n",
+                    "profitable_share",
+                    "mean",
+                    "std",
+                    "adjusted",
+                    "robust",
+                    "plateau_variant",
+                    "plateau_net_r",
+                )
+            )
+            + " |"
+        )
+        if row.get("plateau_note"):
+            notes.append(f"{row['family']}: {row['plateau_note']}.")
+    lines += ["", *notes]
+    lines += ["", "## Duplicate settings", ""]
+    for duplicate in info.get("duplicates", []):
+        lines.append(f"- {duplicate['id']} ({duplicate['family']}) reuses {duplicate['retained']}.")
+    if not info.get("duplicates"):
+        lines.append("None.")
+    lines += ["", "## Shock days", ""]
+    if info.get("shocks") is None:
+        lines.append("Disabled (shocks = false).")
+    for row in info.get("shocks") or []:
+        lines.append(
+            f"- {row['period']} (test run {row['test_run']}): "
+            f"net {row['net_r_total']:+.3f} R, without shocks "
+            f"{row['net_r_without_shocks']:+.3f} R."
+        )
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
