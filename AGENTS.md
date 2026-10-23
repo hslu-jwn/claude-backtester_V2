@@ -23,7 +23,8 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
 - **Cross-review:** no model approves its own work. Codex writes code -> Claude 4.6 reviews it
   and Gemini tests it; Claude 4.6 writes -> Codex reviews; Gemini writes tests -> Codex
   reviews them. Tests (written first, from the spec) and the implementation come from
-  different models.
+  different models where possible; when the other models are out of quota, one model writes
+  both (tests first) and Opus reviews the tests and the code.
 - **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
   **Research / tests:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
   model one level after a failed try before passing the task on.
