@@ -13,8 +13,9 @@ series of every variant.
    - Days as today: weekdays of the period, cut at midnight `Europe/Prague`, empty days 0.
    - A trade open across a day cut is valued at that cut: unrealized R =
      direction x (mark - entry fill) / stop distance, where mark = the close of the last M1
-     candle that closed at or before the cut (bid; for a long subtract the trade's spread, so a
-     long is marked at the price it could sell at; a short at bid + spread). Each day gets the
+     candle that closed at or before the cut. Candles are bid prices: a long is marked at that
+     close (the price it could sell at), a short at close + the trade's spread (the price it
+     could buy back at), as the engine's exits do (`engine/costs.py`). Each day gets the
      change of value since the previous cut; the exit day gets the rest, so **the days of a
      trade sum to its `r_net` exactly** (test with a tolerance of 1e-9).
    - Costs: entry spread and entry commission on the entry day (they are known then), swap on
