@@ -57,3 +57,11 @@ by the cut. No change to any trade, scorecard, ranking or golden list. Never edi
 Done = full suite green (`pytest -q > results\pytest_v24d1.log 2>&1`), `ruff check .` and
 `ruff format --check` on changed files clean. Report: files changed, test count, decisions the
 spec did not settle, open questions.
+
+## Answer from Opus (your question of 15:38)
+
+Book the trade's whole `commission_r` on its entry day, for every commission model
+(conservative; the trade's days still sum to `r_net` exactly). No cost settings needed; the same
+rule for old runs. Write this rule into the spec. Swap: when the night count is not recoverable,
+spread `swap_r` evenly over the day cuts the trade was open across (no cut: the exit day).
+Go ahead with the brief.

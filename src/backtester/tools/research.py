@@ -41,8 +41,9 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
+from backtester.analytics.records import read_trades
 from backtester.analytics.scorecard import SCORE_KEYS, ScorecardConfig, flags, scorecard
-from backtester.analytics.trial_log import TRIALS_FILE, append, make_record
+from backtester.analytics.trial_log import TRIALS_FILE
 from backtester.analytics.trial_log import now_iso as _now
 from backtester.analytics.verdict import (
     EDGE,
@@ -67,7 +68,12 @@ from backtester.runner import (
     run_backtests,
     write_results,
 )
-from backtester.tools import research_diagnostics, research_stability, research_walk_forward
+from backtester.tools import (
+    research_diagnostics,
+    research_series,
+    research_stability,
+    research_walk_forward,
+)
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
@@ -287,6 +293,7 @@ def _store_variant(
     folder: Path,
     sc_cfg: ScorecardConfig,
     trials: Path,
+    sources: SymbolSources,
 ) -> dict:
     """Write a variant's development run, trial log line and scorecard; returns the result."""
     vdir = folder / "variants" / variant.id
@@ -294,10 +301,6 @@ def _store_variant(
     write_results(result, folder / "variants", variant.id)
     _dump(vdir / "diagnostics.json", research_diagnostics.snapshot(result.trades))
     r_net = [t.r_net for t in result.trades]
-    append(make_record(
-        spec.name, spec.strategy, _log_settings(spec, variant.overrides), spec.symbols, start, end,
-        SOURCE_DEV, result.trades,
-    ), trials)  # fmt: skip
     data = {
         "id": variant.id,
         "name": variant.name,
@@ -306,7 +309,37 @@ def _store_variant(
         "sharpe": trade_stats(r_net).sharpe,
     }
     _dump(vdir / SCORECARD_FILE, data)
+    _daily_series(
+        spec, variant.overrides, vdir, start, end, sources, trials, SOURCE_DEV, trades=result.trades
+    )
     return data
+
+
+def _daily_series(
+    spec,
+    overrides,
+    folder,
+    start,
+    end,
+    sources,
+    trials,
+    source,
+    *,
+    trades=None,
+    family=None,
+    note="",
+):
+    research_series.ensure(
+        folder,
+        start,
+        end,
+        sources,
+        trials,
+        (family or spec.name, spec.strategy, _log_settings(spec, overrides), spec.symbols, source),
+        trades=trades,
+        reader=read_trades,
+        note=note,
+    )
 
 
 def _sensitivity(
@@ -336,6 +369,17 @@ def _sensitivity(
             continue
         data = _finished_variant(folder / "sensitivity" / sid)
         if data is not None:
+            _daily_series(
+                spec,
+                row["overrides"],
+                folder / "sensitivity" / sid,
+                periods["dev_start"],
+                periods["dev_end"],
+                sources,
+                trials,
+                "research-sensitivity",
+                family=f"{spec.name}-sensitivity",
+            )
             completed[sid] = data
         else:
             pending[sid] = row
@@ -349,21 +393,20 @@ def _sensitivity(
         sid = row["id"]
         write_results(result, folder / "sensitivity", sid)
         card = scorecard(result.trades, sc_cfg, periods["dev_start"], periods["dev_end"])
-        append(
-            make_record(
-                f"{spec.name}-sensitivity",
-                spec.strategy,
-                _log_settings(spec, row["overrides"]),
-                spec.symbols,
-                periods["dev_start"],
-                periods["dev_end"],
-                "research-sensitivity",
-                result.trades,
-            ),
-            trials,
-        )
         completed[sid] = {"scorecard": card}
         _dump(folder / "sensitivity" / sid / SCORECARD_FILE, completed[sid])
+        _daily_series(
+            spec,
+            row["overrides"],
+            folder / "sensitivity" / sid,
+            periods["dev_start"],
+            periods["dev_end"],
+            sources,
+            trials,
+            "research-sensitivity",
+            trades=result.trades,
+            family=f"{spec.name}-sensitivity",
+        )
         log(f"sensitivity {row['setting']}={row['value']}: net {card['net_r']:+.3f} R")
     for row in rows:
         if row["status"] == "skipped":
@@ -542,6 +585,16 @@ def run_research(
     for variant in variants:
         data = _finished_variant(folder / "variants" / variant.id)
         if data is not None:
+            _daily_series(
+                spec,
+                variant.overrides,
+                folder / "variants" / variant.id,
+                first,
+                dev_end,
+                sources,
+                trials,
+                SOURCE_DEV,
+            )
             done[variant.id] = data
             log(f"[{len(done)}/{len(variants)}] {variant.id} {variant.name}: "
                 f"{data['scorecard']['trades']} trades, net {data['scorecard']['net_r']:+.1f} R "
@@ -553,7 +606,7 @@ def run_research(
         [variant_settings(spec, v) for v in pending], sources, workers,
     ) if pending else ():  # fmt: skip
         variant = pending[index]
-        data = _store_variant(spec, variant, result, periods, folder, sc_cfg, trials)
+        data = _store_variant(spec, variant, result, periods, folder, sc_cfg, trials, sources)
         done[variant.id] = data
         card = data["scorecard"]
         log(
@@ -573,6 +626,19 @@ def run_research(
         info.update(status=status, chosen=chosen, test=test_info, updated=_now())
         # Keep the once-only test guard durable even if optional reporting fails.
         _dump(folder / "research.json", info)
+        for saved in _test_rows(folder):
+            number = int(saved["test_run"])
+            variant = next(v for v in variants if v.id == saved["variant_id"])
+            _daily_series(
+                spec,
+                variant.overrides,
+                results_dir / saved["run_folder"],
+                date.fromisoformat(saved["start"]),
+                date.fromisoformat(saved["end"]),
+                sources,
+                trials,
+                f"{SOURCE_RETEST}-{number - 1}" if number > 1 else SOURCE_TEST,
+            )
         research_diagnostics.write_diagnostics(
             folder, spec, variants, rows, info, results_dir, sources
         )
@@ -684,12 +750,6 @@ def run_research(
     )  # fmt: skip
     if spec.grids:
         row["family"] = next(v.family for v in variants if v.id == best["variant_id"])
-    append(make_record(
-        spec.name, spec.strategy, _log_settings(spec, best["overrides"]), spec.symbols,
-        cfg.cutoff, last, f"{SOURCE_RETEST}-{run_number - 1}" if is_retest else SOURCE_TEST,
-        result.trades,
-        note=f"retest {run_number - 1} of grid {rid}" if is_retest else f"test of grid {rid}",
-    ), trials)  # fmt: skip
     old_rows = _test_rows(folder)
     _write_csv(
         folder / "test.csv", [*TEST_COLUMNS, *_set_columns(spec)],
@@ -704,6 +764,20 @@ def run_research(
         verdict_label=row["verdict_label"], verdict_reason=row["verdict_reason"],
         n_variants=row["n_variants"], flags=row["flags"].split(";") if row["flags"] else [],
     )  # fmt: skip
+    info.update(chosen=chosen, test=test_info)
+    _dump(folder / "research.json", info)
+    _daily_series(
+        spec,
+        best["overrides"],
+        results_dir / run_folder,
+        cfg.cutoff,
+        last,
+        sources,
+        trials,
+        f"{SOURCE_RETEST}-{run_number - 1}" if is_retest else SOURCE_TEST,
+        trades=result.trades,
+        note=f"retest {run_number - 1} of grid {rid}" if is_retest else f"test of grid {rid}",
+    )
     log(
         f"test result: {row['trades']} trades, net {row['net_r']:+.1f} R, "
         f"verdict {row['verdict']} ({row['verdict_label']})"

@@ -267,6 +267,31 @@ one's Sharpe by the number of trials.
 - **Back-fill** (user, 2026-10-16): trials run before the log existed are added by hand
   (`python -m backtester.tools.trials add ...`), with their numbers where the old result files have them,
   otherwise as count-only lines (count for N, no Sharpe).
+- **Marked-to-market daily series (V2.4d items 1?2):** additive daily net R and signed
+  position; existing daily statistics and DSR stay on exit-booked daily net R.
+  Calendar days end at the following Europe/Prague midnight. Weekend contributions move
+  to the next weekday; out-of-period contributions clamp to the first/last weekday.
+  At cuts before exit use the last M1 bid close whose close time is <= cut, adding the
+  trade's spread for shorts. Value remaining shares from actual entry fill; realized
+  partial fills remain in cumulative value. Differences form daily R and final exit settles
+  to saved r_net, conserving each trade's total within 1e-9. An exit exactly at midnight
+  settles on its new calendar day's exit booking; the preceding cut uses the bid mark,
+  leaving exit costs to the exit day. Parts exiting exactly at a cut are marked there
+  before their fill is realized in the following day.
+  Spread/slippage included in fills are never deducted twice. Book the whole commission_r
+  on entry day for every commission model, including old runs, without cost settings.
+  Saved swap/funding totals have no recoverable charge schedule: spread each evenly across
+  Prague midnight cuts strictly after entry and <= exit (no cuts: exit day), on the day
+  ending at that cut. Position is signed remaining share integrated over actual calendar
+  day duration in UTC (DST included), counting only time on the named weekday inside
+  the requested period. Weekend/out-of-period holding time is omitted from position,
+  rather than added to another weekday; only R contributions follow the mapping above.
+  Missing marks or invalid/nonfinite prices and stop distances raise errors.
+  Read M1 through SymbolSources once per symbol/consecutive cached-day block.
+  TrialRecord.series optionally links daily.csv relative to results/; old lines default
+  to None. read_series defaults to net_r_exit_booked and also accepts net_r_mtm or position.
+  series_matrix aligns the date union with zero padding in input record order; records
+  without series yield empty arrays and an all-zero matrix column.
 - **Daily Sharpe** (rule changed by the user 2026-10-20, ROADMAP 12.13; before: per trade): SR = mean / sd (sample sd)
   of the **daily net R** of the run, not annualised; a day = a weekday of the run's period, midnight to midnight
   `Europe/Prague`, trades by exit day, days without trades = 0 (as Monte Carlo kind A); n = number of days; skewness g3

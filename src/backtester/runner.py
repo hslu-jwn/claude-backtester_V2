@@ -633,6 +633,8 @@ def trade_rows(result: RunResult) -> list[dict]:
                         "price": p.price,
                         "reason": p.reason.value,
                         "r_gross": p.r_gross,
+                        "fill": p.fill,
+                        "r_fills": p.r_fills,
                     }
                     for p in t.parts
                 ]

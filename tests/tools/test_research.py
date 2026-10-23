@@ -213,6 +213,7 @@ def make_trade(symbol, year, r_net, n):
     entry = datetime(year, 3, 1 + n, 14, 30, tzinfo=UTC)
     return SimpleNamespace(
         symbol=symbol, entry_time=entry, exit_time=entry + timedelta(hours=2),
+        direction="long",
         r_gross=r_net + 0.05, r_net=r_net, planned_r=None,
     )  # fmt: skip
 

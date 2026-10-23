@@ -123,6 +123,20 @@ summary). The chosen variant's development and test runs are also written as nor
 (`results/<run-id>/`, so the results page and the chart open them) and the chosen settings as a preset.
 Runs are resumable: a finished variant is not run again. Every research run is written to the trial log.
 
+### Daily series (V2.4d items 1?2)
+
+Every development variant retains variants/<id>/daily.csv: date, net_r_exit_booked,
+net_r_mtm, position, including empty weekdays. Sensitivity neighbours retain the same
+file in sensitivity/<id>/; each test/retest retains it in its own normal run folder.
+Trial-log series paths are relative to results/. Resume backfills missing files from
+saved trades, including historical tests, without backtests. Existing files are retained;
+trial-log links are refreshed with the same trial identity (no additional trials).
+No scorecard, ranking, golden list, daily statistic or DSR changes: statistics continue
+using exit-booked daily net R. Valuation follows risk-management.md > Trial log and
+deflated Sharpe. Older CSVs lacking entry fill reconstruct it from the saved spread;
+older partial exits lacking fill details use their saved chart prices and spread, with
+unrecoverable fill-cost residuals settled on final exit day. New CSVs retain fill details.
+
 ### Additional diagnostics (V2.4, grid merge 1)
 
 - `grid.csv` and a report block: development `grid_stats` over all variants, including
