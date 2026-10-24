@@ -36,6 +36,23 @@ the entry, `None` tick = no change, off = identical to today), failing tests, th
 default the golden lists stay identical (`python -m backtester.tools.golden --check >
 results\golden_v24d9.log 2>&1`). Never edit `src/backtester/live/`.
 
-Done = full suite green (`pytest -q > results\pytest_v24d9.log 2>&1`), golden identical, `ruff
+Done = the tests of what you changed green (`pytest -q tests/engine tests/strategy/test_contract.py
+<your new test files> > results\pytest_v24d9.log 2>&1`; Opus runs the full suite), golden identical, `ruff
 check .` clean, the measurement table in the report. Report: files changed, test count, decisions
 the spec did not settle, open questions.
+
+## Answers given up front (Opus, 2026-10-24)
+
+- Round only the levels the strategy sets (limit entry, SL, TP1-3, break-even level); never a
+  market fill, a gap fill at an open or an M1 replay price (those are prices the data showed).
+- Tick source order: `results/trading.json` (`trade_tick_size` per FTMO symbol) if present, else
+  the cache's digits (10^-digits), else None. Keep the values as a literal table in
+  `engine/costs.py` with the date and source in a comment, so the engine never reads
+  `results/` at run time.
+- A level within 1e-9 of a tick counts as on the tick (float noise is not a move).
+- The TP penetration distance (V2.4d 3) is not rounded; it is a threshold, not an order level.
+- Break-even level: it sits at the entry plus the cost offset, so that a hit ends at 0R net.
+  Round it to the side that keeps a hit at >= 0R net: a long's BE level rounds **up**, a
+  short's **down**. (This overrides "toward the entry" in item 2 for the BE level only.)
+- Rejected orders (rounding crosses the entry) go through `strategy.on_order_skipped` like the
+  cost filter's skips.
