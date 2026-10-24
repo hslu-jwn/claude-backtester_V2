@@ -41,8 +41,22 @@ double count: refuse); too short a period -> no windows with a reason; WFE n/a o
 train. Selection of the chosen variant, the test run, trial log, DSR unchanged. Never edit
 `src/backtester/live/`.
 
-Done = full suite green (`pytest -q > results\pytest_v24d6.log 2>&1`), `ruff check .` clean;
+Done = the tests of what you changed green (`pytest -q tests/analytics/test_walk_forward*.py
+tests/tools/test_research*.py > results\pytest_v24d6.log 2>&1`; Opus runs the full suite), `ruff check .` clean;
 one real run of the runner on a small trend-following grid (2-3 variants, XAUUSD, dev-only,
 `walk_forward = "anchored"`, `walk_forward_study = true`, results to `results\v24d6_check`) with the
 tables in the report. Report: files changed, test count, decisions the spec did not settle, open
 questions.
+
+## Answers given up front (Opus, 2026-10-24)
+
+- A window with no trade of a variant: that variant's train net R is 0 (it can still be picked
+  only if all are <= 0; ties go to the first variant as today).
+- Months are calendar months (UTC); a window starts on the 1st; the first window starts at the
+  first full month of the development period; a partial last test window is kept and its
+  per-month numbers use its real length.
+- The chosen variant (from the normal selection) is reported next to the walk-forward picks per
+  window, as today.
+- WFE in R per month; when the train result is <= 0 the window's WFE is n/a and it is left out
+  of the overall WFE (say so).
+- Nothing in this brief changes selection, the test run, the trial log or the DSR.

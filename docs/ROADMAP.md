@@ -170,6 +170,12 @@ strategy with all metrics; the user decides later.
 - Regime classifier: `analytics/regime.py` per `docs/regime-classifier.md` (accepted
   2026-10-23); every research card and results page shows net R, R/trade and win rate per
   regime and names the best regime.
+- **Where a strategy performs best** (the user, 2026-10-24): the breakdown is not only a
+  warning; it is the input for combining strategies. Per strategy and per condition (market
+  regime, symbol / market class, session, volatility, long vs short) the card shows the raw and
+  the **detrended** result (skill vs trend, V2.4d 7), the bounds (V2.4d 8) and the trade count,
+  so the strongest *skill* condition of each strategy is visible; V2.7 picks members and their
+  active conditions from it (a strategy may trade only in its best regime).
 
 ### V2.7 Portfolio (main goal)
 - Combine strategies that balance each other (e.g. trend following + range / mean reversion,

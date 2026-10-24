@@ -55,6 +55,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
     plain Python (job queue, sweeps), no AI tokens.
   - **Usage limits:** dispatch exit 4 = limit; the others take over; two out -> pause the loop
     and resume later. Save Claude and Codex tokens; plain Python does the bulk.
+  - **Speed rules (the user, 2026-10-24):** Codex runs only the tests of what it changed; Opus
+    runs the full suite once before each commit. Every brief carries the likely rule questions
+    with their answers, so Codex rarely stops. Keep the full suite fast (target < 5 min).
   - Record model and effort per task in `docs/research-log.md` (the dispatcher logs every call
     in `results/ai_calls.jsonl`). Tell the user when a phase would clearly benefit from Opus high.
   - Shell gotcha: never put backticks in inline PowerShell (they are escape characters); edit
