@@ -297,11 +297,51 @@ class Fakes:
         return folder
 
 
+def _small_diagnostics(monkeypatch):
+    """Runner tests check wiring and resume, not the statistics (their own tests use the real
+    sizes): small resample counts keep the suite fast (speed rule of 2026-10-24)."""
+    from backtester.analytics.bayes import BayesConfig
+    from backtester.analytics.best_of_n import RealityCheckConfig
+    from backtester.analytics.bounds import BoundsConfig
+    from backtester.analytics.pbo import PBOConfig
+    from backtester.risk.drawdown_bounds import DrawdownBoundsConfig
+    from backtester.tools import (
+        drawdown_report,
+        research_bayes,
+        research_significance,
+        skill_bounds,
+    )
+
+    significance = research_significance.SignificanceConfig
+    monkeypatch.setattr(
+        research_significance,
+        "SignificanceConfig",
+        lambda **kw: significance(
+            **{"reality_check": RealityCheckConfig(boots=50), "pbo": PBOConfig(blocks=4), **kw}
+        ),
+    )
+    monkeypatch.setattr(
+        skill_bounds, "BoundsConfig", lambda **kw: BoundsConfig(**{"boots": 100, **kw})
+    )
+    monkeypatch.setattr(
+        research_bayes, "BayesConfig", lambda **kw: BayesConfig(**{"draws": 500, **kw})
+    )
+    bounds = drawdown_report.drawdown_bounds
+    monkeypatch.setattr(
+        drawdown_report,
+        "drawdown_bounds",
+        lambda values, config=None: bounds(
+            values, config or DrawdownBoundsConfig(outer=5, inner=50)
+        ),
+    )
+
+
 @pytest.fixture
 def fakes(monkeypatch):
     from backtester.tools import research_diagnostics, research_monkeys, skill_bounds
 
     f = Fakes()
+    _small_diagnostics(monkeypatch)
     # Synthetic executions have a flat benchmark, without reading the real price cache.
     monkeypatch.setattr(
         skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
@@ -528,7 +568,9 @@ def test_output_files_and_their_fields(tmp_path, fakes):
     assert "Skill vs trend, and bounds test 1" in report
     skill = json.loads((folder / "skill_bounds.json").read_text(encoding="utf-8"))
     assert set(skill) == {"development", "test 1"}
-    assert skill["development"]["trend"]["total"]["net_r"] == pytest.approx(float(variants[0]["net_r"]))
+    assert skill["development"]["trend"]["total"]["net_r"] == pytest.approx(
+        float(variants[0]["net_r"])
+    )
     assert float(variants[0]["detrended_net_r"]) == pytest.approx(float(variants[0]["net_r"]))
     assert all(r["detrended_net_r"] == "" for r in variants[1:])
     assert float(test[0]["detrended_net_r"]) == pytest.approx(float(test[0]["net_r"]))
