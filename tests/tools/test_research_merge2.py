@@ -54,7 +54,8 @@ def test_scorecard_union_weekdays_and_se():
     assert card["se_avg_r"] == pytest.approx(2)
     assert card["avg_hold_hours"] == 45  # (72 + 18) / 2
     assert card["time_in_market"] == pytest.approx(30 / 48)
-    assert SCORE_KEYS[-3:] == ("se_avg_r", "time_in_market", "avg_hold_hours")
+    # V2.4d 7+8 appends three diagnostics after the existing holding metrics.
+    assert SCORE_KEYS[-6:-3] == ("se_avg_r", "time_in_market", "avg_hold_hours")
 
 
 def test_scorecard_clipping_empty_singleton_and_utc():
@@ -186,7 +187,7 @@ def test_disabled_and_legacy_scorecard_cells(tmp_path, fakes):
     assert not (folder / "sensitivity.csv").exists()
     for path in (folder / "variants").glob("*/scorecard.json"):
         data = json.loads(path.read_text())
-        for key in SCORE_KEYS[-3:]:
+        for key in ("se_avg_r", "time_in_market", "avg_hold_hours"):
             data["scorecard"].pop(key)
         path.write_text(json.dumps(data))
     run_research(tmp_path, text, dev_only=True)

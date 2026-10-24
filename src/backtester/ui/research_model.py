@@ -43,6 +43,7 @@ RESEARCH_DIR = "research"
 VARIANT_PREFIX = "research~"  # results page id of a variant folder (pages/results.py)
 RESULTS_PREFIX = "/results/"
 FLAG_SHORT = {
+    "skill_is_trend": "trend explains profit",
     "bayes_weak": "Bayes weak",
     "rc_not_significant": "RC p > 0.05",
     "pbo_high": "PBO >= 0.5",

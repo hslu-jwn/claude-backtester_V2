@@ -711,6 +711,14 @@ def run_research(
         research_diagnostics.write_diagnostics(
             folder, spec, variants, rows, info, results_dir, sources
         )
+        from backtester.tools import skill_bounds
+
+        saved_tests = _test_rows(folder)
+        skill_bounds.research_results(
+            folder, results_dir, info, rows, saved_tests, first, dev_end, sources, spec.symbols
+        )
+        if saved_tests:
+            _write_csv(folder / "test.csv", [*TEST_COLUMNS, *_set_columns(spec)], saved_tests)
         pairs, info["twins"] = research_stability.twin_rows(spec, variants, rows)
         info["bayes"] = research_bayes.calculate(
             folder,
@@ -1028,6 +1036,10 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
 
     for label, bounds in info.get("drawdown_bounds", {}).items():
         lines += drawdown_report.markdown(bounds, label)
+    from backtester.tools import skill_bounds
+
+    for label, result in info.get("skill_bounds", {}).items():
+        lines += skill_bounds.markdown(result, label)
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

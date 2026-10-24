@@ -207,6 +207,16 @@ Kept in the base backtest (rule set by the user).
 
 ### Monte Carlo report (ROADMAP 12.7; rules set by the user, 2026-10-15)
 
+#### Skill vs trend, and bounds (V2.4d 7 + 8)
+
+The report and `skill_bounds.json` show raw and detrended net/mean R by symbol and
+total, long/short/flat time shares and the no-skill benchmark, BCa and t-based
+90/95% lower bounds of daily MTM and trade means, and daily log PF with BCa bounds.
+Use `research-runner.md` > Skill vs trend, and bounds for formulas, defaults,
+position conventions and unavailable cases. Compute from the run's own period,
+trades and SymbolSources, with saved daily MTM preferred. Set `skill_is_trend`
+when positive raw R becomes nonpositive detrended R; leave the verdict unchanged.
+
 One HTML report per backtest run (`python -m backtester.tools.monte_carlo <run-id>` ->
 `results/<run-id>/monte_carlo/report.html`), built from the run's trade list (R). All four kinds of Monte Carlo
 (`knowledge/topics/backtest-frameworks.md`), every random draw seeded (⚙️ seed **42**). It ends every test with a

@@ -74,7 +74,7 @@ from backtester.risk.monte_carlo import MonteCarloConfig, run_monte_carlo
 from backtester.runner import RunSettings, run_backtests
 from backtester.settings import from_dict
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
-from backtester.tools import drawdown_report
+from backtester.tools import drawdown_report, skill_bounds
 
 # strategies with a kind B alternative on the same days: (setting, value) of the other choice
 ALTERNATIVES = {"gap_fade": ("mode", "follow"), "gap_momentum": ("side", "fade")}
@@ -390,6 +390,13 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         family,
         daily_folder=args.results_dir / args.run if args.run else None,
         monkeys=monkeys,
+    )
+    log("skill vs trend, and bounds")
+    summary["skill_bounds"] = skill_bounds.calculate(
+        trades, start, end, sources,
+        args.results_dir / args.run if args.run else None,
+        symbols=symbols,
+        config=skill_bounds.BoundsConfig(seed=config.seed),
     )
     summary["meta"]["paths"] = config.paths
     return summary
@@ -778,7 +785,7 @@ def render_report(summary: dict) -> str:
     body = "".join((
         verdict_html(summary), deflated_html(summary), fan_html(summary), numbers_html(summary), ftmo_html(summary),
         random_entries_html(summary), random_fills_html(summary), random_paths_html(summary),
-        robustness_html(summary), drawdown_bounds_html(summary), monkeys_html(summary),
+        robustness_html(summary), drawdown_bounds_html(summary), monkeys_html(summary), skill_bounds_html(summary),
     ))  # fmt: skip
     m = summary["meta"]
     title = f"Monte Carlo {m['strategy']} {'-'.join(m['symbols'])}"
@@ -788,6 +795,15 @@ def render_report(summary: dict) -> str:
         f"<title>{esc(title)}</title><style>{CSS}</style></head><body><main>"
         f"<h1>{esc(title)}</h1>{body}</main></body></html>"
     )
+
+
+def skill_bounds_html(summary: dict) -> str:
+    result = summary.get("skill_bounds")
+    if result is None:
+        return ""
+    body = "".join(table(headers, [[esc(v) for v in row] for row in rows])
+                   for headers, rows in skill_bounds.tables(result))
+    return section("Skill vs trend, and bounds", " ".join(skill_bounds.notes(result)), body)
 
 
 def drawdown_bounds_html(summary: dict) -> str:
@@ -876,6 +892,8 @@ def write_outputs(summary: dict, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.html").write_text(render_report(summary), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(jsonable(summary), indent=1), encoding="utf-8")
+    if summary.get("skill_bounds") is not None:
+        skill_bounds.write(summary["skill_bounds"], out)
 
 
 def main(argv: list[str] | None = None) -> int:

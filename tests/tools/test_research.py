@@ -214,6 +214,7 @@ def make_trade(symbol, year, r_net, n):
     return SimpleNamespace(
         symbol=symbol, entry_time=entry, exit_time=entry + timedelta(hours=2),
         direction="long",
+        entry=100.0, initial_stop=99.0,
         r_gross=r_net + 0.05, r_net=r_net, planned_r=None,
     )  # fmt: skip
 
@@ -261,8 +262,33 @@ class Fakes:
         out_dir = Path(out_dir)
         folder = out_dir / (run_id or new_run_id(result.symbols, out_dir))
         folder.mkdir(parents=True, exist_ok=False)
-        (folder / "trades.csv").write_text("id\n" + "\n".join(
-            str(i) for i in range(len(result.trades))), encoding="utf-8")  # fmt: skip
+        columns = (
+            "id",
+            "symbol",
+            "direction",
+            "entry_time",
+            "entry_candle",
+            "entry",
+            "initial_stop",
+            "exit_time",
+            "exit_price",
+            "exit_reason",
+            "r_gross",
+            "r_net",
+        )
+        with (folder / "trades.csv").open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, columns)
+            writer.writeheader()
+            for i, t in enumerate(result.trades):
+                writer.writerow(
+                    {k: getattr(t, k, None) for k in columns}
+                    | {
+                        "id": i,
+                        "entry_candle": t.entry_time,
+                        "exit_price": t.entry,
+                        "exit_reason": "signal",
+                    }
+                )
         (folder / "settings.json").write_text(json.dumps({"preset": preset}), encoding="utf-8")
         (folder / "summary.json").write_text(
             json.dumps({"run_id": folder.name, "start": str(result.start), "end": str(result.end)}),
@@ -273,10 +299,13 @@ class Fakes:
 
 @pytest.fixture
 def fakes(monkeypatch):
-    from backtester.tools import research_diagnostics, research_monkeys
+    from backtester.tools import research_diagnostics, research_monkeys, skill_bounds
 
     f = Fakes()
-    # These tests use deliberately skeletal CSV files, without entry prices or stops.
+    # Synthetic executions have a flat benchmark, without reading the real price cache.
+    monkeypatch.setattr(
+        skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
+    )
     monkeypatch.setattr(research_monkeys, "calculate", lambda *a, **kw: {"available": False})
     monkeypatch.setattr(research_diagnostics, "load_shocks", lambda *args: {})
     monkeypatch.setattr(research, "run_backtests", f.run)
@@ -478,6 +507,7 @@ def test_output_files_and_their_fields(tmp_path, fakes):
         "variant_id", "variant", "rank", "trades", "win_rate", "avg_r", "net_r", "profit_factor",
         "max_dd_r", "half_first_net_r", "half_second_net_r", "net_r_stressed",
         "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "detrended_net_r", "lower95_mean_daily_r", "log_pf",
         "flags", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert variants[0]["rank"] == "1" and variants[0]["set.range_minutes"] == "30"
@@ -487,12 +517,21 @@ def test_output_files_and_their_fields(tmp_path, fakes):
         "test_run", "variant_id", "variant", "start", "end", "trades", "win_rate", "avg_r",
         "net_r", "profit_factor", "max_dd_r", "half_first_net_r", "half_second_net_r",
         "net_r_stressed", "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "detrended_net_r", "lower95_mean_daily_r", "log_pf",
         "t_stat", "deflated_sharpe", "verdict",
         "verdict_label", "n_variants", "flags", "run_folder", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert test[0]["n_variants"] == "6" and test[0]["variant_id"] == info["chosen"]["id"]
     report = (folder / "report.md").read_text(encoding="utf-8")
     assert "range_minutes=30 target_r=1" in report and "6 variants" in report
+    assert "Skill vs trend, and bounds development" in report
+    assert "Skill vs trend, and bounds test 1" in report
+    skill = json.loads((folder / "skill_bounds.json").read_text(encoding="utf-8"))
+    assert set(skill) == {"development", "test 1"}
+    assert skill["development"]["trend"]["total"]["net_r"] == pytest.approx(float(variants[0]["net_r"]))
+    assert float(variants[0]["detrended_net_r"]) == pytest.approx(float(variants[0]["net_r"]))
+    assert all(r["detrended_net_r"] == "" for r in variants[1:])
+    assert float(test[0]["detrended_net_r"]) == pytest.approx(float(test[0]["net_r"]))
 
 
 def test_chosen_runs_are_normal_run_folders_and_a_preset(tmp_path, fakes):

@@ -38,7 +38,11 @@ def stub(monkeypatch):
     import numpy as np
 
     from backtester.analytics.entry_screen import M1Data
-    from backtester.tools import entry_screen
+    from backtester.tools import entry_screen, skill_bounds
+
+    monkeypatch.setattr(
+        skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
+    )
 
     def fake_m1(*args):
         stamps = [
@@ -292,7 +296,8 @@ def make_run(tmp_path, strategy="gap_fade"):
                 entry=100.0, initial_stop=99.0, take_profit=101.0, tp1_share=1.0,
                 planned_rr=1.0, exit_time=t.exit_time.isoformat(), exit_price=101.0,
                 exit_reason="take_profit", r_gross=t.r_gross, r_net=t.r_net, confluence="",
-                parts='[{"share": 1.0, "reason": "take_profit"}]',
+                parts=json.dumps([{"share": 1.0, "reason": "take_profit",
+                                   "time": t.exit_time.isoformat(), "price": 101.0}]),
             )  # fmt: skip
             rows.append(row)
     with open(folder / "trades.csv", "w", newline="", encoding="utf-8") as f:
@@ -331,6 +336,9 @@ def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
     assert [getattr(c, "mode", None) for c in stub["run"]] == ["follow"]
     assert summary["random_entries"]["available"] is True
     assert (out / "report.html").is_file()
+    assert "Skill vs trend, and bounds" in (out / "report.html").read_text(encoding="utf-8")
+    assert json.loads((out / "skill_bounds.json").read_text(encoding="utf-8")) == summary["skill_bounds"]
+    assert summary["skill_bounds"]["daily_mean"]["n"] > 60  # include empty weekdays
 
 
 def test_run_bounds_use_saved_mtm_and_cli_configuration(tmp_path, stub):

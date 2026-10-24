@@ -1,5 +1,44 @@
 # Research runner and Research page (ROADMAP 6.1 + 6.2)
 
+## Skill vs trend, and bounds (V2.4d 7 + 8)
+
+After selection, report the chosen development variant and each already executed test
+in `skill_bounds.json` and the report. Never open an unspent test period for diagnostics.
+Append `detrended_net_r`, `lower95_mean_daily_r`, `log_pf` to SCORE_KEYS; unavailable
+values are null and historic scorecards without these fields remain readable.
+Flag `skill_is_trend` when raw net R > 0 and detrended net R <= 0. Diagnostics change
+neither ranking, execution, trial logging, DSR nor the seven-check verdict.
+
+Per symbol, use the first and last cached M1 closes inside the inclusive UTC period:
+drift = price change / elapsed seconds between those closes (weekends included).
+Read SymbolSources once per symbol/consecutive cached-day block. Fewer than two
+distinct close times makes that symbol unavailable, never silently zero drift.
+Pure detrending accepts supplied drifts. Subtract direction * drift * holding seconds /
+initial stop distance from saved net R, weighting partial exits by share and their own
+exit time and the remaining share by final exit time; apply saved risk_weight.
+Report raw/detrended net and mean R by symbol and total; unavailable symbols make
+total detrended R unavailable. Costs remain in net R.
+
+Compute position bias from trade intervals (signed daily averages lose intraday reversals).
+Integrate signed remaining share per symbol over Prague weekdays in the period,
+clipping simultaneous net exposure to [-1, 1]. Positive/negative magnitude gives
+long/short time, remainder flat. Average shares equally across symbols. Show each
+symbol's no-skill expected price change per day = (p(long)-p(short)) * drift * 86400
+next to raw R; price units must not be pooled across symbols.
+
+For daily marked-to-market net R (including zero weekdays) and trade net R show mean,
+one-sided 90/95% BCa lower bounds and Student-t lower bounds. Frozen config defaults:
+seed 42, 5000 iid samples of original length. Use jackknife acceleration, midpoint
+ties for bias correction and linearly interpolated empirical quantiles. These are iid
+descriptive bounds, not dependence or selection corrections. Constant samples have
+bounds equal to their value; fewer than two observations have no bounds.
+Log PF = log(sum positive daily MTM R / abs(sum negative daily MTM R)). Without both
+wins and losses it and its bounds are null. Undefined bootstrap or jackknife log PF
+replicates make its bounds unavailable with a reason; never discard replicates or
+bootstrap raw PF. Reject nonfinite inputs. Prefer complete saved daily MTM; otherwise
+compute MTM from trades and cached marks, never substitute exit-booked daily R.
+JSON records sample count, method, seed, replicate count and unavailable reasons.
+
 Matched monkeys (V2.4c T-14): after selection, the chosen development trade list is compared
 with three matched null models (200 seeded runs each). `monkeys = false` at grid top level
 skips this diagnostic. `monkeys.json` and the report show net-R and max-DD percentiles;

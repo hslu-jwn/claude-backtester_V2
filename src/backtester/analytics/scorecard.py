@@ -34,6 +34,7 @@ SCORE_KEYS = (
     "trades", "win_rate", "avg_r", "net_r", "profit_factor", "max_dd_r",
     "half_first_net_r", "half_second_net_r", "net_r_stressed", "net_r_without_best",
     "se_avg_r", "time_in_market", "avg_hold_hours",
+    "detrended_net_r", "lower95_mean_daily_r", "log_pf",
 )  # fmt: skip
 
 FLAG_TOO_FEW = "too_few_trades"
@@ -43,6 +44,7 @@ FLAG_STRESSED = "not_profitable_costs_x"
 FLAG_WITHOUT_BEST = "not_profitable_without_best"
 FLAG_TEST_FAILED = "test_failed"
 FLAG_LABELS = {
+    "skill_is_trend": "positive result explained by market trend",
     FLAG_TOO_FEW: "too few trades",
     FLAG_HIGH_WIN_SMALL_EDGE: "high win rate, small edge",
     FLAG_HALF: "one half not profitable",
@@ -143,6 +145,9 @@ def scorecard(
         "se_avg_r": stdev(t.r_net for t in trades) / sqrt(len(trades)) if len(trades) > 1 else None,
         "time_in_market": occupancy,
         "avg_hold_hours": hold,
+        "detrended_net_r": None,
+        "lower95_mean_daily_r": None,
+        "log_pf": None,
     }
 
 
@@ -150,6 +155,9 @@ def flags(row: dict, config: ScorecardConfig | None = None) -> list[str]:
     """The warning flags of a scorecard row, in the spec's order."""
     cfg = config or ScorecardConfig()
     out = []
+    detrended = row.get("detrended_net_r")
+    if row.get("net_r", 0) > 0 and detrended is not None and detrended <= 0:
+        out.append("skill_is_trend")
     if row["trades"] < cfg.min_trades:
         out.append(FLAG_TOO_FEW)
     win, avg = row.get("win_rate"), row.get("avg_r")
