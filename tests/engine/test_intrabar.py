@@ -405,14 +405,14 @@ def test_setting_roundtrips_and_panel(tmp_path):
     from backtester.tools.research_grid import expand, load_grid, variant_settings
     from backtester.ui.settings_panel import group_of, label_of
 
-    assert EngineConfig().intrabar == "sl_first"
+    assert EngineConfig().intrabar == "m1"  # default set by the user 2026-10-24
     with pytest.raises(ValueError, match="intrabar"):
         EngineConfig(intrabar="unknown")
     found = {leaf.path: leaf for leaf in leaves()}
-    assert found["engine.intrabar"].default == "sl_first"
+    assert found["engine.intrabar"].default == "m1"
     values = form_values()
-    values["engine.intrabar"] = "m1"
-    assert settings_from_values(values).engine.intrabar == "m1"
+    values["engine.intrabar"] = "sl_first"
+    assert settings_from_values(values).engine.intrabar == "sl_first"
     assert group_of("engine.intrabar") == "Backtest"
     assert "intrabar" in label_of("engine.intrabar").lower()
     path = tmp_path / "grid.toml"

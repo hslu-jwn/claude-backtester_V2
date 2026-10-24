@@ -75,7 +75,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
 - ☐ **V2.4c Honesty tooling before V2.6** (audit 2026-10-23, `docs/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
-  effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1;
+  effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
+  user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
   then measure the spread table's effect on the golden lists (default stays off unless the
   user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in

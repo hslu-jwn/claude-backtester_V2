@@ -53,7 +53,8 @@ class EngineConfig:
     # › Stop loss)
     break_even_at_next_session: bool = True
     sessions: SessionConfig = DEFAULT_SESSIONS
-    intrabar: str = "sl_first"  # Ambiguous candles: sl_first (legacy) or m1 replay
+    # ambiguous candles: m1 replay (default set by the user 2026-10-24) or sl_first (legacy)
+    intrabar: str = "m1"
 
     def __post_init__(self) -> None:
         if self.intrabar not in ("sl_first", "m1"):

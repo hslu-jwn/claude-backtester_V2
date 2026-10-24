@@ -17,8 +17,8 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Intrabar execution (V2.4c T-03)
 
-The setting `engine.intrabar` is `"sl_first"` by default (unchanged golden execution),
-or `"m1"` to resolve ambiguous closed base candles from M1. See
+The setting `engine.intrabar` is `"m1"` by default (rule set by the user 2026-10-24; `"sl_first"` = the earlier execution),
+which resolves ambiguous closed base candles from M1. See
 ARCHITECTURE.md > How a backtest steps through time > Intrabar resolution for the
 execution and diagnostic contract. Penetration and short ask triggering apply on M1
 too; levels, partial shares and fill costs remain the same. SL still wins within an

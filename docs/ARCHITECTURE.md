@@ -61,7 +61,9 @@ The break-even at the next session start (step 2) is strategy 1's rule: a strate
 
 ### Intrabar resolution (V2.4c T-03, user 2026-10-23)
 
-`EngineConfig.intrabar = "sl_first"` preserves the existing execution exactly (default).
+`EngineConfig.intrabar = "m1"` is the default (rule set by the user 2026-10-24 after the measurement in
+`results/intrabar.md`); `"sl_first"` preserves the earlier execution exactly. Without an
+`intrabar_source` (direct engine calls) an ambiguous candle falls back to SL first and is counted.
 The optional `"m1"` setting resolves only ambiguous base candles after they have closed:
 the current stop and an outstanding TP both reached, or TP1 reached with break-even
 after TP1 enabled and its eligible BE level reached, or a limit-fill candle reaching
