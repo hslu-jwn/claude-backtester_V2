@@ -760,7 +760,9 @@ def run_research(
                 ],
                 pairs,
             )
-        mode = spec.walk_forward or ("anchored" if walk_forward else None)
+        mode = spec.walk_forward or (
+            "anchored" if walk_forward or spec.walk_forward_study else None
+        )
         if mode:
             wf_rows, info["walk_forward"] = research_walk_forward.from_saved(
                 folder,
@@ -770,11 +772,29 @@ def run_research(
                 dev_end,
                 mode,
                 spec.train_years,
+                train_months=spec.train_months,
+                test_months=spec.test_months,
+                step_months=spec.step_months,
+                study=spec.walk_forward_study,
             )
-            _write_csv(folder / "walk_forward.csv", research_walk_forward.COLUMNS, wf_rows)
+            columns = (
+                research_walk_forward.LEGACY_COLUMNS
+                if spec.train_years is not None
+                else research_walk_forward.COLUMNS
+            )
+            _write_csv(folder / "walk_forward.csv", columns, wf_rows)
+            if spec.walk_forward_study:
+                _write_csv(
+                    folder / "walk_forward_study.csv",
+                    research_walk_forward.STUDY_COLUMNS,
+                    info["walk_forward"]["study"],
+                )
+            else:
+                (folder / "walk_forward_study.csv").unlink(missing_ok=True)
         else:
             info.pop("walk_forward", None)
             (folder / "walk_forward.csv").unlink(missing_ok=True)
+            (folder / "walk_forward_study.csv").unlink(missing_ok=True)
         _dump(folder / "research.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
@@ -1062,7 +1082,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--walk-forward",
         action="store_true",
-        help="yearly walk-forward diagnostics from saved development trades",
+        help="calendar-month walk-forward diagnostics from saved development trades",
     )
     p.add_argument("--results-dir", type=Path, default=RESULTS_DIR, help=argparse.SUPPRESS)
     return p.parse_args(argv)

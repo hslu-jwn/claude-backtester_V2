@@ -52,6 +52,10 @@ TOP_LEVEL = (
     "sensitivity",
     "walk_forward",
     "train_years",
+    "train_months",
+    "test_months",
+    "step_months",
+    "walk_forward_study",
     "monkeys",
 )
 ID_HASH_LENGTH = 8
@@ -99,7 +103,11 @@ class GridSpec:
     duplicates: list[dict] = field(default_factory=list, compare=False)
     sensitivity: bool = True
     walk_forward: str | None = None
-    train_years: int = 3
+    train_years: int | None = None
+    train_months: int = 24
+    test_months: int = 6
+    step_months: int = 6
+    walk_forward_study: bool = False
     monkeys: bool = True
 
 
@@ -275,7 +283,18 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("monkeys must be true or false")
     if "walk_forward" in data and data["walk_forward"] not in ("anchored", "rolling"):
         raise GridError("walk_forward must be anchored or rolling")
-    train_years = _number(data, "train_years", 3, 1)
+    train_years = _number(data, "train_years", 3, 1) if "train_years" in data else None
+    if train_years is not None and any(
+        k in data for k in ("train_months", "test_months", "step_months")
+    ):
+        raise GridError("do not combine train_years with month options")
+    train_months = _number(data, "train_months", 24, 1)
+    test_months = _number(data, "test_months", 6, 1)
+    step_months = _number(data, "step_months", test_months, 1)
+    if step_months < test_months:
+        raise GridError("step_months must be >= test_months (overlap double counts trades)")
+    if not isinstance(data.get("walk_forward_study", False), bool):
+        raise GridError("walk_forward_study must be true or false")
     families = []
     if "grids" in data:
         raw = data["grids"]
@@ -322,6 +341,10 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         sensitivity=data.get("sensitivity", True),
         walk_forward=data.get("walk_forward"),
         train_years=train_years,
+        train_months=train_months,
+        test_months=test_months,
+        step_months=step_months,
+        walk_forward_study=data.get("walk_forward_study", False),
         monkeys=data.get("monkeys", True),
     )
     return spec

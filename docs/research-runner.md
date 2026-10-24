@@ -319,7 +319,51 @@ Never spend a test, add trials, change selection, DSR or existing statistics.
   there the chart).
 - Command-line runner first, then the page (user, 2026-10-21).
 
-## Walk-forward (V2.4, grid merge 3)
+## Walk-forward (V2.4d item 6)
+
+The runner defaults to calendar-month windows in UTC: `train_months = 24`,
+`test_months = 6`, `step_months = test_months`. All lengths are positive integers;
+step shorter than test is refused (overlapping OOS would double count). Longer
+steps leave gaps. `walk_forward = "anchored" | "rolling"` and `--walk-forward`
+enable this saved-development-trade diagnostic; it never loads hold-out trades.
+Anchored training grows from the first full development month; rolling training
+uses exactly train_months. The first test starts after train_months. All starts
+are the first of a UTC month; skip an initial partial month. Keep the last partial
+test window, clipped to the inclusive development end. A fractional calendar month
+is elapsed UTC time divided by that month's length (including leap days).
+
+A trade belongs to the window in which it entered. For picking, include only
+training entries with exit strictly before the training end. A test entry keeps
+its entire saved outcome even if it exits after its test window; do not force-close
+it or move it to another window. Saved development runs supply these outcomes;
+no hold-out data is loaded. This diagnostic stitches independently saved variant
+trades; it does not rerun or reset indicators, or simulate position handovers.
+Pick maximum training net R, including zero for a variant without trades; ties
+keep original variant order, including when all variants are nonpositive.
+
+`walk_forward.csv` includes window number, train/test periods (end exclusive),
+picked and normally chosen variant, train/test net R, net R per month, window
+WFE (test rate / train rate), trades and test max DD R (existing scorecard).
+Window WFE is n/a when train net R <= 0. Overall WFE is mean test R/month /
+mean train R/month over only windows with positive training net R; exclude the
+other windows from both means. All test windows still enter the chained scorecard
+and positive-window share (strict test net R > 0). Report pick changes across
+adjacent windows as a count and a share of transitions (n/a with fewer than two).
+Chained net R/month divides total OOS net R by total actual test months, excluding
+gaps. No windows yields an empty table and an explanatory reason.
+
+`walk_forward_study = true` enables anchored diagnostics when no mode is supplied
+and repeats the same saved-trade analysis for train lengths (12, 24, 36) crossed
+with test lengths (3, 6, 12), step = test length, retaining the selected mode.
+`walk_forward_study.csv` and the report show overall WFE, chained net R/month,
+positive-window share, window count and any no-window reason. These lengths are
+diagnostics, not a new selection search. Selection, hold-out execution, trial log,
+DSR and research identity remain unchanged.
+
+Compatibility: explicit 12/12 monthly windows reproduce the former yearly picks
+and numbers on full calendar years. The legacy year API and grids explicitly
+using `train_years` retain the following original semantics; do not combine
+train_years with month options. New grids should use months.
 
 Optional top-level `walk_forward = "anchored" | "rolling"`, with `train_years`
 (a positive integer, default 3, rolling window length). `--walk-forward` enables
