@@ -719,6 +719,11 @@ def run_research(
         skill_bounds.research_results(
             folder, results_dir, info, rows, saved_tests, first, dev_end, sources, spec.symbols
         )
+        from backtester.tools import strategy_profile
+
+        strategy_profile.research_results(
+            folder, results_dir, info, saved_tests, first, dev_end, sources
+        )
         if saved_tests:
             _write_csv(folder / "test.csv", [*TEST_COLUMNS, *_set_columns(spec)], saved_tests)
         pairs, info["twins"] = research_stability.twin_rows(spec, variants, rows)
@@ -1062,6 +1067,10 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
 
     for label, result in info.get("skill_bounds", {}).items():
         lines += skill_bounds.markdown(result, label)
+    from backtester.analytics.profile import markdown as profile_markdown
+
+    for label, result in info.get("profiles", {}).items():
+        lines += profile_markdown(result, label)
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

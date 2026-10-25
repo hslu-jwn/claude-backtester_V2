@@ -339,6 +339,8 @@ def _small_diagnostics(monkeypatch):
 
 @pytest.fixture
 def fakes(monkeypatch):
+    from backtester.analytics import profile
+    from backtester.analytics.regime import RegimeLabel
     from backtester.tools import research_diagnostics, research_monkeys, skill_bounds
 
     f = Fakes()
@@ -347,6 +349,8 @@ def fakes(monkeypatch):
     monkeypatch.setattr(
         skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
     )
+    monkeypatch.setattr(profile, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0))
+    monkeypatch.setattr(profile, "label_trades", lambda trades, *a: [RegimeLabel()] * len(trades))
     monkeypatch.setattr(research_monkeys, "calculate", lambda *a, **kw: {"available": False})
     monkeypatch.setattr(research_diagnostics, "load_shocks", lambda *args: {})
     monkeypatch.setattr(research, "run_backtests", f.run)
@@ -360,6 +364,25 @@ def fakes(monkeypatch):
 def run_research(tmp_path, text=GRID, **kw):
     kw.setdefault("log", lambda *a, **k: None)
     return research.run_research(write_grid(tmp_path, text), results_dir=tmp_path / "results", **kw)
+
+
+def test_condition_profiles_chosen_only_and_saved_test(tmp_path, fakes):
+    out = run_research(tmp_path, dev_only=True)
+    folder = research_folder(tmp_path)
+    profiles = json.loads((folder / "profile.json").read_text())
+    assert set(profiles) == {"development"}
+    assert len(list((folder / "variants").glob("*/profile.json"))) == 1
+    assert (tmp_path / "results" / out["chosen"]["dev_run"] / "profile.json").is_file()
+    out = run_research(tmp_path)
+    profiles = json.loads((folder / "profile.json").read_text())
+    assert set(profiles) == {"development", "test 1"}
+    assert (tmp_path / "results" / out["test"]["run_folder"] / "profile.json").is_file()
+    report = (folder / "report.md").read_text()
+    assert "Strategy condition profile development" in report
+    assert "Strategy condition profile test 1" in report
+    count = len(fakes.calls)
+    assert run_research(tmp_path)["status"] == "refused"
+    assert len(fakes.calls) == count
 
 
 def test_monkeys_chosen_development_only_and_flag(tmp_path, fakes, monkeypatch):
