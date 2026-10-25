@@ -107,7 +107,6 @@ def runs_list(results_dir: Path = RESULTS_DIR, toast: str | None = None) -> html
             html.Div([html.Span(h) for h in head], className="bj-row bj-row-head"),
             html.Div(body, className="bj-rows"),
         ]
-    card.append(dcc.Link("← Chart", href="/", className="bj-back"))
     page = [html.Div(card, className="bj-card")]
     if toast:
         page.insert(0, html.Div(toast, className="bj-toast", id="bj-toast"))
@@ -193,7 +192,6 @@ def layout(snap: dict) -> html.Div:
                         n_clicks=0,
                         disabled=out["cancel_disabled"],
                     ),
-                    dcc.Link("← Chart", href="/", className="bj-back"),
                 ],
                 className="bj-actions",
             ),

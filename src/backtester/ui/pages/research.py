@@ -24,8 +24,8 @@ ALL = "__all__"
 TITLE = "Research"
 HINT = "Click a row to open its results. Verdict, test net R and deflated Sharpe: chosen variants."
 EMPTY_TEXT = "No runs yet."
-GREEN, YELLOW, RED = "#2ebd85", "#f0b90b", "#f6465d"
-FLAG_COLOUR = "#f0b90b"
+GREEN, YELLOW, RED = "var(--green)", "var(--amber)", "var(--red)"
+FLAG_COLOUR = "var(--amber)"
 VERDICT_COLOURS = {"green": GREEN, "yellow": YELLOW, "red": RED}
 
 
@@ -119,7 +119,7 @@ def view(rows, strategy, symbol, flagged, min_trades) -> tuple[list[dict], list[
 
 
 def _style_data_conditional() -> list[dict]:
-    out = [{"if": {"state": "active"}, "backgroundColor": "#172238", "border": "none"}]
+    out = [{"if": {"state": "active"}, "backgroundColor": "var(--raised)", "border": "none"}]
     for col in NUMBER_COLUMNS:
         out.append({"if": {"column_id": col, "filter_query": f"{{{col}}} > 0"}, "color": GREEN})
         out.append({"if": {"column_id": col, "filter_query": f"{{{col}}} < 0"}, "color": RED})
@@ -200,20 +200,20 @@ def layout(results_dir: Path = RESULTS_DIR) -> html.Div:
             "minWidth": "100%",
         },
         style_header={
-            "backgroundColor": "#111a2b",
-            "color": "#7d8aa5",
+            "backgroundColor": "var(--panel)",
+            "color": "var(--muted)",
             "fontWeight": "600",
-            "borderBottom": "1px solid #1d2a40",
+            "borderBottom": "1px solid var(--line)",
             "whiteSpace": "normal",
         },
         style_cell={
-            "backgroundColor": "#0b1220",
-            "color": "#e6ebf5",
+            "backgroundColor": "var(--bg)",
+            "color": "var(--text)",
             "fontFamily": "-apple-system, Trebuchet MS, Roboto, sans-serif",
             "fontSize": "13px",
             "padding": "6px 10px",
             "border": "none",
-            "borderBottom": "1px solid #1d2a40",
+            "borderBottom": "1px solid var(--line)",
             "textAlign": "right",
             "cursor": "pointer",
             "minWidth": "70px",

@@ -1,15 +1,15 @@
 /* Research page (ROADMAP 6.2): dark table, same tokens as /live and /backtest */
 :root:has(.rr-page) body,
 body:has(.rr-page) {
-  background: #0b1220;
+  background: var(--bg);
 }
 .rr-page {
   min-height: calc(100vh - var(--nav-h));
   box-sizing: border-box;
   padding: 14px 24px 24px;
-  background: #0b1220;
-  color: #e6ebf5;
-  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--font-13);
 }
 .rr-head {
   display: flex;
@@ -24,7 +24,7 @@ body:has(.rr-page) {
 }
 .rr-hint,
 .rr-count {
-  color: #7d8aa5;
+  color: var(--muted);
 }
 .rr-controls {
   display: flex;
@@ -35,31 +35,31 @@ body:has(.rr-page) {
 }
 .rr-select {
   min-width: 190px;
-  color: #111a2b;
+  color: var(--text);
 }
 .rr-radio label {
   margin-right: 12px;
-  color: #c4cde0;
+  color: var(--text);
 }
 .rr-label {
-  color: #c4cde0;
+  color: var(--text);
 }
 .rr-input {
   width: 70px;
   padding: 4px 6px;
-  background: #111a2b;
-  border: 1px solid #1d2a40;
-  border-radius: 6px;
-  color: #e6ebf5;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
 }
 .rr-button {
   padding: 5px 14px;
-  background: #172238;
-  border: 1px solid #1d2a40;
-  border-radius: 6px;
-  color: #e6ebf5;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
   cursor: pointer;
 }
 .rr-button:hover {
-  background: #1d2a40;
+  background: var(--line);
 }

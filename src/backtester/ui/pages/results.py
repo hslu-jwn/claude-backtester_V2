@@ -1,7 +1,7 @@
 """Results page of one backtest run: `/results/<run id>`. Spec: ROADMAP.md › 3.6.
 
-TradingView Strategy Tester look (light theme, same style as the chart's toolbar):
-- Top bar: "← Chart", the run selector (every run folder in results/, newest first) and
+TradingView Strategy Tester look (shared dark theme):
+- Top bar: the run selector (every run folder in results/, newest first) and
   the symbol filter (All / one symbol), which applies to every tab.
 - Header: run name, symbols, date range, settings preset, run date.
 - Tabs: **Overview** (stat cards, equity curve in R over time, gross and net, with the net
@@ -47,6 +47,7 @@ from backtester.strategy.registry import REGISTRY
 from backtester.ui import prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
 from backtester.ui.run_paths import run_folder
+from backtester.ui.theme import color as theme_color
 
 # a research variant's run folder: results/research/<id>/variants/<variant id> (Research page)
 VARIANT_PREFIX = "research~"
@@ -84,7 +85,7 @@ def list_runs(results_dir: Path = RESULTS_DIR) -> list[dict]:
     options = []
     for p in runs:
         s = _read_json(p / "summary.json")
-        if not s:
+        if not s or "symbols" not in s:  # a Monte Carlo / study report folder is not a run
             continue
         symbols = ", ".join(s.get("symbols", []))
         options.append(
@@ -393,11 +394,15 @@ def histogram_figure(trades: list[TradeRecord]) -> go.Figure:
     fig.update_layout(
         height=260,
         margin={"l": 40, "r": 10, "t": 10, "b": 36},
-        paper_bgcolor="#ffffff",
-        plot_bgcolor="#ffffff",
-        font={"family": "-apple-system, Trebuchet MS, Roboto, sans-serif", "size": 12},
-        xaxis={"title": "net R per trade", "gridcolor": "#f0f3fa", "zeroline": False},
-        yaxis={"title": "trades", "gridcolor": "#f0f3fa", "rangemode": "tozero"},
+        paper_bgcolor=theme_color("panel"),
+        plot_bgcolor=theme_color("panel"),
+        font={
+            "family": "-apple-system, Trebuchet MS, Roboto, sans-serif",
+            "size": 12,
+            "color": theme_color("text"),
+        },
+        xaxis={"title": "net R per trade", "gridcolor": theme_color("line"), "zeroline": False},
+        yaxis={"title": "trades", "gridcolor": theme_color("line"), "rangemode": "tozero"},
         bargap=0,
     )
     return fig
@@ -541,7 +546,7 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
     r_styles = [
         {"if": {"filter_query": f"{{{c}}} {op} 0", "column_id": c}, "color": color}
         for c in ("r_gross", "r_net")
-        for op, color in ((">", UP), ("<", DOWN))
+        for op, color in ((">", "var(--green)"), ("<", "var(--red)"))
     ]
     return html.Div(
         [
@@ -561,17 +566,19 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
                 style_as_list_view=True,
                 style_table={"height": "calc(100vh - 250px)", "overflowY": "auto"},
                 style_header={
-                    "backgroundColor": "#ffffff",
-                    "color": MUTED,
+                    "backgroundColor": "var(--panel)",
+                    "color": "var(--muted)",
                     "fontWeight": "600",
-                    "borderBottom": "1px solid #e0e3eb",
+                    "borderBottom": "1px solid var(--line)",
                 },
                 style_cell={
+                    "backgroundColor": "var(--bg)",
+                    "color": "var(--text)",
                     "fontFamily": "-apple-system, Trebuchet MS, Roboto, sans-serif",
                     "fontSize": "13px",
                     "padding": "6px 10px",
                     "border": "none",
-                    "borderBottom": "1px solid #f0f3fa",
+                    "borderBottom": "1px solid var(--line)",
                     "textAlign": "right",
                     "cursor": "pointer",
                 },
@@ -581,14 +588,18 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
                 ],
                 style_data_conditional=[
                     *r_styles,
-                    {"if": {"state": "active"}, "backgroundColor": "#e3effd", "border": "none"},
+                    {
+                        "if": {"state": "active"},
+                        "backgroundColor": "var(--accent-soft)",
+                        "border": "none",
+                    },
                     {
                         "if": {"filter_query": '{direction} = "Long"', "column_id": "direction"},
-                        "color": UP,
+                        "color": "var(--green)",
                     },
                     {
                         "if": {"filter_query": '{direction} = "Short"', "column_id": "direction"},
-                        "color": DOWN,
+                        "color": "var(--red)",
                     },
                 ],
             ),
@@ -617,7 +628,6 @@ def tab_content(tab: str, trades: list[TradeRecord]):
 
 
 def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
-    back = dcc.Link("← Chart", href="/", className="rs-back")
     folder = run_folder(run_id, results_dir)
     runs = list_runs(results_dir)
     selector = dcc.Dropdown(
@@ -632,7 +642,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
     if folder is None:
         return html.Div(
             [
-                html.Div([back, html.Div(className="tb-sep"), selector], className="tb-bar tb-top"),
+                html.Div([selector], className="tb-bar tb-top"),
                 html.Div([html.H2("Run not found"), html.P(run_id)], className="rs-body"),
                 dcc.Store(id="rs-run-id", data=None),
             ],
@@ -651,7 +661,6 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
     notes = summary.get("notes") or []
     top = html.Div(
         [
-            back,
             html.Div(className="tb-sep"),
             selector,
             html.Div(className="tb-sep"),

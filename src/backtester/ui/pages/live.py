@@ -32,6 +32,7 @@ from backtester.live.status import STATUS_NAME, heartbeat_age_s, read_status
 from backtester.paths import RESULTS_DIR
 from backtester.ui import live_model as lm
 from backtester.ui import trade_focus, trading_panel
+from backtester.ui.theme import color as theme_color
 
 LIVE_DIR = RESULTS_DIR / "live"
 LOG_LINES = 50
@@ -505,15 +506,21 @@ def trades_figure(strip: dict, trades: list[dict] | None = None) -> go.Figure:
             line={"color": "#4f8cff", "width": 2}, hovertemplate="$%{y:,.0f}<extra></extra>",
         )  # fmt: skip
     else:
-        fig.add_annotation(text="No trades yet", showarrow=False, font={"color": "#7d8aa5"})
-    axis = {"gridcolor": "#1d2a40", "zerolinecolor": "#33415c", "color": "#7d8aa5"}
+        fig.add_annotation(
+            text="No trades yet", showarrow=False, font={"color": theme_color("muted")}
+        )
+    axis = {
+        "gridcolor": theme_color("line"),
+        "zerolinecolor": theme_color("line"),
+        "color": theme_color("muted"),
+    }
     fig.update_layout(
         height=260, margin={"l": 40, "r": 56, "t": 8, "b": 28}, showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        font={"family": "ui-monospace, Consolas, monospace", "size": 11, "color": "#7d8aa5"},
+        paper_bgcolor=theme_color("panel"), plot_bgcolor=theme_color("panel"),
+        font={"family": "ui-monospace, Consolas, monospace", "size": 11, "color": theme_color("muted")},
         xaxis={**axis, "title": "trade", "dtick": 1 if n <= 20 else None},
         yaxis={**axis, "ticksuffix": " %"},
-        yaxis2={"overlaying": "y", "side": "right", "color": "#4f8cff", "showgrid": False,
+        yaxis2={"overlaying": "y", "side": "right", "color": theme_color("muted"), "showgrid": False,
                 "tickprefix": "$", "tickformat": ",.0f"},
     )  # fmt: skip
     if not n:  # no data: hide the axes plotly would draw with a made-up range
@@ -698,7 +705,7 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                     ),
                 ],
             ),
-            trading_panel.layout(),
+            html.Div(trading_panel.layout(), id="connection"),
         ],
         className="lv-page",
     )

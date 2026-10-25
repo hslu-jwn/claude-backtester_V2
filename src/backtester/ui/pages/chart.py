@@ -132,7 +132,6 @@ from backtester.ui import (
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trade_focus,
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
-    update_button,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
@@ -1180,7 +1179,6 @@ def layout(
             _icon_button("tb-zoom", "zoom", "Zoom: drag a rectangle on the chart"),
             _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
             html.Div(className="tb-sep"),
-            *update_button.layout(),
             html.Div(className="tb-spacer"),
             html.Div(
                 [
@@ -1355,7 +1353,6 @@ def register_callbacks(
     results_dir: Path = RESULTS_DIR,
 ) -> None:
     settings_panel.register_callbacks(app)
-    update_button.register_callbacks(app)
 
     @app.callback(
         Output("chart-dates", "data"),

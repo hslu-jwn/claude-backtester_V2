@@ -1,4 +1,4 @@
-"""The chart toolbar's "Update data" button (ROADMAP 7.5).
+"""The shared top bar's "Update data" button (ROADMAP 7.5).
 
 A click starts `tools/update_data` in its one background thread (a click while it runs does
 nothing); an interval polls its state and shows the current line, then "Updated n · k errors"
@@ -27,7 +27,7 @@ def layout() -> list:
                     className="tb-btn tb-update",
                     n_clicks=0,
                 ),
-                # Floats under the button (CSS), so it never pushes or covers toolbar items.
+                # Shown under the button only while the update runs.
                 html.Span(id=STATUS_ID, className="tb-update-status"),
             ],
             className="tb-update-wrap",
@@ -63,10 +63,19 @@ def register_callbacks(app: Dash) -> None:
         Output(STATUS_ID, "children"),
         Output(STATUS_ID, "title"),
         Output(BUTTON_ID, "disabled"),
+        Output(BUTTON_ID, "title"),
+        Output(STATUS_ID, "style"),
         Output(TICK_ID, "disabled"),
         Input(BUTTON_ID, "n_clicks"),
         Input(TICK_ID, "n_intervals"),
     )
     def _update(_clicks, _ticks):
         v = refresh(ctx.triggered_id)
-        return v["text"], v["title"], v["button_disabled"], v["interval_disabled"]
+        return (
+            v["text"],
+            v["title"],
+            v["button_disabled"],
+            v["title"] or "Update data caches",
+            {"display": "inline" if v["button_disabled"] else "none"},
+            v["interval_disabled"],
+        )

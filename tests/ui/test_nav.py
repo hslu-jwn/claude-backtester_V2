@@ -32,9 +32,9 @@ def test_backtest_link_goes_to_the_backtest_page():
     assert '"href": "/backtest"' in json.dumps(nav.layout(), default=lambda o: o.to_plotly_json())
 
 
-def test_risk_has_no_link_yet():
+def test_risk_tab_is_removed():
     text = json.dumps(nav.layout(), default=lambda o: o.to_plotly_json())
-    assert "nav-off" in text and '"href": "/live"' in text and '"href": "/"' in text
+    assert "nav-off" not in text and '"href": "/live"' in text and '"href": "/"' in text
 
 
 def test_the_app_builds_with_the_nav_callbacks():

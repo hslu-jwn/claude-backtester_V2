@@ -1,7 +1,7 @@
 """Chart settings and helpers shared by the chart page and the overlays (no Plotly, no
 Dash). Spec: ROADMAP.md › 1.1, 1.3, 4.0a.
 
-`ChartConfig` holds the chart's tunable values and colors (the pane is light blue on the dark page, ROADMAP 7.4). `session_line_positions` places the session start lines (1.3): through the
+`ChartConfig` holds the chart's tunable values and colors (the pane uses the shared dark theme, ROADMAP V2.5a). `session_line_positions` places the session start lines (1.3): through the
 middle of the candle the session starts on.
 """
 
@@ -16,6 +16,7 @@ from backtester.data.resample import DEFAULT_BOUNDARY, DayBoundary, H4Alignment
 from backtester.data.sources import BINANCE_SYMBOLS, PRICE_DIGITS
 from backtester.detectors.trend import TrendConfig
 from backtester.sessions import DEFAULT_SESSIONS, Session, SessionConfig, session_starts
+from backtester.ui.theme import color as theme_color
 
 
 @dataclass(frozen=True)
@@ -51,16 +52,16 @@ class ChartConfig:
     replay_min_visible: int = 5  # at least this many candles left of the cursor (e.g. on H4)
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
-    # Colors (the chart pane is light blue on the dark page, ROADMAP 7.4; same candle colors).
+    # Dark surface tokens (V2.5a); candle and overlay colours are unchanged.
     up_body: str = "#6f9ceb"
     down_body: str = "#000000"
     edge_color: str = "#000000"
     wick_color: str = "#000000"
-    background: str = "#dfe9f8"
-    text_color: str = "#131722"
-    axis_color: str = "#131722"  # axis lines and tick marks
+    background: str = theme_color("bg")
+    text_color: str = theme_color("text")
+    axis_color: str = theme_color("line")  # axis lines and tick marks
     show_grid: bool = False
-    grid_color: str = "#f0f3fa"  # very faint, used when show_grid is on
+    grid_color: str = theme_color("line")  # very faint, used when show_grid is on
     spike_color: str = "#9598a1"  # crosshair lines
     tokyo_color: str = "#f5c518"
     london_color: str = "#2962ff"

@@ -1,5 +1,5 @@
 /* Chart page: legend, trend badges and hover tooltip over the Lightweight Charts canvas
-   (ui/assets/chart.js). TradingView light theme. */
+   (ui/assets/chart.js). Shared dark theme. */
 
 .chart-legend {
   position: absolute;
@@ -7,7 +7,7 @@
   left: 8px;
   z-index: 3;
   font: 12px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
-  color: #131722;
+  color: var(--text);
   white-space: pre;
   pointer-events: none;
 }
@@ -26,7 +26,7 @@
 
 .chart-badge {
   padding: 3px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
 }
 
@@ -36,12 +36,12 @@
   z-index: 4;
   max-width: 460px;
   padding: 6px 8px;
-  background: #ffffff;
-  border: 1px solid #9598a1;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(19, 23, 34, 0.15);
+  background: var(--panel);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 6px var(--shadow);
   font: 12px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
-  color: #131722;
+  color: var(--text);
   white-space: pre-line;
   pointer-events: none;
 }
@@ -59,7 +59,7 @@
 .chart-zoom-rect {
   position: absolute;
   display: none;
-  border: 1px solid #2962ff;
-  background: rgba(41, 98, 255, 0.1);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
   pointer-events: none;
 }

@@ -1,30 +1,9 @@
 /* Chart page in the new style (ROADMAP 7.4): dark like /live (toolbar, range bar, side panel,
-   popovers, settings dialog), the chart pane itself light blue (chart_config.py `background`).
+   popovers, settings dialog), the chart pane uses the shared background token.
    Everything is scoped to `.ch-page`, so the results page (which shares toolbar.css) stays as it
    was. Dash's dropdown / date picker menus may render outside the page: those rules use
    `body:has(.ch-page)`. */
-:root:has(.ch-page),
-.ch-page {
-  --bg: #0b1220;
-  --card: #111a2b;
-  --line: #1d2a40;
-  --line2: #2a3a58;
-  --text: #e6ebf5;
-  --muted: #7d8aa5;
-  --hover: #172238;
-  --blue: #4f8cff;
-  --green: #2ebd85;
-  --red: #f6465d;
-  --Dash-Text-Strong: var(--text);
-  --Dash-Text-Primary: var(--text);
-  --Dash-Text-Weak: var(--muted);
-  --Dash-Text-Disabled: var(--muted);
-  --Dash-Stroke-Weak: var(--line2);
-  --Dash-Stroke-Strong: var(--muted);
-  --Dash-Fill-Primary-Hover: rgba(125, 170, 255, 0.1);
-  --Dash-Fill-Primary-Active: rgba(125, 170, 255, 0.18);
-  --Dash-Fill-Interactive-Weak: rgba(125, 170, 255, 0.1);
-}
+
 body:has(.ch-page) {
   background: var(--bg);
 }
@@ -32,7 +11,7 @@ body:has(.ch-page) {
 .ch-page {
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .ch-page .tb-bar {
   background: var(--bg);
@@ -53,14 +32,8 @@ body:has(.ch-page) {
 .ch-page .tb-sep {
   background: var(--line);
 }
-.ch-page .tb-icon {
-  filter: invert(0.85);
-}
-.ch-page .tb-btn.active .tb-icon {
-  filter: invert(29%) sepia(97%) saturate(4000%) hue-rotate(222deg);
-}
 .ch-page .tb-btn {
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 .ch-page .tb-btn:hover,
 .ch-page .tb-menu-item:hover,
@@ -68,7 +41,7 @@ body:has(.ch-page) {
   background: var(--hover);
 }
 .ch-page .tb-btn.active {
-  background: #15294d;
+  background: var(--accent-soft);
 }
 
 /* symbol dropdown and timeframe buttons */
@@ -88,7 +61,7 @@ body:has(.ch-page) {
   padding: 3px;
   gap: 2px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--card);
 }
 .ch-page .tb-timeframes label {
@@ -100,8 +73,8 @@ body:has(.ch-page) {
   color: var(--text);
 }
 .ch-page .tb-timeframes label:has(input:checked) {
-  background: #3b73e8;
-  color: #ffffff !important;
+  background: var(--accent);
+  color: var(--text) !important;
 }
 
 /* popovers */
@@ -109,7 +82,7 @@ body:has(.ch-page) {
   background: var(--card);
   border-color: var(--line2);
   color: var(--text);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px var(--scrim);
 }
 .ch-page .tb-pop-sub,
 .ch-page .tb-pop-note,
@@ -126,7 +99,7 @@ body:has(.ch-page) {
   color: var(--text);
 }
 .ch-page .tb-run {
-  background: #3b73e8;
+  background: var(--accent);
 }
 .ch-page .tb-progress {
   background: var(--line);
@@ -140,7 +113,7 @@ body:has(.ch-page) {
 .ch-page .tb-replay {
   background: var(--card);
   border-color: var(--line2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px var(--scrim);
 }
 .ch-page .tb-replay button {
   background: transparent;
@@ -151,23 +124,23 @@ body:has(.ch-page) {
 .ch-page .dash-datepicker input,
 .ch-page .dash-dropdown-focus-target {
   border: 1px solid var(--line2);
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: var(--bg);
   color: var(--text);
 }
 
 /* dropdown / date picker menus (may sit outside the page) */
-body:has(.ch-page) .dash-dropdown-content,
-body:has(.ch-page) .dash-datepicker-content {
+body .dash-dropdown-content,
+body .dash-datepicker-content {
   border: 1px solid var(--line2);
   background: var(--card);
   color: var(--text);
 }
-body:has(.ch-page) .dash-dropdown-option:hover,
-body:has(.ch-page) .dash-dropdown-option.selected {
+body .dash-dropdown-option:hover,
+body .dash-dropdown-option.selected {
   background: var(--hover);
 }
-body:has(.ch-page) .dash-dropdown-search {
+body .dash-dropdown-search {
   background: var(--bg);
   color: var(--text);
 }
@@ -178,7 +151,7 @@ body:has(.ch-page) .dash-dropdown-search {
   color: var(--text);
 }
 
-/* chart area: the pane stays light blue; the legend / badges / tooltip sit on it */
+/* chart area: the pane uses the dark background; the legend / badges / tooltip sit on it */
 .ch-main {
   display: flex;
   flex: 1 1 auto;
@@ -194,11 +167,11 @@ body:has(.ch-page) .dash-dropdown-search {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--card);
 }
 .ch-chartcol .tb-chart {
-  background: #dfe9f8;
+  background: var(--bg);
 }
 .ch-side {
   display: flex;
@@ -234,7 +207,7 @@ body:has(.ch-page) .dash-dropdown-search {
   padding: 12px 14px;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .ch-fold label {
   display: flex;
@@ -251,7 +224,7 @@ body:has(.ch-page) .dash-dropdown-search {
 }
 .ch-fold label::after {
   content: "▾";
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .ch-fold:has(input:checked) label::after {
   content: "▸";
@@ -272,7 +245,7 @@ body:has(.ch-page) .dash-dropdown-search {
 }
 .ch-empty,
 .ch-note {
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .ch-pos {
   color: var(--green);
@@ -289,8 +262,8 @@ body:has(.ch-page) .dash-dropdown-search {
 }
 .ch-stat {
   padding: 8px 10px;
-  background: #0d1627;
-  border-radius: 8px;
+  background: var(--bg);
+  border-radius: var(--radius);
 }
 .ch-stat-label {
   color: var(--muted);
@@ -320,7 +293,7 @@ body:has(.ch-page) .dash-dropdown-search {
 }
 .ch-link {
   color: var(--blue);
-  font-size: 12px;
+  font-size: var(--font-12);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -342,8 +315,8 @@ body:has(.ch-page) .dash-dropdown-search {
   width: 34px;
   height: 18px;
   margin: 0;
-  border-radius: 9px;
-  background: #2a3a58;
+  border-radius: var(--radius);
+  background: var(--line);
   position: relative;
   cursor: pointer;
   transition: background 0.15s;
@@ -356,11 +329,11 @@ body:has(.ch-page) .dash-dropdown-search {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--panel);
   transition: left 0.15s;
 }
 .ch-switches input:checked {
-  background: #3b73e8;
+  background: var(--accent);
 }
 .ch-switches input:checked::after {
   left: 18px;
@@ -413,33 +386,33 @@ body:has(.ch-page) .dash-dropdown-search {
 }
 .ch-trade-r {
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .ch-badge {
   flex: 0 0 auto;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 .ch-long {
-  background: #12392e;
+  background: var(--green-soft);
   color: var(--green);
 }
 .ch-short {
-  background: #3a1620;
+  background: var(--red-soft);
   color: var(--red);
 }
 
 /* panel toggle icon */
 .icon-panel {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131722' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='2'/%3E%3Cpath d='M15 5v14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='2'/%3E%3Cpath d='M15 5v14'/%3E%3C/svg%3E");
 }
 
 /* settings dialog (opened from the toolbar), dark */
 .ch-page .st-backdrop {
-  background: rgba(2, 6, 14, 0.6);
+  background: var(--scrim);
 }
 .ch-page .st-dialog {
   background: var(--card);
@@ -466,8 +439,8 @@ body:has(.ch-page) .dash-dropdown-search {
   color: var(--text);
 }
 .ch-page .st-nav label:has(input:checked) {
-  background: #15294d;
-  color: #8fb4ff;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .ch-page .st-section,
 .ch-page .st-help,
@@ -485,59 +458,20 @@ body:has(.ch-page) .dash-dropdown-search {
   color: var(--text);
 }
 .ch-page .st-btn.st-primary {
-  border-color: #3b73e8;
-  background: #3b73e8;
-  color: #ffffff;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text);
 }
 .ch-page .st-switch input {
-  background: #2a3a58;
+  background: var(--line);
 }
 .ch-page .st-switch input:checked {
-  background: #3b73e8;
+  background: var(--accent);
 }
 .ch-page .tr-result {
   border-color: var(--line);
   background: var(--bg);
   color: var(--text);
-}
-
-/* "Update data" button + status (ROADMAP 7.5) */
-.ch-page .tb-update {
-  padding: 0 10px;
-  white-space: nowrap;
-  color: var(--text, #d6d9e0);
-}
-.ch-page .tb-update:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.ch-page .tb-update-wrap {
-  position: relative;
-  flex: 0 0 auto;
-}
-/* the status floats under the button: no width in the toolbar, so it cannot overlap anything;
-   long texts are cut with an ellipsis (full text in the tooltip) */
-.ch-page .tb-update-status {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 60;
-  box-sizing: border-box;
-  max-width: min(320px, 60vw);
-  margin-top: 2px;
-  padding: 3px 8px;
-  overflow: hidden;
-  border: 1px solid var(--line2);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--text);
-  font-size: 12px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  pointer-events: auto;
-}
-.ch-page .tb-update-status:empty {
-  display: none;
 }
 
 /* loading bar at the top of the chart pane (chart.js, 0-100 %) */
@@ -548,7 +482,7 @@ body:has(.ch-page) .dash-dropdown-search {
   right: 0;
   height: 4px;
   z-index: 20;
-  background: rgba(11, 18, 32, 0.18);
+  background: var(--shadow);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.35s;
@@ -561,7 +495,7 @@ body:has(.ch-page) .dash-dropdown-search {
   width: 0;
   height: 100%;
   background: var(--blue);
-  box-shadow: 0 0 6px rgba(79, 140, 255, 0.8);
+  box-shadow: 0 0 6px var(--accent-soft);
   transition: width 0.2s linear;
 }
 .ch-bar-pct {
@@ -569,7 +503,7 @@ body:has(.ch-page) .dash-dropdown-search {
   top: 6px;
   right: 8px;
   padding: 0 5px;
-  border-radius: 3px;
+  border-radius: var(--radius);
   background: var(--card);
   color: var(--text);
   font-size: 10px;
