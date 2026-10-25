@@ -40,6 +40,7 @@ from backtester.settings import Leaf, SettingsError, leaves, settings_from_value
 from backtester.strategy.registry import REGISTRY, default_config
 
 TOP_LEVEL = (
+    "idea",
     "strategy",
     "symbols",
     "min_trades",
@@ -109,6 +110,7 @@ class GridSpec:
     step_months: int = 6
     walk_forward_study: bool = False
     monkeys: bool = True
+    idea: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,6 +263,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
             f"unknown entry {unknown[0]!r} in {path.name} (valid: {', '.join(TOP_LEVEL)})"
         )
     strategy = data.get("strategy")
+    if not isinstance(data.get("idea", ""), str):
+        raise GridError("idea must be text")
     if strategy not in REGISTRY:
         raise GridError(f"strategy {strategy!r} is not registered (known: {', '.join(REGISTRY)})")
     symbols = data.get("symbols")
@@ -346,6 +350,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         step_months=step_months,
         walk_forward_study=data.get("walk_forward_study", False),
         monkeys=data.get("monkeys", True),
+        idea=data.get("idea", ""),
     )
     return spec
 

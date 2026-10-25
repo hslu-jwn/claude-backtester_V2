@@ -54,6 +54,8 @@ strategy instead of a grid tool per strategy, and see at a glance which variants
 - One file per idea: `research/grids/<name>.toml` (written by Claude; the user does no file work).
 - Contents: `strategy` (a `strategy/registry.py` name), `symbols`, optional `base` settings (start values,
   else the config defaults), `grid` (setting name -> list of values), optional `min_trades`, `max_variants`.
+- Optional `idea = "..."` supplies the Research card's one-line idea and is saved in
+  `research.json`. Without it, the card uses the strategy label. This text does not change grid IDs.
 - Setting names are the strategy config's field names (dotted for nested fields); shared run settings
   (costs, detectors) may be swept the same way. An unknown name or a wrong type stops the run with an error
   that lists the valid names.

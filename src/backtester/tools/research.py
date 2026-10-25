@@ -565,7 +565,8 @@ def run_research(
     info = {
         "id": rid, "name": spec.name, "grid_file": str(spec.path), "version": 1,
         "created": previous.get("created", _now()), "updated": _now(), "status": "running",
-        "strategy": spec.strategy, "symbols": list(spec.symbols), "base": spec.base,
+        "strategy": spec.strategy, "idea": spec.idea,
+        "symbols": list(spec.symbols), "base": spec.base,
         "grid": spec.grid, "grid_size": size, "variants": len(variants), "sampled": sampled,
         "seed": spec.seed, "min_trades": spec.min_trades, "max_variants": spec.max_variants,
         "periods": {

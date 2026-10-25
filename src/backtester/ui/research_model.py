@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from datetime import date
 from pathlib import Path
 
@@ -100,7 +101,8 @@ def _csv(path: Path) -> list[dict]:
 
 def _num(value) -> float | None:
     try:
-        return float(value) if value not in (None, "") else None
+        number = float(value) if value not in (None, "") else None
+        return number if number is not None and math.isfinite(number) else None
     except (TypeError, ValueError):
         return None
 
@@ -131,15 +133,155 @@ def _period(start, end) -> str:
 
 def flag_text(keys: list[str]) -> str:
     """Short warning badges for the table: "⚠ few trades · ⚠ test failed"."""
-    return FLAG_SEPARATOR.join(f"{FLAG_MARK} {FLAG_SHORT.get(k, k)}" for k in keys)
+    return FLAG_SEPARATOR.join(
+        f"{FLAG_MARK} {FLAG_SHORT.get(k, 'monkey beaten' if k == 'monkey_beaten' else k.replace('_', ' '))}"
+        for k in keys
+    )
 
 
 def flag_tooltip(keys: list[str]) -> str:
     """The full labels (analytics/scorecard.FLAG_LABELS), for the hover text."""
-    return "; ".join(FLAG_LABELS.get(k, k) for k in keys)
+    return "; ".join(
+        FLAG_LABELS.get(
+            k,
+            "matched random strategies beat the strategy"
+            if k == "monkey_beaten"
+            else k.replace("_", " "),
+        )
+        for k in keys
+    )
 
 
 # --- research folders ----------------------------------------------------------------------
+
+DIAGNOSTIC_FILES = (
+    "significance.json",
+    "bayes.json",
+    "skill_bounds.json",
+    "profile.json",
+    "monkeys.json",
+    "sensitivity.csv",
+    "walk_forward.csv",
+    "grid.csv",
+)
+RESEARCH_FIELDS = (
+    "rc_p",
+    "pbo",
+    "n",
+    "n_eff",
+    "p_mean_pos",
+    "posterior_odds",
+    "detrended_net_r",
+    "lower95",
+    "log_pf",
+    "sensitivity",
+    "wfe",
+    "mc_dd_p95_pct",
+    "prop_pass_pct",
+    "mc_risk_pct",
+    "monkey",
+    "monkey_net_percentile",
+    "monkey_dd_percentile",
+    "best_regime",
+    "best_condition",
+    "drawdown_bounds",
+    "grid",
+    "walk_forward",
+    "sensitivity_rows",
+)
+
+
+def _dict(value) -> dict:
+    return value if isinstance(value, dict) else {}
+
+
+def _list(value) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _development(data: dict) -> dict:
+    return _dict(data.get("development")) if "development" in data else data
+
+
+def _run_path(root: Path, name) -> Path:
+    # Metadata names are folder names, never arbitrary paths.
+    name = str(name or "")
+    if not name or name in (".", "..") or any(c in name for c in "/\\:"):
+        return root / "__missing_run__"
+    return root / name
+
+
+def _diagnostic_paths(folder: Path, info: dict) -> list[Path]:
+    chosen = _dict(info.get("chosen"))
+    run = _run_path(folder.parent.parent, chosen.get("dev_run"))
+    variant = _run_path(folder / "variants", chosen.get("id"))
+    mc = _run_path(folder.parent.parent / "monte_carlo", chosen.get("dev_run"))
+    return [
+        run / "drawdown_bounds.json",
+        variant / "drawdown_bounds.json",
+        mc / "summary.json",
+        run / "monte_carlo" / "summary.json",
+    ]
+
+
+def _diagnostics(folder: Path, info: dict) -> dict:
+    """Saved chosen-development diagnostics only; no analytics are executed here.
+
+    Spec: design/ui-proposal.md > Research card. MC uses the middle saved risk level,
+    matching the Results card convention; its risk is included in the expanded card.
+    """
+    sig = _json(folder / "significance.json")
+    bayes = _development(_json(folder / "bayes.json"))
+    skill = _development(_json(folder / "skill_bounds.json"))
+    scores = _dict(skill.get("scores"))
+    profile = _development(_json(folder / "profile.json"))
+    cells = [_dict(c) for c in _list(profile.get("strongest_skill_cells"))]
+    cells = [c for c in cells if _num(c.get("lower90_bca")) is not None]
+    best = max(cells, key=lambda c: _num(c["lower90_bca"]), default={})
+    regime = _dict(_dict(profile.get("dimensions")).get("regime")).get("best")
+    monkeys = _json(folder / "monkeys.json")
+    kind = next(
+        (k for k in _list(monkeys.get("kinds")) if isinstance(k, dict) and k.get("kind") == 1), {}
+    )
+    if not monkeys.get("available"):
+        kind = {}
+    paths = _diagnostic_paths(folder, info)
+    mc = _json(paths[2]) or _json(paths[3])
+    risks = _dict(_dict(mc.get("monte_carlo")).get("risks"))
+    levels = sorted((k for k in risks if _num(k) is not None), key=float)
+    level = levels[len(levels) // 2] if levels else None
+    risk = _dict(risks.get(level))
+    probability = _num(_dict(risk.get("ftmo")).get("pass_probability"))
+    sensitivity = _dict(info.get("sensitivity")).get("status")
+    return {
+        "rc_p": _num(_dict(sig.get("reality_check")).get("p_value")),
+        "pbo": _num(_dict(sig.get("pbo")).get("pbo")),
+        "n": _num(_dict(sig.get("effective_trials")).get("n")),
+        "n_eff": _num(_dict(sig.get("effective_trials")).get("n_eff")),
+        "p_mean_pos": _num(_dict(bayes.get("mean_r")).get("p_positive")),
+        "posterior_odds": _num(_dict(bayes.get("evidence")).get("posterior_odds")),
+        "detrended_net_r": _num(scores.get("detrended_net_r")),
+        "lower95": _num(scores.get("lower95_mean_daily_r")),
+        "log_pf": _num(scores.get("log_pf")),
+        "sensitivity": sensitivity if sensitivity in ("gentle", "sharp") else None,
+        "wfe": _num(_dict(info.get("walk_forward")).get("efficiency")),
+        "mc_dd_p95_pct": _num(_dict(_dict(risk.get("stats")).get("max_dd_pct")).get("p95")),
+        "prop_pass_pct": probability * PERCENT if probability is not None else None,
+        "mc_risk_pct": float(level) * PERCENT if level is not None else None,
+        "monkey": ("pass" if kind["passed"] else "fail")
+        if isinstance(kind.get("passed"), bool)
+        else None,
+        "monkey_net_percentile": _num(_dict(kind.get("net_r")).get("percentile")),
+        "monkey_dd_percentile": _num(_dict(kind.get("max_dd_r")).get("percentile")),
+        "best_regime": (regime or "none") if profile else None,
+        "best_condition": f"{best.get('dimension')}: {best.get('condition')}"
+        if best
+        else ("none" if profile else None),
+        "drawdown_bounds": _json(paths[0]) or _json(paths[1]) or None,
+        "grid": _csv(folder / "grid.csv") or None,
+        "walk_forward": _csv(folder / "walk_forward.csv") or None,
+        "sensitivity_rows": _csv(folder / "sensitivity.csv") or None,
+    }
 
 
 def _research_rows(folder: Path) -> tuple[list[dict], set[str]]:
@@ -152,8 +294,9 @@ def _research_rows(folder: Path) -> tuple[list[dict], set[str]]:
     rid = str(info.get("id") or folder.name)
     strategy = str(info.get("strategy") or "")
     symbols = [str(s) for s in info.get("symbols") or []]
-    dev = (info.get("periods") or {}).get("development") or {}
-    chosen = info.get("chosen") or {}
+    dev = _dict(_dict(info.get("periods")).get("development"))
+    chosen = _dict(info.get("chosen"))
+    diagnostic = _diagnostics(folder, info) if chosen.get("id") else {}
     hidden = {str(chosen["dev_run"])} if chosen.get("dev_run") else set()
     hidden |= {t["run_folder"] for t in tests if t.get("run_folder")}
     latest = {}
@@ -181,6 +324,19 @@ def _research_rows(folder: Path) -> tuple[list[dict], set[str]]:
         win = _num(v.get("win_rate"))
         rows.append(
             {
+                **dict.fromkeys(RESEARCH_FIELDS),
+                **(diagnostic if chosen.get("id") == vid else {}),
+                "is_research": True,
+                "idea": info.get("idea") or _strategy_label(strategy),
+                "test_period": _period(
+                    _dict(_dict(info.get("periods")).get("test")).get("start"),
+                    _dict(_dict(info.get("periods")).get("test")).get("end")),
+                "verdict_reason": test.get("verdict_reason") if test else None,
+                "test_trades": _num(test.get("trades")) if test else None,
+                "test_win_rate": (_num(test.get("win_rate")) or 0) * PERCENT
+                if test and _num(test.get("win_rate")) is not None else None,
+                "t_stat": _num(test.get("t_stat")) if test else None,
+                "n_variants": _num(test.get("n_variants")) if test else None,
                 "source": f"{rid} {vid}", "strategy_name": strategy,
                 "strategy": _strategy_label(strategy), "variant": v.get("variant") or vid,
                 "symbols": ", ".join(symbols), "symbol_list": symbols,
@@ -208,7 +364,10 @@ def _research(results_dir: Path) -> tuple[list[dict], set[str]]:
     base = results_dir / RESEARCH_DIR
     folders = sorted(p for p in base.iterdir() if p.is_dir()) if base.is_dir() else []
     for folder in folders:
-        files = [folder / n for n in ("research.json", "variants.csv", "test.csv")]
+        files = [
+            folder / n for n in ("research.json", "variants.csv", "test.csv", *DIAGNOSTIC_FILES)
+        ]
+        files += _diagnostic_paths(folder, _json(folder / "research.json"))
         sig = _signature(*files)
         key = str(folder.resolve())
         cached = _cache.get(key)
@@ -239,6 +398,8 @@ def _plain_row(folder: Path) -> dict | None:
     name = str((settings.get("strategy") or {}).get("name") or "session_zone_sweep")
     symbols = [str(s) for s in summary.get("symbols") or []]
     return {
+        **dict.fromkeys(RESEARCH_FIELDS), "is_research": False,
+        "idea": _strategy_label(name),
         "source": folder.name, "strategy_name": name, "strategy": _strategy_label(name),
         "variant": settings.get("preset") or "—", "symbols": ", ".join(symbols),
         "symbol_list": symbols, "period": _period(summary.get("start"), summary.get("end")),
@@ -293,6 +454,27 @@ def sort_rows(rows: list[dict]) -> list[dict]:
             test is None,
             -(test or 0.0),
             -(r.get("net_r") or 0.0),
+        )
+
+    return sorted(rows, key=key)
+
+
+def sort_card_rows(rows: list[dict], sort_by: str = "verdict") -> list[dict]:
+    """Card ordering: research before plain runs; smaller drawdown / RC p first.
+
+    The existing default verdict/test/development ordering is retained within each
+    group. Other dropdown sorts place missing values last within each group.
+    """
+    if sort_by == "verdict":
+        return sorted(sort_rows(rows), key=lambda r: not r.get("is_research", True))
+
+    def key(row):
+        value = _num(row.get(sort_by))
+        return (
+            not row.get("is_research", True),
+            value is None,
+            (value or 0) * (1 if sort_by in ("max_dd_r", "rc_p") else -1),
+            -(row.get("net_r") or 0),
         )
 
     return sorted(rows, key=key)
