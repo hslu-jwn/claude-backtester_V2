@@ -65,6 +65,7 @@ from backtester.data.sources import (
 from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.spread_table import SpreadTable
+from backtester.engine.ticks import TickRoundingStats
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.base import UnsupportedSymbolError
@@ -127,6 +128,7 @@ class SymbolRun:
     trades: tuple[TradeResult, ...]  # entered in the range, entry order
     sessions: tuple[dict, ...]  # strategy.session_records(), sessions overlapping the range
     notes: tuple[str, ...] = ()
+    tick_rounding: TickRoundingStats = field(default_factory=TickRoundingStats)
 
 
 @dataclass(frozen=True)
@@ -144,8 +146,16 @@ class RunResult:
 
     def summary(self) -> dict:
         return {
-            "per_symbol": {s: summarize(r.trades) for s, r in self.runs.items()},
-            "combined": summarize(self.trades),
+            "per_symbol": {
+                s: {**summarize(r.trades), "tick_rounding": r.tick_rounding.as_dict()}
+                for s, r in self.runs.items()
+            },
+            "combined": {
+                **summarize(self.trades),
+                "tick_rounding": TickRoundingStats.combined(
+                    r.tick_rounding for r in self.runs.values()
+                ).as_dict(),
+            },
         }
 
 
@@ -324,6 +334,8 @@ class IntrabarSource:
 
 def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
     strategy = make_strategy(job.symbol, job.settings.strategy, job.settings.detectors)
+    start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
+    tick_rounding = TickRoundingStats()
     trades = run_backtest(
         strategy,
         job.series,
@@ -332,8 +344,9 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         intrabar_source=IntrabarSource(job.sources.adapter(job.symbol))
         if job.settings.engine.intrabar == "m1" and strategy.base_timeframe is not Timeframe.M1
         else None,
+        tick_rounding=tick_rounding,
+        diagnostics_start=start,
     )
-    start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
     sessions = [
         s
         for s in strategy.session_records(run_end=end)
@@ -346,7 +359,8 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         job.warmup_from,
         tuple(t for t in trades if t.entry_candle >= start),
         tuple(sessions),
-        job.notes,
+        (*job.notes, *tick_rounding.notes()),
+        tick_rounding,
     )
 
 

@@ -28,7 +28,9 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
 - **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
   **Research / tests:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
   model one level after a failed try before passing the task on.
-- **Hard limits for Codex, Claude 4.6 and Gemini:** never commit, push or create branches;
+- **Hard limits for Codex, Claude 4.6 and Gemini:** never start a server, app preview or any
+  process that keeps running after your answer (a preview of the app on 2026-10-24 kept a
+  dispatch open for 30 hours); never commit, push or create branches;
   never read, print or ask for credentials (they live only in the Windows Credential
   Manager); never edit `src/backtester/live/` (order and bot code) or `.env`.
   `python -m backtester.tools.ai_dispatch` enforces this after every call (commits, resets,

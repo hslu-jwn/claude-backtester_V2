@@ -95,7 +95,8 @@ class Strategy(ABC):
 
     def on_order_skipped(self, ref: object, now: datetime) -> None:
         """The order with `ref` was not filled: its costs were above the cost filter
-        (risk-management.md › Costs › Cost filter). Default: nothing."""
+        or tick rounding made its levels invalid (risk-management.md > Costs).
+        Default: nothing."""
 
     def session_records(self, run_end: datetime | None = None) -> list[dict]:
         """What the strategy saw per session, JSON-ready, for the results file (ROADMAP

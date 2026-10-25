@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from backtester.analytics import trial_log
+from backtester.engine.ticks import TickRoundingStats
 from backtester.runner import RunSettings
 from backtester.settings import leaves
 from backtester.strategy.registry import default_config
@@ -244,7 +245,7 @@ class Fakes:
             trades = tuple(make_trade(s, y, r, i) for i, (y, r) in enumerate(zip(years, rs)))
             runs[s] = SimpleNamespace(
                 symbol=s, first_day=start, last_day=end, warmup_from=start, trades=trades,
-                sessions=(), notes=(),
+                sessions=(), notes=(), tick_rounding=TickRoundingStats(),
             )  # fmt: skip
         merged = tuple(t for r in runs.values() for t in r.trades)
         return SimpleNamespace(

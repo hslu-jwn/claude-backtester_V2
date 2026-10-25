@@ -41,6 +41,7 @@ from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries, SeriesView
 from backtester.engine.costs import CostConfig
 from backtester.engine.replay import Replay
+from backtester.engine.ticks import TickRoundingStats, round_level
 from backtester.engine.trade import ExitReason, OpenTrade, TradeResult
 from backtester.sessions import DEFAULT_SESSIONS, SessionConfig, next_session_start
 from backtester.strategy.base import Order, Strategy
@@ -88,9 +89,18 @@ def run_backtest(
     progress: Progress | None = None,
     *,
     intrabar_source: IntrabarSource | None = None,
+    tick_rounding: TickRoundingStats | None = None,
+    diagnostics_start: datetime | None = None,
 ) -> list[TradeResult]:
     """Run `strategy` over `series` (one per timeframe it declares, same symbol)."""
-    return Backtest(strategy, series, config, intrabar_source=intrabar_source).run(progress)
+    return Backtest(
+        strategy,
+        series,
+        config,
+        intrabar_source=intrabar_source,
+        tick_rounding=tick_rounding,
+        diagnostics_start=diagnostics_start,
+    ).run(progress)
 
 
 class Backtest:
@@ -101,6 +111,8 @@ class Backtest:
         config: EngineConfig = DEFAULT_ENGINE,
         *,
         intrabar_source: IntrabarSource | None = None,
+        tick_rounding: TickRoundingStats | None = None,
+        diagnostics_start: datetime | None = None,
     ):
         by_tf = {s.timeframe: s for s in series}
         if len(by_tf) != len(series):
@@ -113,8 +125,12 @@ class Backtest:
         self._strategy = strategy
         self._config = config
         self._intrabar_source = intrabar_source
+        self.tick_rounding = tick_rounding if tick_rounding is not None else TickRoundingStats()
+        self._diagnostics_start = diagnostics_start
         strategy.limit_fill_check = (
-            self._limit_fill_allowed if config.costs.tp_penetration else None
+            self._limit_fill_allowed
+            if config.costs.tp_penetration or config.costs.round_to_tick
+            else None
         )
         self._higher = tuple(tf for tf in strategy.timeframes if tf is not strategy.base_timeframe)
         self._replay = Replay(by_tf[strategy.base_timeframe], [by_tf[tf] for tf in self._higher])
@@ -235,10 +251,10 @@ class Backtest:
             threshold = placed.entry - trade.sign * trade.tp_penetration * trade.spread
             first = next(
                 (
-                    i for i, minute in enumerate(minutes)
-                    if trade.sign * (
-                        (minute.low if trade.sign > 0 else minute.high) - threshold
-                    ) <= 0
+                    i
+                    for i, minute in enumerate(minutes)
+                    if trade.sign * ((minute.low if trade.sign > 0 else minute.high) - threshold)
+                    <= 0
                 ),
                 -1,
             )
@@ -316,35 +332,25 @@ class Backtest:
         """
         sign = 1 if placed.direction is Direction.BULLISH else -1
         extreme = candle.low if sign > 0 else candle.high
-        entry = placed.entry
+        level = placed.entry
+        tick = self._tick_size()
+        if tick is not None:
+            level = round_level(level, tick, up=sign < 0)
+        entry = level
         if not candle.low <= entry <= candle.high:
             entry = candle.open
         distance = self._config.costs.tp_penetration * self._config.costs.spread(
             self._replay.symbol, now, entry
         )
-        return sign * (extreme - (placed.entry - sign * distance)) <= 0
+        return sign * (extreme - (level - sign * distance)) <= 0
 
-    def _fill(
-        self, order: Order, candle: Candle, now: datetime, pending_limits: list[Order]
-    ) -> tuple[OpenTrade, Order | None] | None:
-        """Enter at the close of the current base candle (spec: "enter at that close"), or
-        for a limit order at its level, which the candle must have traded through."""
-        for name in ("entry", "stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
-            price = getattr(order, name)
-            if price is not None and not math.isfinite(price):
-                raise ValueError(f"order {name} must be finite")
-        entry = order.entry if order.limit_fill else candle.close
-        placed = None
-        if order.limit_fill:
-            placed = self._consume_pending_limit(order, candle, pending_limits)
-            if not candle.low <= entry <= candle.high:
-                raise ValueError(f"limit entry {entry} outside the candle at {now}")
-            if self._config.costs.tp_penetration and not self._limit_fill_allowed(
-                placed, candle, now
-            ):
-                return None
-        elif not math.isclose(order.entry, entry):
-            raise ValueError(f"order entry {order.entry} is not the candle close {entry} at {now}")
+    def _tick_size(self) -> float | None:
+        costs = self._config.costs
+        return costs.for_symbol(self._replay.symbol).tick_size if costs.round_to_tick else None
+
+    @staticmethod
+    def _validate_levels(order: Order, entry: float) -> None:
+        """Existing order contract; also applied after rounding (Costs > Tick rounding)."""
         sign = 1 if order.direction is Direction.BULLISH else -1
         if sign * (entry - order.stop_loss) <= 0:
             raise ValueError(f"{order.direction.value} SL {order.stop_loss} not beyond {entry}")
@@ -370,6 +376,60 @@ class Backtest:
                 raise ValueError("tp2_share must be finite and positive with a TP3")
             if 1 - order.tp1_share - order.tp2_share <= 1e-12:
                 raise ValueError("tp1_share + tp2_share must leave a share for TP3")
+
+    def _fill(
+        self, order: Order, candle: Candle, now: datetime, pending_limits: list[Order]
+    ) -> tuple[OpenTrade, Order | None] | None:
+        """Enter at the close of the current base candle (spec: "enter at that close"), or
+        for a limit order at its level, which the candle must have traded through."""
+        for name in ("entry", "stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
+            price = getattr(order, name)
+            if price is not None and not math.isfinite(price):
+                raise ValueError(f"order {name} must be finite")
+        entry = order.entry if order.limit_fill else candle.close
+        placed = None
+        if order.limit_fill:
+            placed = self._consume_pending_limit(order, candle, pending_limits)
+            if not candle.low <= entry <= candle.high:
+                raise ValueError(f"limit entry {entry} outside the candle at {now}")
+            if (
+                self._config.costs.tp_penetration or self._config.costs.round_to_tick
+            ) and not self._limit_fill_allowed(placed, candle, now):
+                return None
+        elif not math.isclose(order.entry, entry):
+            raise ValueError(f"order entry {order.entry} is not the candle close {entry} at {now}")
+        sign = 1 if order.direction is Direction.BULLISH else -1
+        self._validate_levels(order, entry)
+        tick = self._tick_size()
+        moves: list[float] = []
+        count = self._diagnostics_start is None or candle.ts >= self._diagnostics_start
+        if tick is not None:
+            levels = {}
+            for name in ("stop_loss", "take_profit", "take_profit_2", "take_profit_3"):
+                price = getattr(order, name)
+                if price is None:
+                    continue
+                up = sign > 0 if name == "stop_loss" else sign < 0
+                levels[name] = round_level(price, tick, up=up)
+                if levels[name] != price:
+                    moves.append(abs(levels[name] - price) / tick)
+            order = replace(order, **levels)
+            if placed is not None:
+                level = round_level(placed.entry, tick, up=sign < 0)
+                if level != placed.entry:
+                    moves.append(abs(level - placed.entry) / tick)
+                # Round only the strategy's limit. A gap already filled at the open
+                # keeps that observed price, even if the new level is in the candle.
+                if candle.low <= placed.entry <= candle.high:
+                    entry = level
+                placed = replace(placed, entry=level)
+            try:
+                self._validate_levels(order, entry)
+            except ValueError as exc:
+                if count:
+                    self.tick_rounding.record(moves, str(exc))
+                self._strategy.on_order_skipped(order.ref, now)
+                return None
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol, now, entry)
         slippage = self._config.costs.slippage(symbol, entry)
@@ -379,6 +439,16 @@ class Backtest:
         check = None
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
+        break_even = entry + sign * self._config.costs.break_even_offset(
+            symbol, now, entry, order.direction, entry_fill
+        )
+        if tick is not None:
+            rounded_be = round_level(break_even, tick, up=sign > 0)
+            if rounded_be != break_even:
+                moves.append(abs(rounded_be - break_even) / tick)
+            break_even = rounded_be
+            if count:
+                self.tick_rounding.record(moves)
         trade = OpenTrade(
             symbol=symbol,
             direction=order.direction,
@@ -390,9 +460,7 @@ class Backtest:
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
             break_even_check=check,
-            break_even_level=entry
-            + sign
-            * self._config.costs.break_even_offset(symbol, now, entry, order.direction, entry_fill),
+            break_even_level=break_even,
             tags=order.tags,
             reason=order.reason,
             confluence=order.confluence,

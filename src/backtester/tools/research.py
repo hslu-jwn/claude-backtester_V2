@@ -56,6 +56,7 @@ from backtester.analytics.verdict import (
     t_statistic,
 )
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, UnmappedSymbolError
+from backtester.engine.ticks import TickRoundingStats
 from backtester.paths import RESULTS_DIR
 from backtester.presets import save_preset
 from backtester.runner import (
@@ -156,6 +157,7 @@ def _join(symbol: str, runs: list) -> SymbolRun:
         tuple(t for r in runs for t in r.trades),
         tuple(s for r in runs for s in r.sessions),
         tuple(notes),
+        TickRoundingStats.combined(r.tick_rounding for r in runs),
     )
 
 

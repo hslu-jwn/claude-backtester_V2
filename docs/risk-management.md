@@ -31,6 +31,45 @@ and no exit precedes entry (Opus clarification, 2026-10-23 21:02).
 The seven-strategy 2023 measurement informs a later user decision on the default.
 
 ### Costs (per symbol)
+- **Tick rounding** (V2.4d item 9, Opus clarifications 2026-10-24):
+  `CostConfig.round_to_tick` defaults to **False**, preserving current execution exactly.
+  When enabled, round strategy order levels at fill using `SymbolCosts.tick_size`;
+  None disables rounding for that symbol. Market fills, gap fills at the open and M1
+  replay prices remain the observed prices (including an existing gap-open fill when
+  the rounded limit would lie inside that candle). Buy limits round down, sell limits up;
+  long SL rounds up and long TP1-3 down (short mirrored). R uses the rounded initial
+  SL distance. The cost-inclusive break-even stop rounds up for longs, down for shorts,
+  preserving >= 0R net at a level hit before swap/funding (a gap may still lose).
+  A level within 1e-9 price units of a tick is unchanged; penetration distances are
+  thresholds and are never rounded. Pending limits must reach the rounded level and
+  its penetration threshold before consumption; placement proof uses the original order.
+  Orders made invalid by rounding (SL/TP on or across entry, or non-increasing TP levels
+  under the existing validator) are skipped with `strategy.on_order_skipped`, counted
+  and given an aggregate reason in run notes. Original invalid orders still raise.
+  Per-run diagnostics count moved orders once (including rejected attempts), moved levels
+  (limit entry, SL, TP1-3 and computed BE), mean absolute move in ticks over moved levels,
+  and rejections. Warm-up attempts are excluded, using the entry base candle's open time.
+  Panel setting / TOML grid key: `engine.costs.round_to_tick = [false, true]`.
+  Per-symbol tick metadata stays in settings/presets and grids, without extra panel
+  widgets, preserving the panel's existing widget-count performance limit.
+
+  Tick snapshot, 2026-10-24: `results/trading.json` is present but contains symbol-name
+  mappings, no `trade_tick_size`. FTMO fallback is 10^-digits from the cache quote
+  precision table `data/sources.py:PRICE_DIGITS` (FTMO snapshot 2026-10-15 for expanded
+  symbols; XAUUSD includes histdata's three-decimal precision). These are fallback
+  precision estimates, not verified exchange ticks. Literal engine table; no runtime
+  reads of results or data. Binance ticks are **None**, pending an exchange snapshot.
+
+  | Symbols | Tick size | Source |
+  |---|---:|---|
+  | GBPUSD, EURUSD, AUDUSD, NZDUSD, EURGBP, USDCAD, USDCHF | 0.00001 | Cache digits (5) |
+  | GBPJPY, USDJPY, EURJPY, XAUUSD, XAGUSD, USOIL, UKOIL, DXY, NATGAS | 0.001 | Cache digits (3) |
+  | NAS100, US500, GER40, UK100, JP225, EU50, US30, US2000, BTCUSD, ETHUSD | 0.01 | Cache digits (2) |
+  | BTCUSDT, ETHUSDT | None | No recorded exchange tick; rounding disabled |
+
+  `scripts/measure_ticks.py` compares off/on on all seven golden setups for 2023 with
+  current defaults and one worker, writing `results/ticks.md`, `.csv` and a run log.
+  The measurement does not change the default; that decision belongs to the user.
 - **Limit penetration** (V2.4d item 3, user 2026-10-23):
   `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0.5** (rule set by
   the user 2026-10-23 after the measurement in `results/tp_penetration.md`; 0 = touch fills as before).

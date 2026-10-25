@@ -241,6 +241,7 @@ LABELS = {
     "engine.costs.commission_enabled": "Commission",
     "engine.costs.tp_penetration": "TP / limit penetration (spread multiple)",
     "engine.costs.short_tp_on_ask": "Short TP triggered by ask",
+    "engine.costs.round_to_tick": "Round order levels to instrument tick",
     "warmup_days": "Warm-up days",
 }
 LEAF_LABELS = {  # by the last part of the path
@@ -380,6 +381,10 @@ def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
 
 
 def _panel_symbol(path: str) -> bool:
+    # Tick metadata remains editable in settings/grids; only the rounding switch
+    # needs a widget (risk-management.md > Costs > Tick rounding).
+    if path.startswith("engine.costs.symbols.") and path.endswith(".tick_size"):
+        return False
     return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS
 
 
