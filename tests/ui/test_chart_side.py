@@ -184,18 +184,21 @@ def popover_ids(page, popover_id: str) -> list[str]:
     return ids_in(find(page))
 
 
-def test_layout_has_the_side_panel_without_overlays_and_overlays_in_the_settings(tmp_path):
-    """User, 2026-10-19: the Overlays card moved into the Settings popover (same ids)."""
+def test_layout_has_trades_side_panel_result_strip_and_overlays_tab(tmp_path):
+    """V2.5c: results above chart, overlays below; keep all control IDs unique."""
     page = chart.layout(SymbolSources({}), results_dir=tmp_path)
     toolbar, main = page.children[0], page.children[1]
     side = main.children[-2]  # the last child is the right strip with the toggle
     side_ids = set(ids_in(side))
     assert "side-trades" in side_ids and "ch-card-overlays" not in side_ids
-    assert {"ch-card-result", "ch-card-trades"} <= side_ids
+    assert "ch-card-trades" in side_ids
+    assert "ch-card-result" in ids_in(main.children[0])
     assert not side_ids & {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"}
     assert "chart-lwc" in ids_in(main) and "chart-lwc" not in side_ids
     settings = set(popover_ids(page, "pop-settings"))
-    assert {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"} <= settings
+    assert not {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"} & settings
+    overlays = set(popover_ids(page, "chart-tab-overlays"))
+    assert {"chart-overlays", "chart-overlay-types", "chart-overlay-summary"} <= overlays
     assert {"chart-sessions", "chart-day-boundary", "chart-filters"} <= settings
     tb_ids = set(ids_in(toolbar))
     assert "chart-sessions" in tb_ids and "side-toggle" not in tb_ids
@@ -215,7 +218,7 @@ def test_side_panel_shows_the_newest_run(tmp_path):
     assert "No backtest yet" in str(chart.layout(SymbolSources({}), results_dir=tmp_path))
     write_run(tmp_path, "20261008-120000_B", [csv_row(1, "2026-09-02T08:00:00+00:00", 3.0)])
     text = str(chart.layout(SymbolSources({}), results_dir=tmp_path))
-    assert "20261008-120000_B" in text and "+3.0 R" in text
+    assert "20261008-120000_B" in text and "+3.00 R" in text
 
 
 def test_overlay_switch_options_cover_every_overlay_type():

@@ -1,6 +1,28 @@
 /* Results page (ROADMAP 3.6): TradingView Strategy Tester look, dark theme, the same
    tokens as the toolbar (toolbar.css :root). */
 
+.rs-page .rs-body { max-width: none; padding: 0 16px 24px; }
+.rs-page .ui-main-row:has(.ui-side) {
+  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 330px;
+}
+.rs-page .ui-key-strip { flex-wrap: wrap; }
+.rs-page .ui-main { min-width: 0; }
+.rs-page .ui-side { flex: 0 0 330px; min-width: 0; }
+.rs-page .rs-equity { height: 440px; min-height: 420px; }
+.rs-page .pf-card { margin: 0; height: 100%; box-sizing: border-box; }
+.pf-pass { color: var(--green); font-size: 30px; font-weight: 600; }
+.pf-table-scroll { overflow-x: auto; }
+.rs-trade-tools { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.rs-diagnostics { color: var(--muted); padding: 8px 0; }
+.rs-page .mc-row { flex-wrap: wrap; }
+@media (max-width: 900px) {
+  .rs-page .ui-main-row:has(.ui-side) { grid-template-columns: minmax(0, 1fr); }
+  .rs-page .ui-side { flex-basis: auto; width: 100%; }
+  .rs-page .tb-top { flex-wrap: wrap; height: auto; min-height: 40px; }
+  .rs-page .rs-run { width: min(520px, 100%); }
+}
+
 .rs-page {
   display: flex;
   flex-direction: column;

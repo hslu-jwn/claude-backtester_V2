@@ -12,6 +12,8 @@ body:has(.ch-page) {
   background: var(--bg);
   color: var(--text);
   font-size: var(--font-13);
+  height: auto;
+  min-height: calc(100vh - var(--nav-h, 0px));
 }
 .ch-page .tb-bar {
   background: var(--bg);
@@ -154,8 +156,9 @@ body .dash-dropdown-search {
 /* chart area: the pane uses the dark background; the legend / badges / tooltip sit on it */
 .ch-main {
   display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: 530px;
+  height: max(530px, calc(100vh - var(--nav-h, 48px) - 240px));
   gap: 14px;
   padding: 14px 16px;
   box-sizing: border-box;
@@ -172,6 +175,7 @@ body .dash-dropdown-search {
 }
 .ch-chartcol .tb-chart {
   background: var(--bg);
+  min-height: 420px;
 }
 .ch-side {
   display: flex;
@@ -515,4 +519,29 @@ body .dash-dropdown-search {
 .ch-page .tb-chip {
   color: var(--text);
   border-color: var(--line2);
+}
+
+/* V2.5c: fixed chart space, compact key row, mounted panels below the chart. */
+.ch-key-row { display: flex; align-items: center; gap: 12px; padding-right: 12px; }
+.ch-key-row .ui-key-strip { flex: 1; margin: 0; border: 0; }
+.ch-key-row #ch-card-result { flex: 1; min-width: 0; }
+.ch-tabs-content { padding: 12px 16px 24px; background: var(--panel); }
+.ch-tab-form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.ch-tab-form > .dash-dropdown { min-width: 180px; }
+.ch-tab-form .tb-pop-row { margin: 0; }
+.ch-run-trades { max-height: 300px; overflow-y: auto; }
+.ch-tab-form .tb-pop-note:empty { display: none; }
+.ch-page .st-main { display: block; overflow-y: auto; }
+.ch-page .st-fields { width: 100%; box-sizing: border-box; }
+.st-group-section > summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
+@media (max-width: 900px) {
+  .ch-side { flex-basis: 220px; }
+  .ch-page .tb-top { flex-wrap: wrap; height: auto; min-height: 52px; }
+  .ch-page .tb-timeframes { flex-wrap: wrap; }
+  .ch-key-row { flex-wrap: wrap; }
+}
+@media (max-width: 640px) {
+  .ch-main { flex-wrap: wrap; height: auto; }
+  .ch-chartcol { flex-basis: calc(100% - 58px); }
+  .ch-side { order: 3; flex-basis: 100%; max-height: 220px; }
 }

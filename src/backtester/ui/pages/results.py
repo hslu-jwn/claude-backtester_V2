@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
+from math import isfinite
 from pathlib import Path
 
 import plotly.graph_objects as go
@@ -46,6 +47,7 @@ from backtester.runner import RESULTS_DIR
 from backtester.strategy.registry import REGISTRY
 from backtester.ui import prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
+from backtester.ui.layout import details, info, key_strip, page, tabs_below
 from backtester.ui.run_paths import run_folder
 from backtester.ui.theme import color as theme_color
 
@@ -53,9 +55,9 @@ from backtester.ui.theme import color as theme_color
 VARIANT_PREFIX = "research~"
 ALL = "__all__"  # symbol filter value for every symbol
 TABS = (
-    ("overview", "Overview"),
-    ("performance", "Performance summary"),
-    ("trades", "List of trades"),
+    ("trades", "Trades"),
+    ("performance", "Performance"),
+    ("overview", "Overview details"),
 )
 HISTOGRAM_BIN_R = 0.25
 UP, DOWN, MUTED, ACCENT = "#089981", "#f23645", "#787b86", "#2962ff"  # TradingView colors
@@ -174,7 +176,7 @@ def _card(label: str, value: str, sub: str = "", cls: str = "") -> html.Div:
         [
             html.Div(label, className="rs-card-label"),
             html.Div(value, className=f"rs-card-value {cls}"),
-            html.Div(sub, className="rs-card-sub"),
+            info(sub) if sub else None,
         ],
         className="rs-card",
     )
@@ -239,12 +241,12 @@ def equity_payload(trades: list[TradeRecord]) -> dict:
     }
 
 
-def overview(trades: list[TradeRecord]) -> html.Div:
-    if not trades:
+def overview(trades: list[TradeRecord], *, cards: bool = True) -> html.Div:
+    if not trades and cards:
         return html.Div("No trades.", className="rs-empty")
     return html.Div(
         [
-            html.Div(stat_cards(summarize(trades)), className="rs-cards"),
+            html.Div(stat_cards(summarize(trades)), className="rs-cards") if cards else None,
             html.Div(
                 [
                     html.Div("Equity curve (R)", className="rs-section-title"),
@@ -260,6 +262,7 @@ def overview(trades: list[TradeRecord]) -> html.Div:
                 className="rs-section-head",
             ),
             html.Div(id="rs-equity", className="rs-equity"),
+            html.Div("No trades.", className="rs-empty") if not trades else None,
         ]
     )
 
@@ -451,34 +454,28 @@ def period_table(title: str, periods: dict[str, dict]) -> html.Div:
     )
 
 
-def performance(trades: list[TradeRecord]) -> html.Div:
+def performance(trades: list[TradeRecord], folder: Path | None = None) -> html.Div:
     if not trades:
-        return html.Div("No trades.", className="rs-empty")
+        return html.Div([diagnostics(folder), html.Div("No trades.", className="rs-empty")])
     return html.Div(
         [
-            html.Div("Performance summary", className="rs-section-title"),
-            summary_table(trades),
+            diagnostics(folder),
+            details("Performance summary", summary_table(trades)),
             period_table(
                 "Per year (net R; max drawdown within the year)", by_period(trades, by_year)
             ),
-            html.Details(
-                [
-                    html.Summary("Per quarter", className="rs-section-title rs-summary-toggle"),
-                    period_table("", by_period(trades, by_quarter)),
-                ],
-                open=len({by_year(t) for t in trades}) <= 2,
-            ),
+            details("Per quarter", period_table("", by_period(trades, by_quarter))),
             html.Div(
                 [split_table(title, split(trades, key)) for title, key in SPLITS.items()],
                 className="rs-splits",
             ),
-            html.Div(
-                f"R distribution (net R, {HISTOGRAM_BIN_R} R bins)", className="rs-section-title"
-            ),
-            dcc.Graph(
-                figure=histogram_figure(trades),
-                config={"displayModeBar": False},
-                className="rs-histogram",
+            details(
+                f"R distribution (net R, {HISTOGRAM_BIN_R} R bins)",
+                dcc.Graph(
+                    figure=histogram_figure(trades),
+                    config={"displayModeBar": False},
+                    className="rs-histogram",
+                ),
             ),
         ]
     )
@@ -540,6 +537,13 @@ TRADE_COLUMNS = [
 ]
 
 
+ESSENTIAL_COLUMNS = {"time", "symbol", "direction", "r_net", "exit"}
+
+
+def hidden_trade_columns(more):
+    return [] if more else [c["id"] for c in TRADE_COLUMNS if c["id"] not in ESSENTIAL_COLUMNS]
+
+
 def trade_list(trades: list[TradeRecord]) -> html.Div:
     if not trades:
         return html.Div("No trades.", className="rs-empty")
@@ -551,17 +555,22 @@ def trade_list(trades: list[TradeRecord]) -> html.Div:
     return html.Div(
         [
             html.Div(
-                "Click a trade to open it on the chart with its entry, SL and TP.",
-                className="rs-hint",
+                [
+                    dcc.Checklist(id="rs-more-columns", options=["More columns"], value=[]),
+                    info("Click a trade to open its entry, SL and TP on the chart."),
+                ],
+                className="rs-trade-tools",
             ),
             dash_table.DataTable(
                 id="rs-trades",
                 columns=TRADE_COLUMNS,
+                hidden_columns=hidden_trade_columns(False),
+                css=[{"selector": ".show-hide", "rule": "display: none"}],
                 data=trade_table_rows(trades),
                 sort_action="native",
                 sort_by=[{"column_id": "id", "direction": "asc"}],
                 page_action="none",
-                virtualization=True,  # only the visible rows are drawn (years: 17,000+ trades)
+                virtualization=True,  # only visible rows are drawn
                 fixed_rows={"headers": True},
                 style_as_list_view=True,
                 style_table={"height": "calc(100vh - 250px)", "overflowY": "auto"},
@@ -616,6 +625,120 @@ def chart_link(trade: TradeRecord, folder: Path | None = None) -> str:
 
 
 # --- page ------------------------------------------------------------------------------
+
+
+def result_strip(trades, prop_pass="—"):
+    """Essential metrics for the current symbol. Spec: ui-proposal.md › Page: Results."""
+    s = summarize(trades)
+    return key_strip(
+        [
+            {
+                "label": "Net R",
+                "value": fmt_r(s["net_r_net"]),
+                "sign": "green" if s["net_r_net"] > 0 else "red" if s["net_r_net"] < 0 else "",
+            },
+            {
+                "label": "Trades",
+                "value": str(s["trades"]),
+                "tooltip": f"{s['wins']} wins · {s['losses']} losses · {s['break_even']} break-even",
+            },
+            {"label": "Win rate", "value": fmt_pct(s["win_rate"]), "tooltip": "By net R"},
+            {
+                "label": "Profit factor",
+                "value": fmt_num(s["profit_factor"]),
+                "tooltip": "Net R won / net R lost",
+            },
+            {"label": "Max drawdown", "value": fmt_r(s["max_drawdown_r_net"], False)},
+            {
+                "label": "Expectancy",
+                "value": fmt_r(s["expectancy_r"]),
+                "tooltip": "Net R per trade",
+            },
+            {
+                "label": "Prop pass %",
+                "value": html.Span(prop_pass, id="rs-prop-pass"),
+                "tooltip": "Full run, fixed risk at the middle saved risk level; both phases",
+            },
+        ]
+    )
+
+
+def diagnostics(folder: Path | None):
+    """Display saved diagnostics only, with units and no recomputation or inference."""
+
+    def load(filename):
+        data = _read_json(folder / filename) if folder else {}
+        value = data.get("development", data)
+        return value if isinstance(value, dict) else {}
+
+    def mapping(value):
+        return value if isinstance(value, dict) else {}
+
+    def sequence(value):
+        return value if isinstance(value, list) else []
+
+    def number(value):
+        return value if isinstance(value, (int, float)) and isfinite(value) else None
+
+    skill, profile, bounds = (
+        load(n) for n in ("skill_bounds.json", "profile.json", "drawdown_bounds.json")
+    )
+    scores = mapping(skill.get("scores"))
+    cells = sequence(profile.get("strongest_skill_cells"))
+    cells = [c for c in cells if isinstance(c, dict) and number(c.get("lower90_bca")) is not None]
+    best = max(cells, key=lambda c: c["lower90_bca"], default={})
+    condition = f"{best.get('dimension')}: {best.get('condition')}" if best else "—"
+    dd = []
+    for row in sequence(bounds.get("rows")):
+        if not isinstance(row, dict) or number(row.get("q")) is None:
+            continue
+        units = [("R", mapping(row.get("bounds_r")))]
+        units += [
+            (f"% balance at {float(risk) * 100:g}% risk", mapping(values))
+            for risk, values in mapping(row.get("bounds_pct")).items()
+        ]
+        for unit, values in units:
+            dd.append(
+                html.Tr(
+                    [
+                        html.Td(fmt_pct(row["q"])),
+                        html.Td(unit),
+                        *[
+                            html.Td(fmt_num(number(values.get(k))))
+                            for k in ("median", "upper90", "upper95")
+                        ],
+                    ]
+                )
+            )
+    dd_table = (
+        html.Table(
+            [
+                html.Thead(
+                    html.Tr(
+                        [
+                            html.Th(c)
+                            for c in ("DD quantile", "Units", "Median", "90% upper", "95% upper")
+                        ]
+                    )
+                ),
+                html.Tbody(dd),
+            ],
+            className="rs-table",
+        )
+        if dd
+        else "—"
+    )
+    return html.Div(
+        [
+            html.Div(
+                f"Skill vs trend · full run · detrended net {fmt_r(number(scores.get('detrended_net_r')))} · "
+                f"95% lower daily mean {fmt_r(number(scores.get('lower95_mean_daily_r')))}"
+            ),
+            html.Div(f"Best condition · {condition}"),
+            details("Drawdown bounds", html.Div(dd_table, className="pf-table-scroll")),
+        ],
+        className="rs-diagnostics",
+    )
 
 
 def tab_content(tab: str, trades: list[TradeRecord]):
@@ -680,34 +803,54 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
             html.Div(
                 [
                     html.Span([html.Span(k, className="rs-meta-key"), v], className="rs-meta")
-                    for k, v in meta
+                    for k, v in meta[:2]
                 ],
                 className="rs-metas",
             ),
-            *([html.Div(" · ".join(notes), className="rs-notes")] if notes else []),
+            details(
+                "Details",
+                html.Div(
+                    [html.Div(f"{k}: {v}") for k, v in meta[2:]]
+                    + ([html.Div(" · ".join(notes), className="rs-notes")] if notes else [])
+                ),
+            ),
         ],
         className="rs-header",
     )
-    tabs = dcc.RadioItems(
+    tabs = tabs_below(
+        [dcc.Tab(label=label, value=key) for key, label in TABS],
         id="rs-tab",
-        options=[{"label": label, "value": key} for key, label in TABS],
         value=TABS[0][0],
-        className="rs-tabs",
     )
+    trades = read_trades(folder)
+    cached = prop_firm_card.pj.peek(folder, prop_firm_card.prop_card.DEFAULT_FIRM)
     return html.Div(
         [
             top,
             html.Div(
                 [
                     header,
-                    prop_firm_card.layout(run_id, folder, results_dir),
-                    tabs,
-                    html.Div(id="rs-content", className="rs-content"),
+                    page(
+                        html.Div(
+                            result_strip(trades, prop_firm_card.middle_pass(cached)),
+                            id="rs-key-strip",
+                        ),
+                        overview(trades, cards=False),
+                        side=prop_firm_card.layout(run_id, folder, results_dir),
+                        tabs=html.Div(
+                            [
+                                tabs,
+                                html.Div(
+                                    trade_list(trades), id="rs-content", className="rs-content"
+                                ),
+                            ]
+                        ),
+                    ),
                 ],
                 className="rs-body",
             ),
             dcc.Store(id="rs-run-id", data=run_id),
-            dcc.Store(id="rs-equity-data"),
+            dcc.Store(id="rs-equity-data", data=equity_payload(trades) if trades else None),
             dcc.Store(id="rs-equity-done"),
         ],
         className="rs-page",
@@ -719,7 +862,6 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
 
     @app.callback(
         Output("rs-content", "children"),
-        Output("rs-equity-data", "data"),
         Input("rs-tab", "value"),
         Input("rs-symbol", "value"),
         State("rs-run-id", "data"),
@@ -727,7 +869,34 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
     def _content(tab, symbol, run_id):
         folder = run_folder(run_id, results_dir)
         trades = filtered(read_trades(folder), symbol) if folder else []
-        return tab_content(tab, trades)
+        if tab == "performance":
+            return performance(trades, folder)
+        if tab == "overview":
+            return details(
+                "Overview details", html.Div(stat_cards(summarize(trades)), className="rs-cards")
+            )
+        return trade_list(trades)
+
+    @app.callback(
+        Output("rs-key-strip", "children"),
+        Output("rs-equity-data", "data"),
+        Input("rs-symbol", "value"),
+        Input("pf-firm", "value"),
+        State("rs-run-id", "data"),
+    )
+    def _metrics(symbol, firm, run_id):
+        folder = run_folder(run_id, results_dir)
+        trades = filtered(read_trades(folder), symbol) if folder else []
+        cached = (
+            prop_firm_card.pj.peek(folder, firm or prop_firm_card.prop_card.DEFAULT_FIRM)
+            if folder
+            else None
+        )
+        return result_strip(trades, prop_firm_card.middle_pass(cached)), equity_payload(trades)
+
+    @app.callback(Output("rs-trades", "hidden_columns"), Input("rs-more-columns", "value"))
+    def _columns(more):
+        return hidden_trade_columns(more)
 
     app.clientside_callback(
         "function (data) { return window.dash_clientside.results.equity(data); }",

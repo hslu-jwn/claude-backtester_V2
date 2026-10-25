@@ -27,6 +27,7 @@ from backtester.paths import RESULTS_DIR
 from backtester.risk import prop_card
 from backtester.ui import monte_carlo_job as mj
 from backtester.ui import prop_card_job as pj
+from backtester.ui.layout import details, info
 from backtester.ui.monte_carlo_job import format_elapsed
 from backtester.ui.run_paths import run_folder
 
@@ -59,6 +60,15 @@ WAITING_TEXT = "Waiting for another calculation to finish …"
 
 def _pct(value: float | None, digits: int = 1) -> str:
     return DASH if value is None else f"{value * PERCENT:.{digits}f} %"
+
+
+def middle_pass(card: dict | None) -> str:
+    """Fixed-mode probability at the middle saved risk; no finished attempts means unknown."""
+    rows = sorted((card or {}).get("rows") or [], key=lambda r: r["risk"])
+    if not rows or (card or {}).get("status") != "ok":
+        return DASH
+    row = rows[len(rows) // 2]
+    return _pct(row.get("pass_probability")) if row.get("attempts") else DASH
 
 
 def _share(count: int, attempts: int) -> str:
@@ -130,7 +140,14 @@ def card_body(status: dict) -> html.Div:
     ad = card.get("adaptive") or {"floor": 0.0, "daily_budget": 0.0}
     how = HOW_TEXT.format(days=card["days"], runs=card["runs"], label=card["label"],
                           floor=ad["floor"], budget=ad["daily_budget"] * PERCENT)  # fmt: skip
-    return html.Div([_table(card), html.Div(how, className="pf-how")])
+    return html.Div(
+        [
+            html.Div(middle_pass(card), className="pf-pass"),
+            html.Div("Pass probability · middle risk · Fixed", className="pf-note"),
+            info(how),
+            details("Details", html.Div(_table(card), className="pf-table-scroll")),
+        ]
+    )
 
 
 def timer_disabled(status: dict) -> bool:
@@ -207,16 +224,17 @@ def _mc_block(run_id: str, results_dir: Path) -> html.Div:
                                 style=out["cancel_style"]),
                     html.A("Open report", id="mc-open", href=out["open_href"], target="_blank",
                            rel="noopener", className="mc-btn mc-open", style=out["open_style"]),
-                    html.Span(out["status"], id="mc-status", className="mc-status"),
                 ],
                 className="mc-row",
             ),
-            html.Div(html.Div(id="mc-fill", className="mc-fill", style=out["fill_style"]),
-                     id="mc-track", className=out["track_class"], style=out["track_style"]),
-            html.Div(
+            details("Progress", html.Div([
+                html.Span(out["status"], id="mc-status", className="mc-status"),
+                html.Div(html.Div(id="mc-fill", className="mc-fill", style=out["fill_style"]),
+                         id="mc-track", className=out["track_class"], style=out["track_style"]),
+            ])),
+            info(
                 "Runs all four Monte Carlo kinds on this run and writes a report (about 35 minutes "
                 "with kind D, the random price paths).",
-                className="pf-how",
             ),
             dcc.Interval(id="mc-timer", interval=MC_REFRESH_MS, disabled=out["timer_disabled"]),
         ],
@@ -224,15 +242,15 @@ def _mc_block(run_id: str, results_dir: Path) -> html.Div:
     )  # fmt: skip
 
 
-def layout(run_id: str, folder: Path, results_dir: Path = RESULTS_DIR) -> html.Details:
+def layout(run_id: str, folder: Path, results_dir: Path = RESULTS_DIR) -> html.Div:
     """The card (open by default, folds) with the firm dropdown, the numbers and the Monte
     Carlo block; shows a cached card at once, else polls (the poll starts the calculation)."""
     cached = pj.peek(folder, prop_card.DEFAULT_FIRM)
     status = {"state": "ready", "card": cached} if cached else {"state": "running", "elapsed": 0.0}
     firms = [{"label": p.label, "value": k} for k, p in prop_card.FIRMS.items()]
-    return html.Details(
+    return html.Div(
         [
-            html.Summary("Prop firm", className="rs-section-title pf-summary"),
+            html.Div("Prop firm", className="rs-section-title pf-summary"),
             html.Div(
                 [
                     dcc.Dropdown(id="pf-firm", options=firms, value=prop_card.DEFAULT_FIRM,
@@ -245,12 +263,21 @@ def layout(run_id: str, folder: Path, results_dir: Path = RESULTS_DIR) -> html.D
                 className="pf-inner",
             ),
         ],
-        open=True,
         className="pf-card",
     )  # fmt: skip
 
 
 def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
+    @app.callback(
+        Output("rs-prop-pass", "children"),
+        Input("pf-body", "children"),
+        State("pf-firm", "value"),
+        State("rs-run-id", "data"),
+    )
+    def _strip_pass(_, firm, run_id):
+        folder = run_folder(run_id, results_dir)
+        return middle_pass(pj.peek(folder, firm or prop_card.DEFAULT_FIRM)) if folder else DASH
+
     @app.callback(
         Output("pf-body", "children"),
         Output("pf-timer", "disabled"),

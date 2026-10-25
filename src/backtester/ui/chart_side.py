@@ -22,6 +22,7 @@ from dash import dcc, html
 
 from backtester.analytics.metrics import summarize
 from backtester.analytics.records import TradeRecord, read_trades
+from backtester.ui.layout import key_strip
 from backtester.ui.pages import results
 
 MAX_LISTED = 40  # trades listed in the card; more are counted ("+N more: zoom in")
@@ -162,7 +163,29 @@ def result_body(summary: dict | None) -> list:
     ]
 
 
-def trade_item(trade: TradeRecord) -> html.Button:
+def result_strip(summary: dict | None) -> html.Div:
+    """Newest-run numbers. Spec: design/ui-proposal.md › Page: Chart."""
+    s = summary or {}
+    items = [
+        {"label": "Net R", "value": results.fmt_r(s.get("net_r"))},
+        {"label": "Win rate", "value": results.fmt_pct(s.get("win_rate"))},
+        {"label": "Trades", "value": str(s["trades"]) if s else "—"},
+        {"label": "Max drawdown", "value": results.fmt_r(s.get("max_drawdown_r"), False)},
+    ]
+    if s:
+        items[0]["sign"] = "green" if s["net_r"] > 0 else "red" if s["net_r"] < 0 else ""
+    return html.Div(
+        [
+            html.Div(key_strip(items), id="ch-card-result"),
+            dcc.Link("Results →", href=s["href"], className="ch-link") if s else None,
+        ],
+        id="chart-key-strip",
+        title=s.get("run_id", NO_RUN_TEXT),
+        className="ch-key-row",
+    )
+
+
+def trade_item(trade: TradeRecord, kind: str = "side-trade") -> html.Button:
     """One row of "Trades in view": direction badge, date · setup, result in R or "open"."""
     long = trade.direction == "long"
     when = utc(trade.entry_candle)
@@ -178,10 +201,15 @@ def trade_item(trade: TradeRecord) -> html.Button:
                 "LONG" if long else "SHORT",
                 className=f"ch-badge {'ch-long' if long else 'ch-short'}",
             ),
-            html.Span(f"{when:%b %d} · {setup}", className="ch-trade-what"),
+            html.Span(
+                f"{trade.symbol} · {when:%Y-%m-%d %H:%M} · {setup}"
+                if kind == "run-trade"
+                else f"{when:%b %d} · {setup}",
+                className="ch-trade-what",
+            ),
             outcome,
         ],
-        id={"type": "side-trade", "index": trade.id},
+        id={"type": kind, "index": trade.id},
         className="ch-trade",
         title=f"{trade.symbol} {when:%Y-%m-%d %H:%M} UTC",
         n_clicks=0,
@@ -213,7 +241,6 @@ def panel(summary: dict | None) -> html.Div:
     """The whole side panel (cards are collapsible; the toolbar button hides the panel)."""
     return html.Div(
         [
-            _card("Backtest result", result_body(summary), "ch-card-result"),
             _card(
                 "Trades in view",
                 html.Div(trades_body([], summary is not None), id="side-trades"),

@@ -348,8 +348,14 @@ def test_chart_page_sweep_controls_moved_into_the_settings():
     assert {"chart-sweep-tol", "chart-sweep-cancel", "chart-sweep-n", "chart-sweep-top",
             "chart-sweep-tweak"} <= ids  # fmt: skip
     text = text_of(page)
-    # two collapsible blocks in the Settings popover: Chart Settings and Chart Overlays
-    assert text.count('"type": "Details"') == 2 and "Account connection" not in text
+    # V2.5c: settings and sweep folds; overlays and modal groups also use Details.
+    assert "Account connection" not in text
+    folds = {d.children[0].children: d for d in _details(page)}
+    assert {"Chart Settings", "Liquidity sweep (temporary)", "Chart Overlays"} <= folds.keys()
+    assert not any(
+        getattr(folds[k], "open", False)
+        for k in ("Chart Settings", "Liquidity sweep (temporary)", "Chart Overlays")
+    )
 
 
 def _nested_lists(node, path="root") -> list[str]:
