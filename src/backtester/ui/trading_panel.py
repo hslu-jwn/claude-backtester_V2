@@ -46,6 +46,7 @@ from backtester.live.trading_settings import (
     load_trading_settings,
     save_trading_settings,
 )
+from backtester.ui.layout import details, info
 
 PASSWORD_SAVED = "saved, leave empty to keep it"
 PASSWORD_NONE = "password"
@@ -218,7 +219,7 @@ def _row(label: str, control, help_: str = "") -> html.Div:
             html.Div(
                 [
                     html.Div(label, className="st-label"),
-                    html.Div(help_, className="st-help") if help_ else None,
+                    info(help_) if help_ else None,
                 ],
                 className="st-text",
             ),
@@ -274,59 +275,72 @@ def layout(open_: bool = False) -> html.Details:
                 "Empty: the installed / running MetaTrader 5.",
             ),
             html.Div("Symbols on the server", className="st-section"),
-            html.Div(
+            info(
                 "The broker's name for each symbol (e.g. with a suffix). "
                 "python -m backtester.tools.mt5_info finds them.",
-                className="st-help st-section-help",
             ),
             *[_row(symbol, _input(f"tr-sym-{symbol}")) for symbol in SYMBOLS],
             html.Div(id="tr-clock", className="st-help"),
-            html.Div("Telegram", className="st-section"),
-            html.Div(
-                "Messages and commands (/status, /stop, /emergency) for the live bot. Create a "
-                "bot with @BotFather for the token; the chat id is your chat with that bot. "
-                "Stored only in the Windows Credential Manager.",
-                className="st-help st-section-help",
-            ),
-            _row(
-                "Bot token",
-                dcc.Input(
-                    id="tr-tg-token",
-                    type="password",
-                    className="st-input",
-                    placeholder=TOKEN_NONE,
-                    autoComplete="new-password",
+            details(
+                "Telegram",
+                html.Div(
+                    [
+                        info(
+                            "Messages and commands (/status, /stop, /emergency) for the live bot. Create a "
+                            "bot with @BotFather for the token; the chat id is your chat with that bot. "
+                            "Stored only in the Windows Credential Manager.",
+                        ),
+                        _row(
+                            "Bot token",
+                            dcc.Input(
+                                id="tr-tg-token",
+                                type="password",
+                                className="st-input",
+                                placeholder=TOKEN_NONE,
+                                autoComplete="new-password",
+                            ),
+                            "Never shown again after saving.",
+                        ),
+                        _row("Chat id", _input("tr-tg-chat", autoComplete="off"), "A number."),
+                        html.Div(
+                            [
+                                html.Button("Save Telegram", id="tr-tg-save", className="st-btn"),
+                                html.Button(
+                                    "Send test message", id="tr-tg-test", className="st-btn"
+                                ),
+                                html.Span(id="tr-tg-status", className="st-help"),
+                            ],
+                            className="tr-actions",
+                        ),
+                    ]
                 ),
-                "Never shown again after saving.",
             ),
-            _row("Chat id", _input("tr-tg-chat", autoComplete="off"), "A number."),
-            html.Div(
-                [
-                    html.Button("Save Telegram", id="tr-tg-save", className="st-btn"),
-                    html.Button("Send test message", id="tr-tg-test", className="st-btn"),
-                    html.Span(id="tr-tg-status", className="st-help"),
-                ],
-                className="tr-actions",
-            ),
-            html.Div("Demo test orders", className="st-section"),
-            html.Div(
-                "Demo accounts only (DEMO LOCK): buy and sell 2 x the minimum lot with SL "
-                "and TP, move the SL, close half, close the rest. Nothing stays open.",
-                className="st-help st-section-help",
-            ),
-            html.Div(
-                [
-                    dcc.Dropdown(
-                        id="tr-test-symbol",
-                        options=list(SYMBOLS),
-                        value=SYMBOLS[0],
-                        clearable=False,
-                        searchable=False,
-                        className="tr-test-symbol",
-                    ),
-                    html.Button("Run demo test orders", id="tr-orders", className="st-btn"),
-                ],
-                className="tr-actions",
+            details(
+                "Demo test orders",
+                html.Div(
+                    [
+                        info(
+                            "Demo accounts only (DEMO LOCK): buy and sell 2 x the minimum lot with SL "
+                            "and TP, move the SL, close half, close the rest. Nothing stays open.",
+                        ),
+                        html.Div(
+                            [
+                                dcc.Dropdown(
+                                    id="tr-test-symbol",
+                                    options=list(SYMBOLS),
+                                    value=SYMBOLS[0],
+                                    clearable=False,
+                                    searchable=False,
+                                    className="tr-test-symbol",
+                                ),
+                                html.Button(
+                                    "Run demo test orders", id="tr-orders", className="st-btn"
+                                ),
+                            ],
+                            className="tr-actions",
+                        ),
+                    ]
+                ),
             ),
             dcc.Loading(html.Pre(id="tr-result", className="tr-result"), type="dot"),
         ],

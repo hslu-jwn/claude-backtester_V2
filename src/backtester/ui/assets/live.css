@@ -402,3 +402,24 @@ details[open] > .lv-summary::before {
   justify-content: flex-end;
   margin-bottom: 6px;
 }
+
+/* V2.5d: chart, setup side panel, and persistent tab panels. */
+.lv-page { padding: 0 0 24px; }
+.lv-strip { display: block; }
+.lv-strip .lv-header { border: 0; padding: 0 0 12px; background: transparent; }
+.lv-strip .lv-cards { gap: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.lv-strip .lv-cards > .lv-card { border: 0; border-radius: 0; padding: 8px 12px; background: transparent; }
+.lv-strip .lv-cards > .lv-card + .lv-card { border-left: 1px solid var(--line); }
+.lv-strip .lv-big { font-size: var(--font-20); }
+.lv-strip .lv-strategy { font-size: var(--font-15); }
+.lv-strip .lv-metas { font-size: var(--font-12); }
+.lv-page .ui-main-row { margin-top: 16px; }
+.lv-page .ui-side .lv-funnels { grid-template-columns: 1fr; gap: 12px; }
+.lv-page .ui-side .lv-step { gap: 8px; padding: 2px 0; }
+.lv-tab-content { padding: 16px; background: var(--panel); overflow-x: auto; }
+.lv-msg:empty { display: none; }
+.lv-page #connection { margin: 0 16px; }
+.lv-conn .ui-details { margin-top: 12px; }
+@media (max-width: 1000px) {
+  .lv-strip .lv-cards { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+}

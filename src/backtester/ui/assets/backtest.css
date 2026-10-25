@@ -188,3 +188,26 @@ body:has(.bj-page) {
     border-width: 0;
   }
 }
+
+/* V2.5d: compact strip and list in the shared skeleton. */
+.bj-page { padding: 0 0 24px; }
+.bj-card { max-width: none; margin: 16px 0; padding: 20px; }
+.bj-strip { flex-wrap: wrap; }
+.bj-head { flex: 1; min-width: 240px; }
+.bj-state { display: inline-block; padding: 3px 10px; border: 1px solid var(--line); border-radius: var(--radius); font-size: var(--font-12); }
+.bj-strip .bj-strategy, .bj-metas { display: inline; color: var(--muted); font-size: var(--font-12); }
+.bj-meta { margin-left: 12px; }
+.bj-strip .bj-actions { margin: 0 0 0 auto; }
+.bj-list-head { display: flex; align-items: center; gap: 12px; font-size: var(--font-15); }
+.bj-row { grid-template-columns: 150px minmax(180px, 1.4fr) minmax(90px, 1fr) 70px 90px; }
+.bj-days { display: none; }
+.bj-card:has(.bj-column-toggle[open]) .bj-days { display: block; }
+.bj-card:has(.bj-column-toggle[open]) .bj-row { grid-template-columns: 150px minmax(180px, 1.4fr) minmax(90px, 1fr) 190px 70px 90px; }
+.bj-column-toggle { width: fit-content; margin-top: 12px; }
+.bj-column-toggle > span { display: none; }
+.bj-risk-link { display: block; margin: 0 16px; color: var(--muted); font-size: var(--font-12); }
+@media (max-width: 760px) {
+  .bj-card { overflow-x: auto; }
+  .bj-row { min-width: 640px; }
+  .bj-card:has(.bj-column-toggle[open]) .bj-row { min-width: 850px; }
+}

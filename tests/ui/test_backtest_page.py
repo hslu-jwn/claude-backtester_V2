@@ -105,7 +105,8 @@ def test_failed_and_cancelled_jobs_say_so_and_stay_on_the_page():
     run = begin()
     run.finished, run.cancelled = True, True
     out = backtest.poll_outputs(bj.snapshot(bj.current(), now=101.0))
-    assert out["title"] == "Backtest cancelled" and "Nothing was saved" in out["message"]
+    # V2.5d proposal: message line only on error; cancellation becomes a short toast.
+    assert out["title"] == "Backtest cancelled" and out["message"] == ""
     assert out["timer_disabled"] is True
 
 
@@ -188,9 +189,9 @@ def test_a_cancelled_run_closes_the_page_and_shows_the_list_with_a_toast(tmp_pat
     run.finished, run.cancelled = True, True
     page = text(backtest.page(tmp_path))
     assert "bj-cancel" not in page and "bj-fill" not in page
-    assert "Backtest cancelled" in page and "/results/20261008-120000_XAUUSD" in page
+    assert "Cancelled" in page and "/results/20261008-120000_XAUUSD" in page
     assert bj.current() is None  # the job is gone: the next visit shows the plain list
-    assert "Backtest cancelled" not in text(backtest.page(tmp_path))
+    assert "bj-toast" not in text(backtest.page(tmp_path))
 
 
 def test_poll_swaps_in_the_list_once_the_cancel_has_really_stopped(tmp_path):
@@ -200,7 +201,7 @@ def test_poll_swaps_in_the_list_once_the_cancel_has_really_stopped(tmp_path):
     assert backtest.cancel_page(bj.snapshot(bj.current(), now=101.0), tmp_path) is no_update
     run.finished, run.cancelled = True, True
     swapped = backtest.cancel_page(bj.snapshot(bj.current(), now=102.0), tmp_path)
-    assert "Backtest cancelled" in text(swapped) and bj.current() is None
+    assert "Cancelled" in text(swapped) and bj.current() is None
 
 
 def test_app_routes_backtest_and_the_nav_marks_it():
