@@ -22,6 +22,30 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 Limits seen: Codex hit its limit twice (about 20:50 and 04:25; reset after ~4.5 h);
 Antigravity (Gemini + Claude 4.6, one shared weekly quota) is empty until about 2026-10-29.
 
+## Strategy profiles, development period, spec defaults (2026-10-25)
+
+`python -m backtester.tools.strategy_profile --strategy <name>` for all 7 strategies (current
+defaults incl. TP penetration 0.5 + ask, intrabar M1), results in `results/profiles/`. Best cells
+by **detrended** R per trade (>= 30 trades); "lower90" = BCa 90 % lower bound. These are
+descriptive cells picked after the fact, **not** a significance test (many cells were looked at).
+
+| Strategy | Trades | Net R | Best cells (detrended R/trade, lower90) |
+|---|---|---|---|
+| 1 Session zones | 20,167 | -4,556 | London session -0.12 (-0.14); everything negative |
+| 2 NY index sweep | 1,381 | -328 | sideways / high vol -0.08 (-0.17); all negative |
+| 3 No-wick | 42,448 | -11,498 | London -0.18 (-0.19); all negative |
+| 4 Trend following | 1,027 | -182 | **GBPJPY +0.16 (+0.02, 200 trades, the only positive lower bound)**; sideways / low vol raw +14.9 R but detrended -0.03 |
+| 5 Gap fade | 2,420 | -83 | sideways / low vol +0.05 (-0.01, 406 trades); trend_up / low +0.02 |
+| 6 Opening range | 3,318 | -199 | trend_up / low -0.01; sideways / high -0.01: near zero, no edge |
+| 7 Gap momentum | 975 | -12 | sideways / high vol +0.03 (-0.01, 285 trades) |
+
+Reading (Opus): no strategy has a robust edge in any condition. Candidates worth a researched
+follow-up, not a conclusion: strategy 4 on GBPJPY (the only positive lower bound; check it as a
+pre-registered hypothesis on the MT5 test period, it was found by looking at 30+ cells), and the
+quiet sideways regime for the two gap strategies (5 and 7 both best there, in line with mean
+reversion working in noise, Kaufman). For combining (V2.7): 4 trend-following and 5 / 7 gap
+strategies prefer opposite regimes, which is the kind of pair the portfolio looks for.
+
 ## Research runs
 
 (none yet; V2.6 starts after the regime classifier spec is accepted)

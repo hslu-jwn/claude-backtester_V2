@@ -73,7 +73,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the trades of any strategy on the chart; the trade itself is enough, confluences only when
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
-- ☐ **V2.4c Honesty tooling before V2.6** (audit 2026-10-23, `docs/review/backtest-audit.md`;
+- ◐ **V2.4c Honesty tooling before V2.6** (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
+  done; open: spread-table measurement, news-day split) (audit 2026-10-23, `docs/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
   effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
   user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
@@ -81,7 +82,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
   market, expectation haircut.
-- ☐ **V2.4d Book requirements** (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
+- ◐ **V2.4d Book requirements** (2026-10-23 / 24: items 1-9 done; open: the user's choice of
+  the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
   `docs/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
   net R series of every variant (trial log / runner); (2) daily returns marked to market (open
   trades valued each day, not booked at exit); (3) take profits and limit entries fill only on
@@ -102,10 +104,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
   `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)
   stay.
-- ☐ **V2.5 App redesign** (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
+- ◐ **V2.5 App redesign** (2026-10-25: V2.5a-d done: dark theme, top bar, Research cards,
+  Chart / Results / Backtest / Live in the new skeleton, browser-checked by Opus; open: the
+  user's look and ok, Fast vs Visual mode identical-trades test) (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
   vs "Details" per page (list to the user first), research page as one vertical list of
   cards, Fast mode (headless) vs Visual mode with identical trade lists.
-- ☐ **V2.6 Continuous research:** research-based strategies only, job queue (≈8 workers,
+- ◐ **V2.6 Continuous research:** (2026-10-25: regime classifier and strategy profile built,
+  all 7 strategies profiled, `docs/research-log.md`) research-based strategies only, job queue (≈8 workers,
   temperature guard, resumable), 3 lanes in worktrees, Monte Carlo, parameter stability,
   regime breakdown (regime classifier in `analytics/`, spec first, user decides), warning flags,
   research cards, `docs/research-log.md`.
