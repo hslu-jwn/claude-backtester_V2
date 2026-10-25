@@ -74,7 +74,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
 - ◐ **V2.4c Honesty tooling before V2.6** (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
-  done; open: spread-table measurement, news-day split) (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
+  trade +25 to +90 % at the index open, no-wick nearly x2; default stays fixed until the user
+  decides); open: the user's spread-table decision, news-day split (the user gathers news data)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
   effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
   user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
