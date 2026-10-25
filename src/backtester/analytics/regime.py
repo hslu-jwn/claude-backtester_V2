@@ -140,8 +140,20 @@ class RegimeHistory:
         return self._labels[i] if i >= 0 else RegimeLabel()
 
 
+def _blocks(days):
+    """(first, last) of each run of consecutive cached days."""
+    out = []
+    for day in sorted(set(days)):
+        if out and day == out[-1][1] + timedelta(days=1):
+            out[-1][1] = day
+        else:
+            out.append([day, day])
+    return out
+
+
 def label_trades(trades, sources, config=None):
-    """One D1 adapter read per symbol, all available pre-entry history; no trade mutation."""
+    """One D1 adapter read per symbol and run of consecutive cached days (the cache has gaps,
+    e.g. a closed 1 January), all available pre-entry history; no trade mutation."""
     trades = list(trades)
     cfg = config or RegimeConfig()
     histories = {}
@@ -149,10 +161,13 @@ def label_trades(trades, sources, config=None):
         entries = [t.entry_time for t in trades if t.symbol == symbol]
         end = max(entries)
         days = [d for d in sources.cached_days(symbol) if d <= end.date()]
-        candles = []
-        if days:
-            start = datetime.combine(min(days), time(), UTC)
-            if start < end:
-                candles = sources.adapter(symbol).fetch(symbol, cfg.timeframe, start, end)
+        by_ts = {}
+        for first, last in _blocks(days):
+            start = datetime.combine(first, time(), UTC)
+            stop = min(datetime.combine(last + timedelta(days=1), time(), UTC), end)
+            if start < stop:
+                for c in sources.adapter(symbol).fetch(symbol, cfg.timeframe, start, stop):
+                    by_ts[c.ts] = c
+        candles = [by_ts[ts] for ts in sorted(by_ts)]
         histories[symbol] = RegimeHistory(CandleSeries(symbol, cfg.timeframe, candles), cfg)
     return [histories[t.symbol].at(t.entry_time) for t in trades]

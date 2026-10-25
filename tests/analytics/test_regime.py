@@ -125,3 +125,23 @@ def test_one_adapter_read():
     trades = [SimpleNamespace(symbol="XAUUSD", entry_time=datetime(2020, 2, 1, tzinfo=UTC))] * 2
     result = label_trades(trades, sources)
     assert len(result) == 2 and calls == [("XAUUSD", Timeframe.D1)]
+
+
+def test_cache_gap_reads_each_block_and_joins_them():
+    """2026-10-25: a missing cached day (closed 1 January) must not stop the labelling."""
+    calls = []
+    s = series(list(range(100, 130)))
+    candles = list(s.view(len(s) - 1))
+
+    class Adapter:
+        def fetch(self, symbol, timeframe, start, end):
+            calls.append((start.date(), end.date()))
+            return [c for c in candles if start <= c.ts < end]
+
+    first = candles[0].ts.date()
+    days = [first + timedelta(days=i) for i in range(30) if i != 10]  # gap on day 10
+    sources = SimpleNamespace(adapter=lambda s: Adapter(), cached_days=lambda s: days)
+    entry = candles[-1].ts + timedelta(days=2)
+    [label] = label_trades([SimpleNamespace(symbol="XAUUSD", entry_time=entry)], sources)
+    assert len(calls) == 2 and calls[0][1] == first + timedelta(days=10)
+    assert label.regime_trend == "trend_up"
