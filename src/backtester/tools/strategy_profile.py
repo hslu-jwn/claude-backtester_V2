@@ -11,9 +11,10 @@ from backtester.analytics.records import read_trades
 from backtester.analytics.trial_log import append, make_record
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
 from backtester.paths import RESULTS_DIR
-from backtester.runner import RunSettings, run_backtests
+from backtester.runner import RunSettings
 from backtester.strategy.registry import REGISTRY
 from backtester.tools.entry_screen import DEV_END, START, STRATEGY_SYMBOLS, parse_sets
+from backtester.tools.research import run_period
 
 
 def write(result, folder):
@@ -94,7 +95,8 @@ def main(argv=None):
             else SymbolSources.single(args.cache_dir, symbols)
         )
         print(f"Profiling {name}: {symbols}, {args.start}..{args.end}", flush=True)
-        run = run_backtests(
+        # run_period splits the range at cache gaps (e.g. a closed 1 January), like research
+        run = run_period(
             symbols,
             args.start,
             args.end,

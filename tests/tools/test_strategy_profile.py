@@ -11,7 +11,7 @@ from backtester.tools import strategy_profile as tool
 
 
 def test_period_guard(monkeypatch):
-    monkeypatch.setattr(tool, "run_backtests", lambda *a, **k: pytest.fail("must not run"))
+    monkeypatch.setattr(tool, "run_period", lambda *a, **k: pytest.fail("must not run"))
     with pytest.raises(SystemExit, match="test period"):
         tool.main(["--strategy", "trend_following", "--end", "2022-01-01"])
 
@@ -23,7 +23,7 @@ def test_all_defaults_outputs_and_trials(tmp_path, monkeypatch):
         calls.append((symbols, settings, kw))
         return SimpleNamespace(trades=[])
 
-    monkeypatch.setattr(tool, "run_backtests", run)
+    monkeypatch.setattr(tool, "run_period", run)
     monkeypatch.setattr(
         tool,
         "calculate",
@@ -76,7 +76,7 @@ def test_overrides_and_explicit_test_period(tmp_path, monkeypatch):
         calls.append(args)
         return SimpleNamespace(trades=[])
 
-    monkeypatch.setattr(tool, "run_backtests", run)
+    monkeypatch.setattr(tool, "run_period", run)
     monkeypatch.setattr(
         tool,
         "calculate",
