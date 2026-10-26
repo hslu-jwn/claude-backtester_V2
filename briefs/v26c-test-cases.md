@@ -57,3 +57,37 @@ or injected; no real backtest runs and no process outlives a test.
 | D12 | unknown lane | `check` / `remove` of an unknown name: clear error, exit 1 |
 | D13 | CLI | `main(["create", ...])`, `list`, `check`, `remove` return the exit codes above |
 | D14 | no git side effects in this repo | all tests use `tmp_path` repos with a local user.name / email; none touches the repository the tests run from |
+
+## C. Queue panel on the Research page (`ui/queue_model.py`, `ui/queue_panel.py`, `ui/pages/research.py`)
+
+Tests: `tests/ui/test_queue_panel.py`. A real `Queue` in `tmp_path` (jobs written as files, never run); the
+runner is never started: the Start button gets an injected fake spawner, a fake queue records
+cancel / retry / stop calls.
+
+| # | Case | Expectation |
+|---|---|---|
+| C1 | Layout, empty queue | the page renders; key strip shows pending / running / done / failed = 0, "no sensor", paused no, runner no; "No jobs." text; Start enabled, Stop disabled; `qp-interval` is 5000 ms |
+| C2 | Layout with jobs | pending, running, done, failed and cancelled jobs each show name, state chip (class per state), elapsed, attempts `n / max`; Cancel only on pending / running, Retry only on failed / cancelled; log tail in a `details` (closed) |
+| C3 | Key strip values | counts follow `queue_status`; temperature shows e.g. `63 °C` or "no sensor" when `None`; paused yes / no; runner "yes" / "no" (+ "stopping") |
+| C4 | Runner alive | Start disabled, Stop enabled; runner not alive: Start enabled, Stop disabled |
+| C5 | Start | calls the injected spawner exactly once with `python -m backtester.tools.queue run --workers 8` in the V2 root; message says started |
+| C6 | Start while a runner is alive | the spawner is not called; message says a runner is already running |
+| C7 | Start twice quickly | the second click inside the start grace period (runner lock not yet taken) does not spawn again; after the grace period it may |
+| C8 | Spawner fails (OSError) | message with the error, no crash, no second spawn counted as started |
+| C9 | Real spawner flags | `spawn_detached` passes DETACHED_PROCESS / new process group (Windows) or `start_new_session` (POSIX), stdin / stdout redirected to files, no pipe to the page (tested with a fake `Popen`, nothing is started) |
+| C10 | Stop | alive runner: `queue.stop()` called once; no runner alive: not called (a stale stop file would stop the next runner), message says so |
+| C11 | Cancel / Retry | call `queue.cancel(id)` / `queue.retry(id)`; a `ValueError` from the queue (wrong state, child still exiting) becomes a message, no crash; an id that is not a job id is refused |
+| C12 | Queue a grid | calls `add_grid(queue, toml)` once, without `retest` (and no `dev_only` / `cwd`); a path not in the grid dropdown (arbitrary file, `..`) is refused; no value selected -> message, no call |
+| C13 | Duplicate grid | the duplicate warning of `Queue.add` is shown in the message, the job is still queued |
+| C14 | No retest anywhere | the panel module and the layout contain no "retest" option (text and ids) |
+| C15 | Grid dropdown | lists `research/grids/*.toml` sorted, labelled with the file name; missing folder -> empty options |
+| C16 | Log tail | last 20 lines of the job log; a missing log -> "no log yet"; a huge log is read from its end only; non-UTF-8 bytes do not crash |
+| C17 | Job order and cap | running first, then pending, failed, cancelled, done (newest first inside a state); at most 50 rows, then "N more" |
+| C18 | Elapsed | running: now - started; finished: ended - started; pending: "–"; `h m s` formatting; unparsable timestamps -> "–" |
+| C19 | Broken job file | listed in the strip tooltip / message, rest of the list still renders |
+| C20 | Card shows pipeline state | `queued`, `step 2 of 3: monte_carlo`, `done`, `failed: monte_carlo: boom` appear on the card of a research row; plain runs and research rows with no `pipeline.json` and no job show no pipeline chip |
+| C21 | Pending pipeline job | a pending pipeline job for the grid -> card says "queued", even when `pipeline.json` says done / failed from an earlier run |
+| C22 | Cancelled / failed job vs stale running | job cancelled or failed while `pipeline.json` still says running -> card shows the job's state ("job cancelled" / "job failed (exit N)"), not "step x of n" |
+| C23 | Running job, normal flow | job running + `pipeline.json` running -> "step x of n: name"; job done + pipeline done -> "done"; pipeline failed (job failed after retries) -> "failed: step: error" |
+| C24 | Job to folder mapping | a pipeline job's grid file (relative to the V2 root or the job's lane cwd, absolute, unreadable or invalid grid) maps to the research folder id of `research_folder`; an invalid grid is skipped, never raises; non-pipeline jobs are ignored; several jobs for one grid: the active one wins, else the newest |
+| C25 | Layout of the existing page | `rr-cards`, `rr-reload`, `rr-keys`, filters and the callbacks of the existing tests still exist; the new callbacks register without duplicate-output errors |

@@ -594,6 +594,18 @@ queued while a pipeline job for the grid is pending in the queue. To queue a gri
 use `tools.queue.add_grid(queue, toml, cwd=None) -> Job` (what `add-grid` calls; job name
 `pipeline <grid stem>`, argv `["backtester.tools.research_pipeline", "<toml>"]`).
 
+### Queue panel (Research page)
+
+The Research page shows the queue above the cards (`ui/queue_panel.py`, `ui/queue_model.py`):
+key strip (pending / running / done / failed, CPU temperature or "no sensor", paused, runner
+alive), **Start runner** (a detached `queue run --workers 8` that keeps running after the page
+closes; refused while a runner is alive; user 2026-10-26), **Stop** (graceful), per job
+**Cancel** / **Retry**, **Queue a grid** (`research/grids/*.toml` -> the development-only
+pipeline; the one-time MT5 test stays CLI only, user 2026-10-26). Running, pending and failed
+jobs are listed; finished and cancelled ones sit in a closed "Finished (N)" section. Every card
+of a grid shows its pipeline state (queued / step x of n / done / failed + error). Refresh every
+5 s while the page is open.
+
 ## Lanes
 
 Spec: ROADMAP V2.6 step 3, decision of the user 2026-10-26: parallel strategy work in git

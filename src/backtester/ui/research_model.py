@@ -327,6 +327,7 @@ def _research_rows(folder: Path) -> tuple[list[dict], set[str]]:
                 **dict.fromkeys(RESEARCH_FIELDS),
                 **(diagnostic if chosen.get("id") == vid else {}),
                 "is_research": True,
+                "research_id": folder.name,  # results/research/<id>: pipeline.json lives there
                 "idea": info.get("idea") or _strategy_label(strategy),
                 "test_period": _period(
                     _dict(_dict(info.get("periods")).get("test")).get("start"),

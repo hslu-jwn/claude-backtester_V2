@@ -525,7 +525,7 @@ def test_card_paging_wrapping_and_control_ids(results_dir):
     nodes = list(walk(research.layout(results_dir)))
     assert not any(isinstance(n, dash_table.DataTable) for n in nodes)
     assert all(n.open is False for n in nodes if isinstance(n, html.Details))
-    ids = {getattr(n, "id", "") for n in nodes}
+    ids = {i for n in nodes if isinstance(i := getattr(n, "id", ""), str)}  # pattern ids are dicts
     assert {
         "rr-cards",
         "rr-sort",
@@ -620,3 +620,21 @@ def test_optional_diagnostics_render_as_wrapping_metrics():
     assert not any(isinstance(n, html.Pre) for n in nodes)
     rendered = _json(nodes)
     assert "Bounds R" in rendered and "0.25" in rendered
+
+
+def test_research_rows_name_their_folder_and_the_card_shows_the_pipeline(results_dir):
+    rows = rm.load_rows(results_dir)
+    research_rows = [r for r in rows if r["is_research"]]
+    assert research_rows and all(r["research_id"] == RID for r in research_rows)
+    assert all("research_id" not in r or not r["research_id"] for r in rows if not r["is_research"])
+    folder = results_dir / "research" / RID
+    (folder / "pipeline.json").write_text(
+        json.dumps(
+            {"state": "running", "current": "monte_carlo",
+             "steps": [{"name": n, "state": "pending"} for n in ("research", "monte_carlo", "card_inputs")]}
+        ),
+        encoding="utf-8",
+    )  # fmt: skip
+    page = _json(research.layout(results_dir))
+    assert "Pipeline: step 2 of 3: monte_carlo" in page
+    assert "qp-panel" in page

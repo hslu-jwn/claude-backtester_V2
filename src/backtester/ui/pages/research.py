@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dash import ALL as EVERY  # the page's own ALL is the strategy / symbol filter value
 from dash import Dash, Input, Output, State, ctx, dcc, html
 
 from backtester.paths import RESULTS_DIR
+from backtester.ui import queue_model as qm
+from backtester.ui import queue_panel
 from backtester.ui import research_model as rm
 from backtester.ui.layout import details, info, key_strip, page
 
@@ -14,6 +17,8 @@ PATH = "/research"
 ALL = "__all__"
 TITLE = "Research"
 HINT = "Expand a card for diagnostics and Open results. Research diagnostics: chosen variant only."
+PIPELINE_ID = "rr-pipeline"
+PIPELINE_HINT = "Research pipeline of this grid: queue job and pipeline.json"
 EMPTY_TEXT = "No runs yet."
 PAGE_SIZE = 50
 VERDICT_COLOURS = {
@@ -136,6 +141,21 @@ def diagnostic_tiles(data, prefix=""):
     )
 
 
+def pipeline_chip(row: dict):
+    """The pipeline state of a research card ("queued", "step 2 of 3: ...", "done", "failed:
+    ..."); a plain run has none. The text is empty (chip hidden) when the grid has no pipeline
+    state; the page refreshes it with the queue panel (`register_callbacks`)."""
+    if not row.get("is_research"):
+        return None
+    text = row.get("pipeline")
+    return html.Div(
+        f"Pipeline: {text}" if text else "",
+        id={"type": PIPELINE_ID, "rid": row.get("research_id") or "", "card": row["source"]},
+        title=PIPELINE_HINT,
+        className=qm.pipeline_class(text),
+    )
+
+
 def card(row: dict) -> html.Details:
     """A wrapping summary and closed diagnostic fold, with its existing results link."""
     verdict = row.get("verdict_colour", row.get("verdict", ""))
@@ -155,6 +175,7 @@ def card(row: dict) -> html.Details:
             html.Div(row.get("idea") or row.get("strategy") or "–", className="rr-idea"),
             html.Div(
                 [
+                    pipeline_chip(row),
                     *[_metric(row, field, "rr-chip") for field in CHIPS],
                     html.Div(
                         flags or "⚠ none",
@@ -276,8 +297,26 @@ def counts(rows):
     )
 
 
-def layout(results_dir: Path = RESULTS_DIR) -> html.Div:
+_ops: dict[str, qm.QueueOps] = {}
+
+
+def queue_ops(results_dir: Path = RESULTS_DIR) -> qm.QueueOps:
+    """The queue actions of this results folder, one per folder (it remembers a runner start)."""
+    key = str(Path(results_dir).resolve())
+    if key not in _ops:
+        _ops[key] = qm.QueueOps(qm.make_queue(results_dir))
+    return _ops[key]
+
+
+def _load(results_dir: Path, ops: qm.QueueOps) -> list[dict]:
     rows = rm.load_rows(results_dir)
+    qm.attach_pipeline(rows, ops.queue, results_dir)
+    return rows
+
+
+def layout(results_dir: Path = RESULTS_DIR, ops: qm.QueueOps | None = None) -> html.Div:
+    ops = ops if ops is not None else queue_ops(results_dir)
+    rows = _load(results_dir, ops)
     cards, exhausted, count = card_view(rows, ALL, ALL, rm.FILTER_ALL, None)
     controls = html.Div(
         [
@@ -348,6 +387,7 @@ def layout(results_dir: Path = RESULTS_DIR) -> html.Div:
             page(
                 html.Div(counts(rows), id="rr-keys"),
                 [
+                    queue_panel.layout(ops),
                     controls,
                     advanced,
                     dcc.Store(id="rr-limit", data=PAGE_SIZE),
@@ -366,7 +406,11 @@ def layout(results_dir: Path = RESULTS_DIR) -> html.Div:
     )
 
 
-def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
+def register_callbacks(
+    app: Dash, results_dir: Path = RESULTS_DIR, ops: qm.QueueOps | None = None
+) -> None:
+    ops = ops if ops is not None else queue_ops(results_dir)
+
     @app.callback(
         Output("rr-cards", "children"),
         Output("rr-more", "hidden"),
@@ -386,7 +430,7 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
     )
     def _refresh(strategy, symbol, flagged, min_trades, sort_by, _reload, _more, limit):
         limit = (limit or PAGE_SIZE) + PAGE_SIZE if ctx.triggered_id == "rr-more" else PAGE_SIZE
-        rows = rm.load_rows(results_dir)
+        rows = _load(results_dir, ops)
         cards, exhausted, count = card_view(
             rows, strategy, symbol, flagged, min_trades, sort_by, limit
         )
@@ -399,3 +443,19 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
             counts(rows),
             limit,
         )
+
+    @app.callback(
+        Output({"type": PIPELINE_ID, "rid": EVERY, "card": EVERY}, "children"),
+        Output({"type": PIPELINE_ID, "rid": EVERY, "card": EVERY}, "className"),
+        Input("qp-interval", "n_intervals"),
+    )
+    def _pipeline(_tick):
+        ids = [o["id"] for o in ctx.outputs_list[0]]
+        texts = qm.pipeline_texts([i["rid"] for i in ids], ops.queue, results_dir)
+        shown = [texts.get(i["rid"]) for i in ids]
+        return (
+            [f"Pipeline: {t}" if t else "" for t in shown],
+            [qm.pipeline_class(t) for t in shown],
+        )
+
+    queue_panel.register_callbacks(app, ops)
