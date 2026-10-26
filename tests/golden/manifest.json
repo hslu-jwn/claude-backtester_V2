@@ -9,9 +9,9 @@
         "GBPJPY"
       ],
       "trade_count": 2964,
-      "runtime_seconds": 26.628624300006777,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 13.568120300000373,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "ny_index_sweep": {
       "symbols": [
@@ -19,9 +19,9 @@
         "US500"
       ],
       "trade_count": 221,
-      "runtime_seconds": 84.86268059999566,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 56.63919309999983,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "no_wick": {
       "symbols": [
@@ -31,9 +31,9 @@
         "US500"
       ],
       "trade_count": 4202,
-      "runtime_seconds": 5.108900099992752,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 4.363584799999899,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "trend_following": {
       "symbols": [
@@ -43,9 +43,9 @@
         "US500"
       ],
       "trade_count": 136,
-      "runtime_seconds": 0.8362754999834578,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 1.756795400000101,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "gap_fade": {
       "symbols": [
@@ -53,9 +53,9 @@
         "US500"
       ],
       "trade_count": 379,
-      "runtime_seconds": 5.187666500016348,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 8.553188299999874,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "opening_range": {
       "symbols": [
@@ -65,20 +65,20 @@
         "US500"
       ],
       "trade_count": 1009,
-      "runtime_seconds": 11.899814499978675,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 15.616015300000072,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     },
     "gap_momentum": {
       "symbols": [
         "XAUUSD"
       ],
       "trade_count": 91,
-      "runtime_seconds": 3.473056299990276,
-      "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-      "date": "2026-10-24T09:08:51+00:00"
+      "runtime_seconds": 3.4837655999999697,
+      "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+      "date": "2026-10-26T15:14:35+00:00"
     }
   },
-  "git_commit": "6718191f5006a8d64065fd2313cc25ec16f6a894",
-  "date": "2026-10-24T09:08:51+00:00"
+  "git_commit": "555c853704c63549547ac5f0264d7e848286eae8",
+  "date": "2026-10-26T15:14:35+00:00"
 }

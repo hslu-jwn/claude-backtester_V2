@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from backtester.analytics.trial_log import append, count_only, read_all
+from backtester.engine.costs import CostConfig
 from backtester.tools import portfolio as tool
 
 START, END = date(2021, 1, 4), date(2021, 4, 30)
@@ -230,7 +231,9 @@ def test_spread_table_is_given_to_the_costs(tmp_path, stub):
     tool.main(argv(tmp_path, "--spread-table", str(sample)))
     assert all(c["settings"].engine.costs.spread_table is not None for c in stub)
     tool.main(argv(tmp_path))
-    assert stub[-1]["settings"].engine.costs.spread_table is None
+    assert (
+        stub[-1]["settings"].engine.costs.spread_table == CostConfig().spread_table
+    )  # no option: the default table
 
 
 def test_same_seed_same_numbers(tmp_path, stub):

@@ -75,8 +75,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
 - ◐ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
   done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
-  trade +25 to +90 % at the index open, no-wick nearly x2; default stays fixed until the user
-  decides); open: the user's spread-table decision, news-day split (moved to V2.4e, 2026-10-26)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  trade +25 to +90 % at the index open, no-wick nearly x2; **default: the median table, set by
+  the user 2026-10-26; re-evaluated after a period of demo trading (V2.4b)**); news-day split
+  moved to V2.4e, 2026-10-26) (audit 2026-10-23, `docs/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
   effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
   user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
@@ -133,7 +134,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   boundary, no `actual` one tick early, blank timestamps, date / range policy, two events at
   one time, duplicate keys fail, EURUSD gets no foreign currencies, hash recorded).
   Not in scope: the live bot (needs a live calendar source), 2015-2019 (raw Forex Factory
-  cache goes back to 2007 if wanted later).
+  cache goes back to 2007 if wanted later). **Rule set by the user, 2026-10-26:** Opus may
+  use `../backtester-news/` and implement V2.4e in the repo once it is due (no extra ask).
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
@@ -149,6 +151,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   temperature guard, resumable), 3 lanes in worktrees, Monte Carlo, parameter stability,
   regime breakdown (regime classifier in `analytics/`, spec first, user decides), warning flags,
   research cards, `docs/research-log.md`.
+  **Order (rule set by the user, 2026-10-26): first build the whole app, then check / test it;
+  intensive research starts only when everything works.** In V2.6 that means the job queue
+  first (plain Python, resumable, ~8 workers, file lock on the trial log, temperature guard
+  reading LibreHardwareMonitor's sensor, which the user installs; pause new jobs above
+  ~85 °C), then lanes and research cards. Pre-registered hypotheses (written now, tested once
+  on MT5 data only when the pipeline is ready, user 2026-10-26): strategy 4 trend following
+  on GBPJPY; gap fade (5) and gap momentum (7) in quiet sideways markets.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 

@@ -55,9 +55,10 @@ SETTINGS = RunSettings(  # read-only mappings like the defaults (pickled for the
     ),
     engine=EngineConfig(
         costs=CostConfig(
+            spread_table=None,
             symbols=MappingProxyType(
                 {**DEFAULT_SYMBOL_COSTS, "GOLD": DEFAULT_SYMBOL_COSTS["XAUUSD"]}
-            )
+            ),
         )
     ),
 )

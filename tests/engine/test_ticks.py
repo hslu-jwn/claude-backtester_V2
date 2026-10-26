@@ -225,7 +225,7 @@ def test_off_and_none_are_exact_legacy_trades():
     missing, _ = setup(tick=None)
     assert [serialize_trade(t) for t in off.run()] == [serialize_trade(t) for t in missing.run()]
     assert off.tick_rounding.orders_moved == missing.tick_rounding.orders_moved == 0
-    assert CostConfig().round_to_tick is False
+    assert CostConfig().round_to_tick is True  # default set by the user 2026-10-26
 
 
 def test_warmup_attempts_excluded():
@@ -252,10 +252,10 @@ def test_default_table_and_settings_grid_panel(tmp_path):
             None if symbol in BINANCE_SYMBOLS else 10 ** -PRICE_DIGITS[symbol]
         )
     key = "engine.costs.round_to_tick"
-    assert {v.path: v for v in leaves()}[key].default is False
+    assert {v.path: v for v in leaves()}[key].default is True
     values = form_values()
-    values[key] = True
-    assert settings_from_values(values).engine.costs.round_to_tick
+    values[key] = False
+    assert not settings_from_values(values).engine.costs.round_to_tick
     assert group_of(key) == "Costs" and "tick" in label_of(key)
     path = tmp_path / "ticks.toml"
     path.write_text(
@@ -491,3 +491,34 @@ def test_panel_exposes_switch_without_tick_metadata_widgets():
     assert key in values
     values[key] = 0.01
     assert settings_from_values(values).engine.costs.for_symbol("XAUUSD").tick_size == 0.01
+
+
+def test_tick_rounding_is_on_by_default():
+    # rule set by the user, 2026-10-26 (results/ticks.md)
+    assert CostConfig().round_to_tick is True
+
+
+def test_a_symbol_without_cost_settings_is_not_rounded_and_does_not_fail():
+    from conftest import build_series
+
+    from backtester.engine.backtest import EngineConfig, run_backtest
+
+    cfg = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
+    assert cfg.costs.round_to_tick
+
+    class Once(Strategy):
+        base_timeframe = Timeframe.M5
+        timeframes = (Timeframe.M5,)
+
+        def on_candle(self, now, views):
+            base = views[Timeframe.M5]
+            if base.cursor != 1:
+                return []
+            return [Order(Direction.BULLISH, base.current.close, 99.95, 100.05)]
+
+    [trade] = run_backtest(
+        Once(),
+        [build_series([(100, 100.1, 99.9, 100)] * 2 + [(100, 100.2, 99.98, 100.1)], symbol="TEST")],
+        cfg,
+    )
+    assert trade.take_profit == 100.05

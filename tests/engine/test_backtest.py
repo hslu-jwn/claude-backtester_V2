@@ -204,6 +204,7 @@ def test_break_even_can_be_switched_off():
 # (it has its own tests in test_spread_scaling.py).
 GOLD_USD6 = CostConfig(
     **TOUCH,
+    spread_table=None,
     spread_price_scaling=False,
     symbols={
         **DEFAULT_SYMBOL_COSTS,
@@ -283,7 +284,7 @@ def test_spread_and_commission_switches_leave_slippage_active():
 
 
 def test_forex_commission_depends_on_the_sl_distance():
-    costs = CostConfig(**TOUCH)
+    costs = CostConfig(**TOUCH, spread_table=None)
     # GBPUSD 20 pips: $5 / (0.002 * 100,000) = 0.025R, spread 0.3 pip = 0.015R
     assert costs.commission_r("GBPUSD", 0.002) == pytest.approx(0.025)
     assert costs.spread_r("GBPUSD", 0.002) == pytest.approx(0.015)

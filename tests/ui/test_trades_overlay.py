@@ -28,8 +28,8 @@ from backtester.detectors.zone import ZoneKind
 from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, PartialExit
-from backtester.settings import settings_from_values, to_json
-from backtester.ui.overlays import OverlayContext, OverlaySettings
+from backtester.settings import from_json, settings_from_values, to_json
+from backtester.ui.overlays import DEFAULT_SETTINGS, OverlayContext, OverlaySettings
 from backtester.ui.trades_overlay import detect_trades
 from backtester.ui.trades_overlay import draw_trades as draw_trade_drawings
 
@@ -69,17 +69,27 @@ class FakeSources:
 
 
 FULL = LONDON + NY_SETUP + TO_TARGET
+# the fixed spread of the test's arithmetic: no spread table (the CostConfig default is the table)
+_base = from_json(DEFAULT_SETTINGS.strategy)
+FIXED_SPREAD = OverlaySettings(
+    strategy=to_json(
+        replace(
+            _base,
+            engine=replace(_base.engine, costs=replace(_base.engine.costs, spread_table=None)),
+        )
+    )
+)
 
 
-def one_trade(ohlc=FULL, timeframe=Timeframe.M5):
+def one_trade(ohlc=FULL, timeframe=Timeframe.M5, settings=DEFAULT_SETTINGS):
     sources = FakeSources(ohlc)
     replay = sources.chart(timeframe)
-    [e] = detect_trades(replay, sources=sources)
+    [e] = detect_trades(replay, settings, sources=sources)
     return e, replay, sources
 
 
 def test_the_scenario_trade_with_its_chart_positions():
-    e, _, _ = one_trade()
+    e, _, _ = one_trade(settings=FIXED_SPREAD)
     t = e.trade
     assert (t.entry, t.initial_stop, t.take_profit) == (110.0, 109.1, pytest.approx(111.08))
     assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.2)

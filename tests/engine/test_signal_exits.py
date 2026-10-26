@@ -18,7 +18,12 @@ LONG, SHORT = Direction.BULLISH, Direction.BEARISH
 NO_COSTS = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
 # synthetic prices around 100: fixed spread arithmetic, price scaling off (test_spread_scaling.py)
 SPREAD_ONLY = EngineConfig(
-    costs=CostConfig(spread_enabled=True, commission_enabled=False, spread_price_scaling=False)
+    costs=CostConfig(
+        spread_enabled=True,
+        commission_enabled=False,
+        spread_price_scaling=False,
+        spread_table=None,
+    )
 )
 ENTRY = (100.0, 100.5, 99.5, 100.0)  # close 100
 QUIET = (100.0, 100.6, 99.6, 100.2)

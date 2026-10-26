@@ -346,7 +346,9 @@ class Backtest:
 
     def _tick_size(self) -> float | None:
         costs = self._config.costs
-        return costs.for_symbol(self._replay.symbol).tick_size if costs.round_to_tick else None
+        symbol = costs.symbols.get(self._replay.symbol) if costs.round_to_tick else None
+        # no cost settings (synthetic test symbols): no tick; the spread lookup still raises
+        return symbol.tick_size if symbol is not None else None
 
     @staticmethod
     def _validate_levels(order: Order, entry: float) -> None:

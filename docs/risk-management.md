@@ -32,7 +32,8 @@ The seven-strategy 2023 measurement informs a later user decision on the default
 
 ### Costs (per symbol)
 - **Tick rounding** (V2.4d item 9, Opus clarifications 2026-10-24):
-  `CostConfig.round_to_tick` defaults to **False**, preserving current execution exactly.
+  `CostConfig.round_to_tick` defaults to **True** (rule set by the user, 2026-10-26; False
+  reproduces the earlier execution).
   When enabled, round strategy order levels at fill using `SymbolCosts.tick_size`;
   None disables rounding for that symbol. Market fills, gap fills at the open and M1
   replay prices remain the observed prices (including an existing gap-open fill when
@@ -105,7 +106,10 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   so it stays the same share of the price. The fill price is the trade's entry; the exit pays the same spread as the entry
   (as before). `CostConfig.spread_price_scaling` (default **True**) switches it off to reproduce old results. The spread
   table (per year and hour, ROADMAP 6.7) is a measurement and is **not** scaled; where it has no value the scaled fixed spread
-  is used. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
+  is used. **Default: the FTMO median table** (rule set by the user, 2026-10-26; re-evaluated after a period of demo
+  trading), shipped as `engine/ftmo_spread_median.json` (copy of `data/spreads/ftmo_spread_median.json`, measured
+  2026-10-15; XAUUSD, GBPUSD, GBPJPY 2015-2026, NAS100 / US500 2021-2026; other symbols keep the fixed spread).
+  `CostConfig(spread_table=None)` gives the fixed spread. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
   (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage follows the same entry-price
   scaling (rule set by the user, 2026-10-22; B4), independently of the spread switch/table. FX is scaled the same way (no special case).
   Reference prices (`REFERENCE_PRICES` in `engine/costs.py`): median M1 bid close over the last 60 cached days of the FTMO MT5

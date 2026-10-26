@@ -99,6 +99,7 @@ def test_from_dict_rejects_bad_content():
 
 def costs(**kw):
     sym = SymbolCosts(spread=0.25, commission_per_lot=0.0, contract_size=100)
+    kw.setdefault("spread_table", None)  # no table unless a test gives one
     return CostConfig(symbols={"XAUUSD": sym, "US500": sym}, **kw)
 
 
@@ -188,3 +189,42 @@ def test_the_engine_without_a_table_is_unchanged():
     (long,) = run(Direction.BULLISH, table_=False)
     assert long.entry_fill == pytest.approx(100.25)
     assert long.spread_r == pytest.approx(0.25 / 2.0)
+
+
+# --- default table (rule set by the user, 2026-10-26) ----------------------------------
+
+
+def test_the_default_cost_config_uses_the_ftmo_median_table():
+    table = CostConfig().spread_table
+    assert isinstance(table, SpreadTable)
+    assert table.stat == "median"
+    assert {"XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"} <= set(table.values)
+    assert table.spread_at("XAUUSD", SUMMER_0930) is not None
+
+
+def test_the_default_table_is_loaded_once_and_shared():
+    assert CostConfig().spread_table is CostConfig().spread_table
+
+
+def test_spread_table_none_still_gives_the_fixed_spread():
+    costs = CostConfig(spread_table=None)
+    fixed = costs.for_symbol("GBPUSD").spread
+    assert costs.spread("GBPUSD", SUMMER_0930) == pytest.approx(fixed)
+
+
+def test_a_symbol_outside_the_default_table_keeps_the_fixed_spread():
+    costs = CostConfig()
+    fixed = CostConfig(spread_table=None)
+    at = SUMMER_0930
+    price = costs.for_symbol("GER40").reference_price
+    assert costs.spread("GER40", at, price) == pytest.approx(fixed.spread("GER40", at, price))
+
+
+def test_the_packaged_table_equals_the_measured_file():
+    from backtester.paths import DATA_DIR
+
+    measured = DATA_DIR / "spreads" / "ftmo_spread_median.json"
+    if not measured.exists():
+        pytest.skip("data/spreads not on this machine")
+    expected = SpreadTable.from_dict(json.loads(measured.read_text(encoding="utf-8")))
+    assert CostConfig().spread_table == expected

@@ -32,7 +32,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   PBO, effective N, Bayesian view, matched monkeys, skill vs trend (detrended), BCa bounds, log
   PF, double-bootstrap drawdown, profile block. Old grid tools deleted (reproduced exactly).
 - Engine (defaults set by the user): TP / limit fill on 0.5 x spread penetration + short TP on
-  the ask; same-candle SL / TP resolved from M1. Tick rounding built, **off** (decision open).
+  the ask; same-candle SL / TP resolved from M1; tick rounding **on** and the FTMO median spread
+  table as default (both set by the user 2026-10-26; spread re-checked after demo trading).
 - Regime classifier + strategy profile; all 7 strategies profiled (no robust edge anywhere;
   candidates: strategy 4 on GBPJPY, the gap strategies in quiet sideways markets).
 
@@ -51,10 +52,11 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Open (needs the user)
 
-1. **Tick rounding default** (`results/ticks.md`; effect tiny; Opus recommends on).
-2. **Spread table default** (`results/spread_table.md`; the measured FTMO median spread raises
-   costs at the index open by 25-90 %; Opus recommends the median table as default for
-   realism).
+1. **Decided 2026-10-26:** tick rounding on, median spread table default (golden lists 2023
+   rewritten: session zones -479.9 -> -473.7, NY indices -30.9 -> -32.2, no-wick -959.7 ->
+   -1347.7, trend following 6.8 -> 6.7, gap fade -21.1 -> -25.2, ORB -35.6 -> -42.3, gap
+   momentum 6.4 -> 6.6 net R). Re-check the spread after demo trading (V2.4b).
+2. **Order (user, 2026-10-26):** build and test the whole app first, research intensively after.
 3. **News:** data delivered in `../backtester-news/`; checked 2026-10-26, timestamps need a
    regenerated file first (`../backtester-news/verification_2026-10-26.md`); then V2.4e.
 4. Demo bot restart for V2.4b (slippage, demo vs engine reconciliation) — the user's call.

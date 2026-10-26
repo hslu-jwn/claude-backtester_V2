@@ -37,12 +37,13 @@ the chart entry price like the fixed spread (rule set by the user, 2026-10-22).
 from __future__ import annotations
 
 import csv
+import json
 import math
 from bisect import bisect_right
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
-from functools import lru_cache
+from functools import cache, lru_cache
 from pathlib import Path
 from types import MappingProxyType
 
@@ -304,6 +305,14 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
 )
 
 
+@cache
+def default_spread_table() -> SpreadTable:
+    """FTMO's median spread by year and New York hour, measured 2026-10-15 (copy of
+    data/spreads/ftmo_spread_median.json); the default (rule set by the user, 2026-10-26)."""
+    path = Path(__file__).with_name("ftmo_spread_median.json")
+    return SpreadTable.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
 @dataclass(frozen=True, slots=True)
 class CostConfig:
     spread_enabled: bool = True  # off: no spread; commission/slippage remain independent
@@ -315,8 +324,9 @@ class CostConfig:
     funding_enabled: bool = True  # off: funding_r is 0
     # funding rates by symbol; None: read data/cache/binance_funding/<SYM>.csv when needed
     funding: Mapping[str, FundingSeries] | None = None
-    # spread by year and hour of day (ROADMAP 6.7); None: the fixed `SymbolCosts.spread`
-    spread_table: SpreadTable | None = None
+    # spread by year and hour of day (ROADMAP 6.7); default the FTMO median table (rule set
+    # by the user, 2026-10-26); None: the fixed `SymbolCosts.spread`
+    spread_table: SpreadTable | None = field(default_factory=default_spread_table)
     # fixed spread x (fill price / SymbolCosts.reference_price) (rule set by the user,
     # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
     spread_price_scaling: bool = True
@@ -324,8 +334,8 @@ class CostConfig:
     tp_penetration: float = 0.5  # default set by the user 2026-10-23
     # Short TP needs ask <= target minus penetration; fills at target without extra spread
     short_tp_on_ask: bool = True  # default set by the user 2026-10-23
-    # Round order levels conservatively to the symbol tick; default unchanged pending measurement.
-    round_to_tick: bool = False
+    # Round order levels conservatively to the symbol tick (default set by the user 2026-10-26)
+    round_to_tick: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.tp_penetration) or self.tp_penetration < 0:

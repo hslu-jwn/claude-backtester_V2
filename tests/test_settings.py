@@ -150,9 +150,17 @@ def _with_table():
     return replace(settings, engine=replace(settings.engine, costs=costs)), table
 
 
-def test_default_settings_have_no_spread_table():
-    assert RunSettings().engine.costs.spread_table is None
-    assert from_json(to_json(RunSettings())).engine.costs.spread_table is None
+def test_default_settings_have_the_median_spread_table():
+    # default set by the user, 2026-10-26 (risk-management.md › Costs)
+    table = RunSettings().engine.costs.spread_table
+    assert table is not None and table.stat == "median"
+    assert from_json(to_json(RunSettings())).engine.costs.spread_table == table
+
+
+def test_an_explicit_null_spread_table_stays_fixed_spread():
+    data = to_dict(RunSettings())
+    data["engine"]["costs"]["spread_table"] = None
+    assert from_dict(data).engine.costs.spread_table is None
 
 
 def test_a_spread_table_survives_the_json_round_trip_with_integer_keys():

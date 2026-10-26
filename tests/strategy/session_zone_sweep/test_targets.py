@@ -299,7 +299,11 @@ def test_two_tps_order_and_weighted_result():
     # once the cap allows it; the run to 112.8 hits TP1 and leaves the rest open
     config = SessionZoneSweepConfig(tp_cap_r=4.0)
     ohlc = LONDON + NY_SETUP + TO_TARGET
-    strategy, [trade] = run(ohlc, config, extra_levels=[Level(111.5, SWING)])
+    # unrounded to the tick (round_to_tick is on by default): the slippage stays exact here
+    no_ticks = EngineConfig(
+        costs=CostConfig(spread_enabled=False, commission_enabled=False, round_to_tick=False)
+    )
+    strategy, [trade] = run(ohlc, config, no_ticks, extra_levels=[Level(111.5, SWING)])
     order = strategy.decisions[0].order
     assert (order.take_profit, order.take_profit_2) == (111.5, 113.0)
     assert order.tp1_share == 0.5 and order.break_even_after_tp1

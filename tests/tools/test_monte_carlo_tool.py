@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from backtester.engine.costs import CostConfig
 from backtester.tools import monte_carlo as tool
 from backtester.tools.monte_carlo import ToolConfig, parse_args, path_row
 
@@ -493,7 +494,7 @@ def test_spread_table_option_goes_into_the_costs_of_every_run(tmp_path, monkeypa
     assert seen and all(t is not None for t in seen)
     seen.clear()
     assert tool.main(argv(tmp_path, "--paths", "0")) == 0
-    assert all(t is None for t in seen)
+    assert all(t == CostConfig().spread_table for t in seen)  # no option: the default table
 
 
 # ----- enum overrides and ready kind B / C results (ROADMAP 12.9) -------------------------------

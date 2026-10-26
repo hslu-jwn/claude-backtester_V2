@@ -29,18 +29,18 @@ def test_every_default_symbol_with_a_spread_has_a_reference_price():
 
 
 def test_half_the_reference_price_pays_half_the_spread():
-    cfg = CostConfig()
+    cfg = CostConfig(spread_table=None)
     ref = SILVER.reference_price
     assert cfg.spread("XAGUSD", AT, price=ref / 2) == pytest.approx(SILVER.spread / 2)
 
 
 def test_at_the_reference_price_the_old_spread_exactly():
-    cfg = CostConfig()
+    cfg = CostConfig(spread_table=None)
     assert cfg.spread("XAGUSD", AT, price=SILVER.reference_price) == pytest.approx(SILVER.spread)
 
 
 def test_switch_off_gives_the_old_values_exactly():
-    cfg = CostConfig(spread_price_scaling=False)
+    cfg = CostConfig(spread_price_scaling=False, spread_table=None)
     assert cfg.spread("XAGUSD", AT, price=15.0) == SILVER.spread
     assert cfg.spread_r("XAGUSD", 0.5, AT, price=15.0) == SILVER.spread / 0.5
 
@@ -50,8 +50,8 @@ def test_default_is_on():
 
 
 def test_no_price_given_means_no_scaling():
-    assert CostConfig().spread("XAGUSD", AT) == SILVER.spread
-    assert CostConfig().spread("XAGUSD", AT, price=0.0) == SILVER.spread
+    assert CostConfig(spread_table=None).spread("XAGUSD", AT) == SILVER.spread
+    assert CostConfig(spread_table=None).spread("XAGUSD", AT, price=0.0) == SILVER.spread
 
 
 def test_symbol_without_reference_price_is_not_scaled():
@@ -93,13 +93,13 @@ def test_spread_table_without_value_falls_back_to_scaled_fixed():
 
 
 def test_spread_r_uses_the_scaled_spread():
-    cfg = CostConfig()
+    cfg = CostConfig(spread_table=None)
     price = SILVER.reference_price / 4
     assert cfg.spread_r("XAGUSD", 0.1, AT, price=price) == pytest.approx(SILVER.spread / 4 / 0.1)
 
 
 def test_break_even_offset_uses_the_scaled_spread():
-    cfg = CostConfig(commission_enabled=False)
+    cfg = CostConfig(commission_enabled=False, spread_table=None)
     price = SILVER.reference_price / 2
     assert cfg.break_even_offset("XAGUSD", AT, price) == pytest.approx(
         (SILVER.spread + 2 * SILVER.slippage) / 2
@@ -109,16 +109,18 @@ def test_break_even_offset_uses_the_scaled_spread():
 def test_cost_filter_uses_the_scaled_spread():
     # at the reference price the spread costs 0.049 / 0.1 = 0.49 R: filtered at 0.3 R;
     # at a quarter of it 0.1225 R: filled
-    cfg = CostConfig(max_cost_r=0.3, commission_enabled=False)
+    cfg = CostConfig(max_cost_r=0.3, commission_enabled=False, spread_table=None)
     ref = SILVER.reference_price
     assert cfg.too_expensive("XAGUSD", 0.1, AT, entry=ref)
     assert not cfg.too_expensive("XAGUSD", 0.1, AT, entry=ref / 4)
-    old = CostConfig(max_cost_r=0.3, commission_enabled=False, spread_price_scaling=False)
+    old = CostConfig(
+        max_cost_r=0.3, commission_enabled=False, spread_price_scaling=False, spread_table=None
+    )
     assert old.too_expensive("XAGUSD", 0.1, AT, entry=ref / 4)
 
 
 def test_gbpusd_at_reference_price_is_unchanged():
     gbp = DEFAULT_SYMBOL_COSTS["GBPUSD"]
-    cfg = CostConfig()
+    cfg = CostConfig(spread_table=None)
     assert cfg.spread("GBPUSD", AT, price=gbp.reference_price) == pytest.approx(gbp.spread)
     assert cfg.spread("GBPUSD", AT) == gbp.spread

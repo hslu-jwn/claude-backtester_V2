@@ -23,6 +23,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "backtester.ui" = ["assets/*"]  # chart JavaScript, Lightweight Charts and its license
+"backtester.engine" = ["ftmo_spread_median.json"]  # default spread table
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
