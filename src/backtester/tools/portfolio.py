@@ -162,11 +162,14 @@ def combined_baseline(parts, scales, runs: int, seed: int) -> RandomBaselineResu
     )  # fmt: skip
 
 
-def combined_fills(parts, scales, costs, runs: int, seed: int) -> RandomFillsResult:
+def combined_fills(
+    parts, scales, costs, runs: int, seed: int, *, component_costs=None
+) -> RandomFillsResult:
     """Kind C of the portfolio: random fills per component (seed + index), added with the weights."""
     total, base = np.zeros(runs), 0.0
     for k, (trades, scale) in enumerate(zip(parts, scales, strict=True)):
-        res = random_fills(trades, RandomFillsConfig(runs, seed + k), costs)
+        own_costs = costs if component_costs is None else component_costs[k]
+        res = random_fills(trades, RandomFillsConfig(runs, seed + k), own_costs)
         total += np.array(res.run_net_r) * scale
         base += res.base_net_r * scale
     p5, p50, p95 = np.percentile(total, [LOW_PCT, 50.0, HIGH_PCT])
@@ -324,7 +327,7 @@ def trials_html(summary: dict) -> str:
     )
 
 
-def render_report(summary: dict) -> str:
+def render_report(summary: dict, *, include_verdict: bool = True) -> str:
     p = summary["portfolio"]
     note = (
         f"<p class='how'>Kind B randomises {esc(', '.join(p['kind_b_components']))}; the other "
@@ -333,7 +336,7 @@ def render_report(summary: dict) -> str:
         else ""
     )
     body = "".join((
-        mc.verdict_html(summary), mc.deflated_html(summary), trials_html(summary),
+        mc.verdict_html(summary) if include_verdict else "", mc.deflated_html(summary), trials_html(summary),
         components_html(summary), correlation_html(summary), mc.fan_html(summary),
         mc.numbers_html(summary), mc.ftmo_html(summary), mc.random_entries_html(summary), note,
         mc.random_fills_html(summary), mc.robustness_html(summary),
@@ -355,9 +358,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     d, pd = ToolConfig(), PortfolioConfig()
     p = argparse.ArgumentParser(prog="python -m backtester.tools.portfolio", description=__doc__,
                                 formatter_class=argparse.RawTextHelpFormatter)  # fmt: skip
-    p.add_argument("components", type=Path, help="components JSON file (format above)")
-    p.add_argument("--start", type=date.fromisoformat, required=True, help="first UTC day")
-    p.add_argument("--end", type=date.fromisoformat, required=True, help="last UTC day")
+    p.add_argument("components", type=Path, nargs="?", help="components JSON file (format above)")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--existing", type=Path, help="saved development member manifest; no backtests"
+    )
+    mode.add_argument("--test", help="one-time MT5 holdout of a saved portfolio set ID (CLI only)")
+    p.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
+    p.add_argument("--start", type=date.fromisoformat, help="first UTC day")
+    p.add_argument("--end", type=date.fromisoformat, help="last UTC day")
     p.add_argument("--cache-dir", type=Path, default=MT5_CACHE_DIR,
                    help="candle cache for every symbol (read only; default: FTMO MT5 cache)")  # fmt: skip
     p.add_argument("--source", default="mt5", help="source label for the trial log (default mt5)")
@@ -376,6 +385,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="multiply the account list by the IDM (off by default)")  # fmt: skip
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
+    if args.existing or args.test:
+        if args.components or args.start or args.apply_idm:
+            p.error("saved portfolios use equal weights, a fixed period and no components argument")
+    elif not args.components or not args.start or not args.end:
+        p.error("components, --start and --end are required for a new backtest")
     args.trials = args.trials or default_path()
     return args
 
@@ -387,6 +401,17 @@ def default_out(args: argparse.Namespace) -> Path:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     config = ToolConfig(runs=args.runs, seed=args.seed, paths=0)
+    if args.existing or args.test:
+        from backtester.tools.portfolio_candidates import run_existing, run_test
+
+        try:
+            if args.test:
+                run_test(args.test, args.results_dir, config, args.end)
+            else:
+                run_existing(args.existing, args.results_dir, config)
+        except (ValueError, OSError, KeyError) as exc:
+            raise SystemExit(str(exc)) from exc
+        return 0
     pcfg = PortfolioConfig(window_days=args.window_days, apply_idm=args.apply_idm)
     out = args.out or default_out(args)
     t0 = clock.time()

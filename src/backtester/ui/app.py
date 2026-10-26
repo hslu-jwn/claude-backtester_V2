@@ -22,7 +22,7 @@ from dash import Dash, Input, Output, State, dcc, html
 
 from backtester.data.sources import CHART_SOURCES, SymbolSources
 from backtester.ui import backtest_job, nav, report_route
-from backtester.ui.pages import backtest, chart, live, research, results
+from backtester.ui.pages import backtest, chart, live, portfolio, research, results
 
 RESULTS_PREFIX = "/results/"
 LIVE_PATH = "/live"
@@ -33,6 +33,8 @@ def page_for(pathname: str | None, sources: SymbolSources, search: str | None = 
         return live.layout()
     if pathname == research.PATH:
         return research.layout()
+    if pathname == portfolio.PATH:
+        return portfolio.layout()
     if pathname == backtest.PATH:
         return backtest.page()
     if pathname and pathname.startswith(RESULTS_PREFIX):
@@ -58,6 +60,7 @@ def create_app(sources: SymbolSources = CHART_SOURCES) -> Dash:
             results.layout(""),
             live.layout(),
             research.layout(),
+            portfolio.layout(include_queue=False),
             backtest.layout(backtest_job.PLACEHOLDER),
         ]
     )
@@ -73,6 +76,7 @@ def create_app(sources: SymbolSources = CHART_SOURCES) -> Dash:
     backtest.register_callbacks(app)
     live.register_callbacks(app)
     research.register_callbacks(app)
+    portfolio.register_callbacks(app)
     return app
 
 

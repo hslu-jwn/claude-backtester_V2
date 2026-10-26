@@ -34,6 +34,8 @@ def section_of(pathname: str | None) -> str:
         return "live"
     if pathname == RESEARCH_PATH:
         return "research"
+    if pathname == "/portfolio":
+        return "portfolio"
     if pathname == BACKTEST_PATH or (pathname and pathname.startswith(RESULTS_PREFIX)):
         return "backtest"
     return "chart"
@@ -42,7 +44,7 @@ def section_of(pathname: str | None) -> str:
 def link_classes(pathname: str | None, bot_live: bool) -> dict[str, str]:
     section = section_of(pathname)
     out = {name: "nav-link" + (" active" if section == name else "") for name in
-           ("chart", "backtest", "research", "live")}  # fmt: skip
+           ("chart", "backtest", "research", "portfolio", "live")}  # fmt: skip
     if bot_live:
         out["live"] += " nav-red"
     return out
@@ -62,6 +64,7 @@ def layout() -> html.Div:
             dcc.Link("Chart", id="nav-chart", href="/", className="nav-link"),
             dcc.Link("Backtest", id="nav-backtest", href=BACKTEST_PATH, className="nav-link"),
             dcc.Link("Research", id="nav-research", href=RESEARCH_PATH, className="nav-link"),
+            dcc.Link("Portfolio", id="nav-portfolio", href="/portfolio", className="nav-link"),
             dcc.Link("Live", id="nav-live", href=live_model.LIVE_PATH, className="nav-link"),
             html.Div(className="nav-spacer"),
             html.Div(
@@ -91,6 +94,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
         Output("nav-chart", "className"),
         Output("nav-backtest", "className"),
         Output("nav-research", "className"),
+        Output("nav-portfolio", "className"),
         Output("nav-live", "className"),
         Output("nav-status", "children"),
         Output("nav-status", "className"),
@@ -104,6 +108,7 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
             cls["chart"],
             cls["backtest"],
             cls["research"],
+            cls["portfolio"],
             cls["live"],
             view["text"],
             f"nav-status nav-{view['level']}",

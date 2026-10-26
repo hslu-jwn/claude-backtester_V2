@@ -45,7 +45,8 @@ def test_global_actions_and_exact_tabs():
     links = [
         n for n in nodes if isinstance(n, dcc.Link) and getattr(n, "id", "").startswith("nav-")
     ]
-    assert [n.children for n in links] == ["Chart", "Backtest", "Research", "Live"]
+    # V2.7 explicitly adds Portfolio next to Research.
+    assert [n.children for n in links] == ["Chart", "Backtest", "Research", "Portfolio", "Live"]
     ids = [getattr(n, "id", None) for n in nodes]
     for identifier in ("nav-status", "nav-settings", "update-btn", "update-status", "update-tick"):
         assert ids.count(identifier) == 1
