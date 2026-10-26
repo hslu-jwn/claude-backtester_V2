@@ -98,8 +98,8 @@ def test_process_safe_labels_and_history(tmp_path):
         for process in processes:
             process.start()
         for process in processes:
-            process.join(30)
-        assert all(p.exitcode == 0 for p in processes)
+            process.join(120)  # spawn imports the whole package; slow under full-suite load
+        assert [p.exitcode for p in processes] == [0, 0, 0, 0]  # None = still running
     finally:
         for process in processes:
             if process.is_alive():

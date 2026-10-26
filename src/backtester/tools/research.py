@@ -72,6 +72,7 @@ from backtester.runner import (
     write_results,
 )
 from backtester.tools import (
+    news_diagnostics,
     research_bayes,
     research_diagnostics,
     research_monkeys,
@@ -277,7 +278,14 @@ def _setting_cells(spec: GridSpec, overrides: dict) -> dict:
 
 
 def _log_settings(spec: GridSpec, overrides: dict) -> dict:
-    return {"strategy": spec.strategy, "base": spec.base, "set": overrides}
+    settings = {"strategy": spec.strategy, "base": spec.base, "set": overrides}
+    calendars = news_diagnostics.active_calendars()
+    if calendars is not None:
+        config = variant_settings(spec, Variant("", "", overrides)).engine.news
+        digest = calendars.digest(config)
+        if digest is not None:
+            settings["calendar_sha256"] = digest
+    return settings
 
 
 # --- development ---------------------------------------------------------------------------------
@@ -336,6 +344,12 @@ def _daily_series(
     family=None,
     note="",
 ):
+    calendars = news_diagnostics.active_calendars()
+    if calendars is not None:
+        if trades is None:
+            trades = read_trades(folder)
+        config = variant_settings(spec, Variant("", "", overrides)).engine.news
+        calendars.write_run(folder, config, trades)
     research_series.ensure(
         folder,
         start,
@@ -559,7 +573,10 @@ def run_research(
     folder = results_dir / "research" / rid
     # Every report/variant/resume write for this grid shares one transaction lock.
     # Distinct grids can still run concurrently. Spec: research-runner.md > Job queue.
-    with file_lock(results_dir / ".locks" / "research" / f"{rid}.lock"):
+    with (
+        file_lock(results_dir / ".locks" / "research" / f"{rid}.lock"),
+        news_diagnostics.research_calendars([variant_settings(spec, v) for v in variants], folder),
+    ):
         return _run_research_locked(
             spec,
             variants,
@@ -627,6 +644,11 @@ def _run_research_locked(
         for entry, family in zip(info["grids"], spec.grids, strict=True):
             entry["compare_to"] = family.compare_to
     info["live_expectation_range"] = cfg.live_expectation_range
+    calendars = news_diagnostics.active_calendars()
+    if calendars is not None:
+        info["news_calendars"] = calendars.manifest()
+        for item in info["news_calendars"]:
+            log(f"news: {item['status']}; {item['path']}; sha256={item['sha256']}")
     _dump(folder / "research.json", info)
     log(
         f"research {rid}: {spec.strategy} {','.join(spec.symbols)}, {len(variants)} variants"
@@ -760,6 +782,7 @@ def _run_research_locked(
         research_diagnostics.write_diagnostics(
             folder, spec, variants, rows, info, results_dir, sources
         )
+        news_diagnostics.write_research(folder, variants, info, results_dir)
         from backtester.tools import skill_bounds
 
         saved_tests = _test_rows(folder)
@@ -1106,6 +1129,7 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
             f"{row['net_r_without_shocks']:+.3f} R."
         )
     lines += research_walk_forward.report(info.get("walk_forward"))
+    lines += news_diagnostics.markdown(info)
     from backtester.tools import drawdown_report
 
     for label, bounds in info.get("drawdown_bounds", {}).items():

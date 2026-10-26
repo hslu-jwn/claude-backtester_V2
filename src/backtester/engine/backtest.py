@@ -39,6 +39,7 @@ from datetime import datetime
 
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries, SeriesView
+from backtester.data.news import Calendar, NewsConfig, matching_events
 from backtester.engine.costs import CostConfig
 from backtester.engine.replay import Replay
 from backtester.engine.ticks import TickRoundingStats, round_level
@@ -56,6 +57,7 @@ class EngineConfig:
     sessions: SessionConfig = DEFAULT_SESSIONS
     # ambiguous candles: m1 replay (default set by the user 2026-10-24) or sl_first (legacy)
     intrabar: str = "m1"
+    news: NewsConfig = field(default_factory=NewsConfig)
 
     def __post_init__(self) -> None:
         if self.intrabar not in ("sl_first", "m1"):
@@ -91,6 +93,7 @@ def run_backtest(
     intrabar_source: IntrabarSource | None = None,
     tick_rounding: TickRoundingStats | None = None,
     diagnostics_start: datetime | None = None,
+    calendar: Calendar | None = None,
 ) -> list[TradeResult]:
     """Run `strategy` over `series` (one per timeframe it declares, same symbol)."""
     return Backtest(
@@ -100,6 +103,7 @@ def run_backtest(
         intrabar_source=intrabar_source,
         tick_rounding=tick_rounding,
         diagnostics_start=diagnostics_start,
+        calendar=calendar,
     ).run(progress)
 
 
@@ -113,6 +117,7 @@ class Backtest:
         intrabar_source: IntrabarSource | None = None,
         tick_rounding: TickRoundingStats | None = None,
         diagnostics_start: datetime | None = None,
+        calendar: Calendar | None = None,
     ):
         by_tf = {s.timeframe: s for s in series}
         if len(by_tf) != len(series):
@@ -124,6 +129,9 @@ class Backtest:
             raise ValueError(f"no series for {sorted(tf.name for tf in missing)}")
         self._strategy = strategy
         self._config = config
+        self._calendar = calendar
+        self.news_blocked = 0
+        self.news_flags: list[tuple[datetime, tuple[str, ...]]] = []
         self._intrabar_source = intrabar_source
         self.tick_rounding = tick_rounding if tick_rounding is not None else TickRoundingStats()
         self._diagnostics_start = diagnostics_start
@@ -177,6 +185,13 @@ class Backtest:
                 if filled is None:
                     continue
                 trade, placed = filled
+                events = matching_events(now, trade.symbol, self._calendar, self._config.news)
+                if events:
+                    self.news_flags.append((now, tuple(e.event_id for e in events)))
+                    if self._config.news.policy == "block_entries":
+                        self.news_blocked += 1
+                        self._strategy.on_order_skipped(order.ref, now)
+                        continue
                 if self._config.costs.too_expensive(
                     trade.symbol, trade.risk, trade.entry_time, trade.entry, trade.entry_fill
                 ):

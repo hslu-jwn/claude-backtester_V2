@@ -81,6 +81,7 @@ DEFAULT_PRESET = DEFAULT
 # (path or path prefix ending in ".", group), first match wins
 _GROUP_RULES = (
     ("engine.intrabar", "Backtest"),
+    ("engine.news.", "Backtest"),  # hidden in the panel for now (_panel_symbol), JSON / grids only
     ("strategy.entry_bos_with_trend", "Entry"),
     ("strategy.max_trades_per_session", "Entry"),
     ("strategy.sweep_lookback", "Entry"),
@@ -388,6 +389,10 @@ def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
 
 
 def _panel_symbol(path: str) -> bool:
+    # Calendar loading and runner wiring are pending (news.md); keep this partial
+    # feature configurable in JSON/grids without adding unusable panel controls.
+    if path.startswith("engine.news."):
+        return False
     # Tick metadata remains editable in settings/grids; only the rounding switch
     # needs a widget (risk-management.md > Costs > Tick rounding).
     if path.startswith("engine.costs.symbols.") and path.endswith(".tick_size"):

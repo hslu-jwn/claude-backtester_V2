@@ -14,6 +14,9 @@ data/raw/*
 data/cache/
 data/spreads/
 
+# External economic calendar: never version source data
+data/news/
+
 # Backtest outputs
 results/
 

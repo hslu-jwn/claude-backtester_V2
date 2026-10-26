@@ -49,3 +49,18 @@ Test-case list first (`briefs/v24e-test-cases.md`), then tests, then code. Run o
 (`pytest -q tests/data tests/tools tests/engine > results\pytest_v24e.log 2>&1`) + ruff on
 touched files. Report: files changed, test results, the inclusive / exclusive window rule you
 chose, open questions (rules you were unsure about: report, never guess).
+
+## Addendum: the CSV format (Opus, from the verification of 2026-10-26)
+
+UTF-8 with BOM, comma separated, quoted fields may contain commas. Header (29 columns, this order):
+`event_id,scheduled_timestamp_utc,scheduled_date_utc,scheduled_date_local,source_timezone,time_precision,time_label,time_window_start_utc,time_window_end_utc,currency,country,impact,impact_rank,event_name,actual,forecast,previous,status,source_provider,source_name,source_url,source_record_id,source_retrieved_at_utc,source_updated_at_utc,known_at_utc,point_in_time_verified,point_in_time_note,provenance_quality,dedupe_key`
+Values: timestamps ISO 8601 with `Z` (e.g. `2020-01-02T01:45:00Z`), blank when not exact;
+`scheduled_date_utc` / `scheduled_date_local` `YYYY-MM-DD` (the UTC date can be blank for
+date-only rows); `time_precision` one of `second | minute | date | range | unknown`; `time_label`
+free text (Forex Factory snapshot: local clock `HH:MM:SS`; HTML: e.g. `2:30pm`, `All Day`); `impact`
+`High | Medium`, `impact_rank` `3 | 2`; `currency` e.g. `USD`, `ALL` with `country` `GLOBAL`;
+`point_in_time_verified` `false`; `status` e.g. `historical_record | confirmed | released |
+estimated`; `dedupe_key` `<timestamp or date>|<currency lower>|<event name lower>`.
+Finish the remaining parts now: loader validation, synthetic CSV tests (build the CSVs in the
+tests with this header), runner wiring of the news-day split, the file hash in the run settings /
+trial log. Same rules; run `pytest -q tests/data tests/tools tests/engine > results\pytest_v24e2.log 2>&1`.

@@ -103,8 +103,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   mean and log profit factor; (9) prices rounded to the tick in the engine. Later (V2.6 /
   V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
   for the portfolio's member selection.
-- ☐ **V2.4e Economic calendar: news-day split + blackout filter** (decisions by the user,
-  2026-10-26) — the news part of V2.4c and audit item "News" (`docs/review/backtest-audit.md`).
+- ◐ **V2.4e Economic calendar: news-day split + blackout filter** (synthetic build plus CSV-format addendum: loader validation, per-variant research split and settings/trial SHA256 persistence built; real-calendar validation pending;
+  `docs/news.md`; not accepted; decisions by the user, 2026-10-26) — the news part of V2.4c and audit item "News" (`docs/review/backtest-audit.md`).
   Data: `../backtester-news/` (`economic_events_2020_to_2026-10-25.csv`, 9,836 High / Medium
   events 2020-01-02 .. 2026-10-23, `implementation_instructions.md`, `coverage_report.md`,
   `source_manifest.csv`). **Blocked: the data needs fixing first** (Opus check 2026-10-26,
