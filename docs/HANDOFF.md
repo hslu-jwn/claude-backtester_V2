@@ -55,7 +55,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 2. **Spread table default** (`results/spread_table.md`; the measured FTMO median spread raises
    costs at the index open by 25-90 %; Opus recommends the median table as default for
    realism).
-3. **News:** the user gathers news data for the news-day split (V2.4c).
+3. **News:** data delivered in `../backtester-news/`; checked 2026-10-26, timestamps need a
+   regenerated file first (`../backtester-news/verification_2026-10-26.md`); then V2.4e.
 4. Demo bot restart for V2.4b (slippage, demo vs engine reconciliation) — the user's call.
 5. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
    auto-refresh live candles; remote branch `claude/ui-polish`; the CLI's named-preset

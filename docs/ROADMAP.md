@@ -76,7 +76,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ◐ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
   done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
   trade +25 to +90 % at the index open, no-wick nearly x2; default stays fixed until the user
-  decides); open: the user's spread-table decision, news-day split (the user gathers news data)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  decides); open: the user's spread-table decision, news-day split (moved to V2.4e, 2026-10-26)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
   effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
   user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
@@ -102,6 +102,38 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   mean and log profit factor; (9) prices rounded to the tick in the engine. Later (V2.6 /
   V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
   for the portfolio's member selection.
+- ☐ **V2.4e Economic calendar: news-day split + blackout filter** (decisions by the user,
+  2026-10-26) — the news part of V2.4c and audit item "News" (`docs/review/backtest-audit.md`).
+  Data: `../backtester-news/` (`economic_events_2020_to_2026-10-25.csv`, 9,836 High / Medium
+  events 2020-01-02 .. 2026-10-23, `implementation_instructions.md`, `coverage_report.md`,
+  `source_manifest.csv`). **Blocked: the data needs fixing first** (Opus check 2026-10-26,
+  `../backtester-news/verification_2026-10-26.md`; the user regenerates the file, the CSV is
+  never edited here): 2,873 Forex Factory rows (1,620 High, incl. every NFP, most US CPI,
+  FOMC, BoE) have a lost time stored as midnight Tehran and labelled exact (e.g. NFP
+  2020-01-10 13:30Z sits at 2020-01-09 20:30Z); 258 all-day rows labelled exact; summer
+  2023-2025 rows 1 h early (wrong +04:30 offset); Finance Calendar year (2025-10-24 on) has
+  only 163 High, 305 bill auctions as Medium and almost no AUD / CAD / NZD / CHF; its raw file
+  is missing. Then, per the instructions:
+  (1) read-only loader with explicit schema, UTC parsing, blank timestamps kept blank,
+  validation (unique `event_id` / `dedupe_key`, impact High / Medium, exact rows parse), CSV
+  sha256 logged with every run (trial log); copy the CSV into `data/news/` unchanged;
+  (2) instrument -> currencies mapping in config (XAUUSD, GBPUSD, GBPJPY, NAS100, US500,
+  GER40, BTC / ETH; `GLOBAL` per instrument explicitly);
+  (3) schedule and result behind separate interfaces: strategies never see `actual`,
+  `forecast`, `previous` (not point-in-time); `actual` only from release + delay if ever needed;
+  (4) **news-day split** in the research runner like the shock-day check: results with /
+  without High-impact minutes (and days) per strategy; only from 2020-01-02 (user: 2020+
+  only), earlier trades reported apart as "no calendar", never counted as news-free; the
+  Finance Calendar year reported apart while its coverage differs;
+  (5) **blackout filter** as a strategy / runner setting, default off: windows before / after
+  per impact, policy (block entries / flag only), date / range / unknown rows by a separate
+  conservative policy (block the day or skip with a warning), simultaneous events kept;
+  effect measured on the golden lists, then the user decides any default;
+  (6) the tests from the instructions (timezone of the PC, DST, inclusive / exclusive
+  boundary, no `actual` one tick early, blank timestamps, date / range policy, two events at
+  one time, duplicate keys fail, EURUSD gets no foreign currencies, hash recorded).
+  Not in scope: the live bot (needs a live calendar source), 2015-2019 (raw Forex Factory
+  cache goes back to 2007 if wanted later).
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
