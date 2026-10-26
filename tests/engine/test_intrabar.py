@@ -258,7 +258,10 @@ def test_limit_replay_without_exit_still_records_entry_time(sign):
 def test_gapped_limit_keeps_base_fill_price_and_placed_penetration(sign):
     placed = Order(
         Direction.BULLISH if sign > 0 else Direction.BEARISH,
-        100, 100 - sign * 20, 100 - sign * 2, limit_fill=True,
+        100,
+        100 - sign * 20,
+        100 - sign * 2,
+        limit_fill=True,
     )
 
     class GapLimit(Scripted):

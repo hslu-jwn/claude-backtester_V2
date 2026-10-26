@@ -55,7 +55,9 @@ def test_no_price_given_means_no_scaling():
 
 
 def test_symbol_without_reference_price_is_not_scaled():
-    cfg = CostConfig(symbols={"ZZZ": SymbolCosts(spread=0.3, commission_per_lot=0, contract_size=1)})
+    cfg = CostConfig(
+        symbols={"ZZZ": SymbolCosts(spread=0.3, commission_per_lot=0, contract_size=1)}
+    )
     assert cfg.for_symbol("ZZZ").reference_price is None
     assert cfg.spread("ZZZ", AT, price=1234.0) == 0.3
 

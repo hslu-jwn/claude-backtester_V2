@@ -3,15 +3,15 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-10-25, 21:00)
+## Where things are (2026-10-26, End of session)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
-- **Branches:** `main` has everything up to V2.4a (trades of every strategy on the chart).
-  **All work since then is on `v2-grid-merge` (pushed, not merged)**: grid merge, V2.4c, V2.4d,
-  regime classifier + strategy profile, V2.5a-d. Merge it into `main` at the next `End.` (or when
-  the user accepts). `v2-chart-trades` is merged.
-- **Tests:** 4146 passed, 5 skipped, 1 xfailed (~5 min); ruff clean. Golden trade lists
+- **Branches:** `main` has everything (v2-grid-merge merged at `End.` on 2026-10-26: grid
+  merge, V2.4c, V2.4d, regime classifier + strategy profile, V2.5a-d, fast / visual parity
+  test). `v2-chart-trades`, `v2-grid-merge` are merged and can be deleted. Start the next
+  phase on a new branch from `main`.
+- **Tests:** 4150 passed, 5 skipped, 1 xfailed (~5 min); ruff check and ruff format clean. Golden trade lists
   (`tests/golden/`, 2023) rewritten twice with the user's default decisions (TP penetration,
   intrabar M1): `python -m backtester.tools.golden --check`.
 - **App:** dark redesign V2.5a-d is in; restart with `restart_app.bat` to see it.
@@ -46,6 +46,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - 2026-10-24: intrabar default M1; speed rules for the AI team; the breakdown shows where each
   strategy performs best (raw and detrended) as input for combining strategies (V2.7);
   continue autonomously.
+- 2026-10-26 (`End.`): everything done so far accepted: V2.4, V2.4d (tick default still open),
+  V2.5 redesign, the done parts of V2.4c, regime classifier + strategy profile.
 
 ## Open (needs the user)
 
@@ -53,11 +55,11 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 2. **Spread table default** (`results/spread_table.md`; the measured FTMO median spread raises
    costs at the index open by 25-90 %; Opus recommends the median table as default for
    realism).
-3. **V2.5 look:** restart the app and say ok or what to change.
-4. **News:** the user gathers news data for the news-day split (V2.4c).
-5. Demo bot restart for V2.4b (slippage, demo vs engine reconciliation) — the user's call.
-6. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
-   auto-refresh live candles; remote branch `claude/ui-polish`.
+3. **News:** the user gathers news data for the news-day split (V2.4c).
+4. Demo bot restart for V2.4b (slippage, demo vs engine reconciliation) — the user's call.
+5. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
+   auto-refresh live candles; remote branch `claude/ui-polish`; the CLI's named-preset
+   restrictions differ slightly from the app's (found by the parity test, trades identical).
 
 ## Next step
 

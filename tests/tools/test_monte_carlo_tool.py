@@ -337,7 +337,10 @@ def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
     assert summary["random_entries"]["available"] is True
     assert (out / "report.html").is_file()
     assert "Skill vs trend, and bounds" in (out / "report.html").read_text(encoding="utf-8")
-    assert json.loads((out / "skill_bounds.json").read_text(encoding="utf-8")) == summary["skill_bounds"]
+    assert (
+        json.loads((out / "skill_bounds.json").read_text(encoding="utf-8"))
+        == summary["skill_bounds"]
+    )
     assert summary["skill_bounds"]["daily_mean"]["n"] > 60  # include empty weekdays
 
 

@@ -393,7 +393,10 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
     )
     log("skill vs trend, and bounds")
     summary["skill_bounds"] = skill_bounds.calculate(
-        trades, start, end, sources,
+        trades,
+        start,
+        end,
+        sources,
         args.results_dir / args.run if args.run else None,
         symbols=symbols,
         config=skill_bounds.BoundsConfig(seed=config.seed),
@@ -801,8 +804,10 @@ def skill_bounds_html(summary: dict) -> str:
     result = summary.get("skill_bounds")
     if result is None:
         return ""
-    body = "".join(table(headers, [[esc(v) for v in row] for row in rows])
-                   for headers, rows in skill_bounds.tables(result))
+    body = "".join(
+        table(headers, [[esc(v) for v in row] for row in rows])
+        for headers, rows in skill_bounds.tables(result)
+    )
     return section("Skill vs trend, and bounds", " ".join(skill_bounds.notes(result)), body)
 
 

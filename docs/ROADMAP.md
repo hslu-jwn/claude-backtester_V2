@@ -59,7 +59,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☑ **V2.1 Set up this PC** (tools, venv, data check, baseline tests).
 - ☑ **V2.2 Team setup** (AGENTS.md, Codex / Claude 4.6 / Gemini through `tools/ai_dispatch.py`).
 - ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
-- ◐ **V2.4 Full Codex review and speed-up** (2026-10-23: golden lists, review of all 8
+- ☑ **V2.4 Full Codex review and speed-up** (accepted by the user 2026-10-26) (2026-10-23: golden lists, review of all 8
   modules (84 findings, `docs/review/`), groups A + B fixed, speed 1 + 2 (partial) done;
   speed 2 complete; grid tools merged into the research runner 2026-10-23 (combined grids,
   grid robustness, shock days, breakdowns, sensitivity, filter twins, walk-forward, old sweeps as
@@ -73,7 +73,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the trades of any strategy on the chart; the trade itself is enough, confluences only when
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
-- ◐ **V2.4c Honesty tooling before V2.6** (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
+- ◐ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
   done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
   trade +25 to +90 % at the index open, no-wick nearly x2; default stays fixed until the user
   decides); open: the user's spread-table decision, news-day split (the user gathers news data)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
@@ -84,7 +84,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
   market, expectation haircut.
-- ◐ **V2.4d Book requirements** (2026-10-23 / 24: items 1-9 done; open: the user's choice of
+- ☑ **V2.4d Book requirements** (accepted by the user 2026-10-26; the tick-rounding default
+  stays off until the user decides) (2026-10-23 / 24: items 1-9 done; open: the user's choice of
   the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
   `docs/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
   net R series of every variant (trial log / runner); (2) daily returns marked to market (open
@@ -106,7 +107,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
   `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)
   stay.
-- ◐ **V2.5 App redesign** (2026-10-25: V2.5a-d done: dark theme, top bar, Research cards,
+- ☑ **V2.5 App redesign** (accepted by the user 2026-10-26) (2026-10-25: V2.5a-d done: dark theme, top bar, Research cards,
   Chart / Results / Backtest / Live in the new skeleton, browser-checked by Opus; open: the
   user's look and ok) (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
   vs "Details" per page (list to the user first), research page as one vertical list of
