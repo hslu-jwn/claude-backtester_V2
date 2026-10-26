@@ -164,7 +164,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   cards through the queue + lanes in worktrees; (4) V2.7 portfolio page; (5) UI: 3.3d, 3.5,
   12.4, 4.3; (6) live: demo bot restart (the user's call), V2.4b, 12.5; (7) V2.4e news when the
   data is regenerated; (8) full check of the whole app (every page and CLI end to end + Codex
-  review); then intensive research. Dropped as covered by V2.4c / V2.4d (Opus proposal, user
+  review); (9) possibly more symbols / pairs before research, for more options (the user,
+  2026-10-26: which ones and from which source decided then; download + data check + costs
+  per symbol); then intensive research. Dropped as covered by V2.4c / V2.4d (Opus proposal, user
   2026-10-26): 3.7, 12.11, 12.13.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
