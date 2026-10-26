@@ -99,3 +99,29 @@ in the same change.
 
 Report: files changed, test results, the list of shared-file writers you found (point 7),
 open questions.
+
+## Addendum after the read-only pass (Opus, 2026-10-26 15:30)
+
+Your first pass (results/ai/20261026-152735_codex_task.md) ran read-only by mistake; now
+implement. Answers to your questions:
+
+- **Surviving child after a runner crash** (PID alive and identity matches): do not start it
+  again; the new runner monitors it until the PID exits, then sets the job back to `pending`
+  with the attempt counted (its exit code is unknown; the research runner resumes from its
+  own saved progress, so a re-run is cheap). If attempts are exhausted -> `failed`.
+- **Sensor unreadable while paused:** clear the pause (keep working) and write the warning.
+- **Cancel** terminates the job's whole process tree (Windows: `taskkill /T /F /PID`;
+  elsewhere: the process group), so workers it spawned do not survive.
+
+Shared-file writers, scope of this step:
+- fix: trial-log lock (point 7); run-ID / run-folder allocation in `runner.py` (atomic
+  `mkdir` with retry on collision, also for development publishing); unique temporary files
+  in the series writer (`daily.csv.tmp` -> unique name + `os.replace`, under the trial-log
+  lock or its own lock). Tests for each with several processes.
+- not now (document in `docs/research-runner.md` › Job queue as "do not queue two jobs with
+  the same destination"): presets publication, Monte Carlo default destinations, golden
+  `--write`, standalone strategy profiles. The queue's `add` warns when a pending / running
+  job has exactly the same argv.
+- Also test: concurrent runner acquisition (two runners race: exactly one wins), runner vs
+  `cancel` updating the same job file (use a per-job lock so no update is lost), exhausted
+  attempts during crash recovery.
