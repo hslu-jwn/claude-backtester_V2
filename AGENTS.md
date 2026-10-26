@@ -37,6 +37,11 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   branches, pushes, protected paths, any change on a read-only task) and logs every call to
   `results/ai_calls.jsonl`. The CLIs' own sandboxes are not a hard wall (tools are
   auto-approved headless); the guard is.
+- **Lanes:** parallel strategy work happens in a git worktree next to V2 (`python -m
+  backtester.tools.lanes create <name>`, `tools/lanes.py`, `docs/research-runner.md` › Lanes).
+  A lane may change only `src/backtester/strategy/<name>/`, `docs/strategy-<name>.md`,
+  `tests/strategy/<name>/` and `research/grids/<name>*.toml` (`lanes check <name>` enforces it);
+  shared code and the `strategy/registry.py` entry go through Opus.
 - Every answer ends with a short report: what was done, files changed, test results, open
   questions. A trading rule that is unclear is reported, never guessed.
 

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from pathlib import Path
 
 from backtester.jobs.config import DEFAULT_CONFIG
 from backtester.jobs.queue import Queue, Runner, queue_status
@@ -14,11 +15,13 @@ def parser():
     add.add_argument("--name")
     add.add_argument("--priority", type=int, default=0)
     add.add_argument("--max-attempts", type=int, default=DEFAULT_CONFIG.max_attempts)
+    add.add_argument("--cwd", help="a registered lane (name or path); default the V2 root")
     add.add_argument("argv", nargs=argparse.REMAINDER)
     grid = sub.add_parser("add-grid")
     grid.add_argument("toml")
-    grid.add_argument("--retest", action="store_true")
-    grid.add_argument("--dev-only", action="store_true")
+    grid.add_argument("--retest", action="store_true", help="CLI-only one-time test (bare runner)")
+    grid.add_argument("--dev-only", action="store_true", help="accepted; the pipeline is dev-only")
+    grid.add_argument("--cwd", help="a registered lane (name or path); default the V2 root")
     run = sub.add_parser("run")
     run.add_argument("--workers", type=int, default=DEFAULT_CONFIG.workers)
     run.add_argument("--max-temp", type=float, default=DEFAULT_CONFIG.max_temp)
@@ -36,6 +39,21 @@ def parser():
     return p
 
 
+def add_grid(q, toml, *, retest=False, dev_only=False, cwd=None):
+    """Queue the research pipeline of a grid file (the Research page calls this too). With
+    `retest` the bare runner with `--retest` is queued instead: the one-time MT5 test is CLI
+    only and not part of the pipeline; `dev_only` is then passed on, else it changes nothing
+    (the pipeline is always development only)."""
+    if retest:
+        command = ["backtester.tools.research", str(toml), "--workers", "1", "--retest"]
+        return q.add(command + (["--dev-only"] if dev_only else []), cwd=cwd)
+    return q.add(
+        ["backtester.tools.research_pipeline", str(toml)],
+        name=f"pipeline {Path(str(toml)).stem}",
+        cwd=cwd,
+    )
+
+
 def main(argv=None, *, queue=None):
     p = parser()
     args = p.parse_args(argv)
@@ -45,14 +63,17 @@ def main(argv=None, *, queue=None):
             command = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
             print(
                 q.add(
-                    command, name=args.name, priority=args.priority, max_attempts=args.max_attempts
+                    command,
+                    name=args.name,
+                    priority=args.priority,
+                    max_attempts=args.max_attempts,
+                    cwd=args.cwd,
                 ).id
             )
         elif args.command == "add-grid":
-            command = ["backtester.tools.research", args.toml, "--workers", "1"]
-            command += ["--retest"] if args.retest else []
-            command += ["--dev-only"] if args.dev_only else []
-            print(q.add(command).id)
+            print(
+                add_grid(q, args.toml, retest=args.retest, dev_only=args.dev_only, cwd=args.cwd).id
+            )
         elif args.command == "run":
             Runner(
                 q,

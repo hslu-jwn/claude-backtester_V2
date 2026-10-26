@@ -17,6 +17,9 @@ data/spreads/
 # Backtest outputs
 results/
 
+# Lane registry (tools/lanes.py), local to this machine
+lanes.json
+
 # Secrets (broker API keys, MT5 credentials)
 .env
 *.secret

@@ -428,10 +428,16 @@ python -m backtester.tools.queue stop
 python -m backtester.tools.queue clean --done-older-than 30
 ```
 
-`add-grid` passes `--workers 1` and accepts `--dev-only` / `--retest`. `add` preserves
-the supplied argument list, accepts `--max-attempts` (default 2), and only accepts module
-names below `backtester.`. Duplicate pending/running argument lists produce a warning.
-Commands use the current Python interpreter, no shell, and the repository root as cwd.
+`add-grid` queues the research pipeline (`backtester.tools.research_pipeline <toml>`, see
+Pipeline below; job name `pipeline <grid>`); `--dev-only` is accepted and changes nothing
+(the pipeline is always development only). `add-grid --retest` queues the bare runner
+(`tools.research <toml> --workers 1 --retest`): the one-time MT5 test is CLI only and not part
+of the pipeline. `add` preserves the supplied argument list, accepts `--max-attempts`
+(default 2), and only accepts module names below `backtester.`. Duplicate pending/running
+argument lists (same cwd) produce a warning. Commands use the current Python interpreter, no
+shell, and by default the repository root as cwd. `add` and `add-grid` take
+`--cwd <lane name or path>`: a job runs in the V2 root (default) or in a registered lane
+worktree (see Lanes below); any other folder is refused.
 
 Files live under the anchored `backtester.paths.RESULTS_DIR/queue`: `jobs/<id>.json`,
 `logs/<id>.log` (combined child output, appended across retries), `runner.log`,
@@ -496,3 +502,130 @@ destinations (`summary.json`, `report.html`), golden `--write` fixtures/manifest
 strategy profile destinations (`profile.json`, `profile.md`) are also shared writers;
 their destination isolation is the caller's responsibility in this step. Different argv
 can still target the same destination; the duplicate-argv warning is advisory only.
+
+### Job folder (cwd) and lane jobs (V2.6 step 3)
+
+`Job.cwd` is `None` (the V2 root, the default; also every job file written before V2.6 step 3)
+or the absolute path of a registered lane worktree. `Queue.add(argv, ..., cwd=None)` accepts
+a lane name or path (or the V2 root, stored as `None`) and raises `ValueError` for any other
+folder; `Queue(root, home=HOME_DIR)` knows the V2 root and reads its `lanes.json`. The runner
+checks the registry again when it starts a job: a job whose lane was removed meanwhile fails
+at once (exit code -1, reason in the job log, no retry). A lane job runs with
+`BACKTESTER_HOME` = the V2 root (data, results and the queue stay shared; `paths.py` reads it)
+and with the lane's `src` first on `PYTHONPATH`, so it imports the lane's strategy code and not
+the V2 install. The rest of the environment is unchanged; default jobs get no environment change.
+
+## Pipeline
+
+Spec: ROADMAP V2.6 step 3 (accepted by the user 2026-10-26). One resumable command per grid
+fills a research card without AI calls and without computing again anything the runner
+already writes:
+
+```console
+python -m backtester.tools.research_pipeline research/grids/orb.toml
+python -m backtester.tools.queue add-grid research/grids/orb.toml      # the same, in the queue
+```
+
+| Step | What it does |
+|---|---|
+| `research` | `run_research(grid, workers=1, retest=False, dev_only=True)`: development period only, never a retest, the test period stays unspent. Writes everything the card reads from the research folder (below). |
+| `monte_carlo` | `tools/monte_carlo --run <chosen dev run> --results-dir <results> --out <results>/monte_carlo/<dev run>`: the tool's own defaults (1000 runs, seed 42, 20 random paths per symbol, block bootstrap), no other option. This is where `ui/research_model.py` reads it. Not run (step done, with a note) when that `summary.json` already exists (for example from the Results page button) or when no variant was ranked. |
+| `card_inputs` | read-only: lists which card input files exist / are missing, the stability status and the chosen variant's flags. Computes nothing. |
+
+What the runner already writes and the pipeline reuses (in `results/research/<id>/` unless
+noted): `profile.json` (strategy profile / regime breakdown of the chosen development run, via
+`strategy_profile.research_results`), `research.json` -> `sensitivity` and `sensitivity.csv`
+(parameter stability, status gentle / sharp), the `flags` column of `variants.csv` (scorecard
+flags plus the significance, monkey and Bayes flags of the chosen variant), `significance.json`
+(Reality Check, PBO, effective trials), `bayes.json`, `skill_bounds.json`, `monkeys.json`,
+`grid.csv`, `walk_forward.csv` (when the grid asks for it) and
+`<results>/<dev run>/drawdown_bounds.json`. Only the Monte Carlo summary was missing, so it is
+the only new computation. A grid with `sensitivity = false` or `monkeys = false` has no such
+file (listed as missing, not an error).
+
+### pipeline.json
+
+`results/research/<id>/pipeline.json` (`<id>` = the runner's grid folder, `grid_id`), written
+atomically before and after every step:
+
+```json
+{
+  "version": 1,
+  "grid": "research/grids/orb.toml",
+  "id": "orb_ab12cd34",
+  "created": "2026-10-26T12:00:00+00:00",
+  "updated": "2026-10-26T12:41:00+00:00",
+  "state": "running",
+  "current": "monte_carlo",
+  "steps": [
+    {"name": "research", "state": "done", "started": "...", "ended": "...", "error": null,
+     "note": "development done; the test run was not started (--dev-only)"},
+    {"name": "monte_carlo", "state": "running", "started": "...", "ended": null,
+     "error": null, "note": null},
+    {"name": "card_inputs", "state": "pending", "started": null, "ended": null,
+     "error": null, "note": null}
+  ],
+  "chosen": {"id": "v003", "dev_run": "20261026-120000_US500-NAS100"},
+  "monte_carlo": {"kind": "monte_carlo --run (kinds A-D, tool defaults)", "runs": 1000,
+                  "paths": 20, "seed": 42, "out": "monte_carlo/20261026-120000_US500-NAS100"},
+  "inputs": null
+}
+```
+
+Step `state` is `pending | running | done | failed`; `error` is `"<ExceptionType>: <text>"`
+(at most 2000 characters). The overall `state` is `failed` when any step failed, `done` when
+all are done, `running` when one started, else `pending`; `current` is the running step. After
+`card_inputs`, `inputs` is `{"present": [...], "missing": [...], "stability": "gentle" |
+"sharp" | null, "flags": [...]}`. `chosen` is null when no variant had enough trades (Monte
+Carlo is then skipped). A failed step stops the pipeline (later steps stay `pending`) and the
+command exits 1. A rerun skips `done` steps and runs `failed`, `running` (killed process) and
+`pending` steps again, so a crash, Ctrl+C or a queue restart (job retry) continues where it
+stopped; the research runner itself resumes per variant. Exit codes: 0 done, 1 a step failed
+or another process runs this grid's pipeline (`.locks/pipeline/<id>.lock`), 2 grid file error
+(no `pipeline.json`, the folder is unknown). A `running` state whose queue job was cancelled or
+failed is stale (a killed process cannot update the file): show the job's state then.
+
+Functions for readers (the Research card): `research_pipeline.research_folder(grid, results_dir)`
+(grid file -> its folder), `read_state(folder) -> dict | None` (None before the first run or for
+a broken file) and `progress(state) -> str`: `"queued"` (no state, or all pending),
+`"step 2 of 3: monte_carlo"`, `"done"`, `"failed: monte_carlo: <error>"`. The folder (and so
+`pipeline.json`) exists only once the research step has started: treat a missing state as
+queued while a pipeline job for the grid is pending in the queue. To queue a grid from code
+use `tools.queue.add_grid(queue, toml, cwd=None) -> Job` (what `add-grid` calls; job name
+`pipeline <grid stem>`, argv `["backtester.tools.research_pipeline", "<toml>"]`).
+
+## Lanes
+
+Spec: ROADMAP V2.6 step 3, decision of the user 2026-10-26: parallel strategy work in git
+worktrees next to V2, `tools/lanes.py`.
+
+```console
+python -m backtester.tools.lanes create <name> [--existing]
+python -m backtester.tools.lanes list
+python -m backtester.tools.lanes check <name>
+python -m backtester.tools.lanes remove <name> [--force]
+```
+
+- **create** runs `git worktree add <V2 parent>/bt-lane-<name> -b lane/<name>` from the
+  current commit and registers the lane in `lanes.json` in the V2 root (git-ignored; entries
+  `name`, `path`, `branch`, `base_commit`, `created`). Nothing from `data/` or `results/` is
+  copied: lane jobs run with `BACKTESTER_HOME` = the V2 root (Job queue above). Names are
+  `[a-z0-9_]+`; a name that is an existing folder under `src/backtester/strategy/` is refused
+  unless `--existing`. A registered name, an existing target folder or an existing branch
+  `lane/<name>` is refused (no half state).
+- **check** compares the lane's working tree with its base commit (committed, staged, edited
+  and untracked files; a rename counts as delete + add). Allowed: `src/backtester/strategy/<name>/`,
+  `docs/strategy-<name>.md`, `tests/strategy/<name>/`, `research/grids/<name>*.toml`. Anything
+  else prints the files and exits 1: shared code (engine, detectors, risk, ...) is changed by
+  Opus, and the `strategy/registry.py` entry is merged by Opus.
+- **list** prints per lane: name, path, branch, ahead / behind (commits of the lane branch not
+  in the V2 HEAD / commits of the V2 HEAD not in the lane), dirty yes / no, check result.
+  `lanes.list_lanes(root=None) -> list[dict]` gives the same as data (`ahead`, `behind`,
+  `dirty`, `check_ok`, `offending`, `missing`).
+- **remove** removes the worktree and the registry entry. Refuses uncommitted changes
+  (tracked or untracked) and commits not in the V2 HEAD unless `--force`. The branch is never
+  deleted (a merged lane's branch can be deleted by hand). A lane whose folder is gone is
+  pruned and unregistered.
+
+Queue use: `queue add --cwd <name> -- backtester.tools.research_pipeline research/grids/<name>.toml`
+runs in the lane. None of these commands switches the branch checked out in the V2 root.

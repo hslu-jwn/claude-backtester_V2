@@ -23,6 +23,7 @@ from backtester.jobs.processes import process_identity, terminate_tree
 from backtester.jobs.storage import atomic_json, read_json
 from backtester.jobs.temperature import TemperatureGuard, read_temperature
 from backtester.paths import HOME_DIR, RESULTS_DIR
+from backtester.tools.lanes import resolve_cwd
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class Job:
     log: str = ""
     process_started: float | None = None
     starting: str | None = None
+    cwd: str | None = None  # None = the V2 root; else the path of a registered lane (tools/lanes)
 
 
 class RunnerLock:
@@ -83,8 +85,9 @@ class RunnerLock:
 
 
 class Queue:
-    def __init__(self, root: Path = RESULTS_DIR / "queue"):
+    def __init__(self, root: Path = RESULTS_DIR / "queue", home: Path = HOME_DIR):
         self.root = Path(root).resolve()
+        self.home = Path(home).resolve()  # the V2 root: default cwd, holds lanes.json
         self.broken = []
         self._warned_broken = set()
         (self.root / "jobs").mkdir(parents=True, exist_ok=True)
@@ -144,7 +147,9 @@ class Queue:
             (j for j in self.jobs() if j.state == "pending"), key=lambda j: (-j.priority, j.id)
         )
 
-    def add(self, argv, *, name=None, priority=0, max_attempts=DEFAULT_CONFIG.max_attempts):
+    def add(
+        self, argv, *, name=None, priority=0, max_attempts=DEFAULT_CONFIG.max_attempts, cwd=None
+    ):
         argv = list(argv)
         if (
             not argv
@@ -154,8 +159,12 @@ class Queue:
             raise ValueError("Only modules under backtester. are accepted")
         if max_attempts < 1:
             raise ValueError("max-attempts must be at least 1")
+        cwd = resolve_cwd(cwd, self.home)  # the V2 root (None) or a registered lane, else refused
         with file_lock(self.root / "add.lock"):
-            if any(j.argv == argv and j.state in ("pending", "running") for j in self.jobs()):
+            if any(
+                j.argv == argv and j.cwd == cwd and j.state in ("pending", "running")
+                for j in self.jobs()
+            ):
                 warnings.warn("A pending/running job has the same argv", stacklevel=2)
             job_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ_") + uuid.uuid4().hex[:8]
             job = Job(
@@ -165,6 +174,7 @@ class Queue:
                 priority=priority,
                 max_attempts=max_attempts,
                 log=str(self.root / "logs" / f"{job_id}.log"),
+                cwd=cwd,
             )
             self.save(job)
             return job
@@ -299,6 +309,20 @@ class Runner:
             name = re.sub(r"[^\w .-]", "", j.name)[:80]
             self.notify(f"Queue: job {name} failed (exit {j.exit_code}, {j.attempts} attempts)")
 
+    def launch_target(self, j):
+        """(cwd, env) of a job. The default is the V2 root with the runner's environment
+        (env None). A lane job runs in its worktree with BACKTESTER_HOME = the V2 root (data and
+        results stay shared) and the lane's `src` first on PYTHONPATH (its code, not V2's).
+        Raises ValueError when the lane is no longer registered."""
+        lane = resolve_cwd(j.cwd, self.queue.home)
+        if lane is None:
+            return self.queue.home, None
+        env = dict(os.environ)
+        env["BACKTESTER_HOME"] = str(self.queue.home)
+        old = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = str(Path(lane) / "src") + (os.pathsep + old if old else "")
+        return Path(lane), env
+
     def identity_matches(self, j):
         return j.process_started is not None and self.identity(j.pid) == j.process_started
 
@@ -394,12 +418,23 @@ class Runner:
                     )
                     self.queue.save(j)
                     try:
+                        cwd, env = self.launch_target(j)
+                    except ValueError as exc:  # the lane was removed after the job was queued
+                        with Path(j.log).open("ab") as stream:
+                            stream.write(f"{utc_now()} not started: {exc}\n".encode())
+                        j = replace(j, state="failed", ended=utc_now(), exit_code=-1)
+                        self.queue.save(j)
+                        self.failed(j)
+                        continue
+                    try:
                         with Path(j.log).open("ab") as stream:
                             options = {
-                                "cwd": HOME_DIR,
+                                "cwd": cwd,
                                 "stdout": stream,
                                 "stderr": subprocess.STDOUT,
                             }
+                            if env is not None:
+                                options["env"] = env
                             if os.name == "nt":
                                 options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
                             else:
