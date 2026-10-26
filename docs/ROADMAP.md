@@ -108,7 +108,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   stay.
 - ◐ **V2.5 App redesign** (2026-10-25: V2.5a-d done: dark theme, top bar, Research cards,
   Chart / Results / Backtest / Live in the new skeleton, browser-checked by Opus; open: the
-  user's look and ok, Fast vs Visual mode identical-trades test) (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
+  user's look and ok) (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
   vs "Details" per page (list to the user first), research page as one vertical list of
   cards, Fast mode (headless) vs Visual mode with identical trade lists.
 - ◐ **V2.6 Continuous research:** (2026-10-25: regime classifier and strategy profile built,
@@ -133,7 +133,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   pass probability, best market regime, parameter stability, warning flags. Click a card to
   expand the full details.
 - Two modes with a switch / CLI flag: Fast mode = headless, no chart, for automated research;
-  Visual mode = the app. Both give identical trade lists for the same settings (test).
+  Visual mode = the app. ☑ Identical trade lists for the same settings (`tests/test_fast_visual_identical.py`, 2026-10-25).
 - Codex reviews the redesign code. Done = tests green and the user looked at it in the browser
   and said ok.
 
