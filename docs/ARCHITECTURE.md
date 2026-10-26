@@ -325,29 +325,39 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
 
 **Candles (`Mt5Adapter`, a `DataAdapter`)**
 
-- **V2.6b historical cache repair:** there is no universally proven pre-2020 server rule.
-  `data/cache_repair.py` therefore proves each input UTC day against corrected histdata
-  using M1 close errors for candidate shifts −1, 0, +1 hours, not a guessed yearly rule.
+- **V2.6b historical cache repair (addendum A-C):** one FTMO server clock applies to
+  every symbol. `data/cache_repair.py` builds one per-date server clock table from the
+  start of the cache through **2021-09-13 inclusive**. Reference symbols with corrected
+  histdata prove residual shifts against the original NY+7-converted cache, using M1
+  close errors for candidates −1, 0, +1 hours. Every decisive reference must agree.
+  That date's residual then applies to every MT5 symbol, including MT5-only symbols.
+  Disagreement marks a date ambiguous (all symbol readings are retained); no decisive
+  reference marks it unproven. Both exclude the date for all symbols, without averaging.
+  From **2021-09-14**, retain the plain `America/New_York + 7 h` conversion unchanged.
   `QualityConfig` requires at least 100 matched bars and 50% coverage, a best median
   error at most 50% of reference median M1 range, and runner-up error at least twice the
   best plus 25% of that range. Flat/short/ambiguous references cannot prove a clock.
   Only proved days survive; bars are regrouped across UTC midnight after correction.
-  Pre-2015 days lack a histdata reference and are excluded; other unproved pre-2020 days,
-  including MT5-only symbols without references, are also excluded. Empty weekends remain
-  closed days. There is no invented Friday offset for 2010–2014.
+  Pre-2015 dates without reference evidence are excluded. A sparse reference cannot prove
+  a date. Empty development days also require a proven server date; there is no invented
+  Friday offset for 2010–2014. Missing MT5 days fall back to histdata where available.
   Per-symbol/year weekday bar counts strictly below
   `QualityConfig.min_weekday_share` (0.5) times the median weekday count, and empty
   weekdays, are missing; this density check applies in all years. Removing active day
   files makes `PreferredCacheAdapter` fall back to histdata; MT5 remains preferred on
   every retained day. Direct MT5-only requests report missing data when no replacement exists.
-  Run the offline `tools.cache_repair SYMBOL` **after** corrected histdata is rebuilt.
+  Run `tools.cache_repair --prove-clock --clock-table PATH` **after** corrected histdata
+  is rebuilt, then `tools.cache_repair SYMBOL --clock-table PATH` for each symbol.
+  The frozen JSON table records per-date status, residual hours and all decisive readings,
+  together with the quality settings. Reuse it for all symbols; do not measure repaired data.
   It locks per symbol with `filelock.py`, retains affected original files under
   `_v26b_original/`, stages measurements before active writes, and writes each day's
   proof/exclusion to `_v26b_reports/SYMBOL.json`. Reruns always start from originals.
-  See `results/clock_check_mt5.md`: 2015–2019 sampled gap days often need +1 hour, with
-  exceptions. Independent anchors and `mt5_compare.weekly_offsets` on cached overlaps
-  also show XAUUSD residual shifts during 2020 and March 2021; those modern clock
-  corrections remain outside this pre-2020 repair and need a separate decision.
+  See `results/clock_check_mt5.md` for per-year proven/ambiguous/no-reference dates,
+  per-symbol/year kept/dropped counts, disagreeing readings and test-period samples.
+  `scripts/v26b2_clock_evidence.py` reproduces the bounded read-only original-cache audit;
+  it corrects the proven old histdata DST-gap conversion in memory only. Its evidence
+  table is separate from the post-histdata-rebuild table used by the repair jobs.
   The 2023 golden check is run by Opus after rebuild, never regenerated to accept a change.
 - **Downloader errors:** only `Mt5NoHistory` (`RES_E_NOT_FOUND` after symbol validation)
   may be skipped before the first dense history day. Other first-chunk errors fail the

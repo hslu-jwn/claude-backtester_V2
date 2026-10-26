@@ -45,43 +45,57 @@ Identical duplicate periods:
 - US500 2020-01-01: DAT_MT_SPXUSD_M1_2020.csv, HISTDATA_COM_MT_SPXUSD_M1_2020.zip
 - XAUUSD 2020-01-01: DAT_MT_XAUUSD_M1_2020.csv, HISTDATA_COM_MT_XAUUSD_M1_2020.zip
 
-## Stage 2: offline MT5 repair
+## Stage 2a: prove the shared server clock (no cache writes)
+
+Only after stage 1 succeeds, queue this proof job and drain it before stage 2b.
+Inspect ambiguous readings and counts against results/clock_check_mt5.md. The original-cache
+audit table is evidence only; rebuild jobs MUST use the new table from corrected histdata.
+
+```powershell
+python -m backtester.tools.queue add --name v26b2-server-clock -- backtester.tools.cache_repair --prove-clock --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue run --drain
+```
+
+## Stage 2b: offline MT5 repair
 
 Only add after stage 1 has fully completed. No MT5 connection or download is used.
 Original affected days are retained in data/cache/mt5/_v26b_original/. Keep these backups.
 Per-day proofs, shifts and exclusions are written to data/cache/mt5/_v26b_reports/SYMBOL.json.
 The jobs may require substantial backup disk space. Reruns read retained originals and never shift timestamps twice.
-Pre-2020 days without a strong direct price match to corrected histdata are excluded (including MT5-only symbols and unavailable pre-2015 references).
-Sparse weekdays in any year are excluded at <50% of that symbol/year median. Empty weekends remain closed days.
-2020+ clock conversion is unchanged; XAUUSD 2020/March 2021 evidence needs a separate decision.
+Through 2021-09-13, each date's unanimously proven residual applies to EVERY symbol,
+including US30/US2000 and other MT5-only symbols. Disagreeing references or no decisive
+reference exclude that date for all symbols. No pre-2015 offset is inferred.
+Sparse weekdays in any year remain excluded at <50% of that symbol/year median.
+Dates from 2021-09-14 retain the plain NY+7 clock. Reuse the SAME frozen clock table for
+all 26 jobs; do not regenerate it between symbol repairs.
 
 ```powershell
-python -m backtester.tools.queue add --name v26b-mt5-AUDUSD -- backtester.tools.cache_repair AUDUSD
-python -m backtester.tools.queue add --name v26b-mt5-BTCUSD -- backtester.tools.cache_repair BTCUSD
-python -m backtester.tools.queue add --name v26b-mt5-DXY -- backtester.tools.cache_repair DXY
-python -m backtester.tools.queue add --name v26b-mt5-ETHUSD -- backtester.tools.cache_repair ETHUSD
-python -m backtester.tools.queue add --name v26b-mt5-EU50 -- backtester.tools.cache_repair EU50
-python -m backtester.tools.queue add --name v26b-mt5-EURGBP -- backtester.tools.cache_repair EURGBP
-python -m backtester.tools.queue add --name v26b-mt5-EURJPY -- backtester.tools.cache_repair EURJPY
-python -m backtester.tools.queue add --name v26b-mt5-EURUSD -- backtester.tools.cache_repair EURUSD
-python -m backtester.tools.queue add --name v26b-mt5-GBPJPY -- backtester.tools.cache_repair GBPJPY
-python -m backtester.tools.queue add --name v26b-mt5-GBPUSD -- backtester.tools.cache_repair GBPUSD
-python -m backtester.tools.queue add --name v26b-mt5-GER40 -- backtester.tools.cache_repair GER40
-python -m backtester.tools.queue add --name v26b-mt5-JP225 -- backtester.tools.cache_repair JP225
-python -m backtester.tools.queue add --name v26b-mt5-NAS100 -- backtester.tools.cache_repair NAS100
-python -m backtester.tools.queue add --name v26b-mt5-NATGAS -- backtester.tools.cache_repair NATGAS
-python -m backtester.tools.queue add --name v26b-mt5-NZDUSD -- backtester.tools.cache_repair NZDUSD
-python -m backtester.tools.queue add --name v26b-mt5-UK100 -- backtester.tools.cache_repair UK100
-python -m backtester.tools.queue add --name v26b-mt5-UKOIL -- backtester.tools.cache_repair UKOIL
-python -m backtester.tools.queue add --name v26b-mt5-US2000 -- backtester.tools.cache_repair US2000
-python -m backtester.tools.queue add --name v26b-mt5-US30 -- backtester.tools.cache_repair US30
-python -m backtester.tools.queue add --name v26b-mt5-US500 -- backtester.tools.cache_repair US500
-python -m backtester.tools.queue add --name v26b-mt5-USDCAD -- backtester.tools.cache_repair USDCAD
-python -m backtester.tools.queue add --name v26b-mt5-USDCHF -- backtester.tools.cache_repair USDCHF
-python -m backtester.tools.queue add --name v26b-mt5-USDJPY -- backtester.tools.cache_repair USDJPY
-python -m backtester.tools.queue add --name v26b-mt5-USOIL -- backtester.tools.cache_repair USOIL
-python -m backtester.tools.queue add --name v26b-mt5-XAGUSD -- backtester.tools.cache_repair XAGUSD
-python -m backtester.tools.queue add --name v26b-mt5-XAUUSD -- backtester.tools.cache_repair XAUUSD
+python -m backtester.tools.queue add --name v26b-mt5-AUDUSD -- backtester.tools.cache_repair AUDUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-BTCUSD -- backtester.tools.cache_repair BTCUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-DXY -- backtester.tools.cache_repair DXY --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-ETHUSD -- backtester.tools.cache_repair ETHUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-EU50 -- backtester.tools.cache_repair EU50 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-EURGBP -- backtester.tools.cache_repair EURGBP --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-EURJPY -- backtester.tools.cache_repair EURJPY --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-EURUSD -- backtester.tools.cache_repair EURUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-GBPJPY -- backtester.tools.cache_repair GBPJPY --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-GBPUSD -- backtester.tools.cache_repair GBPUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-GER40 -- backtester.tools.cache_repair GER40 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-JP225 -- backtester.tools.cache_repair JP225 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-NAS100 -- backtester.tools.cache_repair NAS100 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-NATGAS -- backtester.tools.cache_repair NATGAS --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-NZDUSD -- backtester.tools.cache_repair NZDUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-UK100 -- backtester.tools.cache_repair UK100 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-UKOIL -- backtester.tools.cache_repair UKOIL --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-US2000 -- backtester.tools.cache_repair US2000 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-US30 -- backtester.tools.cache_repair US30 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-US500 -- backtester.tools.cache_repair US500 --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-USDCAD -- backtester.tools.cache_repair USDCAD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-USDCHF -- backtester.tools.cache_repair USDCHF --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-USDJPY -- backtester.tools.cache_repair USDJPY --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-USOIL -- backtester.tools.cache_repair USOIL --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-XAGUSD -- backtester.tools.cache_repair XAGUSD --clock-table results/v26b2_rebuild_server_clock.json
+python -m backtester.tools.queue add --name v26b-mt5-XAUUSD -- backtester.tools.cache_repair XAUUSD --clock-table results/v26b2_rebuild_server_clock.json
 ```
 
 Then drain the queue again. Opus runs the data check and the 2023 golden check afterwards; stop and report any golden change.

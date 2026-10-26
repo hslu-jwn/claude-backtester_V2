@@ -1,6 +1,6 @@
 """Offline V2.6b cache repair. Spec: ARCHITECTURE.md > Data sources.
 
-Pre-2020 clocks are proved per UTC input day against corrected histdata. Ambiguous
+Development clocks are proved per UTC input day across reference symbols. Ambiguous
 days are excluded, never assigned an inferred year-wide clock. Originals are retained
 outside the active cache layout; reruns always start from originals, never shift twice.
 """
@@ -11,6 +11,7 @@ import statistics
 from dataclasses import asdict, dataclass
 from datetime import date, timedelta
 from pathlib import Path
+from time import monotonic
 
 import numpy as np
 import pandas as pd
@@ -38,6 +39,108 @@ class QualityConfig:
 
 
 QUALITY = QualityConfig()
+DEVELOPMENT_END = date(2021, 9, 13)
+
+
+def original_inputs(cache_dir: Path, symbol: str) -> dict[date, Path]:
+    """Retained original days take precedence, independent of repair order."""
+    return {
+        date.fromisoformat(p.stem): p
+        for root in (cache_dir, cache_dir / "_v26b_original")
+        for p in (root / symbol).glob("*/*.parquet")
+    }
+
+
+def build_server_clock_table(
+    cache_dir: Path,
+    histdata_dir: Path,
+    config: QualityConfig = QUALITY,
+    *,
+    original_histdata: bool = False,
+    timeout_seconds: float = 540,
+    log=print,
+) -> dict[str, dict]:
+    """Read-only per-date consensus; no decisive references means no clock proof.
+
+    Spec: ARCHITECTURE.md > Data sources. `original_histdata` is audit-only:
+    compensate the old 2015-2018 cache conversion before the queued rebuild.
+    No symbol can override another decisive reading. Unproven readings abstain.
+    """
+    started = monotonic()
+    cache_dir, histdata_dir = Path(cache_dir), Path(histdata_dir)
+    symbols = {
+        p.name
+        for root in (cache_dir, cache_dir / "_v26b_original")
+        if root.exists()
+        for p in root.iterdir()
+        if p.is_dir() and p.name.isalnum() and p.name.isupper()
+    }
+    table = {}
+    for symbol in sorted(symbols):
+        inputs = original_inputs(cache_dir, symbol)
+        counts = {d: pq.ParquetFile(p).metadata.num_rows for d, p in inputs.items()}
+        sparse = bad_density_days(counts, config)
+        days = {d: p for d, p in inputs.items() if d <= DEVELOPMENT_END}
+        for day in days:
+            table.setdefault(str(day), {"status": "no reference", "shift": None, "readings": {}})
+        for year in sorted({d.year for d in days}):
+            if monotonic() - started > timeout_seconds:
+                raise TimeoutError("server clock proof exceeded measurement budget")
+            paths = list((histdata_dir / symbol / str(year)).glob("*.parquet"))
+            for neighbour in (date(year, 1, 1) - timedelta(days=1), date(year + 1, 1, 1)):
+                path = cache_path(histdata_dir, symbol, neighbour)
+                if path.exists():
+                    paths.append(path)
+            if not paths:
+                continue
+            reference = read_cached_days(paths)
+            if original_histdata and not reference.empty:
+                from zoneinfo import ZoneInfo
+
+                ny, eu = ZoneInfo("America/New_York"), ZoneInfo("Europe/London")
+                stamps = reference.ts
+                # Audit cache correction only affects US/EU gap weekdays. Compute
+                # zone offsets per distinct UTC day rather than per M1 row.
+                dates = stamps.dt.normalize()
+                offsets = {
+                    t: int(
+                        2015 <= t.year <= 2018
+                        and bool((t + pd.Timedelta(hours=12)).tz_convert(ny).dst())
+                        != bool((t + pd.Timedelta(hours=12)).tz_convert(eu).dst())
+                    )
+                    for t in dates.unique()
+                }
+                adjust = dates.map(offsets)
+                reference = reference.assign(
+                    ts=stamps - pd.to_timedelta(adjust.astype(int), unit="h")
+                )
+            ref_days = dict(tuple(reference.groupby(reference.ts.dt.date)))
+            raw = read_cached_days(
+                [p for d, p in days.items() if d.year == year and d not in sparse]
+            )
+            for day, part in raw.groupby(raw.ts.dt.date):
+                if monotonic() - started > timeout_seconds:
+                    raise TimeoutError("server clock proof exceeded measurement budget")
+                if day not in days or day in sparse:
+                    continue
+                neighbours = [
+                    ref_days[d]
+                    for d in (day - timedelta(days=1), day, day + timedelta(days=1))
+                    if d in ref_days
+                ]
+                if not neighbours:
+                    continue
+                shift = proven_shift(part, pd.concat(neighbours, ignore_index=True), config)
+                if shift is not None:
+                    table[str(day)]["readings"][symbol] = shift
+            log(f"clock proof {symbol} {year}: {monotonic() - started:.1f}s")
+    for entry in table.values():
+        shifts = set(entry["readings"].values())
+        if len(shifts) == 1:
+            entry.update(status="proven", shift=next(iter(shifts)))
+        elif len(shifts) > 1:
+            entry.update(status="ambiguous")
+    return dict(sorted(table.items()))
 
 
 def bad_density_days(counts: dict[date, int], config: QualityConfig = QUALITY) -> set[date]:
@@ -106,17 +209,21 @@ def repair_mt5(
     histdata_dir: Path,
     config: QualityConfig = QUALITY,
     log=print,
+    *,
+    server_table: dict[str, dict] | None = None,
 ) -> list[dict]:
     """Repair a symbol without downloads, retaining originals in `_v26b_original/`.
 
-    The histdata rebuild MUST finish first. All pre-2020 input days require independent
-    per-day evidence. 2020+ clock conversion stays unchanged; density filtering applies
+    The histdata rebuild MUST finish first. Development days require shared per-date
+    evidence. From 2021-09-14 the clock stays unchanged; density filtering applies
     to all years. Corrections crossing midnight are regrouped into UTC day files.
     Writes a dated per-day decision log, including every rejected period.
     """
     cache_dir, histdata_dir = Path(cache_dir), Path(histdata_dir)
     if not symbol.isalnum() or symbol != symbol.upper():
         raise ValueError("expected an uppercase alphanumeric symbol")
+    if server_table is None:
+        server_table = build_server_clock_table(cache_dir, histdata_dir, config, log=log)
     archive = cache_dir / "_v26b_original"
     stage = cache_dir / "_v26b_staged"
     with file_lock(cache_dir / "_v26b_locks" / f"{symbol}.lock"):
@@ -134,7 +241,7 @@ def repair_mt5(
             work = {
                 d: p
                 for d, p in inputs.items()
-                if d.year == year and (d.year < 2020 or d in sparse or d in originals)
+                if d.year == year and (d <= DEVELOPMENT_END or d in sparse or d in originals)
             }
             if not work:
                 continue
@@ -146,31 +253,32 @@ def repair_mt5(
                     shutil.copy2(path, backup)
             raw = read_cached_days(list(work.values()))
             by_day = dict(tuple(raw.groupby(raw["ts"].dt.date)))
-            ref_paths = [p for p in (histdata_dir / symbol / str(year)).glob("*.parquet")]
-            # Adjacent days permit proof and re-bucketing at year boundaries.
-            for neighbour in (date(year, 1, 1) - timedelta(days=1), date(year + 1, 1, 1)):
-                path = cache_path(histdata_dir, symbol, neighbour)
-                if path.exists():
-                    ref_paths.append(path)
-            reference = read_cached_days(ref_paths) if year < 2020 else pd.DataFrame()
             kept = []
             for day in sorted(work):
                 affected.add(day)
                 part = by_day.get(day, raw.iloc[:0])
                 if day in sparse:
                     decision, shift = "drop: sparse/empty weekday", None
-                elif part.empty:
-                    decision, shift = "keep: empty weekend", 0
-                elif year >= 2020:
-                    decision, shift = "keep: modern clock unchanged", 0
+                elif day > DEVELOPMENT_END:
+                    decision, shift = "keep: test-period clock unchanged", 0
                 else:
-                    shift = proven_shift(part, reference, config)
-                    decision = "drop: clock unproven" if shift is None else "keep: clock proven"
+                    entry = server_table.get(str(day), {"status": "no reference", "shift": None})
+                    shift = entry["shift"] if entry["status"] == "proven" else None
+                    decision = (
+                        "keep: server clock proven"
+                        if shift is not None
+                        else f"drop: {entry['status']}"
+                    )
                 decisions.append(
                     {"day": str(day), "bars": counts[day], "decision": decision, "shift": shift}
                 )
                 if shift is not None:
-                    kept.append(part.assign(ts=part.ts + pd.Timedelta(hours=shift)))
+                    shifted = part.assign(ts=part.ts + pd.Timedelta(hours=shift))
+                    if day <= DEVELOPMENT_END and (shifted.ts.dt.date > DEVELOPMENT_END).any():
+                        raise ValueError(
+                            f"{symbol} {day}: correction crosses test-period boundary; no active writes"
+                        )
+                    kept.append(shifted)
                     if part.empty:
                         write_atomic(part, cache_path(stage, symbol, day))
                         staged_days.add(day)

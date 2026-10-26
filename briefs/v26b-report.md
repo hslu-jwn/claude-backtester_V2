@@ -1,100 +1,90 @@
-# V2.6 step 2 — implementation handoff
+# V2.6 step 2 — addendum A-C handoff
 
-Implementation is ready for Opus's independent review and the user's acceptance.
-No ROADMAP checkbox was marked done. No commits, pushes, branches, terminal sessions,
-downloads, servers or cache rebuilds were performed. No production cache or raw file was
-changed. Tests use temporary caches and fake MT5 sessions. Work was performed alone.
+Only addendum A-C was changed in this pass; Part 1 is the committed baseline.
+Ready for Opus's independent review and user acceptance. No ROADMAP checkbox marked.
 
-## Clock evidence
+## Implemented
 
-- `results/clock_check_histdata.md`: 920 original-cache edge observations across both
-  feeds; every sampled 2015–2018 DST-gap GBPUSD Sunday open is one hour late under the
-  old conversion. Friday FX/gold closes corroborate the US DST correction. 2019–2021
-  FX edges support retaining the existing European-date rule. Normal weeks are unchanged.
-- `results/clock_check_mt5.md`: 384 daily price matches and 77 H1 weekly matches against
-  corrected histdata, using `mt5_compare.weekly_offsets` without a terminal connection.
-  Sampled pre-2020 daily proofs: 2015 60/60, 2016 48/49, 2017 50/50, 2018 50/50,
-  2019 35/60. The table and CSV identify unproven sampled dates; these are samples,
-  not approval of all unsampled days. Each queued repair proves every affected day.
-- No universal pre-2020 MT5 clock was inferred. Missing pre-2015 references mean those
-  non-empty MT5 days are excluded. Other pre-2020 days without a clear direct price
-  match, including MT5-only symbols without histdata, are excluded too. Empty weekends
-  remain closed days. Sparse/empty weekdays are excluded using the configurable
-  symbol/year median threshold (default strictly below 50%). Histdata fills absent MT5
-  days wherever available; missing MT5-only data stays visibly missing.
-- Open finding: XAUUSD's 2020 and March 2021 overlap also has a one-hour residual,
-  contrary to a universal NY+7 rule from 2020. Modern clock correction is outside this
-  pre-2020 repair; it needs a separate decision. Modern timestamps are unchanged.
-- Reproduce the bounded read-only measurements with `python scripts/v26b_clock_evidence.py`
-  against original caches. Edge/match passes took approximately 1.6/5.4 seconds; each
-  enforces a 540-second bound. Logs: `results/v26b_clock_edges.log`,
-  `results/v26b_clock_match.log`; dated CSVs: `results/v26b_clock_edges.csv`,
-  `results/v26b_clock_matches.csv`, `results/v26b_clock_weekly.csv`.
+- Shared per-date server clock proof from the cache start through 2021-09-13 inclusive.
+  Every decisive histdata reference must agree. Its residual applies to EVERY MT5 symbol,
+  including MT5-only US30/US2000. Sparse reference days cannot vote.
+- Ambiguous dates retain all disagreeing readings and are excluded for all symbols.
+  Dates without a decisive reference are also excluded for all symbols.
+  Per-symbol/year density filtering remains unchanged.
+- From 2021-09-14, the plain NY+7 clock is unchanged. A development correction that
+  crosses into the test period fails before active cache writes.
+- Queue plan: 21 histdata jobs, then ONE shared proof job, then 26 symbol repairs using
+  the SAME frozen JSON table. Quality settings must match. Reruns use retained originals.
+  The proof command uses a unique temporary file and atomic replacement.
 
-## Implementation
+## Evidence (no cache writes)
 
-- Histdata: date-dependent zoneinfo conversion, explicit transition errors, configurable
-  daily-close continuity validation before writes, and removal/exclusion of GER40 UTC
-  cache days from 2020-06-15. Adjacent year files already combine correctly in one import;
-  the regression checks both halves of January 1. Disconnected periods are not compared
-  as consecutive closes. Documented jump exemptions require a date, symbol and reason.
-- Offline MT5 repair: per-day price proof, UTC re-bucketing, retained originals,
-  per-symbol file locks, staging before active writes and dated per-day decision reports.
-  Reruns use retained originals and cannot shift the same inputs twice. Modern density
-  filtering can also exclude anomalously sparse modern days; Opus must stop if that
-  changes any 2023 golden trade list.
-- Downloader: only validated-symbol `RES_E_NOT_FOUND` becomes `Mt5NoHistory`; other
-  first-chunk errors fail with nonzero status. Later errors always propagate. Today/future
-  end dates and reversed ranges fail before connecting. Binance daily 404 holes retry once.
-- Tools: clean show/trials validation, shared MT5 spread defaults, one-year M1 reads in
-  check with cross-year gaps and exact full-history M5 median. Outlier thresholds are
-  explicitly per year. Monte Carlo default folders include source, seed and runs, also
-  for saved runs; explicit output overrides remain unchanged. No `--part` users remain.
-- Cache day writes use unique temporary names, atomic replacement and bounded Windows
-  sharing retries, following V2.6a's pattern. Repair reuses `filelock.py`.
-- Packaging/cleanup: numpy/requests are included in the data extra; ignore comments are
-  on separate lines and the named stray hook file is ignored.
+Read-only audit: `.venv/Scripts/python.exe scripts/v26b2_clock_evidence.py`.
+Elapsed **184.80 seconds**, below the 540-second bound. Proven 2015–2018 histdata
+DST-gap corrections are applied in memory to the original cache, using Part 1's
+independent weekly-edge anchors. No whole-period clock offset is guessed.
 
-## Rebuild handoff — not executed
+|Year|Dates proven|Ambiguous|No reference|
+|---|---:|---:|---:|
+|2010|0|0|365|
+|2011|0|0|365|
+|2012|0|0|366|
+|2013|0|0|365|
+|2014|0|0|365|
+|2015|309|0|56|
+|2016|308|1|57|
+|2017|304|5|56|
+|2018|311|0|54|
+|2019|292|18|55|
+|2020|287|24|55|
+|2021 through September 13|205|12|39|
 
-`scripts/rebuild_cache_v26b.md` has 21 histdata jobs and 26 offline MT5 repair jobs.
-Drain and verify stage 1 before adding stage 2. Nine duplicate raw CSV/ZIP periods
-matched after newline normalization; the plan selects plain CSVs and imports every
-neighbouring year together. Raw files remain untouched. Retain MT5 originals under
-`data/cache/mt5/_v26b_original/`; inspect per-day exclusions in `_v26b_reports/`.
+Total: **4,274 dates: 2,016 proven, 60 ambiguous, 2,198 without a decisive reference**.
+Counts include cached empty weekend dates. Proven dates still undergo per-symbol density
+filtering. 2010–2014 have no references and are excluded.
 
-Opus runs the rebuild, data check and golden check afterwards. Golden lists were neither
-run nor regenerated here. Stop and report any 2023 golden difference.
+`results/clock_check_mt5.md` includes per-symbol/year kept/dropped counts and ALL
+ambiguous dates with both/all readings, including March 2021 FX/metals disagreements.
+US30 retains 236/285/205 input days in 2019/2020/2021-development; US2000 retains
+288/291/285/205 in 2018/2019/2020/2021-development.
 
-The named stray hook file, `.vscode/` and `data/cache/dukascopy/` were absent.
-**Removed: nothing.**
+Test-period sample: GBPUSD/XAUUSD prove zero residual on 2021-09-14, 2021-11-03,
+2022-03-16, 2023-03-15 and 2023-07-12. NAS100/US500 prove zero on 2023-03-15;
+other available index samples are inconclusive under unchanged thresholds.
+No decisive sample contradicts NY+7. No sample is used to change test-period timestamps.
 
-## Files changed
+Artifacts: `results/clock_check_mt5.md`, `results/v26b2_server_clock.json`,
+`results/v26b2_clock_measurement.log`, `results/v26b2_clock_console.log`.
+The audit JSON is evidence only; queue stage 2a generates
+`results/v26b2_rebuild_server_clock.json` from REBUILT histdata.
 
-- `.gitignore`, `pyproject.toml`, `docs/ARCHITECTURE.md`
-- `src/backtester/data/adapters/mt5_adapter.py`
-- `src/backtester/data/binance.py`, `cache.py`, `histdata.py`, `mt5_download.py`
-- New `src/backtester/data/cache_repair.py`
-- `src/backtester/tools/check.py`, `monte_carlo.py`, `mt5_download.py`, `show.py`,
-  `spread_table.py`, `trials.py`
-- New `src/backtester/tools/cache_repair.py`
-- `tests/tools/test_monte_carlo_tool.py` (old folder-name expectations updated to the
-  explicitly requested source/seed/run suffix, not weakened)
-- New `tests/data/test_v26b_data.py`, `tests/tools/test_v26b_tools.py`
-- New `briefs/v26b-test-cases.md` (written first), this report,
-  `scripts/v26b_clock_evidence.py`, `scripts/rebuild_cache_v26b.md`
-- Git-ignored evidence/log artifacts under `results/` listed above and `results/pytest_v26b.log`
+## Files changed in this addendum
 
-## Validation
+- `src/backtester/data/cache_repair.py`, `src/backtester/tools/cache_repair.py`
+- New `tests/data/test_v26b_server_clock.py`
+- New `tests/tools/test_v26b_server_clock_cli.py`
+- `tests/tools/test_v26b_tools.py` (queue-plan contract includes the shared proof stage)
+- New `scripts/v26b2_clock_evidence.py`
+- `scripts/rebuild_cache_v26b.md`, `docs/ARCHITECTURE.md` (Data sources)
+- `briefs/v26b-test-cases.md`, this report
+- Git-ignored evidence artifacts above and `results/pytest_v26b2.log`
 
-The initial regression run failed on the expected defects before implementation.
-The first full run exposed two obsolete Monte Carlo path assertions and an empty-cache
-check edge case; all were resolved against the requested behavior. Subsequent targeted
-tests also cover malformed year placement, sparse history, explicit fake MT5 failures,
-UTC-midnight preservation and queue command validity. No test expectation was weakened.
+## Validation / remaining review
 
-Final command: `.venv/Scripts/python.exe -m pytest -q tests/data tests/tools > results/pytest_v26b.log 2>&1`.
-Result: **715 passed**, 20 existing pandas deprecation warnings, 144.01 seconds.
-The 48 new regressions also passed in the focused run. Ruff and `git diff --check`
-passed on the changed files. Independent cross-review, cache rebuild/data check,
-golden check and the user's acceptance remain for Opus.
+Test-case list first, then tests, then code. Initial shared-table and boundary
+regressions failed before implementation; eight new cases now pass. Existing
+expectations were not weakened. The first full run had 722 passes and one obsolete
+queue-plan failure: it counted the new shared proof as a 27th symbol repair. The updated
+contract still requires exactly 26 symbol jobs and now additionally requires one preceding
+proof job and the same table path in every repair job. Its focused check passes.
+Ruff and formatting checks pass on changed Python files; `git diff --check` passes.
+Final command: `.venv/Scripts/python.exe -m pytest -q tests/data tests/tools > results/pytest_v26b2.log 2>&1`.
+Result: **723 passed**, 20 existing pandas deprecation warnings, **142.89 seconds**.
+
+No rebuild, production-cache/raw changes, downloads, terminal, servers, commits,
+pushes, branches, subagents or protected-path edits. **Removed: nothing.**
+Opus runs the rebuild, data check and 2023 golden check afterwards; stop on any
+golden difference. No golden lists were run or regenerated here.
+
+Open review: assess the 60 ambiguous dates and inconclusive index samples.
+No unclear trading rules. Independent cross-review and user acceptance remain.

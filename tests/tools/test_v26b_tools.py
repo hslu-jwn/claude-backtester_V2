@@ -53,6 +53,7 @@ def test_rebuild_plan_has_one_valid_job_per_feed_symbol_and_no_overlaps():
 
     plan = Path("scripts/rebuild_cache_v26b.md").read_text(encoding="utf-8")
     seen = set()
+    proof_tables = []
     for line in plan.splitlines():
         if not line.startswith("python -m backtester.tools.queue add "):
             continue
@@ -67,12 +68,20 @@ def test_rebuild_plan_has_one_valid_job_per_feed_symbol_and_no_overlaps():
             symbol = files[0].symbol
         else:
             assert argv[0] == "backtester.tools.cache_repair"
+            if "--prove-clock" in argv:
+                assert not proof_tables
+                assert not any(module == "backtester.tools.cache_repair" for module, _ in seen)
+                proof_tables.append(argv[argv.index("--clock-table") + 1])
+                continue
+            assert len(proof_tables) == 1
+            assert argv[argv.index("--clock-table") + 1] == proof_tables[0]
             symbol = argv[1]
         key = (argv[0], symbol)
         assert key not in seen
         seen.add(key)
     assert sum(module == "backtester.data.histdata" for module, _ in seen) == 21
     assert sum(module == "backtester.tools.cache_repair" for module, _ in seen) == 26
+    assert len(proof_tables) == 1
 
 
 def test_trials_negative_count_rejected(tmp_path, capsys):

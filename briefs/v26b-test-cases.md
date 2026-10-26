@@ -32,3 +32,14 @@ download, golden run, or production cache rebuild is run by Codex.
 12. Packaging/cleanup: data extra includes existing numpy/requests dependencies;
     ignore comments on separate lines; remove only named stray file and untracked,
     empty/clearly unused leftovers, logging actual removals.
+
+## Addendum A-C regressions (2026-10-26; before implementation)
+
+- A reference symbol proves a date's residual shift; MT5-only US30 inherits it.
+- Opposing reference readings make the server date ambiguous; retain both readings,
+  exclude the date for every symbol, and count it separately from no-reference dates.
+- No decisive reference excludes a development date, including dates in 2020/2021.
+- Development ends on 2021-09-13 inclusive; 2021-09-14 and 2023 retain timestamps/bytes.
+- Sparse reference days cannot prove a clock; per-symbol density filtering remains.
+- Repair order and reruns use original reference files and the same frozen server table.
+- Year-boundary re-bucketing remains covered by the existing regression.
