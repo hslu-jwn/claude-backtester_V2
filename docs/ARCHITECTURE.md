@@ -355,9 +355,16 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
   Friday offset for 2010–2014. Missing MT5 days fall back to histdata where available.
   Per-symbol/year weekday bar counts strictly below
   `QualityConfig.min_weekday_share` (0.5) times the median weekday count, and empty
-  weekdays, are missing; this density check applies in all years. Removing active day
-  files makes `PreferredCacheAdapter` fall back to histdata; MT5 remains preferred on
-  every retained day. Direct MT5-only requests report missing data when no replacement exists.
+  weekdays, are sparse (all years). A sparse MT5 day **of the development period (up to
+  2021-09-13)** is excluded **only if the histdata cache has that UTC day for the same
+  symbol and it is itself not sparse** (a real fill); from 2021-09-14 FTMO's own data always
+  stays, thin holidays included (`keep: sparse, test period (FTMO data)`; rule set by the
+  user, 2026-10-26: the test period stays on one feed, the one actually traded);
+  `PreferredCacheAdapter` then falls back to histdata. Otherwise (exchange holidays and
+  short sessions, MT5-only symbols, the test period) the MT5 day is kept unchanged
+  (shifted only by a proven clock; an empty day stays an empty closed day) and the report
+  records `keep: sparse, no histdata fill`. MT5 remains preferred on every retained day
+  (rule set by the user, 2026-10-26).
   Run `tools.cache_repair --prove-clock --clock-table PATH` **after** corrected histdata
   is rebuilt, then `tools.cache_repair SYMBOL --clock-table PATH` for each symbol.
   The frozen JSON table records per-date status, residual hours and all decisive readings,

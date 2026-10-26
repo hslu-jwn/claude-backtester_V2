@@ -160,7 +160,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   on GBPJPY; gap fade (5) and gap momentum (7) in quiet sideways markets.
   **Build order accepted by the user 2026-10-26:** (1) ◐ job queue + temperature guard +
   trial-log lock (`briefs/v26a-job-queue.md`; built 2026-10-26: `python -m backtester.tools.queue`,
-  `docs/research-runner.md` › Job queue; open: the user's check, LibreHardwareMonitor install); (2) data fixes 13.12-13.16, 13.18; (3) research
+  `docs/research-runner.md` › Job queue; open: the user's check, LibreHardwareMonitor install); (2) ◐ data fixes 13.12-13.16, 13.18 (built 2026-10-26, cache rebuilt through the queue, 100 jobs; `briefs/v26b-report.md`, `results/clock_check_*.md`; histdata clock 2015-2018, MT5 server clock per date through 2021-09-13 (2010-2014 dropped: no reference), wrong instruments dropped (GER40 from 2020-06-15, DXY = Dow Jones until 2018-12-14, EU50 = IBEX from 2018-12-17), oil jumps 2020 documented, sparse days filled by histdata only up to 2021-09-13 (user 2026-10-26); golden lists identical; open: the user's check; `tools/check.py` still reports unexpected gaps (~450 / year 2015-2020) and MT5 bid-without-ask rows -> look at them in step 8); (3) research
   cards through the queue + lanes in worktrees; (4) V2.7 portfolio page; (5) UI: 3.3d, 3.5,
   12.4, 4.3; (6) live: demo bot restart (the user's call), V2.4b, 12.5; (7) V2.4e news when the
   data is regenerated; (8) full check of the whole app (every page and CLI end to end + Codex

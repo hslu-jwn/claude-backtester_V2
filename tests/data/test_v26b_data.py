@@ -440,3 +440,88 @@ def test_default_oil_exemptions_are_exact(tmp_path):
     other_sym.write_text(_row("2020-03-06", 45.505) + _row("2020-03-09", 33.415))
     with pytest.raises(HistdataError):
         import_files([other_sym], tmp_path / "c3")
+
+
+def _modern_week(mt5, hist, sparse_day, sparse_bars, hist_bars=None):
+    days = [date(2023, 12, 18), date(2023, 12, 19), date(2023, 12, 20), sparse_day]
+    for d in days:
+        write_atomic(frame(d, sparse_bars if d == sparse_day else 100), cache_path(mt5, "US30", d))
+    if hist_bars is not None:
+        for d in days[:-1]:
+            write_atomic(frame(d, 100), cache_path(hist, "US30", d))
+        write_atomic(frame(sparse_day, hist_bars), cache_path(hist, "US30", sparse_day))
+
+
+def _week(mt5, hist, days, sparse_day, sparse_bars, hist_bars):
+    for d in days:
+        write_atomic(frame(d, sparse_bars if d == sparse_day else 100), cache_path(mt5, "US30", d))
+        write_atomic(frame(d, hist_bars if d == sparse_day else 100), cache_path(hist, "US30", d))
+
+
+def test_sparse_development_day_with_histdata_fill_is_excluded(tmp_path):
+    from backtester.data.cache_repair import repair_mt5
+
+    mt5, hist, day = tmp_path / "mt5", tmp_path / "hist", date(2019, 12, 24)
+    days = [date(2019, 12, 17), date(2019, 12, 18), date(2019, 12, 19), day]
+    _week(mt5, hist, days, day, 30, 100)
+    proven = {str(d): {"status": "proven", "shift": 0} for d in days}
+    decisions = repair_mt5("US30", mt5, hist, server_table=proven)
+    assert not cache_path(mt5, "US30", day).exists()
+    assert next(d for d in decisions if d["day"] == str(day))["shift"] is None
+
+
+def test_sparse_test_period_day_keeps_ftmo_data_even_with_histdata_fill(tmp_path):
+    # rule set by the user 2026-10-26: from 2021-09-14 FTMO's own data always stays
+    from backtester.data.cache_repair import repair_mt5
+
+    mt5, hist, day = tmp_path / "mt5", tmp_path / "hist", date(2023, 12, 25)
+    _modern_week(mt5, hist, day, 30, hist_bars=100)
+    original = read_cached_day(cache_path(mt5, "US30", day))
+    decisions = repair_mt5("US30", mt5, hist, server_table={})
+    pd.testing.assert_frame_equal(original, read_cached_day(cache_path(mt5, "US30", day)))
+    assert next(d for d in decisions if d["day"] == str(day))["decision"] == (
+        "keep: sparse, test period (FTMO data)"
+    )
+
+
+def test_sparse_day_without_histdata_or_sparse_histdata_is_kept(tmp_path):
+    from backtester.data.cache_repair import repair_mt5
+
+    day = date(2023, 12, 25)
+    for hist_bars in (None, 10):  # no histdata / histdata itself sparse
+        mt5, hist = tmp_path / f"mt5_{hist_bars}", tmp_path / f"hist_{hist_bars}"
+        _modern_week(mt5, hist, day, 30, hist_bars=hist_bars)
+        original = read_cached_day(cache_path(mt5, "US30", day))
+        decisions = repair_mt5("US30", mt5, hist, server_table={})
+        pd.testing.assert_frame_equal(original, read_cached_day(cache_path(mt5, "US30", day)))
+        assert next(d for d in decisions if d["day"] == str(day))["decision"] == (
+            "keep: sparse, test period (FTMO data)"
+        )
+
+
+def test_empty_holiday_without_histdata_stays_an_empty_closed_day(tmp_path):
+    from backtester.data.adapters.cache_adapter import cached_days
+    from backtester.data.cache_repair import repair_mt5
+
+    mt5, hist, day = tmp_path / "mt5", tmp_path / "hist", date(2023, 4, 7)
+    _modern_week(mt5, hist, day, 0)
+    repair_mt5("US30", mt5, hist, server_table={})
+    assert cache_path(mt5, "US30", day).exists()
+    assert read_cached_day(cache_path(mt5, "US30", day)).empty
+    assert day in cached_days("US30", mt5)
+
+
+def test_rerun_restores_day_excluded_by_old_rule(tmp_path):
+    from backtester.data.cache_repair import repair_mt5
+
+    mt5, hist, day = tmp_path / "mt5", tmp_path / "hist", date(2023, 12, 25)
+    _modern_week(mt5, hist, day, 30)
+    path = cache_path(mt5, "US30", day)
+    original = read_cached_day(path)
+    # State left by the old rule: original retained, active day file removed.
+    backup = cache_path(mt5 / "_v26b_original", "US30", day)
+    backup.parent.mkdir(parents=True)
+    backup.write_bytes(path.read_bytes())
+    path.unlink()
+    repair_mt5("US30", mt5, hist, server_table={})
+    pd.testing.assert_frame_equal(original, read_cached_day(path))

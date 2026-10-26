@@ -65,7 +65,10 @@ The jobs may require substantial backup disk space. Reruns read retained origina
 Through 2021-09-13, each date's unanimously proven residual applies to EVERY symbol,
 including US30/US2000 and other MT5-only symbols. Disagreeing references or no decisive
 reference exclude that date for all symbols. No pre-2015 offset is inferred.
-Sparse weekdays in any year remain excluded at <50% of that symbol/year median.
+Sparse weekdays (<50% of that symbol/year median, or empty) up to 2021-09-13 are excluded
+ONLY where the histdata cache has a real fill for that UTC day (not itself sparse); otherwise
+the MT5 day is kept (holidays, MT5-only symbols) as `keep: sparse, no histdata fill`. From
+2021-09-14 FTMO's own data always stays (`keep: sparse, test period (FTMO data)`). Reruns restore previously excluded days from the originals.
 Dates from 2021-09-14 retain the plain NY+7 clock. Reuse the SAME frozen clock table for
 all 26 jobs; do not regenerate it between symbol repairs.
 

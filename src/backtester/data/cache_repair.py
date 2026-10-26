@@ -160,6 +160,17 @@ def bad_density_days(counts: dict[date, int], config: QualityConfig = QUALITY) -
     }
 
 
+def histdata_fill_days(
+    histdata_dir: Path, symbol: str, config: QualityConfig = QUALITY
+) -> set[date]:
+    """UTC days where histdata is a real fill: not itself sparse for its symbol/year."""
+    counts = {
+        date.fromisoformat(p.stem): pq.ParquetFile(p).metadata.num_rows
+        for p in (Path(histdata_dir) / symbol).glob("*/*.parquet")
+    }
+    return {d for d, n in counts.items() if n > 0} - bad_density_days(counts, config)
+
+
 def proven_shift(
     frame: pd.DataFrame,
     reference: pd.DataFrame,
@@ -215,8 +226,9 @@ def repair_mt5(
     """Repair a symbol without downloads, retaining originals in `_v26b_original/`.
 
     The histdata rebuild MUST finish first. Development days require shared per-date
-    evidence. From 2021-09-14 the clock stays unchanged; density filtering applies
-    to all years. Corrections crossing midnight are regrouped into UTC day files.
+    evidence. From 2021-09-14 the clock stays unchanged. Sparse weekdays (all years) are
+    dropped only where histdata has a real fill; otherwise they are kept.
+    Corrections crossing midnight are regrouped into UTC day files.
     Writes a dated per-day decision log, including every rejected period.
     """
     cache_dir, histdata_dir = Path(cache_dir), Path(histdata_dir)
@@ -231,7 +243,12 @@ def repair_mt5(
         originals = {date.fromisoformat(p.stem): p for p in (archive / symbol).glob("*/*.parquet")}
         inputs = {**active, **originals}
         counts = {day: pq.ParquetFile(path).metadata.num_rows for day, path in inputs.items()}
+        # A sparse MT5 weekday of the development period is dropped only when histdata
+        # really fills it; otherwise (exchange holidays, MT5-only symbols) the day stays,
+        # even if empty. From 2021-09-14 FTMO's own data always stays (user, 2026-10-26).
         sparse = bad_density_days(counts, config)
+        fill = histdata_fill_days(histdata_dir, symbol, config)
+        excluded = {d for d in sparse & fill if d <= DEVELOPMENT_END}
         decisions, affected = [], set()
         staged_days = set()
         # A completed older staging run is overwritten from the retained original data.
@@ -257,18 +274,24 @@ def repair_mt5(
             for day in sorted(work):
                 affected.add(day)
                 part = by_day.get(day, raw.iloc[:0])
-                if day in sparse:
-                    decision, shift = "drop: sparse/empty weekday", None
+                if day in excluded:
+                    decision, shift = "drop: sparse/empty weekday, histdata fill", None
                 elif day > DEVELOPMENT_END:
-                    decision, shift = "keep: test-period clock unchanged", 0
+                    decision = (
+                        "keep: sparse, test period (FTMO data)"
+                        if day in sparse
+                        else "keep: test-period clock unchanged"
+                    )
+                    shift = 0
                 else:
                     entry = server_table.get(str(day), {"status": "no reference", "shift": None})
                     shift = entry["shift"] if entry["status"] == "proven" else None
-                    decision = (
-                        "keep: server clock proven"
-                        if shift is not None
-                        else f"drop: {entry['status']}"
-                    )
+                    if shift is None:
+                        decision = f"drop: {entry['status']}"
+                    elif day in sparse:
+                        decision = "keep: sparse, no histdata fill"
+                    else:
+                        decision = "keep: server clock proven"
                 decisions.append(
                     {"day": str(day), "bars": counts[day], "decision": decision, "shift": shift}
                 )
