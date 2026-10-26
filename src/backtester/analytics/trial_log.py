@@ -20,6 +20,7 @@ import numpy as np
 
 from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import trade_stats
+from backtester.filelock import file_lock
 from backtester.paths import RESULTS_DIR
 
 TRIALS_FILE = "trials.jsonl"
@@ -106,7 +107,10 @@ def count_only(family: str, strategy: str, count: int, note: str = "") -> TrialR
 def append(record: TrialRecord, path: Path | None = None) -> None:
     path = path or default_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
+    with (
+        file_lock(path.parent / ".locks" / (path.name + ".lock")),
+        path.open("a", encoding="utf-8") as f,
+    ):
         f.write(json.dumps(asdict(record), sort_keys=True) + "\n")
 
 

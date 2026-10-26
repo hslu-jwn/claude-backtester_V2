@@ -17,8 +17,8 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "backtester"
 LAYERS = [
     "core", "data", "detectors", "sessions", "strategy", "engine", "analytics", "risk", "live",
 ]  # fmt: skip
-UTIL = {"paths", "cli"}  # import nothing from backtester
-APP = {"runner", "run", "presets", "settings", "tools", "ui"}
+UTIL = {"paths", "cli", "filelock"}  # import nothing from backtester
+APP = {"runner", "run", "presets", "settings", "tools", "ui", "jobs"}
 
 
 def runtime_imports(path: Path) -> set[str]:

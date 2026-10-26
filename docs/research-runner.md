@@ -411,3 +411,88 @@ would introduce extra configurations. The eight replacement files resolve to
 Active studies retain their existing CSV and segmented-run behavior through
 `tools/research_helpers.py`. Historical briefs and former command provenance are
 preserved under `docs/archive/`.
+## Job queue
+
+Spec: ROADMAP V2.6, build order step 1 (V2.6a). The persistent Python queue runs
+heavy repository tools without AI calls. It does not change trading rules or defaults.
+
+```console
+python -m backtester.tools.queue add --name orb --priority 2 -- backtester.tools.research research/grids/orb.toml --workers 1
+python -m backtester.tools.queue add-grid research/grids/orb.toml --dev-only
+python -m backtester.tools.queue run --workers 8 --max-temp 85 --resume-temp 80 --poll 10
+python -m backtester.tools.queue run --drain
+python -m backtester.tools.queue status --json
+python -m backtester.tools.queue cancel JOB_ID
+python -m backtester.tools.queue retry JOB_ID
+python -m backtester.tools.queue stop
+python -m backtester.tools.queue clean --done-older-than 30
+```
+
+`add-grid` passes `--workers 1` and accepts `--dev-only` / `--retest`. `add` preserves
+the supplied argument list, accepts `--max-attempts` (default 2), and only accepts module
+names below `backtester.`. Duplicate pending/running argument lists produce a warning.
+Commands use the current Python interpreter, no shell, and the repository root as cwd.
+
+Files live under the anchored `backtester.paths.RESULTS_DIR/queue`: `jobs/<id>.json`,
+`logs/<id>.log` (combined child output, appended across retries), `runner.log`,
+`runner.lock` (PID), `runner.guard` (OS exclusive lock), `stop`, and `status.json`.
+Job and status JSON files use unique temporary files and atomic replacement. Reads and
+replacement retry Windows permission/sharing errors for up to five seconds. Stored job
+log paths are relative to the results folder; readers resolve them to absolute paths. Job changes
+use per-job sidecar locks; job order is priority descending, then sortable UTC ID ascending.
+Status includes counts, running elapsed seconds, CPU reading/warning, pause state, and
+`broken` filenames (invalid job records are skipped with one warning per file per queue
+instance; direct lookup gives a clear error). The guard lock determines runner liveness,
+not its PID. When the guard is free, sensor/pause data is historical (`last_seen`), not current.
+
+One runner owns the queue through the OS byte lock. A stale PID file can be taken over.
+Before spawning, a job is saved as running with a `starting` timestamp, no PID and the
+attempt counted; its PID and process identity are saved immediately after spawning.
+A running record without a PID is recovered as a dead attempt. A failed PID save terminates
+and waits for the launched child before propagating the failure. A forced OS kill between
+process creation and PID persistence can still leave an unidentified child: durable intent
+counts the attempt but cannot guarantee exactly-once execution in that window.
+Nonzero exits retry up to the limit, then fail. On restart, dead or reused child
+PIDs return to pending, or fail if attempts are exhausted. A surviving child with matching
+process creation time is monitored without being launched again; after it exits, its
+unknown exit result consumes that attempt and follows the same retry limit. If identity
+cannot be verified, it is treated as dead. Ctrl+C and `stop` stop new launches and drain
+running children. Each runner records its last release time in `runner.release.json`.
+At startup, only a stop flag older than that release is stale and removed. A newer flag
+(or any flag with no recorded release) is honored immediately and logged; no new jobs start.
+`clean` removes completed job records, logs and their per-job locks. Without `--drain`,
+the runner waits for new jobs indefinitely. `cancel` kills the child process tree and marks
+the job cancelled; `retry` resets attempts for a failed/cancelled job once its child exits.
+
+Install LibreHardwareMonitor and enable its **Remote Web Server**. The default sensor URL
+is `http://localhost:8085/data.json`, configurable with `--sensor-url` (2-second timeout).
+The guard takes the highest CPU Package / Tctl / Tdie / Core Max temperature. At 85 °C
+it holds new jobs until 80 °C; existing jobs continue. An unreadable sensor clears the
+pause and allows work, records one warning per outage in the runner log, and exposes it
+in status until readings return. No running job is killed for temperature.
+
+Using the existing Telegram configuration, the runner sends only final job failures,
+continuous temperature holds of pending jobs longer than 30 minutes (once per pause),
+and runner crashes (which are re-raised). Missing configuration skips sends silently;
+send errors are logged without configuration or exception details.
+
+Concurrent writer audit: trial-log appends hold `.locks/trials.jsonl.lock` using Windows
+`msvcrt.locking` / POSIX `flock`, with a 30-second acquisition timeout. Automatically
+named run folders and development publication reserve folders using atomic `mkdir`
+with collision retries. Daily series use locks and unique temporary files under
+`.locks/series/<variant-relative-path>/`, with atomic replacement into the variant folder;
+their trial-link appends also take the trial-log lock.
+Each grid holds `.locks/research/<grid-id>.lock` across its resume state and report writes
+(the same 30-second lock timeout), so two processes cannot modify one grid concurrently.
+All these locks live below the results folder in `.locks/`, outside listed research, run
+and variant folders; queue locks remain inside `queue/`. Results listings require report
+files (or use explicit filename patterns), so the central lock directory is not a result.
+
+**Do not queue two jobs with the same destination.** Grid locking protects `research.json`,
+variant and sensitivity folders, scorecards, significance, monkey and Bayes reports and
+`report.md` resume state; overlapping long runs of the same grid can time out on the lock.
+Preset publication, Monte Carlo default
+destinations (`summary.json`, `report.html`), golden `--write` fixtures/manifest and standalone
+strategy profile destinations (`profile.json`, `profile.md`) are also shared writers;
+their destination isolation is the caller's responsibility in this step. Different argv
+can still target the same destination; the duplicate-argv warning is advisory only.

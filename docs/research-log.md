@@ -19,6 +19,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 | Opus (this app) | medium | - | - | V2.4a trades overlay for every strategy, backtest audit, book-claim check | small UI change cheaper than a brief |
 | Codex gpt-6.1-sol | medium / high | 11 | ~330 | V2.4d 1-5, V2.4c T-10 / T-14 / T-03 (2026-10-23 evening); 5 short stops with a rule question, all good questions | yes; hit the limit at 21:10 after ~5 h of work since the morning reset, the last task (T-03) was already complete |
 
+| Codex gpt-6.1-sol | medium | 3 | 23 | V2.6a job queue: read-only pass by mistake (found 6 shared-file collisions), build, fix round (2026-10-26) | yes; Sonnet subagent review found 5 real defects (one Windows replace race, reproduced by Opus); Haiku subagent pinned 14 tests for the new defaults |
+
 Limits seen: Codex hit its limit twice (about 20:50 and 04:25; reset after ~4.5 h);
 Antigravity (Gemini + Claude 4.6, one shared weekly quota) is empty until about 2026-10-29.
 

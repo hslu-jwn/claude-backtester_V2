@@ -57,16 +57,17 @@ from backtester.analytics.verdict import (
 )
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, UnmappedSymbolError
 from backtester.engine.ticks import TickRoundingStats
+from backtester.filelock import file_lock
 from backtester.paths import RESULTS_DIR
 from backtester.presets import save_preset
 from backtester.runner import (
     RunResult,
     RunSettings,
     SymbolRun,
+    allocate_run_folder,
     combine_runs,
     iter_symbol_runs,
     merge_trades,
-    new_run_id,
     run_backtests,
     write_results,
 )
@@ -513,10 +514,15 @@ def _preset_name(grid: str, variant_id: str) -> str:
 
 def _publish_dev_run(vdir: Path, spec: GridSpec, results_dir: Path, preset: str) -> str:
     """The chosen variant's development run as a normal run folder `results/<run-id>/`."""
-    results_dir.mkdir(parents=True, exist_ok=True)
-    run_id = new_run_id(spec.symbols, results_dir)
-    target = results_dir / run_id
-    shutil.copytree(vdir, target, ignore=shutil.ignore_patterns(SCORECARD_FILE))
+    target = allocate_run_folder(spec.symbols, results_dir)
+    run_id = target.name
+    try:
+        shutil.copytree(
+            vdir, target, ignore=shutil.ignore_patterns(SCORECARD_FILE), dirs_exist_ok=True
+        )
+    except BaseException:
+        shutil.rmtree(target, ignore_errors=True)
+        raise
     for name, key, value in (
         ("summary.json", "run_id", run_id),
         ("settings.json", "preset", preset),
@@ -551,6 +557,46 @@ def run_research(
     variants, size, sampled = expand(spec)
     rid = grid_id(spec, variants)
     folder = results_dir / "research" / rid
+    # Every report/variant/resume write for this grid shares one transaction lock.
+    # Distinct grids can still run concurrently. Spec: research-runner.md > Job queue.
+    with file_lock(results_dir / ".locks" / "research" / f"{rid}.lock"):
+        return _run_research_locked(
+            spec,
+            variants,
+            size,
+            sampled,
+            rid,
+            folder,
+            cfg,
+            results_dir,
+            workers=workers,
+            retest=retest,
+            dev_only=dev_only,
+            walk_forward=walk_forward,
+            sources=sources,
+            bayes_config=bayes_config,
+            log=log,
+        )
+
+
+def _run_research_locked(
+    spec,
+    variants,
+    size,
+    sampled,
+    rid,
+    folder,
+    cfg,
+    results_dir,
+    *,
+    workers,
+    retest,
+    dev_only,
+    walk_forward,
+    sources,
+    bayes_config,
+    log,
+):
     first, last = cached_span(spec.symbols, sources)
     dev_end = min(cfg.cutoff - timedelta(days=1), last)
     if first > dev_end:

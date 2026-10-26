@@ -159,7 +159,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   on MT5 data only when the pipeline is ready, user 2026-10-26): strategy 4 trend following
   on GBPJPY; gap fade (5) and gap momentum (7) in quiet sideways markets.
   **Build order accepted by the user 2026-10-26:** (1) ◐ job queue + temperature guard +
-  trial-log lock (`briefs/v26a-job-queue.md`); (2) data fixes 13.12-13.16, 13.18; (3) research
+  trial-log lock (`briefs/v26a-job-queue.md`; built 2026-10-26: `python -m backtester.tools.queue`,
+  `docs/research-runner.md` › Job queue; open: the user's check, LibreHardwareMonitor install); (2) data fixes 13.12-13.16, 13.18; (3) research
   cards through the queue + lanes in worktrees; (4) V2.7 portfolio page; (5) UI: 3.3d, 3.5,
   12.4, 4.3; (6) live: demo bot restart (the user's call), V2.4b, 12.5; (7) V2.4e news when the
   data is regenerated; (8) full check of the whole app (every page and CLI end to end + Codex

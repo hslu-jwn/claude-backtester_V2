@@ -729,6 +729,19 @@ def new_run_id(symbols: Sequence[str], out_dir: Path, now: datetime | None = Non
     return run_id
 
 
+def allocate_run_folder(symbols: Sequence[str], out_dir: Path, now: datetime | None = None) -> Path:
+    """Reserve a unique folder atomically. Spec: research-runner.md > Job queue."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    while True:
+        folder = out_dir / new_run_id(symbols, out_dir, now)
+        try:
+            folder.mkdir()
+            return folder
+        except FileExistsError:
+            continue
+
+
 def write_results(
     result: RunResult,
     out_dir: Path = RESULTS_DIR,
@@ -737,9 +750,12 @@ def write_results(
 ) -> Path:
     """Write the run to `out_dir/<run_id>/`; returns that folder."""
     out_dir = Path(out_dir)
-    run_id = run_id or new_run_id(result.symbols, out_dir)
-    folder = out_dir / run_id
-    folder.mkdir(parents=True, exist_ok=False)
+    if run_id is None:
+        folder = allocate_run_folder(result.symbols, out_dir)
+        run_id = folder.name
+    else:
+        folder = out_dir / run_id
+        folder.mkdir(parents=True, exist_ok=False)
     try:
         _write_files(result, folder, run_id, preset)
     except BaseException:  # no half-written run folder is left behind
