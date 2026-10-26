@@ -40,6 +40,7 @@ import os
 import shutil
 import threading
 import time as clock_time
+from bisect import bisect_left
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, as_completed, wait
 from dataclasses import dataclass, field, fields, is_dataclass
@@ -50,9 +51,10 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.analytics.metrics import summarize
-from backtester.core.models import Direction
+from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
-from backtester.data.adapters.cache_adapter import candles_from_frame
+from backtester.data.adapters.base import DataAdapter
+from backtester.data.adapters.cache_adapter import MissingCacheError, candles_from_frame
 from backtester.data.sources import (
     DEFAULT_SOURCES,
     SymbolSources,
@@ -63,6 +65,7 @@ from backtester.data.sources import (
 from backtester.detectors.settings import DetectorSettings
 from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
 from backtester.engine.spread_table import SpreadTable
+from backtester.engine.ticks import TickRoundingStats
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.base import UnsupportedSymbolError
@@ -125,6 +128,7 @@ class SymbolRun:
     trades: tuple[TradeResult, ...]  # entered in the range, entry order
     sessions: tuple[dict, ...]  # strategy.session_records(), sessions overlapping the range
     notes: tuple[str, ...] = ()
+    tick_rounding: TickRoundingStats = field(default_factory=TickRoundingStats)
 
 
 @dataclass(frozen=True)
@@ -142,8 +146,16 @@ class RunResult:
 
     def summary(self) -> dict:
         return {
-            "per_symbol": {s: summarize(r.trades) for s, r in self.runs.items()},
-            "combined": summarize(self.trades),
+            "per_symbol": {
+                s: {**summarize(r.trades), "tick_rounding": r.tick_rounding.as_dict()}
+                for s, r in self.runs.items()
+            },
+            "combined": {
+                **summarize(self.trades),
+                "tick_rounding": TickRoundingStats.combined(
+                    r.tick_rounding for r in self.runs.values()
+                ).as_dict(),
+            },
         }
 
 
@@ -165,6 +177,7 @@ class _Job:
     series: tuple[CandleSeries, ...]
     settings: RunSettings
     notes: tuple[str, ...]
+    sources: SymbolSources = DEFAULT_SOURCES
 
     @property
     def base_candles(self) -> int:
@@ -230,7 +243,7 @@ def _load(
         )
         for k, tf in enumerate(timeframes)
     )  # fmt: skip
-    return _Job(symbol, first, last, warm, series, settings, tuple(notes))
+    return _Job(symbol, first, last, warm, series, settings, tuple(notes), sources)
 
 
 class SeriesCache:
@@ -285,10 +298,55 @@ def _load_timeframe(adapter, symbol, tf, start, end, h4, step: StepProgress) -> 
 # --- running ---------------------------------------------------------------------------
 
 
+class IntrabarSource:
+    """Spec: ARCHITECTURE.md > Intrabar resolution. Keep only one UTC day of M1.
+
+    The adapter may read a complete day, but only closed candles inside the engine's
+    requested interval are returned. Future cached candles never reach execution.
+    """
+
+    def __init__(self, adapter: DataAdapter):
+        self._adapter = adapter
+        self._key: tuple[str, date] | None = None
+        self._candles: list[Candle] = []
+        self._times: list[datetime] = []
+
+    def __call__(self, symbol: str, start: datetime, end: datetime) -> list[Candle]:
+        out = []
+        day = start.astimezone(UTC).date()
+        while _midnight(day) < end:
+            key = (symbol, day)
+            if key != self._key:
+                try:
+                    candles = self._adapter.fetch(
+                        symbol, Timeframe.M1, _midnight(day), _midnight(day + timedelta(days=1))
+                    )
+                except MissingCacheError:
+                    candles = []
+                self._candles = candles
+                self._times = [c.ts for c in candles]
+                self._key = key
+            left, right = bisect_left(self._times, start), bisect_left(self._times, end)
+            out.extend(c for c in self._candles[left:right] if c.ts + Timeframe.M1.duration <= end)
+            day += timedelta(days=1)
+        return out
+
+
 def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
     strategy = make_strategy(job.symbol, job.settings.strategy, job.settings.detectors)
-    trades = run_backtest(strategy, job.series, job.settings.engine, progress)
     start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
+    tick_rounding = TickRoundingStats()
+    trades = run_backtest(
+        strategy,
+        job.series,
+        job.settings.engine,
+        progress,
+        intrabar_source=IntrabarSource(job.sources.adapter(job.symbol))
+        if job.settings.engine.intrabar == "m1" and strategy.base_timeframe is not Timeframe.M1
+        else None,
+        tick_rounding=tick_rounding,
+        diagnostics_start=start,
+    )
     sessions = [
         s
         for s in strategy.session_records(run_end=end)
@@ -301,7 +359,8 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         job.warmup_from,
         tuple(t for t in trades if t.entry_candle >= start),
         tuple(sessions),
-        job.notes,
+        (*job.notes, *tick_rounding.notes()),
+        tick_rounding,
     )
 
 
@@ -598,6 +657,8 @@ TRADE_COLUMNS = (
     "exit_time", "exit_candle", "exit_price", "exit_fill", "exit_reason", "r_gross", "r_net",
     "spread_r", "commission_r", "swap_r", "funding_r", "break_even_time", "break_even_stop", "mae_r", "mfe_r",
     "tags", "confluence", "reason", "parts", "limit_fill",
+    "tp_levels_touched", "tp_levels_touched_not_filled",
+    "intrabar", "intrabar_ambiguous", "intrabar_tp_first", "intrabar_sl_first", "intrabar_fallbacks",
 )  # fmt: skip
 
 
@@ -633,6 +694,8 @@ def trade_rows(result: RunResult) -> list[dict]:
                         "price": p.price,
                         "reason": p.reason.value,
                         "r_gross": p.r_gross,
+                        "fill": p.fill,
+                        "r_fills": p.r_fills,
                     }
                     for p in t.parts
                 ]

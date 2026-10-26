@@ -1,65 +1,80 @@
-/* Research page (ROADMAP 6.2): dark table, same tokens as /live and /backtest */
-:root:has(.rr-page) body,
-body:has(.rr-page) {
-  background: #0b1220;
-}
+/* Research cards: one vertical list; metrics wrap within their container. */
 .rr-page {
   min-height: calc(100vh - var(--nav-h));
   box-sizing: border-box;
   padding: 14px 24px 24px;
-  background: #0b1220;
-  color: #e6ebf5;
-  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--font-13);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.rr-head {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-bottom: 10px;
-}
-.rr-title {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.rr-hint,
-.rr-count {
-  color: #7d8aa5;
-}
-.rr-controls {
+.rr-page .ui-page { padding: 0; }
+.rr-head, .rr-controls, .rr-card-title, .rr-chips, .rr-tiles {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 10px;
 }
-.rr-select {
-  min-width: 190px;
-  color: #111a2b;
-}
-.rr-radio label {
-  margin-right: 12px;
-  color: #c4cde0;
-}
-.rr-label {
-  color: #c4cde0;
-}
+.rr-head, .rr-controls { margin-bottom: 10px; }
+.rr-title { font-size: 16px; font-weight: 700; }
+.rr-count, .rr-metric-label, .rr-idea { color: var(--muted); }
+.rr-select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
+.rr-label { flex: 1 1 160px; min-width: 0; }
+.rr-radio label { margin-right: 12px; }
 .rr-input {
   width: 70px;
+  max-width: 100%;
   padding: 4px 6px;
-  background: #111a2b;
-  border: 1px solid #1d2a40;
-  border-radius: 6px;
-  color: #e6ebf5;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
 }
 .rr-button {
+  display: inline-block;
   padding: 5px 14px;
-  background: #172238;
-  border: 1px solid #1d2a40;
-  border-radius: 6px;
-  color: #e6ebf5;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
   cursor: pointer;
 }
-.rr-button:hover {
-  background: #1d2a40;
+.rr-button:hover { background: var(--line); }
+.rr-cards { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; min-width: 0; }
+.rr-card {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--muted);
+  border-radius: var(--radius);
+  background: var(--panel);
 }
+.rr-card > summary { padding: 12px; cursor: pointer; list-style: none; }
+.rr-card > summary::-webkit-details-marker { display: none; }
+.rr-card > summary:focus-visible { outline: 2px solid var(--accent); }
+.rr-card-title > strong { min-width: 0; }
+.rr-idea { margin: 7px 0 10px; }
+.rr-chips, .rr-tiles { align-items: stretch; gap: 8px; }
+.rr-chip, .rr-tile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--raised);
+}
+.rr-tile { flex: 1 1 180px; flex-direction: column; }
+.rr-metric-value { font-variant-numeric: tabular-nums; }
+.rr-flags { color: var(--amber); }
+.rr-card-body { padding: 0 12px 12px; }
+.rr-card-body > .rr-flags { margin: 12px 0; }
+.rr-results { margin-top: 12px; }
+.rr-diagnostics { min-width: 0; max-width: 100%; }
+.rr-diagnostics > div { margin-bottom: 8px; }
+@media (max-width: 800px) { .rr-page { padding: 12px; } }

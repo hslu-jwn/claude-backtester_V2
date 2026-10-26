@@ -20,9 +20,12 @@ from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
 from backtester.engine.trade import ExitReason
 from backtester.strategy.base import Order, Strategy
 
+# touch fills (the rule before 2026-10-23): these tests check the cost arithmetic of a touch
+TOUCH = {"tp_penetration": 0.0, "short_tp_on_ask": False}
+
 LONG, SHORT = Direction.BULLISH, Direction.BEARISH
 M5 = timedelta(minutes=5)
-NO_COSTS = EngineConfig(costs=CostConfig(spread_enabled=False, commission_enabled=False))
+NO_COSTS = EngineConfig(costs=CostConfig(**TOUCH, spread_enabled=False, commission_enabled=False))
 # Monday 2026-01-05 07:30 UTC: candle 5 (07:55) closes at London's start, 08:00 UTC
 BEFORE_LONDON = datetime(2026, 1, 5, 7, 30, tzinfo=UTC)
 
@@ -200,13 +203,14 @@ def test_break_even_can_be_switched_off():
 # Synthetic prices around 100 test the fixed-spread arithmetic: price scaling is off here
 # (it has its own tests in test_spread_scaling.py).
 GOLD_USD6 = CostConfig(
+    **TOUCH,
     spread_price_scaling=False,
     symbols={
         **DEFAULT_SYMBOL_COSTS,
         "XAUUSD": replace(
             DEFAULT_SYMBOL_COSTS["XAUUSD"], commission_per_lot=6.0, commission_pct_per_side=0.0
         ),
-    }
+    },
 )
 GOLD = EngineConfig(costs=GOLD_USD6)
 
@@ -279,7 +283,7 @@ def test_spread_and_commission_switches_leave_slippage_active():
 
 
 def test_forex_commission_depends_on_the_sl_distance():
-    costs = CostConfig()
+    costs = CostConfig(**TOUCH)
     # GBPUSD 20 pips: $5 / (0.002 * 100,000) = 0.025R, spread 0.3 pip = 0.015R
     assert costs.commission_r("GBPUSD", 0.002) == pytest.approx(0.025)
     assert costs.spread_r("GBPUSD", 0.002) == pytest.approx(0.015)
@@ -358,7 +362,7 @@ def test_future_candles_never_change_finished_trades():
 # --- two TPs: partial closes (strategy-session-zones.md › Take profit) ---------------------
 
 NO_SESSION_BE = EngineConfig(
-    costs=CostConfig(spread_enabled=False, commission_enabled=False),
+    costs=CostConfig(**TOUCH, spread_enabled=False, commission_enabled=False),
     break_even_at_next_session=False,
 )
 

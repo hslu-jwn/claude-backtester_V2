@@ -67,6 +67,14 @@ class TradeRecord:
     funding_r: float = 0.0  # inside r_net (files before funding: 0)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
     limit_fill: bool = False  # older CSVs have no entry kind: assume market
+    entry_fill: float | None = None  # preserve actual fill for MTM; old files reconstruct spread
+    tp_levels_touched: int = 0  # old files did not track touches
+    tp_levels_touched_not_filled: int = 0
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @classmethod
     def from_row(cls, row: Mapping) -> TradeRecord:
@@ -102,6 +110,14 @@ class TradeRecord:
             swap_r=float(row.get("swap_r") or 0.0),
             funding_r=float(row.get("funding_r") or 0.0),
             limit_fill=str(row.get("limit_fill", False)).lower() == "true",
+            entry_fill=_float(row.get("entry_fill")),
+            tp_levels_touched=int(row.get("tp_levels_touched") or 0),
+            tp_levels_touched_not_filled=int(row.get("tp_levels_touched_not_filled") or 0),
+            intrabar=row.get("intrabar") or "",
+            intrabar_ambiguous=int(row.get("intrabar_ambiguous") or 0),
+            intrabar_tp_first=int(row.get("intrabar_tp_first") or 0),
+            intrabar_sl_first=int(row.get("intrabar_sl_first") or 0),
+            intrabar_fallbacks=int(row.get("intrabar_fallbacks") or 0),
         )
 
 

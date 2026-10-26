@@ -37,7 +37,7 @@ from backtester.core.models import Timeframe
 from backtester.data.sources import DEFAULT_SOURCES
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.trend_following.config import TIMEFRAMES
-from backtester.tools.grid_common import HALVES, SYMBOLS, write_csv
+from backtester.tools.research_helpers import HALVES, SYMBOLS, write_csv
 
 NS = (10, 20, 60)  # ER windows in bars
 DEFAULT_JOIN_N = 20  # Kaufman's 20-bar noise

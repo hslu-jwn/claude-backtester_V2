@@ -88,3 +88,21 @@ See also: [testing-and-robustness.md](testing-and-robustness.md), [costs-and-exe
   (KD ch.14); costs never zero (KD ch.6); data definition identical in test and trade (KD ch.11; histdata vs FTMO feed).
 - Statistics for the Monte Carlo family above: resampled trades assume independence, so check serial correlation first (Durbin-Watson) or use
   start-trade / moving-start analysis (KD ch.7); trades must be on one unit basis; compare against the 8,000-run matched monkeys (T-14).
+- **Platform feature list (RP ch.4):** per-bar diagnostics (signal arrows, condition flags, intermediate values written to a file,
+  bar-by-bar stepping); standard reports (long/short split, trade list with signal name, equity curve under the price chart, year /
+  quarter / month table, replay of stops and signals); a **custom objective function** (he stresses it most); batch runs (N
+  strategies × M markets, reports saved, overnight); built-in walk-forward; portfolio analysis.
+- **Optimizer and criterion wrapper (TM ch.3-5; RP ch.9):** a generic optimizer calls a criterion wrapper, the strategy data lives
+  behind it. Differential evolution is the candidate beyond grids: over-initialised population, reject candidates below a minimum
+  trade count (criterion scaled so 0 = reject, e.g. log PF), stop after about 50 generations without gain, hard bounds. Guided search
+  (DE, GA) cannot feed CSCV or the cheap training-bias estimate, which need grid or random trials. Pardo's prioritized one-at-a-time
+  step search is the cheap alternative for many parameters.
+- **Trial log and returns:** keep every variant's daily return and position series, not only summaries; best-of-N tests (White's
+  Reality Check, permutation max) and CSCV need them (DA p.255-330; TM ch.5, 7). Base every statistic on marked-to-market bar returns,
+  trade-level figures for display only; all grid variants start on the same bar (TM ch.4-6).
+- **Walk-forward splitter (lesson 6):** configurable IS / OOS / step, per-window table with WFE, open-trade boundary rule, optional
+  nesting for any selector on top (details in [testing-and-robustness.md](testing-and-robustness.md); RP ch.11; TM ch.5).
+- **Monte Carlo kinds, additions:** kind D can permute log-price changes (start and end price kept, so the trend is kept; OHLC bars
+  as separate gap and intra-bar series, one permutation for all symbols) and re-run the whole optimization on each permuted
+  dataset (TM ch.7). **Disagreement on kind A:** a plain resample of trades or days (Davey, KD ch.7) underestimates catastrophic DD
+  on short samples; Masters' double bootstrap fixes it (TM ch.6). Check which of our kinds feed the FTMO breach probability.

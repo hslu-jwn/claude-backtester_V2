@@ -132,10 +132,10 @@ from backtester.ui import (
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trade_focus,
     trades_overlay,  # noqa: F401  (registers the Trades overlay)
-    update_button,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
+from backtester.ui.layout import details, info, tabs_below
 from backtester.ui.overlays import (
     DEFAULT_SETTINGS,
     OVERLAYS,
@@ -998,6 +998,17 @@ def overlay_controls() -> list:
     ]
 
 
+def newest_trade_rows(results_dir: Path):
+    """All newest-run trades, with the same order focus as the visible-trades side list."""
+    folder = chart_side.newest_run(results_dir)
+    trades = chart_side.run_trades(folder) if folder else ()
+    if not trades:
+        return html.Div("No trades.", className="ch-empty")
+    return html.Div(
+        [chart_side.trade_item(t, "run-trade") for t in trades], className="ch-run-trades"
+    )
+
+
 def layout(
     sources: SymbolSources,
     config: ChartConfig = DEFAULT_CONFIG,
@@ -1009,10 +1020,10 @@ def layout(
         "pop-settings",
         "Settings",
         [
+            _switch("chart-sessions", "Session lines", ["on"]),
             html.Details(
                 [
                     html.Summary("Chart Settings"),
-                    _switch("chart-sessions", "Session lines", ["on"]),
                     html.Div("Daily / weekly candles", className="tb-pop-sub"),
                     dcc.Dropdown(
                         id="chart-day-boundary",
@@ -1044,62 +1055,73 @@ def layout(
                         persistence=True,
                         className="tb-check",
                     ),
-                    html.Div("Liquidity sweep (temporary)", className="tb-pop-sub tb-group"),
-                    html.Div("Same-height high counts as the level", className="tb-pop-sub"),
-                    dcc.Dropdown(
-                        id="chart-sweep-tol",
-                        options=[{"label": label, "value": v} for v, label in SWEEP_TOLERANCES],
-                        value="none",
-                        clearable=False,
-                        searchable=False,
-                        persistence=True,
-                    ),
-                    html.Div("Breakout filter", className="tb-pop-sub"),
-                    dcc.Dropdown(
-                        id="chart-sweep-cancel",
-                        options=[
-                            {"label": label, "value": k} for k, (label, _) in SWEEP_CANCELS.items()
+                    html.Details(
+                        [
+                            html.Summary("Liquidity sweep (temporary)"),
+                            html.Div(
+                                "Same-height high counts as the level", className="tb-pop-sub"
+                            ),
+                            dcc.Dropdown(
+                                id="chart-sweep-tol",
+                                options=[
+                                    {"label": label, "value": v} for v, label in SWEEP_TOLERANCES
+                                ],
+                                value="none",
+                                clearable=False,
+                                searchable=False,
+                                persistence=True,
+                            ),
+                            html.Div("Breakout filter", className="tb-pop-sub"),
+                            dcc.Dropdown(
+                                id="chart-sweep-cancel",
+                                options=[
+                                    {"label": label, "value": k}
+                                    for k, (label, _) in SWEEP_CANCELS.items()
+                                ],
+                                value="off",
+                                clearable=False,
+                                searchable=False,
+                                persistence=True,
+                            ),
+                            html.Div(
+                                "Highs / lows that count (last N swings)", className="tb-pop-sub"
+                            ),
+                            dcc.Dropdown(
+                                id="chart-sweep-n",
+                                options=[
+                                    {"label": f"Last {n} swings", "value": n} for n in range(1, 6)
+                                ],
+                                value=SweepConfig().lookback_swings,
+                                clearable=False,
+                                searchable=False,
+                                persistence=True,
+                            ),
+                            dcc.Checklist(
+                                id="chart-sweep-top",
+                                options=[
+                                    {
+                                        "label": "BOS must break structure from before the top",
+                                        "value": "on",
+                                    }
+                                ],
+                                value=[],
+                                persistence=True,
+                                className="tb-check",
+                            ),
+                            info(
+                                "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
+                                "and Equilibrium overlays. Defaults = the current rules.",
+                            ),
                         ],
-                        value="off",
-                        clearable=False,
-                        searchable=False,
-                        persistence=True,
-                    ),
-                    html.Div("Highs / lows that count (last N swings)", className="tb-pop-sub"),
-                    dcc.Dropdown(
-                        id="chart-sweep-n",
-                        options=[{"label": f"Last {n} swings", "value": n} for n in range(1, 6)],
-                        value=SweepConfig().lookback_swings,
-                        clearable=False,
-                        searchable=False,
-                        persistence=True,
-                    ),
-                    dcc.Checklist(
-                        id="chart-sweep-top",
-                        options=[
-                            {"label": "BOS must break structure from before the top", "value": "on"}
-                        ],
-                        value=[],
-                        persistence=True,
-                        className="tb-check",
-                    ),
-                    html.Div(
-                        "Tolerance in ATR of the shown timeframe. Applies to the Liquidity sweep "
-                        "and Equilibrium overlays. Defaults = the current rules.",
-                        className="tb-pop-note",
+                        open=False,
+                        className="ui-details",
                     ),
                 ],
                 className="tb-details",
             ),
-            html.Details(
-                [html.Summary("Chart Overlays"), *overlay_controls()],
-                className="tb-details tb-group",
-            ),
         ],
     )
-    strategy = _popover(
-        "pop-strategy",
-        "Strategy",
+    strategy = html.Div(
         [
             dcc.Dropdown(
                 id="chart-strategy",
@@ -1112,12 +1134,10 @@ def layout(
                 [html.Button("Settings…", className="tb-run", **{"data-modal": "st-modal"})],
                 className="tb-pop-row",
             ),
-            html.Div("Used by the Trades overlay and the backtest.", className="tb-pop-note"),
         ],
+        className="ch-tab-form",
     )
-    backtest = _popover(
-        "pop-backtest",
-        "Backtest",
+    backtest = html.Div(
         [
             html.Div("Symbols", className="tb-pop-sub"),
             dcc.Dropdown(id="bt-symbols", options=symbols, value=symbols[:1], multi=True),
@@ -1138,6 +1158,7 @@ def layout(
             ),
             html.Div(id="bt-status", className="tb-pop-note"),
         ],
+        className="ch-tab-form",
     )
     toolbar = html.Div(
         [
@@ -1167,20 +1188,11 @@ def layout(
                 ],
                 className="tb-anchor",
             ),
-            html.Div(
-                [_icon_button("tb-strategy", "strategy", "Strategy", "pop-strategy"), strategy],
-                className="tb-anchor",
-            ),
             _icon_button("chart-replay-toggle", "replay", "Bar replay (on / off)"),
-            html.Div(
-                [_icon_button("tb-backtest", "backtest", "Backtest", "pop-backtest"), backtest],
-                className="tb-anchor",
-            ),
             html.Div(className="tb-sep"),
             _icon_button("tb-zoom", "zoom", "Zoom: drag a rectangle on the chart"),
             _icon_button("tb-zoom-reset", "zoom-reset", "Reset zoom (or double-click the chart)"),
             html.Div(className="tb-sep"),
-            *update_button.layout(),
             html.Div(className="tb-spacer"),
             html.Div(
                 [
@@ -1280,6 +1292,7 @@ def layout(
                 [
                     html.Div(
                         [
+                            chart_side.result_strip(chart_side.run_summary(results_dir)),
                             html.Div(
                                 [
                                     html.Div(id="chart-lwc"),
@@ -1309,6 +1322,35 @@ def layout(
                 ],
                 id="ch-main",
                 className=chart_side.main_class(False),
+            ),
+            tabs_below(
+                [
+                    dcc.Tab(label=label, value=value)
+                    for value, label in (
+                        ("trades", "Trades"),
+                        ("overlays", "Overlays"),
+                        ("backtest", "Backtest"),
+                        ("strategy", "Strategy"),
+                    )
+                ],
+                id="chart-tabs",
+                value="trades",
+            ),
+            html.Div(
+                [
+                    html.Div(newest_trade_rows(results_dir), id="chart-tab-trades"),
+                    html.Div(
+                        [
+                            overlay_controls()[0],
+                            details("Chart Overlays", html.Div(overlay_controls()[1:])),
+                        ],
+                        id="chart-tab-overlays",
+                        style={"display": "none"},
+                    ),
+                    html.Div(backtest, id="chart-tab-backtest", style={"display": "none"}),
+                    html.Div(strategy, id="chart-tab-strategy", style={"display": "none"}),
+                ],
+                className="ch-tabs-content",
             ),
             dcc.Store(id="chart-range"),
             dcc.Store(id="chart-dates"),
@@ -1355,7 +1397,19 @@ def register_callbacks(
     results_dir: Path = RESULTS_DIR,
 ) -> None:
     settings_panel.register_callbacks(app)
-    update_button.register_callbacks(app)
+
+    @app.callback(
+        [
+            Output(f"chart-tab-{name}", "style")
+            for name in ("trades", "overlays", "backtest", "strategy")
+        ],
+        Input("chart-tabs", "value"),
+    )
+    def _tab(tab):
+        return [
+            {} if tab == name else {"display": "none"}
+            for name in ("trades", "overlays", "backtest", "strategy")
+        ]
 
     @app.callback(
         Output("chart-dates", "data"),
@@ -1466,10 +1520,11 @@ def register_callbacks(
         Output("chart-focus", "data", allow_duplicate=True),
         Output("chart-message", "children", allow_duplicate=True),
         Input({"type": "side-trade", "index": ALL}, "n_clicks"),
+        Input({"type": "run-trade", "index": ALL}, "n_clicks"),
         State("chart-replay", "data"),
         prevent_initial_call=True,
     )
-    def _focus_trade(_clicks, replay_state):
+    def _focus_trade(_clicks, _run_clicks, replay_state):
         """A click on a trade in "Trades in view": open its order on the run's timeframe."""
         trig = ctx.triggered[0] if ctx.triggered else None
         folder = chart_side.newest_run(results_dir)

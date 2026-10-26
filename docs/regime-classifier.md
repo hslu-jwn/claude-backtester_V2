@@ -5,6 +5,14 @@
 an option), ER 0.30 over 20 closed days, volatility split at the median of the last 2 years.
 Build it in V2.6.
 
+Implemented in `analytics/regime.py` (V2.6): incremental closed-D1 labels, ER and ADX.
+D1 follows the adapter default: 17:00 America/New_York with DST-aware close times.
+ATR uses Wilder smoothing (simple-average seed); volatility rank is the fraction of the
+previous lookback observations <= the current ATR/close (ties included, current excluded).
+Trend and volatility warm up independently. The profile's stricter best-condition rule
+(detrended mean, >=30 trades, positive BCa 90% lower bound) is specified in
+`strategy-profile.md` and supersedes the original raw-mean best-regime summary below.
+
 Shared tool in `analytics/regime.py`, used by every strategy's results, research cards and the
 portfolio (V2.6 / V2.7). It labels each **trade** with the market regime at its entry, so every
 result can be split by regime ("works in trends", "works in quiet sideways markets").

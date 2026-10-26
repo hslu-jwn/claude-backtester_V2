@@ -258,6 +258,14 @@ def test_newest_timestamped_run_beats_a_study_folder_name(tmp_path):
     assert values[2:] == ["zz_study", "gap_fade_walk_forward"]  # others after, as before
 
 
+def test_a_monte_carlo_report_folder_is_not_listed_as_a_run(tmp_path):
+    """2026-10-25: a Monte Carlo report written into results/ appeared as a run "None -> None"."""
+    make_run(tmp_path, "20261008-120000_B")
+    (tmp_path / "mc_check").mkdir()
+    (tmp_path / "mc_check" / "summary.json").write_text(json.dumps({"meta": {}, "verdict": {}}))
+    assert [o["value"] for o in results.list_runs(tmp_path)] == ["20261008-120000_B"]
+
+
 def test_only_named_folders_keep_the_old_order_and_empty_is_empty(tmp_path):
     assert results.list_runs(tmp_path) == []
     for name in ("a_study", "b_study"):

@@ -80,7 +80,7 @@ def weekly_offsets(
     ref_close = ref_close[~ref_close.index.duplicated()]
     ref_range = pd.Series((ref["high"] - ref["low"]).to_numpy(), index=ref_close.index)
     server = pd.to_datetime(raw["time"], unit="s")
-    weeks = (server - pd.to_timedelta(server.dt.weekday, unit="D")).dt.normalize()
+    weeks = (server - pd.to_timedelta(server.dt.day_of_week, unit="D")).dt.normalize()
     rows = []
     for week, bars in raw.groupby(weeks.to_numpy()):
         times, closes = bars["time"].to_numpy(), bars["close"].to_numpy()

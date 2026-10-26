@@ -87,7 +87,21 @@ def summarize(trades: Sequence) -> dict:
     ordered = by_exit(trades)
     net_gross = sum(t.r_gross for t in trades)
     net = sum(t.r_net for t in trades)
+    touched = sum(getattr(t, "tp_levels_touched", 0) for t in trades)
+    missed = sum(getattr(t, "tp_levels_touched_not_filled", 0) for t in trades)
     return {
+        **{
+            key: sum(getattr(t, key, 0) for t in trades)
+            for key in (
+                "intrabar_ambiguous",
+                "intrabar_tp_first",
+                "intrabar_sl_first",
+                "intrabar_fallbacks",
+            )
+        },
+        "tp_levels_touched": touched,
+        "tp_levels_touched_not_filled": missed,
+        "tp_touched_not_filled_share": missed / touched if touched else 0.0,
         "trades": n,
         "wins": len(win_r),
         "losses": len(loss_r),

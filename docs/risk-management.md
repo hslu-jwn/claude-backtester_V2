@@ -15,7 +15,86 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 - **Several TPs** (strategy 2: 3 equal parts; strategy 1: TP1 share): each part is rounded down to the lot step; the **remainder goes to TP1** (rule set by the user). If the position is too small to split into all parts (less than parts × minimum lot), it trades with **fewer TPs**: the first TPs get the lots, the later ones are dropped (the last remaining TP closes the rest). Below one minimum lot → trade skipped, logged as "too small".
 - The trade's R result is recalculated from the lots actually used per part.
 
+### Intrabar execution (V2.4c T-03)
+
+The setting `engine.intrabar` is `"m1"` by default (rule set by the user 2026-10-24; `"sl_first"` = the earlier execution),
+which resolves ambiguous closed base candles from M1. See
+ARCHITECTURE.md > How a backtest steps through time > Intrabar resolution for the
+execution and diagnostic contract. Penetration and short ask triggering apply on M1
+too; levels, partial shares and fill costs remain the same. SL still wins within an
+ambiguous M1 candle. After TP1, break-even starts on the next M1 candle; on a limit's
+filling M1 candle only SL counts, then TPs start on the next minute. Missing M1 falls
+back conservatively and is counted. M1-base strategies keep existing behaviour.
+A replayed limit records `entry_time` at its filling M1 candle's close; `entry_candle`
+stays at the base candle's open. Decisions and callbacks still run at the base close,
+and no exit precedes entry (Opus clarification, 2026-10-23 21:02).
+The seven-strategy 2023 measurement informs a later user decision on the default.
+
 ### Costs (per symbol)
+- **Tick rounding** (V2.4d item 9, Opus clarifications 2026-10-24):
+  `CostConfig.round_to_tick` defaults to **False**, preserving current execution exactly.
+  When enabled, round strategy order levels at fill using `SymbolCosts.tick_size`;
+  None disables rounding for that symbol. Market fills, gap fills at the open and M1
+  replay prices remain the observed prices (including an existing gap-open fill when
+  the rounded limit would lie inside that candle). Buy limits round down, sell limits up;
+  long SL rounds up and long TP1-3 down (short mirrored). R uses the rounded initial
+  SL distance. The cost-inclusive break-even stop rounds up for longs, down for shorts,
+  preserving >= 0R net at a level hit before swap/funding (a gap may still lose).
+  A level within 1e-9 price units of a tick is unchanged; penetration distances are
+  thresholds and are never rounded. Pending limits must reach the rounded level and
+  its penetration threshold before consumption; placement proof uses the original order.
+  Orders made invalid by rounding (SL/TP on or across entry, or non-increasing TP levels
+  under the existing validator) are skipped with `strategy.on_order_skipped`, counted
+  and given an aggregate reason in run notes. Original invalid orders still raise.
+  Per-run diagnostics count moved orders once (including rejected attempts), moved levels
+  (limit entry, SL, TP1-3 and computed BE), mean absolute move in ticks over moved levels,
+  and rejections. Warm-up attempts are excluded, using the entry base candle's open time.
+  Panel setting / TOML grid key: `engine.costs.round_to_tick = [false, true]`.
+  Per-symbol tick metadata stays in settings/presets and grids, without extra panel
+  widgets, preserving the panel's existing widget-count performance limit.
+
+  Tick snapshot, 2026-10-24: `results/trading.json` is present but contains symbol-name
+  mappings, no `trade_tick_size`. FTMO fallback is 10^-digits from the cache quote
+  precision table `data/sources.py:PRICE_DIGITS` (FTMO snapshot 2026-10-15 for expanded
+  symbols; XAUUSD includes histdata's three-decimal precision). These are fallback
+  precision estimates, not verified exchange ticks. Literal engine table; no runtime
+  reads of results or data. Binance ticks are **None**, pending an exchange snapshot.
+
+  | Symbols | Tick size | Source |
+  |---|---:|---|
+  | GBPUSD, EURUSD, AUDUSD, NZDUSD, EURGBP, USDCAD, USDCHF | 0.00001 | Cache digits (5) |
+  | GBPJPY, USDJPY, EURJPY, XAUUSD, XAGUSD, USOIL, UKOIL, DXY, NATGAS | 0.001 | Cache digits (3) |
+  | NAS100, US500, GER40, UK100, JP225, EU50, US30, US2000, BTCUSD, ETHUSD | 0.01 | Cache digits (2) |
+  | BTCUSDT, ETHUSDT | None | No recorded exchange tick; rounding disabled |
+
+  `scripts/measure_ticks.py` compares off/on on all seven golden setups for 2023 with
+  current defaults and one worker, writing `results/ticks.md`, `.csv` and a run log.
+  The measurement does not change the default; that decision belongs to the user.
+- **Limit penetration** (V2.4d item 3, user 2026-10-23):
+  `CostConfig.tp_penetration` is a finite, non-negative spread multiple, default **0.5** (rule set by
+  the user 2026-10-23 after the measurement in `results/tp_penetration.md`; 0 = touch fills as before).
+  With `d = tp_penetration * spread`, use the spread actually fixed for the trade at entry
+  (fixed, price-scaled or table spread; zero when spread is disabled). A long TP needs
+  bid high >= TP + d; a short TP needs bid low <= TP - d. Partial TPs, TP2/TP3 and the
+  move to break-even after TP1 require this same fill test. Gap opens beyond the threshold
+  still fill at the TP level. MAE/MFE tracking and SL-first precedence stay unchanged.
+  Buy limits need low <= entry - d; sell limits need high >= entry + d. An insufficient
+  penetration leaves the order pending under its existing expiry/cancellation rules.
+  Existing entry gap pricing remains; test penetration against the placed limit, using
+  the spread of the candidate fill (including its existing gap entry price).
+- **Short TP on ask:** `CostConfig.short_tp_on_ask`, default **True** (rule set by the user 2026-10-23). When enabled,
+  short TPs need bid low + the trade's spread <= TP - d and fill at TP itself, with no
+  additional exit spread. When disabled, preserve bid triggering and fill at TP + spread.
+  TP fills have no slippage. Both defaults reproduce existing fills exactly; the user
+  chooses any future default after measuring all seven golden setups.
+- **TP touch diagnostics:** `tp_levels_touched` counts each outstanding TP level once per
+  trade when the old bid-touch rule reaches it. `tp_levels_touched_not_filled` counts each
+  such level once if it fails the new price threshold in any candle, even if filled later.
+  These are price-threshold diagnostics; SL-first precedence and the entry fill candle's
+  exclusion of TPs remain in force on the execution timeframe (base by default, M1
+  during intrabar resolution). Already filled levels are no longer observed.
+  Both counts are written to `trades.csv`; summary `tp_touched_not_filled_share` is the
+  sum of missed levels divided by the sum of touched levels (0 when none were touched).
 - ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
 - ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.14): the fixed spread is today's FTMO
   value, which is far too large in R in years with lower prices (XAGUSD 2015 at about $15 against $65 now). In the fixed-spread
@@ -162,19 +241,68 @@ A plain account backtest over the whole data range. **No challenge phases, no pr
 
 ### Monte Carlo (`risk/monte_carlo.py`)
 Kept in the base backtest (rule set by the user).
-- Reshuffles the order of **whole trading days** (not single trades, so bad days stay realistic) ⚙️ **1,000** times (default) and simulates the account for each order with the same settings.
+- Samples **whole trading days** ⚙️ **1,000** times and simulates the account for each order with the same settings (sampling rules below).
 - **Output:** distribution of max drawdown and final balance, e.g. "in 95% of the runs the max drawdown stays below X%", a fan of simulated equity curves. Main use: choosing a safe risk %.
 
 ### Monte Carlo report (ROADMAP 12.7; rules set by the user, 2026-10-15)
+
+#### Skill vs trend, and bounds (V2.4d 7 + 8)
+
+The report and `skill_bounds.json` show raw and detrended net/mean R by symbol and
+total, long/short/flat time shares and the no-skill benchmark, BCa and t-based
+90/95% lower bounds of daily MTM and trade means, and daily log PF with BCa bounds.
+Use `research-runner.md` > Skill vs trend, and bounds for formulas, defaults,
+position conventions and unavailable cases. Compute from the run's own period,
+trades and SymbolSources, with saved daily MTM preferred. Set `skill_is_trend`
+when positive raw R becomes nonpositive detrended R; leave the verdict unchanged.
+
 One HTML report per backtest run (`python -m backtester.tools.monte_carlo <run-id>` ->
 `results/<run-id>/monte_carlo/report.html`), built from the run's trade list (R). All four kinds of Monte Carlo
 (`knowledge/topics/backtest-frameworks.md`), every random draw seeded (⚙️ seed **42**). It ends every test with a
 clear verdict.
 
+#### Matched monkeys (V2.4c T-14, accepted 2026-10-23)
+
+For every strategy, compare its actual trade list with three seeded null models on the
+same symbols' M1 data. Preserve trade count and long count exactly per symbol in every run.
+
+1. Random entries: uniformly sample M1 closes with replacement from `_window_candidates`
+   (observed New York weekdays and 15-minute time buckets within the entry date range).
+   Permute the real (initial stop distance, elapsed hold seconds) pairs onto those entries.
+2. Random exits: keep real entries and stops; independently permute real elapsed holds.
+3. Both random: sample entries as in 1; independently permute stops and holds.
+
+All permutations are per symbol (Opus clarification, 2026-10-23). Direction slots retain the
+real long/short counts; stop distance is mirrored around the sampled bid close. No target.
+Use entry-screen exit replay and costs, including stop gaps at the open, slippage, spread,
+commission and swap. Only candles opening at or after the entry close can resolve an exit.
+Holds use the last M1 close by the deadline, at least the first subsequent candle, and are
+clipped to available data as in entry screening. Exclude final candle closes from random
+candidates because they have no subsequent exit candle. Reject invalid trades or missing
+symbol data explicitly; empty lists are unavailable, never passing.
+
+Defaults: 1,000 runs, seed 42 (8,000 is configurable); runner: 200 development runs on the
+chosen variant only, skipped by grid `monkeys = false`. Report total net R and max drawdown
+in additive R, ordered by exit time (stable input order for simultaneous exits), including
+the initial zero equity peak. Each statistic reports median, 5th and 95th percentiles and
+the real result's percentile (half credit for ties within 1e-12). Lower DD is better.
+Each kind passes iff both favorable percentiles are >= 90; any failure flags `monkey_beaten`.
+This diagnostic does not alter selection, DSR, trial counts or golden lists. Standalone
+tool logs one source backtest per variant, not the synthetic runs; refuses test dates
+without `--allow-test-period`, writes `summary.json` and `report.md` under
+`results/monkeys/<strategy>_<time>/`, and supports sequential `--workers 1`.
+
+Monte Carlo verdict check 2 keeps its existing >= 95 threshold: gap fade uses kind B where
+available; other strategies use matched-monkey kind 1 net-R percentile. Missing data must
+be reported as unavailable, never replaced by a different period's percentile.
+
+#### Report and verdict
+
 - **Verdict** (first thing in the report): **EDGE** when all seven checks pass, **WEAK** when one or two fail,
   **NO EDGE** otherwise:
   1. mean net R per trade > 0 with t = mean / (sd / sqrt(n)) ≥ ⚙️ **2**;
-  2. net R above ⚙️ **95 %** of the random-entry runs (kind B);
+  2. net R above ⚙️ **95 %** of random-entry runs (gap fade kind B where available,
+     matched-monkey kind 1 for all other strategies; see Matched monkeys);
   3. both halves of the run's own period (split at the middle date of start..end; rule set by the user,
      2026-10-15) net positive;
   4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);
@@ -187,7 +315,16 @@ clear verdict.
   banner only, not part of the verdict.
   7. **Deflated Sharpe** DSR ≥ ⚙️ **0.95** (7th check, rule set by the user 2026-10-16; see › Trial log and
      deflated Sharpe). With seven checks, WEAK still means one or two failed.
-- **A. Day reshuffle** (the Monte Carlo above): ⚙️ **1,000** runs. A "day" = a weekday of the run's period
+- **A. Day sampling** (V2.4d item 4, accepted 2026-10-23): ⚙️ **1,000** runs.
+  `MonteCarloConfig.sampling="block_bootstrap"` is the default: stationary bootstrap
+  (Politis–Romano), starting uniformly at a historic day, continuing to the next day modulo
+  the history length with probability `1 - 1/block_days`, otherwise restarting uniformly.
+  Block lengths are geometric, mean `block_days` (default **5**, finite and >= 1).
+  Every path has the historic number of days; replacement permits repeats and omissions.
+  `sampling="permutation"` retains the exact historic seeded permutations for comparison.
+  The same orders feed account statistics, drawdown duration, fan, FTMO challenges/funded
+  phase, adaptive risk, prop cards and risk sweeps. Reports name sampling and block length.
+  A "day" = a weekday of the run's period
   (midnight to midnight `Europe/Prague`; days without trades included, so days and months are real calendar
   lengths); trades belong to their exit day and keep their order and times inside it. Account per run: start
   ⚙️ **100,000 USD**, risk ⚙️ **0.5 / 1 / 1.5 %** of the current balance per trade, shown **side by side**
@@ -200,6 +337,22 @@ clear verdict.
     median; a month = ⚙️ **21** trading days), share of profitable months, max drawdown (median and 95 %),
     P(max drawdown > 10 %), longest drawdown in days, worst day, longest losing streak, profit factor, win
     rate, expectancy, trades per month.
+- **Double-bootstrap drawdown bounds** (`risk/drawdown_bounds.py`, Masters ch.6): separate
+  additive daily-R calculation, independent of the compounded account replay. Use the run's
+  complete `daily.csv` MTM column when present (V2.4d 1+2), otherwise exit-booked daily R;
+  label the source. Reject malformed/nonfinite daily data rather than silently falling back.
+  Outer **200** stationary-bootstrap histories of the original length; per outer history,
+  inner **1,000** stationary-bootstrap future paths of **126** days. Both use mean block
+  length **5**, seeded **42**, configurable in a frozen config. Include the initial zero
+  equity peak: max drawdown R = max(running peak of cumulative R minus cumulative R).
+  For q = **0.50 / 0.90 / 0.95 / 0.99**, take each outer history's inner q-quantile;
+  report its outer median and one-sided **90 % / 95 %** upper bounds (numpy linear
+  quantiles). Table in R and percent balance at each configured risk: `R * risk * 100`,
+  fixed fraction without compounding. Empty input is explicitly unavailable; a nonnegative
+  series gives zero. These are estimates for the stated future horizon, not guarantees.
+  Monte Carlo HTML + JSON include the table. Research writes `drawdown_bounds.json` beside
+  the chosen development run and each completed test run, with blocks in `report.md`;
+  no test is triggered solely to calculate bounds. Defaults must run well under one minute.
 - **FTMO 2-Step** on each reshuffled run (rules in › Prop-firm field): Phase 1 +10 %, Phase 2 +5 %, daily loss
   5 % and max loss 10 % (static) of the initial balance, at least 4 trading days (days with a trade). Attempts
   follow each other along the run (a new attempt starts the day after the last one ended, fresh balance).
@@ -267,6 +420,31 @@ one's Sharpe by the number of trials.
 - **Back-fill** (user, 2026-10-16): trials run before the log existed are added by hand
   (`python -m backtester.tools.trials add ...`), with their numbers where the old result files have them,
   otherwise as count-only lines (count for N, no Sharpe).
+- **Marked-to-market daily series (V2.4d items 1?2):** additive daily net R and signed
+  position; existing daily statistics and DSR stay on exit-booked daily net R.
+  Calendar days end at the following Europe/Prague midnight. Weekend contributions move
+  to the next weekday; out-of-period contributions clamp to the first/last weekday.
+  At cuts before exit use the last M1 bid close whose close time is <= cut, adding the
+  trade's spread for shorts. Value remaining shares from actual entry fill; realized
+  partial fills remain in cumulative value. Differences form daily R and final exit settles
+  to saved r_net, conserving each trade's total within 1e-9. An exit exactly at midnight
+  settles on its new calendar day's exit booking; the preceding cut uses the bid mark,
+  leaving exit costs to the exit day. Parts exiting exactly at a cut are marked there
+  before their fill is realized in the following day.
+  Spread/slippage included in fills are never deducted twice. Book the whole commission_r
+  on entry day for every commission model, including old runs, without cost settings.
+  Saved swap/funding totals have no recoverable charge schedule: spread each evenly across
+  Prague midnight cuts strictly after entry and <= exit (no cuts: exit day), on the day
+  ending at that cut. Position is signed remaining share integrated over actual calendar
+  day duration in UTC (DST included), counting only time on the named weekday inside
+  the requested period. Weekend/out-of-period holding time is omitted from position,
+  rather than added to another weekday; only R contributions follow the mapping above.
+  Missing marks or invalid/nonfinite prices and stop distances raise errors.
+  Read M1 through SymbolSources once per symbol/consecutive cached-day block.
+  TrialRecord.series optionally links daily.csv relative to results/; old lines default
+  to None. read_series defaults to net_r_exit_booked and also accepts net_r_mtm or position.
+  series_matrix aligns the date union with zero padding in input record order; records
+  without series yield empty arrays and an all-zero matrix column.
 - **Daily Sharpe** (rule changed by the user 2026-10-20, ROADMAP 12.13; before: per trade): SR = mean / sd (sample sd)
   of the **daily net R** of the run, not annualised; a day = a weekday of the run's period, midnight to midnight
   `Europe/Prague`, trades by exit day, days without trades = 0 (as Monte Carlo kind A); n = number of days; skewness g3
@@ -283,6 +461,17 @@ one's Sharpe by the number of trials.
   denominator under the square root. Same rule in the Monte Carlo report and the portfolio tool (on the combined,
   weighted daily R).
 - The report shows PSR(0), DSR, N, V, SR0 and the family name.
+
+#### Effective sample counts (V2.4d item 5 / T-19)
+
+Research significance reports effective variant N beside the actual N, using aligned
+development marked-to-market daily correlations: max(1, N / (1 + (N - 1) * mean
+pairwise correlation)). It also reports the chosen variant's average trade uniqueness
+and sum of uniqueness weights from daily concurrent trade intervals. Exact conventions
+and unavailable cases: research-runner.md > Significance of the best variant.
+These are diagnostics only: the trial log, DSR's actual N and variance, t-statistics,
+selection and existing daily statistics remain unchanged. Substituting effective N
+into DSR requires a later user decision.
 
 ### Entry screening (ROADMAP 12.12, idea T-13; rules set by the user, 2026-10-20)
 Why: most ideas die at the entry (Davey, *Building Winning Algorithmic Trading Systems* ch.12). The battery asks whether a

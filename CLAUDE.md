@@ -55,6 +55,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
     plain Python (job queue, sweeps), no AI tokens.
   - **Usage limits:** dispatch exit 4 = limit; the others take over; two out -> pause the loop
     and resume later. Save Claude and Codex tokens; plain Python does the bulk.
+  - **Speed rules (the user, 2026-10-24):** Codex runs only the tests of what it changed; Opus
+    runs the full suite once before each commit. Every brief carries the likely rule questions
+    with their answers, so Codex rarely stops. Keep the full suite fast (target < 5 min).
   - Record model and effort per task in `docs/research-log.md` (the dispatcher logs every call
     in `results/ai_calls.jsonl`). Tell the user when a phase would clearly benefit from Opus high.
   - Shell gotcha: never put backticks in inline PowerShell (they are escape characters); edit
@@ -87,7 +90,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   - Topic given: research only that. Otherwise the next open idea from
     `docs/research-log.md` / `knowledge/ideas.md`.
   - Rules: every strategy comes from research (book, paper, study) cited in its `docs/` spec;
-    Opus checks the source exists before any code. Vary only the settings of a researched
+    Opus checks the source exists before any code. One parameter set pooled across all
+    markets by default; per-market parameters with re-optimisation only as a walk-forward
+    variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the settings of a researched
     idea. Do not judge pass / fail: record every strategy with all metrics; the user decides.
     Develop before 2021-09-14, test the best variant once on MT5 data from 2021-09-14 (rule set
     by the user, 2026-10-15); every variant in the trial log; DSR, robustness report, real

@@ -3,6 +3,7 @@
 Sources: K = Kaufman *TSM* ch. 2, 5, 21-24; D = Douglas; H = Hougaard; RC = Carver; EC = Chan; KD = Davey;
 LP = López de Prado; WK = Kurt. Applies to `risk/` (Phase 5),
 which works on the R trade list. Spec: `docs/risk-management.md`.
+RP = Pardo, TM = Masters (chapter as cited).
 
 ## Basic rules
 - Risk a small fraction per trade: never > 5 %, 1-3 % common (K p.1032). For FTMO's 10 % total
@@ -13,6 +14,13 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
   (K p.1027-1028). Be in the market as little as possible.
 - Capital ≈ 3 × the historic max drawdown; plan for 1.5-2 × (K p.941). The historic max DD is a
   floor, not a forecast.
+- **Required capital and strategy stop (Pardo):** margin + 1.5 × MDD, or margin + 2 × 1.5 × MDD to survive two drawdowns in a
+  row; strategy stop = MDD × safety factor (1.5 in ch.5, 2-3 in ch.14); combined with a tolerated capital loss: (MDD × SF) / max
+  loss % (6k × 3 = 18k at 40 % → 45k). RAR = annual profit / (margin + 2 × MDD); reward/risk = annual profit / MDD, aim at 3 or
+  more (RP ch.5, 12, 14). Recipes differ (K about 3 × MDD and plan 1.5-2×; Davey's quit rule below) but all land at 1.5-3 × MDD;
+  write the quit rule before going live. MDD scales with volatility: a calm test period gives a DD that is too small live; OOS
+  drawdowns are more realistic than IS ones (RP ch.11-12). Bound the DD with the double bootstrap
+  ([statistics-and-bayes.md](statistics-and-bayes.md); TM ch.6).
 
 ## Sizing methods
 - Equal dollars, equal volatility and equal ATR risk give very different sizes. Prefer **ATR /
@@ -28,6 +36,8 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
   bound** to *reduce* leverage (K p.1088-1092). Carver and Chan agree: Kelly vol target = Sharpe, overbetting hurts
   more than underbetting, use **half Kelly** of a pessimistic Sharpe (RC ch.9; EC p.172-173); Davey rejects his optimal f
   (21 % ruin, 67 % median DD) (KD ch.16). Details below.
+  Pardo's Kelly, as noted: (win % - loss %) / (avg win / avg loss), which differs from K's formula above (the two agree only at a
+  payoff ratio of 1); check before coding. Small samples and fat tails make every Kelly input unreliable (RP ch.5).
 - Martingale / averaging down: works only in strongly trending low-noise markets with caps; blow-up
   risk; not for us (K p.1000-1011).
 - Equity-curve trading (trade only when equity > its MA): inconsistent in Kaufman's tests (K p.1086).
@@ -40,6 +50,13 @@ which works on the R trade list. Spec: `docs/risk-management.md`.
   capital shrinks (K p.1073-1075; worked example 0.63 % → 7.9 % → 28 % as capital halves).
 - Binomial probability of a loss streak and chi-square of live vs expected win rate decide whether a
   live system is broken (K p.1092-1097). With 20 trades win-rate error is ±20 points (D's sample).
+- **Live profile vs test profile (RP ch.14):** track about 25 statistics live and in the test (annual profit, trades a year, %
+  winners, largest and average win and loss with durations, winning and losing runs, max DD and run-up with length), each with its
+  SD; alarm when a live value is below 50 % or above 150 % of the test value; scale by volatility (twice the volatility, twice the
+  losses is fine). A losing run beyond MDD + 1 SD in both money and trade count at the same volatility → suspend. Poor live results
+  have three causes: a poor strategy, less market opportunity, a structural change.
+- **Grouped-return bounds for monitoring (TM ch.6):** lower bound at p 0.05-0.1 and an upper bound at p 0.4 on weekly / monthly
+  returns, with the order-statistic confidence of the bound; too few periods reaching the upper bound also signals decay.
 - Douglas: do not size up after winning streaks (euphoria) or skip signals after losses (fear). Test
   whether outcomes after streaks differ from baseline; if not, flat fractional risk is justified.
   → I-28

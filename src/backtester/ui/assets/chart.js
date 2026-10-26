@@ -780,12 +780,13 @@
     const h = 22;
     const axis = S.chart.timeScale().height();
     const x = 8, y = box.height - axis - h - 8;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-    ctx.strokeStyle = "#9598a1";
+    const token = (name) => getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
+    ctx.fillStyle = token("panel");
+    ctx.strokeStyle = token("line");
     ctx.lineWidth = 1;
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-    ctx.fillStyle = "#131722";
+    ctx.fillStyle = token("text");
     ctx.textBaseline = "middle";
     ctx.fillText(text, x + 8, y + h / 2 + 0.5);
     ctx.restore();

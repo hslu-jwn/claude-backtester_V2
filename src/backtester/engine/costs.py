@@ -37,6 +37,7 @@ the chart entry price like the fixed spread (rule set by the user, 2026-10-22).
 from __future__ import annotations
 
 import csv
+import math
 from bisect import bisect_right
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -142,6 +143,14 @@ class SymbolCosts:
     # median price of the window the fixed spread stands for (REFERENCE_PRICES); None: the
     # spread is never scaled with the price level (CostConfig.spread_price_scaling)
     reference_price: float | None = None
+    # Spec: risk-management.md > Costs > Tick rounding; None leaves levels unchanged.
+    tick_size: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.tick_size is not None and (
+            not math.isfinite(self.tick_size) or self.tick_size <= 0
+        ):
+            raise ValueError("tick_size must be finite and > 0, or None")
 
     @property
     def value_per_price_unit(self) -> float:
@@ -270,9 +279,26 @@ REFERENCE_PRICES: Mapping[str, float] = MappingProxyType(
     }
 )  # fmt: skip
 
+# Tick snapshot 2026-10-24: results/trading.json has names, no trade_tick_size.
+# Fallback 10^-digits from data/sources.py PRICE_DIGITS (expanded FTMO symbols
+# measured 2026-10-15; XAUUSD includes histdata precision). No runtime results reads.
+# Binance has no recorded exchange tick snapshot: None, explicitly no rounding.
+TICK_SIZES: Mapping[str, float | None] = MappingProxyType(
+    {
+        "XAUUSD": 0.001, "GBPUSD": 0.00001, "GBPJPY": 0.001,
+        "EURUSD": 0.00001, "AUDUSD": 0.00001, "NZDUSD": 0.00001,
+        "EURGBP": 0.00001, "USDJPY": 0.001, "USDCAD": 0.00001,
+        "USDCHF": 0.00001, "EURJPY": 0.001, "XAGUSD": 0.001,
+        "NAS100": 0.01, "US500": 0.01, "GER40": 0.01, "UK100": 0.01,
+        "JP225": 0.01, "EU50": 0.01, "US30": 0.01, "US2000": 0.01,
+        "USOIL": 0.001, "UKOIL": 0.001, "DXY": 0.001, "NATGAS": 0.001,
+        "BTCUSD": 0.01, "ETHUSD": 0.01, "BTCUSDT": None, "ETHUSDT": None,
+    }
+)  # fmt: skip
+
 DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     {
-        name: replace(costs, reference_price=REFERENCE_PRICES.get(name))
+        name: replace(costs, reference_price=REFERENCE_PRICES.get(name), tick_size=TICK_SIZES[name])
         for name, costs in _BASE_SYMBOL_COSTS.items()
     }
 )
@@ -294,8 +320,16 @@ class CostConfig:
     # fixed spread x (fill price / SymbolCosts.reference_price) (rule set by the user,
     # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
     spread_price_scaling: bool = True
+    # TP and limit-entry penetration as a multiple of the trade's spread (0: touch fills)
+    tp_penetration: float = 0.5  # default set by the user 2026-10-23
+    # Short TP needs ask <= target minus penetration; fills at target without extra spread
+    short_tp_on_ask: bool = True  # default set by the user 2026-10-23
+    # Round order levels conservatively to the symbol tick; default unchanged pending measurement.
+    round_to_tick: bool = False
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.tp_penetration) or self.tp_penetration < 0:
+            raise ValueError("tp_penetration must be finite and >= 0")
         if self.max_cost_r < 0:
             raise ValueError("max_cost_r must be >= 0 (0 = off)")
 

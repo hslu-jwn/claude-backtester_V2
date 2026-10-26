@@ -42,7 +42,7 @@ from backtester.analytics.orderflow import (
 )
 from backtester.data.binance import CACHE_DIR, DEFAULT_SYMBOLS, FLOW_DIR, FUNDING_DIR
 from backtester.paths import RESULTS_DIR
-from backtester.tools.grid_common import write_csv
+from backtester.tools.research_helpers import write_csv
 
 DEV_START = date(2020, 1, 1)
 DEV_END_DATE = date(2021, 9, 13)

@@ -87,7 +87,7 @@ def test_bottom_bar_has_no_range_buttons_or_date_picker():
 
 def test_loading_bar_is_at_the_top_of_the_chart_pane():
     page = chart.layout(SymbolSources({}))
-    pane = page.children[1].children[0].children[0]  # ch-chartcol -> tb-chart
+    pane = page.children[1].children[0].children[1]  # key strip, then tb-chart
     assert "chart-bar" in str(pane.children) and "chart-lwc" in str(pane.children)
 
 

@@ -27,6 +27,9 @@ the original SL stays (rule set by the user, 2026-10-22).
 Times: `entry_time` / `exit_time` are when the engine acted, i.e. the CLOSE time of the
 entry candle and of the candle in which SL / TP was hit. `entry_candle` / `exit_candle` are
 those candles' open times (`Candle.ts`), for drawing the position box on the chart.
+With M1 resolution, exit times and replayed limit entry times refer to the resolving
+minute, processed at the base close; entry_candle stays at the base open
+(Spec: ARCHITECTURE.md > Intrabar resolution).
 """
 
 from __future__ import annotations
@@ -100,6 +103,13 @@ class TradeResult:
     funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
     limit_fill: bool = False  # Kind C: a limit entry gets no market-fill draw
+    tp_levels_touched: int = 0
+    tp_levels_touched_not_filled: int = 0
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @property
     def risk(self) -> float:
@@ -172,6 +182,15 @@ class OpenTrade:
     mfe_r: float = 0.0
     parts: list[PartialExit] = field(default_factory=list)
     limit_fill: bool = False
+    tp_penetration: float = 0.0
+    short_tp_on_ask: bool = False
+    _tp_touched: set[int] = field(default_factory=set)
+    _tp_not_filled: set[int] = field(default_factory=set)
+    intrabar: str = ""
+    intrabar_ambiguous: int = 0
+    intrabar_tp_first: int = 0
+    intrabar_sl_first: int = 0
+    intrabar_fallbacks: int = 0
 
     @property
     def risk(self) -> float:
@@ -226,25 +245,56 @@ class OpenTrade:
         """`price` reached `level` in the trade's direction (long: price >= level)."""
         return self.sign * (price - level) >= 0
 
-    def on_candle(self, candle: Candle, now: datetime) -> None:
+    def _tp_reached(self, bid: float, level: float) -> bool:
+        """Spec: risk-management.md > Costs > Limit penetration / Short TP on ask."""
+        distance = self.tp_penetration * self.spread
+        quote = bid + self.spread if self.sign < 0 and self.short_tp_on_ask else bid
+        return self.sign * (quote - (level + self.sign * distance)) >= 0
+
+    def ambiguous(self, candle: Candle, *, limit_fill: bool = False) -> bool:
+        """Spec: ARCHITECTURE.md > Intrabar resolution; use actual fill thresholds."""
+        worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
+        outstanding = self.targets[len(self.parts) :]
+        if not any(self._tp_reached(best, price) for price, _ in outstanding):
+            return False
+        stop = self.sign * (worst - self.stop_loss) <= 0
+        new_be = (
+            not self.tp1_done
+            and self.break_even_after_tp1
+            and len(self.targets) > 1
+            and self.sign * (self.take_profit - self.break_even_level) > 0
+            and self.sign * (worst - self.break_even_level) <= 0
+        )
+        return limit_fill or stop or new_be
+
+    def on_candle(self, candle: Candle, now: datetime, *, intrabar: bool = False) -> None:
         """Close the parts whose SL / TP is hit inside `candle`.
 
         Only this candle's OHLC is used. SL and a TP both inside the candle: SL first
         (conservative). A candle that opens beyond the SL (gap) fills at its open; one that
         opens beyond a TP fills at the TP (never better than planned). Several TPs inside
         one candle (no SL): all are filled.
+        During intrabar replay, new BE stops are checked from the next M1 candle only.
         """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
+        targets = self.targets
+        # Observe outstanding levels once each, independently of SL-first precedence.
+        # This measures the changed price threshold; with both defaults misses are zero.
+        for i in range(len(self.parts), len(targets)):
+            price, _ = targets[i]
+            if self._beyond(best, price):
+                self._tp_touched.add(i)
+                if not self._tp_reached(best, price):
+                    self._tp_not_filled.add(i)
         if self.sign * (worst - self.stop_loss) <= 0:
             gap_fill = self.stop_loss if self._beyond(candle.open, self.stop_loss) else candle.open
             reason = ExitReason.BREAK_EVEN if self.break_even_time else ExitReason.STOP_LOSS
             self._exit(self.open_share, candle, now, gap_fill, reason)
             return
-        targets = self.targets
         hit_tp1 = False
         for i in range(len(self.parts), len(targets)):  # every part closed so far was a TP
             price, share = targets[i]
-            if not self._beyond(best, price):
+            if not self._tp_reached(best, price):
                 break
             rest = i == len(targets) - 1
             self._exit(
@@ -259,7 +309,7 @@ class OpenTrade:
             and self.sign * (self.take_profit - self.break_even_level) > 0
         ):
             self.move_to_break_even(now)
-            if not self._beyond(candle.close, self.break_even_level):
+            if not intrabar and not self._beyond(candle.close, self.break_even_level):
                 # closed back beyond break-even after TP1: the level was hit in this candle
                 self._exit(
                     self.open_share, candle, now, self.break_even_level, ExitReason.BREAK_EVEN
@@ -281,6 +331,8 @@ class OpenTrade:
         self, share: float, candle: Candle, now: datetime, price: float, reason: ExitReason
     ) -> None:
         fill = price if self.sign > 0 else price + self.spread
+        if reason is ExitReason.TAKE_PROFIT and self.sign < 0 and self.short_tp_on_ask:
+            fill = price
         if reason is not ExitReason.TAKE_PROFIT:
             fill -= self.sign * self.slippage
         r_fills = self.sign * (fill - self.entry_fill) / self.risk
@@ -332,4 +384,11 @@ class OpenTrade:
             swap_r=swap_r,
             funding_r=funding_r,
             limit_fill=self.limit_fill,
+            tp_levels_touched=len(self._tp_touched),
+            tp_levels_touched_not_filled=len(self._tp_not_filled),
+            intrabar=self.intrabar,
+            intrabar_ambiguous=self.intrabar_ambiguous,
+            intrabar_tp_first=self.intrabar_tp_first,
+            intrabar_sl_first=self.intrabar_sl_first,
+            intrabar_fallbacks=self.intrabar_fallbacks,
         )

@@ -19,7 +19,7 @@ def trade(symbol, day, r_net, r_gross=None, mode_bonus=0.0):
     entry = datetime(day.year, day.month, day.day, 14, 30, tzinfo=UTC)
     return SimpleNamespace(
         symbol=symbol, entry_time=entry, exit_time=entry + timedelta(hours=2),
-        entry=100.0, initial_stop=99.0, exit_reason="signal", swap_r=0.0,
+        entry=100.0, initial_stop=99.0, direction="long", exit_reason="signal", swap_r=0.0,
         r_gross=r_net + 0.05 if r_gross is None else r_gross, r_net=r_net + mode_bonus,
     )  # fmt: skip
 
@@ -35,6 +35,25 @@ def weekdays(n=60):
 
 @pytest.fixture
 def stub(monkeypatch):
+    import numpy as np
+
+    from backtester.analytics.entry_screen import M1Data
+    from backtester.tools import entry_screen, skill_bounds
+
+    monkeypatch.setattr(
+        skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
+    )
+
+    def fake_m1(*args):
+        stamps = [
+            datetime(d.year, d.month, d.day, 14, 29, tzinfo=UTC).timestamp() + i * 60
+            for d in weekdays()
+            for i in range(122)
+        ]
+        prices = np.full(len(stamps), 100.0)
+        return M1Data(np.array(stamps), prices, prices, prices, prices)
+
+    monkeypatch.setattr(entry_screen, "load_m1", fake_m1)
     calls = {"run": [], "profile": 0, "path": 0}
 
     def fake_run(symbols, start, end, settings, *args, **kwargs):
@@ -116,9 +135,11 @@ def test_other_strategy_kind_b_is_not_available(tmp_path, stub):
     html = (tmp_path / "report.html").read_text(encoding="utf-8")
     assert summary["random_entries"]["available"] is False
     check = next(c for c in summary["verdict"]["checks"] if c["key"] == "random_entries")
-    assert check["available"] is False and check["passed"] is False
+    # T-14 explicitly replaces the former n/a verdict with monkey kind 1 for this strategy.
+    assert check["available"] and check["passed"]
+    assert check["value"] == summary["monkeys"]["kinds"][0]["net_r"]["percentile"] == 100.0
     assert "random_entries" not in summary["verdict"]["failed"]
-    assert "random_entries" in summary["verdict"]["not_available"]
+    assert "random_entries" not in summary["verdict"]["not_available"]
     assert "not available for this strategy yet" in html
     assert len(stub["run"]) == 1  # no follow run
 
@@ -275,7 +296,8 @@ def make_run(tmp_path, strategy="gap_fade"):
                 entry=100.0, initial_stop=99.0, take_profit=101.0, tp1_share=1.0,
                 planned_rr=1.0, exit_time=t.exit_time.isoformat(), exit_price=101.0,
                 exit_reason="take_profit", r_gross=t.r_gross, r_net=t.r_net, confluence="",
-                parts='[{"share": 1.0, "reason": "take_profit"}]',
+                parts=json.dumps([{"share": 1.0, "reason": "take_profit",
+                                   "time": t.exit_time.isoformat(), "price": 101.0}]),
             )  # fmt: skip
             rows.append(row)
     with open(folder / "trades.csv", "w", newline="", encoding="utf-8") as f:
@@ -314,6 +336,49 @@ def test_run_option_uses_the_runs_own_trades_and_settings(tmp_path, stub):
     assert [getattr(c, "mode", None) for c in stub["run"]] == ["follow"]
     assert summary["random_entries"]["available"] is True
     assert (out / "report.html").is_file()
+    assert "Skill vs trend, and bounds" in (out / "report.html").read_text(encoding="utf-8")
+    assert (
+        json.loads((out / "skill_bounds.json").read_text(encoding="utf-8"))
+        == summary["skill_bounds"]
+    )
+    assert summary["skill_bounds"]["daily_mean"]["n"] > 60  # include empty weekdays
+
+
+def test_run_bounds_use_saved_mtm_and_cli_configuration(tmp_path, stub):
+    from backtester.analytics.daily import weekdays as period_weekdays
+
+    folder = make_run(tmp_path)
+    (folder / "daily.csv").write_text(
+        "date,net_r_mtm\n" + "".join(f"{d},1\n" for d in period_weekdays(START, END)),
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    assert (
+        tool.main(
+            run_argv(
+                folder,
+                out,
+                "--sampling",
+                "permutation",
+                "--block-days",
+                "2",
+                "--bounds-outer",
+                "3",
+                "--bounds-inner",
+                "8",
+                "--horizon-days",
+                "4",
+            )
+        )
+        == 0
+    )
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    bounds = summary["drawdown_bounds"]
+    assert bounds["source"] == "marked_to_market"
+    assert bounds["config"]["outer"] == 3 and bounds["config"]["inner"] == 8
+    assert bounds["config"]["horizon_days"] == 4 and bounds["config"]["block_days"] == 2
+    assert all(v == 0 for row in bounds["rows"] for v in row["bounds_r"].values())
+    assert summary["monte_carlo"]["config"]["sampling"] == "permutation"
 
 
 def test_run_option_writes_a_trial_line_and_check_7_uses_the_trial_count(tmp_path, stub):
@@ -461,3 +526,43 @@ def test_build_summary_takes_ready_kind_b_and_c_results():
     assert s["random_entries"]["percentile"] == 97.0 and s["random_fills"]["p50"] == 7.5
     checks = {c.key: c for c in s["verdict"].checks}
     assert checks["random_entries"].passed and checks["random_fills"].value == 7.5
+
+
+def test_monkey_percentile_in_verdict_and_html():
+    from backtester.runner import RunSettings
+
+    trades = [trade("NAS100", d, 0.5) for d in weekdays()[:3]]
+    monkeys = {
+        "available": True,
+        "trades": 3,
+        "config": {"runs": 20},
+        "passed": False,
+        "kinds": [
+            {
+                "kind": 1,
+                "name": "random entry",
+                "passed": False,
+                "net_r": {"real": 1.5, "median": 0.0, "p5": -1.0, "p95": 2.0, "percentile": 94.0},
+                "max_dd_r": {"real": 0.0, "median": 1.0, "p5": 0.0, "p95": 3.0, "percentile": 89.0},
+            }
+        ],
+    }
+    summary = tool.build_summary(
+        trades,
+        None,
+        {
+            "strategy": "trend_following",
+            "symbols": ["NAS100"],
+            "start": START,
+            "end": END,
+            "source": "histdata",
+        },
+        RunSettings(),
+        ToolConfig(runs=2),
+        log=lambda *_: None,
+        monkeys=monkeys,
+    )
+    check = next(c for c in summary["verdict"].checks if c.key == "random_entries")
+    assert check.available and check.value == 94 and not check.passed  # MC still needs 95
+    rendered = tool.monkeys_html(summary)
+    assert "Matched monkeys" in rendered and "94.0" in rendered and "89.0" in rendered

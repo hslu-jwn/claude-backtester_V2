@@ -1,0 +1,17 @@
+# Old tool: gap momentum grid (exact historical module in docs/archive/grid-merge3-provenance.md)
+# Default command: python -m ("backtester.tools.gap_momentum" + "_grid") --mode index
+# not carried over: --start/--end (fixed development/test split),
+# --source/--cache-dir (runner uses DEFAULT_SOURCES), --spread-table (no grid equivalent),
+# --out/--family (runner controls results and trials). --workers remains a runner option.
+# --no-sweep/--only/parameter CLI axes: edit grid settings instead.
+# --no-shocks: set shocks = false; split-year overrides: runner scorecard halves.
+# --no-study is obsolete; gap_bucket_study is a separate descriptive tool.
+strategy = "gap_momentum"
+symbols = ["NAS100", "US500"]
+max_variants = 10000
+[base]
+"mode" = "index"
+[grid]
+"stop_atr" = [0.5, 1.0, 2.0]
+"exit_time" = ["11:00", "12:00", "15:59"]
+"entry_z" = [0.0, 0.1, 0.25, 0.5]

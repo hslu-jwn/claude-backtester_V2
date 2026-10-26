@@ -169,5 +169,7 @@ def test_trading_symbols_are_all_the_backtest_symbols():
     from backtester.live.trading_settings import SYMBOLS, TradingSettings
 
     assert set(SYMBOLS) == set(PRICE_DIGITS)
-    assert {"XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"} <= set(SYMBOLS)  # + ROADMAP 11.8 / 11.9
+    assert {"XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"} <= set(
+        SYMBOLS
+    )  # + ROADMAP 11.8 / 11.9
     assert dict(TradingSettings().symbols) == {s: s for s in SYMBOLS}

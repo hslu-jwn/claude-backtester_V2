@@ -1,6 +1,7 @@
-"""Monte Carlo kind A: reshuffle whole trading days, simulate the account per order, plus the
-FTMO 2-Step pass simulation on each reshuffled order.
-Spec: risk-management.md › Monte Carlo report (A. Day reshuffle, FTMO 2-Step, daily loss
+"""Monte Carlo kind A: sample whole trading days, simulate the account per order, plus the
+FTMO 2-Step pass simulation on each sampled order. Stationary bootstrap is the default;
+the permutation option preserves the historic seeded simulation for comparison.
+Spec: risk-management.md › Monte Carlo report (A. Day sampling, FTMO 2-Step, daily loss
 approximation) and › Prop-firm field (FTMO rules).
 
 Pure functions on R trade lists: anything with `entry_time`, `exit_time` (tz-aware) and
@@ -30,6 +31,7 @@ import numpy as np
 from backtester.analytics.daily import PRAGUE, weekdays
 from backtester.analytics.metrics import longest_streak
 from backtester.risk.adaptive import AdaptiveRisk, budgeted_risk, risk_factor
+from backtester.risk.bootstrap import stationary_orders, validate_block_days
 
 PERCENTILES = (5, 50, 95)
 EPS = 1e-9  # float tolerance when a loss is compared with its limit
@@ -52,8 +54,13 @@ class MonteCarloConfig:
     max_loss: float = 0.10  # static
     min_trading_days: int = 4
     adaptive: AdaptiveRisk | None = None  # None = fixed risk per trade (ROADMAP 5.7)
+    sampling: str = "block_bootstrap"
+    block_days: float = 5.0
 
     def __post_init__(self) -> None:
+        if self.sampling not in ("block_bootstrap", "permutation"):
+            raise ValueError("sampling must be block_bootstrap or permutation")
+        validate_block_days(self.block_days)
         if self.runs < 1 or self.fan_paths < 0 or self.month_days < 1 or self.funded_days < 1:
             raise ValueError("runs, month_days and funded_days must be >= 1, fan_paths >= 0")
         if self.start_balance <= 0 or self.min_trading_days < 0:
@@ -122,8 +129,13 @@ def build_days(trades: Sequence, start: date, end: date) -> list[Day]:
 
 
 def reshuffle_orders(n_days: int, config: MonteCarloConfig) -> np.ndarray:
-    """`runs` permutations of the day indices (rows), from the seeded generator."""
+    """Seeded whole-day orders; Spec: risk-management.md > A. Day sampling.
+
+    The permutation branch preserves the historic generator calls exactly.
+    """
     rng = np.random.default_rng(config.seed)
+    if config.sampling == "block_bootstrap":
+        return stationary_orders(n_days, config.runs, n_days, rng, config.block_days)
     return np.array([rng.permutation(n_days) for _ in range(config.runs)], dtype=int).reshape(
         config.runs, n_days
     )
@@ -234,7 +246,7 @@ class _RunSequence:
 
 
 def _run_sequence(days: list[Day], order) -> _RunSequence:
-    """Risk-independent order data, reused across risks for just this permutation.
+    """Risk-independent order data, reused across risks for just this sampled order.
 
     Spec: risk-management.md > Monte Carlo report, A. No run-by-trade cache is kept.
     """

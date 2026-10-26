@@ -60,7 +60,7 @@ from backtester.detectors.zone import ZoneKind
 from backtester.engine.backtest import run_backtest
 from backtester.engine.replay import Replay
 from backtester.engine.trade import ExitReason, TradeResult
-from backtester.runner import RunSettings, run_backtests
+from backtester.runner import IntrabarSource, RunSettings, run_backtests
 from backtester.settings import from_json
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import Decision, SessionZoneSweep
@@ -113,7 +113,12 @@ def run_strategy(
         )
         for tf in strategy.timeframes
     }
-    trades = run_backtest(strategy, list(series.values()), settings.engine)
+    trades = run_backtest(
+        strategy,
+        list(series.values()),
+        settings.engine,
+        intrabar_source=IntrabarSource(adapter) if settings.engine.intrabar == "m1" else None,
+    )
     decisions = {
         (d.signal.at, d.signal.direction): d for d in strategy.decisions if d.order is not None
     }

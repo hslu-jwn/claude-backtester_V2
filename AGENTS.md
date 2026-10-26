@@ -28,7 +28,9 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
 - **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
   **Research / tests:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
   model one level after a failed try before passing the task on.
-- **Hard limits for Codex, Claude 4.6 and Gemini:** never commit, push or create branches;
+- **Hard limits for Codex, Claude 4.6 and Gemini:** never start a server, app preview or any
+  process that keeps running after your answer (a preview of the app on 2026-10-24 kept a
+  dispatch open for 30 hours); never commit, push or create branches;
   never read, print or ask for credentials (they live only in the Windows Credential
   Manager); never edit `src/backtester/live/` (order and bot code) or `.env`.
   `python -m backtester.tools.ai_dispatch` enforces this after every call (commits, resets,
@@ -144,7 +146,7 @@ src/backtester/
   analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
   live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
   tools/       Command-line tools: data check / show / update, research runner, Monte Carlo,
-               portfolio, studies, ai_dispatch (archive/ = old grid runners)
+               portfolio, studies, gap_bucket_study, ai_dispatch (grids in research/grids/)
   ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
                backtest results page, Risk & Prop Firm page
 tests/         pytest; mirrors src/ structure
@@ -166,7 +168,7 @@ python -m backtester.data.histdata data/raw/histdata/  # import histdata files (
 python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
-python -m backtester.tools.research research/grids/orb_example.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
+python -m backtester.tools.research research/grids/orb.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
 python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
 python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/

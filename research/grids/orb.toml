@@ -1,0 +1,82 @@
+# Old tool: orb_grid.py
+# Default command: python -m backtester.tools.orb_grid
+# not carried over: --start/--end (fixed development/test split),
+# --source/--cache-dir (runner uses DEFAULT_SOURCES), --spread-table (no grid equivalent),
+# --out/--family (runner controls results and trials). --workers remains a runner option.
+# --no-sweep/--only/parameter CLI axes: edit grid settings instead.
+# --no-shocks: set shocks = false; split-year overrides: runner scorecard halves.
+# Includes optional --volume twins. --part/--merge: runner resumes finished variants.
+strategy = "opening_range"
+symbols = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "EURJPY", "GBPJPY", "EURGBP", "XAUUSD", "XAGUSD", "NAS100", "US500", "GER40", "UK100", "JP225", "EU50"]
+max_variants = 10000
+
+[[grids]]
+name = "range"
+[grids.base]
+"entry_mode" = "RANGE"
+[grids.grid]
+"target_r" = [0.0, 1.0, 2.0]
+"range_minutes" = [5, 15, 30]
+
+[[grids]]
+name = "band"
+[grids.base]
+"entry_mode" = "BAND"
+[grids.grid]
+"target_r" = [0.0, 1.0, 2.0]
+"band_atr" = [0.25, 0.5, 1.0]
+
+[[grids]]
+name = "max_range_atr_0.15"
+compare_to = "range"
+[grids.base]
+"max_range_atr" = 0.15
+[grids.grid]
+
+[[grids]]
+name = "max_range_atr_0.3"
+compare_to = "range"
+[grids.base]
+"max_range_atr" = 0.3
+[grids.grid]
+
+[[grids]]
+name = "narrow_day_filter_NR4"
+compare_to = "range"
+[grids.base]
+"narrow_day_filter" = "NR4"
+[grids.grid]
+
+[[grids]]
+name = "narrow_day_filter_INSIDE"
+compare_to = "range"
+[grids.base]
+"narrow_day_filter" = "INSIDE"
+[grids.grid]
+
+[[grids]]
+name = "max_reversals_1"
+compare_to = "range"
+[grids.base]
+"max_reversals" = 1
+[grids.grid]
+
+[[grids]]
+name = "volume_range"
+compare_to = "range"
+[grids.base]
+"entry_mode" = "RANGE"
+"min_rel_volume" = 1.5
+[grids.grid]
+"target_r" = [0.0, 1.0, 2.0]
+"range_minutes" = [5, 15, 30]
+
+[[grids]]
+name = "volume_band"
+compare_to = "band"
+[grids.base]
+"entry_mode" = "BAND"
+"min_rel_volume" = 1.5
+[grids.grid]
+"target_r" = [0.0, 1.0, 2.0]
+"band_atr" = [0.25, 0.5, 1.0]

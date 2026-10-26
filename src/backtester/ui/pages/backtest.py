@@ -20,6 +20,7 @@ from dash import Dash, Input, Output, dcc, html, no_update
 
 from backtester.paths import RESULTS_DIR
 from backtester.ui import backtest_job as bj
+from backtester.ui import layout as ui
 from backtester.ui.pages import results
 
 PATH = "/backtest"
@@ -35,7 +36,7 @@ POLL_KEYS = (
     "title", "track", "fill", "pct", "detail", "elapsed", "eta", "message", "cancel_disabled",
     "timer_disabled", "page", "children",
 )  # fmt: skip
-CANCELLED_TOAST = "Backtest cancelled. Nothing was saved."
+CANCELLED_TOAST = "Cancelled"
 
 
 def _meta(key: str, value: str) -> html.Span:
@@ -84,7 +85,7 @@ def runs_list(results_dir: Path = RESULTS_DIR, toast: str | None = None) -> html
                 html.Span(r["date"]),
                 html.Span(r["strategy"]),
                 html.Span(r["symbols"]),
-                html.Span(r["days"]),
+                html.Span(r["days"], className="bj-days"),
                 html.Span("—" if r["trades"] is None else f"{r['trades']:,}", className="bj-num"),
                 html.Span(
                     results.fmt_r(r["net_r"]), className=f"bj-num {results.tone(r['net_r'])}"
@@ -101,16 +102,38 @@ def runs_list(results_dir: Path = RESULTS_DIR, toast: str | None = None) -> html
         if rows
         else "Start one with Run in the chart's Backtest menu."
     )
-    card = [html.Div(title, className="bj-title"), html.Div(sub, className="bj-strategy")]
+    card = [html.Div([html.Span(title), ui.info(sub)], className="bj-list-head")]
     if rows:
         card += [
-            html.Div([html.Span(h) for h in head], className="bj-row bj-row-head"),
+            html.Details(
+                [html.Summary("More columns"), html.Span("Days (UTC)")],
+                id="bj-more-columns",
+                open=False,
+                className="ui-details bj-column-toggle",
+            ),
+            html.Div(
+                [html.Span(h, className="bj-days" if h == "Days (UTC)" else "") for h in head],
+                className="bj-row bj-row-head",
+            ),
             html.Div(body, className="bj-rows"),
         ]
-    card.append(dcc.Link("← Chart", href="/", className="bj-back"))
-    page = [html.Div(card, className="bj-card")]
+    page = [
+        ui.page(
+            html.Div(card[0], className="ui-key-strip"),
+            html.Div(card[1:], id="backtest-runs", className="bj-card"),
+        ),
+        risk_link(),
+    ]
     if toast:
-        page.insert(0, html.Div(toast, className="bj-toast", id="bj-toast"))
+        page.insert(
+            0,
+            html.Div(
+                toast,
+                title="Backtest cancelled. Nothing was saved.",
+                className="bj-toast",
+                id="bj-toast",
+            ),
+        )
     return html.Div(page, className="bj-page")
 
 
@@ -134,7 +157,7 @@ def poll_outputs(snap: dict) -> dict:
         "detail": snap["detail"],
         "elapsed": snap["elapsed"],
         "eta": snap["eta"],
-        "message": snap["message"],
+        "message": snap["message"] if state == "error" else "",
         "cancel_disabled": not snap["cancellable"],
         "timer_disabled": state != "running",
         "page": snap["href"] if snap["href"] else no_update,
@@ -193,7 +216,6 @@ def layout(snap: dict) -> html.Div:
                         n_clicks=0,
                         disabled=out["cancel_disabled"],
                     ),
-                    dcc.Link("← Chart", href="/", className="bj-back"),
                 ],
                 className="bj-actions",
             ),
@@ -201,7 +223,23 @@ def layout(snap: dict) -> html.Div:
         className="bj-card",
     )
     timer = dcc.Interval(id="bj-timer", interval=REFRESH_MS, disabled=out["timer_disabled"])
-    return html.Div([timer, card], className="bj-page")
+    # Move the existing components so callback targets remain mounted exactly once.
+    head, metas, bar, detail, stats, message, actions = card.children
+    head.children[0].className = "bj-state"
+    head.children.append(metas)
+    strip = html.Div(
+        [head, *stats.children, actions], id="bj-key-strip", className="ui-key-strip bj-strip"
+    )
+    card.children = [bar, detail, message]
+    return html.Div([timer, ui.page(strip, card), risk_link()], className="bj-page")
+
+
+def risk_link():
+    return dcc.Link(
+        "Risk & prop firm: open a run's results",
+        href="/backtest#backtest-runs",
+        className="bj-risk-link",
+    )
 
 
 def press_cancel(clicks: int | None) -> bool:

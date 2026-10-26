@@ -59,6 +59,52 @@ result)` before the next `on_candle` (strategy 2: one open trade per setup, re-e
 The break-even at the next session start (step 2) is strategy 1's rule: a strategy with
 `uses_session_break_even = False` (strategy 2) skips it.
 
+### Intrabar resolution (V2.4c T-03, user 2026-10-23)
+
+`EngineConfig.intrabar = "m1"` is the default (rule set by the user 2026-10-24 after the measurement in
+`results/intrabar.md`); `"sl_first"` preserves the earlier execution exactly. Without an
+`intrabar_source` (direct engine calls) an ambiguous candle falls back to SL first and is counted.
+The optional `"m1"` setting resolves only ambiguous base candles after they have closed:
+the current stop and an outstanding TP both reached, or TP1 reached with break-even
+after TP1 enabled and its eligible BE level reached, or a limit-fill candle reaching
+an outstanding TP. TP reach uses the entry-fixed spread, `tp_penetration` and
+`short_tp_on_ask`, including for partial targets. A 1m base never requests intrabar data.
+
+The engine receives an optional `intrabar_source(symbol, start, end)` callable. The
+runner supplies it from that symbol's adapter with a bounded UTC-day cache; it never
+loads the entire M1 history. Only M1 candles wholly inside `[base.ts, base.close)` may
+be replayed, oldest first, at that base close. Strategies still run once per base close;
+callbacks and orders cannot act earlier. Missing minutes (including partial coverage,
+duplicates or unordered timestamps) cause whole-candle fallback before any mutation.
+No source also falls back. No candle outside the closed interval is replayed.
+
+Replay uses the existing stop/TP levels, costs and partial shares. Stops gap to the M1
+open, TPs fill at their levels. SL wins if stop and TP share one M1 candle. After TP1,
+an eligible break-even stop applies from M1 candle k+1; never infer a same-M1 BE exit
+from candle k's close. In the M1 candle that fills a pending limit only SL counts;
+TPs count from the next M1 candle (both clarifications confirmed by Opus). Before
+the limit fills, extremes and TP hits do not count. Entry penetration uses the placed
+limit and the candidate trade's fixed spread. Default mode keeps today's close-based
+same-base-candle BE rule and ignores all TPs on the base limit-fill candle.
+
+A replayed limit's `entry_time` is the close of the M1 candle that fills it, so no exit
+can precede entry (Opus clarification, 2026-10-23 21:02). `entry_candle` remains the base
+candle's open time. The order decision and all strategy callbacks stay at the base
+candle's close; recording the M1 entry time does not advance strategy execution.
+
+An exit's time/candle are the resolving M1 candle's close/open. Excursions use only
+replayed minutes while exposed, with the existing open-gap excursion rule. Other
+candles retain base OHLC execution. Per-run summary counters `intrabar_ambiguous`,
+`intrabar_tp_first`, `intrabar_sl_first`, `intrabar_fallbacks` count trade/candle
+assessments (two positions on one candle count twice), excluding warm-up entries.
+Ambiguity is counted in both modes; resolution/fallback counts apply only in M1 mode.
+First exit during a replay determines TP-first/SL-first (BE counts as a stop). A limit
+replay with no exit increments only ambiguity. The trade CSV `intrabar` is empty
+without a resolution, otherwise `tp_first`, `sl_first`, or `fallback`; fallback takes
+precedence across repeated assessments, otherwise the first resolution is retained.
+`scripts/measure_intrabar.py` compares both modes on all seven 2023 golden setups,
+checkpoints `results/intrabar.csv` and `.md`, and does not change the default.
+
 ### Engine costs (rule set by the user, 2026-10-22)
 
 - Slippage is always applied, there is no switch to turn it off (most realistic scenario);
@@ -340,3 +386,16 @@ the MT5 cache days after the last histdata day (`ui/chart_data.py` `FeedFillAdap
 See `docs/ROADMAP.md`. Phases: 0 historical data (histdata.com) → 1 chart with replay → 2 confluences on the
 chart → 3 strategy 1 + backtest → 4 settings menu → 5 risk & FTMO simulation →
 6 robustness → 7 live trading via MT5 → 8 strategy 2 (NY Open index sweep).
+
+## Research tools (V2.4 grid merge)
+
+`tools/research.py` executes registered strategy grids from `research/grids/`.
+For example: `python -m backtester.tools.research research/grids/orb.toml --dev-only`.
+Combined families, robustness, shock days, filter twins and sensitivity use shared
+analytics. Optional `--walk-forward` reads the saved development variant trades;
+it never executes another backtest or reads the untouched test period.
+`tools/research_helpers.py` supplies CSV and segmented-run helpers used by studies
+and risk sweeps. `python -m backtester.tools.gap_bucket_study --mode index` (or
+`--mode fx`) produces gap-bucket analytics independently of strategy backtests.
+Previous per-strategy sweep executables were removed after four identical
+old/new development results; migration evidence is in `results/gm3_*.log`.

@@ -235,7 +235,7 @@ def test_table_rows_have_display_fields(results_dir):
     assert first["flags"].startswith("⚠") and first["flags_tooltip"]
     assert first["verdict_colour"] == "red"
     assert first["verdict"] == "red · no edge"
-    assert research.COLUMNS[0]["id"] == "source"
+    assert "Source" in _json(research.card(first))
 
 
 def test_cache_by_mtime(results_dir, monkeypatch):
@@ -279,8 +279,8 @@ def test_page_route_nav_and_app(results_dir):
     assert "active" in cls["research"] and "active" not in cls["backtest"]
     assert '"href": "/research"' in _json(nav.layout())
     page = _json(research.layout(results_dir))
-    assert "rr-table" in page and "Reload" in page
-    assert "rr-table.data" in " ".join(app_module.create_app().callback_map)
+    assert "rr-cards" in page and "Reload" in page and "rr-table" not in page
+    assert "rr-cards.children" in " ".join(app_module.create_app().callback_map)
 
 
 def test_click_opens_the_row_link(results_dir):
@@ -289,3 +289,334 @@ def test_click_opens_the_row_link(results_dir):
     assert research.href_for_click(cell, table) == f"/results/research~{RID}~v2"
     assert research.href_for_click(None, table) is None
     assert research.href_for_click({"row_id": "nope"}, table) is None
+
+
+NEW_FIELDS = (
+    "rc_p",
+    "pbo",
+    "n_eff",
+    "p_mean_pos",
+    "detrended_net_r",
+    "lower95",
+    "sensitivity",
+    "wfe",
+    "mc_dd_p95_pct",
+    "prop_pass_pct",
+    "monkey",
+    "best_regime",
+    "best_condition",
+)
+
+
+def _diagnostics(rd):
+    folder = rd / "research" / RID
+    data = json.loads((folder / "research.json").read_text("utf-8"))
+    data.update(
+        idea="Trade the opening range",
+        sensitivity={"status": "gentle"},
+        walk_forward={"efficiency": 0.65},
+    )
+    (folder / "research.json").write_text(json.dumps(data), "utf-8")
+    files = {
+        "significance.json": {
+            "reality_check": {"p_value": 0.03},
+            "pbo": {"pbo": 0.2},
+            "effective_trials": {"n": 3, "n_eff": 2.5},
+        },
+        "bayes.json": {
+            "development": {"mean_r": {"p_positive": 0.97}, "evidence": {"posterior_odds": 4.0}}
+        },
+        "skill_bounds.json": {
+            "development": {
+                "scores": {"detrended_net_r": 25.0, "lower95_mean_daily_r": 0.02, "log_pf": 0.3}
+            }
+        },
+        "monkeys.json": {
+            "available": True,
+            "kinds": [
+                {
+                    "kind": 1,
+                    "passed": True,
+                    "net_r": {"percentile": 96},
+                    "max_dd_r": {"percentile": 93},
+                }
+            ],
+        },
+        "profile.json": {
+            "development": {
+                "dimensions": {"regime": {"best": "up / low"}},
+                "strongest_skill_cells": [
+                    {"dimension": "session", "condition": "London", "lower90_bca": 0.2}
+                ],
+            }
+        },
+    }
+    for name, content in files.items():
+        (folder / name).write_text(json.dumps(content), "utf-8")
+    _write_csv(folder / "sensitivity.csv", [{"setting": "x", "status": "done", "net_r": 25}])
+    _write_csv(folder / "walk_forward.csv", [{"window": 1, "wfe": 0.65}])
+    _write_csv(folder / "grid.csv", [{"variant_id": "v1", "net_r": 40}])
+    (rd / "DEV1" / "drawdown_bounds.json").write_text('{"available": true}', "utf-8")
+    mc = rd / "monte_carlo" / "DEV1"
+    mc.mkdir(parents=True)
+    (mc / "summary.json").write_text(
+        json.dumps(
+            {
+                "monte_carlo": {
+                    "risks": {
+                        "0.005": {
+                            "stats": {"max_dd_pct": {"p95": 4}},
+                            "ftmo": {"pass_probability": 0.9},
+                        },
+                        "0.01": {
+                            "stats": {"max_dd_pct": {"p95": 8}},
+                            "ftmo": {"pass_probability": 0.75},
+                        },
+                        "0.015": {
+                            "stats": {"max_dd_pct": {"p95": 12}},
+                            "ftmo": {"pass_probability": 0.6},
+                        },
+                    }
+                }
+            }
+        ),
+        "utf-8",
+    )
+
+
+def test_all_diagnostics_are_chosen_only_and_cards_filled(results_dir):
+    _diagnostics(results_dir)
+    rows = rm.load_rows(results_dir)
+    chosen = by_source(rows)[f"{RID} v1"]
+    expected = [
+        0.03,
+        0.2,
+        2.5,
+        0.97,
+        25,
+        0.02,
+        "gentle",
+        0.65,
+        8,
+        75,
+        "pass",
+        "up / low",
+        "session: London",
+    ]
+    assert [chosen[k] for k in NEW_FIELDS] == expected
+    assert chosen["idea"] == "Trade the opening range"
+    assert chosen["n"] == 3 and chosen["posterior_odds"] == 4
+    assert chosen["monkey_net_percentile"] == 96 and chosen["monkey_dd_percentile"] == 93
+    for row in rows[1:]:
+        assert all(row[k] is None for k in NEW_FIELDS)
+    rendered = _json(research.card(chosen))
+    for text in (
+        "RC p",
+        "PBO",
+        "N / N_eff",
+        "P(mean",
+        "WFE",
+        "Open results",
+        "Detrended",
+        "MC DD p95",
+        "Prop pass %",
+        "London",
+        "Costs x1.5",
+    ):
+        assert text in rendered
+    assert chosen["href"] in rendered
+
+
+def test_optional_diagnostics_missing_broken_and_cache_refresh(results_dir):
+    chosen = by_source(rm.load_rows(results_dir))[f"{RID} v1"]
+    assert all(chosen[k] is None for k in NEW_FIELDS)
+    assert chosen["idea"] == chosen["strategy"]
+    assert "\\u2013" in _json(research.card(chosen))
+    _diagnostics(results_dir)  # cached missing files must be invalidated
+    assert by_source(rm.load_rows(results_dir))[f"{RID} v1"]["rc_p"] == 0.03
+    folder = results_dir / "research" / RID
+    for name in ("significance", "bayes", "skill_bounds", "monkeys", "profile"):
+        (folder / f"{name}.json").write_text("{broken", "utf-8")
+    chosen = by_source(rm.load_rows(results_dir))[f"{RID} v1"]
+    for key in (
+        "rc_p",
+        "pbo",
+        "n_eff",
+        "p_mean_pos",
+        "detrended_net_r",
+        "lower95",
+        "monkey",
+        "best_condition",
+        "best_regime",
+    ):
+        assert chosen[key] is None
+    (folder / "profile.json").write_text('{"development": {"strongest_skill_cells": []}}', "utf-8")
+    assert by_source(rm.load_rows(results_dir))[f"{RID} v1"]["best_condition"] == "none"
+    (folder / "significance.json").write_text('{"reality_check": [], "pbo": "bad"}', "utf-8")
+    assert by_source(rm.load_rows(results_dir))[f"{RID} v1"]["rc_p"] is None
+    mc = results_dir / "monte_carlo" / "DEV1" / "summary.json"
+    mc.write_text("[]", "utf-8")
+    assert by_source(rm.load_rows(results_dir))[f"{RID} v1"]["mc_dd_p95_pct"] is None
+    assert rm._num("nan") is None and rm._num("inf") is None
+
+
+@pytest.mark.parametrize(
+    "sort_by",
+    [
+        "verdict",
+        "test_net_r",
+        "net_r",
+        "avg_r",
+        "profit_factor",
+        "max_dd_r",
+        "detrended_net_r",
+        "rc_p",
+    ],
+)
+def test_each_card_sort_and_plain_runs_last(sort_by):
+    a = {
+        "source": "a",
+        "is_research": True,
+        "verdict": "green",
+        "test_net_r": 4,
+        "net_r": 10,
+        "avg_r": 0.2,
+        "profit_factor": 2,
+        "max_dd_r": 2,
+        "detrended_net_r": 9,
+        "rc_p": 0.01,
+    }
+    b = {
+        **a,
+        "source": "b",
+        "verdict": "yellow",
+        "test_net_r": 2,
+        "net_r": 5,
+        "avg_r": 0.1,
+        "profit_factor": 1.2,
+        "max_dd_r": 4,
+        "detrended_net_r": 3,
+        "rc_p": 0.2,
+    }
+    missing = {"source": "missing", "is_research": True}
+    plain = {**a, "source": "plain", "is_research": False, "net_r": 999}
+    assert [r["source"] for r in rm.sort_card_rows([plain, b, missing, a], sort_by)] == [
+        "a",
+        "b",
+        "missing",
+        "plain",
+    ]
+
+
+def test_card_paging_wrapping_and_control_ids(results_dir):
+    from dash import dash_table, html
+
+    from tests.ui.test_v25a_theme import walk
+
+    rows = rm.load_rows(results_dir) * 25
+    first, more, count = research.card_view(rows, research.ALL, research.ALL, "all", None)
+    assert len(first) == 50 and more is False and count == "50 of 125 rows"
+    second, more, _ = research.card_view(rows, research.ALL, research.ALL, "all", None, limit=100)
+    assert len(second) == 100 and more is False
+    last, more, _ = research.card_view(rows, research.ALL, research.ALL, "all", None, limit=150)
+    assert len(last) == 125 and more is True
+    filtered, _, _ = research.card_view(rows, research.ALL, "GBPUSD", "all", None)
+    assert len(filtered) == 25
+    nodes = list(walk(research.layout(results_dir)))
+    assert not any(isinstance(n, dash_table.DataTable) for n in nodes)
+    assert all(n.open is False for n in nodes if isinstance(n, html.Details))
+    ids = {getattr(n, "id", "") for n in nodes}
+    assert {
+        "rr-cards",
+        "rr-sort",
+        "rr-more",
+        "rr-limit",
+        "rr-keys",
+        "rr-count",
+        "rr-strategy",
+        "rr-symbol",
+        "rr-flagged",
+        "rr-min-trades",
+        "rr-reload",
+    } <= ids
+    css = (research.Path(research.__file__).parents[1] / "assets/research.css").read_text("utf-8")
+    assert "flex-wrap: wrap" in css and "overflow-wrap: anywhere" in css
+    assert "overflow-x: auto" not in css.lower() and "nowrap" not in css
+
+
+def test_grid_idea_is_optional_text(tmp_path):
+    from backtester.tools.research_grid import GridError, load_grid
+
+    path = tmp_path / "grid.toml"
+    base = 'strategy = "opening_range"\nsymbols = ["US500"]\n'
+    path.write_text(base + 'idea = "Trade the opening range"\n', "utf-8")
+    assert load_grid(path).idea == "Trade the opening range"
+    path.write_text(base, "utf-8")
+    assert load_grid(path).idea == ""
+    path.write_text(base + "idea = 42\n", "utf-8")
+    with pytest.raises(GridError, match="idea"):
+        load_grid(path)
+
+
+def test_callback_show_more_and_filter_sort_reload_reset(results_dir, monkeypatch):
+    from types import SimpleNamespace
+
+    from dash import Dash
+
+    app = Dash(__name__)
+    research.register_callbacks(app, results_dir)
+    callback = next(iter(app.callback_map.values()))["callback"].__wrapped__
+    rows = rm.load_rows(results_dir) * 25
+    monkeypatch.setattr(rm, "load_rows", lambda _: rows)
+    monkeypatch.setattr(research, "ctx", SimpleNamespace(triggered_id="rr-more"))
+    values = callback(research.ALL, research.ALL, "all", None, "net_r", 0, 1, 50)
+    assert len(values[0]) == 100 and values[-1] == 100 and values[1] is False
+    assert "125" in _json(values[5])  # key strip counts all rows
+    for trigger in (
+        "rr-strategy",
+        "rr-symbol",
+        "rr-flagged",
+        "rr-min-trades",
+        "rr-sort",
+        "rr-reload",
+    ):
+        monkeypatch.setattr(research, "ctx", SimpleNamespace(triggered_id=trigger))
+        values = callback(research.ALL, research.ALL, "all", None, "net_r", 1, 1, 100)
+        assert len(values[0]) == 50 and values[-1] == 50
+
+
+def test_grid_idea_written_to_research_metadata(tmp_path, monkeypatch):
+    from datetime import date
+
+    from backtester.tools import research as runner
+
+    path = tmp_path / "idea.toml"
+    path.write_text(
+        'strategy = "opening_range"\nsymbols = ["US500"]\nidea = "Opening idea"', "utf-8"
+    )
+    monkeypatch.setattr(runner, "cached_span", lambda *a: (date(2020, 1, 1), date(2022, 1, 1)))
+
+    def stop_before_execution(*args, **kwargs):
+        raise RuntimeError("stop before backtest")
+
+    monkeypatch.setattr(runner, "run_period_many", stop_before_execution)
+    with pytest.raises(RuntimeError, match="stop before backtest"):
+        runner.run_research(path, results_dir=tmp_path / "results", log=lambda *a: None)
+    saved = next((tmp_path / "results/research").glob("*/research.json"))
+    assert json.loads(saved.read_text("utf-8"))["idea"] == "Opening idea"
+
+
+def test_additional_flags_have_readable_full_labels():
+    assert rm.flag_tooltip(["monkey_beaten"]) == "matched random strategies beat the strategy"
+    assert "monkey_beaten" not in rm.flag_text(["monkey_beaten"])
+
+
+def test_optional_diagnostics_render_as_wrapping_metrics():
+    from dash import html
+
+    from tests.ui.test_v25a_theme import walk
+
+    nodes = list(walk(research.diagnostic_tiles({"bounds_r": {"lower95": 0.25}})))
+    assert not any(isinstance(n, html.Pre) for n in nodes)
+    rendered = _json(nodes)
+    assert "Bounds R" in rendered and "0.25" in rendered

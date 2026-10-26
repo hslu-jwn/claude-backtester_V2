@@ -2,6 +2,7 @@
 
 Sources: K = Kaufman *TSM* ch. 1, 8, 16, 21-23; H = Hougaard; RC = Carver ch.12; KD = Davey; EC = Chan; JK = Kaeppel;
 LP = López de Prado.
+RP = Pardo, TM = Masters, DA = Aronson (chapter or page as cited).
 
 - **Costs decide fast systems.** Systems with > ~200 trades in 20 years were clearly worse; 5-day MA
   systems lose everywhere (K p.315, 347-348). Davey agrees: optimising without costs favours systems that trade too often
@@ -77,3 +78,21 @@ Sources: RC ch.12 (Tables 34-36), ch.2 (Table 2). Idea link: I-52.
   (how much costlier execution can become before break-even), return on execution costs (should be a large multiple) (LP 14.6).
   The Roll estimator (2·sqrt(−cov of consecutive price changes)) and the Corwin-Schultz two-bar high-low estimator give an effective spread
   from OHLC alone, a cross-check for the spread table (LP 19.3).
+- Pardo (engine accuracy, RP ch.5-6):
+  - **Limit orders do not fill on a touch:** price must trade through by X ticks (his S&P example: 8); citing Kaufman, up to 30 %
+    of limits stay unfilled, and the missed fills tend to be the winners. Report the share touched but not filled. Same rule as
+    Davey above; our engine fills limit entries and every take profit on a touch (verified 2026-10-23, `docs/review/book-app-requirements.md` A2).
+  - **Gapped stops and targets fill at the open:** a stop gapped through becomes a market order at the open (worse), a limit target
+    gapped through fills at the open (better); trailing stops likewise. Report gap slippage separately: many stops filled at the
+    open = a design weakness, limits gapped in our favour = a hidden strength.
+  - **Slippage is dominated by rare events** (fills 10× worse than average; clustered stops fill worse). **Silent slippage at the
+    open and close:** the historical open/close is often the first tick or the mid of the opening range, while a real market-on-open
+    or -on-close fill lands near the worst end of that range.
+  - **Tick math:** round data and order prices to the tick; float near-misses give wrong fills and overstated P/L (about 10 % of a
+    $250 average trade in his example), worst for fast systems. Cost example: 200 trades a year, $10k gross, $125 each → -$15k net.
+  - **Same-bar ambiguity ("phantom trades"):** entry and stop (or stop and target) inside one bar cannot be ordered from OHLC;
+    resolve from a lower timeframe (5m for daily bars). The "extreme nearer the open came first" rule (the adaptive bar order in
+    [backtest-frameworks.md](backtest-frameworks.md) lesson 3) is only a guess; our T-03 reads the M1 bars.
+- Masters, Aronson: decide on the bar close, fill at the next open (a rule that needs the close cannot fill at that close;
+  TM ch.1, 6-7; DA p.15-31). Both book demos are **gross of costs** on purpose (to isolate the statistics / the information), so their
+  returns are upper bounds (TM ch.1; DA p.15-31).

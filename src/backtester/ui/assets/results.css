@@ -1,11 +1,33 @@
-/* Results page (ROADMAP 3.6): TradingView Strategy Tester look, light theme, the same
+/* Results page (ROADMAP 3.6): TradingView Strategy Tester look, dark theme, the same
    tokens as the toolbar (toolbar.css :root). */
+
+.rs-page .rs-body { max-width: none; padding: 0 16px 24px; }
+.rs-page .ui-main-row:has(.ui-side) {
+  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 330px;
+}
+.rs-page .ui-key-strip { flex-wrap: wrap; }
+.rs-page .ui-main { min-width: 0; }
+.rs-page .ui-side { flex: 0 0 330px; min-width: 0; }
+.rs-page .rs-equity { height: 440px; min-height: 420px; }
+.rs-page .pf-card { margin: 0; height: 100%; box-sizing: border-box; }
+.pf-pass { color: var(--green); font-size: 30px; font-weight: 600; }
+.pf-table-scroll { overflow-x: auto; }
+.rs-trade-tools { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.rs-diagnostics { color: var(--muted); padding: 8px 0; }
+.rs-page .mc-row { flex-wrap: wrap; }
+@media (max-width: 900px) {
+  .rs-page .ui-main-row:has(.ui-side) { grid-template-columns: minmax(0, 1fr); }
+  .rs-page .ui-side { flex-basis: auto; width: 100%; }
+  .rs-page .tb-top { flex-wrap: wrap; height: auto; min-height: 40px; }
+  .rs-page .rs-run { width: min(520px, 100%); }
+}
 
 .rs-page {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - var(--nav-h, 0px));
-  background: #ffffff;
+  background: var(--panel);
 }
 .rs-page .tb-top {
   position: sticky;
@@ -14,7 +36,7 @@
 }
 .rs-back {
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   color: var(--tb-text);
   text-decoration: none;
   font-weight: 600;
@@ -24,7 +46,7 @@
 }
 .rs-run {
   width: 520px;
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .rs-run .dash-dropdown,
 .rs-run .dash-dropdown-trigger,
@@ -54,7 +76,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 22px;
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .rs-meta-key {
   margin-right: 6px;
@@ -63,7 +85,7 @@
 .rs-notes {
   margin-top: 6px;
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 
 /* tabs: TradingView's underlined tabs */
@@ -105,7 +127,7 @@
 .rs-hint {
   margin-bottom: 8px;
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 
 /* overview cards */
@@ -113,7 +135,7 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   border: 1px solid var(--tb-line);
-  border-radius: 6px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 .rs-card {
@@ -124,24 +146,24 @@
 }
 .rs-card-label {
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .rs-card-value {
   margin-top: 4px;
-  font-size: 20px;
+  font-size: var(--font-20);
   font-weight: 600;
   white-space: nowrap;
 }
 .rs-card-sub {
   margin-top: 2px;
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .rs-up {
-  color: #089981;
+  color: var(--green);
 }
 .rs-down {
-  color: #f23645;
+  color: var(--red);
 }
 
 /* section titles, equity curve */
@@ -159,7 +181,7 @@
   display: flex;
   gap: 16px;
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .rs-key::before {
   content: "";
@@ -171,19 +193,19 @@
   border-top: 2px solid;
 }
 .rs-key-net::before {
-  border-color: #2962ff;
+  border-color: var(--accent);
 }
 .rs-key-gross::before {
-  border-top: 2px dashed #787b86;
+  border-top: 2px dashed var(--muted);
 }
 .rs-key-dd::before {
-  border-top: 6px solid rgba(242, 54, 69, 0.35);
+  border-top: 6px solid var(--red-soft);
 }
 .rs-equity {
   position: relative;
   height: 430px;
   border: 1px solid var(--tb-line);
-  border-radius: 6px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -191,7 +213,7 @@
 .rs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .rs-table th {
   padding: 7px 10px;
@@ -203,7 +225,7 @@
 .rs-table td {
   padding: 6px 10px;
   text-align: right;
-  border-bottom: 1px solid #f0f3fa;
+  border-bottom: 1px solid var(--raised);
   white-space: nowrap;
 }
 .rs-table th:first-child,
@@ -211,7 +233,7 @@
   text-align: left;
 }
 .rs-table tbody tr:hover {
-  background: #f8f9fd;
+  background: var(--panel);
 }
 .rs-summary {
   max-width: 760px;
@@ -223,7 +245,7 @@
 }
 .rs-histogram {
   border: 1px solid var(--tb-line);
-  border-radius: 6px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -242,7 +264,7 @@
 
 /* trade list (dash_table): hover like TradingView's list */
 #rs-trades .dash-spreadsheet-container tr:hover td {
-  background-color: #f0f3fa !important;
+  background-color: var(--raised) !important;
 }
 
 @media (max-width: 1100px) {
@@ -258,7 +280,7 @@
 .pf-card {
   margin: 10px 0 4px;
   border: 1px solid var(--tb-line);
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 .pf-summary {
   margin: 0;
@@ -271,7 +293,7 @@
 .pf-firm {
   width: 220px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .pf-table {
   max-width: 900px;
@@ -279,7 +301,7 @@
 .pf-modes th {
   color: var(--tb-muted);
   font-weight: 400;
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .pf-table th:not(:first-child),
 .pf-table td:not(:first-child) {
@@ -287,17 +309,17 @@
 }
 .pf-note {
   color: var(--tb-muted);
-  font-size: 13px;
+  font-size: var(--font-13);
   padding: 6px 0;
 }
 .pf-error {
-  color: #f23645;
+  color: var(--red);
 }
 .pf-how {
   margin-top: 6px;
   max-width: 720px;
   color: var(--tb-muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .pf-bar,
 .mc-track {
@@ -305,8 +327,8 @@
   height: 6px;
   max-width: 420px;
   margin-top: 6px;
-  border-radius: 3px;
-  background: #e0e3eb;
+  border-radius: var(--radius);
+  background: var(--line);
   overflow: hidden;
 }
 .pf-bar-run,
@@ -315,8 +337,8 @@
   top: 0;
   height: 100%;
   width: 35%;
-  border-radius: 3px;
-  background: #2962ff;
+  border-radius: var(--radius);
+  background: var(--accent);
   animation: pf-slide 1.1s ease-in-out infinite alternate;
 }
 .mc-loading::after {
@@ -332,7 +354,7 @@
 }
 .mc-fill {
   height: 100%;
-  background: #2962ff;
+  background: var(--accent);
   transition: width 0.4s linear;
 }
 .mc-block {
@@ -349,11 +371,11 @@
 .mc-btn {
   padding: 6px 14px;
   border: 1px solid var(--tb-line);
-  border-radius: 4px;
-  background: #ffffff;
+  border-radius: var(--radius);
+  background: var(--panel);
   color: var(--tb-text);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-13);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -366,15 +388,15 @@
   cursor: default;
 }
 .mc-cancel {
-  color: #f23645;
+  color: var(--red);
 }
 .mc-open {
-  border-color: #2962ff;
-  color: #2962ff;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .mc-status {
   color: var(--tb-muted);
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 @media (max-width: 720px) {
   .pf-firm {

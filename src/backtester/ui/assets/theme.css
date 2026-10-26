@@ -1,0 +1,76 @@
+/* V2.5a: shared dark terminal tokens. Loaded before page styles. */
+:root {
+  color-scheme: dark;
+  --bg: #101113;
+  --panel: #17191c;
+  --raised: #202328;
+  --line: #2b2e34;
+  --text: #e5e7eb;
+  --muted: #969ca6;
+  --green: #2ebd85;
+  --red: #f6465d;
+  --amber: #f5a623;
+  --accent: #6e9fff;
+  --green-soft: #153027;
+  --red-soft: #351d24;
+  --amber-soft: #342b19;
+  --accent-soft: #202c40;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --scrim: rgba(0, 0, 0, 0.65);
+  --font-12: 12px;
+  --font-13: 13px;
+  --font-15: 15px;
+  --font-20: 20px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --radius: 6px;
+  /* Compatibility names for existing page selectors. */
+  --card: var(--panel);
+  --line2: var(--line);
+  --hover: var(--raised);
+  --blue: var(--accent);
+  --Dash-Text-Strong: var(--text);
+  --Dash-Text-Primary: var(--text);
+  --Dash-Text-Weak: var(--muted);
+  --Dash-Text-Disabled: var(--muted);
+  --Dash-Stroke-Weak: var(--line);
+  --Dash-Stroke-Strong: var(--muted);
+  --Dash-Fill-Primary-Hover: var(--raised);
+  --Dash-Fill-Primary-Active: var(--accent-soft);
+  --Dash-Fill-Interactive-Weak: var(--raised);
+}
+body { margin: 0; background: var(--bg); color: var(--text); font-size: var(--font-13); }
+button, input, select { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ui-page { padding: var(--space-16); background: var(--bg); color: var(--text); }
+.ui-main-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-16); }
+.ui-main-row:has(.ui-side) { grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); }
+.ui-main, .ui-side { min-width: 0; }
+.ui-key-strip { display: flex; align-items: center; gap: var(--space-24); padding: var(--space-12) 0; border-bottom: 1px solid var(--line); }
+.ui-key-label { color: var(--muted); font-size: var(--font-12); }
+.ui-key-value { font-size: var(--font-20); font-variant-numeric: tabular-nums; }
+.ui-green { color: var(--green); }
+.ui-red { color: var(--red); }
+.ui-details { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-12); background: var(--panel); }
+.ui-details > summary { cursor: pointer; color: var(--muted); }
+.ui-info { display: inline-block; font-size: var(--font-12); color: var(--muted); cursor: help; }
+.ui-tabs { border-bottom: 1px solid var(--line) !important; }
+.ui-tab { background: var(--panel) !important; color: var(--muted) !important; border: 0 !important; padding: var(--space-12) var(--space-16) !important; }
+.ui-tab-selected { color: var(--text) !important; border-bottom: 2px solid var(--accent) !important; }
+@media (max-width: 760px) {
+  .ui-main-row:has(.ui-side) { grid-template-columns: minmax(0, 1fr); }
+  .ui-key-strip { flex-wrap: wrap; }
+}
+
+/* Form controls on every page, including menus rendered outside a page root. */
+.dash-dropdown, .dash-dropdown-trigger, .dash-dropdown-content,
+.dash-datepicker, .dash-datepicker-content, .dash-datepicker input,
+.dash-dropdown-search, .dash-dropdown-focus-target {
+  background: var(--panel); color: var(--text); border-color: var(--line);
+}
+.dash-dropdown-option:hover, .dash-dropdown-option.selected { background: var(--raised); }
+.dash-spreadsheet-container { color: var(--text); }
+.dash-tooltip, .dash-table-tooltip { background: var(--raised) !important; color: var(--text) !important; border-color: var(--line) !important; }

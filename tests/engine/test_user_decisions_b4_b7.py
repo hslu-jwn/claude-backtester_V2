@@ -22,6 +22,9 @@ from backtester.engine.costs import CostConfig, SymbolCosts
 from backtester.engine.trade import ExitReason
 from backtester.strategy.base import Order, Strategy
 
+# touch fills (the rule before 2026-10-23): these tests check the cost arithmetic of a touch
+TOUCH = {"tp_penetration": 0.0, "short_tp_on_ask": False}
+
 LONG, SHORT = Direction.BULLISH, Direction.BEARISH
 ENTRY = (100.0, 100.0, 100.0, 100.0)
 COSTS = SymbolCosts(0.2, 0.0, 1, slippage=0.1)
@@ -58,7 +61,7 @@ def run(candles, sign=1, *, costs=COSTS, tp=None, tp2=None, limit=False, signal=
         limit_fill=limit,
         ref="entry",
     )
-    config = EngineConfig(costs=CostConfig(symbols={"TEST": costs}))
+    config = EngineConfig(costs=CostConfig(**TOUCH, symbols={"TEST": costs}))
     return run_backtest(Scripted(order, signal), [build_series(candles)], config)[0]
 
 
@@ -251,6 +254,7 @@ def test_b7_tp_gap_does_not_override_sl_first_in_a_candle_with_both_levels(sign)
 @pytest.mark.parametrize("spread_enabled", [False, True])
 def test_b4_slippage_scaling_switch_and_spread_switch_are_independent(scaling, spread_enabled):
     cfg = CostConfig(
+        **TOUCH,
         symbols={"TEST": replace(COSTS, reference_price=200)},
         spread_price_scaling=scaling,
         spread_enabled=spread_enabled,
@@ -263,6 +267,7 @@ def test_b4_slippage_scaling_switch_and_spread_switch_are_independent(scaling, s
 def test_b6_cost_filter_estimates_commission_on_actual_entry_fill(threshold, count):
     # Spread .2 / risk 2 + .001 * (100.3 + 100.3) / risk 2 = .2003R.
     costs = CostConfig(
+        **TOUCH,
         symbols={"TEST": replace(COSTS, commission_pct_per_side=0.001)},
         max_cost_r=threshold,
     )
@@ -281,7 +286,7 @@ def test_b6_unsolvable_percentage_be_is_rejected(pct):
 @pytest.mark.parametrize("sign", [1, -1])
 @pytest.mark.parametrize("kind", ["time", "end_of_data", "target", "stop", "gap"])
 def test_b4_b6_entry_screening_obeys_the_same_market_fill_costs(sign, kind):
-    costs = CostConfig(symbols={"TEST": replace(COSTS, commission_pct_per_side=0.001)})
+    costs = CostConfig(**TOUCH, symbols={"TEST": replace(COSTS, commission_pct_per_side=0.001)})
     candle = ENTRY
     price = 100
     if kind == "target":

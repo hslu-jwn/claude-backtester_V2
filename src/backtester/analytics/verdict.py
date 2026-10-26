@@ -3,7 +3,7 @@
 Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7). The checks:
 
 1. `t_stat`: mean net R per trade > 0 and t = mean / (sd / sqrt(n)) >= `t_min`;
-2. `random_entries` (kind B): the strategy's percentile among the random-entry runs >=
+2. `random_entries` (gap fade kind B, otherwise matched monkey 1): percentile >=
    `percentile_min`;
 3. `halves`: both halves' net R > 0 (the run's own period split at the middle date of start..end,
    `middle_date` / `period_halves`; rule set by the user 2026-10-15; a half without trades has net 0
@@ -56,7 +56,7 @@ class VerdictConfig:
 class VerdictInputs:
     mean_r: float | None  # mean net R per trade (None: no trades)
     t: float | None  # None: fewer than 2 trades or no variance
-    percentile: float | None  # kind B; None = not available
+    percentile: float | None  # gap fade kind B / otherwise monkey 1; None = not available
     half_first_net: float
     half_second_net: float
     stressed_net: float
@@ -114,6 +114,15 @@ def _over(value: float | None, limit: float) -> bool:
     return value is not None and value > limit
 
 
+def random_entry_percentile(strategy: str, baseline, monkeys: dict | None) -> float | None:
+    """Spec: risk-management.md > Matched monkeys > verdict precedence."""
+    if strategy == "gap_fade" and baseline is not None:
+        return baseline.percentile
+    if monkeys and monkeys.get("available"):
+        return monkeys["kinds"][0]["net_r"]["percentile"]
+    return None
+
+
 def evaluate(inputs: VerdictInputs, config: VerdictConfig | None = None) -> Verdict:
     cfg = config or VerdictConfig()
     i = inputs
@@ -125,7 +134,7 @@ def evaluate(inputs: VerdictInputs, config: VerdictConfig | None = None) -> Verd
             _over(i.mean_r, cfg.net_min) and i.t is not None and i.t >= cfg.t_min,
         ),
         Check(
-            "random_entries", "Net R above random entries (kind B, percentile)",
+            "random_entries", "Net R above random entries (kind B / monkey 1, percentile)",
             i.percentile, cfg.percentile_min,
             i.percentile is not None and i.percentile >= cfg.percentile_min,
             available=i.percentile is not None,

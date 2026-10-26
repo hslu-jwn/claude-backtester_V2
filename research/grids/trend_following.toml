@@ -1,0 +1,59 @@
+# Old tool: trend_grid.py
+# Default command: python -m backtester.tools.trend_grid
+# not carried over: --start/--end (fixed development/test split),
+# --source/--cache-dir (runner uses DEFAULT_SOURCES), --spread-table (no grid equivalent),
+# --out/--family (runner controls results and trials). --workers remains a runner option.
+# --no-sweep/--only/parameter CLI axes: edit grid settings instead.
+# --no-shocks: set shocks = false; split-year overrides: runner scorecard halves.
+# SMA band sweep is a separate family to preserve correlated periods. --swap-file: set engine.costs.symbols.<SYMBOL> fields in base.
+strategy = "trend_following"
+symbols = ["XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"]
+max_variants = 10000
+
+[[grids]]
+name = "breakout"
+[grids.base]
+"signal" = "BREAKOUT"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+"breakout_period" = [20, 55, 100]
+
+[[grids]]
+name = "sma"
+[grids.base]
+"signal" = "SMA"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+"sma_period" = [20, 50, 100, 200]
+
+[[grids]]
+name = "sma_band"
+[grids.base]
+"signal" = "SMA"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+"sma_period" = [50, 200]
+"sma_band_atr" = [0.5, 1.0]
+
+[[grids]]
+name = "momentum"
+[grids.base]
+"signal" = "MOMENTUM"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+"momentum_period" = [5, 20, 63, 252]
+
+[[grids]]
+name = "dunnigan"
+[grids.base]
+"signal" = "DUNNIGAN"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+
+[[grids]]
+name = "kama"
+[grids.base]
+"signal" = "KAMA"
+[grids.grid]
+"timeframe" = ["M15", "M30", "H1", "H4", "D1"]
+"kama_filter" = [0.0, 0.1, 0.5]

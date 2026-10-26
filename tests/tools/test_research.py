@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from backtester.analytics import trial_log
+from backtester.engine.ticks import TickRoundingStats
 from backtester.runner import RunSettings
 from backtester.settings import leaves
 from backtester.strategy.registry import default_config
@@ -28,6 +29,7 @@ from backtester.tools.research_grid import (
 GRID = """
 strategy = "opening_range"
 symbols = ["US500", "NAS100"]
+sensitivity = false  # these tests count the grid runs only (brief 2)
 min_trades = 4
 
 [base]
@@ -212,6 +214,8 @@ def make_trade(symbol, year, r_net, n):
     entry = datetime(year, 3, 1 + n, 14, 30, tzinfo=UTC)
     return SimpleNamespace(
         symbol=symbol, entry_time=entry, exit_time=entry + timedelta(hours=2),
+        direction="long",
+        entry=100.0, initial_stop=99.0,
         r_gross=r_net + 0.05, r_net=r_net, planned_r=None,
     )  # fmt: skip
 
@@ -241,7 +245,7 @@ class Fakes:
             trades = tuple(make_trade(s, y, r, i) for i, (y, r) in enumerate(zip(years, rs)))
             runs[s] = SimpleNamespace(
                 symbol=s, first_day=start, last_day=end, warmup_from=start, trades=trades,
-                sessions=(), notes=(),
+                sessions=(), notes=(), tick_rounding=TickRoundingStats(),
             )  # fmt: skip
         merged = tuple(t for r in runs.values() for t in r.trades)
         return SimpleNamespace(
@@ -259,8 +263,33 @@ class Fakes:
         out_dir = Path(out_dir)
         folder = out_dir / (run_id or new_run_id(result.symbols, out_dir))
         folder.mkdir(parents=True, exist_ok=False)
-        (folder / "trades.csv").write_text("id\n" + "\n".join(
-            str(i) for i in range(len(result.trades))), encoding="utf-8")  # fmt: skip
+        columns = (
+            "id",
+            "symbol",
+            "direction",
+            "entry_time",
+            "entry_candle",
+            "entry",
+            "initial_stop",
+            "exit_time",
+            "exit_price",
+            "exit_reason",
+            "r_gross",
+            "r_net",
+        )
+        with (folder / "trades.csv").open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, columns)
+            writer.writeheader()
+            for i, t in enumerate(result.trades):
+                writer.writerow(
+                    {k: getattr(t, k, None) for k in columns}
+                    | {
+                        "id": i,
+                        "entry_candle": t.entry_time,
+                        "exit_price": t.entry,
+                        "exit_reason": "signal",
+                    }
+                )
         (folder / "settings.json").write_text(json.dumps({"preset": preset}), encoding="utf-8")
         (folder / "summary.json").write_text(
             json.dumps({"run_id": folder.name, "start": str(result.start), "end": str(result.end)}),
@@ -269,9 +298,61 @@ class Fakes:
         return folder
 
 
+def _small_diagnostics(monkeypatch):
+    """Runner tests check wiring and resume, not the statistics (their own tests use the real
+    sizes): small resample counts keep the suite fast (speed rule of 2026-10-24)."""
+    from backtester.analytics.bayes import BayesConfig
+    from backtester.analytics.best_of_n import RealityCheckConfig
+    from backtester.analytics.bounds import BoundsConfig
+    from backtester.analytics.pbo import PBOConfig
+    from backtester.risk.drawdown_bounds import DrawdownBoundsConfig
+    from backtester.tools import (
+        drawdown_report,
+        research_bayes,
+        research_significance,
+        skill_bounds,
+    )
+
+    significance = research_significance.SignificanceConfig
+    monkeypatch.setattr(
+        research_significance,
+        "SignificanceConfig",
+        lambda **kw: significance(
+            **{"reality_check": RealityCheckConfig(boots=50), "pbo": PBOConfig(blocks=4), **kw}
+        ),
+    )
+    monkeypatch.setattr(
+        skill_bounds, "BoundsConfig", lambda **kw: BoundsConfig(**{"boots": 100, **kw})
+    )
+    monkeypatch.setattr(
+        research_bayes, "BayesConfig", lambda **kw: BayesConfig(**{"draws": 500, **kw})
+    )
+    bounds = drawdown_report.drawdown_bounds
+    monkeypatch.setattr(
+        drawdown_report,
+        "drawdown_bounds",
+        lambda values, config=None: bounds(
+            values, config or DrawdownBoundsConfig(outer=5, inner=50)
+        ),
+    )
+
+
 @pytest.fixture
 def fakes(monkeypatch):
+    from backtester.analytics import profile
+    from backtester.analytics.regime import RegimeLabel
+    from backtester.tools import research_diagnostics, research_monkeys, skill_bounds
+
     f = Fakes()
+    _small_diagnostics(monkeypatch)
+    # Synthetic executions have a flat benchmark, without reading the real price cache.
+    monkeypatch.setattr(
+        skill_bounds, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0)
+    )
+    monkeypatch.setattr(profile, "load_drifts", lambda symbols, *a: dict.fromkeys(symbols, 0.0))
+    monkeypatch.setattr(profile, "label_trades", lambda trades, *a: [RegimeLabel()] * len(trades))
+    monkeypatch.setattr(research_monkeys, "calculate", lambda *a, **kw: {"available": False})
+    monkeypatch.setattr(research_diagnostics, "load_shocks", lambda *args: {})
     monkeypatch.setattr(research, "run_backtests", f.run)
     monkeypatch.setattr(research, "run_period_many", f.run_many)
     monkeypatch.setattr(research, "write_results", f.write)
@@ -283,6 +364,57 @@ def fakes(monkeypatch):
 def run_research(tmp_path, text=GRID, **kw):
     kw.setdefault("log", lambda *a, **k: None)
     return research.run_research(write_grid(tmp_path, text), results_dir=tmp_path / "results", **kw)
+
+
+def test_condition_profiles_chosen_only_and_saved_test(tmp_path, fakes):
+    out = run_research(tmp_path, dev_only=True)
+    folder = research_folder(tmp_path)
+    profiles = json.loads((folder / "profile.json").read_text())
+    assert set(profiles) == {"development"}
+    assert len(list((folder / "variants").glob("*/profile.json"))) == 1
+    assert (tmp_path / "results" / out["chosen"]["dev_run"] / "profile.json").is_file()
+    out = run_research(tmp_path)
+    profiles = json.loads((folder / "profile.json").read_text())
+    assert set(profiles) == {"development", "test 1"}
+    assert (tmp_path / "results" / out["test"]["run_folder"] / "profile.json").is_file()
+    report = (folder / "report.md").read_text()
+    assert "Strategy condition profile development" in report
+    assert "Strategy condition profile test 1" in report
+    count = len(fakes.calls)
+    assert run_research(tmp_path)["status"] == "refused"
+    assert len(fakes.calls) == count
+
+
+def test_monkeys_chosen_development_only_and_flag(tmp_path, fakes, monkeypatch):
+    from backtester.tools import research_monkeys
+
+    calls = []
+
+    def calculate(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"available": False, "flags": ["monkey_beaten"]}
+
+    monkeypatch.setattr(research_monkeys, "calculate", calculate)
+    out = run_research(tmp_path, dev_only=True)
+    assert len(calls) == 1
+    assert calls[0][0][2] == out["chosen"]["id"]
+    assert calls[0][0][4] == date(2021, 9, 13)
+    folder = out["folder"]
+    assert (folder / "monkeys.json").is_file()
+    assert "monkey_beaten" in (folder / "variants.csv").read_text()
+    assert "Matched monkeys" in (folder / "report.md").read_text()
+    assert out["test"]["status"] == "not_run"
+
+
+def test_monkeys_opt_out(tmp_path, fakes, monkeypatch):
+    from backtester.tools import research_monkeys
+
+    def forbidden(*a, **kw):
+        pytest.fail("monkeys=false must skip M1 loading and simulations")
+
+    monkeypatch.setattr(research_monkeys, "calculate", forbidden)
+    out = run_research(tmp_path, GRID.replace("[base]", "monkeys = false\n\n[base]"), dev_only=True)
+    assert out["chosen"] is not None
 
 
 def research_folder(tmp_path) -> Path:
@@ -438,7 +570,9 @@ def test_output_files_and_their_fields(tmp_path, fakes):
     assert list(variants[0]) == [
         "variant_id", "variant", "rank", "trades", "win_rate", "avg_r", "net_r", "profit_factor",
         "max_dd_r", "half_first_net_r", "half_second_net_r", "net_r_stressed",
-        "net_r_without_best", "flags", "set.range_minutes", "set.target_r",
+        "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "detrended_net_r", "lower95_mean_daily_r", "log_pf",
+        "flags", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert variants[0]["rank"] == "1" and variants[0]["set.range_minutes"] == "30"
     test = read_csv(folder / "test.csv")
@@ -446,12 +580,24 @@ def test_output_files_and_their_fields(tmp_path, fakes):
     assert list(test[0]) == [
         "test_run", "variant_id", "variant", "start", "end", "trades", "win_rate", "avg_r",
         "net_r", "profit_factor", "max_dd_r", "half_first_net_r", "half_second_net_r",
-        "net_r_stressed", "net_r_without_best", "t_stat", "deflated_sharpe", "verdict",
+        "net_r_stressed", "net_r_without_best", "se_avg_r", "time_in_market", "avg_hold_hours",
+        "detrended_net_r", "lower95_mean_daily_r", "log_pf",
+        "t_stat", "deflated_sharpe", "verdict",
         "verdict_label", "n_variants", "flags", "run_folder", "set.range_minutes", "set.target_r",
     ]  # fmt: skip
     assert test[0]["n_variants"] == "6" and test[0]["variant_id"] == info["chosen"]["id"]
     report = (folder / "report.md").read_text(encoding="utf-8")
     assert "range_minutes=30 target_r=1" in report and "6 variants" in report
+    assert "Skill vs trend, and bounds development" in report
+    assert "Skill vs trend, and bounds test 1" in report
+    skill = json.loads((folder / "skill_bounds.json").read_text(encoding="utf-8"))
+    assert set(skill) == {"development", "test 1"}
+    assert skill["development"]["trend"]["total"]["net_r"] == pytest.approx(
+        float(variants[0]["net_r"])
+    )
+    assert float(variants[0]["detrended_net_r"]) == pytest.approx(float(variants[0]["net_r"]))
+    assert all(r["detrended_net_r"] == "" for r in variants[1:])
+    assert float(test[0]["detrended_net_r"]) == pytest.approx(float(test[0]["net_r"]))
 
 
 def test_chosen_runs_are_normal_run_folders_and_a_preset(tmp_path, fakes):

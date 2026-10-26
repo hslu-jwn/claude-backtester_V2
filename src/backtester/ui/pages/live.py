@@ -30,8 +30,10 @@ from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 from backtester.live.lock import LOCK_NAME, lock_holder, pid_alive
 from backtester.live.status import STATUS_NAME, heartbeat_age_s, read_status
 from backtester.paths import RESULTS_DIR
+from backtester.ui import layout as ui
 from backtester.ui import live_model as lm
 from backtester.ui import trade_focus, trading_panel
+from backtester.ui.theme import color as theme_color
 
 LIVE_DIR = RESULTS_DIR / "live"
 LOG_LINES = 50
@@ -283,13 +285,11 @@ def render_head(view: dict, now: datetime) -> html.Div:
         html.Div([html.Span(m, className="lv-meta") for m in meta], className="lv-metas"),
     ]
     if state == "none":
-        parts.append(html.Div("Bot not started yet (no status file).", className="lv-note"))
+        parts.append(ui.info("Bot not started yet (no status file)."))
     elif state == "stale":
         age = view["age"]
         gap = f" for {age / 60:.0f} min" if age is not None else ""
-        parts.append(
-            html.Div(f"No heartbeat{gap}: the bot is not running.", className="lv-note lv-stale")
-        )
+        parts.append(ui.info(f"No heartbeat{gap}: the bot is not running."))
     if status.get("last_error"):
         parts.append(html.Div(f"Last error: {status['last_error']}", className="lv-error"))
     return html.Div(parts)
@@ -505,15 +505,21 @@ def trades_figure(strip: dict, trades: list[dict] | None = None) -> go.Figure:
             line={"color": "#4f8cff", "width": 2}, hovertemplate="$%{y:,.0f}<extra></extra>",
         )  # fmt: skip
     else:
-        fig.add_annotation(text="No trades yet", showarrow=False, font={"color": "#7d8aa5"})
-    axis = {"gridcolor": "#1d2a40", "zerolinecolor": "#33415c", "color": "#7d8aa5"}
+        fig.add_annotation(
+            text="No trades yet", showarrow=False, font={"color": theme_color("muted")}
+        )
+    axis = {
+        "gridcolor": theme_color("line"),
+        "zerolinecolor": theme_color("line"),
+        "color": theme_color("muted"),
+    }
     fig.update_layout(
-        height=260, margin={"l": 40, "r": 56, "t": 8, "b": 28}, showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        font={"family": "ui-monospace, Consolas, monospace", "size": 11, "color": "#7d8aa5"},
+        height=400, margin={"l": 40, "r": 56, "t": 8, "b": 28}, showlegend=False,
+        paper_bgcolor=theme_color("panel"), plot_bgcolor=theme_color("panel"),
+        font={"family": "ui-monospace, Consolas, monospace", "size": 11, "color": theme_color("muted")},
         xaxis={**axis, "title": "trade", "dtick": 1 if n <= 20 else None},
         yaxis={**axis, "ticksuffix": " %"},
-        yaxis2={"overlaying": "y", "side": "right", "color": "#4f8cff", "showgrid": False,
+        yaxis2={"overlaying": "y", "side": "right", "color": theme_color("muted"), "showgrid": False,
                 "tickprefix": "$", "tickformat": ",.0f"},
     )  # fmt: skip
     if not n:  # no data: hide the axes plotly would draw with a made-up range
@@ -559,9 +565,8 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
     settings = settings_state(view)
     buttons = button_state(view)
     chosen = settings["symbols"] or list(lm.DEFAULT_SYMBOLS)
-    return html.Div(
+    header = html.Div(
         [
-            dcc.Interval(id="lv-interval", interval=REFRESH_MS),
             html.Div(
                 [
                     html.Div(pieces["head"], id="lv-head", className="lv-head-info"),
@@ -606,99 +611,123 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
                 ],
                 className="lv-card lv-header",
             ),
-            html.Div(id="lv-msg", className="lv-msg"),
             html.Div(pieces["cards"], id="lv-cards"),
+        ],
+        id="lv-key-strip",
+        className="ui-key-strip lv-strip",
+    )
+    main = _card(
+        "Recent trades",
+        [
+            _range_picker("lv-range"),
+            ui.info("Click a bar to open the trade on the chart."),
+            dcc.Graph(
+                id="lv-trades",
+                figure=trades_figure(lm.trade_strip([], None, "day", now)),
+                config={"displayModeBar": False, "responsive": True},
+            ),
+        ],
+    )
+    settings_panel = html.Div(
+        [
             html.Div(
                 [
-                    _fold("Setup in progress", html.Div(pieces["setup"], id="lv-setup")),
-                    _fold(
-                        "Recent trades",
-                        [
-                            _range_picker("lv-range"),
-                            html.Div(
-                                "Click a bar to open the trade on the chart.", className="lv-sub"
-                            ),
-                            dcc.Graph(
-                                id="lv-trades",
-                                figure=trades_figure(lm.trade_strip([], None, "day", now)),
-                                config={"displayModeBar": False, "responsive": True},
-                            ),
-                        ],
+                    _field(
+                        "Risk per trade (%)",
+                        dcc.Input(
+                            id="lv-risk",
+                            type="number",
+                            value=lm.DEFAULT_RISK,
+                            min=0,
+                            max=lm.MAX_RISK_PERCENT,
+                            step=0.05,
+                            className="lv-input",
+                            disabled=settings["disabled"],
+                        ),
+                    ),
+                    _field(
+                        "Daily stop (%)",
+                        dcc.Input(
+                            id="lv-daily-stop",
+                            type="number",
+                            value=lm.DEFAULT_DAILY_STOP,
+                            min=0,
+                            max=lm.MAX_DAILY_STOP_PERCENT,
+                            step=0.1,
+                            className="lv-input",
+                            disabled=settings["disabled"],
+                        ),
+                    ),
+                    _field(
+                        "Symbols",
+                        dcc.Checklist(
+                            id="lv-symbols",
+                            options=symbol_options(chosen, settings["disabled"]),
+                            value=chosen,
+                            inline=True,
+                            className="lv-checks",
+                        ),
                     ),
                 ],
-                className="lv-two",
+                className="lv-fields",
             ),
-            _fold("Open positions", html.Div(pieces["positions"], id="lv-positions"), open_=True),
-            _fold(
-                "Closed trades",
-                [_range_picker("lv-closed-range"), html.Div(render_closed([]), id="lv-closed")],
-                open_=True,
+            ui.info(
+                f"Editable only while the bot is not running; Start passes them to the bot. "
+                f"Risk 0 to {lm.MAX_RISK_PERCENT:g} %, daily stop 0 to "
+                f"{lm.MAX_DAILY_STOP_PERCENT:g} %, at least one symbol.",
             ),
-            _fold(
-                "Today's signals and skips",
-                html.Div(pieces["signals"], id="lv-signals"),
-                open_=True,
+        ]
+    )
+    panels = [
+        ("positions", "Open positions", html.Div(pieces["positions"], id="lv-positions")),
+        (
+            "closed",
+            "Closed trades",
+            html.Div(
+                [_range_picker("lv-closed-range"), html.Div(render_closed([]), id="lv-closed")]
             ),
-            _fold(
-                "Event log",
+        ),
+        ("signals", "Signals & skips", html.Div(pieces["signals"], id="lv-signals")),
+        (
+            "log",
+            "Event log",
+            html.Div(
                 [
-                    html.Div(f"last {LOG_LINES}, times in Swiss time", className="lv-sub"),
+                    ui.info(f"last {LOG_LINES}, times in Swiss time"),
                     html.Pre(pieces["log"], id="lv-log", className="lv-log"),
-                ],
+                ]
             ),
-            _fold(
-                "Settings",
-                [
-                    html.Div(
-                        [
-                            _field(
-                                "Risk per trade (%)",
-                                dcc.Input(
-                                    id="lv-risk",
-                                    type="number",
-                                    value=lm.DEFAULT_RISK,
-                                    min=0,
-                                    max=lm.MAX_RISK_PERCENT,
-                                    step=0.05,
-                                    className="lv-input",
-                                    disabled=settings["disabled"],
-                                ),
-                            ),
-                            _field(
-                                "Daily stop (%)",
-                                dcc.Input(
-                                    id="lv-daily-stop",
-                                    type="number",
-                                    value=lm.DEFAULT_DAILY_STOP,
-                                    min=0,
-                                    max=lm.MAX_DAILY_STOP_PERCENT,
-                                    step=0.1,
-                                    className="lv-input",
-                                    disabled=settings["disabled"],
-                                ),
-                            ),
-                            _field(
-                                "Symbols",
-                                dcc.Checklist(
-                                    id="lv-symbols",
-                                    options=symbol_options(chosen, settings["disabled"]),
-                                    value=chosen,
-                                    inline=True,
-                                    className="lv-checks",
-                                ),
-                            ),
-                        ],
-                        className="lv-fields",
-                    ),
-                    html.Div(
-                        f"Editable only while the bot is not running; Start passes them to the bot. "
-                        f"Risk 0 to {lm.MAX_RISK_PERCENT:g} %, daily stop 0 to "
-                        f"{lm.MAX_DAILY_STOP_PERCENT:g} %, at least one symbol.",
-                        className="lv-sub",
-                    ),
-                ],
+        ),
+        ("settings", "Settings", settings_panel),
+    ]
+    tabs = html.Div(
+        [
+            ui.tabs_below(
+                [dcc.Tab(label=label, value=name) for name, label, _ in panels],
+                id="lv-tabs",
+                value="positions",
             ),
-            trading_panel.layout(),
+            *[
+                html.Div(
+                    body,
+                    id=f"lv-tab-{name}",
+                    style={} if name == "positions" else {"display": "none"},
+                    className="lv-tab-content",
+                )
+                for name, _, body in panels
+            ],
+        ]
+    )
+    return html.Div(
+        [
+            dcc.Interval(id="lv-interval", interval=REFRESH_MS),
+            ui.page(
+                header,
+                [html.Div(id="lv-msg", className="lv-msg"), main],
+                side=_card("Setup in progress", html.Div(pieces["setup"], id="lv-setup")),
+                tabs=tabs,
+            ),
+            html.Div(trading_panel.layout(), id="connection"),
         ],
         className="lv-page",
     )
@@ -710,6 +739,20 @@ def _field(label: str, control) -> html.Div:
 
 def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
     trading_panel.register_callbacks(app)
+
+    @app.callback(
+        [
+            Output(f"lv-tab-{name}", "style")
+            for name in ("positions", "closed", "signals", "log", "settings")
+        ],
+        Input("lv-tabs", "value"),
+    )
+    def _tabs(selected):
+        # All callback targets stay mounted, including settings used by Start.
+        return [
+            {} if selected == name else {"display": "none"}
+            for name in ("positions", "closed", "signals", "log", "settings")
+        ]
 
     @app.callback(
         Output("lv-head", "children"),

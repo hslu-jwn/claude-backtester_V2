@@ -94,7 +94,7 @@
 - Trading windows: start and end per session (AM 09:00–11:30, PM 13:30–16:00 = open −30 min to open +2 h); the whole setup inside
 - Max trades per session per index (1)
 - Sweep: lookback N swings (3, the most extreme of them must be taken), close beyond the level allowed (yes), BoS within X sweep-TF candles (10, separate for AM/PM)
-- Sweep rules being tried (user, 2026-10-13, all **off by default** = today's behaviour, in the settings under Entry; compare with `python -m backtester.tools.archive.strategy2_sweep_grid`):
+- Sweep rules being tried (user, 2026-10-13, all **off by default** = today's behaviour, in the settings under Entry; compare with `python -m backtester.tools.research research/grids/ny_index_sweep.toml --dev-only`):
   - `sweep_equal_highs` + `sweep_equal_tolerance_atr`: off = a wick beyond one of the last N swings is enough (today). On = the most extreme of the last N must be taken, or one within tolerance x ATR (sweep TF) of it (0 = the most extreme only). H1 / H4 frames now have an ATR for this.
   - `sweep_breakout_closes` (0 off, 2, 3) and `sweep_breakout_wick_first`: that many consecutive sweep-TF candles (dojis skipped) closing beyond the swept level cancel the setup before its BoS; with wick-first the older candles need only their wick beyond. The levels the closes are beyond are accepted and no longer sweepable.
   - `bos_before_top`: the setup-TF BoS must break a swing made before the sweep extreme's candle; other BoS are ignored and the setup keeps waiting.

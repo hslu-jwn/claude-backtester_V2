@@ -8,12 +8,15 @@ Sharpe, so it does not enter V; V comes from the daily Sharpes only (ROADMAP 12.
 
 from __future__ import annotations
 
+import csv
 import json
 import warnings
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+
+import numpy as np
 
 from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import trade_stats
@@ -53,6 +56,7 @@ class TrialRecord:
     day_sharpe: float | None = None
     count: int = 1  # trials this line stands for (back-fill lines may be more than 1)
     note: str = field(default="")
+    series: str | None = None
 
     @property
     def key(self) -> str:
@@ -75,7 +79,7 @@ def now_iso() -> str:
 
 def make_record(
     family: str, strategy: str, settings, symbols: Sequence[str], start: date, end: date,
-    source: str, trades: Sequence, note: str = "",
+    source: str, trades: Sequence, note: str = "", series: str | None = None,
 ) -> TrialRecord:  # fmt: skip
     """One variant's line from its trades (`r_net`, tz-aware `exit_time`): per-trade and daily
     statistics (the daily ones over the weekdays start..end)."""
@@ -85,7 +89,7 @@ def make_record(
     return TrialRecord(
         family, strategy, settings_dict(settings), list(symbols), start.isoformat(),
         end.isoformat(), source, now_iso(), s.n, float(sum(r_net)), s.mean, s.sd, s.skew, s.kurt,
-        s.sharpe, d.n, d.mean, d.sd, d.skew, d.kurt, d.sharpe, 1, note,
+        s.sharpe, d.n, d.mean, d.sd, d.skew, d.kurt, d.sharpe, 1, note, series,
     )  # fmt: skip
 
 
@@ -136,3 +140,38 @@ def family_summary(lines: Sequence[TrialRecord]) -> tuple[int, list[float]]:
     """(N = trial count including count-only lines, daily Sharpes of the lines that have one;
     lines without daily statistics count for N only)."""
     return sum(r.count for r in lines), [r.day_sharpe for r in lines if r.day_sharpe is not None]
+
+
+def read_series(
+    record: TrialRecord, results_dir: Path = RESULTS_DIR, kind: str = "net_r_exit_booked"
+) -> tuple[list[date], np.ndarray]:
+    """Read one saved daily series. Spec: risk-management.md > Trial log and deflated Sharpe."""
+    if kind not in ("net_r_exit_booked", "net_r_mtm", "position"):
+        raise ValueError(f"unknown daily series kind: {kind}")
+    if record.series is None:
+        return [], np.zeros(0)
+    root = Path(results_dir).resolve()
+    path = (root / record.series).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError("series path must be relative to results folder")
+    with path.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    dates = [date.fromisoformat(row["date"]) for row in rows]
+    values = np.array([float(row[kind]) for row in rows], dtype=float)
+    if dates != sorted(set(dates)) or not np.isfinite(values).all():
+        raise ValueError("invalid daily series dates or values")
+    return dates, values
+
+
+def series_matrix(
+    records: Sequence[TrialRecord], kind: str = "net_r_exit_booked", results_dir: Path = RESULTS_DIR
+) -> tuple[list[date], np.ndarray]:
+    """Union dates x input variants, absent dates zero. Spec: risk-management.md > Trial log."""
+    series = [read_series(r, results_dir, kind) for r in records]
+    dates = sorted({day for ds, _ in series for day in ds})
+    indices = {day: i for i, day in enumerate(dates)}
+    matrix = np.zeros((len(dates), len(records)))
+    for column, (ds, values) in enumerate(series):
+        for day, value in zip(ds, values, strict=True):
+            matrix[indices[day], column] = value
+    return dates, matrix

@@ -1,12 +1,11 @@
-"""The top bar on every page: Chart · Backtest · Research · Risk · Live and the bot status (ROADMAP 7.3).
+"""The top bar on every page: Chart · Backtest · Research · Live and the bot status (ROADMAP 7.3).
 
 Spec: docs/live-trading.md › App layout and Live page. The Live link turns red while the bot runs
 (fresh heartbeat in `results/live/status.json`, read every few seconds). The app opens on `/live`
 when the bot runs at the first load of a browser session, else on the chart.
 
 Backtest links to `/backtest`: the running backtest with its progress bar, else the newest run's
-results (or "No backtest yet"). Risk has no page yet (pages/risk.py is a stub): it is shown
-greyed out, not as a link.
+results (or "No backtest yet"). Connection settings are reached by the gear.
 """
 
 from __future__ import annotations
@@ -18,7 +17,8 @@ from dash import Dash, Input, Output, State, dcc, html, no_update
 
 from backtester.live.status import STATUS_NAME, read_status
 from backtester.paths import RESULTS_DIR
-from backtester.ui import live_model
+from backtester.ui import live_model, update_button
+from backtester.ui.layout import info
 
 LIVE_DIR = RESULTS_DIR / "live"
 REFRESH_MS = 3000
@@ -62,16 +62,31 @@ def layout() -> html.Div:
             dcc.Link("Chart", id="nav-chart", href="/", className="nav-link"),
             dcc.Link("Backtest", id="nav-backtest", href=BACKTEST_PATH, className="nav-link"),
             dcc.Link("Research", id="nav-research", href=RESEARCH_PATH, className="nav-link"),
-            html.Span("Risk", className="nav-link nav-off", title="Not built yet"),
             dcc.Link("Live", id="nav-live", href=live_model.LIVE_PATH, className="nav-link"),
             html.Div(className="nav-spacer"),
-            html.Div("Bot not running", id="nav-status", className="nav-status nav-idle"),
+            html.Div(
+                [
+                    html.Div("Bot not running", id="nav-status", className="nav-status nav-idle"),
+                    *update_button.layout(),
+                    html.A(
+                        "⚙",
+                        id="nav-settings",
+                        href="/live#connection",
+                        className="nav-settings",
+                        title="MT5 / Telegram connection settings",
+                    ),
+                    info("Connection settings: MT5 and Telegram"),
+                ],
+                className="nav-actions",
+            ),
         ],
         className="nav-bar",
     )
 
 
 def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
+    update_button.register_callbacks(app)
+
     @app.callback(
         Output("nav-chart", "className"),
         Output("nav-backtest", "className"),

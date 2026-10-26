@@ -96,7 +96,7 @@ class NoWick(Strategy):
         for tf, structure in self._structures.items():
             structure.update(views[tf])
         candle = views[self.base_timeframe].current
-        orders = self._fill_pending(candle)
+        orders = self._fill_pending(candle, now)
         signal = self._signal(candle)
         if signal is None:
             return orders
@@ -106,12 +106,16 @@ class NoWick(Strategy):
             self._pending.append(Pending(signal, self.config.order_expiry_candles))
         return orders
 
-    def _fill_pending(self, candle: Candle) -> list[Order]:
+    def _fill_pending(self, candle: Candle, now: datetime | None = None) -> list[Order]:
         filled, waiting = [], []
         for p in self._pending:
             level = p.order.entry
             long = p.order.direction is Direction.BULLISH
-            if candle.low <= level if long else candle.high >= level:
+            touched = candle.low <= level if long else candle.high >= level
+            allowed = touched and (
+                self.limit_fill_check is None or self.limit_fill_check(p.order, candle, now)
+            )
+            if allowed:
                 order = p.order
                 if not candle.low <= level <= candle.high:  # gapped through the level
                     order = replace(order, entry=candle.open)  # a limit fills at the open

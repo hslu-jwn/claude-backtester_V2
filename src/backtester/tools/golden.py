@@ -72,6 +72,26 @@ def compare_trades(old: list[dict], new: list[dict]) -> str | None:
     """First changed field or missing/extra trade, always with the count difference."""
     counts = f"count old={len(old)}, new={len(new)}, difference={len(new) - len(old):+d}"
     for i, (a, b) in enumerate(zip(old, new)):
+        # T-03 adds diagnostic-only ambiguity counts in legacy mode. For references
+        # predating them, require neutral execution metadata and compare every old
+        # field normally. Never rewrite the golden lists.
+        if "intrabar_ambiguous" not in a:
+            b = {k: v for k, v in b.items() if k != "intrabar_ambiguous"}
+        for key, neutral in (
+            ("intrabar", ""),
+            ("intrabar_tp_first", 0),
+            ("intrabar_sl_first", 0),
+            ("intrabar_fallbacks", 0),
+        ):
+            if key not in a and key in b:
+                a = {**a, key: neutral}
+        # Pre-V2.4d references have no touch diagnostics. Preserve every historic
+        # field exactly, require zero new missed fills, and compare both counters
+        # normally as soon as the reference contains them. Never rewrite references.
+        if "tp_levels_touched" not in a and "tp_levels_touched" in b:
+            b = {k: v for k, v in b.items() if k != "tp_levels_touched"}
+        if "tp_levels_touched_not_filled" not in a and "tp_levels_touched_not_filled" in b:
+            a = {**a, "tp_levels_touched_not_filled": 0}
         if diff := _first_difference(a, b):
             field, previous, current = diff
             return f"trade {i}, field {field}: old={previous!r}, new={current!r}; {counts}"

@@ -1,0 +1,24 @@
+# Old tool: s2_volume_ab.py
+# Default command: python -m backtester.tools.s2_volume_ab
+# not carried over: --start/--end (fixed development/test split),
+# --source/--cache-dir (runner uses DEFAULT_SOURCES), --spread-table (no grid equivalent),
+# --out/--family (runner controls results and trials). --workers remains a runner option.
+# --no-sweep/--only/parameter CLI axes: edit grid settings instead.
+# --no-shocks: set shocks = false; split-year overrides: runner scorecard halves.
+# Extension-symbol doji calibration is not carried over: default symbols already have spec thresholds.
+strategy = "ny_index_sweep"
+symbols = ["NAS100", "US500"]
+max_variants = 10000
+
+[[grids]]
+name = "base"
+[grids.base]
+[grids.grid]
+
+[[grids]]
+name = "volume"
+compare_to = "base"
+[grids.base]
+"min_rel_volume" = 1.5
+"volume_lookback" = 20
+[grids.grid]

@@ -52,6 +52,7 @@ from backtester.settings import (
     to_json,
 )
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
+from backtester.ui.layout import info
 
 GROUPS = (
     "Entry",
@@ -73,6 +74,7 @@ DEFAULT_PRESET = DEFAULT
 
 # (path or path prefix ending in ".", group), first match wins
 _GROUP_RULES = (
+    ("engine.intrabar", "Backtest"),
     ("strategy.entry_bos_with_trend", "Entry"),
     ("strategy.max_trades_per_session", "Entry"),
     ("strategy.sweep_lookback", "Entry"),
@@ -218,6 +220,7 @@ LABELS = {
     "detectors.equilibrium.sl_at_deepest_wick": "EQ SL beyond the deepest wick",
     "strategy.strong_move.atr_period": "ATR period (5m)",
     "engine.break_even_at_next_session": "Break-even at the next session",
+    "engine.intrabar": "Intrabar SL / TP resolution",
     "strategy.tp_cap_r": "TP cap (R)",
     "strategy.min_rr": "Minimum R:R (TP1)",
     "strategy.obstacles_passable": "Levels TP2 may pass",
@@ -237,6 +240,9 @@ LABELS = {
     "strategy.friday_ny_carries_to_monday_tokyo": "Friday NY → Monday Tokyo",
     "engine.costs.spread_enabled": "Spread",
     "engine.costs.commission_enabled": "Commission",
+    "engine.costs.tp_penetration": "TP / limit penetration (spread multiple)",
+    "engine.costs.short_tp_on_ask": "Short TP triggered by ask",
+    "engine.costs.round_to_tick": "Round order levels to instrument tick",
     "warmup_days": "Warm-up days",
 }
 LEAF_LABELS = {  # by the last part of the path
@@ -376,6 +382,10 @@ def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
 
 
 def _panel_symbol(path: str) -> bool:
+    # Tick metadata remains editable in settings/grids; only the rounding switch
+    # needs a widget (risk-management.md > Costs > Tick rounding).
+    if path.startswith("engine.costs.symbols.") and path.endswith(".tick_size"):
+        return False
     return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS
 
 
@@ -657,10 +667,15 @@ def _widget(leaf: Leaf, widget_path: str):
         return dcc.Checklist(
             id=id_, options=[{"label": "", "value": "on"}], value=start, className="st-switch"
         )
-    if leaf.kind == "enum":
+    if leaf.kind == "enum" or leaf.path == "engine.intrabar":
         return dcc.Dropdown(
             id=id_,
-            options=options_of(leaf, owner),
+            options=[
+                {"label": "SL first", "value": "sl_first"},
+                {"label": "Resolve from M1", "value": "m1"},
+            ]
+            if leaf.path == "engine.intrabar"
+            else options_of(leaf, owner),
             value=start,
             clearable=False,
             searchable=False,
@@ -701,9 +716,7 @@ def _row(leaf: Leaf, widget_path: str) -> html.Div:
             html.Div(
                 [
                     html.Div(label_of(leaf.path), className="st-label"),
-                    html.Div(leaf.help, className="st-help")
-                    if leaf.help and not _section_help_of(leaf.path)
-                    else None,
+                    info(leaf.help) if leaf.help and not _section_help_of(leaf.path) else None,
                 ],
                 className="st-text",
             ),
@@ -747,20 +760,22 @@ def grouped(leaf_list: Sequence[Leaf]) -> dict[str, list[Leaf]]:
     return {g: ls for g, ls in out.items() if ls}
 
 
-def _group_body(group: str, fields: list[tuple[str, Leaf]], shown: bool) -> html.Div:
-    children, section = [], ""
+def _group_body(group: str, fields: list[tuple[str, Leaf]], shown: bool) -> html.Details:
+    children, section = [html.Summary(group)], ""
     for widget_path, leaf in fields:
         s = section_of(leaf.path)
         if s and s != section:
             children.append(html.Div(s, className="st-section"))
             if help_ := _section_help_of(leaf.path):
-                children.append(html.Div(help_, className="st-help st-section-help"))
+                children.append(info(help_))
         section = s
         children.append(_row(leaf, widget_path))
-    return html.Div(
+    return html.Details(
         children,
         id={"type": "st-group-body", "group": group},
-        style={"display": "block" if shown else "none"},
+        open=shown,
+        className="ui-details st-group-section",
+        style={} if group in grouped(strategy_leaves(DEFAULT_STRATEGY)) else {"display": "none"},
     )
 
 
@@ -801,6 +816,7 @@ def layout() -> html.Div:
                             options=list(grouped(strategy_leaves(DEFAULT_STRATEGY))),
                             value=first,
                             className="st-nav",
+                            style={"display": "none"},
                         ),
                         html.Div(
                             [_group_body(g, ls, g == first) for g, ls in groups.items()],
@@ -867,11 +883,15 @@ def row_classes(
 
 def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
     app.clientside_callback(
-        """function (group, ids) {
-            return ids.map((id) => ({display: id.group === group ? "block" : "none"}));
+        """function (group, options, ids) {
+            const groups = options.map(o => typeof o === "string" ? o : o.value);
+            return [ids.map(id => groups.includes(id.group) ? {} : {display: "none"}),
+                    ids.map(id => id.group === group)];
         }""",
         Output({"type": "st-group-body", "group": ALL}, "style"),
+        Output({"type": "st-group-body", "group": ALL}, "open"),
         Input("st-group", "value"),
+        Input("st-group", "options"),
         State({"type": "st-group-body", "group": ALL}, "id"),
     )
 

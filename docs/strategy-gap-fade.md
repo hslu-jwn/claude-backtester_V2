@@ -51,3 +51,7 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
 - `mode` = `fade` (default) or `follow`: follow takes the other direction (gap up -> long) with the same stop and
   target distances, same days, filter and time exit. Research only, used by the random-entry baseline
   (ROADMAP 12.1, user 2026-10-15); default fade.
+
+Research runner commands (development only):
+
+- `python -m backtester.tools.research research/grids/gap_fade.toml --dev-only`

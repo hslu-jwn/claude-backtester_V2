@@ -25,18 +25,18 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 |---|---|---|---|---|---|---|
 | T-01 | Robustness report: plateau heat map, % profitable combos, halves t-test, shock days, 3 cost levels | tooling | all | – | K ch.21; KD p.106-109 (70 % gate) | done 2026-10-15 (ROADMAP 6.4; heat map via plateau on a family, stressed costs x1.5 instead of 3 levels) |
 | T-02 ★ | Random-entry baseline (Monte Carlo of entries): percentile of net R vs 1,000 seeded random-entry runs | tooling | all | – | VectorBT; KD p.109-114; EC p.16-22 (see T-14) | done 2026-10-16 (ROADMAP 12.1, in tools/monte_carlo.py) |
-| T-03 | SL and TP inside one candle: resolve the order from M1 instead of "SL first" | tooling | all | – | NautilusTrader | open (ROADMAP 12.2) |
+| T-03 | SL and TP inside one candle: resolve the order from M1 instead of "SL first" | tooling | all | – | NautilusTrader | measured on 2023 golden setups (2026-10-23, results/intrabar.md); default sl_first; limit-entry timestamp decision and Opus review pending (ROADMAP 12.2 / V2.4c) |
 | T-04 | Shared walk-forward splitter (rolling / anchored) | tooling | all | – | VectorBT; K ch.21; LP 11.6, 12.2; KD ch.13 (see T-09) | done 2026-10-16 (ROADMAP 12.3, analytics/walk_forward.py) |
 | T-05 | Parameter heat map on the results page | tooling | all | – | VectorBT; K ch.21 | open (ROADMAP 12.4) |
 | T-06 | Demo vs engine reconciliation of the same trades | tooling | FTMO symbols | – | HftBacktest; prediction-market-backtesting | open (ROADMAP 12.5, before Phase 7) |
 | T-07 | Stressed fills: seeded random slippage, touch is not a fill | tooling | all | – | NautilusTrader | random slippage done 2026-10-15 (12.6, analytics/random_fills.py); touch-is-not-a-fill open |
 | T-08 ★ | Trial log + deflated Sharpe: every variant / symbol / timeframe / filter logged with its return series; PSR and DSR (effective N) on per-trade net R; shared-prior shrinkage of the best variant | tooling | all | – | LP 8.1, 11.5, 14.7; RC ch.3; WK M7 | done 2026-10-16 (ROADMAP 12.10; N = raw trial count per family, no clustering or shrinkage yet; DSR >= 0.95 is verdict check 7) |
 | T-09 | CPCV (N groups, k=2, purged + embargoed), PBO via CSCV, time-reversed run; extends T-04 | tooling | all | – | LP 7.4, 11.6, 12.4 | open |
-| T-10 ★ | Bayesian win-rate and A/B report: Beta posterior under flat / weak / strong skeptical priors, P(B > A), Bayes factor, trades needed before the MT5 test | tooling | all | – | WK ch.5, 15-17, M1-M10 | open; prior odds 1:50 against an edge (user, 2026-10-16) |
+| T-10 ★ | Bayesian win-rate and A/B report: Beta posterior under flat / weak / strong skeptical priors, P(B > A), Bayes factor, trades needed before the MT5 test | tooling | all | – | WK ch.5, 15-17, M1-M10 | implemented and tested 2026-10-23, review and user acceptance pending (V2.4c); prior odds 1:50 against an edge (user, 2026-10-16); spec: research-runner.md > Bayesian view |
 | T-11 ★ | Stationarity / Hurst / variance ratio / half-life / lag-correlation diagnostic per symbol, timeframe and half | study | all; M5-D1 | – | EC p.41-48, 134-137; LP 17 | done 2026-10-19 (ROADMAP 11.11): no stationarity; H1 reversal real but 0.2-0.5 of a spread, not tradeable |
 | T-12 | Carver forecast engine: continuous ±20 forecasts, FDM / IDM, vol-target sizing, position inertia | tooling | all | n/a | RC ch.7-11, App.B, D | open |
 | T-13 ★ | Entry-only screening battery: fixed-bar exits, equal-R stop / target, random exit, forward-return hit rate, time-frame lift, reversed signal with costs twice | tooling | all | – | KD p.88, 105-109; JK p.100 | built 2026-10-20 (ROADMAP 12.12); first audit of strategies 1-7: all FAIL |
-| T-14 | Matched-monkey test (random entry / exit / both, 8,000 runs, matched count, long share, hold) + random entry with vol trailing stop; extends T-02 | tooling | all | – | KD p.109-114; RC ch.13 | open |
+| T-14 | Matched-monkey test (random entry / exit / both, 8,000 runs, matched count, long share, hold) + random entry with vol trailing stop; extends T-02 | tooling | all | – | KD p.109-114; RC ch.13 | matched monkeys implemented and exercised 2026-10-23 (V2.4c), review/user acceptance pending; volatility-trailing null remains open |
 | T-15 | Synthetic OU / random-walk null for SL-TP heat maps and barrier-probability reference | tooling | all | – | LP 13; JK p.91-95 | open |
 | T-16 | Strategy-risk / precision calculator for FTMO: precision needed for a target Sharpe, P[precision < threshold], posterior Monte Carlo of the account | tooling | R lists | – | LP 15; RC ch.9; WK M6 | open |
 | T-17 | Pre-registered gate pipeline: numeric gates in `docs/`, quit rule, MT5 incubation, live performance cone | process | all | – | KD ch.8-14, 20, 23 | open |
@@ -488,6 +488,15 @@ Fit: good, cheap with M1 and R multiples; keep holds intraday (swap). Differs: a
 full strategy per idea. Our failed strategies could be re-audited with the reversed-signal check (reversals rarely survive costs).
 
 ### T-14 Matched-monkey test (tooling)
+V2.4c implementation (2026-10-23): per-symbol exact stop/hold permutations, three kinds,
+default 1,000 runs (configurable to 8,000), runner 200 runs, net-R and exit-order DD percentiles.
+Spec: `docs/risk-management.md` > Matched monkeys. Development check: default trend following,
+XAUUSD, 53 trades, 200 runs; net-R percentiles 47.5 / 12.0 / 37.5 and favorable DD percentiles
+34.5 / 11.5 / 31.0 (kinds 1/2/3), all fail. Report:
+`results/monkeys/trend_following_20261023T201820334384Z/report.md`.
+Independent review and user acceptance pending. The separate Carver volatility-trailing null
+and live rolling monitoring remain outside this brief.
+
 Replace entry by a random entry matched on trade count, long share and mean hold; the same for the exit (random exit time, same hold distribution, same session-end rule); both
 random; 8,000 runs each; require the real result to beat ≥ 90 % of runs on net R and on max DD. Reuse on the last 6-12 months live: 60-70 % percentiles = warning, < 50 % =
 edge gone. Add Carver's null: random daily entries exited only by a trailing stop X x daily sigma (X 1-10), which was profitable on real data from trend capture alone.

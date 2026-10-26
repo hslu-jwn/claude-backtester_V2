@@ -1,20 +1,12 @@
 /* /live page (ROADMAP 7.2 / 7.3): dark cards, small uppercase titles, monospace numbers */
 .lv-page {
-  --bg: #0b1220;
-  --card: #111a2b;
-  --line: #1d2a40;
-  --text: #e6ebf5;
-  --muted: #7d8aa5;
-  --green: #2ebd85;
-  --red: #f6465d;
-  --amber: #f5a623;
-  --blue: #4f8cff;
+
   min-height: calc(100vh - var(--nav-h));
   box-sizing: border-box;
   padding: 16px 24px 48px;
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-13);
 }
 .lv-page > * + * {
   margin-top: 14px;
@@ -23,7 +15,7 @@
   padding: 14px 16px;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .lv-card-head {
   display: flex;
@@ -58,7 +50,7 @@ details[open] > .lv-summary::before {
 }
 .lv-sub {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-12);
 }
 .lv-mono,
 .lv-big,
@@ -102,22 +94,22 @@ details[open] > .lv-summary::before {
 }
 .lv-state {
   padding: 3px 10px;
-  border-radius: 999px;
-  background: #1d2a40;
+  border-radius: var(--radius);
+  background: var(--line);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-12);
   font-weight: 600;
 }
 .lv-state.lv-ok {
-  background: #12392e;
+  background: var(--green-soft);
   color: var(--green);
 }
 .lv-state.lv-warn {
-  background: #3d2e0c;
+  background: var(--amber-soft);
   color: var(--amber);
 }
 .lv-state.lv-bad {
-  background: #3a1620;
+  background: var(--red-soft);
   color: var(--red);
 }
 .lv-metas {
@@ -136,8 +128,8 @@ details[open] > .lv-summary::before {
 .lv-error {
   margin-top: 8px;
   padding: 6px 10px;
-  border-radius: 6px;
-  background: #3a1620;
+  border-radius: var(--radius);
+  background: var(--red-soft);
   color: var(--red);
 }
 .lv-actions {
@@ -148,15 +140,15 @@ details[open] > .lv-summary::before {
 .lv-btn {
   height: 34px;
   padding: 0 16px;
-  border: 1px solid #2a3a58;
-  border-radius: 8px;
-  background: #15213a;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--raised);
   color: var(--text);
   font: inherit;
   cursor: pointer;
 }
 .lv-btn:hover:not(:disabled) {
-  background: #1b2a49;
+  background: var(--raised);
 }
 .lv-btn:disabled {
   opacity: 0.4;
@@ -164,12 +156,12 @@ details[open] > .lv-summary::before {
 }
 .lv-go {
   border-color: var(--blue);
-  background: #1f4fb8;
+  background: var(--accent);
 }
 .lv-danger {
-  border-color: #6b2230;
-  background: #3a1620;
-  color: #ff8896;
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: var(--red);
 }
 .lv-msg {
   min-height: 1em;
@@ -187,8 +179,8 @@ details[open] > .lv-summary::before {
   height: 6px;
   margin: 6px 0;
   overflow: hidden;
-  border-radius: 3px;
-  background: #1d2a40;
+  border-radius: var(--radius);
+  background: var(--line);
 }
 .lv-fill {
   height: 100%;
@@ -245,9 +237,9 @@ details[open] > .lv-summary::before {
   flex: 0 0 18px;
   height: 18px;
   box-sizing: border-box;
-  border: 2px solid #33415c;
+  border: 2px solid var(--line);
   border-radius: 50%;
-  color: #0b1220;
+  color: var(--bg);
   font-size: 11px;
   line-height: 14px;
   text-align: center;
@@ -277,12 +269,12 @@ details[open] > .lv-summary::before {
 .lv-seg label {
   margin-left: 4px;
   padding: 3px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--muted);
   cursor: pointer;
 }
 .lv-seg label:has(input:checked) {
-  background: #1d2a40;
+  background: var(--line);
   color: var(--text);
 }
 .lv-seg input {
@@ -311,7 +303,7 @@ details[open] > .lv-summary::before {
   max-height: 320px;
   margin: 0;
   overflow: auto;
-  font-size: 12px;
+  font-size: var(--font-12);
   white-space: pre-wrap;
 }
 
@@ -327,9 +319,9 @@ details[open] > .lv-summary::before {
   height: 32px;
   box-sizing: border-box;
   padding: 0 8px;
-  border: 1px solid #2a3a58;
-  border-radius: 6px;
-  background: #0b1220;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
   color: var(--text);
   font-family: ui-monospace, Consolas, monospace;
 }
@@ -358,29 +350,29 @@ details[open] > .lv-summary::before {
   border-bottom-color: var(--line);
 }
 .lv-conn .st-input {
-  border-color: #2a3a58;
-  background: #0b1220;
+  border-color: var(--line);
+  background: var(--bg);
   color: var(--text);
 }
 .lv-conn .dash-dropdown,
 .lv-conn .dash-dropdown-focus-target,
 .lv-conn .dash-dropdown-content {
-  border-color: #2a3a58;
-  background: #0b1220;
+  border-color: var(--line);
+  background: var(--bg);
   color: var(--text);
 }
 .lv-conn .dash-dropdown-option:hover,
 .lv-conn .dash-dropdown-option.selected {
-  background: #15213a;
+  background: var(--raised);
 }
 .lv-conn .st-btn {
-  border-color: #2a3a58;
-  background: #15213a;
+  border-color: var(--line);
+  background: var(--raised);
   color: var(--text);
 }
 .lv-conn .st-btn.st-primary {
   border-color: var(--blue);
-  background: #1f4fb8;
+  background: var(--accent);
 }
 .lv-conn .st-foot {
   display: flex;
@@ -390,17 +382,16 @@ details[open] > .lv-summary::before {
 }
 .lv-conn .tr-result {
   border-color: var(--line);
-  background: #0b1220;
+  background: var(--bg);
   color: var(--text);
 }
 /* Dash's own theme colours (option labels, dropdowns) default to dark text; the page is dark */
 .lv-page {
-  --Dash-Text-Strong: var(--text);
-  --Dash-Text-Disabled: var(--muted);
+
 }
 
 .lv-link {
-  color: #4f8cff;
+  color: var(--accent);
   text-decoration: none;
 }
 .lv-link:hover {
@@ -410,4 +401,25 @@ details[open] > .lv-summary::before {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 6px;
+}
+
+/* V2.5d: chart, setup side panel, and persistent tab panels. */
+.lv-page { padding: 0 0 24px; }
+.lv-strip { display: block; }
+.lv-strip .lv-header { border: 0; padding: 0 0 12px; background: transparent; }
+.lv-strip .lv-cards { gap: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.lv-strip .lv-cards > .lv-card { border: 0; border-radius: 0; padding: 8px 12px; background: transparent; }
+.lv-strip .lv-cards > .lv-card + .lv-card { border-left: 1px solid var(--line); }
+.lv-strip .lv-big { font-size: var(--font-20); }
+.lv-strip .lv-strategy { font-size: var(--font-15); }
+.lv-strip .lv-metas { font-size: var(--font-12); }
+.lv-page .ui-main-row { margin-top: 16px; }
+.lv-page .ui-side .lv-funnels { grid-template-columns: 1fr; gap: 12px; }
+.lv-page .ui-side .lv-step { gap: 8px; padding: 2px 0; }
+.lv-tab-content { padding: 16px; background: var(--panel); overflow-x: auto; }
+.lv-msg:empty { display: none; }
+.lv-page #connection { margin: 0 16px; }
+.lv-conn .ui-details { margin-top: 12px; }
+@media (max-width: 1000px) {
+  .lv-strip .lv-cards { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 }

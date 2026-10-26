@@ -328,12 +328,15 @@ def test_connection_is_closed_by_default_whatever_the_bot_state(tmp_path):
     assert not conn_open(tmp_path)
 
 
-def test_setup_in_progress_and_connection_are_closed_details(tmp_path):
-    found = {_summary(d): d for d in _details(live.layout(tmp_path, NOW))}
-    setup = next(d for t, d in found.items() if "Setup in progress" in t)
+def test_setup_is_visible_and_connection_is_closed_details(tmp_path):
+    from tests.ui.test_v25c_pages import find, walk
+
+    page = live.layout(tmp_path, NOW)
+    found = {_summary(d): d for d in _details(page)}
+    setup = next(n for n in walk(page) if isinstance(n, html.Aside))
+    find(setup, "lv-setup")
     conn = next(d for t, d in found.items() if "Connection" in t)
-    for d in (setup, conn):
-        assert not getattr(d, "open", False)
+    assert not getattr(conn, "open", False)
     assert "lv-setup" in ids_of(setup)
     assert {"tr-login", "tr-password", "tr-server", "tr-save"} <= ids_of(conn)
 
@@ -348,8 +351,14 @@ def test_chart_page_sweep_controls_moved_into_the_settings():
     assert {"chart-sweep-tol", "chart-sweep-cancel", "chart-sweep-n", "chart-sweep-top",
             "chart-sweep-tweak"} <= ids  # fmt: skip
     text = text_of(page)
-    # two collapsible blocks in the Settings popover: Chart Settings and Chart Overlays
-    assert text.count('"type": "Details"') == 2 and "Account connection" not in text
+    # V2.5c: settings and sweep folds; overlays and modal groups also use Details.
+    assert "Account connection" not in text
+    folds = {d.children[0].children: d for d in _details(page)}
+    assert {"Chart Settings", "Liquidity sweep (temporary)", "Chart Overlays"} <= folds.keys()
+    assert not any(
+        getattr(folds[k], "open", False)
+        for k in ("Chart Settings", "Liquidity sweep (temporary)", "Chart Overlays")
+    )
 
 
 def _nested_lists(node, path="root") -> list[str]:
@@ -490,26 +499,23 @@ def test_spawned_command_really_runs_detached_from_the_caller(tmp_path):
     assert marker.exists()
 
 
-def test_every_card_folds_and_the_days_cards_are_open_by_default(tmp_path):
-    # ROADMAP 7.7 (user 2026-10-20): open by default what concerns the day, the rest closed
-    found = {_summary(d): d for d in _details(live.layout(tmp_path, NOW))}
+def test_v25d_tabs_replace_day_folds_and_keep_panels_mounted(tmp_path):
+    # V2.5d proposal supersedes 7.7 folds: positions default, other panels hidden.
+    from tests.ui.test_v25c_pages import find
 
-    def fold(title):
-        return next(d for t, d in found.items() if title in t)
-
-    expected = {
-        "Open positions": True, "Closed trades": True, "Today's signals and skips": True,
-        "Recent trades": False, "Event log": False, "Settings": False,
-        "Setup in progress": False, "Connection": False,
-    }  # fmt: skip
-    for title, is_open in expected.items():
-        assert bool(getattr(fold(title), "open", False)) is is_open, title
-    assert "lv-positions" in ids_of(fold("Open positions"))
-    assert {"lv-closed", "lv-closed-range"} <= ids_of(fold("Closed trades"))
-    assert "lv-signals" in ids_of(fold("Today's signals and skips"))
-    assert {"lv-trades", "lv-range"} <= ids_of(fold("Recent trades"))
-    assert "lv-log" in ids_of(fold("Event log"))
-    assert {"lv-risk", "lv-daily-stop", "lv-symbols"} <= ids_of(fold("Settings"))
+    page = live.layout(tmp_path, NOW)
+    assert find(page, "lv-tabs").value == "positions"
+    for name in ("positions", "closed", "signals", "log", "settings"):
+        assert find(page, f"lv-tab-{name}").style == (
+            {} if name == "positions" else {"display": "none"}
+        )
+    assert all(not getattr(d, "open", False) for d in _details(page))
+    assert "lv-positions" in ids_of(find(page, "lv-tab-positions"))
+    assert {"lv-closed", "lv-closed-range"} <= ids_of(find(page, "lv-tab-closed"))
+    assert "lv-signals" in ids_of(find(page, "lv-tab-signals"))
+    assert {"lv-trades", "lv-range"} <= ids_of(page)
+    assert "lv-log" in ids_of(find(page, "lv-tab-log"))
+    assert {"lv-risk", "lv-daily-stop", "lv-symbols"} <= ids_of(find(page, "lv-tab-settings"))
 
 
 def test_closed_trades_have_their_own_range_starting_on_day(tmp_path):

@@ -59,9 +59,12 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☑ **V2.1 Set up this PC** (tools, venv, data check, baseline tests).
 - ☑ **V2.2 Team setup** (AGENTS.md, Codex / Claude 4.6 / Gemini through `tools/ai_dispatch.py`).
 - ☑ **V2.3 Move to V2 and clean up** (inventory accepted by the user 2026-10-22).
-- ◐ **V2.4 Full Codex review and speed-up** (2026-10-23: golden lists, review of all 8
+- ☑ **V2.4 Full Codex review and speed-up** (accepted by the user 2026-10-26) (2026-10-23: golden lists, review of all 8
   modules (84 findings, `docs/review/`), groups A + B fixed, speed 1 + 2 (partial) done;
-  speed 2 complete; open: the archived grid tools merge, the user's check of the UI fixes): golden trade lists of all strategies first; review
+  speed 2 complete; grid tools merged into the research runner 2026-10-23 (combined grids,
+  grid robustness, shock days, breakdowns, sensitivity, filter twins, walk-forward, old sweeps as
+  `research/grids/*.toml`, identical trades on the reproduction check; archive deleted); open:
+  the user's check of the UI fixes): golden trade lists of all strategies first; review
   core -> detectors -> engine -> risk -> analytics -> strategies -> ui -> live (correctness,
   then speed, then cleanup); profile a real sweep, optimize with before/after numbers and
   identical golden trade lists. Includes merging the archived grid tools into the research
@@ -70,15 +73,47 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the trades of any strategy on the chart; the trade itself is enough, confluences only when
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
+- ◐ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
+  done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
+  trade +25 to +90 % at the index open, no-wick nearly x2; default stays fixed until the user
+  decides); open: the user's spread-table decision, news-day split (the user gathers news data)) (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
+  effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
+  user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
+  then measure the spread table's effect on the golden lists (default stays off unless the
+  user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
+  items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
+  market, expectation haircut.
+- ☑ **V2.4d Book requirements** (accepted by the user 2026-10-26; the tick-rounding default
+  stays off until the user decides) (2026-10-23 / 24: items 1-9 done; open: the user's choice of
+  the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
+  `docs/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
+  net R series of every variant (trial log / runner); (2) daily returns marked to market (open
+  trades valued each day, not booked at exit); (3) take profits and limit entries fill only on
+  penetration by a per-symbol distance: built as a setting first, its effect measured on the
+  golden lists of all 7 strategies, then the user picks the default (rule set by the user
+  2026-10-23); **done: default 0.5 x spread + short TP on the ask (set by the user 2026-10-23;
+  golden net R 2023: session zones -443.8 -> -484.9, no-wick -1013.9 -> -1036.2, gap fade
+  -16.6 -> -21.1, NY indices -31.6 -> -30.9, the others without TPs unchanged)**; (4) drawdown Monte Carlo as Masters' double bootstrap (kind A only permutes
+  the historic days and is optimistic); (5) best-of-N significance in the runner (White's
+  Reality Check / Monte Carlo permutation over the variants' daily series); (6) walk-forward
+  with month-based windows, walk-forward efficiency and the open-trade boundary rule;
+  (7) detrended benchmark and long / short position bias; (8) bootstrap (BCa) bounds of the
+  mean and log profit factor; (9) prices rounded to the tick in the engine. Later (V2.6 /
+  V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
+  for the portfolio's member selection.
 - ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
   `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)
   stay.
-- ☐ **V2.5 App redesign** (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
+- ☑ **V2.5 App redesign** (accepted by the user 2026-10-26) (2026-10-25: V2.5a-d done: dark theme, top bar, Research cards,
+  Chart / Results / Backtest / Live in the new skeleton, browser-checked by Opus; open: the
+  user's look and ok) (decisions 2026-10-23 in `docs/design/ui-proposal.md`) after `docs/design/app-v2.png`: dark trading-terminal look, essential
   vs "Details" per page (list to the user first), research page as one vertical list of
   cards, Fast mode (headless) vs Visual mode with identical trade lists.
-- ☐ **V2.6 Continuous research:** research-based strategies only, job queue (≈8 workers,
+- ◐ **V2.6 Continuous research:** (2026-10-25: regime classifier and strategy profile built,
+  all 7 strategies profiled, `docs/research-log.md`) research-based strategies only, job queue (≈8 workers,
   temperature guard, resumable), 3 lanes in worktrees, Monte Carlo, parameter stability,
   regime breakdown (regime classifier in `analytics/`, spec first, user decides), warning flags,
   research cards, `docs/research-log.md`.
@@ -99,7 +134,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   pass probability, best market regime, parameter stability, warning flags. Click a card to
   expand the full details.
 - Two modes with a switch / CLI flag: Fast mode = headless, no chart, for automated research;
-  Visual mode = the app. Both give identical trade lists for the same settings (test).
+  Visual mode = the app. ☑ Identical trade lists for the same settings (`tests/test_fast_visual_identical.py`, 2026-10-25).
 - Codex reviews the redesign code. Done = tests green and the user looked at it in the browser
   and said ok.
 
@@ -143,6 +178,12 @@ strategy with all metrics; the user decides later.
 - Regime classifier: `analytics/regime.py` per `docs/regime-classifier.md` (accepted
   2026-10-23); every research card and results page shows net R, R/trade and win rate per
   regime and names the best regime.
+- **Where a strategy performs best** (the user, 2026-10-24): the breakdown is not only a
+  warning; it is the input for combining strategies. Per strategy and per condition (market
+  regime, symbol / market class, session, volatility, long vs short) the card shows the raw and
+  the **detrended** result (skill vs trend, V2.4d 7), the bounds (V2.4d 8) and the trade count,
+  so the strongest *skill* condition of each strategy is visible; V2.7 picks members and their
+  active conditions from it (a strategy may trade only in its best regime).
 
 ### V2.7 Portfolio (main goal)
 - Combine strategies that balance each other (e.g. trend following + range / mean reversion,

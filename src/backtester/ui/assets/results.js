@@ -19,18 +19,19 @@
     const L = window.LightweightCharts;
     R.el = el;
     el.textContent = "";
+    const token = (name) => getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
     const chart = L.createChart(el, {
       autoSize: true,
       layout: {
-        background: { type: "solid", color: "#ffffff" },
-        textColor: "#131722",
+        background: { type: "solid", color: token("panel") },
+        textColor: token("text"),
         fontSize: 12,
         attributionLogo: true,
-        panes: { separatorColor: "#e0e3eb" },
+        panes: { separatorColor: token("line") },
       },
-      grid: { vertLines: { visible: false }, horzLines: { color: "#f0f3fa" } },
-      rightPriceScale: { borderColor: "#e0e3eb" },
-      timeScale: { borderColor: "#e0e3eb", timeVisible: true, secondsVisible: false },
+      grid: { vertLines: { visible: false }, horzLines: { color: token("line") } },
+      rightPriceScale: { borderColor: token("line") },
+      timeScale: { borderColor: token("line"), timeVisible: true, secondsVisible: false },
       localization: { dateFormat: "yyyy-MM-dd" },
       crosshair: { mode: L.CrosshairMode.Normal },
     });
