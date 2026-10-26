@@ -177,7 +177,13 @@ def result_strip(summary: dict | None) -> html.Div:
     return html.Div(
         [
             html.Div(key_strip(items), id="ch-card-result"),
-            dcc.Link("Results →", href=s["href"], className="ch-link") if s else None,
+            dcc.Link(
+                "Results →",
+                href=s.get("href", ""),
+                className="ch-link",
+                id="chart-result-link",
+                style={} if s else {"display": "none"},
+            ),
         ],
         id="chart-key-strip",
         title=s.get("run_id", NO_RUN_TEXT),

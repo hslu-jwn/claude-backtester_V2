@@ -172,7 +172,7 @@ def _read_log(out_dir: Path, now: datetime) -> list[str]:
     return out[-LOG_LINES:]
 
 
-def live_view(out_dir: Path, now: datetime) -> dict:
+def live_view(out_dir: Path, now: datetime, stale_minutes=lm.DISPLAY_STALE_MINUTES) -> dict:
     status = read_status(out_dir / STATUS_NAME)
     state = lm.bot_state(status, now)
     if state == "running" and is_paused(out_dir):
@@ -181,6 +181,7 @@ def live_view(out_dir: Path, now: datetime) -> dict:
         "status": status,
         "age": heartbeat_age_s(status, now),
         "state": state,
+        "display_stale": lm.display_stale(status, now, stale_minutes),
         "log": _read_log(out_dir, now),
     }
 
@@ -266,13 +267,17 @@ def _range_picker(id_: str) -> dcc.RadioItems:
 def render_head(view: dict, now: datetime) -> html.Div:
     status, state = view["status"] or {}, view["state"]
     label, css = STATE_BADGE[state]
+    if _historical(view):
+        label, css = "Stopped", "idle"
     symbols = status.get("symbols") or []
     meta = [
         status.get("account_mode") or DASH,
         ", ".join(symbols) or DASH,
         f"{lm.window_text(status.get('session'))} · {lm.countdown_text(status.get('session'), now)}",
     ]
-    if state in ("running", "paused"):
+    if _historical(view):
+        meta[-1] = lm.last_session_text(status)
+    if state in ("running", "paused") and not _historical(view):
         meta.append(f"running since {lm.clock_ch(status.get('started_at'))}")
     parts = [
         html.Div(
@@ -295,6 +300,18 @@ def render_head(view: dict, now: datetime) -> html.Div:
     return html.Div(parts)
 
 
+def _historical(view: dict) -> bool:
+    age = view["age"]
+    return view["status"] is not None and view.get(
+        "display_stale",
+        age is None or age > lm.DISPLAY_STALE_MINUTES * 60 or view["state"] == "stopped",
+    )
+
+
+def _last_session(view: dict):
+    return html.Div(lm.last_session_text(view["status"]), className="lv-sub")
+
+
 def render_cards(view: dict) -> html.Div:
     status = view["status"] or {}
     balance, equity = _num(status, "balance"), _num(status, "equity")
@@ -306,7 +323,7 @@ def render_cards(view: dict) -> html.Div:
     )
     today = lm.today_bar(status)
     age = view["age"]
-    stale = lm.heartbeat_stale(age) or view["state"] in ("stopped", "none")
+    stale = _historical(view)
     link = status.get("connected")
     cards = [
         _card(
@@ -346,7 +363,8 @@ def render_cards(view: dict) -> html.Div:
             [
                 html.Div(
                     lm.heartbeat_text(age),
-                    className="lv-big lv-small" + (" lv-stale" if view["status"] and stale else ""),
+                    className="lv-big lv-small"
+                    + (" lv-stale" if view["status"] and lm.heartbeat_stale(age) else ""),
                 ),
                 html.Div(
                     DASH if link is None else ("MT5 connected" if link else "MT5 not connected"),
@@ -355,7 +373,12 @@ def render_cards(view: dict) -> html.Div:
             ],
         ),
     ]
-    return html.Div(cards, className="lv-cards")
+    if stale:
+        for card in cards[2:4]:
+            card.className += " lv-last-session"
+            card.children.append(_last_session(view))
+        cards[-1].children[1].children[-1].children = lm.last_seen_text(status, age)
+    return html.Div(cards, className="lv-cards" + (" lv-last-state" if stale else ""))
 
 
 def _limit_row(b: dict) -> html.Div:
@@ -379,9 +402,9 @@ def render_setup(view: dict) -> html.Div:
     status = view["status"] or {}
     setups = status.get("setups") if isinstance(status.get("setups"), dict) else {}
     symbols = list(status.get("symbols") or setups)
+    blocks = [_last_session(view)] if _historical(view) else []
     if not symbols:
-        return html.Div("No symbols yet.", className="lv-empty")
-    blocks = []
+        blocks.append(html.Div("No symbols yet.", className="lv-empty"))
     for symbol in symbols:
         rows = lm.funnel_rows(setups.get(symbol))
         steps = [
@@ -402,7 +425,9 @@ def render_setup(view: dict) -> html.Div:
         blocks.append(
             html.Div([html.Div(symbol, className="lv-symbol"), *steps], className="lv-funnel")
         )
-    return html.Div(blocks, className="lv-funnels")
+    return html.Div(
+        blocks, className="lv-funnels" + (" lv-last-session" if _historical(view) else "")
+    )
 
 
 def chart_link(row: dict):
@@ -633,6 +658,19 @@ def layout(out_dir: Path = LIVE_DIR, now: datetime | None = None) -> html.Div:
             html.Div(
                 [
                     _field(
+                        "Mark status stale after (minutes)",
+                        dcc.Input(
+                            id="lv-stale-minutes",
+                            type="number",
+                            min=1,
+                            step=1,
+                            value=lm.DISPLAY_STALE_MINUTES,
+                            persistence=True,
+                            persistence_type="local",
+                            className="lv-input",
+                        ),
+                    ),
+                    _field(
                         "Risk per trade (%)",
                         dcc.Input(
                             id="lv-risk",
@@ -773,11 +811,12 @@ def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR) -> None:
         Output("lv-daily-stop", "value"),
         Output("lv-symbols", "value"),
         Input("lv-interval", "n_intervals"),
+        Input("lv-stale-minutes", "value"),
         State("lv-symbols", "value"),
     )
-    def _refresh(_, chosen):
+    def _refresh(_, stale_minutes, chosen):
         now = datetime.now(UTC)
-        view = live_view(out_dir, now)
+        view = live_view(out_dir, now, stale_minutes)
         p, b, s = render(view, now), button_state(view), settings_state(view)
         keep = s["symbols"] or chosen
         return (

@@ -29,6 +29,7 @@ from backtester.ui.numbers import _number
 
 SWISS = ZoneInfo("Europe/Zurich")
 DASH = "–"
+DISPLAY_STALE_MINUTES = 5
 
 # Limits of the editable settings (user, 2026-10-17: "risk > 0 and <= 2, daily stop > 0 and <= 5"):
 # MAX_RISK_PERCENT, MAX_DAILY_STOP_PERCENT, the bot's own (it refuses to start outside them).
@@ -133,6 +134,29 @@ def heartbeat_text(age: float | None) -> str:
 
 def heartbeat_stale(age: float | None) -> bool:
     return age is None or age > STALE_S
+
+
+def display_stale(status: dict | None, now: datetime, minutes=DISPLAY_STALE_MINUTES) -> bool:
+    """Display freshness only; never changes the bot's control/lock thresholds."""
+    if status is None:
+        return False
+    age = heartbeat_age_s(status, now)
+    threshold = _number(minutes)
+    threshold = threshold if threshold is not None and threshold > 0 else DISPLAY_STALE_MINUTES
+    return age is None or age > threshold * 60 or not status.get("running")
+
+
+def last_seen_text(status: dict, age: float | None) -> str:
+    when = _parse_utc(status.get("heartbeat"))
+    stamp = f"{when.astimezone(SWISS):%Y-%m-%d %H:%M} CH" if when else DASH
+    elapsed = fmt_duration(age) if age is not None else "unknown age"
+    return f"Not running · last seen {stamp} ({elapsed})"
+
+
+def last_session_text(status: dict) -> str:
+    when = _parse_utc(status.get("heartbeat"))
+    day = status.get("date") or (f"{when.astimezone(SWISS):%Y-%m-%d}" if when else DASH)
+    return f"last session {day}"
 
 
 # --- bars ----------------------------------------------------------------------------------------

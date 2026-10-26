@@ -713,10 +713,10 @@
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && Z.on) zoomTool(false); });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setProps("chart-inspect", {data: {order: null, n: ++S.nonce}});
+    if (e.key === "Escape" && S.orderDraw?.focused) setProps("chart-inspect", {data: {order: null, n: ++S.nonce}});
   });
   document.addEventListener("click", (e) => {
-    if (S.el && !S.el.contains(e.target) && !e.target.closest("#inspection-panel"))
+    if (S.orderDraw?.focused && S.el && !S.el.contains(e.target) && !e.target.closest("#inspection-panel"))
       setProps("chart-inspect", {data: {order: null, n: ++S.nonce}});
   });
   document.addEventListener("dblclick", (e) => {

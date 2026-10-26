@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 
 from dash import Input, Output, State, ctx, no_update
 
+from backtester.core.errors import LookaheadError
 from backtester.ui import review, settings_panel, trade_focus, trades_overlay
 
 
@@ -15,19 +16,14 @@ def review_orders(sources, symbol, first, last, settings):
 
 
 def evaluate(sources, strategy, labels, orders, state):
-    """Include previously labelled dates/symbols, so absent means removed by the rules."""
-    all_orders = list(orders)
-    extra = {}
-    for row in labels:
-        day = datetime.fromisoformat(row["entry_time"]).date().isoformat()
-        if row["symbol"] != state["symbol"] or not state["first"] <= day <= state["last"]:
-            extra.setdefault(row["symbol"], []).append(day)
-    for symbol, days in extra.items():
-        all_orders.extend(
-            trade_focus.inspection_order(t)
-            for t in review_orders(sources, symbol, min(days), max(days), state["settings"])
-        )
-    return review.agreement(labels, strategy, all_orders)
+    """Agreement covers this symbol and inclusive UTC period; never run other labels."""
+    in_view = [
+        row
+        for row in labels
+        if row["symbol"] == state["symbol"]
+        and state["first"] <= review.utc(row["entry_time"])[:10] <= state["last"]
+    ]
+    return dict(review.agreement(in_view, strategy, orders), labels_all=len(labels))
 
 
 def transition(
@@ -49,19 +45,26 @@ def transition(
     if not first or not last or first > last:
         raise ValueError("Choose a valid review period")
     previous = state or {}
-    if (
-        action == "run"
-        or not state
-        or state.get("settings") != settings
-        or state.get("symbol") != symbol
-    ):
+    run_hash = review.settings_hash(settings)
+    matches = bool(state) and all(
+        previous.get(field) == value
+        for field, value in {
+            "strategy": strategy,
+            "settings": settings,
+            "settings_hash": run_hash,
+            "symbol": symbol,
+            "first": first,
+            "last": last,
+        }.items()
+    )
+    if action == "run" or not matches:
         state = {
             "symbol": symbol,
             "strategy": strategy,
             "first": first,
             "last": last,
             "settings": settings,
-            "settings_hash": review.settings_hash(settings),
+            "settings_hash": run_hash,
             "index": 0,
             "revealed": False,
         }
@@ -71,15 +74,27 @@ def transition(
         sources, state["symbol"], state["first"], state["last"], state["settings"]
     )
     orders = [trade_focus.inspection_order(t) for t in trades]
-    labels = review.load_labels(strategy, folder)
+    notices = []
+    labels = review.load_labels(strategy, folder, notices)
     index = min(state.get("index", 0), max(0, len(orders) - 1))
     status = ""
-    if action in {"take", "skip"} and orders:
+    visible = (
+        matches
+        and orders
+        and previous.get("index") == index
+        and previous.get("entry_time") == orders[index]["entry_time"]
+        and previous.get("order")
+        and review.key(dict(previous["order"], strategy=strategy))
+        == review.key(dict(orders[index], strategy=strategy))
+    )
+    if action in {"take", "skip"} and not visible:
+        status = "Label ignored: review the displayed trade before choosing Take or Skip"
+    elif action in {"take", "skip"}:
         review.save_label(
             review.label(strategy, orders[index], state["settings_hash"], action, reason, own_tp),
             folder,
         )
-        labels = review.load_labels(strategy, folder)
+        labels = review.load_labels(strategy, folder, notices)
         status = "Label saved"
     labelled_keys = {review.key(r) for r in labels}
     labelled = {
@@ -87,7 +102,8 @@ def transition(
     }
     index = review.navigate(index, action, len(orders), labelled)
     counts = evaluate(sources, strategy, labels, orders, state)
-    snapshots = review.history(strategy, state["settings_hash"], counts, folder)
+    snapshots = review.history(strategy, state["settings_hash"], counts, folder, notices)
+    status = " \u00b7 ".join(dict.fromkeys(filter(None, [status, *notices])))
     if index is None:
         return (
             None,
@@ -100,9 +116,7 @@ def transition(
             None,
         )
     changed = (
-        previous.get("entry_time") != orders[index]["entry_time"]
-        or action == "run"
-        or previous.get("settings_hash") != state["settings_hash"]
+        previous.get("entry_time") != orders[index]["entry_time"] or action == "run" or not matches
     )
     state["revealed"] = action == "reveal" or (state.get("revealed", False) and not changed)
     state.update(
@@ -194,7 +208,9 @@ def register_callbacks(app, sources, config, results_dir):
                 tp,
                 results_dir / "review",
             )
-        except (ValueError, KeyError, OSError) as error:
+        except LookaheadError:
+            raise
+        except Exception as error:  # noqa: BLE001 - run failures belong in the panel
             return (
                 no_update,
                 no_update,

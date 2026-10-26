@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from math import isfinite
 from pathlib import Path
@@ -16,6 +17,7 @@ from threading import Lock
 
 from dash import dcc, html
 
+from backtester.filelock import file_lock
 from backtester.paths import RESULTS_DIR
 
 LABEL_DIR = RESULTS_DIR / "review"
@@ -58,29 +60,80 @@ def label(strategy, order, run_hash, choice, reason="", own_tp=None):
 
 
 def _path(strategy, folder):
-    if not re.fullmatch(r"[a-zA-Z0-9_-]+", strategy):
+    if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", strategy):
         raise ValueError("Invalid strategy name")
     return Path(folder) / f"{strategy}.jsonl"
 
 
+@contextmanager
+def _locked(folder):
+    # One lock also covers migration from a legacy path that may belong to another
+    # strategy. The thread lock handles same-process callers on all platforms.
+    with _LOCK, file_lock(Path(folder).parent / ".locks" / "review.lock"):
+        yield
+
+
+def _append(path, row):
+    """Append one complete UTF-8 line under the caller's process lock."""
+    payload = (json.dumps(row, allow_nan=False) + "\n").encode("utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+b") as handle:
+        # A crashed writer may have left a fragment. Keep it on its own line so
+        # the next valid record survives and readers can warn about the fragment.
+        handle.seek(0, 2)
+        if handle.tell():
+            handle.seek(-1, 2)
+            if handle.read(1) != b"\n":
+                payload = b"\n" + payload
+        handle.write(payload)
+        handle.flush()
+
+
+def _label_key(row):
+    identity = key(row)
+    label(row["strategy"], row, row["settings_hash"], row["choice"], row["reason"], row["own_tp"])
+    utc(row["label_time"])
+    return identity
+
+
+def _history_key(row):
+    utc(row["evaluated"])
+    for field in ("total", "take_exists", "skip_absent", "agreed"):
+        if not isinstance(row[field], int) or row[field] < 0:
+            raise ValueError("Invalid history count")
+    if row["percent"] is not None and not 0 <= row["percent"] <= 100:
+        raise ValueError("Invalid history percentage")
+    if not isinstance(row["settings_hash"], str):
+        raise TypeError("Invalid settings hash")
+    return row["settings_hash"]
+
+
+def _read(path, row_key, notices):
+    latest = {}
+    if path.exists():
+        for number, line in enumerate(path.read_bytes().splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+                latest[row_key(row)] = row
+            except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
+                if notices is not None:
+                    notices.append(f"Warning: skipped corrupt line {number} in {path.name}")
+    return latest
+
+
 def save_label(row, folder=LABEL_DIR):
     path = _path(row["strategy"], folder)
-    with _LOCK:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(row, allow_nan=False) + "\n")
+    _label_key(row)
+    with _locked(folder):
+        _append(path, row)
 
 
-def load_labels(strategy, folder=LABEL_DIR):
+def load_labels(strategy, folder=LABEL_DIR, notices=None):
     path = _path(strategy, folder)
-    if not path.exists():
-        return []
-    latest = {}
-    with _LOCK:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                row = json.loads(line)
-                latest[key(row)] = row
+    with _locked(folder):
+        latest = _read(path, _label_key, notices)
     return list(latest.values())
 
 
@@ -156,32 +209,64 @@ def layout():
     )
 
 
-def history(strategy, run_hash, counts, folder=LABEL_DIR):
-    """Keep the latest observed agreement for each settings hash (never settings)."""
-    path = _path(strategy + "-history", folder)
-    latest = {}
-    with _LOCK:
-        if path.exists():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                row = json.loads(line)
-                latest[row["settings_hash"]] = row
+def _migrate_history(strategy, folder, path):
+    legacy = _path(strategy + "-history", folder)
+    if not legacy.exists():
+        return
+    history_lines, other_lines = [], []
+    for line in legacy.read_bytes().splitlines(keepends=True):
+        try:
+            row = json.loads(line)
+        except ValueError:
+            row = None
+        # A strategy named '<strategy>-history' owns its labels at this path.
+        if isinstance(row, dict) and "strategy" in row:
+            other_lines.append(line)
+        else:
+            history_lines.append(line)
+    if not history_lines:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not other_lines and not path.exists():
+        legacy.replace(path)
+        return
+    # Merge old records before newer observations; replacement is atomic. On a
+    # crash before removal, a retry only duplicates old lines (last row wins).
+    old = b"".join(history_lines).rstrip(b"\r\n") + b"\n"
+    new = path.read_bytes() if path.exists() else b""
+    temporary = path.with_suffix(".tmp")
+    temporary.write_bytes(old + new)
+    temporary.replace(path)
+    if other_lines:
+        temporary = legacy.with_suffix(".tmp")
+        temporary.write_bytes(b"".join(other_lines))
+        temporary.replace(legacy)
+    else:
+        legacy.unlink()
+
+
+def history(strategy, run_hash, counts, folder=LABEL_DIR, notices=None):
+    """Latest agreement per hash; legacy history moves into its reserved folder."""
+    path = _path(strategy, Path(folder) / "_history")
+    with _locked(folder):
+        _migrate_history(strategy, folder, path)
+        latest = _read(path, _history_key, notices)
         row = dict(settings_hash=run_hash, evaluated=utc(datetime.now(UTC)), **counts)
-        if latest.get(run_hash, {}).get("total") != counts["total"] or any(
-            latest.get(run_hash, {}).get(k) != v for k, v in counts.items()
-        ):
-            path.parent.mkdir(parents=True, exist_ok=True)
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(row) + "\n")
+        if any(latest.get(run_hash, {}).get(k) != v for k, v in counts.items()):
+            _append(path, row)
         latest[run_hash] = row
     return list(latest.values())
 
 
 def agreement_text(counts):
-    percent = "—" if counts["percent"] is None else f"{counts['percent']:.1f}%"
-    return (
-        f"Agreement {percent} · {counts['agreed']}/{counts['total']} labels · "
-        f"take still exists {counts['take_exists']} · skip absent {counts['skip_absent']}"
+    percent = "\u2014" if counts["percent"] is None else f"{counts['percent']:.1f}%"
+    text = (
+        f"Agreement {percent} \u00b7 {counts['agreed']}/{counts['total']} labels \u00b7 "
+        f"take still exists {counts['take_exists']} \u00b7 skip absent {counts['skip_absent']}"
     )
+    if "labels_all" in counts:
+        text += f" \u00b7 {counts['total']} of {counts['labels_all']} labels in this view"
+    return text
 
 
 def history_table(rows):

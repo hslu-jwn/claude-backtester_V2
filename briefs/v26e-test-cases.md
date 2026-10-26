@@ -41,7 +41,8 @@ a dropdown with scalar values `off`, `fvg`, `ob`, `both`. Server mapping also ac
 checklist lists. The two original settings fields retain their IDs and are hidden; settings
 JSON, presets and grid keys retain their boolean values.
 
-Review history is stored separately as `results/review/<strategy>-history.jsonl`; label data
+Review history is stored separately as `results/review/_history/<strategy>.jsonl` (legacy
+`results/review/<strategy>-history.jsonl` is migrated under the process lock); label data
 remains exactly `results/review/<strategy>.jsonl`. History percentages are observations at
 evaluation time, with counts and UTC time. Existing chart candle limits still apply when
 revealing a very long trade; the chart can request a higher timeframe.
@@ -53,3 +54,17 @@ Ruff: all checks passed; all 10 touched Python files pass the formatting check. 
 also passed. The workspace virtualenv's `pytest.exe` was used because pytest is not on PATH.
 Opus cross-review and the user's visual acceptance remain pending; ROADMAP is not marked done.
 No trading-rule questions arose.
+
+## Step 5 review fixes (test first)
+
+- Ignore Take/Skip before Run review and after strategy/hash/settings/symbol/period changes;
+  reject stale trade identity or index; accept a matching visible trade.
+- Spawn several label/history writers; preserve all complete JSON lines and last-label wins;
+  keep process locks in results/.locks. Skip invalid/partial JSON and malformed records,
+  show warnings in the panel, and preserve new appends after an unterminated fragment.
+- Agreement uses only labels in the selected symbol and inclusive UTC period; count all
+  other labels without running them. Show n of N labels in this view. Surface run failures
+  as panel messages while LookaheadError remains an error.
+- Migrate legacy history once to review/_history/<strategy>.jsonl; keep valid labels for
+  a strategy named <strategy>-history intact; reject names starting with underscore.
+- Outside clicks and Escape clear inspection only while a trade focus is present.

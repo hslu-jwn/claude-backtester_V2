@@ -197,6 +197,12 @@ def card(row: dict) -> html.Details:
             className="rr-tile",
         )
     )
+    # Partition by the displayed value, including invalid numeric values; zero is computed.
+    missing, filled = [], []
+    for tile in tiles:
+        value = tile.children[1].children
+        empty = value in ("–", "-", "– / –", "- / -")
+        (missing if empty else filled).append(tile)
     diagnostics = [
         details(
             label,
@@ -215,7 +221,7 @@ def card(row: dict) -> html.Details:
             summary,
             html.Div(
                 [
-                    html.Div(tiles, className="rr-tiles"),
+                    html.Div(filled, className="rr-tiles"),
                     html.Div(
                         rm.flag_tooltip(row.get("flag_keys", [])) or "No warning flags",
                         className="rr-flags",
@@ -229,6 +235,16 @@ def card(row: dict) -> html.Details:
                     if row.get("is_research")
                     else None,
                     dcc.Link("Open results", href=row["href"], className="rr-button rr-results"),
+                    *(
+                        [
+                            details(
+                                f"Not computed yet ({len(missing)})",
+                                html.Div(missing, className="rr-tiles"),
+                            )
+                        ]
+                        if missing
+                        else []
+                    ),
                 ],
                 className="rr-card-body",
             ),

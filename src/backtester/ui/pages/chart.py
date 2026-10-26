@@ -224,6 +224,15 @@ def _cached_replay(sources, symbol, timeframe, start_date, end_date, config, liv
     return Replay(series, higher, overall=overall), message
 
 
+@lru_cache(maxsize=8)
+def _cached_candles(sources, symbol, timeframe, start_date, end_date, config, live_stamp=()):
+    """Base-only replay for immediate candle delivery; overlays load their own context."""
+    frame, message = _load_frame(sources, symbol, timeframe, start_date, end_date, config)
+    if frame is None:
+        return None, message
+    return Replay(CandleSeries(symbol, Timeframe[timeframe], candles_from_frame(frame))), message
+
+
 def _higher_series(sources, symbol, timeframe, start_date, end_date, config) -> list:
     """The chart range on `config.higher_timeframes` above the shown one (e.g. 30m for
     session zones on the 5m chart), read by overlays only through the replay's clocks."""
@@ -434,11 +443,13 @@ def load_replay(
     start_date: str | None,
     end_date: str | None,
     config: ChartConfig = DEFAULT_CONFIG,
+    base_only: bool = False,
 ) -> tuple[Replay | None, str]:
     """(Replay over the chosen candles or None, message). Kept in memory for the next steps
     (restart the app to see days downloaded while it runs)."""
     stamp = sources.fallback_stamp(symbol) if symbol in sources.fallback_dirs else ()
-    return _cached_replay(sources, symbol, timeframe, start_date, end_date, config, stamp)
+    loader = _cached_candles if base_only else _cached_replay
+    return loader(sources, symbol, timeframe, start_date, end_date, config, stamp)
 
 
 def default_start(replay: Replay) -> int:
@@ -637,7 +648,7 @@ def base_payload(
 ) -> tuple[dict | None, str]:
     """(candles up to the cursor + session lines, message). The cursor is the last candle,
     or in replay (start picked) the candle closed at the replay time `now`."""
-    replay, message = load_replay(sources, symbol, timeframe, start_date, end_date, config)
+    replay, message = load_replay(sources, symbol, timeframe, start_date, end_date, config, True)
     if replay is None:
         return None, message
     if review_state:
@@ -865,6 +876,7 @@ def order_draw_payload(
     return {
         "key": review_key(chart_key(symbol, timeframe, start_date, end_date, config), review_state),
         "items": items,
+        "focused": bool(order) and not bool(review_state),
         "inspections": inspections,
     }
 
