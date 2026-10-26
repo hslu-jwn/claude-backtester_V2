@@ -14,9 +14,9 @@ Spec: ROADMAP.md › 0.2, 2.1; confluences.md › Strong-move filter.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pandas as pd
 
@@ -37,17 +37,30 @@ ATR_WARMUP_PERIODS = 20
 ATR_WARMUP_EXTRA = timedelta(days=4)
 
 
+def _zone(value: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise argparse.ArgumentTypeError(f"unknown time zone: {value}") from exc
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("symbol", choices=DEFAULT_SOURCES.symbols)
     p.add_argument("timeframe", choices=[tf.name for tf in Timeframe if supported(tf)])
     p.add_argument("start", type=datetime.fromisoformat, help="UTC, e.g. 2026-09-02T13:00")
     p.add_argument("end", type=datetime.fromisoformat, help="UTC, exclusive")
-    p.add_argument("--tz", type=ZoneInfo, help="also show open time in this time zone")
+    p.add_argument("--tz", type=_zone, help="also show open time in this time zone")
     p.add_argument("--atr", type=int, metavar="N", help="add ATR(N) and the strong-move flag")
     p.add_argument("--atr-mult", type=float, default=StrongMoveConfig().atr_mult, metavar="K")
     p.add_argument("--cache-dir", type=Path, help="default: the symbol's source (data/sources.py)")
     args = p.parse_args(argv)
+    args.start = (
+        args.start.replace(tzinfo=UTC) if args.start.tzinfo is None else args.start.astimezone(UTC)
+    )
+    args.end = args.end.replace(tzinfo=UTC) if args.end.tzinfo is None else args.end.astimezone(UTC)
+    if args.end <= args.start:
+        p.error("end must be after start")
 
     adapter = (
         CacheAdapter(args.cache_dir) if args.cache_dir else DEFAULT_SOURCES.adapter(args.symbol)
@@ -88,7 +101,7 @@ def add_atr(
             full = adapter.fetch_frame(args.symbol, timeframe, from_, args.end)
             break
         except MissingCacheError:
-            from_ = datetime.combine(from_.date() + timedelta(days=1), datetime.min.time())
+            from_ = datetime.combine(from_.date() + timedelta(days=1), datetime.min.time(), UTC)
             if from_ >= args.start:
                 full, from_ = frame, args.start
                 break

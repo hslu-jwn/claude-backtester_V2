@@ -887,10 +887,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def default_out(args: argparse.Namespace) -> Path:
+    suffix = f"{args.source}_seed{args.seed}_runs{args.runs}"
     if args.run:
-        return Path(args.results_dir) / MONTE_CARLO_DIR / args.run
+        return Path(args.results_dir) / MONTE_CARLO_DIR / f"{args.run}_{suffix}"
     name = f"{args.strategy}_{'-'.join(args.symbols)}_{args.start}_{args.end}"
-    return RESULTS_DIR / MONTE_CARLO_DIR / name
+    return RESULTS_DIR / MONTE_CARLO_DIR / f"{name}_{suffix}"
 
 
 def write_outputs(summary: dict, out: Path) -> None:

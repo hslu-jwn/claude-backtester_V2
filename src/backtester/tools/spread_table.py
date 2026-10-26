@@ -33,15 +33,13 @@ import numpy as np
 import pandas as pd
 
 from backtester.core.models import Timeframe
-from backtester.data.adapters.mt5_adapter import Mt5Adapter, ServerClock
+from backtester.data.adapters.mt5_adapter import Mt5Adapter
+from backtester.data.mt5_download import DEFAULT_CLOCK, DEFAULT_NAMES, DEFAULT_SYMBOLS
 from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 from backtester.engine.spread_table import STATS, SpreadTable
 from backtester.paths import DATA_DIR
 
 DEFAULT_OUT = DATA_DIR / "spreads"
-DEFAULT_NAMES = {"NAS100": "US100.cash", "US500": "US500.cash"}
-DEFAULT_CLOCK = ServerClock("America/New_York", 7)
-DEFAULT_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 FIRST_YEAR = 2015
 MIN_BARS = 100  # valid bars a (symbol, year, hour) cell needs
 

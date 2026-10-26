@@ -38,7 +38,7 @@ from pathlib import Path
 import pandas as pd
 
 from backtester.core.models import Candle, Timeframe
-from backtester.data.adapters.mt5_adapter import Mt5Adapter, Mt5Error, ServerClock
+from backtester.data.adapters.mt5_adapter import Mt5Adapter, Mt5NoHistory, ServerClock
 from backtester.data.cache import (
     COLUMNS,
     MT5_CACHE_DIR,
@@ -130,6 +130,12 @@ def download_symbol(
     history, up to yesterday). Existing day files are overwritten."""
     start = start or FIRST_DAY
     end = end or adapter.now().astimezone(UTC).date() - timedelta(days=1)
+    if end >= adapter.now().astimezone(UTC).date():
+        raise ValueError("end must be before today UTC (only complete days)")
+    if end < start:
+        raise ValueError("end must be on or after start")
+    if chunk_days < 1:
+        raise ValueError("chunk_days must be positive")
     first_bar: date | None = None
     bars_n = written = empty = 0
     first_day = last_day = None
@@ -139,7 +145,7 @@ def download_symbol(
         try:
             # one padded day each side: a UTC day sits in two server days
             bars = utc_bars(adapter, symbol, day - timedelta(days=1), stop + timedelta(days=1))
-        except Mt5Error:
+        except Mt5NoHistory:
             if first_bar is not None:
                 raise
             bars = None  # before the terminal's history: not an error, nothing to write

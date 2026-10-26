@@ -220,6 +220,29 @@ Research tools that name `MT5_CACHE_DIR` / `DEFAULT_CACHE_DIR` explicitly keep t
 
 ### histdata.com (backtest history, every symbol)
 
+- **V2.6b clock periods (offline audit, 2026-10-26):**
+
+  | Local file dates | Clock rule | Evidence / action |
+  |---|---|---|
+  | 2015-01-01 through 2018-12-31 | `America/New_York` including US DST | Every sampled US/EU gap-week GBPUSD Sunday open and Friday close is 18:00 NY under the old conversion; the US rule restores 17:00. Gold closes corroborate it. |
+  | 2019 onward | NY standard time plus `Europe/London` DST | 2019 gap-week FX opens/closes are already 17:00 NY; 2020/2021 checks agree. Existing later-year conversion retained. |
+  | Before 2015 | Existing European-date rule retained, unverified here | No histdata cache/reference available in this audit; no new clock rule inferred. |
+
+  `histdata_to_utc` uses `zoneinfo` for these periods and rejects ambiguous/nonexistent
+  wall-clock minutes. Measurements precede implementation: `results/clock_check_histdata.md`,
+  dated edges and price matches in `results/v26b_clock_*.csv`; reproduce with
+  `python scripts/v26b_clock_evidence.py` against the original caches. Its two measurement
+  passes are bounded to 540 seconds each (observed approximately 2 and 6 seconds).
+  The European-clock description below applies from 2019, not to 2015–2018.
+- **V2.6b import validation:** `ImportConfig.max_day_close_jump` defaults to 0.25.
+  An unexplained daily-close jump above it stops that symbol before writes and names
+  the file/date; weekends alone do not explain an instrument substitution. Documented
+  exemptions are explicit `(symbol, UTC date, reason)` entries in `explained_jumps`.
+  GER40/GRXEUR is excluded from **UTC 2020-06-15 onward**, including existing cached
+  days, because it becomes Euro Stoxx rather than DAX. Raw files are retained.
+  Import all adjacent yearly/monthly periods together to complete the UTC January 1
+  day from both files; `scripts/rebuild_cache_v26b.md` supplies one queue job per symbol.
+
 - M1 files in MetaTrader format, per month (`DAT_MT_{SYMBOL}_M1_{YYYYMM}.csv`, the
   current year) or per year (`DAT_MT_{SYMBOL}_M1_{YYYY}.csv`, full past years), plain or
   inside histdata's zip files, put in `data/raw/histdata/<SYMBOL>/` by hand, one subfolder
@@ -301,6 +324,41 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
   connected to).
 
 **Candles (`Mt5Adapter`, a `DataAdapter`)**
+
+- **V2.6b historical cache repair:** there is no universally proven pre-2020 server rule.
+  `data/cache_repair.py` therefore proves each input UTC day against corrected histdata
+  using M1 close errors for candidate shifts −1, 0, +1 hours, not a guessed yearly rule.
+  `QualityConfig` requires at least 100 matched bars and 50% coverage, a best median
+  error at most 50% of reference median M1 range, and runner-up error at least twice the
+  best plus 25% of that range. Flat/short/ambiguous references cannot prove a clock.
+  Only proved days survive; bars are regrouped across UTC midnight after correction.
+  Pre-2015 days lack a histdata reference and are excluded; other unproved pre-2020 days,
+  including MT5-only symbols without references, are also excluded. Empty weekends remain
+  closed days. There is no invented Friday offset for 2010–2014.
+  Per-symbol/year weekday bar counts strictly below
+  `QualityConfig.min_weekday_share` (0.5) times the median weekday count, and empty
+  weekdays, are missing; this density check applies in all years. Removing active day
+  files makes `PreferredCacheAdapter` fall back to histdata; MT5 remains preferred on
+  every retained day. Direct MT5-only requests report missing data when no replacement exists.
+  Run the offline `tools.cache_repair SYMBOL` **after** corrected histdata is rebuilt.
+  It locks per symbol with `filelock.py`, retains affected original files under
+  `_v26b_original/`, stages measurements before active writes, and writes each day's
+  proof/exclusion to `_v26b_reports/SYMBOL.json`. Reruns always start from originals.
+  See `results/clock_check_mt5.md`: 2015–2019 sampled gap days often need +1 hour, with
+  exceptions. Independent anchors and `mt5_compare.weekly_offsets` on cached overlaps
+  also show XAUUSD residual shifts during 2020 and March 2021; those modern clock
+  corrections remain outside this pre-2020 repair and need a separate decision.
+  The 2023 golden check is run by Opus after rebuild, never regenerated to accept a change.
+- **Downloader errors:** only `Mt5NoHistory` (`RES_E_NOT_FOUND` after symbol validation)
+  may be skipped before the first dense history day. Other first-chunk errors fail the
+  command. `--end` must be before today UTC. Binance daily 404 holes are retried once;
+  a second 404 is reported missing and remains eligible next run.
+- **Offline checks and output:** `tools.check` reads one M1 year at a time through the
+  preferred sources, carries cross-year gaps, and computes outlier limits per year
+  (labelled explicitly); its full-history M5 median remains exact. Monte Carlo default
+  output folders include source, seed and run count, also for saved runs. No `--part`
+  tools remain. Day-cache writes reuse the queue's unique-temp/atomic-replace pattern
+  and bounded Windows sharing retries; symbol repair reuses its independent file lock.
 
 - Bar time = candle **open** time in the broker's **server time**, written as if it were
   UTC. `ServerClock(zone, shift_hours)`: server time = local time in an IANA zone + a

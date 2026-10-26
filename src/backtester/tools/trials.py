@@ -44,6 +44,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub.add_parser("list", help="per family: N, lines with a Sharpe, V")
     args = p.parse_args(argv)
     if args.command == "add":
+        if args.count is not None and args.count < 0:
+            p.error("--count must be >= 0")
         stats = (args.trades, args.mean, args.sd)
         if args.count is None and None in stats:
             p.error("add needs --count, or --trades with --mean and --sd")

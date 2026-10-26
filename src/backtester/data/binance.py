@@ -313,7 +313,11 @@ def download_month(
         try:
             bars_n += _process_zip(cfg, symbol, url, [d], fetch, log)
         except NotFoundError:
-            missing += 1
+            # Retry each day hole once; only a second 404 remains missing.
+            try:
+                bars_n += _process_zip(cfg, symbol, url, [d], fetch, log)
+            except NotFoundError:
+                missing += 1
     return MonthResult(symbol, month, bars_n, False, True, missing)
 
 

@@ -86,3 +86,30 @@ results\pytest_v26b.log 2>&1` plus any other folder you changed). The evidence m
 (items 1-2) may read the existing caches; keep each under ~10 minutes and write a log.
 Report: files changed, test results, the evidence tables' conclusions (which periods are
 proven, which are dropped), what you removed (item 7), open questions.
+
+## Addendum after review (Opus, 2026-10-26; decisions of the user the same day)
+
+Your report (`briefs/v26b-report.md`) drops every pre-2020 MT5 day without a direct histdata
+price match, so MT5-only symbols (US30, US2000, ...) lose all pre-2020 history. Change:
+
+A. **One server clock (decision of the user):** FTMO's MT5 server has one clock for all
+   symbols. Prove the server offset **per date** from the symbols that have histdata (FX,
+   gold, indices with histdata) and apply that date's proven offset to **every** MT5 symbol
+   on that date, including MT5-only symbols. A date whose offset cannot be proven (no
+   reference symbol, or reference symbols disagree) is dropped for all symbols on that date
+   (histdata fills where it exists). If reference symbols disagree on the same date (e.g. FX
+   says NY+7, XAUUSD says NY+6), do not average or guess: record the date as ambiguous in
+   the report with both readings, drop it, and list the count per year so Opus can judge
+   whether a symbol-specific effect (session times) rather than the clock explains it.
+   Keep the sparse / empty-day rule (per symbol) as it is.
+B. **Extend through the development period (decision of the user):** the per-date proof runs
+   from the start of the MT5 cache through **2021-09-13** (development end; the MT5 test
+   period from 2021-09-14 keeps the plain NY+7 rule, verify it still holds on a sample and
+   report). This covers the XAUUSD 2020 / March 2021 residual you found.
+C. Update `results/clock_check_mt5.md` (per-year table: dates proven / ambiguous / no
+   reference, per symbol the days kept vs dropped) and `scripts/rebuild_cache_v26b.md`;
+   tests for: an MT5-only symbol takes the date's offset from a reference symbol; disagreeing
+   references -> dropped + listed; no reference -> dropped; a test-period date untouched.
+   `docs/ARCHITECTURE.md` › Data sources: describe the per-date server clock table.
+
+Do not run the rebuild. Run `pytest -q tests/data tests/tools > results\pytest_v26b2.log 2>&1`.

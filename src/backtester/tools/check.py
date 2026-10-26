@@ -362,12 +362,17 @@ def spot_check(
     return pd.DataFrame(rows)
 
 
-def doji_by_period(m5: pd.DataFrame, max_body: float | None) -> pd.DataFrame:
+def doji_by_period(
+    m5: pd.DataFrame,
+    max_body: float | None,
+    *,
+    last_year: int | None = None,
+) -> pd.DataFrame:
     """Per year (per quarter for the last year): 5m candles, median range, share of dojis
     (body <= `max_body`, swings.py `is_doji`) and the gold rule's threshold for that
     median range."""
     ts = m5["ts"]
-    last = ts.dt.year.max()
+    last = ts.dt.year.max() if last_year is None else last_year
     quarter = "Q" + ts.dt.quarter.astype(str)
     period = ts.dt.year.astype(str).where(ts.dt.year < last, ts.dt.year.astype(str) + " " + quarter)
     frame = pd.DataFrame(
@@ -404,6 +409,8 @@ def history_spot_times(traded_days: set[date], config: DataCheckConfig) -> list[
             t = datetime.combine(day, config.history_spot_time_utc, UTC)
             by.setdefault((day.year, dst_season(t)), []).append(t)
     years = sorted({y for y, _ in by})
+    if not years:
+        return []
     seasons = (SUMMER, WINTER, US_ONLY)
     out: list[datetime] = []
     n = config.history_spot_count
@@ -436,15 +443,21 @@ def check_symbol(
     end: date | None = None,
     spot: list[datetime] | None = None,
     config: DataCheckConfig = DEFAULT_CONFIG,
+    *,
+    sources: SymbolSources | None = None,
 ) -> SymbolReport:
     """Build the report for days start <= day < end that are in the cache."""
+    adapter = sources.adapter(symbol) if sources else CacheAdapter(cache_dir)
+    available = (
+        {d: adapter._path(symbol, d) for d in sources.cached_days(symbol)}
+        if sources
+        else {date.fromisoformat(p.stem): p for p in (Path(cache_dir) / symbol).glob("*/*.parquet")}
+    )
     paths = {}
-    for path in (Path(cache_dir) / symbol).glob("*/*.parquet"):
-        day = date.fromisoformat(path.stem)
+    for day, path in available.items():
         if (start is None or day >= start) and (end is None or day < end):
             paths[day] = path
     days = sorted(paths)
-    raw, file_day, empty = _read_days(paths)
     missing = []
     if days:
         span = [days[0] + timedelta(days=i) for i in range((days[-1] - days[0]).days + 1)]
@@ -452,7 +465,7 @@ def check_symbol(
     report = SymbolReport(
         symbol=symbol,
         cached_days=days,
-        empty_days=empty,
+        empty_days=[],
         missing_days=missing,
         first_traded=None,
         last_traded=None,
@@ -463,35 +476,69 @@ def check_symbol(
         price_range=pd.DataFrame(),
         spot=pd.DataFrame(),
     )
-    if raw.empty:
+    # Only raw M1 for one year is held at once. Keep small summaries and M5 range
+    # arrays for the exact history median. Outlier limits are explicitly per year.
+    ranges, prices, dojis = [], [], []
+    traded_days = set()
+    years = sorted({d.year for d in paths})
+    last_traded = None
+    for year in years:
+        raw, file_day, empty = _read_days({d: p for d, p in paths.items() if d.year == year})
+        report.empty_days.extend(empty)
+        if raw.empty:
+            continue
+        filled = raw["bid_volume"].notna().groupby(file_day.to_numpy()).any()
+        short_files = [str(d) for d, k in Counter(file_day).items() if k != 24 * 60 and filled[d]]
+        findings = [
+            *integrity_findings(raw, file_day, config),
+            Finding(
+                "non-empty file without 1440 rows", len(short_files), short_files[: config.examples]
+            ),
+        ]
+        _merge_findings(report.integrity, findings, config.examples)
+        traded = drop_flat_minutes(raw).sort_values("ts", ignore_index=True)
+        if traded.empty:
+            continue
+        first = traded["ts"].iloc[0].to_pydatetime()
+        if last_traded is not None and first > last_traded + MINUTE:
+            report.gaps.append(
+                Gap(
+                    last_traded + MINUTE,
+                    first,
+                    classify_gap(last_traded + MINUTE, first, set(missing), config),
+                )
+            )
+        report.first_traded = report.first_traded or first
+        last_traded = traded["ts"].iloc[-1].to_pydatetime()
+        report.last_traded = last_traded
+        report.traded_minutes += len(traded)
+        report.gaps.extend(find_gaps(traded["ts"], set(missing), config))
+        outliers = outlier_findings(traded, config)
+        if len(years) > 1:
+            for finding in outliers:
+                finding.name = f"{year}: {finding.name}"
+        report.outliers.extend(outliers)
+        prices.append(price_range(traded))
+        m5 = resample(traded, Timeframe.M5)
+        ranges.append((m5["high"] - m5["low"]).to_numpy())
+        dojis.append(
+            doji_by_period(
+                m5,
+                SwingConfig().doji_max_body.get(symbol),
+                last_year=years[-1],
+            )
+        )
+        traded_days.update(traded["ts"].dt.date)
+        del raw, file_day, traded, m5
+    if prices:
+        report.price_range = (
+            pd.concat(prices).groupby(level=0).agg(low=("low", "min"), high=("high", "max"))
+        )
+        report.median_m5_range = float(np.median(np.concatenate(ranges)))
+    if days and (days[-1] - days[0]).days > 365 and dojis:
+        report.doji_periods = pd.concat(dojis)
+    if not traded_days:
         return report
-
-    # A source that fills every minute (flat zero-volume filler, volume 0) has 1440 rows per
-    # day; histdata.com leaves non-trading minutes out (volume unknown = NaN).
-    filled = raw["bid_volume"].notna().groupby(file_day.to_numpy()).any()
-    rows_per_file = Counter(file_day)
-    short_files = [str(d) for d, k in rows_per_file.items() if k != 24 * 60 and filled[d]]
-    report.integrity = [
-        *integrity_findings(raw, file_day, config),
-        Finding(
-            "non-empty file without 1440 rows", len(short_files), short_files[: config.examples]
-        ),
-    ]
-    traded = drop_flat_minutes(raw).sort_values("ts", ignore_index=True)
-    if traded.empty:
-        return report
-
-    report.first_traded = traded["ts"].iloc[0].to_pydatetime()
-    report.last_traded = traded["ts"].iloc[-1].to_pydatetime()
-    report.traded_minutes = len(traded)
-    report.gaps = find_gaps(traded["ts"], set(missing), config)
-    report.outliers = outlier_findings(traded, config)
-    report.price_range = price_range(traded)
-    m5 = resample(traded, Timeframe.M5)
-    report.median_m5_range = float((m5["high"] - m5["low"]).median())
-    if days and (days[-1] - days[0]).days > 365:
-        report.doji_periods = doji_by_period(m5, SwingConfig().doji_max_body.get(symbol))
-    traded_days = set(traded["ts"].dt.date)
     long = days and (days[-1] - days[0]).days > 365
     spot_times = spot or (
         history_spot_times(traded_days, config)
@@ -499,8 +546,18 @@ def check_symbol(
         else default_spot_times(days, traded_days, config)
     )
     if spot_times:
-        report.spot = spot_check(CacheAdapter(cache_dir), symbol, spot_times, config)
+        report.spot = spot_check(adapter, symbol, spot_times, config)
     return report
+
+
+def _merge_findings(target: list[Finding], incoming: list[Finding], examples: int) -> None:
+    for finding in incoming:
+        existing = next((f for f in target if f.name == finding.name), None)
+        if existing is None:
+            target.append(finding)
+        else:
+            existing.count += finding.count
+            existing.examples = (existing.examples + finding.examples)[:examples]
 
 
 @dataclass(frozen=True, slots=True)
@@ -684,7 +741,13 @@ def main(argv: list[str] | None = None) -> int:
     for symbol in args.symbols:
         config = config_for(symbol)
         report = check_symbol(
-            sources.cache_dir(symbol), symbol, args.start, args.end, args.spot, config
+            sources.cache_dir(symbol),
+            symbol,
+            args.start,
+            args.end,
+            args.spot,
+            config,
+            sources=sources,
         )
         print(format_report(report, config), end="\n\n", flush=True)
         problems |= any(f.count for f in report.integrity) or bool(report.missing_days)

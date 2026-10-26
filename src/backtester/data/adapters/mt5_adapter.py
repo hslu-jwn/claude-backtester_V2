@@ -53,6 +53,10 @@ class Mt5Error(RuntimeError):
     """A call to the terminal failed; the message has MT5's error text."""
 
 
+class Mt5NoHistory(Mt5Error):
+    """MT5 specifically returned RES_E_NOT_FOUND after validating the symbol."""
+
+
 def load_mt5() -> ModuleType:
     try:
         return importlib.import_module("MetaTrader5")
@@ -177,6 +181,9 @@ class Mt5Adapter(DataAdapter):
             name, mt5_timeframe(self.mt5, timeframe), server_from, server_to
         )
         if rates is None:
+            code, _ = self.mt5.last_error()
+            if code == getattr(self.mt5, "RES_E_NOT_FOUND", -4):
+                raise Mt5NoHistory(f"{name} {timeframe.name}: no history for requested range")
             raise Mt5Error(f"{name} {timeframe.name}: no bars ({self._error()})")
         return rates_frame(rates, point)
 

@@ -24,4 +24,6 @@ results/
 
 # Stray files from Windows paths glued into a name
 CUsers*
-C*Users*claude-notify-signals*  # the same with a private-use character after C
+# The same with a private-use character after C
+C*Users*claude-notify-signals*
+C:Usersjusti.claudeclaude-notify-signalsstop

@@ -99,7 +99,7 @@ def test_default_out_folder_names_strategy_symbols_and_period():
                     "--strategy", "gap_fade"])  # fmt: skip
     assert tool.default_out(a).parts[-2:] == (
         "monte_carlo",
-        "gap_fade_NAS100-US500_2020-01-01_2021-09-13",
+        "gap_fade_NAS100-US500_2020-01-01_2021-09-13_histdata_seed42_runs1000",
     )
 
 
@@ -418,7 +418,10 @@ def test_run_option_other_strategy_has_no_kind_b(tmp_path, stub):
 def test_run_option_default_out_is_the_runs_folder_under_monte_carlo(tmp_path, stub):
     folder = make_run(tmp_path)
     args = parse_args(["--run", folder.name, "--results-dir", str(folder.parent)])
-    assert tool.default_out(args) == folder.parent / "monte_carlo" / folder.name
+    assert (
+        tool.default_out(args)
+        == folder.parent / "monte_carlo" / f"{folder.name}_histdata_seed42_runs1000"
+    )
 
 
 def test_run_option_unknown_run_is_a_clear_error(tmp_path, stub):

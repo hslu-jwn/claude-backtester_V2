@@ -29,6 +29,8 @@ unpacking. One minute per line:
   the one that was cached at 13:00). Europe changes on a Sunday at 01:00 UTC, when FX is
   closed, so the skipped and the repeated hour should have no minutes; if one does, the
   import stops (`HistdataError`) instead of guessing its UTC time.
+  Exception proven in V2.6b: local dates 2015–2018 follow America/New_York US DST.
+  See ARCHITECTURE.md > Data sources and results/clock_check_histdata.md for evidence.
 - Prices are **bid** only and already decimal (no point factor). The `ask_*` columns are
   left empty (NaN), so candles get `spread` = NaN (unknown).
 - Volume is always 0 in these files, i.e. unknown: it is stored as NaN, not 0. Minutes
@@ -94,6 +96,25 @@ SYMBOL_NAMES = MappingProxyType(
 
 class HistdataError(ValueError):
     """A file that doesn't look like a histdata MT M1 file; nothing is cached from it."""
+
+
+@dataclass(frozen=True, slots=True)
+class ImportConfig:
+    """Spec: ARCHITECTURE.md > Data sources; V2.6b data validation settings."""
+
+    max_day_close_jump: float = 0.25
+    # A weekend alone is not an explanation for a different instrument's price.
+    explained_jumps: tuple[tuple[str, date, str], ...] = ()
+
+    def __post_init__(self):
+        if self.max_day_close_jump <= 0:
+            raise ValueError("max_day_close_jump must be positive")
+        if any(not reason.strip() for _, _, reason in self.explained_jumps):
+            raise ValueError("every continuity exemption needs an explanation")
+
+
+IMPORT_CONFIG = ImportConfig()
+GER40_END = date(2020, 6, 15)  # first invalid UTC day: GRXEUR switches instrument
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,21 +283,53 @@ def merge_duplicate_minutes(frame: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def import_files(paths: Iterable[Path], cache_dir: Path = DEFAULT_CACHE_DIR):
+def import_files(
+    paths: Iterable[Path],
+    cache_dir: Path = DEFAULT_CACHE_DIR,
+    config: ImportConfig = IMPORT_CONFIG,
+):
     """Import month / year files, csv or zip (any symbols); one ImportResult per symbol."""
     by_symbol: dict[str, list[MonthFile]] = {}
     for path in paths:
         for mf in files_in(Path(path)):
             by_symbol.setdefault(mf.symbol, []).append(mf)
-    return [import_symbol(sym, files, cache_dir) for sym, files in sorted(by_symbol.items())]
+    return [
+        import_symbol(sym, files, cache_dir, config) for sym, files in sorted(by_symbol.items())
+    ]
 
 
-def import_symbol(symbol: str, files: list[MonthFile], cache_dir: Path) -> ImportResult:
+def import_symbol(
+    symbol: str,
+    files: list[MonthFile],
+    cache_dir: Path,
+    config: ImportConfig = IMPORT_CONFIG,
+) -> ImportResult:
     files = sorted(files, key=lambda f: f.month)
     for a, b in pairwise(files):
         if b.month < a.end:
             raise HistdataError(f"{symbol}: {a.name} and {b.name} overlap (the same period twice)")
     parts = [parse_histdata_mt(f) for f in files]
+    previous_close = None
+    for index, (mf, part) in enumerate(zip(files, parts)):
+        if index and files[index - 1].end != mf.month:
+            previous_close = None  # absent periods cannot establish daily continuity
+        if symbol == "GER40":
+            part = part.loc[part["ts"].dt.date < GER40_END].copy()
+            parts[index] = part
+        closes = part.groupby(part["ts"].dt.date)["bid_close"].last()
+        for day, close in closes.items():
+            explained = any(s == symbol and d == day for s, d, _ in config.explained_jumps)
+            if (
+                previous_close is not None
+                and not explained
+                and abs(close / previous_close - 1) > config.max_day_close_jump
+            ):
+                raise HistdataError(
+                    f"{mf.name}: {day}: day-close price jump from {previous_close:g} to {close:g} "
+                    f"exceeds {config.max_day_close_jump:.0%}; import stopped; "
+                    "requires an explicit documented weekend/holiday explanation"
+                )
+            previous_close = close
     merged = sum(p.attrs.get("merged_minutes", 0) for p in parts)
     frame = pd.concat(parts, ignore_index=True)
     covered = _covered_intervals(files)
@@ -284,7 +337,14 @@ def import_symbol(symbol: str, files: list[MonthFile], cache_dir: Path) -> Impor
     written, empty, partial = [], [], []
     by_day = {day: rows for day, rows in frame.groupby(frame["ts"].dt.date, sort=False)}
     minutes = 0
+    if symbol == "GER40":
+        # Performed only by the requested re-import job, never at module import.
+        for path in (Path(cache_dir) / symbol).glob("*/*.parquet"):
+            if date.fromisoformat(path.stem) >= GER40_END:
+                path.unlink()
     for day in days:
+        if symbol == "GER40" and day >= GER40_END:
+            continue
         start = datetime.combine(day, datetime.min.time(), UTC)
         if not any(a <= start and start + timedelta(days=1) <= b for a, b in covered):
             partial.append(day)
@@ -329,9 +389,24 @@ def _summer_time(utc: pd.Series) -> pd.Series:
 
 
 def histdata_to_utc(local: pd.Series) -> pd.Series:
-    """histdata clock (naive) -> UTC: minus New York's standard offset, minus Europe's
-    summer time. A time in the hour Europe's change skips or repeats (Saturday evening on
-    this clock, FX closed) has no single answer: `HistdataError`."""
+    """Naive file clock -> UTC: US DST in 2015–2018, European dates otherwise.
+
+    Spec: ARCHITECTURE.md > Data sources > histdata.com. Ambiguous/nonexistent
+    transition minutes have no single answer and raise `HistdataError`.
+    """
+    # Proven 2015–2018 US dates: results/clock_check_histdata.md. Other years retain
+    # the previously measured European dates. Spec: ARCHITECTURE.md > Data sources.
+    us = local.dt.year.between(2015, 2018)
+    if us.any():
+        try:
+            converted = local[us].dt.tz_localize(NEW_YORK, ambiguous="raise", nonexistent="raise")
+        except ValueError as exc:
+            raise HistdataError(f"histdata US summer time transition: {exc}") from exc
+        out = pd.Series(index=local.index, dtype="datetime64[ns, UTC]")
+        out.loc[us] = converted.dt.tz_convert(UTC)
+        if (~us).any():
+            out.loc[~us] = histdata_to_utc(local[~us])
+        return out
     winter = (local - _standard_offset(NEW_YORK)).dt.tz_localize(UTC)  # if no summer time
     summer = winter - _HOUR  # if summer time
     is_winter = _summer_time(winter) == pd.Timedelta(0)
@@ -357,10 +432,15 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("paths", nargs="+", type=Path, help="DAT_MT_*_M1_*.csv / .zip files or folders")
     p.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
+    p.add_argument("--max-day-close-jump", type=float, default=ImportConfig().max_day_close_jump)
     args = p.parse_args(argv)
     if not any(files_in(p_) for p_ in args.paths):
         p.error("no DAT_MT_*_M1_* files found")
-    for r in import_files(args.paths, args.cache_dir):
+    try:
+        results = import_files(args.paths, args.cache_dir, ImportConfig(args.max_day_close_jump))
+    except (HistdataError, ValueError) as exc:
+        p.exit(1, f"histdata: {exc}\n")
+    for r in results:
         print(f"{r.symbol}: {len(r.days_written)} days, {r.minutes:,} minutes -> {args.cache_dir}")
         if r.merged_minutes:
             print(f"  merged {r.merged_minutes} minutes that appeared twice (feed glitch)")

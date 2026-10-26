@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
-from backtester.data.adapters.mt5_adapter import Mt5Adapter
+from backtester.data.adapters.mt5_adapter import Mt5Adapter, Mt5Error
 from backtester.data.cache import MT5_CACHE_DIR
 from backtester.data.mt5_download import (
     DEFAULT_CLOCK,
@@ -34,6 +34,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--end", type=date.fromisoformat, default=None, help="default: yesterday UTC")
     p.add_argument("--out", type=Path, default=MT5_CACHE_DIR)
     args = p.parse_args(argv)
+    if args.end is not None and args.end >= datetime.now(UTC).date():
+        p.error("--end must be before today UTC")
+    if args.start is not None and args.end is not None and args.end < args.start:
+        p.error("--end must be on or after --start")
     settings = load_trading_settings()
     names = {**DEFAULT_NAMES, **{s: n for s, n in settings.symbols.items() if n != s}}
     clock = settings.server_clock or DEFAULT_CLOCK
@@ -41,9 +45,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     with session(settings, None) as mt5:
         adapter = Mt5Adapter(mt5, clock, names)
         for symbol in (s.upper() for s in args.symbols):
-            r = download_symbol(
-                adapter, symbol, args.start, args.end, args.out, log=lambda t: print(t, flush=True)
-            )
+            try:
+                r = download_symbol(
+                    adapter,
+                    symbol,
+                    args.start,
+                    args.end,
+                    args.out,
+                    log=lambda t: print(t, flush=True),
+                )
+            except (Mt5Error, ValueError) as exc:
+                p.exit(1, f"MT5 download: {exc}\n")
             print(
                 f"{symbol} ({names.get(symbol, symbol)}): {r.bars:,} bars, {r.days_written} days "
                 f"({r.days_empty} empty), {r.first_day} .. {r.last_day}",

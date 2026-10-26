@@ -10,6 +10,8 @@ an empty file, so it is known and not mistaken for a missing day.
 from __future__ import annotations
 
 import os
+import tempfile
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
@@ -36,7 +38,29 @@ def cache_path(cache_dir: Path, symbol: str, day: date) -> Path:
 
 
 def read_cached_day(path: Path) -> pd.DataFrame:
-    return pd.read_parquet(path)
+    return _retry_permission(lambda: pd.read_parquet(path))
+
+
+@dataclass(frozen=True)
+class CacheIOConfig:
+    timeout: float = 5.0
+    poll: float = 0.05
+
+
+CACHE_IO = CacheIOConfig()
+
+
+def _retry_permission(action):
+    """Bounded Windows sharing retries, matching the queue's atomic I/O pattern."""
+    deadline = time.monotonic() + CACHE_IO.timeout
+    while True:
+        try:
+            return action()
+        except PermissionError:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise
+            time.sleep(min(CACHE_IO.poll, remaining))
 
 
 @dataclass(frozen=True)
@@ -66,13 +90,19 @@ def read_cached_days(
     if not paths:
         return empty_cache_frame()
     if on_chunk is None:
-        table = pyarrow.dataset.dataset([str(p) for p in paths], format="parquet").to_table()
+        table = _retry_permission(
+            lambda: pyarrow.dataset.dataset([str(p) for p in paths], format="parquet").to_table()
+        )
     else:
         tables = []
         for i in range(0, len(paths), chunk_files):
             chunk = paths[i : i + chunk_files]
             tables.append(
-                pyarrow.dataset.dataset([str(p) for p in chunk], format="parquet").to_table()
+                _retry_permission(
+                    lambda chunk=chunk: pyarrow.dataset.dataset(
+                        [str(p) for p in chunk], format="parquet"
+                    ).to_table()
+                )
             )
             on_chunk(i + len(chunk), len(paths))
         table = pa.concat_tables(tables, promote_options="permissive")  # ms / us files mix
@@ -90,6 +120,12 @@ def write_atomic(frame: pd.DataFrame, path: Path) -> None:
     """Write via a temp file + rename so an interrupted run never leaves a half file
     that would later be skipped as 'cached'."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".parquet.tmp")
-    frame.to_parquet(tmp, index=False)
-    os.replace(tmp, path)
+    # Reuse V2.6a's unique-temp/replace pattern. Whole-symbol repair jobs hold
+    # file_lock separately; individual day writes remain atomic and leave no sidecars.
+    fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    os.close(fd)
+    try:
+        frame.to_parquet(name, index=False)
+        _retry_permission(lambda: os.replace(name, path))
+    finally:
+        Path(name).unlink(missing_ok=True)
