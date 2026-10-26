@@ -126,12 +126,14 @@ from backtester.ui import (
     equilibrium_overlay,  # noqa: F401  (registers the Equilibrium overlay)
     fvg_overlay,  # noqa: F401  (registers the FVG overlay)
     ob_overlay,  # noqa: F401  (registers the Order block overlay)
+    review,
     session_zone_overlay,  # noqa: F401  (registers the Session zones overlay)
     settings_panel,
+    strong_move,
     sweep_overlay,  # noqa: F401  (registers the Liquidity sweep overlay)
     swing_overlay,  # noqa: F401  (registers the Swings overlay)
     trade_focus,
-    trades_overlay,  # noqa: F401  (registers the Trades overlay)
+    trades_overlay,
 )
 from backtester.ui.chart_config import DEFAULT_CONFIG, ChartConfig, price_digits
 from backtester.ui.chart_data import ChartData
@@ -145,6 +147,7 @@ from backtester.ui.overlays import (
     overlay_options,
     overlay_summary,
 )
+from backtester.ui.review_callbacks import register_callbacks as register_review_callbacks
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
 CALENDAR_NAMES = {tf.name for tf in CALENDAR}
@@ -576,7 +579,7 @@ def overlay_settings(
 ) -> OverlaySettings:
     """The chart's detector switches + the strategy settings (canonical JSON, "" = spec
     defaults; `settings_panel.store_json`) + the sweep rules being tried."""
-    filters = filters or []
+    filters = strong_move.filter_values(filters)
     return OverlaySettings(
         fvg_strong_move_filter="fvg" in filters,
         ob_strong_move_filter="ob" in filters,
@@ -630,12 +633,15 @@ def base_payload(
     replay_state: dict = REPLAY_OFF,
     span: dict | None = None,
     config: ChartConfig = DEFAULT_CONFIG,
+    review_state: dict | None = None,
 ) -> tuple[dict | None, str]:
     """(candles up to the cursor + session lines, message). The cursor is the last candle,
     or in replay (start picked) the candle closed at the replay time `now`."""
     replay, message = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None:
         return None, message
+    if review_state:
+        replay_state = REPLAY_OFF
     in_replay = replay_state["on"] and not replay_state["picking"]
     cursor = len(replay) - 1
     if in_replay:
@@ -650,16 +656,19 @@ def base_payload(
             "Replay: click the candle to start at, or press ▶ to start after the "
             f"candle closing at {now:%Y-%m-%d %H:%M} UTC."
         )
+    cursor = review.limit_cursor(replay, cursor, review_state)
+    if cursor < 0:
+        return None, "No candle has closed at this decision time."
     data = chart_data(replay, DEFAULT_SETTINGS, sources, config)
     tf = Timeframe[timeframe]
     payload = {
-        "key": chart_key(symbol, timeframe, start_date, end_date, config),
+        "key": review_key(chart_key(symbol, timeframe, start_date, end_date, config), review_state),
         "symbol": symbol,
         "tf": tf.name,
         "tfmin": tf.value,
         "digits": price_digits(symbol),
         "cursor": cursor,
-        "replay": bool(replay_state["on"]),
+        "replay": bool(replay_state["on"] or review.ceiling(review_state)),
         "picking": bool(replay_state["on"] and replay_state["picking"]),
         "candles": data.candles(0, cursor + 1),
         "sessions": data.sessions(0, cursor + 1),
@@ -674,6 +683,10 @@ def base_payload(
     return payload, message
 
 
+def review_key(key, state):
+    return f"{key}|review:{state['entry_time']}:{state.get('revealed', False)}" if state else key
+
+
 def overlay_payload(
     sources: SymbolSources,
     request: dict,
@@ -685,17 +698,66 @@ def overlay_payload(
     config: ChartConfig = DEFAULT_CONFIG,
     strategy: str = "",
     sweep_tweak: dict | None = None,
+    review_state: dict | None = None,
+    inspected: dict | None = None,
 ) -> dict | None:
     """Full drawings of the requested overlay types at the browser's cursor, or None if
     the request is for other candles than the ones selected now."""
-    if not request or request["key"] != chart_key(symbol, timeframe, start_date, end_date, config):
+    if not request or request["key"] != review_key(
+        chart_key(symbol, timeframe, start_date, end_date, config), review_state
+    ):
         return None
     replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None or not 0 <= request["cursor"] < len(replay):
         return None
-    data = chart_data(replay, overlay_settings(filters, strategy, sweep_tweak), sources, config)
+    cursor = review.limit_cursor(replay, request["cursor"], review_state)
+    if cursor < 0:
+        return None
+    selected = (review_state or {}).get("order") or inspected
+    strategy = (selected or {}).get("_settings", strategy)
+    settings = overlay_settings(filters, strategy, sweep_tweak)
+
+    def events_for(overlay):
+        events = _cached_events(replay, overlay, settings, sources)
+        if overlay.key == "trades" and selected:
+            events = tuple(
+                e
+                for e in events
+                if review.utc(e.trade.entry_time) == selected["entry_time"]
+                and trade_focus.trade_order(e.trade)["direction"] == selected["direction"]
+            )
+        if overlay.key == "trades" and review.ceiling(review_state) is not None:
+            # Even an exit on the entry candle is an outcome, not a decision input.
+            events = tuple(
+                replace(
+                    e,
+                    exit_x=len(replay),
+                    part_xs=tuple(len(replay) for _ in e.part_xs),
+                    break_even_x=None,
+                )
+                for e in events
+            )
+        return events
+
+    data = ChartData(replay, events_for, config)
+    inspections = []
+    if "trades" in request["types"]:
+        try:
+            trade_events = events_for(OVERLAYS["trades"])
+        except OverlayUnavailable:
+            trade_events = ()  # ChartData.full supplies the existing unavailable message.
+        for event in trade_events:
+            if event.entry_x <= cursor:
+                order = review.decision_order(
+                    trade_focus.inspection_order(event.trade), review.ceiling(review_state) is None
+                )
+                order["_settings"] = strategy
+                inspections.append(
+                    {"x0": event.entry_x, "x1": min(event.exit_x, cursor), "order": order}
+                )
     return {
-        **data.full(request["types"], request["cursor"]),
+        **data.full(request["types"], cursor),
+        "inspections": inspections,
         "key": request["key"],
         "filters": request["filters"],
         "requested": request["types"],
@@ -713,14 +775,23 @@ def order_draw_payload(
     replay_state: dict | None = None,
     config: ChartConfig = DEFAULT_CONFIG,
     run_trades: Sequence | None = None,
+    review_state: dict | None = None,
+    strategy: str = "",
 ) -> dict | None:
     """{"key", "items"}: the drawings on the candles of this chart (`key` = the base payload's,
     so the browser draws them only on those candles). With a focused `order` of this symbol: that
     order, labelled. Without one: the `run_trades` (the newest run's, any strategy) of the symbol
-    that are on the loaded candles, light and capped at `MAX_RUN_ORDERS`; no strategy is run.
+    that are on the loaded candles, light and capped at `MAX_RUN_ORDERS`. A selected strategy-1
+    order also reuses the existing confluence drawings from its saved settings.
     None: nothing to draw, another symbol, replay on, or no candles."""
-    if not symbol or not timeframe or (replay_state and replay_state.get("on")):
+    if (
+        not symbol
+        or not timeframe
+        or (replay_state and replay_state.get("on") and not review_state)
+    ):
         return None
+    if review_state:
+        order = review_state.get("order")
     if order and order.get("symbol") != symbol:
         order = None
     if not order and not [t for t in run_trades or () if t.symbol == symbol]:
@@ -728,21 +799,74 @@ def order_draw_payload(
     replay, _ = load_replay(sources, symbol, timeframe, start_date, end_date, config)
     if replay is None:
         return None
-    opens = [c.ts for c in replay.view(len(replay) - 1)]
+    cursor = review.limit_cursor(replay, len(replay) - 1, review_state)
+    if cursor < 0:
+        return None
+    opens = [c.ts for c in replay.view(cursor)]
     tf, digits = Timeframe[timeframe], price_digits(symbol)
+    drawn_orders = []
     if order:
         items = trade_focus.order_payload(order, opens, tf, digits, config)
+        setup_settings = order.get("_settings")
+        if (
+            sources is not None
+            and setup_settings
+            and isinstance(
+                from_json(setup_settings).strategy, trades_overlay.SessionZoneSweepConfig
+            )
+        ):
+            key = review_key(
+                chart_key(symbol, timeframe, start_date, end_date, config), review_state
+            )
+            setup = overlay_payload(
+                sources,
+                {"key": key, "cursor": cursor, "types": ["trades"], "filters": []},
+                symbol,
+                timeframe,
+                start_date,
+                end_date,
+                [],
+                config,
+                setup_settings,
+                review_state=review_state,
+                inspected=order,
+            )
+            if setup:
+                items = [
+                    dict(d, o="order")
+                    for d in setup["types"].get("trades", [])
+                    if d.get("p") == trades_overlay.CONFLUENCES
+                ] + items
     else:
         items, drawn = [], 0
         for t in run_trades:
             if t.symbol != symbol or drawn >= trade_focus.MAX_RUN_ORDERS:
                 continue
-            found = trade_focus.order_payload(
-                trade_focus.trade_order(t), opens, tf, digits, config, light=True
-            )
+            candidate = dict(trade_focus.inspection_order(t), _settings=strategy)
+            found = trade_focus.order_payload(candidate, opens, tf, digits, config, light=True)
+            if found:
+                drawn_orders.append(candidate)
             drawn += bool(found)
             items += found
-    return {"key": chart_key(symbol, timeframe, start_date, end_date, config), "items": items}
+    orders = [order] if order else drawn_orders
+    from bisect import bisect_left
+
+    inspections = [
+        {
+            "x0": max(0, bisect_left(opens, datetime.fromisoformat(o["entry_time"])) - 1),
+            "x1": min(cursor, bisect_left(opens, datetime.fromisoformat(o["exit_time"])) - 1)
+            if o.get("exit_time")
+            else cursor,
+            "order": o,
+        }
+        for o in orders
+        if opens[0] < datetime.fromisoformat(o["entry_time"]) <= replay.close_time(cursor)
+    ]
+    return {
+        "key": review_key(chart_key(symbol, timeframe, start_date, end_date, config), review_state),
+        "items": items,
+        "inspections": inspections,
+    }
 
 
 def replay_delta(
@@ -755,8 +879,11 @@ def replay_delta(
     config: ChartConfig = DEFAULT_CONFIG,
     strategy: str = "",
     sweep_tweak: dict | None = None,
+    review_state: dict | None = None,
 ) -> dict | None:
     """Delta from what the browser shows (`view`: key, cursor, loaded types) to `cursor`."""
+    if review_state:
+        return None  # Review is frozen at the decision until explicitly revealed.
     if not view or view.get("key") != key or view.get("cursor") is None:
         return None
     frm = view["cursor"]
@@ -1045,13 +1172,11 @@ def layout(
                         persistence=True,
                     ),
                     html.Div("Detector settings", className="tb-pop-sub"),
-                    dcc.Checklist(
+                    dcc.Dropdown(
                         id="chart-filters",
-                        options=[
-                            {"label": "FVG strong-move filter", "value": "fvg"},
-                            {"label": "OB strong-move filter", "value": "ob"},
-                        ],
-                        value=["ob"],
+                        options=strong_move.OPTIONS,
+                        value="ob",
+                        clearable=False,
                         persistence=True,
                         className="tb-check",
                     ),
@@ -1352,6 +1477,17 @@ def layout(
                 ],
                 className="ch-tabs-content",
             ),
+            review.layout(),
+            html.Div(
+                [
+                    html.Button("Replay this trade", id="inspection-replay"),
+                    dcc.Input(id="inspection-lead", type="number", min=0, step=1, value=50),
+                    html.Div(id="inspection-reason"),
+                ],
+                id="inspection-panel",
+                style={"display": "none"},
+            ),
+            dcc.Store(id="chart-inspect"),
             dcc.Store(id="chart-range"),
             dcc.Store(id="chart-dates"),
             dcc.Store(id="chart-more"),
@@ -1397,6 +1533,7 @@ def register_callbacks(
     results_dir: Path = RESULTS_DIR,
 ) -> None:
     settings_panel.register_callbacks(app)
+    register_review_callbacks(app, sources, config, results_dir)
 
     @app.callback(
         [
@@ -1543,10 +1680,11 @@ def register_callbacks(
         Input("chart-range", "data"),
         Input("chart-symbol", "value"),
         Input("chart-replay", "data"),
+        Input("chart-review", "data"),
     )
-    def _side_trades(rng, symbol, replay_state):
+    def _side_trades(rng, symbol, replay_state, review_state=None):
         """Trades of the newest run whose entry is inside the visible range."""
-        if replay_state and replay_state.get("on"):
+        if review_state or (replay_state and replay_state.get("on")):
             return html.Div("Trades in view are hidden during replay.", className="side-empty")
         folder = chart_side.newest_run(results_dir)
         if folder is None:
@@ -1652,16 +1790,30 @@ def register_callbacks(
         State("chart-replay", "data"),
         State("chart-day-boundary", "value"),
         State("chart-h4-alignment", "value"),
+        Input("chart-review", "data"),
     )
-    def _order_draw(_done, order, symbol, timeframe, dates, replay_state, boundary, h4):
+    def _order_draw(
+        _done, order, symbol, timeframe, dates, replay_state, boundary, h4, review_state=None
+    ):
         """The order as drawings on the loaded candles (not during replay: it would show the
         future)."""
         start, end = dates_of(dates)
         cfg = with_boundary(config, boundary, h4)
         folder = chart_side.newest_run(results_dir)
         trades = chart_side.run_trades(folder) if folder is not None else ()
+        run_settings = trade_focus.run_settings(folder) if folder is not None else ""
         return order_draw_payload(
-            sources, order, symbol, timeframe, start, end, replay_state, cfg, trades
+            sources,
+            order,
+            symbol,
+            timeframe,
+            start,
+            end,
+            replay_state,
+            cfg,
+            trades,
+            review_state,
+            run_settings,
         )
 
     app.clientside_callback(
@@ -1688,12 +1840,24 @@ def register_callbacks(
         Input("chart-h4-alignment", "value"),
         State("chart-replay", "data"),
         State("chart-replay-span", "data"),
+        Input("chart-review", "data"),
     )
-    def _base(symbol, timeframe, dates, _mode, _resync, boundary, h4, replay_state, span):
+    def _base(
+        symbol,
+        timeframe,
+        dates,
+        _mode,
+        _resync,
+        boundary,
+        h4,
+        replay_state,
+        span,
+        review_state=None,
+    ):
         start_date, end_date = dates_of(dates)
         cfg = with_boundary(config, boundary, h4)
         return base_payload(
-            sources, symbol, timeframe, start_date, end_date, replay_state, span, cfg
+            sources, symbol, timeframe, start_date, end_date, replay_state, span, cfg, review_state
         )
 
     @app.callback(
@@ -1707,15 +1871,29 @@ def register_callbacks(
         State("chart-day-boundary", "value"),
         State("chart-h4-alignment", "value"),
         State("chart-sweep-tweak", "data"),
+        State("chart-review", "data"),
+        Input("chart-order", "data"),
         prevent_initial_call=True,
     )
-    def _overlays(request, symbol, timeframe, dates, filters, store, boundary, h4, sweep_tweak):
+    def _overlays(
+        request,
+        symbol,
+        timeframe,
+        dates,
+        filters,
+        store,
+        boundary,
+        h4,
+        sweep_tweak,
+        review_state=None,
+        inspected=None,
+    ):
         start_date, end_date = dates_of(dates)
         strategy = settings_panel.store_json(store)
         cfg = with_boundary(config, boundary, h4)
         payload = overlay_payload(
             sources, request, symbol, timeframe, start_date, end_date, filters, cfg, strategy,
-            sweep_tweak,
+            sweep_tweak, review_state, inspected,
         )  # fmt: skip
         return payload if payload is not None else no_update
 
@@ -1802,9 +1980,14 @@ def register_callbacks(
         State("chart-day-boundary", "value"),
         State("chart-h4-alignment", "value"),
         State("chart-sweep-tweak", "data"),
+        State("chart-review", "data"),
         prevent_initial_call=True,
     )
     def _replay_control(*args):
+        review_state = args[-1]
+        args = args[:-1]
+        if review_state:
+            return (no_update,) * 9
         symbol, timeframe, dates, state, controls_style, view, filters = args[-11:-4]
         start_date, end_date = dates_of(dates)
         strategy = settings_panel.store_json(args[-4])

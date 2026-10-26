@@ -8,8 +8,8 @@ from dash import ALL as EVERY  # the page's own ALL is the strategy / symbol fil
 from dash import Dash, Input, Output, State, ctx, dcc, html
 
 from backtester.paths import RESULTS_DIR
+from backtester.ui import parameter_heatmap, queue_panel
 from backtester.ui import queue_model as qm
-from backtester.ui import queue_panel
 from backtester.ui import research_model as rm
 from backtester.ui.layout import details, info, key_strip, page
 
@@ -221,6 +221,13 @@ def card(row: dict) -> html.Details:
                         className="rr-flags",
                     ),
                     *diagnostics,
+                    parameter_heatmap.panel(
+                        row.get("heatmap_rows", []),
+                        row.get("heatmap_chosen"),
+                        row.get("source", ""),
+                    )
+                    if row.get("is_research")
+                    else None,
                     dcc.Link("Open results", href=row["href"], className="rr-button rr-results"),
                 ],
                 className="rr-card-body",
@@ -459,3 +466,4 @@ def register_callbacks(
         )
 
     queue_panel.register_callbacks(app, ops)
+    parameter_heatmap.register_callbacks(app)

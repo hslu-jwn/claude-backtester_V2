@@ -46,6 +46,7 @@
     asked: new Set(),   // "key|side" of the edge loads already requested for this range
     extendTimer: null,
     orderDraw: null,    // the order's drawings {key, items} (a trade focus, ROADMAP 7.6)
+    inspections: [],
   };
 
   // --- helpers ------------------------------------------------------------------------
@@ -439,6 +440,24 @@
       if (logical == null) return;
       const x = Math.round(logical); // the candle under the pointer
       if (x < 0 || x >= S.times.length) return;
+      if (!S.replay) {
+        const price = S.series.coordinateToPrice(param.point.y);
+        const candidates = [
+          ...(S.overlaysOn && S.selected.has("trades") ? S.inspections : []),
+          ...(S.orderDraw && S.orderDraw.key === S.key ? S.orderDraw.inspections || [] : []),
+        ];
+        const hit = candidates.slice().reverse().find((item) => {
+          const o = item.order;
+          const prices = [o.entry, o.sl, o.tp].filter((v) => v != null);
+          const inBox = x >= item.x0 && x <= item.x1 && price >= Math.min(...prices) && price <= Math.max(...prices);
+          const markerX = S.chart.timeScale().logicalToCoordinate(item.x1);
+          const markerY = o.exit == null ? null : S.series.priceToCoordinate(o.exit);
+          const onMarker = markerX != null && markerY != null &&
+            Math.hypot(param.point.x - markerX, param.point.y - markerY) <= HOVER_PX;
+          return inBox || onMarker;
+        });
+        if (hit) setProps("chart-inspect", {data: {order: hit.order, n: ++S.nonce}});
+      }
       setProps("chart-click", { data: { x, n: ++S.nonce } });
     });
     S.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
@@ -693,6 +712,13 @@
     else if (e.target.closest("#tb-zoom-reset") && S.chart) { zoomTool(false); zoomBack(); }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && Z.on) zoomTool(false); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setProps("chart-inspect", {data: {order: null, n: ++S.nonce}});
+  });
+  document.addEventListener("click", (e) => {
+    if (S.el && !S.el.contains(e.target) && !e.target.closest("#inspection-panel"))
+      setProps("chart-inspect", {data: {order: null, n: ++S.nonce}});
+  });
   document.addEventListener("dblclick", (e) => {
     if (!S.chart || Z.on || !Z.history.length || !e.target.closest("#chart-lwc")) return;
     const b = S.el.getBoundingClientRect();
@@ -822,6 +848,7 @@
         S.symbol = payload.symbol; S.tf = payload.tf; S.tfmin = payload.tfmin;
         S.digits = payload.digits; S.replay = payload.replay; S.picking = payload.picking;
         S.cursor = payload.cursor;
+        S.inspections = [];
         S.times = payload.candles.t.slice();
         S.spreads = payload.candles.s.slice();
         S.sessions = payload.sessions;
@@ -881,6 +908,7 @@
           S.loaded.add(type);
         }
         S.order = payload.order;
+        if (payload.inspections) S.inspections = payload.inspections;
         S.messages = payload.messages;
         showMessages();
         showBadges();

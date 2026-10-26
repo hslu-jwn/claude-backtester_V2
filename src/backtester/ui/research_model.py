@@ -327,6 +327,9 @@ def _research_rows(folder: Path) -> tuple[list[dict], set[str]]:
                 **dict.fromkeys(RESEARCH_FIELDS),
                 **(diagnostic if chosen.get("id") == vid else {}),
                 "is_research": True,
+                "heatmap_rows": variants,
+                "heatmap_chosen": chosen.get("id") or vid,
+                "variant_id": vid,
                 "research_id": folder.name,  # results/research/<id>: pipeline.json lives there
                 "idea": info.get("idea") or _strategy_label(strategy),
                 "test_period": _period(

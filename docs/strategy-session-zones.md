@@ -93,8 +93,12 @@ Rules set by the user (2026-10-07). Part of the strategy-1 UI, like the session 
 
 ## Session inspection view (chart)
 > Provisional until ROADMAP 3.5 (strategy 1 is paused). Colors may change: the Session zones section above currently colors by active session; equilibrium also counts as a confluence here.
-How the user checks strategy 1 session by session. Part of the strategy-1 UI, so other
-strategies are not affected.
+How the user checks strategy 1 session by session. Session-line selection remains specific
+to strategy 1. Generic trade inspection (V2.6 step 5) also covers every other strategy:
+click its position box or marker to inspect its recorded entry, SL, TP(s), exit and reason.
+It does not invent detector output for strategies that do not record it. “Replay this trade”
+starts the existing replay 50 candles before entry by default (configurable). Click outside
+the chart or press Escape to leave trade inspection.
 - **Default chart is empty:** candles and session lines only, no zones, confluences or trades.
 - **Select a session:** left-click a session's vertical start line. The session runs from
   that line to the next session line. Clicking outside the chart turns the session view off.

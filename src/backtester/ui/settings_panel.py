@@ -52,7 +52,13 @@ from backtester.settings import (
     to_json,
 )
 from backtester.strategy.registry import REGISTRY, default_config, strategy_name
+from backtester.ui import strong_move
 from backtester.ui.layout import info
+
+STRONG_MOVE_PATHS = {
+    "detectors.fvg.strong_move_filter": "fvg",
+    "detectors.order_block.strong_move_filter": "ob",
+}
 
 GROUPS = (
     "Entry",
@@ -732,6 +738,7 @@ def _row(leaf: Leaf, widget_path: str) -> html.Div:
         ],
         id={"type": "st-row", "path": widget_path},
         className=initial_row_class(widget_path),
+        style={"display": "none"} if leaf.path in STRONG_MOVE_PATHS else {},
     )
 
 
@@ -809,6 +816,19 @@ def layout() -> html.Div:
                     className="st-head",
                 ),
                 html.Div(preset_controls(), className="st-presets"),
+                html.Div(
+                    [
+                        html.Label("Strong-move filter (FVG / OB)"),
+                        dcc.Dropdown(
+                            id="st-strong-move",
+                            options=strong_move.OPTIONS,
+                            value="ob",
+                            clearable=False,
+                            className="st-dd",
+                        ),
+                    ],
+                    className="st-presets",
+                ),
                 html.Div(
                     [
                         dcc.RadioItems(
@@ -914,6 +934,7 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         Output("st-group", "options"),
         Output("st-group", "value"),
         Output("st-title", "children"),
+        Output("st-strong-move", "value"),
         Input({"type": "st-field", "path": ALL}, "value"),
         Input("st-reset-click", "data"),
         Input("st-reset-all", "n_clicks"),
@@ -921,6 +942,7 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         Input("bt-preset", "value"),
         Input("chart-strategy", "value"),
         *[Input(f"st-{action}", "n_clicks") for action in PRESET_ACTIONS],
+        Input("st-strong-move", "value"),
         State("st-name", "value"),
         State("settings-current", "data"),
         State("st-group", "value"),
@@ -929,8 +951,14 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         name, store, group = args[-3:]
         widget_paths = [item["id"]["path"] for item in ctx.inputs_list[0]]
         strategy = store_strategy(store)
+        widgets = panel_widgets(widget_paths, values, strategy, _picked(args))
+        if ctx.triggered_id == "st-strong-move":
+            active = strong_move.filter_values(args[-4])
+            widgets.update(
+                {path: ["on"] if name in active else [] for path, name in STRONG_MOVE_PATHS.items()}
+            )
         result = form_update(
-            _trigger(), panel_widgets(widget_paths, values, strategy, _picked(args)), store,
+            _trigger(), widgets, store,
             name=name, folder=presets_dir, strategy=strategy,
         )  # fmt: skip
         now = result["store"]["strategy"] if result["store"] is not None else strategy
@@ -941,6 +969,8 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
         error_path = result["error"][0] if result["error"] else None
         classes = row_classes(widget_paths, mine, result["changed"], error_path)
         new = result["widgets"]
+        if ctx.triggered_id == "st-strong-move" and not result["error"]:
+            new = widgets
         options = preset_options(result["presets"])
         note = "Modified, not saved (see Settings…)." if result["modified"] else ""
         groups = list(grouped(strategy_leaves(now)))
@@ -970,6 +1000,13 @@ def register_callbacks(app: Dash, presets_dir: Path = PRESETS_DIR) -> None:
             groups,
             group if group in groups else groups[0],
             title_of(now),
+            strong_move.filter_mode(
+                [
+                    name
+                    for path, name in STRONG_MOVE_PATHS.items()
+                    if (result["store"] or store or {}).get("values", {}).get(path, name == "ob")
+                ]
+            ),
         )
 
     @app.callback(

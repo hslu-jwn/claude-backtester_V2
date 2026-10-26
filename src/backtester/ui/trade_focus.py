@@ -37,7 +37,7 @@ from backtester.analytics.records import TradeRecord
 from backtester.core.models import Timeframe
 from backtester.data.resample import supported
 from backtester.data.sources import cached_block
-from backtester.settings import from_dict
+from backtester.settings import from_dict, to_json
 from backtester.strategy.opening_range.strategy import OpeningRange
 from backtester.strategy.registry import REGISTRY, make_strategy
 from backtester.ui.chart_config import ChartConfig
@@ -108,11 +108,25 @@ def trade_order(trade: TradeRecord) -> dict:
     """The order of a backtest trade: its initial SL, the furthest take profit, its exit (a trade
     closed only by the end of the data is still open)."""
     tp = trade.take_profit_3 or trade.take_profit_2 or trade.take_profit
-    closed = trade.exit_reason != "end_of_data"
+    closed = getattr(trade.exit_reason, "value", trade.exit_reason) != "end_of_data"
+    direction = getattr(trade.direction, "value", trade.direction)
+    direction = {"bullish": "long", "bearish": "short"}.get(direction, direction)
     return make_order(
-        trade.symbol, trade.direction, trade.entry_time, trade.entry, trade.initial_stop, tp,
+        trade.symbol, direction, trade.entry_time, trade.entry, trade.initial_stop, tp,
         trade.exit_time if closed else None, trade.exit_price if closed else None,
     )  # fmt: skip
+
+
+def inspection_order(trade):
+    """Recorded setup levels and reason, in addition to the stable order-link schema."""
+    order = trade_order(trade)
+    order["tps"] = [
+        p
+        for p in (trade.take_profit, trade.take_profit_2, getattr(trade, "take_profit_3", None))
+        if p is not None
+    ]
+    order["reason"] = getattr(trade, "reason", "")
+    return order
 
 
 def live_order(row: dict) -> dict | None:
@@ -248,6 +262,14 @@ def _order_focus(query: dict) -> dict | None:
 
 
 # --- timeframe of a run --------------------------------------------------------------------------
+
+
+def run_settings(folder: Path) -> str:
+    """The saved run's strategy inputs, so inspecting another strategy cannot invent a setup."""
+    try:
+        return to_json(from_dict(json.loads((folder / "settings.json").read_text("utf-8"))))
+    except (OSError, ValueError, KeyError, TypeError):
+        return ""
 
 
 @lru_cache(maxsize=32)
@@ -387,9 +409,11 @@ def order_drawings(
         (sl, config.trade_loss_color, f"SL {fmt(sl)} ({_r(order, sl):+.2f}R)",
          "bottom right" if above else "top right")
     )  # fmt: skip
-    if tp is not None:
+    for target in dict.fromkeys(order.get("tps", [tp])):
+        if target is None:
+            continue
         levels.append(
-            (tp, config.trade_profit_color, f"TP {fmt(tp)} ({_r(order, tp):+.2f}R)",
+            (target, config.trade_profit_color, f"TP {fmt(target)} ({_r(order, target):+.2f}R)",
              "top right" if above else "bottom right")
         )  # fmt: skip
     for price, color, text, anchor in levels[: 1 if light else None]:
