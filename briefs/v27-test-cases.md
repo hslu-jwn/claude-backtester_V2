@@ -22,3 +22,15 @@
   no test button/results. Callback registration without launching app; empty/broken files.
 - Run requested analytics/tools/UI tests only, log to results/pytest_v27.log; ruff touched files.
 - Benchmark twelve members (781 sets), target under 30 seconds.
+
+## Review fixes (2026-10-26, before implementation)
+
+- Missing daily CSV: validate development trades first, rebuild with research_series.ensure,
+  retain weekdays and both R columns/position, reuse the saved file on the next load.
+- Missing trades: member stays ineligible with the pipeline instruction, no raw OS error.
+- Invalid development period or holdout trade: refuse before writing a missing daily series.
+- Interval callback updates only the Monte Carlo block; selection renders the static detail.
+- Search cache invalidates on classifier config/implementation and development D1 data changes;
+  identical inputs reuse it and holdout data never enters regime computation.
+- Custom results directories share the default trial log and permanent test reservation;
+  attempts recorded there, including failed attempts, prevent reruns from another directory.

@@ -2,10 +2,14 @@
 
 The Portfolio tab next to Research compares combinations chosen by the user. It never
 computes or displays holdout results. Trading rules and strategy/risk defaults are unchanged.
-Only chosen research variants with complete saved development `daily.csv` and `trades.csv`
-are eligible. Research development dates, saved-run dates, daily dates and trade timestamps
+Only chosen research variants with saved development `trades.csv` are eligible. If `daily.csv`
+is missing, it is rebuilt from validated development trades using the same resumable, locked
+`research_series.ensure` writer as the research pipeline, including exit-booked R, marked-to-market
+R and position on weekdays over the saved development period. Later loads reuse that file.
+Research development dates, saved-run dates, daily dates and trade timestamps
 must be before 2021-09-14. Missing or invalid members are reported, never backtested to repair
-them. Flags come only from the development variant row, never test diagnostics.
+them. Missing trades show “Run this grid's pipeline first: Research › Queue a grid”.
+Flags come only from the development variant row, never test diagnostics.
 
 ## Search metrics
 
@@ -49,7 +53,10 @@ This attribution convention is for user review; it changes no trading or classif
 
 `results/portfolio/search_<pool-hash>.json` caches all search details. The hash includes
 member identities, daily content, saved settings, saved trade/run file fingerprints and schema
-version; pool order is irrelevant.
+version; pool order is irrelevant. The search key also includes the regime classifier's
+default config and implementation hash, plus the available cached development days per symbol
+from which D1 is resampled. New development data or classifier changes recompute attribution.
+This search identity is separate from the saved-trade fingerprint for Monte Carlo jobs.
 Set IDs hash the JSON list of sorted member IDs, so order cannot change identity.
 
 Sort the table (default net R / max DD descending), then Monte Carlo top 10. Undefined values
@@ -65,7 +72,9 @@ does not start a process.
 Development results live at `results/portfolio/<set-id>/summary.json` and `report.html`.
 The page shows pass probability and median days to pass for each existing risk level, with
 no portfolio verdict (the development HTML report also omits the verdict banner/checklist).
-The page polls for finished reports and refuses non-development or
+Only the Monte Carlo block polls for finished reports; selection renders the equity,
+correlation, regimes and leave-one-out details, preserving their controls across interval ticks.
+The page refuses non-development or
 stale summaries.
 
 ## One-time test (CLI only)
@@ -82,6 +91,10 @@ equal weights. It does not run kind-B alternative strategies. The trial log reco
 attempt before backtesting and the finished result after backtesting. An exclusive permanent
 reservation is written before execution. Failed/interrupted attempts count: reruns of the
 same sorted member IDs are refused even when end dates or input order change. No retest flag.
+`--results-dir` may select member inputs and holdout artifact output, but every `--test` checks
+and records the attempt in the default `results/trials.jsonl` and permanent reservation under
+default `results/portfolio/tests/<set-id>/attempt.json`. Changing output directories cannot
+bypass the one-time rule; failed attempts count in the default location as well.
 Holdout artifacts are isolated at `results/portfolio/tests/<set-id>/`; the page never reads them.
 There is no UI action to run or queue a test. Legacy components-file CLI usage remains available.
 

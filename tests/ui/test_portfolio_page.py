@@ -19,6 +19,21 @@ def test_callbacks_register_without_app_start(tmp_path):
     assert app.callback_map
 
 
+def test_interval_only_updates_monte_carlo_block(tmp_path):
+    from dash import Dash
+
+    app = Dash(__name__, suppress_callback_exceptions=True)
+    portfolio.register_callbacks(app, tmp_path)
+    detail = app.callback_map["pf-detail.children"]
+    assert {i["id"] for i in detail["inputs"]} == {"pf-sets", "pf-search"}
+    ticks = [
+        c for c in app.callback_map.values() if any(i["id"] == "pf-refresh" for i in c["inputs"])
+    ]
+    assert len(ticks) == 1
+    assert ticks[0]["output"].component_id == "pf-detail-mc"
+    assert ticks[0]["output"].component_property == "children"
+
+
 def test_holdout_summary_never_shown(tmp_path):
     import json
 

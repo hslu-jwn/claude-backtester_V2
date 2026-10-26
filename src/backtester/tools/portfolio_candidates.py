@@ -72,15 +72,38 @@ def _load_member(folder, root):
         raise ValueError("saved run must match its development period before 2021-09-14")
     if summary.get("source") in ("test", "mt5_test"):
         raise ValueError("test result cannot be a member")
+    if not (run / "trades.csv").is_file():
+        raise ValueError("Run this grid's pipeline first: Research › Queue a grid")
+    trades = read_trades(run)
+    check_trades(trades, start, end)
+    if not (run / "daily.csv").is_file():
+        from backtester.data.sources import DEFAULT_SOURCES
+        from backtester.tools import research_series
+
+        research_series.ensure(
+            run,
+            start,
+            end,
+            DEFAULT_SOURCES,
+            root / "trials.jsonl",
+            (
+                info.get("name", folder.name),
+                info["strategy"],
+                {
+                    "strategy": info["strategy"],
+                    "base": info.get("base", {}),
+                    "set": chosen.get("overrides", {}),
+                },
+                info["symbols"],
+                "research",
+            ),
+            trades=trades,
+        )
     with (run / "daily.csv").open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
     days = tuple(date.fromisoformat(r["date"]) for r in rows)
     if list(days) != weekdays(start, end):
         raise ValueError("daily dates must cover the complete development run")
-    if not (run / "trades.csv").is_file():
-        raise ValueError("missing saved development trades")
-    trades = read_trades(run)
-    check_trades(trades, start, end)
     flags = ()
     with (folder / "variants.csv").open(encoding="utf-8", newline="") as stream:
         for row in csv.DictReader(stream):
@@ -145,6 +168,32 @@ def pool_hash(pool):
     ).hexdigest()[:20]
 
 
+def search_hash(pool, sources=None):
+    """Include classifier defaults/implementation and days feeding development D1 bars.
+
+    D1 is resampled from cached day files; their available development days stamp its data.
+    Keep this separate from the saved-trade fingerprint used by Monte Carlo manifests.
+    Spec: portfolio.md > Saved searches and Monte Carlo.
+    """
+    from backtester.analytics import regime
+    from backtester.data.sources import DEFAULT_SOURCES
+
+    sources = sources or DEFAULT_SOURCES
+    last = max(d for m in pool for d in m.days)
+    stamp = {
+        symbol: sorted(d for d in sources.cached_days(symbol) if d < CUTOFF and d <= last)
+        for symbol in sorted({s for m in pool for s in m.symbols})
+    }
+    classifier = hashlib.sha256(Path(regime.__file__).read_bytes()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(
+            [pool_hash(pool), classifier, asdict(regime.RegimeConfig()), stamp],
+            sort_keys=True,
+            default=str,
+        ).encode()
+    ).hexdigest()[:20]
+
+
 def daily_regimes(pool, sources):
     """Classify each symbol at Prague midnight using only D1 closes <= that instant."""
     from backtester.analytics.regime import RegimeHistory, _blocks
@@ -180,7 +229,7 @@ def cached_search(pool, results_dir=RESULTS_DIR, sources=None):
         validate(member)
     if not 2 <= len(pool) <= SearchConfig().max_pool or len({m.id for m in pool}) != len(pool):
         raise ValueError("choose 2..12 distinct development members")
-    path = Path(results_dir) / "portfolio" / f"search_{pool_hash(pool)}.json"
+    path = Path(results_dir) / "portfolio" / f"search_{search_hash(pool, sources)}.json"
     if path.is_file():
         return _json(path)["sets"]
     regimes = daily_regimes(pool, sources or DEFAULT_SOURCES)
@@ -283,7 +332,7 @@ def resolve_set(sid, results_dir):
         parts = [by_id[i] for i in row["members"]]
         if set_id(m.id for m in parts) != sid:
             raise ValueError("invalid cached set identity")
-        if cached.stem != f"search_{pool_hash([by_id[i] for i in saved['pool']])}":
+        if cached.stem != f"search_{search_hash([by_id[i] for i in saved['pool']])}":
             raise ValueError("development members changed; search again before choosing the test")
         atomic_json(
             path,
@@ -447,9 +496,9 @@ def run_test(sid, results_dir, config, end=None):
         raise ValueError("test end precedes fixed cutoff")
     if end > min(last_days):
         raise ValueError("test end exceeds available MT5 data")
-    trials = Path(results_dir) / "trials.jsonl"
+    trials = Path(RESULTS_DIR) / "trials.jsonl"
     identity = {"member_ids": sorted(manifest["members"])}
-    with file_lock(Path(results_dir) / "portfolio" / ".trial-test.lock"):
+    with file_lock(Path(RESULTS_DIR) / "portfolio" / ".trial-test.lock"):
         if any(
             r.strategy == "portfolio"
             and r.source == "mt5"
@@ -458,7 +507,7 @@ def run_test(sid, results_dir, config, end=None):
             for r in read_all(trials)
         ):
             raise ValueError("portfolio test already attempted for this member set")
-        reservation = reserve_test(manifest["members"], results_dir)
+        reservation = reserve_test(manifest["members"], RESULTS_DIR)
         append(
             make_record(
                 "portfolio_test",
@@ -503,7 +552,8 @@ def run_test(sid, results_dir, config, end=None):
         from_dict(parts[0].settings),
         config,
     )
-    atomic_json(reservation.parent / "summary.json", mc.jsonable(summary))
-    (reservation.parent / "report.html").write_text(mc.render_report(summary), encoding="utf-8")
+    out = Path(results_dir) / "portfolio" / "tests" / sid
+    atomic_json(out / "summary.json", mc.jsonable(summary))
+    (out / "report.html").write_text(mc.render_report(summary), encoding="utf-8")
     atomic_json(reservation, {"members": sorted(manifest["members"]), "status": "done"})
     return summary

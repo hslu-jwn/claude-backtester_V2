@@ -66,7 +66,7 @@ def test_cli_can_select_set_outside_monte_carlo_top_ten(tmp_path, monkeypatch):
     sid = set_id(["a", "b"])
     base = tmp_path / "portfolio"
     base.mkdir()
-    (base / f"search_{pc.pool_hash(parts)}.json").write_text(
+    (base / f"search_{pc.search_hash(parts)}.json").write_text(
         json.dumps({"pool": ["a", "b"], "sets": [{"id": sid, "members": ["a", "b"]}]})
     )
     monkeypatch.setattr(pc, "load_members", lambda *a: (parts, []))
@@ -152,6 +152,7 @@ def test_one_time_test_fixed_mt5_and_trial_log(tmp_path, monkeypatch):
         for i in ("b", "a")
     ]
     sid = set_id(m.id for m in parts)
+    monkeypatch.setattr(pc, "RESULTS_DIR", tmp_path)
     monkeypatch.setattr(pc, "resolve_set", lambda *a: tmp_path / "members.json")
     monkeypatch.setattr(
         pc, "manifest_members", lambda *a: ({"members": [m.id for m in parts]}, parts)
@@ -175,6 +176,177 @@ def test_one_time_test_fixed_mt5_and_trial_log(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="already"):
         pc.run_test(sid, tmp_path, mc.ToolConfig())
     assert len(calls) == 2
+
+
+def test_missing_daily_rebuilt_by_shared_writer_and_reused(tmp_path, monkeypatch):
+    import csv
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    from backtester.tools import research_series
+
+    run = saved_member(tmp_path)
+    (run / "daily.csv").unlink()
+    trade = SimpleNamespace(
+        symbol="US500",
+        direction="long",
+        r_net=2,
+        entry_time=datetime(2020, 1, 2, 10, tzinfo=UTC),
+        exit_time=datetime(2020, 1, 2, 12, tzinfo=UTC),
+    )
+    monkeypatch.setattr(pc, "read_trades", lambda _: [trade])
+    calls = []
+    original = research_series.ensure
+
+    def ensure(*args, **kwargs):
+        calls.append((args, kwargs))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(research_series, "ensure", ensure)
+    pool, errors = pc.load_members(tmp_path)
+    assert errors == [] and len(pool) == 1
+    assert pool[0].values == (0, 2)
+    rows = list(csv.DictReader((run / "daily.csv").open()))
+    assert [r["date"] for r in rows] == ["2020-01-01", "2020-01-02"]
+    assert [float(r["net_r_mtm"]) for r in rows] == [0, 2]
+    assert float(rows[1]["position"]) == pytest.approx(2 / 24)
+    assert calls[0][0][1:3] == (date(2020, 1, 1), date(2020, 1, 2))
+    assert calls[0][1]["trades"] == [trade]
+    assert pc.load_members(tmp_path) == (pool, [])
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("missing_daily", [False, True])
+def test_missing_trades_gives_pipeline_instruction(tmp_path, missing_daily):
+    run = saved_member(tmp_path)
+    if missing_daily:
+        (run / "daily.csv").unlink()
+    (run / "trades.csv").unlink()
+    pool, errors = pc.load_members(tmp_path)
+    assert pool == []
+    assert errors == ["grid: Run this grid's pipeline first: Research › Queue a grid"]
+    assert (run / "daily.csv").exists() is not missing_daily
+
+
+@pytest.mark.parametrize("invalid", ["period", "trade"])
+def test_missing_daily_retains_development_guards(tmp_path, monkeypatch, invalid):
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    from backtester.tools import research_series
+
+    run = saved_member(tmp_path)
+    (run / "daily.csv").unlink()
+    if invalid == "period":
+        (run / "summary.json").write_text('{"start":"2020-01-01","end":"2021-09-14"}')
+    at = datetime(2021, 9, 14, 12, tzinfo=UTC)
+    monkeypatch.setattr(
+        pc,
+        "read_trades",
+        lambda _: [
+            SimpleNamespace(
+                entry_time=at,
+                exit_time=at,
+                r_net=1,
+            )
+        ],
+    )
+    monkeypatch.setattr(research_series, "ensure", lambda *a, **k: pytest.fail("unsafe write"))
+    pool, errors = pc.load_members(tmp_path)
+    assert pool == [] and errors
+    assert not (run / "daily.csv").exists()
+
+
+def test_search_cache_tracks_classifier_and_d1_data(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from types import SimpleNamespace
+
+    from backtester.analytics import regime
+
+    days = [date(2019, 12, 30)]
+    sources = SimpleNamespace(cached_days=lambda s: days)
+    pool = [Member(i, (date(2020, 1, 2),), (1,), symbols=("X",)) for i in ("a", "b")]
+    calls = []
+
+    def regimes(*args):
+        calls.append(True)
+        return {}
+
+    monkeypatch.setattr(pc, "daily_regimes", regimes)
+    classifier = tmp_path / "classifier.py"
+    classifier.write_text("version 1")
+    monkeypatch.setattr(regime, "__file__", str(classifier))
+    pc.cached_search(pool, tmp_path, sources)
+    pc.cached_search(pool[::-1], tmp_path, sources)
+    assert len(calls) == 1
+    config = regime.RegimeConfig()
+    monkeypatch.setattr(regime, "RegimeConfig", lambda: replace(config, er_trend=0.4))
+    pc.cached_search(pool, tmp_path, sources)
+    assert len(calls) == 2
+    days.append(date(2019, 12, 31))
+    pc.cached_search(pool, tmp_path, sources)
+    assert len(calls) == 3
+    classifier.write_text("version 2")
+    pc.cached_search(pool, tmp_path, sources)
+    assert len(calls) == 4
+    # Holdout candles cannot alter a development attribution or enter its cache stamp.
+    days.append(date(2021, 9, 14))
+    pc.cached_search(pool, tmp_path, sources)
+    assert len(calls) == 4
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_custom_results_cannot_repeat_holdout(tmp_path, monkeypatch, failure):
+    from types import SimpleNamespace
+
+    from backtester import runner
+    from backtester.analytics.portfolio_search import set_id
+    from backtester.analytics.trial_log import read_all
+    from backtester.data.sources import SymbolSources
+    from backtester.runner import RunSettings
+    from backtester.settings import to_dict
+    from backtester.tools import monte_carlo as mc
+
+    default = tmp_path / "default"
+    monkeypatch.setattr(pc, "RESULTS_DIR", default)
+    parts = [
+        Member(i, (date(2020, 1, 1),), (1,), symbols=("US500",), settings=to_dict(RunSettings()))
+        for i in ("a", "b")
+    ]
+    sid = set_id(m.id for m in parts)
+    monkeypatch.setattr(pc, "resolve_set", lambda *a: tmp_path / "members.json")
+    monkeypatch.setattr(
+        pc, "manifest_members", lambda *a: ({"members": [m.id for m in parts]}, parts)
+    )
+    monkeypatch.setattr(SymbolSources, "cached_days", lambda *a: [date(2021, 9, 14)])
+    calls = []
+
+    def run(*args, **kwargs):
+        calls.append(True)
+        if failure:
+            raise RuntimeError("interrupted")
+        return SimpleNamespace(trades=[])
+
+    monkeypatch.setattr(runner, "run_backtests", run)
+    monkeypatch.setattr(mc, "build_summary", lambda *a, **k: {})
+    monkeypatch.setattr(mc, "render_report", lambda s: "report")
+    if failure:
+        with pytest.raises(RuntimeError, match="interrupted"):
+            pc.run_test(sid, tmp_path / "first", mc.ToolConfig())
+    else:
+        pc.run_test(sid, tmp_path / "first", mc.ToolConfig())
+    assert len(read_all(default / "trials.jsonl")) == 1
+    assert (default / "portfolio" / "tests" / sid / "attempt.json").exists()
+    count = len(calls)
+    # Reservation alone must survive loss of the log, and vice versa.
+    if failure:
+        (default / "trials.jsonl").unlink()
+    else:
+        (default / "portfolio" / "tests" / sid / "attempt.json").unlink()
+    with pytest.raises(ValueError, match="already"):
+        pc.run_test(sid, tmp_path / "second", mc.ToolConfig())
+    assert len(calls) == count
+    assert not (tmp_path / "first" / "trials.jsonl").exists()
 
 
 def test_combined_fills_uses_each_members_saved_costs(monkeypatch):

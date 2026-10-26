@@ -134,6 +134,7 @@ def layout(results_dir=RESULTS_DIR, *, include_queue=True):
             cell_selectable=True,
         ),
         html.Div(id="pf-detail"),
+        html.Div(id="pf-detail-mc"),
         dcc.Interval(id="pf-refresh", interval=5000),
     ]
     if include_queue:
@@ -213,7 +214,6 @@ def set_details(row, results_dir):
         {"removed": name, **{key: value.get(key) for _, key in METRICS}}
         for name, value in row["leave_one_out"].items()
     ]
-    mc_rows = monte_carlo_rows(row, results_dir)
     return html.Div(
         [
             html.H3(" + ".join(row["members"])),
@@ -252,6 +252,14 @@ def set_details(row, results_dir):
                     ],
                 ),
             ),
+        ]
+    )
+
+
+def monte_carlo_details(row, results_dir):
+    mc_rows = monte_carlo_rows(row, results_dir)
+    return html.Div(
+        [
             html.H4("Development Monte Carlo / prop-firm"),
             _table(
                 "pf-mc-results",
@@ -293,7 +301,7 @@ def register_callbacks(app: Dash, results_dir=RESULTS_DIR):
             chosen = [by_id[i] for i in (ids or [])]
             rows = pc.cached_search(chosen, results_dir)
             return (
-                pc.pool_hash(chosen),
+                pc.search_hash(chosen),
                 table_rows(rows),
                 f"{len(rows)} development combinations. Click a row for details.",
             )
@@ -313,7 +321,7 @@ def register_callbacks(app: Dash, results_dir=RESULTS_DIR):
             pool, _errors = pc.load_members(results_dir)
             by_id = {m.id: m for m in pool}
             parts = [by_id[i] for i in saved["pool"]]
-            if pc.pool_hash(parts) != key:
+            if pc.search_hash(parts) != key:
                 raise ValueError("Member data changed; find combinations again")
             sort = (sort_by or [{"column_id": "net_dd", "direction": "desc"}])[0]
             if sort["column_id"] not in pc.SORT_KEYS:
@@ -333,15 +341,30 @@ def register_callbacks(app: Dash, results_dir=RESULTS_DIR):
     @app.callback(
         Output("pf-detail", "children"),
         Input("pf-sets", "active_cell"),
-        Input("pf-refresh", "n_intervals"),
         Input("pf-search", "data"),
     )
-    def _detail(cell, _tick, key):
+    def _detail(cell, key):
         if not cell or not key:
             return "Select a combination."
         try:
             rows = _read_search(key, results_dir)["sets"]
             row = next((r for r in rows if r["id"] == cell.get("row_id")), None)
             return set_details(row, results_dir) if row else "Select a combination."
+        except (ValueError, OSError, KeyError):
+            return no_update
+
+    @app.callback(
+        Output("pf-detail-mc", "children"),
+        Input("pf-sets", "active_cell"),
+        Input("pf-search", "data"),
+        Input("pf-refresh", "n_intervals"),
+    )
+    def _detail_mc(cell, key, _tick):
+        if not cell or not key:
+            return ""
+        try:
+            rows = _read_search(key, results_dir)["sets"]
+            row = next((r for r in rows if r["id"] == cell.get("row_id")), None)
+            return monte_carlo_details(row, results_dir) if row else ""
         except (ValueError, OSError, KeyError):
             return no_update

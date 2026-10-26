@@ -23,6 +23,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
 | Codex gpt-6.1-sol | medium | 2 | 43 | V2.6b data fixes + server-clock revision (2026-10-26) | yes; Sonnet subagents: wrong-instrument table, sparse-day fix; the continuity check found DXY = Dow Jones and EU50 = IBEX in histdata; Opus caught the holiday-day drop via the golden check |
 
+| Codex gpt-6.1-sol | medium | 2 | 21 | V2.7 portfolio page + fix round (2026-10-26) | yes; Sonnet subagents built V2.6 step 3 while Codex was at its limit (18:14-21:14) and reviewed V2.7 (no blocking defect) |
+
 Limits seen: Codex hit its limit twice (about 20:50 and 04:25; reset after ~4.5 h);
 Antigravity (Gemini + Claude 4.6, one shared weekly quota) is empty until about 2026-10-29.
 
