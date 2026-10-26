@@ -54,7 +54,7 @@ import argparse
 import io
 import re
 import zipfile
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from itertools import pairwise
@@ -104,7 +104,12 @@ class ImportConfig:
 
     max_day_close_jump: float = 0.25
     # A weekend alone is not an explanation for a different instrument's price.
-    explained_jumps: tuple[tuple[str, date, str], ...] = ()
+    explained_jumps: tuple[tuple[str, date, str], ...] = (
+        ("UKOIL", date(2020, 3, 9), "2020 oil price war crash (Brent 45.5 -> 33.4)"),
+        ("USOIL", date(2020, 4, 19), "April 2020 WTI negative-price week / contract roll"),
+        ("USOIL", date(2020, 4, 21), "day after WTI settled negative (2020-04-20), -34 %"),
+        ("USOIL", date(2020, 4, 27), "WTI collapse continues after the negative settle, -26 %"),
+    )
 
     def __post_init__(self):
         if self.max_day_close_jump <= 0:
@@ -114,7 +119,24 @@ class ImportConfig:
 
 
 IMPORT_CONFIG = ImportConfig()
-GER40_END = date(2020, 6, 15)  # first invalid UTC day: GRXEUR switches instrument
+# Periods in which histdata's files hold a different instrument than the symbol's name:
+# symbol -> ((first invalid UTC day or None, first valid-again UTC day or None, reason), ...).
+# Rows of those UTC days are dropped on import and removed from an existing cache.
+INVALID_PERIODS: Mapping[str, tuple[tuple[date | None, date | None, str], ...]] = MappingProxyType(
+    {
+        "GER40": ((date(2020, 6, 15), None, "GRXEUR files switch instrument"),),
+        "DXY": ((None, date(2018, 12, 16), "UDXUSD files are the Dow Jones until 2018-12-14"),),
+        "EU50": ((date(2018, 12, 15), None, "ETXEUR files are the IBEX 35 from 2018-12-17"),),
+    }
+)
+
+
+def is_invalid_day(symbol: str, day: date) -> bool:
+    """True when `day` (UTC) lies in one of the symbol's INVALID_PERIODS."""
+    return any(
+        (start is None or day >= start) and (end is None or day < end)
+        for start, end, _ in INVALID_PERIODS.get(symbol, ())
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -313,8 +335,9 @@ def import_symbol(
     for index, (mf, part) in enumerate(zip(files, parts)):
         if index and files[index - 1].end != mf.month:
             previous_close = None  # absent periods cannot establish daily continuity
-        if symbol == "GER40":
-            part = part.loc[part["ts"].dt.date < GER40_END].copy()
+        if symbol in INVALID_PERIODS:
+            keep = ~part["ts"].dt.date.map(lambda d: is_invalid_day(symbol, d))
+            part = part.loc[keep].copy()
             parts[index] = part
         closes = part.groupby(part["ts"].dt.date)["bid_close"].last()
         for day, close in closes.items():
@@ -337,13 +360,13 @@ def import_symbol(
     written, empty, partial = [], [], []
     by_day = {day: rows for day, rows in frame.groupby(frame["ts"].dt.date, sort=False)}
     minutes = 0
-    if symbol == "GER40":
+    if symbol in INVALID_PERIODS:
         # Performed only by the requested re-import job, never at module import.
         for path in (Path(cache_dir) / symbol).glob("*/*.parquet"):
-            if date.fromisoformat(path.stem) >= GER40_END:
+            if is_invalid_day(symbol, date.fromisoformat(path.stem)):
                 path.unlink()
     for day in days:
-        if symbol == "GER40" and day >= GER40_END:
+        if is_invalid_day(symbol, day):
             continue
         start = datetime.combine(day, datetime.min.time(), UTC)
         if not any(a <= start and start + timedelta(days=1) <= b for a, b in covered):

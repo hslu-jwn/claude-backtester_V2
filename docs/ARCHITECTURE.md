@@ -238,8 +238,20 @@ Research tools that name `MT5_CACHE_DIR` / `DEFAULT_CACHE_DIR` explicitly keep t
   An unexplained daily-close jump above it stops that symbol before writes and names
   the file/date; weekends alone do not explain an instrument substitution. Documented
   exemptions are explicit `(symbol, UTC date, reason)` entries in `explained_jumps`.
-  GER40/GRXEUR is excluded from **UTC 2020-06-15 onward**, including existing cached
-  days, because it becomes Euro Stoxx rather than DAX. Raw files are retained.
+  Wrong-instrument periods are listed in `histdata.INVALID_PERIODS` (symbol -> first
+  invalid UTC day, first valid-again UTC day, reason). Rows of those UTC days are dropped
+  before the continuity check and removed from an existing cache; raw files are retained:
+
+  | Symbol (file) | Invalid UTC days | Reason |
+  |---|---|---|
+  | GER40 (GRXEUR) | from 2020-06-15 | files switch to Euro Stoxx instead of DAX |
+  | DXY (UDXUSD) | until 2018-12-15 (real DXY from the 2018-12-16 session) | files are the Dow Jones until 2018-12-14 |
+  | EU50 (ETXEUR) | from 2018-12-15 | files are the IBEX 35 from 2018-12-17 (Euro Stoxx 50 before) |
+
+  Default `explained_jumps` (genuine market moves above 25 %): UKOIL 2020-03-09 (oil price
+  war crash, 45.505 -> 33.415) and USOIL 2020-04-19 (WTI negative-price / contract roll
+  week, 18.31 -> 24.365), USOIL 2020-04-21 (the day after WTI settled negative, 21.245 ->
+  14) and USOIL 2020-04-27 (16.605 -> 12.23); the date is the UTC day the importer reports.
   Import all adjacent yearly/monthly periods together to complete the UTC January 1
   day from both files; `scripts/rebuild_cache_v26b.md` supplies one queue job per symbol.
 

@@ -352,3 +352,91 @@ def test_repair_preserves_bars_across_midnight(tmp_path):
     assert len(next_day) == 1440
     assert next_day.ts.min() == pd.Timestamp("2018-03-15 00:00", tz="UTC")
     assert next_day.ts.max() == pd.Timestamp("2018-03-15 23:59", tz="UTC")
+
+
+def _row(day, price):
+    return f"{day.replace('-', '.')},12:00,{price},{price},{price},{price},0\n"
+
+
+def test_invalid_periods_table():
+    from backtester.data.histdata import INVALID_PERIODS
+
+    assert INVALID_PERIODS["GER40"][0][:2] == (date(2020, 6, 15), None)
+    assert INVALID_PERIODS["DXY"][0][:2] == (None, date(2018, 12, 16))
+    assert INVALID_PERIODS["EU50"][0][:2] == (date(2018, 12, 15), None)
+    assert all(reason.strip() for rows in INVALID_PERIODS.values() for *_, reason in rows)
+
+
+def test_dxy_dow_jones_days_dropped_and_real_dxy_kept(tmp_path):
+    src = tmp_path / "DAT_MT_UDXUSD_M1_2018.csv"
+    src.write_text(
+        _row("2018-12-13", 25000)
+        + _row("2018-12-14", 24800)
+        + _row("2018-12-17", 96.5)
+        + _row("2018-12-18", 96.8)
+    )
+    cache = tmp_path / "cache"
+    bad = cache_path(cache, "DXY", date(2018, 12, 10))
+    write_atomic(
+        parse_histdata_mt(io.StringIO("2018.12.10,12:00,25000,25000,25000,25000,0\n")), bad
+    )
+    import_files([src], cache)  # no continuity error: invalid side is dropped first
+    assert not bad.exists()
+    assert not cache_path(cache, "DXY", date(2018, 12, 13)).exists()
+    assert not cache_path(cache, "DXY", date(2018, 12, 14)).exists()
+    assert cache_path(cache, "DXY", date(2018, 12, 17)).exists()
+    assert cache_path(cache, "DXY", date(2018, 12, 18)).exists()
+
+
+def test_dxy_from_valid_day_is_kept(tmp_path):
+    src = tmp_path / "DAT_MT_UDXUSD_M1_2018.csv"
+    src.write_text(_row("2018-12-14", 25000) + _row("2018-12-19", 96.5))
+    cache = tmp_path / "cache"
+    import_files([src], cache)
+    assert cache_path(cache, "DXY", date(2018, 12, 19)).exists()
+    assert not cache_path(cache, "DXY", date(2018, 12, 14)).exists()
+
+
+def test_eu50_ibex_days_dropped_from_2018_12_15(tmp_path):
+    src = tmp_path / "DAT_MT_ETXEUR_M1_2018.csv"
+    src.write_text(_row("2018-12-13", 3100) + _row("2018-12-14", 3080) + _row("2018-12-17", 8600))
+    cache = tmp_path / "cache"
+    stale = cache_path(cache, "EU50", date(2018, 12, 17))
+    write_atomic(parse_histdata_mt(io.StringIO("2018.12.17,12:00,8600,8600,8600,8600,0\n")), stale)
+    import_files([src], cache)
+    assert not stale.exists()
+    assert cache_path(cache, "EU50", date(2018, 12, 14)).exists()
+    assert not cache_path(cache, "EU50", date(2018, 12, 17)).exists()
+
+
+def test_unexplained_jump_still_stops_for_other_symbols(tmp_path):
+    src = tmp_path / "DAT_MT_UDXUSD_M1_2019.csv"
+    src.write_text(_row("2019-01-07", 96.5) + _row("2019-01-08", 140))
+    with pytest.raises(HistdataError, match="2019-01-08"):
+        import_files([src], tmp_path / "cache")
+
+
+def test_default_oil_exemptions_are_exact(tmp_path):
+    from backtester.data.histdata import IMPORT_CONFIG, ImportConfig
+
+    got = {(s, d) for s, d, _ in ImportConfig().explained_jumps}
+    assert got == {
+        ("UKOIL", date(2020, 3, 9)),
+        ("USOIL", date(2020, 4, 19)),
+        ("USOIL", date(2020, 4, 21)),
+        ("USOIL", date(2020, 4, 27)),
+    }
+    assert IMPORT_CONFIG.explained_jumps == ImportConfig().explained_jumps
+    ok = tmp_path / "DAT_MT_BCOUSD_M1_202003.csv"
+    ok.write_text(_row("2020-03-06", 45.505) + _row("2020-03-09", 33.415))
+    import_files([ok], tmp_path / "c1")
+    other_day = tmp_path / "x" / "DAT_MT_BCOUSD_M1_202004.csv"
+    other_day.parent.mkdir()
+    other_day.write_text(_row("2020-04-06", 45.505) + _row("2020-04-07", 33.415))
+    with pytest.raises(HistdataError):
+        import_files([other_day], tmp_path / "c2")
+    other_sym = tmp_path / "y" / "DAT_MT_GBPUSD_M1_202003.csv"
+    other_sym.parent.mkdir()
+    other_sym.write_text(_row("2020-03-06", 45.505) + _row("2020-03-09", 33.415))
+    with pytest.raises(HistdataError):
+        import_files([other_sym], tmp_path / "c3")
