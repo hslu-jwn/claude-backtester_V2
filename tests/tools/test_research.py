@@ -630,6 +630,31 @@ def test_test_scorecard_has_deflated_sharpe_and_a_verdict(tmp_path, fakes):
     assert row["verdict"] == test["verdict"]
 
 
+def test_deflated_sharpe_is_the_daily_one_as_the_trial_log(tmp_path, fakes):
+    from backtester.analytics.deflated_sharpe import TradeStats, deflated_sharpe
+
+    out = run_research(tmp_path)
+    test = out["test"]
+    lines = [
+        r for r in trial_log.read_all(tmp_path / "results" / "trials.jsonl") if r.family == "idea"
+    ]
+    dev = [r for r in lines if r.source == "research"]
+    (rec,) = [r for r in lines if r.source == "research-test"]
+    sharpes = [r.day_sharpe for r in dev if r.day_sharpe is not None]
+    daily = deflated_sharpe(
+        TradeStats(rec.days, rec.day_mean, rec.day_sd, rec.day_skew, rec.day_kurt, rec.day_sharpe),
+        len(dev),
+        sharpes,
+    ).dsr
+    per_trade = deflated_sharpe(
+        TradeStats(rec.trades, rec.mean, rec.sd, rec.skew, rec.kurt, rec.sharpe),
+        len(dev),
+        [r.sharpe for r in dev if r.sharpe is not None],
+    ).dsr
+    assert daily is not None and per_trade is not None and daily != pytest.approx(per_trade)
+    assert test["deflated_sharpe"] == pytest.approx(daily)
+
+
 def test_trial_log_gets_every_variant_and_the_test(tmp_path, fakes):
     run_research(tmp_path)
     lines = [

@@ -1,8 +1,8 @@
-"""Run a strategy 1 backtest and print its summary. Spec: ROADMAP.md › 3.4.
+"""Run a backtest of any strategy and print its summary. Spec: ROADMAP.md › 3.4.
 
     python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30
 
-Settings: the spec defaults, or a saved preset with `--preset NAME` (results/presets/,
+Settings: the spec defaults, or a saved preset with `--preset NAME` (results/presets/, any strategy;
 ROADMAP 4.2); results go to `results/<run-id>/` (see runner.py for the files).
 """
 
@@ -17,10 +17,10 @@ from pathlib import Path
 from backtester.analytics.metrics import by_period, by_year
 from backtester.analytics.trial_log import append, make_record
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources
-from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, load_preset
+from backtester.presets import DEFAULT, PRESETS_DIR, PresetError, is_default, load_preset
 from backtester.runner import RESULTS_DIR, run_backtests, write_results
 from backtester.strategy.base import UnsupportedSymbolError
-from backtester.strategy.registry import REGISTRY, default_config, strategy_name
+from backtester.strategy.registry import REGISTRY, strategy_name
 
 
 def format_periods(trades) -> str:
@@ -98,9 +98,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--strategy",
         choices=tuple(REGISTRY),
-        default="session_zone_sweep",
-        help="session_zone_sweep (strategy 1, default), ny_index_sweep (strategy 2: NAS100 / "
-        "US500), no_wick (strategy 3) or trend_following (strategy 4); spec defaults, no presets",
+        default=None,
+        help="the strategy to run (default: the preset's strategy, strategy 1 for Default); "
+        "a preset of another strategy is refused",
     )
     parser.add_argument(
         "--family",
@@ -112,16 +112,13 @@ def main(argv: list[str] | None = None) -> int:
 
     symbols = [s.upper() for s in args.symbols]
     sources = SymbolSources.single(args.cache_dir, symbols) if args.cache_dir else DEFAULT_SOURCES
-    try:
-        preset = load_preset(args.preset, args.presets_dir)
+    try:  # same rules as the app (settings_panel): a preset belongs to one strategy
+        if args.strategy is None and not is_default(args.preset):
+            args.strategy = strategy_name(load_preset(args.preset, args.presets_dir).strategy)
+        args.strategy = args.strategy or "session_zone_sweep"
+        preset = load_preset(args.preset, args.presets_dir, args.strategy)
     except PresetError as e:
         parser.error(str(e))
-    if args.strategy != strategy_name(preset.strategy):  # presets hold strategy 1's settings
-        if args.preset != DEFAULT:
-            parser.error(
-                f"presets are strategy 1 settings; {args.strategy} runs with the spec defaults"
-            )
-        preset = replace(preset, strategy=default_config(args.strategy))
     warmup = args.warmup_days if args.warmup_days is not None else preset.warmup_days
     settings = replace(preset, warmup_days=warmup)
     try:

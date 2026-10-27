@@ -15,7 +15,7 @@ from pathlib import Path
 
 from backtester.runner import RESULTS_DIR, RunSettings
 from backtester.settings import SettingsError, from_dict, to_dict
-from backtester.strategy.registry import default_config
+from backtester.strategy.registry import default_config, strategy_name
 
 PRESETS_DIR = RESULTS_DIR / "presets"
 DEFAULT = "Default"
@@ -37,7 +37,7 @@ def _check_name(name: str | None) -> str:
     return name
 
 
-def _is_default(name: str) -> bool:
+def is_default(name: str) -> bool:
     return name.strip().lower() == DEFAULT.lower()
 
 
@@ -81,22 +81,28 @@ def list_presets(folder: Path = PRESETS_DIR, strategy: str | None = None) -> lis
 
 
 def load_preset(name: str, folder: Path = PRESETS_DIR, strategy: str | None = None) -> RunSettings:
-    """The preset's settings; "Default" is the spec defaults of `strategy` (default: 1)."""
-    if _is_default(name):
+    """The preset's settings; "Default" is the spec defaults of `strategy` (default: 1). A
+    preset of another strategy than the given `strategy` is refused (PresetError)."""
+    if is_default(name):
         return RunSettings(strategy=default_config(strategy or "session_zone_sweep"))
     path = _find(name, folder)
     if path is None:
         raise PresetError(f"no preset {name!r}")
     try:
-        return from_dict(json.loads(path.read_text(encoding="utf-8"))["settings"])
+        settings = from_dict(json.loads(path.read_text(encoding="utf-8"))["settings"])
     except (OSError, ValueError, KeyError, SettingsError) as e:
         raise PresetError(f"preset {name!r} can't be read: {e}") from e
+    if strategy is not None and strategy_name(settings.strategy) != strategy:
+        raise PresetError(
+            f"preset {name!r} is for {strategy_name(settings.strategy)}, not {strategy}"
+        )
+    return settings
 
 
 def save_preset(name: str, settings: RunSettings, folder: Path = PRESETS_DIR) -> str:
     """Save (or overwrite) `name`; returns the name as saved."""
     name = _check_name(name)
-    if _is_default(name):
+    if is_default(name):
         raise PresetError('"Default" is the spec defaults and can\'t be overwritten: Save as …')
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
@@ -111,7 +117,7 @@ def save_preset(name: str, settings: RunSettings, folder: Path = PRESETS_DIR) ->
 
 def rename_preset(old: str, new: str, folder: Path = PRESETS_DIR) -> str:
     new = _check_name(new)
-    if _is_default(old) or _is_default(new):
+    if is_default(old) or is_default(new):
         raise PresetError('"Default" can\'t be renamed or replaced')
     path = _find(old, folder)
     if path is None:
@@ -125,7 +131,7 @@ def rename_preset(old: str, new: str, folder: Path = PRESETS_DIR) -> str:
 
 
 def delete_preset(name: str, folder: Path = PRESETS_DIR) -> None:
-    if _is_default(name):
+    if is_default(name):
         raise PresetError('"Default" can\'t be deleted')
     path = _find(name, folder)
     if path is None:

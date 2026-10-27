@@ -94,6 +94,11 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
   (default **100**) development trades; the others are listed but not ranked.
 - The chosen variant is the top-ranked one. The number of variants tried goes into the deflated Sharpe of
   the test result.
+- **One DSR definition: daily net R, as the trial log** (the user, 2026-10-27; ROADMAP 12.13). The
+  Sharpe and DSR here use `daily_net_r` over the weekdays of the period (development: dev start..end;
+  test: test start..end), the same helper and periods as `trial_log.make_record`. The stored
+  per-variant `day_sharpe` (family Sharpes V) and the test row's DSR follow it; the per-trade Sharpe
+  is no longer stored. A variant stored with the old per-trade `sharpe` runs again on resume.
 
 ## Scorecard (one row per variant and period; also for every plain backtest run)
 

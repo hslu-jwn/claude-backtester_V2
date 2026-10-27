@@ -49,6 +49,21 @@ def trials_log_in_tmp(tmp_path, monkeypatch):
     monkeypatch.setattr(trial_log, "RESULTS_DIR", tmp_path / "_results")
 
 
+@pytest.fixture(autouse=True)
+def no_local_news_calendar(monkeypatch):
+    """The default calendar path (data/news/economic_events.csv) is the real local file; tests
+    see "no calendar" for it instead. A test that loads a calendar passes its own path."""
+    from backtester.data import news
+
+    default = news.NewsConfig().path
+    real = news.load_calendar
+
+    def load_calendar(config):
+        return None if config.path == default else real(config)
+
+    monkeypatch.setattr(news, "load_calendar", load_calendar)
+
+
 @pytest.fixture
 def make_candles():
     return build_candles

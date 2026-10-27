@@ -27,6 +27,7 @@
   const DASHES = { solid: [], dot: [3, 3], dash: [9, 9] }; // Plotly's patterns at width 1
   const KIND_ORDER = { bf: 0, bo: 1, l: 2, m: 3, t: 4 }; // fills, outlines, lines, markers, labels
   const S = {
+    live: false,        // the chart shows the latest day of a symbol the bot writes live bars for
     chart: null, series: null, prim: null, el: null,
     legend: null, badgesEl: null, tip: null,
     key: null, cursor: -1, times: [], spreads: [], digits: 5, tfmin: 5,
@@ -881,6 +882,7 @@
         S.key = payload.key;
         S.symbol = payload.symbol; S.tf = payload.tf; S.tfmin = payload.tfmin;
         S.digits = payload.digits; S.replay = payload.replay; S.picking = payload.picking;
+        S.live = !!payload.live && !payload.replay; // live bars may be appended (liveAsk)
         S.cursor = payload.cursor;
         S.inspections = [];
         S.times = payload.candles.t.slice();
@@ -1046,6 +1048,32 @@
         const bar = S.series.dataByIndex(j);
         if (bar) setTimeout(() => S.chart.setCrosshairPosition(bar.close, bar.time, S.series), 50);
         return Object.assign({}, target, { done: true });
+      },
+
+      /* Live bars (every ~20 s): ask the server for the candles after our last one. Only when
+         the chart shows the latest live day, outside replay / review; else nothing is sent. */
+      liveAsk() {
+        if (!S.live || S.replay || S.picking || !S.series || !S.times.length) return no();
+        if (document.hidden) return no();
+        return { key: S.key, after: S.times[S.times.length - 1], n: ++S.nonce };
+      },
+
+      /* Append them: the candle at our last time is replaced, newer ones are added. View, zoom,
+         overlays and replay stay as they are. */
+      live(found) {
+        if (!found || found.key !== S.key || !S.live || S.replay || S.picking) return no();
+        const c = found.candles, last = S.times[S.times.length - 1];
+        const bars = barsOf(c);
+        for (let i = 0; i < bars.length; i++) {
+          if (bars[i].time < last) continue;
+          S.series.update(bars[i]);
+          if (bars[i].time === last) { S.spreads[S.times.length - 1] = c.s[i]; continue; }
+          S.times.push(c.t[i]);
+          S.spreads.push(c.s[i]);
+        }
+        S.cursor = S.times.length - 1;
+        invalidate();
+        return no();
       },
 
       /* Replay delta: from our cursor to the next one. */

@@ -105,6 +105,7 @@ from backtester.core.models import Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import (
     MissingCacheError,
+    cached_days,
     candles_from_frame,
     latest_run,
 )
@@ -153,6 +154,7 @@ from backtester.ui.theme import color as theme_color
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
 CALENDAR_NAMES = {tf.name for tf in CALENDAR}
 DEFAULT_TIMEFRAME = Timeframe.M5.name
+LIVE_REFRESH_MS = 20_000  # how often an open chart of the latest live day asks for new bars
 REPLAY_OFF = {"on": False, "picking": False, "playing": False, "start": None, "now": None}
 
 
@@ -684,6 +686,7 @@ def base_payload(
         "picking": bool(replay_state["on"] and replay_state["picking"]),
         "candles": data.candles(0, cursor + 1),
         "sessions": data.sessions(0, cursor + 1),
+        "live": live_active(sources, symbol, end_date, replay_state, review_state),
         "span": None,
         "range": None,
     }
@@ -693,6 +696,61 @@ def base_payload(
         payload["span"] = span
         payload["range"] = {"from": cursor - left + 0.5, "to": cursor + right + 0.5}
     return payload, message
+
+
+def live_active(
+    sources: SymbolSources, symbol: str | None, end_date: str | None, replay_state, review_state
+) -> bool:
+    """True when the chart shows the latest day of a symbol whose live folder has that day
+    (the demo bot is writing it) and is neither in replay nor in review: only then are new
+    live bars appended (ROADMAP V2.6d step 5). Cheap: a folder listing, no candles."""
+    folder = sources.fallback_dirs.get(symbol) if sources is not None and symbol else None
+    if folder is None or not end_date or review_state or (replay_state or {}).get("on"):
+        return False
+    days = sources.cached_days(symbol)
+    try:
+        last = date.fromisoformat(end_date[:10])
+    except ValueError:
+        return False
+    return bool(days) and last == days[-1] and last in set(cached_days(symbol, folder))
+
+
+def live_bars(
+    sources: SymbolSources,
+    symbol: str | None,
+    timeframe: str | None,
+    start_date: str | None,
+    end_date: str | None,
+    after: int | None,
+    replay_state: dict | None = None,
+    review_state: dict | None = None,
+    config: ChartConfig = DEFAULT_CONFIG,
+) -> dict | None:
+    """The candles from the chart's last candle (`after`, UTC seconds) on, for the browser to
+    append (`series.update`; the last one replaces its copy, so a still growing M5 / H1
+    candle follows). The live files hold closed M1 bars only. None unless `live_active`."""
+    if (
+        after is None
+        or not timeframe
+        or not live_active(sources, symbol, end_date, replay_state, review_state)
+    ):
+        return None
+    first = datetime.fromtimestamp(after, UTC).date() - timedelta(
+        days=7 if timeframe in CALENDAR_NAMES else 0
+    )
+    frame, _ = _load_frame(sources, symbol, timeframe, first.isoformat(), end_date, config)
+    if frame is None:
+        return None
+    replay = Replay(CandleSeries(symbol, Timeframe[timeframe], candles_from_frame(frame)))
+    data = ChartData(replay, lambda o: [], config)
+    cols = data.candles(0, len(data))
+    keep = [i for i, t in enumerate(cols["t"]) if t >= after]
+    if not keep:
+        return None
+    return {
+        "key": chart_key(symbol, timeframe, start_date, end_date, config),
+        "candles": {k: [v[i] for i in keep] for k, v in cols.items() if k != "x0"},
+    }
 
 
 def review_key(key, state):
@@ -1597,6 +1655,10 @@ def layout(
             dcc.Store(id="chart-goto"),
             dcc.Store(id="settings-current", storage_type="local"),
             settings_panel.layout(),
+            dcc.Store(id="chart-live-req"),
+            dcc.Store(id="chart-live-done"),
+            dcc.Store(id="chart-live"),
+            dcc.Interval(id="chart-live-timer", interval=LIVE_REFRESH_MS),
             dcc.Interval(
                 id="chart-replay-timer",
                 interval=1000 // config.replay_default_speed,
@@ -2054,6 +2116,48 @@ def register_callbacks(
         Input("chart-delta", "data"),
         prevent_initial_call=True,
     )
+
+    app.clientside_callback(
+        ClientsideFunction("chart", "liveAsk"),
+        Output("chart-live-req", "data"),
+        Input("chart-live-timer", "n_intervals"),
+        prevent_initial_call=True,
+    )
+    app.clientside_callback(
+        ClientsideFunction("chart", "live"),
+        Output("chart-live-done", "data"),
+        Input("chart-live", "data"),
+        prevent_initial_call=True,
+    )
+
+    @app.callback(
+        Output("chart-live", "data"),
+        Input("chart-live-req", "data"),
+        State("chart-symbol", "value"),
+        State("chart-timeframe", "value"),
+        State("chart-dates", "data"),
+        State("chart-day-boundary", "value"),
+        State("chart-h4-alignment", "value"),
+        State("chart-replay", "data"),
+        State("chart-review", "data"),
+        prevent_initial_call=True,
+    )
+    def _live(request, symbol, timeframe, dates, boundary, h4, replay_state, review_state):
+        if not request:
+            return no_update
+        start_date, end_date = dates_of(dates)
+        found = live_bars(
+            sources,
+            symbol,
+            timeframe,
+            start_date,
+            end_date,
+            request.get("after"),
+            replay_state,
+            review_state,
+            with_boundary(config, boundary, h4),
+        )
+        return no_update if found is None else {**found, "n": request.get("n")}
 
     @app.callback(
         Output("chart-replay", "data"),

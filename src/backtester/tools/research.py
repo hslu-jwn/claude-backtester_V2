@@ -41,6 +41,7 @@ from collections.abc import Callable, Iterator, Sequence
 from datetime import date, timedelta
 from pathlib import Path
 
+from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
 from backtester.analytics.records import read_trades
 from backtester.analytics.scorecard import SCORE_KEYS, ScorecardConfig, flags, scorecard
@@ -300,6 +301,12 @@ def _finished_variant(vdir: Path) -> dict | None:
     return done
 
 
+def _day_stats(trades, start: date, end: date):
+    """One DSR definition (the user, 2026-10-27): moments and Sharpe of the daily net R over the
+    weekdays start..end, as the trial log (`trial_log.make_record`) and the Monte Carlo check 7."""
+    return trade_stats(daily_net_r(trades, start, end))
+
+
 def _store_variant(
     spec: GridSpec,
     variant: Variant,
@@ -315,13 +322,12 @@ def _store_variant(
     start, end = periods["dev_start"], periods["dev_end"]
     write_results(result, folder / "variants", variant.id)
     _dump(vdir / "diagnostics.json", research_diagnostics.snapshot(result.trades))
-    r_net = [t.r_net for t in result.trades]
     data = {
         "id": variant.id,
         "name": variant.name,
         "overrides": variant.overrides,
         "scorecard": scorecard(result.trades, sc_cfg, start, end),
-        "sharpe": trade_stats(r_net).sharpe,
+        "day_sharpe": _day_stats(result.trades, start, end).sharpe,
     }
     _dump(vdir / SCORECARD_FILE, data)
     _daily_series(
@@ -465,7 +471,7 @@ def _variant_row(spec: GridSpec, data: dict, sc_cfg: ScorecardConfig) -> dict:
     return {
         "variant_id": data["id"], "variant": data["name"], "rank": None, **card,
         "flags": ";".join(flags({**card, "period": "development"}, sc_cfg)),
-        "sharpe": data["sharpe"], "overrides": data["overrides"],
+        "day_sharpe": data["day_sharpe"], "overrides": data["overrides"],
         **_setting_cells(spec, data["overrides"]),
     }  # fmt: skip
 
@@ -487,10 +493,10 @@ def _test_row(
     trades = result.trades
     card = scorecard(trades, sc_cfg, test_start, test_end)
     r_net = [t.r_net for t in trades]
-    stats = trade_stats(r_net)
+    stats = trade_stats(r_net)  # per-trade: the mean R shown in the verdict only
     n_variants = len(dev_rows)
-    sharpes = [r["sharpe"] for r in dev_rows if r["sharpe"] is not None]
-    dsr = deflated_sharpe(stats, n_variants, sharpes).dsr
+    sharpes = [r["day_sharpe"] for r in dev_rows if r["day_sharpe"] is not None]
+    dsr = deflated_sharpe(_day_stats(trades, test_start, test_end), n_variants, sharpes).dsr
     first, second = period_halves(trades, test_start, test_end)
     verdict = evaluate(
         VerdictInputs(
@@ -660,6 +666,9 @@ def _run_research_locked(
     done: dict[str, dict] = {}
     for variant in variants:
         data = _finished_variant(folder / "variants" / variant.id)
+        if data is not None and "day_sharpe" not in data:  # old per-trade Sharpe: runs again
+            shutil.rmtree(folder / "variants" / variant.id)
+            data = None
         if data is not None:
             _daily_series(
                 spec,
