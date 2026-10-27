@@ -58,6 +58,14 @@ compute job only after it is a reviewed V2 strategy.
 9. **Close**: move the queue file to `completed/` or `rejected/` (never deleted), update
    `docs/research-log.md`, ROADMAP, HANDOFF.
 
+## Decided (the user, 2026-10-27)
+
+Two stages only (develop before 2021-09-14, test once after); the adapter is built after the
+V2.6d step-1 fill analysis; `jsonschema` as optional extra `[intake]`; stopless / notional /
+target-weight / portfolio strategies and `NEXT_BAR_OPEN` fills are rejected for now
+(`UNSUPPORTED_STRATEGY_TYPE`; future options in the review › section 6); the one-time test only
+on the user's go; queue files kept forever. Details: review › section 3.
+
 ## Rules that stay
 
 No lookahead; fixed split (develop before 2021-09-14, test once on MT5 after); one parameter

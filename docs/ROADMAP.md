@@ -191,9 +191,11 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   `results/intake/`); (i4) submission mapping section in each strategy spec; (i5) strategy /
   experiment / dataset / commit / stage metadata in `settings.json` and the trial log; (i6)
   result and feedback envelope emitters, test-stage run refused without the user's go; (i7)
-  synthetic end-to-end fixture; (i8) first real R-type pilot, development stage only. Timing vs
-  V2.6d: the user's decision (D2). Open: the user's decisions D1-D8, the research team's answer
-  on the contract edits.
+  synthetic end-to-end fixture; (i8) first real R-type pilot, development stage only. Decisions
+  D1-D8 by the user 2026-10-27 (two stages, built after the V2.6d step-1 fill analysis,
+  `jsonschema` as optional extra, stopless / portfolio and next-bar-open rejected for now with a
+  future-support list, old idea backlog to research, test only on the user's go, queue files
+  kept). Open: the research team's answer on the contract edits.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 

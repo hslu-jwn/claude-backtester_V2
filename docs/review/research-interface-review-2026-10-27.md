@@ -87,22 +87,21 @@ the stopless, unit-notional accounting is a model change, not a mapping.
 
 ## 3. Decisions needed
 
-From the user:
+Decided by the user, 2026-10-27 (rules, do not ask again):
 
-- **D1** Keep V2's two stages (develop before 2021-09-14, test once after) and drop
-  `VALIDATION`, or define validation as walk-forward in development? *Proposal: drop it.*
-- **D2** When to build the adapter: after V2.6d (fill work) or in parallel in a lane?
-  *Proposal: after V2.6d step 1 analysis; the bot keeps running either way.*
-- **D3** Add `jsonschema` as an optional V2 dependency (`[intake]`)? *Proposal: yes, optional extra.*
-- **D4** Stopless / notional / portfolio strategies: separate vectorised harness, a later engine
-  capability, or reject for now? *Proposal: reject now; decide after the first R-type pilot.*
-- **D5** Next-bar-open: map to "fill at the signal close" (time-equivalent on M1) or add an
-  engine option? *Proposal: an engine option later; until then reject `NEXT_BAR_OPEN`.*
-- **D6** The existing V2 idea backlog (`knowledge/ideas.md`) and the pre-registered hypotheses
-  (strategy 4 on GBPJPY, 5 / 7 in quiet sideways markets): hand them to Research or keep them
-  as V2 work? *Proposal: hand the backlog over; the three pre-registered tests stay V2 work.*
-- **D7** Who authorises the one-time test of a submission: the user only (as now)? *Proposal: yes.*
-- **D8** Completed / rejected queue files: keep forever (local)? *Proposal: yes.*
+- **D1** V2 keeps two stages (develop before 2021-09-14, test once after on MT5); `VALIDATION`
+  is not used.
+- **D2** The adapter (V2.6i) is built after the V2.6d step-1 fill analysis; the demo bot keeps
+  running meanwhile.
+- **D3** `jsonschema` becomes an optional V2 extra (`[intake]`), not a core dependency.
+- **D4** Stopless / notional / target-weight / portfolio strategies are rejected for now with
+  `UNSUPPORTED_STRATEGY_TYPE`. Possible future support is listed in section 6.
+- **D5** `NEXT_BAR_OPEN` is rejected for now; an engine option may come later (section 6).
+- **D6** The old idea backlog `knowledge/ideas.md` is handed to the research department (they
+  copy it; the V2 file stays frozen in place). The three pre-registered hypotheses (strategy 4
+  on GBPJPY, 5 / 7 in quiet sideways markets) stay V2 work.
+- **D7** Only the user authorises the one-time test of a submission.
+- **D8** Completed and rejected queue files are kept forever (local).
 
 From the research team: the edits in section 2, plus lease length, worker identity and
 experiment-ID rule (proposal below).
@@ -139,3 +138,18 @@ after a submission is a V2 strategy), `runner.write_results` run IDs, lanes.
 Unsupported now: stopless or notional sizing, target-weight portfolios, monthly rebalancing with
 daily mark-to-market, cash / funding accounting, dividend-adjusted data, exchange early-close
 calendars, real volume, next-bar-open fills.
+
+## 6. Possible future support (D4 / D5, not planned, each needs the user's go)
+
+Ordered from smallest to largest change. None is on the ROADMAP yet.
+
+| Capability | What it would take | Unlocks |
+|---|---|---|
+| Next-bar-open fill | engine option: fill a market order at the next base candle's open (with spread / slippage), signal still from the closed candle; no-lookahead test that the fill never uses the signal candle | `NEXT_BAR_OPEN` submissions, US500 final-30 timing |
+| Exchange calendar | session table with holidays and early closes per index (e.g. `exchange_calendars` data or a checked CSV), read through `sessions.py` | early-close exits, accurate cash-session rules |
+| Unit-notional accounting | an optional `Order.stop_loss` (None = time / signal exit only) plus a per-trade return metric (net price return per unit after costs) next to R; risk / Monte Carlo on returns instead of R | stopless intraday strategies such as US500 final-30 |
+| Adjusted data adapter | a new `DataAdapter` for daily total-return (dividend-adjusted) prices with a dataset identity and adjustment rules | ETF / equity momentum |
+| Portfolio harness | a separate vectorised daily simulator: target weights, monthly rebalance, daily mark-to-market, cash / funding cost, vol targeting; its own tests and result envelope (`net_return_pct`, Sharpe on daily returns) | time-series momentum, cross-asset portfolios |
+
+The first two fit the current engine; the third changes the R-only rule in `AGENTS.md` and
+needs a spec first; the last two are separate tools beside the engine.
