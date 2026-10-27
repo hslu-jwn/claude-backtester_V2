@@ -66,6 +66,9 @@ target-weight / portfolio strategies and `NEXT_BAR_OPEN` fills are rejected for 
 (`UNSUPPORTED_STRATEGY_TYPE`; future options in the review › section 6); the one-time test only
 on the user's go; queue files kept forever. Details: review › section 3.
 
+Focus (rule set by the user, 2026-10-27): strategies are **day trading** (flat by the end of
+the session / day, no overnight holds); multi-day submissions are low priority.
+
 ## Rules that stay
 
 No lookahead; fixed split (develop before 2021-09-14, test once on MT5 after); one parameter
