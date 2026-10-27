@@ -30,7 +30,17 @@ from backtester.analytics.daily import daily_net_r
 from backtester.analytics.trial_log import family_summary, read_all
 
 # the R-valued fields of a trade that are scaled by the weight (when the trade has them)
-R_FIELDS = ("r_gross", "r_net", "spread_r", "commission_r", "swap_r", "funding_r", "conversion_r", "mae_r", "mfe_r")
+R_FIELDS = (
+    "r_gross",
+    "r_net",
+    "spread_r",
+    "commission_r",
+    "swap_r",
+    "funding_r",
+    "conversion_r",
+    "mae_r",
+    "mfe_r",
+)
 
 
 @dataclass(frozen=True, slots=True)
