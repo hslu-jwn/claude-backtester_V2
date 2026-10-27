@@ -74,9 +74,10 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 ## Open (needs the user)
 
 1. News filter on by default? (changes every backtest from 2020; golden lists re-written).
-   The user (2026-10-27): first re-run the off / on comparison (7 golden strategies, 2023,
-   trades and net R) **as a script file** (stdin scripts crash the multiprocessing workers),
-   then the user decides.
+   The switch did nothing outside tests until 2026-10-27 (calendar never reached the engine;
+   now wired, `news.execution_calendar`). Comparison re-run on the 7 golden setups 2023
+   (`scripts/measure_news_filter.py`, `results/news_filter.md`): 1-5 % of trades blocked,
+   net R -9.1 to +26.6 per strategy, R per trade almost unchanged. The user decides.
 2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
 3. Merge `v2-6-research` into `main` (the user's word).
 4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).

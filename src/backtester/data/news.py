@@ -281,6 +281,33 @@ def load_calendar(config: NewsConfig) -> Calendar | None:
     return calendar
 
 
+_execution: list = [None, None]  # [key, calendar] of the last execution_calendar load
+
+
+def execution_calendar(config: NewsConfig) -> Calendar | None:
+    """The blackout schedule a run hands to the engine. Spec: news.md > Configuration.
+
+    None while the filter is off (no file read). Loaded once per process and file version
+    (config, mtime, size), so every symbol of a run and every worker sees one snapshot.
+    """
+    if not config.enabled:
+        return None
+    from backtester.paths import HOME_DIR
+
+    path = Path(config.path)
+    if not path.is_absolute():
+        path = HOME_DIR / path
+    try:
+        stat = path.stat()
+        version = (stat.st_mtime_ns, stat.st_size)
+    except FileNotFoundError:
+        version = None
+    key = (repr(config), version)
+    if _execution[0] != key:
+        _execution[:] = [key, load_calendar(config)]
+    return _execution[1]
+
+
 def _parse_csv(content: bytes, config: NewsConfig) -> tuple[Calendar, dict[str, str | None]]:
     reader = csv.reader(io.StringIO(content.decode("utf-8-sig"), newline=""), strict=True)
     if next(reader, None) != CSV_COLUMNS:

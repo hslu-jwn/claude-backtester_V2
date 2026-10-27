@@ -54,6 +54,7 @@ from functools import lru_cache
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.cache_adapter import candles_from_frame
+from backtester.data.news import execution_calendar
 from backtester.data.sources import SymbolSources, cached_block
 from backtester.detectors.base import Event
 from backtester.detectors.zone import ZoneKind
@@ -118,6 +119,7 @@ def run_strategy(
         list(series.values()),
         settings.engine,
         intrabar_source=IntrabarSource(adapter) if settings.engine.intrabar == "m1" else None,
+        calendar=execution_calendar(settings.engine.news),
     )
     decisions = {
         (d.signal.at, d.signal.direction): d for d in strategy.decisions if d.order is not None

@@ -26,8 +26,11 @@ anything (so Medium never blocks; High day-only rows left after imputation block
 The configured path is `data/news/economic_events.csv`, relative to the project root.
 The research runner loads each configured calendar once per invocation for descriptive
 reporting, independently of the blackout switch. The engine accepts an explicitly supplied
-schedule through its `calendar` keyword argument; automatic execution-calendar wiring is
-outside this CSV-format addendum. A missing schedule disables filtering. An absent configured
+schedule through its `calendar` keyword argument. Every run through `runner.run_backtests`
+(CLI, app, research runner, job queue) and the chart's trade overlay passes
+`news.execution_calendar(config)`: None while `enabled` is False (no file read), otherwise the
+configured CSV, loaded once per process and file version (wired 2026-10-27; before that the
+switch had no effect outside tests). A missing schedule disables filtering. An absent configured
 file reports "no calendar" and disables the research split; an invalid existing file fails.
 
 Currencies and fallback countries are configurable per instrument. A nonblank currency takes

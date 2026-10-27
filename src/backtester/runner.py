@@ -55,6 +55,7 @@ from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.base import DataAdapter
 from backtester.data.adapters.cache_adapter import MissingCacheError, candles_from_frame
+from backtester.data.news import execution_calendar
 from backtester.data.sources import (
     DEFAULT_SOURCES,
     SymbolSources,
@@ -346,6 +347,7 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         else None,
         tick_rounding=tick_rounding,
         diagnostics_start=start,
+        calendar=execution_calendar(job.settings.engine.news),
     )
     sessions = [
         s
