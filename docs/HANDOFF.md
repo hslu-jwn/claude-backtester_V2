@@ -74,6 +74,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Next step
 
+**V2.6d state (2026-10-27 evening):** fill-probe bot running on the FTMO demo since 16:00 UTC (PID in `results/live/`, logs `results/live/probe_stdout.log`, stop with `results/live/STOP`); steps 2, 4, 5 done; news windows wait for the user's decision; slippage analysis after 1-3 days of fills.
+
 **V2.6d before research (ROADMAP, the user 2026-10-27):** (1) fill-collection demo bot 1-3 days,
 (2) FTMO fees researched and implemented, (3) news filter on the cleaned real calendar,
 (4) LibreHardwareMonitor, (5) older known issues; then research. Earlier text below.
