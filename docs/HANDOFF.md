@@ -39,12 +39,13 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 | 6 | Live (demo bot, V2.4b, 12.5) | skipped (user) |
 | 7 | V2.4e news calendar on synthetic data, filter default off | accepted (2026-10-27 `End.`) |
 | 8 | Full check: Codex review (`docs/review/v26-full-check.md`), fixes 1-6, `--help` on Windows, live job logs | accepted (2026-10-27 `End.`) |
-| 9 | More symbols: proposal list `docs/review/symbol-proposal-2026-10-27.md` | **waiting for the user's pick** |
+| 9 | Eight symbols added (AUDJPY, CADJPY, NZDJPY, CHFJPY, EURAUD, GBPAUD, AUS200, HK50): costs, full MT5 history, clock repair (`docs/review/symbol-proposal-2026-10-27.md`) | accepted (2026-10-27) |
 
 ## Accepted by the user (do not ask again)
 
 - 2026-10-22 / 23 / 24: see git history of this file; all V1 decisions; V2.5 UI decisions.
 - 2026-10-27 (`End.`): steps 5, 7, 8 of the V2.6 build order accepted.
+- 2026-10-27 (`Continue.Code`): step 9 accepted; v2-6-research merged into `main`; night-file decisions taken (news at candle close, spread-table cost exception, light pipeline Monte Carlo); file-lock race fixed.
 - 2026-10-26: everything up to V2.5 accepted (`End.`); tick rounding on + median spread table
   default (spread re-checked after demo trading); build and test the whole app first, research
   after; V2.6 build order; queue first, LibreHardwareMonitor guard; pre-registered hypotheses
