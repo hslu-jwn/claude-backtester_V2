@@ -63,3 +63,18 @@ not needed). Spreads to measure after the download.
 - `tools.check` of the eight: no duplicate timestamps, broken candles or negative spreads; a few
   minute jumps at known events (2016-06-24 Brexit, 2019-01-02 JPY flash crash, session opens).
 - Golden lists unchanged (7 / 7 identical).
+
+## Step 9 data state, update (2026-10-27 afternoon)
+
+- The user requested the M1 history in MT5 (Symbols > Bars) and restarted the terminal; the API then
+  returned the full history: FX crosses 2010-01-01..2026-10-26 (~6.2 M bars each), AUS200 from
+  2019-02-09, HK50 from 2021-09-14 (FTMO's index M1 history starts there; before, one bar per day).
+  The capped first download is superseded; the "2022 to mid-2026 missing" note above is resolved.
+- `cache_repair <SYMBOL> --clock-table results/v26b2_rebuild_server_clock.json` for all eight: FX
+  4281 days measured, 2258 excluded (GBPAUD 2267; the same 2455 post-2015 days as AUDUSD; the
+  pre-2015 days have no clock proof, as for the 26 others); AUS200 987 / 220; HK50 92 / 0.
+- Median M5 range (doji threshold) re-measured over 2015-01-02..2026-10-26 (final values in
+  `detectors/swings.py`).
+- `tools.check` after the repair: nothing missing, no duplicate / broken candles or negative spreads.
+  "Unexpected" gaps: FX crosses 162-230 (AUDUSD 378); AUS200 12,723 and HK50 4,591 (lunch breaks,
+  sessions the checker does not model; JP225 already shows 19,705). Golden lists 7 / 7 identical.

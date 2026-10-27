@@ -46,10 +46,9 @@ MEDIAN_M5_RANGE = MappingProxyType(
         "USOIL": 0.079, "UKOIL": 0.081, "DXY": 0.060,
         "US30": 17.0, "US2000": 1.40, "NATGAS": 0.0060, "BTCUSD": 52.5, "ETHUSD": 3.5,
         "BTCUSDT": 74.8, "ETHUSDT": 4.48,
-        # V2.6 step 9 (2026-10-27), same method; provisional: histdata 2015-2021 + MT5 from
-        # 2026-07 only (the terminal capped the download), re-measure after the full MT5 history
-        "AUDJPY": 0.038, "CADJPY": 0.034, "NZDJPY": 0.035, "CHFJPY": 0.040,
-        "EURAUD": 0.00057, "GBPAUD": 0.00076, "AUS200": 3.44, "HK50": 20.0,
+        # V2.6 step 9, same method, full history 2015-01-02..2026-10-26 (measured 2026-10-27)
+        "AUDJPY": 0.041, "CADJPY": 0.037, "NZDJPY": 0.037, "CHFJPY": 0.047,
+        "EURAUD": 0.00058, "GBPAUD": 0.00072, "AUS200": 4.0, "HK50": 19.0,
     }
 )  # fmt: skip
 
