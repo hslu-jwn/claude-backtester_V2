@@ -55,13 +55,13 @@ def symbol_mutation_lock(cache_dir: Path, symbol: str) -> Path:
 
 @contextmanager
 def file_lock(path: Path, timeout: float = DEFAULT_LOCK_CONFIG.timeout):
-    """Exclusive sidecar lock, released by the OS even after a process crashes."""
+    """Exclusive sidecar lock, released by the OS even after a process crashes.
+
+    The file stays empty: Windows may lock byte 0 past the end of the file, and writing a padding
+    byte raced with another process already holding that byte (PermissionError on flush).
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+b") as stream:
-        stream.seek(0, os.SEEK_END)
-        if stream.tell() == 0:
-            stream.write(b"\0")
-            stream.flush()
         deadline = time.monotonic() + timeout
         while True:
             try:
