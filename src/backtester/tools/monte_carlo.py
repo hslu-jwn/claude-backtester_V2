@@ -94,6 +94,9 @@ class ToolConfig:
     sampling: str = "block_bootstrap"
     block_days: float = 5.0
     bounds: DrawdownBoundsConfig = field(default_factory=DrawdownBoundsConfig)
+    # research pipeline: no kind D and no matched monkeys (the runner writes monkeys.json); the
+    # card reads only kind A here, the full report stays on demand (rule set by the user, 2026-10-27)
+    light: bool = False
 
 
 # ----- kind D ------------------------------------------------------------------------------
@@ -370,14 +373,17 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         "strategy": strategy, "symbols": symbols, "start": start, "end": end, "source": source,
         **({"run": args.run} if args.run else {}),
     }  # fmt: skip
-    from backtester.analytics.monkeys import MonkeyConfig, matched_monkeys
+    from backtester.analytics import monkeys as matched
     from backtester.tools.entry_screen import load_m1
 
-    log("matched monkeys: entry / exit / both")
-    m1s = {s: load_m1(s, sources, start, end) for s in sorted({t.symbol for t in trades})}
-    monkeys = matched_monkeys(
-        trades, m1s, settings.engine.costs, MonkeyConfig(runs=config.runs, seed=config.seed)
-    )
+    monkeys = None
+    if not config.light:
+        log("matched monkeys: entry / exit / both")
+        m1s = {s: load_m1(s, sources, start, end) for s in sorted({t.symbol for t in trades})}
+        monkeys = matched.matched_monkeys(
+            trades, m1s, settings.engine.costs,
+            matched.MonkeyConfig(runs=config.runs, seed=config.seed),
+        )  # fmt: skip
     summary = build_summary(
         trades,
         follow,
@@ -402,6 +408,7 @@ def analyse(args: argparse.Namespace, config: ToolConfig, log=print) -> dict:
         config=skill_bounds.BoundsConfig(seed=config.seed),
     )
     summary["meta"]["paths"] = config.paths
+    summary["light"] = config.light
     return summary
 
 
@@ -701,6 +708,9 @@ def random_fills_html(summary: dict) -> str:
 def monkeys_html(summary: dict) -> str:
     """Matched-model percentiles, including which source supplies verdict check 2."""
     result = summary.get("monkeys")
+    if summary.get("light"):
+        return section("Matched monkeys", "", "<p>Skipped (light run of the research pipeline; "
+                       "the research card's monkey check comes from the runner).</p>")  # fmt: skip
     if not result or not result.get("available"):
         return section("Matched monkeys", "", "<p>Unavailable (no M1 input or no trades).</p>")
     rows = []
@@ -748,7 +758,7 @@ def random_paths_html(summary: dict) -> str:
     p = summary["random_paths"]
     if p is None:
         return section(
-            "Random paths (kind D)", how, "<p>Skipped (--paths 0 or not applicable).</p>"
+            "Random paths (kind D)", how, "<p>Skipped (--paths 0, --light or not applicable).</p>"
         )
     rows, classes = [], {}
     for i, r in enumerate(p["rows"]):
@@ -875,6 +885,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--horizon-days", type=int, default=d.bounds.horizon_days)
     p.add_argument("--paths", type=int, default=d.paths,
                    help="random price paths per symbol (kind D), 0 = skip")  # fmt: skip
+    p.add_argument("--light", action="store_true",
+                   help="research pipeline: no kind D and no matched monkeys")  # fmt: skip
     p.add_argument("--family", default=None,
                    help="trial-log family: the variants this run was picked from "
                    "(default: the strategy)")  # fmt: skip
@@ -907,12 +919,13 @@ def main(argv: list[str] | None = None) -> int:
     config = ToolConfig(
         runs=args.runs,
         seed=args.seed,
-        paths=args.paths,
+        paths=0 if args.light else args.paths,
         sampling=args.sampling,
         block_days=args.block_days,
         bounds=DrawdownBoundsConfig(
             outer=args.bounds_outer, inner=args.bounds_inner, horizon_days=args.horizon_days
         ),
+        light=args.light,
     )
     out = args.out or default_out(args)
     t0 = clock.time()

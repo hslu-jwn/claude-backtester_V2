@@ -38,3 +38,15 @@ job per symbol for the data; the costs need the FTMO contract specs from `mt5_in
 Start with priority 1 (six JPY / commodity crosses) and 2 (AUS200, HK50): they add the most
 different behaviour for the portfolio at the lowest cost to integrate (FX: same session logic and
 cost model as the existing pairs).
+
+## Picked by the user 2026-10-27, checked with `tools.mt5_info --no-save` the same day
+
+AUDJPY, CADJPY, NZDJPY, CHFJPY, EURAUD, GBPAUD, AUS200 (FTMO name `AUS200.cash`), HK50
+(`HK50.cash`): all eight exist on FTMO, trade mode full, market execution, FX contract 100 000 /
+indices 1, volume step 0.01. JPY crosses 3 digits, AUD crosses 5, indices 2. Swap points (long /
+short): AUDJPY 3.54 / -13.32, CADJPY 0.5 / -5.71, NZDJPY 0.77 / -5.45, CHFJPY -11.94 / 1.79,
+EURAUD -13.56 / 1.82, GBPAUD -13.4 / -1.25 (triple Wednesday); AUS200 -180.79 / -50.04, HK50
+-477.11 / -16.45 (triple Friday). Open points: HK50 tick value read 0 (no HKD rate in the
+terminal: costs need a USDHKD quote or a fixed rate); the clock step stopped at AUDJPY H1 "no bars"
+(the terminal had no history for the new symbols yet; the clock is already known per date, so
+not needed). Spreads to measure after the download.

@@ -83,6 +83,10 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
   Only the **single best development variant** runs here, **once**.
 - A second test run of the same grid (same strategy, symbols, grid and base) is refused unless `--retest`
   is given; a retest is recorded in the trial log as such.
+- **Exception, costs only:** the median spread table fills years it has no measurement for from the
+  nearest measured year, so the development period may use spreads measured later (NAS100 / US500 in
+  2015-2020 use the 2021 values, and 2021 is measured over the whole year, across the cutoff). Accepted
+  because costs are no trading signal (rule set by the user, 2026-10-27; full check finding 7).
 
 ## Ranking and selection
 
@@ -529,7 +533,7 @@ python -m backtester.tools.queue add-grid research/grids/orb.toml      # the sam
 | Step | What it does |
 |---|---|
 | `research` | `run_research(grid, workers=1, retest=False, dev_only=True)`: development period only, never a retest, the test period stays unspent. Writes everything the card reads from the research folder (below). |
-| `monte_carlo` | `tools/monte_carlo --run <chosen dev run> --results-dir <results> --out <results>/monte_carlo/<dev run>`: the tool's own defaults (1000 runs, seed 42, 20 random paths per symbol, block bootstrap), no other option. This is where `ui/research_model.py` reads it. Not run (step done, with a note) when that `summary.json` already exists (for example from the Results page button) or when no variant was ranked. |
+| `monte_carlo` | `tools/monte_carlo --run <chosen dev run> --results-dir <results> --out <results>/monte_carlo/<dev run> --light`: the light run (rule set by the user, 2026-10-27): no kind D random paths and no matched monkeys (the runner's `monkeys.json` already covers the card's monkey check), everything else at the tool's defaults (1000 runs, seed 42, block bootstrap). The card reads only kind A from it, so its numbers equal a full run's. `summary.json` records `"light": true`; the Results page treats a light report as missing, so its **Full Monte Carlo** button runs the full one (which replaces it). Measured 2026-10-27 on one US500 year: matched monkeys 432 s, kind D 183 s, all the rest 3 s. This is where `ui/research_model.py` reads it. Not run (step done, with a note) when that `summary.json` already exists (for example from the Results page button) or when no variant was ranked. |
 | `card_inputs` | read-only: lists which card input files exist / are missing, the stability status and the chosen variant's flags. Computes nothing. |
 
 What the runner already writes and the pipeline reuses (in `results/research/<id>/` unless
@@ -566,8 +570,9 @@ atomically before and after every step:
      "error": null, "note": null}
   ],
   "chosen": {"id": "v003", "dev_run": "20261026-120000_US500-NAS100"},
-  "monte_carlo": {"kind": "monte_carlo --run (kinds A-D, tool defaults)", "runs": 1000,
-                  "paths": 20, "seed": 42, "out": "monte_carlo/20261026-120000_US500-NAS100"},
+  "monte_carlo": {"kind": "monte_carlo --run --light (kinds A-C, tool defaults; no kind D, no monkeys)",
+                  "light": true, "runs": 1000, "paths": 0, "seed": 42,
+                  "out": "monte_carlo/20261026-120000_US500-NAS100"},
   "inputs": null
 }
 ```

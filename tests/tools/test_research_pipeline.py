@@ -141,7 +141,9 @@ def test_a3_monte_carlo_goes_where_the_card_reads_it(grid, results):
     }
 
 
-def test_a3b_default_monte_carlo_uses_tool_defaults(results, monkeypatch):
+def test_a3b_default_monte_carlo_is_the_light_run(results, monkeypatch):
+    # rule set by the user, 2026-10-27: the pipeline runs the light Monte Carlo (no kind D, no
+    # matched monkeys); the full one stays on demand (Results page button)
     from backtester.tools import monte_carlo
 
     seen = {}
@@ -153,15 +155,13 @@ def test_a3b_default_monte_carlo_uses_tool_defaults(results, monkeypatch):
     monkeypatch.setattr(monte_carlo, "main", fake_main)
     out = results / "monte_carlo" / "RUN"
     info = rp.default_monte_carlo("RUN", results, out)
-    # only the run, where to read it and where to write: every other setting is the tool default
-    assert seen["argv"] == ["--run", "RUN", "--results-dir", str(results), "--out", str(out)]
+    assert seen["argv"] == [
+        "--run", "RUN", "--results-dir", str(results), "--out", str(out), "--light",
+    ]  # fmt: skip
     defaults = monte_carlo.ToolConfig()
-    assert (info["runs"], info["paths"], info["seed"]) == (
-        defaults.runs,
-        defaults.paths,
-        defaults.seed,
-    )
-    assert "kind" in info
+    assert info["light"] is True
+    assert (info["runs"], info["paths"], info["seed"]) == (defaults.runs, 0, defaults.seed)
+    assert "light" in info["kind"]
 
 
 def test_a4_resume_skips_done_steps(grid, results):

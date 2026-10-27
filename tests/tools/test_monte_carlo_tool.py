@@ -570,3 +570,50 @@ def test_monkey_percentile_in_verdict_and_html():
     assert check.available and check.value == 94 and not check.passed  # MC still needs 95
     rendered = tool.monkeys_html(summary)
     assert "Matched monkeys" in rendered and "94.0" in rendered and "89.0" in rendered
+
+
+# --- light mode: the research pipeline's Monte Carlo (rule set by the user, 2026-10-27) -------
+
+
+@pytest.fixture
+def monkey_calls(monkeypatch):
+    from backtester.analytics import monkeys
+
+    calls = []
+    real = monkeys.matched_monkeys
+
+    def spy(*args, **kwargs):
+        calls.append(1)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(monkeys, "matched_monkeys", spy)
+    return calls
+
+
+def test_light_skips_kind_d_and_matched_monkeys_and_says_so(tmp_path, stub, monkey_calls):
+    assert tool.main(argv(tmp_path, "--light")) == 0
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["light"] is True
+    assert summary["random_paths"] is None and summary["monkeys"] is None
+    assert stub["profile"] == 0 and stub["path"] == 0 and monkey_calls == []
+    assert "light" in (tmp_path / "report.html").read_text(encoding="utf-8").lower()
+
+
+def test_light_overrides_a_paths_option(tmp_path, stub, monkey_calls):
+    assert tool.main(argv(tmp_path, "--light", "--paths", "5")) == 0
+    assert stub["profile"] == 0 and stub["path"] == 0 and monkey_calls == []
+
+
+def test_full_run_is_not_light_and_runs_the_monkeys(tmp_path, stub, monkey_calls):
+    assert tool.main(argv(tmp_path, "--paths", "0")) == 0
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["light"] is False and monkey_calls == [1]
+
+
+def test_light_kind_a_numbers_equal_the_full_runs(tmp_path, stub):
+    # the research card reads only kind A (`monte_carlo` -> risks) from this summary
+    tool.main(argv(tmp_path / "light", "--light"))
+    tool.main(argv(tmp_path / "full", "--paths", "0"))
+    light = json.loads((tmp_path / "light" / "summary.json").read_text(encoding="utf-8"))
+    full = json.loads((tmp_path / "full" / "summary.json").read_text(encoding="utf-8"))
+    assert light["monte_carlo"] == full["monte_carlo"]

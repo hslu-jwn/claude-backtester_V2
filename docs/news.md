@@ -55,7 +55,10 @@ At the engine's order acceptance step, `block_entries` calls the existing
 `flag_only` records `(acceptance_time, event_ids)` in `Backtest.news_flags` and preserves trades.
 The engine uses its existing acceptance timestamp (base-candle close) for both market orders
 and reported limit fills; it does not infer an intrabar release or fill timestamp. This does
-not change existing fill semantics. Existing positions and exits are unaffected.
+not change existing fill semantics. Existing positions and exits are unaffected. The blackout
+window is checked at that candle close, not at an intrabar M1 fill time (rule set by the user,
+2026-10-27). Windows are inclusive at both ends; the sizes per impact stay unset while the
+filter is off.
 
 ## Research split
 

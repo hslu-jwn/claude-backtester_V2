@@ -93,8 +93,15 @@ def out_dir(run_id: str, results_dir: Path = RESULTS_DIR) -> Path:
 
 
 def report_exists(run_id: str, results_dir: Path = RESULTS_DIR) -> bool:
+    """A full report; the research pipeline's light one (no kind D, no monkeys) leaves the
+    Full Monte Carlo button available (user, 2026-10-27)."""
     folder = out_dir(run_id, results_dir)
-    return (folder / REPORT).is_file() and (folder / SUMMARY).is_file()
+    if not ((folder / REPORT).is_file() and (folder / SUMMARY).is_file()):
+        return False
+    try:
+        return json.loads((folder / SUMMARY).read_text("utf-8")).get("light") is not True
+    except (OSError, ValueError, AttributeError):
+        return True
 
 
 def _symbol_count(folder: Path) -> int:

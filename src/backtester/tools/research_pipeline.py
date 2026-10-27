@@ -9,9 +9,11 @@ Steps (state per step in `results/research/<id>/pipeline.json`, a rerun skips do
                   breakdown (`profile.json`), parameter stability (`sensitivity.csv`, status in
                   `research.json`), significance, Bayes, monkeys, skill bounds, drawdown bounds
                   and the warning flags (`variants.csv`); none of that is computed again here.
-2. `monte_carlo`  the Monte Carlo report of the chosen variant's development run with the
-                  tool's own defaults, written to `results/monte_carlo/<dev run>/` (where
-                  `ui/research_model.py` reads it). The only card input the runner does not write.
+2. `monte_carlo`  the light Monte Carlo report (`--light`: no kind D, no matched monkeys) of
+                  the chosen variant's development run, other settings at the tool's
+                  defaults, written to `results/monte_carlo/<dev run>/` (where
+                  `ui/research_model.py` reads it). The only card input the runner does not
+                  write; the full report stays on demand (Results page button).
 3. `card_inputs`  read-only check: which card input files exist, the stability status and the
                   chosen variant's flags, recorded in `pipeline.json` for the card.
 
@@ -161,20 +163,22 @@ def default_research(grid: Path, **kwargs) -> dict:
 
 
 def default_monte_carlo(dev_run: str, results_dir: Path, out: Path) -> dict:
-    """The Monte Carlo tool's report of a run (`--run`), every setting at the tool's default.
-    Returns what is recorded in pipeline.json (kind, runs, paths, seed)."""
+    """The Monte Carlo tool's light report of a run (`--run --light`: no kind D, no matched
+    monkeys; rule set by the user, 2026-10-27), every other setting at the tool's default.
+    Returns what is recorded in pipeline.json (kind, light, runs, paths, seed)."""
     from backtester.tools import monte_carlo
 
     code = monte_carlo.main(
-        ["--run", dev_run, "--results-dir", str(results_dir), "--out", str(out)]
+        ["--run", dev_run, "--results-dir", str(results_dir), "--out", str(out), "--light"]
     )
     if code:
         raise RuntimeError(f"monte_carlo exited with {code}")
     defaults = monte_carlo.ToolConfig()
     return {
-        "kind": "monte_carlo --run (kinds A-D, tool defaults)",
+        "kind": "monte_carlo --run --light (kinds A-C, tool defaults; no kind D, no monkeys)",
+        "light": True,
         "runs": defaults.runs,
-        "paths": defaults.paths,
+        "paths": 0,
         "seed": defaults.seed,
     }
 

@@ -154,3 +154,12 @@ def test_cancel_keeps_an_older_report_openable(results):
 def test_elapsed_text_is_shown_while_running(results):
     start(results)
     assert mj.snapshot(RUN, results)["elapsed"].count(":") == 1
+
+
+def test_a_light_pipeline_report_still_offers_the_full_run(results):
+    # the research pipeline writes a light summary (no kind D, no monkeys); the page treats it as
+    # no full report yet, so the Full Monte Carlo button stays available (user, 2026-10-27)
+    write_report(results)
+    (results / "monte_carlo" / RUN / "summary.json").write_text('{"light": true}')
+    snap = mj.snapshot(RUN, results)
+    assert snap["state"] == "idle" and not snap["report"] and snap["href"] is None
