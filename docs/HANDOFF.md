@@ -60,6 +60,9 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 ## Open (needs the user)
 
 1. News filter on by default? (changes every backtest from 2020; golden lists re-written).
+   The user (2026-10-27): first re-run the off / on comparison (7 golden strategies, 2023,
+   trades and net R) **as a script file** (stdin scripts crash the multiprocessing workers),
+   then the user decides.
 2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
 3. Merge `v2-6-research` into `main` (the user's word).
 4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
@@ -76,4 +79,5 @@ reconciliation. Then research (V2.6 lanes + queue) and V2.7 portfolio. Codex rev
 
 ## First prompt for the next chat
 
-`Continue.Code` (read `results/fill_report/report.md` first; re-run the fill report on the new fills)
+`Continue.Code` (read `results/fill_report/report.md` first; re-run the fill report on the new
+fills; run the news off / on comparison as a script file and show the user)
