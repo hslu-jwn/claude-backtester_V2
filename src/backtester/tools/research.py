@@ -352,10 +352,8 @@ def _daily_series(
 ):
     calendars = news_diagnostics.active_calendars()
     if calendars is not None:
-        if trades is None:
-            trades = read_trades(folder)
         config = variant_settings(spec, Variant("", "", overrides)).engine.news
-        calendars.write_run(folder, config, trades)
+        calendars.write_run(folder, config, read_trades(folder) if trades is None else trades)
     research_series.ensure(
         folder,
         start,
@@ -685,6 +683,7 @@ def _run_research_locked(
                 f"{data['scorecard']['trades']} trades, net {data['scorecard']['net_r']:+.1f} R "
                 "(done before)")  # fmt: skip
     pending = [v for v in variants if v.id not in done]
+    rerun = {v.id for v in pending}  # run again now: a published dev run of it is stale
     started = clock.perf_counter()
     for index, result in run_period_many(
         spec.symbols, periods["dev_start"], periods["dev_end"],
@@ -925,7 +924,7 @@ def _run_research_locked(
     save_preset(preset, settings, results_dir / "presets")
     old = previous.get("chosen") or {}
     dev_run = old.get("dev_run") if old.get("id") == best["variant_id"] else None
-    if dev_run is None or not (results_dir / dev_run).is_dir():
+    if best["variant_id"] in rerun or dev_run is None or not (results_dir / dev_run).is_dir():
         dev_run = _publish_dev_run(
             folder / "variants" / best["variant_id"], spec, results_dir, preset
         )

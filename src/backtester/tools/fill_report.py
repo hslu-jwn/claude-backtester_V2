@@ -39,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 from backtester.cli import utf8_output
+from backtester.data.mt5_download import DEFAULT_NAMES
 from backtester.engine.costs import CostConfig
 from backtester.paths import RESULTS_DIR
 
@@ -60,6 +61,7 @@ DEAL_COLUMNS = [
     "ticket", "position_id", "symbol", "time", "type", "entry", "volume", "price",
     "commission", "fee", "swap", "profit", "comment", "magic",
 ]  # fmt: skip
+OUR_NAMES = {broker: ours for ours, broker in DEFAULT_NAMES.items()}  # broker -> our symbol
 _DEAL_TYPES = {0: "buy", 1: "sell"}
 _DEAL_ENTRIES = {0: "in", 1: "out", 2: "inout", 3: "out_by"}
 
@@ -160,7 +162,9 @@ def load_live(
     return paper, trade, notes
 
 
-def _models(costs: CostConfig, symbol: str, at: datetime, price: float) -> tuple[float, float, float]:
+def _models(
+    costs: CostConfig, symbol: str, at: datetime, price: float
+) -> tuple[float, float, float]:
     """(model slippage, table spread, fixed price-scaled spread); NaN for an unknown symbol."""
     if symbol not in costs.symbols:
         return float("nan"), float("nan"), float("nan")
@@ -247,7 +251,9 @@ def _stats(df: pd.DataFrame, price_units: bool) -> dict[str, float]:
     }  # fmt: skip
 
 
-def group_table(fills: pd.DataFrame, key: str | list[str], price_units: bool = False) -> pd.DataFrame:
+def group_table(
+    fills: pd.DataFrame, key: str | list[str], price_units: bool = False
+) -> pd.DataFrame:
     rows = {k: _stats(g, price_units) for k, g in fills.groupby(key)}
     df = pd.DataFrame.from_dict(rows, orient="index")
     if isinstance(key, list):
@@ -275,18 +281,17 @@ def symbol_table(fills: pd.DataFrame, costs: CostConfig) -> pd.DataFrame:
     return pd.DataFrame.from_dict(rows, orient="index")
 
 
-def commission_table(
-    deals: pd.DataFrame, tickets: set[str], costs: CostConfig, prefix: str
-) -> pd.DataFrame:
+def commission_table(deals: pd.DataFrame, tickets: set[str], costs: CostConfig) -> pd.DataFrame:
     """Commission (+ fee) per lot per side, real against the model, per symbol. Model per
     side: commission_per_lot / 2 plus commission_pct_per_side x notional per lot (deal price
-    x contract size x quote_to_usd). Deals of our tickets (position_id) or our comment."""
+    x contract size x quote_to_usd). Only deals of the positions (position_id) of the selected
+    fills (`tickets`, so --since applies); broker names (NATGAS.cash) are mapped to ours."""
     d = deals.copy()
     for col in ("volume", "price", "commission", "fee"):
         d[col] = pd.to_numeric(d[col], errors="coerce").fillna(0.0) if col in d else 0.0
     pos = d["position_id"] if "position_id" in d else d["ticket"]
-    comment = d["comment"] if "comment" in d else pd.Series("", index=d.index)
-    d = d[pos.map(_ticket).isin(tickets) | comment.str.startswith(prefix)]
+    d = d[pos.map(_ticket).isin(tickets)].copy()
+    d["symbol"] = d["symbol"].map(lambda s: OUR_NAMES.get(s, s))
     d = d[d["entry"].isin(["in", "out"]) & (d["volume"] > 0)]
     rows = {}
     for sym, g in d.groupby("symbol"):
@@ -294,7 +299,10 @@ def commission_table(
             continue
         c = costs.symbols[sym]
         per_lot = (g["commission"] + g["fee"]).abs() / g["volume"]
-        model = c.commission_per_lot / 2 + c.commission_pct_per_side * g["price"] * c.value_per_price_unit
+        model = (
+            c.commission_per_lot / 2
+            + c.commission_pct_per_side * g["price"] * c.value_per_price_unit
+        )
         real, mod = float(per_lot.mean()), float(model.mean())
         diff = (real / mod - 1) * 100 if mod else float("nan")
         rows[sym] = {
@@ -338,7 +346,9 @@ def build_report(
     out.append("## By fill type\n" + _md(group_table(fills, "kind")))
     out.append("## Session x fill type\n" + _md(group_table(fills, ["session", "kind"])))
     if commissions is not None:
-        out.append(f"## Commission per lot per side (flag: > {FLAG_PCT:.0f} % off)\n" + _md(commissions))
+        out.append(
+            f"## Commission per lot per side (flag: > {FLAG_PCT:.0f} % off)\n" + _md(commissions)
+        )
     else:
         out.append("## Commission\nno deals file given.\n")
     return "\n".join(out)
@@ -363,7 +373,7 @@ def run(
             notes.append(f"deals file {deals} missing or empty")
         else:
             tickets = set(paper["ticket"]) if not paper.empty else set()
-            commissions = commission_table(deal_df, tickets, costs, prefix)
+            commissions = commission_table(deal_df, tickets, costs)
     report = build_report(fills, costs, notes, commissions, since)
     out.mkdir(parents=True, exist_ok=True)
     fills.to_csv(out / "fills.csv", index=False)
@@ -388,7 +398,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(fills)} fills -> {args.out}")
     if not fills.empty:
         fmt = {"float_format": lambda v: f"{v:.3g}"}
-        print("\nby fill type (units of model slippage)\n" + group_table(fills, "kind").to_string(**fmt))
+        print(
+            "\nby fill type (units of model slippage)\n"
+            + group_table(fills, "kind").to_string(**fmt)
+        )
         print("\nby session\n" + group_table(fills, "session").to_string(**fmt))
     return 0
 

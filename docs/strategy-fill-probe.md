@@ -18,12 +18,12 @@ Base timeframe 1m, warm-up 1 day. At every closed 1m candle (`now` = its close t
 - **Entry only if** the last candle of the view closes exactly at `now` (the market is open), `now.minute %
   interval_minutes == 0` (default 30), and no trade of this instance is open or pending (freed on
   `on_trade_closed` and `on_order_skipped`).
-- **Direction** alternates per instance: long, short, long, ... on every order sent, also if it is skipped.
+- **Direction** is a pure function of the signal time: slot = floor(`now` UTC epoch seconds / (`interval_minutes` x 60)); long when the slot is even, short when odd. A bot restart (shorter warm-up replay) therefore rebuilds the same direction for the same bar. Consecutive bars alternate; skipped or still open trades do not shift it.
 - **ATR:** Wilder ATR(`atr_period` 14) of the 1m candles (true range with the previous close). No order until
   it exists and is > 0.
 - **Entry** = the current close. **Stop** = entry -/+ `stop_atr` (3.0) x ATR. **Take profit** = entry +/-
   `target_r` (1.0) x (entry - stop) distance; `target_r` 0 = no take profit.
-- **Time exit:** `exits()` returns the open trade once `now - entry time >= max_hold_minutes` (20).
+- **Time exit:** `exits()` returns the open trade once `now - entry time >= max_hold_minutes` (20). `exit_at(ref)` returns entry time + `max_hold_minutes` of the open ref (None otherwise), so the live bot closes by the clock when no bar arrives.
 - `Order.confluence = "probe"`, reason `fill probe long #3`.
 
 ## Settings (`FillProbeConfig`)

@@ -392,3 +392,13 @@ def test_judge_pools_cells_over_variants_and_trades_for_the_win_rate():
     verdict = judge([v, v], cfg)
     assert verdict.cells == 4 and verdict.cells_positive == 0
     assert verdict.passed is False and verdict.bracket_win_rate == 0.0
+
+
+def test_random_exit_includes_the_currency_conversion_like_the_fixed_exit():
+    costs = CostConfig(symbols={"X": SymbolCosts(0.0, 0.0, 1, profit_currency="JPY")})
+    rows = flat(100, 3) + [(100, 102.1, 100, 102)] + flat(102, 40)  # +1R gross
+    data = m1(t0(), rows)
+    fixed = exit_after_bars(data, trade(), 2, 5, costs)
+    runs = random_exit_runs(data, trade(), np.array([600.0]), costs)
+    assert fixed.r_gross == pytest.approx(1.0) and fixed.r_net == pytest.approx(0.993)
+    assert runs.net[0] == pytest.approx(fixed.r_net)

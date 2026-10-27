@@ -1,5 +1,4 @@
-"""Fill probe (test tool for the demo bot): entries on the interval minutes, alternating
-direction, ATR stop / TP, time exit, one trade at a time, no lookahead. Not a researched
+"""Fill probe (test tool for the demo bot): entries on the interval minutes, direction by the signal time (even half-hour slot of the epoch long, odd short), ATR stop / TP, time exit, one trade at a time, no lookahead. Not a researched
 strategy. Spec: docs/strategy-fill-probe.md.
 
 Flat fixture: every M1 candle is open = close = 100, high 101, low 99 -> true range 2, so the
@@ -92,34 +91,34 @@ def test_no_order_before_atr_exists():
     assert [hhmm(t) for t, _ in sent] == ["00:15"]
 
 
-def test_direction_alternates_long_then_short():
+def test_direction_alternates_with_the_half_hour_slot():
+    # 00:30 is an odd slot of the epoch (START is midnight): short first, then long, ...
     sent = drive(new(), candles(190), free_at_once)
-    assert [o.direction for _, o in sent] == [LONG, SHORT, LONG, SHORT, LONG, SHORT]
+    assert [o.direction for _, o in sent] == [SHORT, LONG, SHORT, LONG, SHORT, LONG]
 
 
 def test_long_levels_from_hand_computed_atr():
-    [(_, o)] = drive(new(), candles(31))
+    o = drive(new(), candles(61), free_at_once)[1][1]  # 01:00: even slot
     assert o.direction is LONG
     assert o.entry == 100.0
     assert o.stop_loss == pytest.approx(94.0)  # 3 x ATR 2
     assert o.take_profit == pytest.approx(106.0)  # 1R
     assert o.confluence == "probe"
-    assert o.reason == "fill probe long #1"
+    assert o.reason == "fill probe long #2"
 
 
 def test_short_mirrors_the_long():
-    sent = drive(new(), candles(61), free_at_once)
-    short = sent[1][1]
+    short = drive(new(), candles(61), free_at_once)[0][1]  # 00:30: odd slot
     assert short.direction is SHORT
     assert short.stop_loss == pytest.approx(106.0)
     assert short.take_profit == pytest.approx(94.0)
-    assert short.reason == "fill probe short #2"
+    assert short.reason == "fill probe short #1"
 
 
 def test_target_r_scales_and_zero_means_no_take_profit():
-    [(_, o)] = drive(new(target_r=2.0), candles(31))
+    o = drive(new(target_r=2.0), candles(61), free_at_once)[1][1]  # the long of 01:00
     assert o.take_profit == pytest.approx(112.0)
-    [(_, o)] = drive(new(target_r=0), candles(31))
+    o = drive(new(target_r=0), candles(61), free_at_once)[1][1]
     assert o.take_profit is None
     assert o.stop_loss == pytest.approx(94.0)
 
@@ -134,7 +133,8 @@ def test_atr_is_wilder_with_previous_close():
     for tr in [10.0] + [2.0] * 15:
         atr = (atr * 13 + tr) / 14
     assert o.entry == 91.0
-    assert o.stop_loss == pytest.approx(91.0 - 3.0 * atr)
+    assert o.direction is SHORT  # 00:30
+    assert o.stop_loss == pytest.approx(91.0 + 3.0 * atr)
 
 
 def test_no_second_entry_while_open_until_freed():
@@ -151,7 +151,7 @@ def test_no_second_entry_while_open_until_freed():
     assert times == ["00:30", "01:00"]
 
 
-def test_skipped_order_frees_but_alternation_continues():
+def test_skipped_order_frees_and_the_next_slot_decides_the_direction():
     series = CandleSeries("TEST", M1, cs := candles(95))
     s = new()
     got = []
@@ -160,8 +160,8 @@ def test_skipped_order_frees_but_alternation_continues():
         for o in s.on_candle(now, {M1: series.view(i)}):
             got.append(o.direction)
             if len(got) == 1:
-                s.on_order_skipped(o.ref, now)  # skipped: the next one is the short
-    assert got == [LONG, SHORT]
+                s.on_order_skipped(o.ref, now)  # skipped: freed
+    assert got == [SHORT, LONG]  # 00:30 odd slot, 01:00 even
 
 
 def test_skipped_order_blocks_nothing_but_open_one_does():
@@ -226,7 +226,7 @@ def test_runs_through_the_engine_and_produces_several_trades():
     cs = candles(60 * 6, (100.0, 100.5, 99.5, 100.0))
     trades = run_backtest(new(), [CandleSeries("TEST", M1, cs)], NO_COSTS)
     assert len(trades) >= 8
-    assert [t.direction for t in trades[:4]] == [LONG, SHORT, LONG, SHORT]
+    assert [t.direction for t in trades[:4]] == [SHORT, LONG, SHORT, LONG]
     closed = trades[:-1]  # the last one ends with the data
     assert all(t.exit_reason is ExitReason.SIGNAL for t in closed)
     assert all(t.exit_time - t.entry_time == timedelta(minutes=20) for t in closed)
@@ -234,9 +234,32 @@ def test_runs_through_the_engine_and_produces_several_trades():
 
 
 def test_engine_take_profit_frees_the_strategy():
-    # the long of 00:30 hits its TP (106) in the 00:31 candle; the short of 01:00 is a new trade
-    cs = candles(31) + [Candle(START + 31 * M1.duration, 100.0, 107.0, 100.0, 100.0)]
+    # the short of 00:30 hits its TP (94) in the 00:31 candle; the long of 01:00 is a new trade
+    cs = candles(31) + [Candle(START + 31 * M1.duration, 100.0, 100.0, 93.0, 100.0)]
     cs += candles(100, FLAT, START + 32 * M1.duration)
     trades = run_backtest(new(), [CandleSeries("TEST", M1, cs)], NO_COSTS)
     assert trades[0].exit_reason is ExitReason.TAKE_PROFIT
-    assert trades[1].direction is SHORT
+    assert trades[0].direction is SHORT and trades[1].direction is LONG
+
+
+def test_direction_is_a_function_of_the_signal_time_not_of_a_restart():
+    # review #4: after a restart the warm-up replays a shorter history; the same bar must get
+    # the same direction. slot = epoch seconds // (interval x 60): even long, odd short.
+    full = drive(new(), candles(400), free_at_once)
+    late = drive(new(), candles(150, start=START + timedelta(minutes=250)), free_at_once)
+    assert late
+    by_time = {t: o.direction for t, o in full}
+    for t, o in late:
+        assert by_time[t] == o.direction
+        slot = int(t.timestamp()) // 1800
+        assert o.direction is (LONG if slot % 2 == 0 else SHORT)
+
+
+def test_exit_at_is_entry_plus_max_hold_for_the_open_ref():
+    # review #5: the live bot closes by the clock through strategy.exit_at(ref)
+    s = new(max_hold_minutes=20)
+    [(now, o)] = drive(s, candles(31))
+    assert s.exit_at(o.ref) == now + timedelta(minutes=20)
+    assert s.exit_at(("fill_probe", 999)) is None
+    s.on_trade_closed(o.ref, None)
+    assert s.exit_at(o.ref) is None

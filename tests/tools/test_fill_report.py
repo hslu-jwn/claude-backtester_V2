@@ -139,9 +139,11 @@ def test_deals_to_csv_and_commission(tmp_path):
 
     df = pd.read_csv(path, dtype=str, keep_default_na=False)
     assert df["type"].tolist()[:2] == ["buy", "sell"] and df["entry"].tolist()[:2] == ["in", "out"]
-    tab = fr.commission_table(df, {"10", "11", "12"}, CostConfig(), "fp")
+    tab = fr.commission_table(df, {"10", "11", "12"}, CostConfig())
     eur = tab.loc["EURUSD"]
-    assert eur.real_per_lot_side == pytest.approx(2.5) and eur.model_per_lot_side == pytest.approx(2.5)
+    assert eur.real_per_lot_side == pytest.approx(2.5) and eur.model_per_lot_side == pytest.approx(
+        2.5
+    )
     assert not eur.flag
     # metal: 0.0007 % per side (= 7e-6) x 4000 x 100 oz = $2.8 per lot per side
     xau = tab.loc["XAUUSD"]
@@ -157,5 +159,29 @@ def test_commission_flag_over_10_percent(tmp_path):
     df = pd.DataFrame([{"ticket": "1", "position_id": "5", "symbol": "EURUSD", "entry": "in",
                         "volume": "1", "price": "1.1", "commission": "-2.8", "fee": "0",
                         "comment": ""}])  # fmt: skip
-    tab = fr.commission_table(df, {"5"}, CostConfig(), "fp")
+    tab = fr.commission_table(df, {"5"}, CostConfig())
     assert tab.loc["EURUSD"].diff_pct == pytest.approx(12.0) and tab.loc["EURUSD"].flag
+
+
+def _deal_df(rows):
+    import pandas as pd
+
+    base = {"ticket": "1", "position_id": "5", "symbol": "NATGAS.cash", "entry": "in",
+            "volume": "1", "price": "3.0", "commission": "-1", "fee": "0", "comment": "fp 1"}  # fmt: skip
+    return pd.DataFrame([{**base, **r} for r in rows])
+
+
+def test_commission_maps_broker_names_to_ours():
+    # review #6: NATGAS.cash / DXY.cash / US100.cash must find the settings of NATGAS / DXY / NAS100
+    df = _deal_df(
+        [{"symbol": "NATGAS.cash"}, {"symbol": "US100.cash", "ticket": "2", "position_id": "6"}]
+    )
+    tab = fr.commission_table(df, {"5", "6"}, CostConfig())
+    assert set(tab.index) == {"NATGAS", "NAS100"}
+
+
+def test_commission_only_positions_of_the_selected_fills():
+    # review #7: a later-excluded (before --since) fp deal must not count: only the tickets given
+    df = _deal_df([{"position_id": "5"}, {"ticket": "2", "position_id": "99", "comment": "fp 2"}])
+    tab = fr.commission_table(df, {"5"}, CostConfig())
+    assert tab.loc["NATGAS"].deals == 1

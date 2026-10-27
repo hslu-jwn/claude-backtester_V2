@@ -32,6 +32,7 @@ from enum import Enum
 from functools import cache, lru_cache
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, SymbolCosts
 from backtester.engine.spread_table import SpreadTable
 from backtester.runner import RunSettings, jsonable
 from backtester.strategy.registry import REGISTRY, strategy_name
@@ -172,6 +173,15 @@ def form_values(settings: RunSettings | None = None) -> dict[str, Any]:
 # --- back to dataclasses ---------------------------------------------------------------
 
 
+def _with_default_currency(symbol: str, data: Any) -> Any:
+    """`data` of a SymbolCosts without `profit_currency` gets the one of DEFAULT_SYMBOL_COSTS
+    (unknown symbols stay USD); an explicit value is kept."""
+    default = DEFAULT_SYMBOL_COSTS.get(symbol)
+    if isinstance(data, Mapping) and "profit_currency" not in data and default is not None:
+        return {**data, "profit_currency": default.profit_currency}
+    return data
+
+
 def _convert(hint, value, path: str):
     inner = _optional(hint)
     if inner is not None:
@@ -194,6 +204,8 @@ def _convert(hint, value, path: str):
             raise SettingsError(f"numbers needed, got {value!r}", path) from e
     if _is_mapping(hint):
         _, value_hint = get_args(hint)
+        if value_hint is SymbolCosts:  # old presets: no profit_currency -> the symbol's default
+            value = {k: _with_default_currency(k, v) for k, v in value.items()}
         return types.MappingProxyType(
             {k: _convert(value_hint, v, f"{path}.{k}") for k, v in value.items()}
         )

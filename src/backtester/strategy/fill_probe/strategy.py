@@ -1,6 +1,6 @@
 """Fill probe: a TEST TOOL for the FTMO demo bot, not a researched strategy.
 
-It sends many varied market orders (alternating long / short, every `interval_minutes`)
+It sends many varied market orders (long / short by the signal time, every `interval_minutes`)
 so slippage, spreads and commissions of real fills can be measured. Profit does not
 matter: never research it, never trade it for profit.
 
@@ -9,7 +9,7 @@ Spec: docs/strategy-fill-probe.md. Only the `SeriesView` handed in is read (no l
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 from backtester.core.models import Direction, Timeframe
@@ -41,7 +41,7 @@ class FillProbe(Strategy):
         self.symbol = symbol
         self.config = config or FillProbeConfig()
         self._atr = Atr(self.config.atr_period)
-        self._sent = 0  # orders sent (also the skipped ones): decides the next direction
+        self._sent = 0  # orders sent: only numbers the ref / reason, never the direction
         self._open: object | None = None  # ref of the open or pending trade
         self._entry_time: datetime | None = None
         self._now: datetime | None = None
@@ -71,7 +71,9 @@ class FillProbe(Strategy):
 
     def _order(self, now: datetime, entry: float, atr: float) -> Order:
         cfg = self.config
-        direction = Direction.BULLISH if self._sent % 2 == 0 else Direction.BEARISH
+        # a pure function of the signal time, so a restart rebuilds the same direction per bar
+        slot = int(now.timestamp()) // (cfg.interval_minutes * 60)
+        direction = Direction.BULLISH if slot % 2 == 0 else Direction.BEARISH
         sign = 1 if direction is Direction.BULLISH else -1
         self._sent += 1
         stop = entry - sign * cfg.stop_atr * atr
@@ -94,6 +96,13 @@ class FillProbe(Strategy):
             return []
         held = (self._now - self._entry_time).total_seconds() / 60
         return [self._open] if held >= self.config.max_hold_minutes else []
+
+    def exit_at(self, ref: object) -> datetime | None:
+        """The time exit of the open ref (entry + max_hold_minutes; None: not the open one).
+        State only; the live bot closes by the clock when no exit candle comes."""
+        if ref != self._open or self._entry_time is None:
+            return None
+        return self._entry_time + timedelta(minutes=self.config.max_hold_minutes)
 
     def on_order_skipped(self, ref: object, now: datetime) -> None:
         self._free(ref)

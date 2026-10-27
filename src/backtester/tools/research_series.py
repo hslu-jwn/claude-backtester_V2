@@ -3,7 +3,7 @@
 import csv
 import os
 import tempfile
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 from backtester.analytics.daily import daily_net_r, daily_net_r_mtm, weekdays
@@ -35,7 +35,9 @@ def _ensure(folder, start, end, sources, trials, record_args, *, trades, reader,
     args = (*record_args[:4], start, end, record_args[4])
     candidate = make_record(*args, [], note=note)
     existing = next((r for r in read_all(trials) if r.key == candidate.key), None)
-    if not path.exists():
+    rewritten = not path.exists()
+    just_run = trades is not None  # a variant run now, not a backfill from saved trades
+    if rewritten:
         if trades is None:
             trades = reader(folder)
         mtm, position = daily_net_r_mtm(trades, start, end, sources)
@@ -53,9 +55,24 @@ def _ensure(folder, start, end, sources, trials, record_args, *, trades, reader,
         finally:
             Path(name).unlink(missing_ok=True)
     if existing is not None:
+        if rewritten and just_run:
+            # Trades may have changed (a variant run again): rebuild the line; the last line per
+            # key wins (trial_log.read_all), so this is no new trial. Unchanged statistics keep
+            # the old line and its timestamp.
+            if trades is None:
+                trades = reader(folder)
+            fresh = replace(make_record(*args, trades, note=note), series=series)
+            skip = ("written", "series")
+            if _stats(fresh, skip) != _stats(existing, skip):
+                append(fresh, trials)
+                return
         if existing.series != series:
             append(replace(existing, series=series), trials)
     else:
         if trades is None:
             trades = reader(folder)
         append(replace(make_record(*args, trades, note=note), series=series), trials)
+
+
+def _stats(record, skip) -> dict:
+    return {k: v for k, v in asdict(record).items() if k not in skip}

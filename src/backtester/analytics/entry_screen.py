@@ -346,7 +346,8 @@ def random_exit_runs(
     k = np.searchsorted(times, exit_s, side="right")
     nights = np.where(k > 0, cum[np.maximum(k - 1, 0)] if len(cum) else 0, 0)
     per_night = costs.swap_r_nights(symbol, _direction(sign), risk, 1.0, entry)
-    net = sign * (fill - entry_fill) / risk - commission + nights * per_night
+    conversion = costs.conversion_r(symbol, [(1.0, gross)])  # same as `_costed`
+    net = sign * (fill - entry_fill) / risk - commission + nights * per_night + conversion
     return RandomRuns(gross, net)
 
 

@@ -184,3 +184,20 @@ def test_a_bad_spread_table_in_a_preset_is_a_settings_error():
     data["engine"]["costs"]["spread_table"]["values"]["XAUUSD"]["2025"]["9"] = -1
     with pytest.raises(SettingsError):
         from_dict(data)
+
+
+def test_an_old_preset_without_profit_currency_takes_it_from_the_defaults():
+    from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
+
+    data = to_dict(RunSettings())
+    symbols = data["engine"]["costs"]["symbols"]
+    for entry in symbols.values():
+        entry.pop("profit_currency", None)
+    symbols["MYSYM"] = dict(symbols["USDJPY"])  # unknown symbol stays USD
+    symbols["EURJPY"]["profit_currency"] = "EUR"  # an explicit value is kept
+    costs = from_dict(data).engine.costs
+    assert costs.symbols["USDJPY"].profit_currency == "JPY"
+    assert costs.symbols["USDJPY"].profit_currency == DEFAULT_SYMBOL_COSTS["USDJPY"].profit_currency
+    assert costs.symbols["MYSYM"].profit_currency == "USD"
+    assert costs.symbols["EURJPY"].profit_currency == "EUR"
+    assert costs.conversion_r("USDJPY", [(1.0, 1.0)]) == pytest.approx(-0.007)
