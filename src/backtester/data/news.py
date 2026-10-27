@@ -83,8 +83,9 @@ class NewsConfig:
     enabled: bool = False
     policy: str = "block_entries"  # or flag_only
     uncertain_policy: str = "block_day"  # or skip (loader reports counted warnings)
-    high: ImpactWindow = field(default_factory=ImpactWindow)
-    medium: ImpactWindow = field(default_factory=ImpactWindow)
+    # Windows: rule set by the user, 2026-10-27 (High 2 min before / after, Medium none).
+    high: ImpactWindow = field(default_factory=lambda: ImpactWindow(2.0, 2.0))
+    medium: ImpactWindow = field(default_factory=lambda: ImpactWindow(0.0, 0.0))
     publication_delay_seconds: float = 0.0
     quality_errors: bool = False
     separate_source_periods: bool = True
@@ -187,10 +188,12 @@ def matching_events(
     for event in calendar.events:
         if not relevant(event, instrument, config):
             continue
+        window = config.high if event.impact == "High" else config.medium
+        if window.before_minutes == 0 and window.after_minutes == 0:
+            continue  # an impact without a window is not filtered (the user, 2026-10-27)
         if event.time_precision in ("minute", "second"):
             if event.scheduled_at is None:
                 raise ValueError("exact news event needs a release timestamp")
-            window = config.high if event.impact == "High" else config.medium
             release = _utc(event.scheduled_at)
             inside = (
                 release - timedelta(minutes=window.before_minutes)

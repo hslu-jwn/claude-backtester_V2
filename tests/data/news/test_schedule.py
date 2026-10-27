@@ -126,6 +126,20 @@ def test_uncertain_precision_block_day_or_explicit_skip(precision):
     assert not blocked(RELEASE, "EURUSD", schedule, replace(config, uncertain_policy="skip"))
 
 
+def test_an_impact_without_a_window_is_not_filtered_at_all():
+    """Medium has no window (rule set by the user, 2026-10-27): neither its exact releases nor
+    its day-only rows block anything; High day-only rows still block their day."""
+    medium_exact = event(event_id="m1", impact="Medium")
+    medium_day = event(event_id="m2", impact="Medium", scheduled_at=None, time_precision="date")
+    high_day = event(event_id="h", scheduled_at=None, time_precision="date", day=date(2026, 1, 6))
+    schedule = calendar(medium_exact, medium_day, high_day)
+    config = NewsConfig(enabled=True)  # defaults: High 2 / 2, Medium 0 / 0, block_day
+    assert (config.high, config.medium) == (ImpactWindow(2, 2), ImpactWindow(0, 0))
+    assert matching_events(RELEASE, "EURUSD", schedule, config) == ()
+    assert not blocked(RELEASE.replace(hour=0), "EURUSD", schedule, config)
+    assert blocked(datetime(2026, 1, 6, 9, 0, tzinfo=UTC), "EURUSD", schedule, config)
+
+
 @pytest.mark.parametrize("minutes", [-1, float("inf"), float("nan")])
 def test_invalid_windows(minutes):
     with pytest.raises(ValueError):

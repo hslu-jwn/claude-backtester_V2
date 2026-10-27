@@ -18,8 +18,11 @@ strategies until a versioned source exists.
 ## Configuration and instrument relevance
 
 `EngineConfig.news` contains `NewsConfig`. These settings remain available to JSON/grids
-but have no UI widgets. The filter defaults to `enabled=False`. Both impact
-windows default to zero minutes; these are inactive defaults, not recommended trading windows.
+but have no UI widgets. The filter defaults to `enabled=False`. Window defaults (rule set by the user, 2026-10-27): High 2 minutes before and 2 minutes after the
+release (`ImpactWindow(2.0, 2.0)`), Medium no window (`ImpactWindow(0.0, 0.0)`). An impact whose
+window is 0 / 0 is not filtered at all: neither its exact releases nor its day-only rows block
+anything (so Medium never blocks; High day-only rows left after imputation block their day).
+`enabled` stays False; the user decides separately when to switch it on.
 The configured path is `data/news/economic_events.csv`, relative to the project root.
 The research runner loads each configured calendar once per invocation for descriptive
 reporting, independently of the blackout switch. The engine accepts an explicitly supplied
@@ -57,8 +60,7 @@ The engine uses its existing acceptance timestamp (base-candle close) for both m
 and reported limit fills; it does not infer an intrabar release or fill timestamp. This does
 not change existing fill semantics. Existing positions and exits are unaffected. The blackout
 window is checked at that candle close, not at an intrabar M1 fill time (rule set by the user,
-2026-10-27). Windows are inclusive at both ends; the sizes per impact stay unset while the
-filter is off.
+2026-10-27). Windows are inclusive at both ends; the sizes per impact are the defaults above.
 
 ## Research split
 
@@ -135,3 +137,18 @@ They become day-only rows on the local date: precision `date`, blank timestamp a
 to their real weekday; the rest are real weekend releases, harmless because no market trades then).
 All other rows are copied unchanged (columns, order, values, BOM, line ending). The tool prints
 rows in/out, rows changed by impact and the loader's quality counters on the output.
+
+Imputation (rule set by the user, 2026-10-27): a day-only row produced by the rule above gets the
+usual release time of the same event. Siblings are the exact, non-suspicious rows of the whole file
+with the same `event_name`, `currency` and `country` (schedules are known in advance, so using
+later occurrences is no lookahead). Their release times are converted to wall-clock time in the
+event's home zone (country -> IANA zone: US America/New_York, EU/DE Europe/Berlin, GB
+Europe/London, JP Asia/Tokyo, AU Australia/Sydney, NZ Pacific/Auckland, CA America/Toronto, CH
+Europe/Zurich, CN Asia/Shanghai, KR Asia/Seoul, MY Asia/Kuala_Lumpur, IN Asia/Kolkata, SE
+Europe/Stockholm, NO Europe/Oslo; other countries, e.g. GLOBAL: no imputation). The mode of the
+local times is used if there are at least 3 siblings and the mode covers at least 60 % of them
+(`ImputeConfig`); otherwise the row stays day-only. The imputed row keeps its own local date, gets
+that local time converted to UTC with zoneinfo (DST-correct), `scheduled_date_utc` = its UTC date,
+precision `minute`, `time_label` = the local time (HH:MM), and the note gets "; release time imputed
+2026-10-27 from N of M occurrences (HH:MM zone)". Applies to High and Medium rows alike. The tool
+also prints imputed rows and rows left day-only, each by impact.
