@@ -20,7 +20,10 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - **Demo bot RUNNING** (since 2026-10-27 16:00 UTC): `--strategy fill_probe`, 23 symbols, 0.01 %
   risk, comment prefix `fp`; logs `results/live/probe_stdout.log` and `results/live/<date>/`.
   Stop: create `results/live/STOP` (or `EMERGENCY` to close all). Started detached from a
-  PowerShell (`Start-Process`); it survives this chat but not a reboot.
+  PowerShell (`Start-Process`); it survives this chat but not a reboot. Restarted 2026-10-27
+  18:22 UTC on the fixed probe (direction by half-hour slot, `exit_at`; PID 7380) at a minute
+  without open positions; the first run's log is `results/live/probe_stdout_run1.log`.
+  Restart rule: only between :21 and :28 (no probe position open).
 - **LibreHardwareMonitor** installed (winget), web server on 8085, the queue's temperature guard
   reads the CPU. Not started with Windows: after a reboot start it (admin prompt).
 - **App:** `restart_app.bat`; dark / bright switch in the top bar (dark default); chart trade
@@ -68,8 +71,9 @@ Let the bot collect 1-3 days of fills (Asia / London sessions too), then: export
 then +2 h), run `python -m backtester.tools.fill_report --since 2026-10-27T16:00 --deals ...`,
 and set per-symbol slippage (V2.4b) from the medians / p90 with the user; stop the bot; 12.5
 reconciliation. Then research (V2.6 lanes + queue) and V2.7 portfolio. Codex review of the
-2026-10-27 work: `results/ai/*v26d-review*` (findings to fix first).
+2026-10-27 work (`results/ai/20261027-173807_codex_v26d-review.md`): all 7 findings fixed
+(`5bb1b7d`).
 
 ## First prompt for the next chat
 
-`Continue.Code` (read the Codex review in `results/ai/` and `results/fill_report/report.md` first)
+`Continue.Code` (read `results/fill_report/report.md` first; re-run the fill report on the new fills)
