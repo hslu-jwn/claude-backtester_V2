@@ -515,4 +515,5 @@ class Backtest:
         commission_r = costs.commission_r(
             trade.symbol, trade.risk, trade.entry_fill, [(p.share, p.fill) for p in trade.parts]
         )
-        return trade.result(commission_r, swap_r, funding_r)
+        conversion_r = costs.conversion_r(trade.symbol, [(p.share, p.r_gross) for p in trade.parts])
+        return trade.result(commission_r, swap_r, funding_r, conversion_r)

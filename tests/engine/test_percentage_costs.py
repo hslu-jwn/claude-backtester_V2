@@ -302,5 +302,5 @@ def test_cost_totals_are_signed_by_their_effect_on_net_r():
     )
     got = cost_totals([a, b])
     assert got == pytest.approx(
-        {"spread": -0.3, "commission": -0.05, "swap": 0.02, "funding": 0.03}
+        {"spread": -0.3, "commission": -0.05, "swap": 0.02, "funding": 0.03, "conversion": 0.0}
     )

@@ -101,6 +101,7 @@ class TradeResult:
     tp2_share: float | None = None  # with a TP3
     swap_r: float = 0.0  # already inside r_net (negative = cost)
     funding_r: float = 0.0  # Binance funding, already inside r_net (negative = paid)
+    conversion_r: float = 0.0  # FTMO currency conversion, already inside r_net (negative = cost)
     risk_weight: float = 1.0  # portfolio component stop risk; R fields are already weighted
     limit_fill: bool = False  # Kind C: a limit entry gets no market-fill draw
     tp_levels_touched: int = 0
@@ -346,7 +347,11 @@ class OpenTrade:
             self._exit(self.open_share, candle, now, price, reason)
 
     def result(
-        self, commission_r: float, swap_r: float = 0.0, funding_r: float = 0.0
+        self,
+        commission_r: float,
+        swap_r: float = 0.0,
+        funding_r: float = 0.0,
+        conversion_r: float = 0.0,
     ) -> TradeResult:
         if not self.is_closed:
             raise ValueError("the trade is still open")
@@ -366,7 +371,11 @@ class OpenTrade:
             exit_fill=last.fill,
             exit_reason=last.reason,
             r_gross=sum(p.share * p.r_gross for p in self.parts),
-            r_net=sum(p.share * p.r_fills for p in self.parts) - commission_r + swap_r + funding_r,
+            r_net=sum(p.share * p.r_fills for p in self.parts)
+            - commission_r
+            + swap_r
+            + funding_r
+            + conversion_r,
             spread_r=self.spread / self.risk,
             commission_r=commission_r,
             break_even_time=self.break_even_time,
@@ -383,6 +392,7 @@ class OpenTrade:
             tp2_share=self.tp2_share,
             swap_r=swap_r,
             funding_r=funding_r,
+            conversion_r=conversion_r,
             limit_fill=self.limit_fill,
             tp_levels_touched=len(self._tp_touched),
             tp_levels_touched_not_filled=len(self._tp_not_filled),

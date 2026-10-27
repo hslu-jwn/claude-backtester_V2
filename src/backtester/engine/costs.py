@@ -146,6 +146,8 @@ class SymbolCosts:
     reference_price: float | None = None
     # Spec: risk-management.md > Costs > Tick rounding; None leaves levels unchanged.
     tick_size: float | None = None
+    # currency of the trade's P/L (FTMO conversion adjustment, CostConfig.conversion_adjustment)
+    profit_currency: str = "USD"
 
     def __post_init__(self) -> None:
         if self.tick_size is not None and (
@@ -165,6 +167,7 @@ FRIDAY = 4
 # demo trade's deal history; risk-management.md › Costs): FTMO metals 0.0014 % round turn,
 # FTMO crypto 0.065 % round turn and -30 % per year swap, Binance USD-M taker 0.05 % per side.
 FTMO_METAL_COMMISSION_PCT_SIDE = 0.000007
+FTMO_PCT_COMMISSION_SIDE = FTMO_METAL_COMMISSION_PCT_SIDE  # NATGAS, DXY (2026-10-27)
 FTMO_CRYPTO_COMMISSION_PCT_SIDE = 0.000325
 FTMO_CRYPTO_SWAP_PCT_YEAR = -0.30
 BINANCE_TAKER_FEE = 0.0005
@@ -242,10 +245,10 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
         "EU50": SymbolCosts(1.06, 0.0, 1, 1.1211, slippage=0.53, swap_long_per_lot=-1.2359, swap_short_per_lot=-0.0124, swap_triple_weekday=FRIDAY),
         "USOIL": SymbolCosts(0.075, 0.0, 100, slippage=0.0375, swap_long_per_lot=4.966, swap_short_per_lot=-22.54, swap_triple_weekday=FRIDAY),
         "UKOIL": SymbolCosts(0.069, 0.0, 100, slippage=0.0345, swap_long_per_lot=6.097, swap_short_per_lot=-27.582, swap_triple_weekday=FRIDAY),
-        "DXY": SymbolCosts(0.018, 0.0, 100, slippage=0.009, swap_long_per_lot=-2.337, swap_short_per_lot=0.118, swap_triple_weekday=FRIDAY),
+        "DXY": SymbolCosts(0.018, 0.0, 100, slippage=0.009, commission_pct_per_side=FTMO_PCT_COMMISSION_SIDE, swap_long_per_lot=-2.337, swap_short_per_lot=0.118, swap_triple_weekday=FRIDAY),
         "US30": SymbolCosts(2.28, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
         "US2000": SymbolCosts(0.93, 0.0, 1, slippage=0.465, swap_long_per_lot=-0.5735, swap_short_per_lot=-0.0172, swap_triple_weekday=FRIDAY),
-        "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
+        "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, commission_pct_per_side=FTMO_PCT_COMMISSION_SIDE, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
         # --- V2.6 step 9 (user, 2026-10-27), FTMO symbol_info of 2026-10-27, same method ---
         # spread = median M1 bar spread of 2026-08-28..2026-10-26 (data/cache/mt5); FX $5
         # commission assumed like the other pairs, indices 0. HK50: the terminal had no HKD
@@ -315,9 +318,28 @@ TICK_SIZES: Mapping[str, float | None] = MappingProxyType(
     }
 )  # fmt: skip
 
+# Profit currency of every symbol whose P/L is not in USD (FTMO currency conversion adjustment,
+# 2026-07-28; rule set by the user 2026-10-27): FX = the quote currency, non-US indices their
+# local currency. Every other symbol (USD-quoted FX, metals, US indices, oil, NATGAS, DXY,
+# crypto, Binance) is USD.
+PROFIT_CURRENCIES: Mapping[str, str] = MappingProxyType(
+    {
+        "GBPJPY": "JPY", "USDJPY": "JPY", "EURJPY": "JPY", "AUDJPY": "JPY", "CADJPY": "JPY",
+        "NZDJPY": "JPY", "CHFJPY": "JPY", "USDCAD": "CAD", "USDCHF": "CHF", "EURGBP": "GBP",
+        "EURAUD": "AUD", "GBPAUD": "AUD",
+        "GER40": "EUR", "EU50": "EUR", "UK100": "GBP", "JP225": "JPY", "AUS200": "AUD",
+        "HK50": "HKD",
+    }
+)  # fmt: skip
+
 DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
     {
-        name: replace(costs, reference_price=REFERENCE_PRICES.get(name), tick_size=TICK_SIZES[name])
+        name: replace(
+            costs,
+            reference_price=REFERENCE_PRICES.get(name),
+            tick_size=TICK_SIZES[name],
+            profit_currency=PROFIT_CURRENCIES.get(name, "USD"),
+        )
         for name, costs in _BASE_SYMBOL_COSTS.items()
     }
 )
@@ -354,8 +376,15 @@ class CostConfig:
     short_tp_on_ask: bool = True  # default set by the user 2026-10-23
     # Round order levels conservatively to the symbol tick (default set by the user 2026-10-26)
     round_to_tick: bool = True
+    # FTMO currency conversion adjustment (rule set by the user, 2026-10-27): this share of
+    # |gross R| is charged on trades whose profit currency is not the account currency;
+    # 0 = off (reproduces the results from before)
+    conversion_adjustment: float = 0.007
+    account_currency: str = "USD"
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.conversion_adjustment) or not 0 <= self.conversion_adjustment < 1:
+            raise ValueError("conversion_adjustment must be finite and 0 <= x < 1")
         if not math.isfinite(self.tp_penetration) or self.tp_penetration < 0:
             raise ValueError("tp_penetration must be finite and >= 0")
         if self.max_cost_r < 0:
@@ -487,6 +516,23 @@ class CostConfig:
         notional = entry if entry_fill is None else entry_fill
         cost = self.spread_r(symbol, risk, at, entry) + self.commission_r(symbol, risk, notional)
         return cost > self.max_cost_r + COST_FILTER_TOLERANCE
+
+    def conversion_r(self, symbol: str, parts: Iterable[tuple[float, float]]) -> float:
+        """FTMO currency conversion adjustment in R (<= 0, a cost), added to net R only.
+
+        `parts` = (share, gross R of the part on the chart) of each closed part; profit and
+        loss are both charged: -adjustment x sum(share x |gross R|). 0 for symbols whose
+        profit currency is the account currency, for unknown symbols and when switched off.
+        Spec: risk-management.md > Costs > Currency conversion adjustment.
+        """
+        costs = self.symbols.get(symbol)
+        if (
+            not self.conversion_adjustment
+            or costs is None
+            or costs.profit_currency == self.account_currency
+        ):
+            return 0.0
+        return -self.conversion_adjustment * sum(share * abs(gross) for share, gross in parts)
 
     def swap_r(
         self,

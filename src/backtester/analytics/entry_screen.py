@@ -240,8 +240,10 @@ def _costed(
     commission = costs.commission_r(symbol, risk, entry_fill, [(1.0, fill)])
     swap = costs.swap_r(symbol, direction, risk, trade.entry_time, [(1.0, exit_time)], entry)
     funding = costs.funding_r(symbol, direction, risk, trade.entry_time, [(1.0, exit_time)], entry)
-    net = sign * (fill - entry_fill) / risk - commission + swap + funding
-    return ExitResult(exit_time, price, reason, sign * (price - entry) / risk, net, swap)
+    gross = sign * (price - entry) / risk
+    conversion = costs.conversion_r(symbol, [(1.0, gross)])
+    net = sign * (fill - entry_fill) / risk - commission + swap + funding + conversion
+    return ExitResult(exit_time, price, reason, gross, net, swap)
 
 
 def _close_dt(m1: M1Data, idx: int) -> datetime:

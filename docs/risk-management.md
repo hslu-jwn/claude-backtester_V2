@@ -178,6 +178,19 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   FTMO's Commodities class (0.0007 % per side) but is 0 here; USOIL / UKOIL / DXY are named on no FTMO page (0 here). A
   change of those defaults waits for the user.
 
+- **FTMO fees as defaults** (rule set by the user, 2026-10-27; research and sources: `docs/review/ftmo-fees-2026-10-27.md`):
+  - **NATGAS and DXY commission** 0.0007 % per side of the notional (FTMO Symbols page: 0.0014 % round turn), the same
+    constant as the metals (`FTMO_PCT_COMMISSION_SIDE`); this closes the open point above for NATGAS and DXY. USOIL / UKOIL
+    and the indices stay at 0 (no commission field on FTMO's page).
+  - **Currency conversion adjustment** (FTMO, 2026-07-28): 0.7 % of the realised profit or loss of a trade whose profit
+    currency differs from the account currency (USD); a profit is reduced, a loss increased. `SymbolCosts.profit_currency`
+    (default USD; the quote currency for FX, EUR for GER40 / EU50, GBP UK100, JPY JP225, AUD AUS200, HKD HK50) and
+    `CostConfig.conversion_adjustment = 0.007` (0 = off, reproduces older results), `account_currency = "USD"`. In R:
+    `conversion_R = -adjustment x sum(share x |gross R of the part|)` (parts = TP1 / TP2 closes, so the sum equals the whole),
+    charged at the close, added to net R only. Reported as `conversion_r` in the trades CSV next to `swap_r` / `funding_r`
+    (older files without the column load as 0) and as "Cost: currency conversion" on the results page. Applied to all
+    years as a fixed rule (FTMO's start date is not published).
+
   | Symbol | Spread | Contract | Quote to USD | Swap long / short | Triple |
   |---|---|---|---|---|---|
   | AUDJPY / CADJPY / NZDJPY / CHFJPY | 0.009 / 0.007 / 0.009 / 0.015 | 100,000 | 0.00634111 | +2.2448 / -8.4464, +0.3171 / -3.6208, +0.4883 / -3.4559, -7.5713 / +1.1351 | Wed |

@@ -122,3 +122,16 @@ Tests live in `tests/data/news/test_schedule.py`, `tests/engine/test_news.py` an
 Existing golden files are
 not regenerated. Run `pytest -q tests/data tests/tools tests/engine` and capture output in
 `results/pytest_v24e2.log`. Real-calendar validation and user acceptance remain outstanding.
+
+## Cleaning
+
+`python -m backtester.tools.news_clean SOURCE.csv [--out data/news/economic_events.csv]` writes a
+cleaned copy and never modifies the source. Rule set by the user, 2026-10-27: rows with
+`time_precision` second/minute and `time_label` 00:00:00 or 23:59:59 lost their real release time
+in the source (the source clock is Asia/Tehran, so 00:00 is 20:30/19:30 UTC of the previous day).
+They become day-only rows on the local date: precision `date`, blank timestamp and time label,
+`scheduled_date_utc` = `scheduled_date_local`, and a note appended to `point_in_time_note`; the
+`block_day` policy then treats them as day events. Weekend rows are kept (after the rule most move
+to their real weekday; the rest are real weekend releases, harmless because no market trades then).
+All other rows are copied unchanged (columns, order, values, BOM, line ending). The tool prints
+rows in/out, rows changed by impact and the loader's quality counters on the output.

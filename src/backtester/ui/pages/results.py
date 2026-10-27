@@ -294,6 +294,7 @@ COST_ROWS = (
     ("Cost: commission", "commission"),
     ("Cost: swap", "swap"),
     ("Cost: funding", "funding"),
+    ("Cost: currency conversion", "conversion"),
 )
 
 
@@ -304,6 +305,7 @@ def cost_totals(trades: list[TradeRecord]) -> dict[str, float]:
         "commission": -sum(t.commission_r for t in trades),
         "swap": sum(t.swap_r for t in trades),
         "funding": sum(t.funding_r for t in trades),
+        "conversion": sum(t.conversion_r for t in trades),
     }
 
 
