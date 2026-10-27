@@ -65,6 +65,10 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
   bright mode (+ Plotly); V2.6d plan; FTMO fees as defaults ("research all the fees and
   implement them"); news windows High 2 / 2, Medium none, day-only High times imputed; ~8 min
   full suite is fine; use subagents for heavy work.
+- 2026-10-27: the fill probe stays as it is although it opens trades whose 20-min time exit
+  falls into a symbol's daily break (closes rejected with `10018 market closed`, retried until
+  the reopen); only enough fills for spread / slippage matter. In the fill report, treat these
+  delayed time exits as outliers, not as normal exit slippage.
 - Earlier: see git history of this file.
 
 ## Open (needs the user)
