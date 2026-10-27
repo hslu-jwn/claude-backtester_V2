@@ -530,6 +530,9 @@ body .dash-dropdown-search {
 .ch-tab-form > .dash-dropdown { min-width: 180px; }
 .ch-tab-form .tb-pop-row { margin: 0; }
 .ch-run-trades { max-height: 300px; overflow-y: auto; }
+.ch-by-pair .ch-run-trades { display: flex; flex-direction: column; }
+.ch-by-pair .ch-run-trades > button { order: var(--pair-rank); }
+.ch-run-trades-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
 .ch-tab-form .tb-pop-note:empty { display: none; }
 .ch-page .st-main { display: block; overflow-y: auto; }
 .ch-page .st-fields { width: 100%; box-sizing: border-box; }

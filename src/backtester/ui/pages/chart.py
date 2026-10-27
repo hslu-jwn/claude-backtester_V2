@@ -1138,14 +1138,19 @@ def overlay_controls() -> list:
 
 
 def newest_trade_rows(results_dir: Path):
-    """All newest-run trades, with the same order focus as the visible-trades side list."""
+    """All newest-run trades in time order, with the same order focus as the visible-trades
+    side list; each row carries its rank in pair order (`--pair-rank`) for the Pair sort."""
     folder = chart_side.newest_run(results_dir)
-    trades = chart_side.run_trades(folder) if folder else ()
+    trades = chart_side.sort_run_trades(chart_side.run_trades(folder), "time") if folder else ()
     if not trades:
         return html.Div("No trades.", className="ch-empty")
-    return html.Div(
-        [chart_side.trade_item(t, "run-trade") for t in trades], className="ch-run-trades"
-    )
+    rank = {t.id: i for i, t in enumerate(chart_side.sort_run_trades(trades, "pair"))}
+    rows = []
+    for t in trades:
+        row = chart_side.trade_item(t, "run-trade")
+        row.style = {"--pair-rank": rank[t.id]}
+        rows.append(row)
+    return html.Div(rows, className="ch-run-trades")
 
 
 def layout(
@@ -1475,7 +1480,34 @@ def layout(
             ),
             html.Div(
                 [
-                    html.Div(newest_trade_rows(results_dir), id="chart-tab-trades"),
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    dcc.RadioItems(
+                                        id="run-trades-sort",
+                                        options=[
+                                            {"label": "Time", "value": "time"},
+                                            {"label": "Pair", "value": "pair"},
+                                        ],
+                                        value="time",
+                                        persistence=True,
+                                        className="tb-timeframes",
+                                    ),
+                                    html.Button(
+                                        chart_side.run_trades_toggle_label(False),
+                                        id="run-trades-toggle",
+                                        title="Minimize / show the trade list",
+                                        className="tb-btn",
+                                        n_clicks=0,
+                                    ),
+                                ],
+                                className="ch-run-trades-head",
+                            ),
+                            html.Div(newest_trade_rows(results_dir), id="run-trades-list"),
+                        ],
+                        id="chart-tab-trades",
+                    ),
                     html.Div(
                         [
                             overlay_controls()[0],
@@ -1506,6 +1538,7 @@ def layout(
             dcc.Store(id="st-reset-click"),
             dcc.Store(id="st-apply"),
             dcc.Store(id="side-collapsed", storage_type="local"),
+            dcc.Store(id="run-trades-collapsed", storage_type="local"),
             dcc.Store(id="chart-config", data=chart_settings(config)),
             dcc.Store(id="chart-sweep-tweak"),
             dcc.Store(id="chart-base"),
@@ -1715,6 +1748,30 @@ def register_callbacks(
     )
     def _side_toggle(clicks, collapsed):
         return chart_side.collapsed_after(clicks, collapsed)
+
+    @app.callback(
+        Output("run-trades-list", "className"),
+        Input("run-trades-sort", "value"),
+    )
+    def _run_trades_sort(sort):
+        return chart_side.run_trades_class(sort)
+
+    @app.callback(
+        Output("run-trades-collapsed", "data"),
+        Input("run-trades-toggle", "n_clicks"),
+        State("run-trades-collapsed", "data"),
+        prevent_initial_call=True,
+    )
+    def _run_trades_toggle(clicks, collapsed):
+        return chart_side.collapsed_after(clicks, collapsed)
+
+    @app.callback(
+        Output("run-trades-list", "style"),
+        Output("run-trades-toggle", "children"),
+        Input("run-trades-collapsed", "data"),
+    )
+    def _run_trades_apply(collapsed):
+        return chart_side.run_trades_style(collapsed), chart_side.run_trades_toggle_label(collapsed)
 
     @app.callback(
         Output("ch-main", "className"),

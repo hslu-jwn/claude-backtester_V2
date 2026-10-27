@@ -239,6 +239,29 @@ def collapsed_after(clicks: int | None, collapsed: bool | None) -> bool:
     return (not collapsed) if clicks else bool(collapsed)
 
 
+def sort_run_trades(trades, by: str | None):
+    """The run's trades for the list under the chart (user, 2026-10-27): "pair" = by symbol
+    A..Z, each pair's trades in time order; otherwise (default "time") by entry time."""
+    if by == "pair":
+        return tuple(sorted(trades, key=lambda t: (t.symbol, t.entry_candle, t.id)))
+    return tuple(sorted(trades, key=lambda t: (t.entry_candle, t.id)))
+
+
+def run_trades_class(sort: str | None) -> str:
+    """Class of the list under the chart: "pair" reorders its rows with CSS `order` (each row
+    carries `--pair-rank`), so switching never re-renders the pattern-matched rows."""
+    return "ch-by-pair" if sort == "pair" else ""
+
+
+def run_trades_style(collapsed: bool | None) -> dict:
+    """The list under the chart, minimized or shown."""
+    return {"display": "none"} if collapsed else {}
+
+
+def run_trades_toggle_label(collapsed: bool | None) -> str:
+    return "Show" if collapsed else "Minimize"
+
+
 def main_class(collapsed: bool | None) -> str:
     return "ch-main ch-collapsed" if collapsed else "ch-main"
 

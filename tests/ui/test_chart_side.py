@@ -298,3 +298,56 @@ def test_no_details_of_the_settings_popover_is_open_by_default():
     pop = next(c for c in walk(page) if getattr(c, "id", None) == "pop-settings")
     found = [c for c in walk(pop) if isinstance(c, html.Details)]
     assert len(found) >= 2 and not any(getattr(d, "open", False) for d in found)
+
+
+# --- run trades under the chart: sort by pair, minimize (user, 2026-10-27) --------------------
+
+
+def _ids(rows):
+    return [button.id["index"] for button in rows.children]
+
+
+def test_run_trades_sort_by_time_or_by_pair():
+    t = [
+        make_trade(1, "US500", T0 + timedelta(hours=2)),
+        make_trade(2, "NAS100", T0 + timedelta(hours=3)),
+        make_trade(3, "US500", T0),
+        make_trade(4, "NAS100", T0 + timedelta(hours=1)),
+    ]
+    assert [x.id for x in chart_side.sort_run_trades(t, "time")] == [3, 4, 1, 2]
+    # pair: symbols A..Z, each pair's trades in time order
+    assert [x.id for x in chart_side.sort_run_trades(t, "pair")] == [4, 2, 3, 1]
+    assert chart_side.sort_run_trades(t, None) == chart_side.sort_run_trades(t, "time")
+    assert chart_side.sort_run_trades((), "pair") == ()
+
+
+def test_newest_trade_rows_are_in_time_order_and_carry_their_pair_rank(tmp_path):
+    # rendered once; the Time / Pair switch only changes the list's class and CSS `order`
+    # reorders the rows (re-rendering 3,368 pattern-matched rows took Dash over 30 s)
+    write_run(tmp_path, "20261001-090000_A", [
+        csv_row(1, "2026-09-02T10:00:00+00:00", 1.0, "US500"),
+        csv_row(2, "2026-09-02T09:00:00+00:00", -1.0, "NAS100"),
+        csv_row(3, "2026-09-02T08:00:00+00:00", 0.5, "US500"),
+    ])  # fmt: skip
+    rows = chart.newest_trade_rows(tmp_path)
+    assert _ids(rows) == [3, 2, 1]
+    ranks = {b.id["index"]: b.style["--pair-rank"] for b in rows.children}
+    assert sorted(ranks, key=ranks.get) == [2, 3, 1]  # pair order: NAS100, then US500 by time
+
+
+def test_sort_switch_only_changes_the_list_class():
+    assert chart_side.run_trades_class("pair") == "ch-by-pair"
+    assert chart_side.run_trades_class("time") == "" == chart_side.run_trades_class(None)
+
+
+def test_run_trades_list_hides_when_minimized():
+    assert chart_side.run_trades_style(True) == {"display": "none"}
+    assert chart_side.run_trades_style(False) == {} == chart_side.run_trades_style(None)
+    assert chart_side.run_trades_toggle_label(True) == "Show"
+    assert chart_side.run_trades_toggle_label(False) == "Minimize"
+
+
+def test_layout_has_the_run_trades_controls(tmp_path):
+    text = str(chart.layout(SymbolSources({}), results_dir=tmp_path))
+    for part in ("run-trades-sort", "run-trades-toggle", "run-trades-collapsed", "run-trades-list"):
+        assert part in text
