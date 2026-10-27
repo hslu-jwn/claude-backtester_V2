@@ -25,6 +25,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
 | Codex gpt-6.1-sol | medium | 2 | 21 | V2.7 portfolio page + fix round (2026-10-26) | yes; Sonnet subagents built V2.6 step 3 while Codex was at its limit (18:14-21:14) and reviewed V2.7 (no blocking defect) |
 
+| Codex gpt-6.1-sol | medium | 9 | ~120 | night 2026-10-26/27: step 5 (+2 fix rounds, 4.3 items), V2.4e news (2 rounds), full check review + fixes | yes; the full-check review found 6 real defects (one review no-peek leak); its 'violation' flag came from Opus editing files during the read-only review, not from Codex. Codex failed twice on the chart stats strip (wrong brief by Opus), Opus fixed it |
+
 Limits seen: Codex hit its limit twice (about 20:50 and 04:25; reset after ~4.5 h);
 Antigravity (Gemini + Claude 4.6, one shared weekly quota) is empty until about 2026-10-29.
 

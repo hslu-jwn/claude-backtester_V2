@@ -3,73 +3,80 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-10-26, End of session)
+## Where things are (2026-10-27 morning, after the night run)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
-- **Branches:** `main` has everything (v2-grid-merge merged at `End.` on 2026-10-26: grid
-  merge, V2.4c, V2.4d, regime classifier + strategy profile, V2.5a-d, fast / visual parity
-  test). `v2-chart-trades`, `v2-grid-merge` are merged and can be deleted. Start the next
-  phase on a new branch from `main`.
-- **Tests:** 4150 passed, 5 skipped, 1 xfailed (~5 min); ruff check and ruff format clean. Golden trade lists
-  (`tests/golden/`, 2023) rewritten twice with the user's default decisions (TP penetration,
-  intrabar M1): `python -m backtester.tools.golden --check`.
-- **App:** dark redesign V2.5a-d is in; restart with `restart_app.bat` to see it.
-- **PC quirks:** long runs in a terminal tab must write to a log file; PowerShell scripts (.ps1)
-  are disabled (join commands with ` ; `); AI dispatch waiters must detect hangs (a Codex app
-  preview kept a dispatch open for 30 h on 2026-10-24; AGENTS.md now forbids lingering processes).
-- **AI team:** ChatGPT Plus + Gemini Plus only. Codex medium by default, high for engine / risk;
-  briefs carry the likely rule answers; Codex runs only its own tests, Opus the full suite
-  (CLAUDE.md › Models › speed rules). Usage in `docs/research-log.md`.
-- **Live bot:** not running (stopped 2026-10-21). V2.4b (slippage from demo fills) needs it.
+- **Branches:** all V2.6 / V2.7 work is on **`v2-6-research`** (pushed, **not merged to
+  `main`**). `main` = state of 2026-10-26 `End.`. `docs/v2.4e-economic-calendar` is contained in
+  `v2-6-research`. Merge to `main` only on the user's word.
+- **Tests:** ~4620 passed, 5 skipped, 1 xfailed (~7.5 min); ruff clean; golden lists (2023)
+  identical since the 2026-10-26 default change (`python -m backtester.tools.golden --check`).
+- **Data:** cache rebuilt 2026-10-26 (V2.6 step 2: histdata clock, MT5 server clock per date,
+  wrong instruments dropped). Backups moved to `..\old\v26b-cache-backups\` (user: move, not delete).
+- **Queue:** `python -m backtester.tools.queue status` (from the V2 folder). An end-to-end
+  pipeline run of `research/grids/orb_example.toml` was still in its Monte Carlo step at 07:45
+  (started 00:56); let it finish or `queue stop` (graceful). LibreHardwareMonitor not installed
+  yet (temperature guard shows "no sensor").
+- **App:** `restart_app.bat`; new: Portfolio tab, queue panel + pipeline state on the Research
+  page, review mode / trade inspection on the Chart page.
+- **PC quirks:** long runs in a terminal must log to a file; .ps1 disabled; the dev preview for
+  Claude is `X:\Dokumente\Projekte\backtester-claude\.claude\launch.json` (port 8052).
+- **AI team:** ChatGPT Plus + Gemini Plus. Codex hit its limit 2026-10-26 18:14-21:14 (Sonnet
+  subagents built step 3 meanwhile); Antigravity (Gemini / Claude 4.6) empty until ~2026-10-29.
+  The user: no heavy building by Sonnet subagents; delegate mechanical work.
+- **Live bot:** not running (stopped 2026-10-21). Step 6 waits for the user.
 
-## Done since 2026-10-23 (details: ROADMAP, `docs/review/`, `docs/research-log.md`)
+## Built 2026-10-26 / 27 (details: ROADMAP › V2.6 build order, `docs/review/night-2026-10-27.md`)
 
-- Backtest audit (`docs/review/backtest-audit.md`) and the three new books merged into
-  `knowledge/` (Pardo, Masters, Aronson; checklist 33-38; `docs/review/book-app-requirements.md`).
-- Research runner: combined grids, grid robustness, shock days, breakdowns, sensitivity, filter
-  twins, month walk-forward with WFE, daily series per variant (marked to market), Reality Check,
-  PBO, effective N, Bayesian view, matched monkeys, skill vs trend (detrended), BCa bounds, log
-  PF, double-bootstrap drawdown, profile block. Old grid tools deleted (reproduced exactly).
-- Engine (defaults set by the user): TP / limit fill on 0.5 x spread penetration + short TP on
-  the ask; same-candle SL / TP resolved from M1; tick rounding **on** and the FTMO median spread
-  table as default (both set by the user 2026-10-26; spread re-checked after demo trading).
-- Regime classifier + strategy profile; all 7 strategies profiled (no robust edge anywhere;
-  candidates: strategy 4 on GBPJPY, the gap strategies in quiet sideways markets).
+| Step | What | State |
+|---|---|---|
+| 1 | Job queue, temperature guard, file locks | accepted |
+| 2 | Data fixes 13.12-13.16, 13.18; cache rebuilt | accepted |
+| 3 | Research pipeline, queue panel, lanes | accepted |
+| 4 | V2.7 Portfolio tab (search, top-10 Monte Carlo, one-time test CLI) | accepted |
+| 5 | Review mode, trade inspection, heat map, strong-move dropdown, 4.3 items | **built, not accepted** |
+| 6 | Live (demo bot, V2.4b, 12.5) | skipped (user) |
+| 7 | V2.4e news calendar on synthetic data, filter default off | **built, not accepted** |
+| 8 | Full check: Codex review (`docs/review/v26-full-check.md`), fixes 1-6, `--help` on Windows, live job logs | **built, not accepted** |
+| 9 | More symbols: proposal list `docs/review/symbol-proposal-2026-10-27.md` | **waiting for the user's pick** |
 
 ## Accepted by the user (do not ask again)
 
-- 2026-10-22 / 23: see git history of this file; all V1 decisions; V2.5 UI decisions
-  (`docs/design/ui-proposal.md`); regime spec; slippage always on (V2.4b).
-- 2026-10-23: trades of every strategy on the chart (V2.4a); ChatGPT Plus + Gemini Plus, work
-  placed by limits; audit before the grid merge; V2.4d in the proposed order; one pooled
-  parameter set across markets; TP penetration default 0.5 x spread + short TP on the ask.
-- 2026-10-24: intrabar default M1; speed rules for the AI team; the breakdown shows where each
-  strategy performs best (raw and detrended) as input for combining strategies (V2.7);
-  continue autonomously.
-- 2026-10-26 (`End.`): everything done so far accepted: V2.4, V2.4d (tick default still open),
-  V2.5 redesign, the done parts of V2.4c, regime classifier + strategy profile.
+- 2026-10-22 / 23 / 24: see git history of this file; all V1 decisions; V2.5 UI decisions.
+- 2026-10-26: everything up to V2.5 accepted (`End.`); tick rounding on + median spread table
+  default (spread re-checked after demo trading); build and test the whole app first, research
+  after; V2.6 build order; queue first, LibreHardwareMonitor guard; pre-registered hypotheses
+  (strategy 4 on GBPJPY, gap strategies in quiet sideways markets) tested once later; MT5 server
+  clock per date through 2021-09-13, sparse days filled by histdata only before 2021-09-14;
+  wrong instruments dropped; app may start the queue runner; one-time MT5 test CLI only; lanes
+  next to V2; portfolio: development only, equal weights, own tab, 2-4 members, MC top 10;
+  review mode + trade inspection for every strategy, heat map on the card, 4.3 items picked;
+  steps 1-4 accepted; Opus may use `../backtester-news/` for V2.4e; night plan (go through the
+  steps, skip step 6, step 7 on synthetic data, step 8 fix small / list big, step 9 list only).
 
-## Open (needs the user)
+## Open (needs the user) — the morning list is `docs/review/night-2026-10-27.md`
 
-1. **Decided 2026-10-26:** tick rounding on, median spread table default (golden lists 2023
-   rewritten: session zones -479.9 -> -473.7, NY indices -30.9 -> -32.2, no-wick -959.7 ->
-   -1347.7, trend following 6.8 -> 6.7, gap fade -21.1 -> -25.2, ORB -35.6 -> -42.3, gap
-   momentum 6.4 -> 6.6 net R). Re-check the spread after demo trading (V2.4b).
-2. **Order (user, 2026-10-26):** build and test the whole app first, research intensively after.
-3. **News:** data delivered in `../backtester-news/`; checked 2026-10-26, timestamps need a
-   regenerated file first (`../backtester-news/verification_2026-10-26.md`); then V2.4e.
-4. Demo bot restart for V2.4b (slippage, demo vs engine reconciliation) — the user's call.
-5. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
-   auto-refresh live candles; remote branch `claude/ui-polish`; the CLI's named-preset
-   restrictions differ slightly from the app's (found by the parity test, trades identical).
+1. Check and accept steps 5, 7, 8 (app: Chart review mode / inspection, Research heat map,
+   Live stale status; news: `docs/news.md`).
+2. Decisions listed in the night file: news blackout timing (candle close vs fill time) and
+   window sizes; **spread table in the development period** (full check finding 7: 2015-2020
+   indices use 2021 values); more symbols (pick from the proposal); pipeline Monte Carlo speed
+   (one core, 3+ h for a small grid).
+3. Install LibreHardwareMonitor (Options › Remote Web Server, port 8085).
+4. News: the regenerated calendar file -> `data/news/economic_events.csv`.
+5. Demo bot restart for step 6 (V2.4b slippage, 12.5 reconciliation) — the user's call.
+6. Merge `v2-6-research` into `main` when accepted.
+7. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
+   auto-refresh live candles; remote branch `claude/ui-polish`; CLI named-preset restrictions
+   differ slightly from the app's.
 
 ## Next step
 
-After the user's answers: V2.6 continuous research (job queue, lanes, research-based ideas
-from `knowledge/ideas.md`), starting with the profile candidates as pre-registered hypotheses;
-then V2.7 portfolio (combine strategies by regime).
+The user's morning check and decisions (list above), then: more symbols (step 9 download),
+step 6 when the user restarts the demo bot, the regenerated news file into V2.4e; after that
+intensive research (V2.6 lanes + queue) and V2.7 portfolio on real research results.
 
 ## First prompt for the next chat
 
-`Continue.Code`
+`Continue.Code` (read `docs/review/night-2026-10-27.md` first)
