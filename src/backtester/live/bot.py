@@ -89,6 +89,9 @@ from backtester.live.trading_settings import TradingSettings, load_trading_setti
 from backtester.paths import RESULTS_DIR
 from backtester.risk.prop_rules import GuardConfig, GuardStatus, evaluate, prague_day_start
 from backtester.risk.sizer import lots_for_risk, spec_from_symbol_info
+from backtester.strategy.base import Strategy
+from backtester.strategy.fill_probe.config import FillProbeConfig
+from backtester.strategy.fill_probe.strategy import FillProbe
 from backtester.strategy.opening_range.config import EntryMode, OpeningRangeConfig
 from backtester.strategy.opening_range.strategy import OpeningRange
 
@@ -98,6 +101,20 @@ ERROR_KINDS = (
     "close_all_incomplete",
 )  # fmt: skip
 FORWARD_SYMBOLS = ("US30", "US500", "NAS100", "US2000")
+# `--strategy fill_probe` (ROADMAP V2.6d step 1, the user 2026-10-27): a test tool that only
+# collects fills (slippage, spread, commission) on many symbols; profit does not matter
+FILL_PROBE_SYMBOLS = (
+    "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "EURJPY", "GBPJPY", "AUDJPY", "EURAUD",
+    "XAUUSD", "XAGUSD", "US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200",
+    "USOIL", "UKOIL", "NATGAS", "BTCUSD", "ETHUSD",
+)  # fmt: skip
+FILL_PROBE_RISK_PERCENT = 0.01  # of the balance per trade: many trades a day, tiny risk each
+# what the bot can run: name -> (strategy class, config class). The fill probe is a test tool,
+# deliberately not in strategy/registry.py, so no research tool, grid or ranking ever sees it.
+BOT_STRATEGIES = {
+    "opening_range": (OpeningRange, OpeningRangeConfig),
+    "fill_probe": (FillProbe, FillProbeConfig),
+}
 # Limits of the risk settings, also the Live page's (user, 2026-10-17: "risk > 0 and <= 2, daily
 # stop > 0 and <= 5"); the bot refuses to start outside them (review live #18).
 MAX_RISK_PERCENT = 2.0
@@ -124,7 +141,8 @@ def forward_strategy_config() -> OpeningRangeConfig:
 @dataclass(frozen=True)
 class BotConfig:
     symbols: tuple[str, ...] = FORWARD_SYMBOLS
-    strategy: OpeningRangeConfig = field(default_factory=forward_strategy_config)
+    strategy_name: str = "opening_range"  # a BOT_STRATEGIES name
+    strategy: object = field(default_factory=forward_strategy_config)  # its config
     risk_percent: float = 0.25  # of the balance per trade (adjustable per strategy)
     initial_balance: float | None = None  # override; None: the account's first balance deal
     guard: GuardConfig = field(default_factory=GuardConfig)
@@ -156,6 +174,8 @@ class BotConfig:
 
     def __post_init__(self) -> None:
         """The risk settings must be finite and inside the Live page's limits (review #18)."""
+        if self.strategy_name not in BOT_STRATEGIES:
+            raise ValueError(f"unknown strategy {self.strategy_name!r}")
         if not (math.isfinite(self.risk_percent) and 0 < self.risk_percent <= MAX_RISK_PERCENT):
             raise ValueError(
                 f"risk per trade must be above 0 and at most {MAX_RISK_PERCENT:g} % "
@@ -271,7 +291,7 @@ class _Journal(OrderLog):
 class _Symbol:
     name: str  # our name (strategy, adapter)
     broker: str
-    strategy: OpeningRange
+    strategy: Strategy
     candles: list[Candle] = field(default_factory=list)
     fed: int = 0  # candles[:fed] went through the strategy (an interrupted batch resumes, #6)
     cache_day: date | None = None  # UTC day for which the finished days were put in the cache
@@ -340,7 +360,8 @@ class Bot:
         self.clock: ServerClock = clock
         self.adapter = Mt5Adapter(mt5, clock, names, now=now)
         self.symbols = {
-            s: _Symbol(s, names[s], OpeningRange(s, config.strategy)) for s in config.symbols
+            s: _Symbol(s, names[s], BOT_STRATEGIES[config.strategy_name][0](s, config.strategy))
+            for s in config.symbols
         }
         self.by_ticket: dict[int, _Trade] = {}
         self.by_ref: dict[tuple[str, object], _Trade] = {}
@@ -1382,22 +1403,35 @@ class Bot:
         )  # fmt: skip
 
 
-def main(argv: list[str] | None = None) -> int:
-    utf8_output()
+def parse_config(argv: list[str] | None = None) -> BotConfig:
+    """The bot's settings from the command line; ValueError when a value is refused (#18).
+    `--strategy fill_probe` defaults to its own symbols, risk and comment prefix."""
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("--symbols", nargs="+", default=list(FORWARD_SYMBOLS))
-    p.add_argument("--risk", type=float, default=BotConfig.risk_percent, help="percent per trade")
+    p.add_argument("--strategy", choices=tuple(BOT_STRATEGIES), default="opening_range")
+    p.add_argument("--symbols", nargs="+", default=None, help="default: the strategy's symbols")
+    p.add_argument("--risk", type=float, default=None, help="percent per trade")
     p.add_argument("--daily-stop", type=float, default=GuardConfig().daily_stop_percent)
     p.add_argument("--balance", type=float, default=None,
                    help="initial balance override (default: the account's first balance deal)")  # fmt: skip
     args = p.parse_args(argv)
+    probe = args.strategy == "fill_probe"
+    symbols = args.symbols or (FILL_PROBE_SYMBOLS if probe else FORWARD_SYMBOLS)
+    default_risk = FILL_PROBE_RISK_PERCENT if probe else BotConfig.risk_percent
+    return BotConfig(
+        symbols=tuple(s.upper() for s in symbols),
+        strategy_name=args.strategy,
+        strategy=FillProbeConfig() if probe else forward_strategy_config(),
+        comment_prefix="fp" if probe else "orb",
+        risk_percent=default_risk if args.risk is None else args.risk,
+        guard=GuardConfig(daily_stop_percent=args.daily_stop),
+        initial_balance=args.balance,
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    utf8_output()
     try:  # checked before anything starts (#18)
-        config = BotConfig(
-            symbols=tuple(s.upper() for s in args.symbols),
-            risk_percent=args.risk,
-            guard=GuardConfig(daily_stop_percent=args.daily_stop),
-            initial_balance=args.balance,
-        )
+        config = parse_config(argv)
     except ValueError as e:
         print(f"Refused: {e}", file=sys.stderr)
         return 2

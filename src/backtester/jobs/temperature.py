@@ -5,9 +5,23 @@ import json
 import math
 import re
 from dataclasses import dataclass
-from urllib.request import urlopen
+from urllib.parse import urlsplit
 
 from backtester.jobs.config import DEFAULT_CONFIG
+
+
+def urlopen(url: str, timeout: float):
+    """GET `url` without urllib's `Connection: close` header: LibreHardwareMonitor's web server
+    stalls on it (2026-10-27: curl answered in 20 ms, urllib timed out). The response closes
+    the connection when the `with` block ends."""
+    parts = urlsplit(url)
+    connection = http.client.HTTPConnection(parts.hostname, parts.port or 80, timeout=timeout)
+    connection.request("GET", (parts.path or "/") + (f"?{parts.query}" if parts.query else ""))
+    response = connection.getresponse()
+    if response.status != 200:
+        connection.close()
+        raise OSError(f"sensor answered HTTP {response.status}")
+    return response
 
 
 def parse_temperature(tree) -> float | None:
