@@ -3,7 +3,7 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-10-27 morning, after the night run)
+## Where things are (2026-10-27, End of session)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
@@ -35,15 +35,16 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 | 2 | Data fixes 13.12-13.16, 13.18; cache rebuilt | accepted |
 | 3 | Research pipeline, queue panel, lanes | accepted |
 | 4 | V2.7 Portfolio tab (search, top-10 Monte Carlo, one-time test CLI) | accepted |
-| 5 | Review mode, trade inspection, heat map, strong-move dropdown, 4.3 items | **built, not accepted** |
+| 5 | Review mode, trade inspection, heat map, strong-move dropdown, 4.3 items | accepted (2026-10-27 `End.`) |
 | 6 | Live (demo bot, V2.4b, 12.5) | skipped (user) |
-| 7 | V2.4e news calendar on synthetic data, filter default off | **built, not accepted** |
-| 8 | Full check: Codex review (`docs/review/v26-full-check.md`), fixes 1-6, `--help` on Windows, live job logs | **built, not accepted** |
+| 7 | V2.4e news calendar on synthetic data, filter default off | accepted (2026-10-27 `End.`) |
+| 8 | Full check: Codex review (`docs/review/v26-full-check.md`), fixes 1-6, `--help` on Windows, live job logs | accepted (2026-10-27 `End.`) |
 | 9 | More symbols: proposal list `docs/review/symbol-proposal-2026-10-27.md` | **waiting for the user's pick** |
 
 ## Accepted by the user (do not ask again)
 
 - 2026-10-22 / 23 / 24: see git history of this file; all V1 decisions; V2.5 UI decisions.
+- 2026-10-27 (`End.`): steps 5, 7, 8 of the V2.6 build order accepted.
 - 2026-10-26: everything up to V2.5 accepted (`End.`); tick rounding on + median spread table
   default (spread re-checked after demo trading); build and test the whole app first, research
   after; V2.6 build order; queue first, LibreHardwareMonitor guard; pre-registered hypotheses
@@ -57,8 +58,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Open (needs the user) — the morning list is `docs/review/night-2026-10-27.md`
 
-1. Check and accept steps 5, 7, 8 (app: Chart review mode / inspection, Research heat map,
-   Live stale status; news: `docs/news.md`).
+1. Steps 5, 7, 8 accepted at `End.` 2026-10-27; first in the next chat: merge `v2-6-research`
+   into `main` (the user's word).
 2. Decisions listed in the night file: news blackout timing (candle close vs fill time) and
    window sizes; **spread table in the development period** (full check finding 7: 2015-2020
    indices use 2021 values); more symbols (pick from the proposal); pipeline Monte Carlo speed
@@ -66,7 +67,6 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 3. Install LibreHardwareMonitor (Options › Remote Web Server, port 8085).
 4. News: the regenerated calendar file -> `data/news/economic_events.csv`.
 5. Demo bot restart for step 6 (V2.4b slippage, 12.5 reconciliation) — the user's call.
-6. Merge `v2-6-research` into `main` when accepted.
 7. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
    auto-refresh live candles; remote branch `claude/ui-polish`; CLI named-preset restrictions
    differ slightly from the app's.
