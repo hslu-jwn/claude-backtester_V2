@@ -20,7 +20,9 @@ def race_worker(root, barrier):
 def test_concurrent_first_use_of_a_new_lock_file(tmp_path):
     ctx = mp.get_context("spawn")
     barrier = ctx.Barrier(WORKERS)
-    processes = [ctx.Process(target=race_worker, args=(str(tmp_path), barrier)) for _ in range(WORKERS)]
+    processes = [
+        ctx.Process(target=race_worker, args=(str(tmp_path), barrier)) for _ in range(WORKERS)
+    ]
     try:
         for p in processes:
             p.start()
