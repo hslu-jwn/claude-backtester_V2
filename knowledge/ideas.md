@@ -1,5 +1,11 @@
 # Strategy ideas backlog
 
+**Frozen 2026-10-27 (the user):** no new ideas here; new strategies come from the research
+department through `../Shared_Interface/` (`docs/research-intake.md`). Whether this backlog is
+handed to the research department is open (decision D6 in
+`docs/review/research-interface-review-2026-10-27.md`). Status updates of ideas V2 already
+tests are still recorded here.
+
 Testable ideas from the books, merged and de-duplicated. **Nothing here is a trading rule**: an idea
 becomes a rule only when the user picks it, it is written into a `docs/` spec and tested (CLAUDE.md ›
 Specs are the source of truth). When an idea is tested, set its status and link the ROADMAP step.

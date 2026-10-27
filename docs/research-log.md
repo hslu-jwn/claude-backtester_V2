@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-10-27: research department split
+
+From now on this log records only the backtester side (experiments, intake, model usage).
+Research findings, sources and hypotheses live in `../Research_Department/knowledge_base/`.
+Reviewed their contract 0.1.0 (`docs/review/research-interface-review-2026-10-27.md`, Opus
+medium, no code changed); both pilot drafts are not runnable in V2 today (stopless /
+notional, adjusted ETF data). Intake = ROADMAP V2.6i.
+
 ## Model usage, V2.1-V2.4 (2026-10-22 / 23)
 
 | Tool / model | Effort | Calls | Minutes | Used for | Worth it? |

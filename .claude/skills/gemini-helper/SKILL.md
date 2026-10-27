@@ -1,6 +1,6 @@
 ---
 name: gemini-helper
-description: Hand a task to the Antigravity CLI (agy) non-interactively - as Gemini 3.8 Flash for research, knowledge/ write-ups, writing and running tests, research cards; or as Claude 4.6 (Sonnet / Opus) for reviewing Codex's code and as the second coding lane. Use whenever AGENTS.md › Team assigns work to Gemini or Claude 4.6.
+description: Hand a task to the Antigravity CLI (agy) non-interactively - as Gemini 3.8 Flash for writing and running tests, research cards, method look-ups for our evaluation (strategy research belongs to the research department); or as Claude 4.6 (Sonnet / Opus) for reviewing Codex's code and as the second coding lane. Use whenever AGENTS.md › Team assigns work to Gemini or Claude 4.6.
 ---
 
 # gemini-helper (Antigravity CLI: Gemini and Claude 4.6)
@@ -26,9 +26,9 @@ Pro quota. Opus is the only dispatcher and checks every result itself.
   the guard after the call is (any change on a read-only task, commits, branches, pushes,
   protected paths -> exit 3). Write tasks only in a clean tree or a lane worktree.
 - Code tasks need a brief from Codex or Opus (files, spec section, test cases, done = tests
-  green + ruff). Research tasks: topic, sources wanted (books, papers, studies with links),
-  output file in `knowledge/`. Parallel research: several calls in the background, one topic
-  each, different `--label`s.
+  green + ruff). Method look-ups (testing, statistics, costs): question, sources wanted,
+  output in `results/ai/`. No strategy-idea research and no new `knowledge/` files: that is
+  the research department's job (`AGENTS.md` › Team, since 2026-10-27).
 
 ## Result
 

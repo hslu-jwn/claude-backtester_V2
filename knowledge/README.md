@@ -3,6 +3,11 @@
 What the trading books in `C:\Users\justi\Documents\00_Literature\Trading` teach, in our own words, kept
 so new strategies can be built and tested from it. Started 2026-10-14; grows with every new book.
 
+**Frozen 2026-10-27 (the user):** strategy research moved to the separate research department
+(`../Research_Department/`). No new books, topics or ideas are added here. The files stay in
+place because code, docs and tests link them; the evaluation topics (testing, statistics, costs,
+frameworks) remain the backtester team's method reference. See `docs/research-intake.md`.
+
 **This is background, not rules.** Trading rules live only in `docs/` (CLAUDE.md › Specs are the source
 of truth). An idea from here becomes a rule only when the user picks it and it is written into a spec.
 

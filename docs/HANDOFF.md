@@ -33,6 +33,16 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - **AI team:** ChatGPT Plus + Gemini Plus; Antigravity (Gemini / Claude 4.6) empty until
   ~2026-10-29. The user: use subagents for the heavy work (2026-10-27).
 
+## New: research department (the user, 2026-10-27)
+
+Strategy research (literature, ideas, hypotheses, specs) is now done by a separate team at
+`../Research_Department/`; it hands strategies over as JSON through `../Shared_Interface/`. We keep
+implementation, data, costs, validation, experiments and the one-time test. Process:
+`docs/research-intake.md`; review of their contract, our requests and decisions D1-D8:
+`docs/review/research-interface-review-2026-10-27.md`; our answer to them:
+`../BACKTESTER_TEAM_RESPONSE.md`. `Continue.Knowledge` is retired; `Continue.Research` is blocked
+until ROADMAP V2.6i (intake adapter) passes. Nothing built yet; the interface is a proposal.
+
 ## V2.6d before research (ROADMAP) — state
 
 | Step | What | State |
@@ -66,6 +76,8 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
 3. Merge `v2-6-research` into `main` (the user's word).
 4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
+5. Research intake decisions D1-D8 (`docs/review/research-interface-review-2026-10-27.md` ›
+   section 3) and the research team's reply to `../BACKTESTER_TEAM_RESPONSE.md`.
 
 ## Next step
 

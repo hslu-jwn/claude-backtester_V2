@@ -183,6 +183,17 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   live candles auto-refresh on the chart, remote branch `claude/ui-polish` (delete only on the
   user's word), CLI named-preset restrictions equal to the app's.
   A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
+- ☐ **V2.6i Research-department intake (the user, 2026-10-27):** strategy ideas now come from
+  `../Research_Department/` through `../Shared_Interface/` (process: `docs/research-intake.md`;
+  review and decisions D1-D8: `docs/review/research-interface-review-2026-10-27.md`). Test-first
+  steps, no engine change: (i1) contract frozen with the agreed edits + fixtures; (i2)
+  `tools/intake.py validate`; (i3) atomic claim, lease, crash recovery (`backtester.filelock`,
+  `results/intake/`); (i4) submission mapping section in each strategy spec; (i5) strategy /
+  experiment / dataset / commit / stage metadata in `settings.json` and the trial log; (i6)
+  result and feedback envelope emitters, test-stage run refused without the user's go; (i7)
+  synthetic end-to-end fixture; (i8) first real R-type pilot, development stage only. Timing vs
+  V2.6d: the user's decision (D2). Open: the user's decisions D1-D8, the research team's answer
+  on the contract edits.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 
@@ -207,8 +218,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 ### V2.6 Continuous research
 Goal: a library of tested, research-based strategies. Do NOT judge pass / fail; record every
 strategy with all metrics; the user decides later.
+- **Changed 2026-10-27 (the user):** research and ideas are the research department's job;
+  every new strategy comes from a submission in `../Shared_Interface/queue/`
+  (`docs/research-intake.md`), which carries its sources. The pipeline below is replaced by
+  the intake pipeline there; the safeguards, Monte Carlo, stability, regime, flags, lanes and
+  job queue below still apply.
 - Every strategy comes from research (book, paper, study, reputable source), cited in its
-  `docs/` spec; Opus checks the source exists before any code. Never invent or data-mine rules
+  `docs/` spec. Never invent or data-mine rules
   (e.g. entering at an arbitrary time because it backtests well). Vary only the settings of a
   researched idea (R:R, stop / target method, session windows, timeframes, symbols, filters).
 - Safeguards: develop before 2021-09-14, test the best variant ONCE on MT5 data from
@@ -220,7 +236,7 @@ strategy with all metrics; the user decides later.
   (`docs/regime-classifier.md`).
 - Flag suspicious results automatically: win rate > 80 %, < 100 trades, profit from a few
   trades, big gap between development and test, isolated best parameter.
-- Pipeline per idea: (1) research -> idea file with sources (Gemini; while its quota is empty:
+- Pipeline per idea (until 2026-10-27; now `docs/research-intake.md`): (1) research -> idea file with sources (Gemini; while its quota is empty:
   Codex / Opus); (2) pick idea, spec in `docs/` + test-case list (Codex); (3) tests, then
   strategy code (per AGENTS.md › Team); (4) review of the diff for lookahead and spec (Codex /
   Claude 4.6 / Opus); (5) sweep, robustness, one-time MT5 test, Monte Carlo, parameter

@@ -10,14 +10,22 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   commits and talks to the user. It writes or reviews code itself only when the others fail or
   the task touches no-lookahead, the engine or risk.
 - **Codex** writes all production code (strategies, fixes, speed-ups), specs and test-case
-  lists, designs strategies from the research (`knowledge/` entries with sources) and gives a
-  second opinion on decisions. Runs in shell mode (edits files, runs pytest / ruff itself).
+  lists, turns accepted research-department submissions into V2 specs
+  (`docs/research-intake.md`) and gives a second opinion on decisions. Runs in shell mode
+  (edits files, runs pytest / ruff itself).
 - **Claude 4.6** (Sonnet 4.6 / Opus 4.6 through the Antigravity CLI, on the Google quota):
   reviews Codex's code, is the second coding lane when Codex is busy or at its limit, and the
   next step in the escalation chain before Opus.
 - **Gemini** (3.8 Flash through the Antigravity CLI) does the bulk work that is not production
-  code: literature / web / study research, `knowledge/` write-ups, writing tests from a
-  test-case list, running tests and sweeps, research-card write-ups.
+  code: writing tests from a test-case list, running tests and sweeps, research-card
+  write-ups, and method look-ups for our own evaluation (statistics, costs, testing).
+- **Research department (since 2026-10-27, the user):** a separate team at
+  `../Research_Department/` owns literature / web / study research, hypotheses, strategy ideas
+  and complete strategy specifications. It hands them over only through
+  `../Shared_Interface/` (queue, schemas, contract). We do not research or invent strategy
+  ideas any more, do not edit `../Research_Department/`, and never keep V2-local copies of the
+  shared schemas or queue. Questions for them go back as feedback envelopes
+  (`docs/research-intake.md`). They never edit this repo.
 - Codex never calls the others. When Codex plans work for another model it writes a task brief
   file (`briefs/<name>.md`) and Opus hands it on.
 - **Cross-review:** no model approves its own work. Codex writes code -> Claude 4.6 reviews it
@@ -26,7 +34,7 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   different models where possible; when the other models are out of quota, one model writes
   both (tests first) and Opus reviews the tests and the code.
 - **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
-  **Research / tests:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
+  **Tests / method look-ups:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
   model one level after a failed try before passing the task on.
 - **Hard limits for Codex, Claude 4.6 and Gemini:** never start a server, app preview or any
   process that keeps running after your answer (a preview of the app on 2026-10-24 kept a
@@ -76,17 +84,20 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-opening-range.md` | Strategy 6: opening-range breakout (range / ATR band, session-end exit, narrow-range and tick-volume filters) (ROADMAP 11.10) |
 | `docs/strategy-gap-momentum.md` | Strategy 7: gap momentum (opening gap beyond the prior range, day trade) |
 | `docs/research-runner.md` | Research runner: data split, grids, scorecard, flags, trial log |
+| `docs/research-intake.md` | How submissions from the research department become V2 strategies, experiments and result / feedback envelopes (not operational until ROADMAP V2.6i) |
 | `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | What to build next and its status; V1 history in `docs/archive/ROADMAP-v1.md` (step IDs like "ROADMAP 11.4" point there) |
 
-**Knowledge base (background, not rules):** `knowledge/` holds what the trading books in
-`00_Literature/Trading` teach: `README.md` (index, how to add a book), `topics/` (synthesis per
-subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (strategy
-idea backlog with IDs I-xx / T-xx and status). Use it when designing or judging a strategy. An idea
-becomes a rule only when the user picks it and it is written into a `docs/` spec. Update an idea's
-status when it is tested.
+**Knowledge base (background, not rules; frozen 2026-10-27):** `knowledge/` holds what the
+trading books in `00_Literature/Trading` teach: `README.md` (index), `topics/` (synthesis per
+subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (the old
+idea backlog I-xx / T-xx). No new books or ideas are added here: strategy research belongs to
+the research department. Our evaluation methods (testing, statistics, costs, frameworks) stay
+in use for judging results. Files stay in place (code and docs link them); the research team
+may copy from them. New strategies come only from a submission, written into a `docs/` spec and
+approved by the user (`docs/research-intake.md`).
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
   a trading rule. Quote the spec line you are unsure about.

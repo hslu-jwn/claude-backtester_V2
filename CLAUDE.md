@@ -10,7 +10,7 @@ in `AGENTS.md`; they apply in full:
 | Part | Status |
 |---|---|
 | Strategies | 7 built. 1 session zone sweep: paused (negative). 2 NY index sweep: parked. 3 no-wick: dropped. 4 Kaufman trend following: parked, but **portfolio candidate** (passed a prop-firm challenge in some tests, slowly). 5 gap fade: no edge. 6 opening-range breakout: demo forward-test candidate (tick-volume filter, fading since 2024). 7 gap momentum: no edge (gold version positive, not significant). |
-| Research | runner `tools/research.py` (data split 2021-09-14, one MT5 test of the best variant, DSR, flags, trial log), Research page, entry screening, Monte Carlo, portfolio tool; price-only research found no significant edge so far |
+| Research | runner `tools/research.py` (data split 2021-09-14, one MT5 test of the best variant, DSR, flags, trial log), Research page, entry screening, Monte Carlo, portfolio tool; price-only research found no significant edge so far. **Since 2026-10-27 strategy ideas come from the separate research department** through `../Shared_Interface/` (`docs/research-intake.md`); intake not operational until ROADMAP V2.6i |
 | Costs | FTMO spreads / fees / swap of 2026-10-14 are the defaults; spread table off by default |
 | Data | MT5 cache 26 symbols to 2026-10-19 (preferred day by day), histdata 2015-2021, Binance BTC / ETH |
 | Live | demo forward test of strategy 6 on the FTMO demo; bot **not running** (stopped 2026-10-21) |
@@ -37,7 +37,8 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   | All production code, specs, test-case lists | Codex medium |
   | Review of Codex's code; second coding lane | Claude 4.6 (`claude46` medium = Sonnet, high = Opus 4.6) |
   | Writing tests from a test-case list, running tests | Gemini high |
-  | Literature, web research, summaries, card write-ups | Gemini medium (high for hard papers / books) |
+  | Card write-ups, method look-ups for our evaluation (strategy research = research department) | Gemini medium |
+  | Intake: validate / claim a submission, compatibility check, feedback envelopes | Opus medium (Codex second opinion) |
   | Claude subagents: mechanical edits, searches, commands | Haiku, low |
   | Claude subagents: code / tests, debugging, backtests needing judgment | Sonnet, medium (high for hard bugs) |
   | Claude subagents: only if Sonnet failed or critical | Opus, high |
@@ -76,31 +77,41 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   `docs/HANDOFF.md` and the ROADMAP step, run tests + ruff as a baseline, say in max 10 lines
   what you will do (plan, test cases, files, models), ask all open questions at once, then work
   test-first, step by step with the user's ok.
-- **`Continue.Knowledge`:** gather knowledge only, no strategy code. Gemini reads literature,
-  websites and studies; results go into `knowledge/` (topics, `ideas.md` with sources and
-  status; new books: `knowledge/README.md`).
-- **`Continue.Research [Limit=<time>] [<topic>]`:** the autonomous research loop (V2.6 / V2.7;
-  the job queue, lanes and research log are built in V2.6).
+- **`Continue.Knowledge`:** retired 2026-10-27 (the user): literature and idea research is the
+  research department's job (`../Research_Department/`). If the user says it, point there and
+  offer `Continue.Research` (intake) instead.
+- **`Continue.Research [Limit=<time>] [<STRATEGY_ID>]`:** the autonomous test loop on research
+  department submissions (V2.6 / V2.7; job queue, lanes, research log built in V2.6; intake per
+  `docs/research-intake.md`). **Blocked until ROADMAP V2.6i passes**: until then it may work
+  only on V2.6i itself or on the three pre-registered V2 hypotheses (ROADMAP V2.6).
+  - Start: read `../Shared_Interface/INTERFACE_CONTRACT.md`, list `queue/pending/` and our open
+    claims in `results/intake/`.
   - First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything
     unclear in the log or specs) and wait. Then run autonomously (Codex answers questions;
     Telegram only for urgent ones). Later calls in the same chat reuse the answers.
   - `Limit=60min` / `2h` / `3d`: write start time and deadline into `docs/research-log.md`,
     check the clock after every step; at the deadline finish the current step cleanly
     (commit, log) and stop. No limit = until "Stop." or the resources run out.
-  - Topic given: research only that. Otherwise the next open idea from
-    `docs/research-log.md` / `knowledge/ideas.md`.
-  - Rules: every strategy comes from research (book, paper, study) cited in its `docs/` spec;
-    Opus checks the source exists before any code. One parameter set pooled across all
+  - STRATEGY_ID given: work only on that submission. Otherwise the highest-`priority`
+    submission in `queue/pending/`, then our open claims. No submission -> report and stop;
+    never invent an idea to fill the time.
+  - Rules: every strategy comes from a validated, claimed submission; its sources and
+    evidence are the research department's responsibility (Opus does not re-research them,
+    but returns feedback on anything that looks wrong). Every rule maps to the submission;
+    anything unclear -> `NEEDS_CLARIFICATION`, never a guess. One parameter set pooled across all
     markets by default; per-market parameters with re-optimisation only as a walk-forward
-    variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the settings of a researched
-    idea. Do not judge pass / fail: record every strategy with all metrics; the user decides.
+    variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the parameters
+    the submission marks tunable, within its ranges. Do not judge pass / fail: record every
+    strategy with all metrics and the submission's rejection criteria computed; the user decides.
+    Every experiment ends in a result envelope (or a feedback envelope) in `../Shared_Interface/feedback/`.
+    The one-time MT5 test of a submission needs the user's explicit go.
     Develop before 2021-09-14, test the best variant once on MT5 data from 2021-09-14 (rule set
     by the user, 2026-10-15); every variant in the trial log; DSR, robustness report, real
     costs + swap, Monte Carlo, parameter stability, regime breakdown, warning flags. Prefer no
     overnight holds (swap). Never change defaults (costs, sweep options, spread table) without
     the user's go.
-  - End of run: short report (tested, results, research cards added); a very promising
-    strategy first, and on Telegram.
+  - End of run: short report (tested, results, research cards added, envelopes written,
+    feedback sent); a very promising strategy first, and on Telegram.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
   the step, stop lanes and job queue, commit, update the log, short report. Nothing
   half-finished stays uncommitted.
