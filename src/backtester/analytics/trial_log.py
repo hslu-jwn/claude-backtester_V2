@@ -12,6 +12,8 @@ import csv
 import json
 import warnings
 from collections.abc import Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -25,6 +27,17 @@ from backtester.paths import RESULTS_DIR
 
 TRIALS_FILE = "trials.jsonl"
 COUNT_ONLY = "count-only"  # source / period marker of back-filled count-only lines
+_SUBMISSION: ContextVar[dict | None] = ContextVar("trial_submission", default=None)
+
+
+@contextmanager
+def submission_identity(identity: dict | None):
+    """Scope metadata for shared trial writers. Spec: research-runner.md > Submission identity."""
+    token = _SUBMISSION.set(identity)
+    try:
+        yield
+    finally:
+        _SUBMISSION.reset(token)
 
 
 def default_path() -> Path:
@@ -58,6 +71,7 @@ class TrialRecord:
     count: int = 1  # trials this line stands for (back-fill lines may be more than 1)
     note: str = field(default="")
     series: str | None = None
+    submission: dict | None = None
 
     @property
     def key(self) -> str:
@@ -90,7 +104,7 @@ def make_record(
     return TrialRecord(
         family, strategy, settings_dict(settings), list(symbols), start.isoformat(),
         end.isoformat(), source, now_iso(), s.n, float(sum(r_net)), s.mean, s.sd, s.skew, s.kurt,
-        s.sharpe, d.n, d.mean, d.sd, d.skew, d.kurt, d.sharpe, 1, note, series,
+        s.sharpe, d.n, d.mean, d.sd, d.skew, d.kurt, d.sharpe, 1, note, series, _SUBMISSION.get(),
     )  # fmt: skip
 
 
@@ -111,7 +125,12 @@ def append(record: TrialRecord, path: Path | None = None) -> None:
         file_lock(path.parent / ".locks" / (path.name + ".lock")),
         path.open("a", encoding="utf-8") as f,
     ):
-        f.write(json.dumps(asdict(record), sort_keys=True) + "\n")
+        data = asdict(record)
+        if _SUBMISSION.get() is not None:
+            data["submission"] = _SUBMISSION.get()
+        if data["submission"] is None:
+            del data["submission"]
+        f.write(json.dumps(data, sort_keys=True) + "\n")
 
 
 def read_all(path: Path | None = None) -> list[TrialRecord]:

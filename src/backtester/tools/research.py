@@ -35,17 +35,18 @@ import argparse
 import csv
 import json
 import shutil
+import subprocess
 import sys
 import time as clock
 from collections.abc import Callable, Iterator, Sequence
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from backtester.analytics.daily import daily_net_r
 from backtester.analytics.deflated_sharpe import deflated_sharpe, trade_stats
 from backtester.analytics.records import read_trades
 from backtester.analytics.scorecard import SCORE_KEYS, ScorecardConfig, flags, scorecard
-from backtester.analytics.trial_log import TRIALS_FILE
+from backtester.analytics.trial_log import TRIALS_FILE, read_all, submission_identity
 from backtester.analytics.trial_log import now_iso as _now
 from backtester.analytics.verdict import (
     EDGE,
@@ -82,6 +83,7 @@ from backtester.tools import (
     research_stability,
     research_walk_forward,
 )
+from backtester.tools.intake import dataset_version
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
@@ -260,6 +262,80 @@ def _dump(path: Path, data) -> None:
     path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
 
 
+def _code_version() -> dict:
+    """Git provenance of this checkout; unavailable git metadata never blocks a run."""
+    root = Path(__file__).resolve().parents[3]
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return {"code_commit": None, "code_dirty": None}
+    return {"code_commit": commit, "code_dirty": bool(dirty)}
+
+
+def _submission_stem(identity: dict) -> str:
+    return f"{identity['strategy_id']}__v{identity['specification_version']}"
+
+
+def _test_authorized(spec: GridSpec, results_dir: Path) -> bool:
+    if spec.submission is None:
+        return True
+    path = results_dir / "intake" / _submission_stem(spec.submission) / "test_authorization.json"
+    authorization = _read_json(path)
+    if not isinstance(authorization, dict):
+        return False
+    quote = authorization.get("quote")
+    try:
+        datetime.fromisoformat(authorization["authorized_at"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        authorization.get("authorized_by") == "user"
+        and isinstance(quote, str)
+        and bool(quote.strip())
+        and authorization.get("experiment_id") == spec.submission["experiment_id"]
+    )
+
+
+def _trial_submission(spec: GridSpec, source: str) -> dict | None:
+    if spec.submission is None:
+        return None
+    identity = dict(spec.submission)
+    number = None
+    if source == SOURCE_TEST:
+        number = 1
+    elif source.startswith(SOURCE_RETEST + "-"):
+        number = int(source.removeprefix(SOURCE_RETEST + "-")) + 1
+    if number is not None:
+        identity["experiment_id"] = f"{_submission_stem(identity)}__FINAL_HOLDOUT__{number}"
+    return identity
+
+
+def _holdout_number(spec: GridSpec, test_info: dict, trials: Path) -> int:
+    latest = int(test_info.get("run", 0))
+    if spec.submission is not None:
+        prefix = _submission_stem(spec.submission) + "__FINAL_HOLDOUT__"
+        for record in read_all(trials):
+            experiment = (record.submission or {}).get("experiment_id", "")
+            if experiment.startswith(prefix) and experiment[len(prefix) :].isdigit():
+                latest = max(latest, int(experiment[len(prefix) :]))
+    return latest + 1
+
+
 def _write_csv(path: Path, columns: Sequence[str], rows: Sequence[dict]) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, columns, extrasaction="ignore")
@@ -354,17 +430,34 @@ def _daily_series(
     if calendars is not None:
         config = variant_settings(spec, Variant("", "", overrides)).engine.news
         calendars.write_run(folder, config, read_trades(folder) if trades is None else trades)
-    research_series.ensure(
-        folder,
-        start,
-        end,
-        sources,
-        trials,
-        (family or spec.name, spec.strategy, _log_settings(spec, overrides), spec.symbols, source),
-        trades=trades,
-        reader=read_trades,
-        note=note,
-    )
+    identity = _trial_submission(spec, source)
+    if identity is not None:
+        _dump(
+            folder / "info.json",
+            {
+                "submission": identity,
+                "dataset": dataset_version(spec.symbols, start, end, sources),
+                **_code_version(),
+            },
+        )
+    with submission_identity(identity):
+        research_series.ensure(
+            folder,
+            start,
+            end,
+            sources,
+            trials,
+            (
+                family or spec.name,
+                spec.strategy,
+                _log_settings(spec, overrides),
+                spec.symbols,
+                source,
+            ),
+            trades=trades,
+            reader=read_trades,
+            note=note,
+        )
 
 
 def _sensitivity(
@@ -643,6 +736,10 @@ def _run_research_locked(
         },
         "ranked": 0, "chosen": previous.get("chosen"), "test": test_info,
     }  # fmt: skip
+    info.update(_code_version())
+    if spec.submission is not None:
+        info["submission"] = spec.submission
+        info["dataset"] = dataset_version(spec.symbols, first, last, sources)
     if spec.grids:
         info["grids"] = [{"name": f.name, "base": f.base, "grid": f.grid} for f in spec.grids]
         for entry, family in zip(info["grids"], spec.grids, strict=True):
@@ -881,6 +978,8 @@ def _run_research_locked(
             (folder / "walk_forward.csv").unlink(missing_ok=True)
             (folder / "walk_forward_study.csv").unlink(missing_ok=True)
         _dump(folder / "research.json", info)
+        if spec.submission is not None:
+            _dump(folder / "info.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
             "status": status, "message": message, "id": rid, "folder": folder,
@@ -909,6 +1008,14 @@ def _run_research_locked(
         workers,
         log,
     )
+    authorization_skip = None
+    if not dev_only and not _test_authorized(spec, results_dir):
+        authorization_skip = (
+            f"test skipped: no user authorization for {_submission_stem(spec.submission)}"
+        )
+        log(authorization_skip)
+        info["test_skip"] = authorization_skip
+        dev_only = True
     if dev_only:
         info["chosen"] = previous.get("chosen") if previous.get("chosen") else None
         test_info.setdefault("status", "not_run")
@@ -935,7 +1042,9 @@ def _run_research_locked(
     }  # fmt: skip
     if dev_only:
         return finish(
-            "dev_only", "development done; the test run was not started (--dev-only)", chosen
+            "dev_only",
+            authorization_skip or "development done; the test run was not started (--dev-only)",
+            chosen,
         )
     if cfg.cutoff > last:
         message = f"no cached data from {cfg.cutoff} on: no test run"
@@ -948,7 +1057,7 @@ def _run_research_locked(
     _dump(
         results_dir / run_folder / "diagnostics.json", research_diagnostics.snapshot(result.trades)
     )
-    run_number = int(test_info.get("run", 0)) + 1
+    run_number = _holdout_number(spec, test_info, trials)
     is_retest = run_number > 1
     row = _test_row(
         spec, chosen | {"variant_id": best["variant_id"], "variant": best["variant"]}, result,
@@ -1081,6 +1190,8 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
         ]
     test = info["test"]
     lines += ["", "## Test", ""]
+    if info.get("test_skip"):
+        lines.append(info["test_skip"])
     if test.get("status") == "done":
         lines.append(
             f"Test {test['run']} ({test['start']} to {test['end']}): {test['trades']} trades, "

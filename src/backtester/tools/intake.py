@@ -10,16 +10,51 @@ import os
 import re
 import stat
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
+from backtester.data.sources import SymbolSources
 from backtester.filelock import atomic_json, file_lock
 from backtester.paths import HOME_DIR, RESULTS_DIR
 
 DEFAULT_UMBRELLA = HOME_DIR.parent
 MAX_BYTES = 1024 * 1024
 FILENAME = re.compile(r"[A-Z][A-Z0-9_]{2,63}__v[0-9]+\.[0-9]+\.[0-9]+\.json")
+
+
+def dataset_version(symbols, start: date, end: date, sources: SymbolSources) -> dict:
+    """Fingerprint resolved day files by path and size, without reading candle contents.
+
+    Spec: research-runner.md > Submission identity. Dates are inclusive; preferred/main/
+    fallback resolution is delegated to the same cache adapter that reads the candles.
+    """
+
+    def relative(path):
+        try:
+            return Path(os.path.relpath(path, HOME_DIR)).as_posix()
+        except ValueError:
+            # Windows cannot express a relative path across volumes. Retain the volume
+            # as a relative manifest label (C/cache/...), without changing file access.
+            return Path(path).as_posix().replace(":", "", 1).lstrip("/")
+
+    lines, directories = [], set()
+    names = sorted(set(symbols))
+    for symbol in names:
+        adapter = sources.adapter(symbol)
+        for day in sources.cached_days(symbol):
+            if start <= day <= end:
+                path = adapter._path(symbol, day)
+                lines.append(f"{symbol}\t{relative(path)}\t{path.stat().st_size}")
+                directories.add(relative(path.parents[2]))
+    return {
+        "dataset_id": "v2-cache",
+        "version": hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest(),
+        "symbols": names,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "source_summary": sorted(directories),
+    }
 
 
 @dataclass(frozen=True)

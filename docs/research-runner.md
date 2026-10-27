@@ -62,6 +62,48 @@ strategy instead of a grid tool per strategy, and see at a glance which variants
 - Variants = the full product of the grid values; above `max_variants` a seeded random sample (the seed and
   the full grid size are recorded).
 
+### Submission identity (V2.6i step 2)
+
+Grids handed over through research intake may add exactly these four fields:
+
+```toml
+[submission]
+strategy_id = "US500_FINAL30_CONT"
+specification_version = "0.2.0"
+submission_sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+experiment_id = "US500_FINAL30_CONT__v0.2.0__DEVELOPMENT__1"
+```
+
+The strategy ID matches `[A-Z][A-Z0-9_]{2,63}`, the version is three numeric components,
+and the digest is 64 lowercase hex characters. The experiment must match the strategy/version
+and use `DEVELOPMENT__n`, n >= 1. Invalid or extra fields stop loading with a named `GridError`.
+Submission identity participates in the research folder hash so versions cannot share resume state.
+Without this table, existing grid IDs, trial JSON lines and test behavior stay unchanged.
+
+`research.json` records the submission and, for these grids only, a `dataset` manifest:
+`dataset_id = "v2-cache"`, sorted symbols, inclusive start/end dates, cache directories in
+`source_summary`, and a SHA256 version of sorted `symbol<TAB>relative path<TAB>size` lines
+(joined by newlines, without a trailing newline). Paths are relative to the V2 home
+(other Windows volumes use a relative label such as `C/cache/...`);
+only resolved preferred/main/fallback day files for the run's symbols and period contribute.
+This fingerprints file sizes, not candle contents. Every research run records `code_commit`
+and `code_dirty` (both null if git fails). Old reports without these fields remain readable.
+Submission grids also write `info.json` in the research folder and in each recorded run folder;
+run manifests use that run's dates. Each trial carries `submission`, excluded from its key;
+the field is omitted entirely when absent.
+
+The first test and every `--retest` require
+`results/intake/<strategy_id>__v<version>/test_authorization.json` containing
+`authorized_by = "user"`, a nonempty `quote`, an ISO `authorized_at`, and the grid's
+development `experiment_id`. Opus writes this file only after the user's explicit go,
+quoting their words; no runner code creates it. Missing or invalid authorization keeps the
+runner in development-only mode and logs/reports
+`test skipped: no user authorization for <strategy_id>__v<version>`.
+`--dev-only` never spends the test, even with authorization. Holdout run identities replace
+the development experiment with `<strategy_id>__v<version>__FINAL_HOLDOUT__1`, then `__2`,
+etc., counting earlier tests in saved info or the trial log. Test run `info.json` and trial
+metadata carry the holdout identity; the research folder retains the development identity.
+
 ### Combined grids (V2.4, grid merge 1)
 
 Use either `[grid]` or a non-empty array of `[[grids]]` tables, never both.

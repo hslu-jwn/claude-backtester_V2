@@ -40,6 +40,7 @@ from backtester.settings import Leaf, SettingsError, leaves, settings_from_value
 from backtester.strategy.registry import REGISTRY, default_config
 
 TOP_LEVEL = (
+    "submission",
     "idea",
     "strategy",
     "symbols",
@@ -111,6 +112,7 @@ class GridSpec:
     walk_forward_study: bool = False
     monkeys: bool = True
     idea: str = ""
+    submission: dict | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -248,6 +250,31 @@ def _number(data: dict, key: str, default: int, minimum: int) -> int:
     return value
 
 
+def _submission(value) -> dict:
+    """Validate the immutable identity. Spec: research-runner.md > Submission identity."""
+    patterns = {
+        "strategy_id": r"[A-Z][A-Z0-9_]{2,63}",
+        "specification_version": r"[0-9]+\.[0-9]+\.[0-9]+",
+        "submission_sha256": r"[a-f0-9]{64}",
+        "experiment_id": None,
+    }
+    if not isinstance(value, dict):
+        raise GridError("submission must be a table")
+    for key in value:
+        if key not in patterns:
+            raise GridError(f"submission.{key}: unknown key")
+    for key, pattern in patterns.items():
+        item = value.get(key)
+        if not isinstance(item, str) or (pattern is not None and not re.fullmatch(pattern, item)):
+            raise GridError(f"submission.{key}: missing or invalid value")
+    stem = f"{value['strategy_id']}__v{value['specification_version']}"
+    if not re.fullmatch(re.escape(stem) + r"__DEVELOPMENT__[1-9][0-9]*", value["experiment_id"]):
+        raise GridError(
+            "submission.experiment_id: expected matching DEVELOPMENT experiment, n >= 1"
+        )
+    return dict(value)
+
+
 def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpec:
     cfg = config or ResearchConfig()
     path = Path(path)
@@ -351,6 +378,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         walk_forward_study=data.get("walk_forward_study", False),
         monkeys=data.get("monkeys", True),
         idea=data.get("idea", ""),
+        submission=_submission(data["submission"]) if "submission" in data else None,
     )
     return spec
 
@@ -462,11 +490,15 @@ def expand(spec: GridSpec) -> tuple[list[Variant], int, bool]:
 def grid_id(spec: GridSpec, variants: list[Variant]) -> str:
     """`<file name>_<hash>`: the hash covers strategy, symbols, base and the variants run, so the
     same idea gets the same folder (resume, retest guard) and a changed grid a new one."""
-    key = json.dumps(
-        [spec.strategy, sorted(spec.symbols), spec.base, [(v.id, v.overrides) for v in variants]],
-        sort_keys=True,
-        default=str,
-    )
+    identity = [
+        spec.strategy,
+        sorted(spec.symbols),
+        spec.base,
+        [(v.id, v.overrides) for v in variants],
+    ]
+    if spec.submission is not None:
+        identity.append(spec.submission)
+    key = json.dumps(identity, sort_keys=True, default=str)
     digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:ID_HASH_LENGTH]
     safe = re.sub(r"[^A-Za-z0-9_.-]", "-", spec.name)
     return f"{safe}_{digest}"
