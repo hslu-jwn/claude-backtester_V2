@@ -186,3 +186,14 @@ def test_dialog_is_built_with_its_values_and_row_classes_so_page_load_changes_no
     )
     shown = [wp for wp in fields if sp.initial_row_class(wp) == "st-row"]
     assert shown and len(shown) < len(fields)  # other strategies' rows start hidden
+
+
+def test_doji_threshold_fields_only_for_the_strategy_symbols():
+    """36 symbols' doji fields pushed the panel over its widget bound (V2.6 step 9); like the
+    cost fields, only the strategy symbols get one, the others keep their measured defaults
+    (still settings, still used). Rule: the user's pick, 2026-10-27."""
+    paths = [leaf.path for _, leaf, _ in sp.panel_fields()]
+    prefix = "detectors.swings.doji_max_body."
+    doji = {p.removeprefix(prefix) for p in paths if p.startswith(prefix)}
+    assert doji == set(sp.PANEL_COST_SYMBOLS)
+    assert "AUDUSD" in RunSettings().detectors.swings.doji_max_body  # a default, not a widget

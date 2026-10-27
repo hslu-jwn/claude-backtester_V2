@@ -62,6 +62,9 @@ def _instruments() -> dict[str, InstrumentNews]:
         "AUDJPY",
         "CADJPY",
         "CHFJPY",
+        "NZDJPY",
+        "EURAUD",
+        "GBPAUD",
     ):
         currencies = (symbol[:3], symbol[3:])
         out[symbol] = InstrumentNews(
@@ -70,6 +73,7 @@ def _instruments() -> dict[str, InstrumentNews]:
     for symbol in ("XAUUSD", "XAGUSD", "NAS100", "US500", "US30", "US2000", "BTCUSD", "ETHUSD"):
         out[symbol] = InstrumentNews("USD", "US")
     out["GER40"] = InstrumentNews("EUR", "DE,EU")
+    out["AUS200"] = InstrumentNews("AUD", "AU")
     return out
 
 

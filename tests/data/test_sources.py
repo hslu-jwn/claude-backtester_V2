@@ -126,7 +126,7 @@ def test_every_default_symbol_has_price_digits_and_costs():
     from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 
     assert set(DEFAULT_SOURCES.symbols) == set(PRICE_DIGITS) == set(DEFAULT_SYMBOL_COSTS)
-    assert len(PRICE_DIGITS) == 5 + 16 + 5 + 2
+    assert len(PRICE_DIGITS) == 5 + 16 + 5 + 2 + 8  # + V2.6 step 9 (user, 2026-10-27)
 
 
 def test_the_original_five_symbols_keep_their_digits():

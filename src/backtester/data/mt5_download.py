@@ -50,7 +50,7 @@ from backtester.filelock import file_lock, symbol_mutation_lock
 
 DEFAULT_NAMES = {
     "NAS100": "US100.cash", "US500": "US500.cash",
-    **{s: f"{s}.cash" for s in ("US30", "US2000", "GER40", "UK100", "JP225", "EU50", "USOIL", "UKOIL", "NATGAS", "DXY")},
+    **{s: f"{s}.cash" for s in ("US30", "US2000", "GER40", "UK100", "JP225", "EU50", "USOIL", "UKOIL", "NATGAS", "DXY", "AUS200", "HK50")},
 }  # fmt: skip  # our name -> FTMO's (ROADMAP 11.8); other symbols have the same name
 DEFAULT_CLOCK = ServerClock("America/New_York", 7)
 DEFAULT_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")

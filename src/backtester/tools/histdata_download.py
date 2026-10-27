@@ -62,6 +62,15 @@ DEFAULT_PAIRS = [
     "WTIUSD",
     "BCOUSD",
     "UDXUSD",
+    # V2.6 step 9 (user, 2026-10-27)
+    "AUDJPY",
+    "CADJPY",
+    "NZDJPY",
+    "CHFJPY",
+    "EURAUD",
+    "GBPAUD",
+    "AUXAUD",
+    "HKXHKD",
 ]
 DEFAULT_ROOT = DATA_DIR / "raw/histdata"
 

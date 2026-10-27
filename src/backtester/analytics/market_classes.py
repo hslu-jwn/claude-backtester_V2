@@ -3,6 +3,7 @@
 INDEX_CLASSES = {
     **dict.fromkeys(("NAS100", "US500", "US30", "US2000"), "US indices"),
     **dict.fromkeys(("GER40", "EU50", "UK100", "JP225"), "EU/UK/JP indices"),
+    **dict.fromkeys(("AUS200", "HK50"), "AU/HK indices"),  # V2.6 step 9 (Opus, 2026-10-27)
 }
 MARKET_CLASSES = {
     **INDEX_CLASSES,
@@ -19,6 +20,12 @@ MARKET_CLASSES = {
             "NZDUSD",
             "EURJPY",
             "EURGBP",
+            "AUDJPY",
+            "CADJPY",
+            "NZDJPY",
+            "CHFJPY",
+            "EURAUD",
+            "GBPAUD",
         ),
         "FX",
     ),

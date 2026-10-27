@@ -166,6 +166,25 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   | DXY | 0.018 | 100 | 1 | -2.337 / +0.118 | Fri |
   | BTCUSD / ETHUSD | 1.0 / 0.6 | 1 / 10 | 1 | percentage, -30 % per year, both sides (see *Real fees*) | Fri |
 
+- **Costs of the V2.6 step 9 symbols** (picked by the user 2026-10-27; same method, FTMO `symbol_info` of 2026-10-27;
+  spread and reference price = median M1 bar spread / bid close of 2026-08-28..2026-10-26, a method check reproduced the stored
+  EURJPY / GBPJPY / AUDUSD values exactly). FX commission **$5** assumed like the other pairs, indices 0. **HK50:** the terminal
+  had no HKD rate (tick value 0), so `quote_to_usd` = the USD peg's midpoint **1 / 7.80** (assumption). The default median spread
+  table is not re-measured (that would change the other 26 symbols' costs): these eight use the fixed spread, price-scaled.
+  **FTMO commissions checked 2026-10-27** (subagent web research, source checked by Opus: ftmo.com "Trading update 25 Sep
+  2025", effective 2025-09-29, all accounts): Forex and exotics **$2.50 per lot per side** (= our $5 round turn: the FX
+  crosses' $5 is confirmed); Metals CFD, Cash III CFD and Commodities **0.0007 % per side** (metals already so); indices **0**
+  (ftmo.com "Zero commissions on indices", 2025-08); crypto **0.0325 % per side** (already so). Open: **NATGAS** is named in
+  FTMO's Commodities class (0.0007 % per side) but is 0 here; USOIL / UKOIL / DXY are named on no FTMO page (0 here). A
+  change of those defaults waits for the user.
+
+  | Symbol | Spread | Contract | Quote to USD | Swap long / short | Triple |
+  |---|---|---|---|---|---|
+  | AUDJPY / CADJPY / NZDJPY / CHFJPY | 0.009 / 0.007 / 0.009 / 0.015 | 100,000 | 0.00634111 | +2.2448 / -8.4464, +0.3171 / -3.6208, +0.4883 / -3.4559, -7.5713 / +1.1351 | Wed |
+  | EURAUD / GBPAUD | 0.00006 / 0.00011 | 100,000 | 0.70261 | -9.5274 / +1.2788, -9.4150 / -0.8783 | Wed |
+  | AUS200 (`AUS200.cash`) | 1.0 | 1 | 0.70261 | -1.2703 / -0.3516 | Fri |
+  | HK50 (`HK50.cash`) | 6.24 | 1 | 1 / 7.80 | -0.6117 / -0.0211 | Fri |
+
 - **Real fees: FTMO and Binance** (rule set by the user, 2026-10-15: "integrate FTMO's real fees and Binance's fees for crypto and show
   them"). Commission and swap can now also be a **percentage of the notional**, and Binance funding is a third cost. Everything is in R,
   net only (gross = chart prices); lots and contract size cancel, so only prices and the SL distance matter:

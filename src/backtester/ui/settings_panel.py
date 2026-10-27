@@ -299,7 +299,8 @@ SECTION_HELP = {
 HIDDEN_OPTIONS = {("session_zone_sweep", "strategy.confluence_kinds"): {"EQUILIBRIUM"}}
 DEFAULT_STRATEGY = "session_zone_sweep"
 # per-symbol cost fields are shown for these symbols only: with all 28 symbols the panel had
-# 364 pattern-matched cost widgets and the browser froze; the others keep their spec defaults
+# 364 pattern-matched cost widgets and the browser froze; the others keep their spec defaults.
+# The doji threshold fields too (36 symbols, V2.6 step 9; the user's pick, 2026-10-27)
 PANEL_COST_SYMBOLS = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
 # settings a strategy does not use (shown for no widget): strategy 2 has no break-even at
 # the next session start (`Strategy.uses_session_break_even`)
@@ -397,6 +398,8 @@ def _panel_symbol(path: str) -> bool:
     # needs a widget (risk-management.md > Costs > Tick rounding).
     if path.startswith("engine.costs.symbols.") and path.endswith(".tick_size"):
         return False
+    if path.startswith("detectors.swings.doji_max_body."):
+        return path.rsplit(".", 1)[1] in PANEL_COST_SYMBOLS
     return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS
 
 

@@ -90,6 +90,8 @@ SYMBOL_NAMES = MappingProxyType(
         "WTIUSD": "USOIL",
         "BCOUSD": "UKOIL",
         "UDXUSD": "DXY",
+        "AUXAUD": "AUS200",  # V2.6 step 9 (user, 2026-10-27)
+        "HKXHKD": "HK50",
     }
 )
 

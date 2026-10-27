@@ -50,3 +50,16 @@ EURAUD -13.56 / 1.82, GBPAUD -13.4 / -1.25 (triple Wednesday); AUS200 -180.79 / 
 terminal: costs need a USDHKD quote or a fixed rate); the clock step stopped at AUDJPY H1 "no bars"
 (the terminal had no history for the new symbols yet; the clock is already known per date, so
 not needed). Spreads to measure after the download.
+
+## Step 9 data state (2026-10-27)
+
+- histdata.com 2015-2021 (year files; 2021 has no month files for these pairs) imported for all
+  eight (histdata names AUXAUD = AUS200, HKXHKD = HK50): FX 2184 days, AUS200 2143, HK50 1729.
+- MT5: the terminal returned only ~98,000 M1 bars per symbol (FX from 2026-07-22, AUS200 from
+  2026-07-01, HK50 from 2026-05-27): its "Max bars in chart" is not Unlimited. **2022-01-01 to
+  mid-2026 is missing** (`tools.check`: NOT DOWNLOADED) until the user sets Unlimited and the
+  download re-runs; then `cache_repair <SYMBOL> --clock-table results/v26b2_rebuild_server_clock.json`
+  per symbol, and the median M5 range (doji threshold) is re-measured (provisional values now).
+- `tools.check` of the eight: no duplicate timestamps, broken candles or negative spreads; a few
+  minute jumps at known events (2016-06-24 Brexit, 2019-01-02 JPY flash crash, session opens).
+- Golden lists unchanged (7 / 7 identical).

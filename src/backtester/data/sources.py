@@ -139,6 +139,9 @@ PRICE_DIGITS = MappingProxyType(
         "EURUSD": 5, "USDJPY": 3, "AUDUSD": 5, "USDCAD": 5, "USDCHF": 5, "NZDUSD": 5,
         "EURJPY": 3, "EURGBP": 5, "XAGUSD": 3, "GER40": 2, "UK100": 2, "JP225": 2, "EU50": 2,
         "USOIL": 3, "UKOIL": 3, "DXY": 3,
+        # V2.6 step 9 (user, 2026-10-27), FTMO's digits
+        "AUDJPY": 3, "CADJPY": 3, "NZDJPY": 3, "CHFJPY": 3, "EURAUD": 5, "GBPAUD": 5,
+        "AUS200": 2, "HK50": 2,
         # FTMO only (data/cache/mt5)
         "US30": 2, "US2000": 2, "NATGAS": 3, "BTCUSD": 2, "ETHUSD": 2,
         # Binance futures (data/cache/binance)

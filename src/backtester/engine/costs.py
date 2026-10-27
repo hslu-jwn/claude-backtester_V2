@@ -246,6 +246,18 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
         "US30": SymbolCosts(2.28, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
         "US2000": SymbolCosts(0.93, 0.0, 1, slippage=0.465, swap_long_per_lot=-0.5735, swap_short_per_lot=-0.0172, swap_triple_weekday=FRIDAY),
         "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
+        # --- V2.6 step 9 (user, 2026-10-27), FTMO symbol_info of 2026-10-27, same method ---
+        # spread = median M1 bar spread of 2026-08-28..2026-10-26 (data/cache/mt5); FX $5
+        # commission assumed like the other pairs, indices 0. HK50: the terminal had no HKD
+        # rate (tick value 0), so quote_to_usd = the USD peg's midpoint 1 / 7.80 (assumption).
+        "AUDJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00634111, slippage=0.0045, swap_long_per_lot=2.24475, swap_short_per_lot=-8.44636),
+        "CADJPY": SymbolCosts(0.007, 5.0, 100_000, 0.00634111, slippage=0.0035, swap_long_per_lot=0.317056, swap_short_per_lot=-3.62077),
+        "NZDJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00634111, slippage=0.0045, swap_long_per_lot=0.488265, swap_short_per_lot=-3.45590),
+        "CHFJPY": SymbolCosts(0.015, 5.0, 100_000, 0.00634111, slippage=0.0075, swap_long_per_lot=-7.57129, swap_short_per_lot=1.13506),
+        "EURAUD": SymbolCosts(0.00006, 5.0, 100_000, 0.70261, slippage=0.00003, swap_long_per_lot=-9.52739, swap_short_per_lot=1.27875),
+        "GBPAUD": SymbolCosts(0.00011, 5.0, 100_000, 0.70261, slippage=0.000055, swap_long_per_lot=-9.41497, swap_short_per_lot=-0.878263),
+        "AUS200": SymbolCosts(1.0, 0.0, 1, 0.70261, slippage=0.5, swap_long_per_lot=-1.27025, swap_short_per_lot=-0.351586, swap_triple_weekday=FRIDAY),
+        "HK50": SymbolCosts(6.24, 0.0, 1, 1 / 7.80, slippage=3.12, swap_long_per_lot=-0.611700, swap_short_per_lot=-0.021090, swap_triple_weekday=FRIDAY),
         "BTCUSD": SymbolCosts(
             1.0, 0.0, 1, slippage=0.5, swap_triple_weekday=FRIDAY,
             commission_pct_per_side=FTMO_CRYPTO_COMMISSION_PCT_SIDE,
@@ -277,6 +289,9 @@ REFERENCE_PRICES: Mapping[str, float] = MappingProxyType(
         "JP225": 66072.5, "EU50": 6316.47, "US30": 52172.25, "US2000": 2890.78,
         "USOIL": 92.499, "UKOIL": 102.245, "NATGAS": 2.876, "DXY": 99.673,
         "BTCUSD": 79679.87, "ETHUSD": 2498.33,
+        # V2.6 step 9: 2026-08-28..2026-10-26, measured 2026-10-27
+        "AUDJPY": 110.57, "CADJPY": 111.527, "NZDJPY": 89.395, "CHFJPY": 190.36,
+        "EURAUD": 1.61278, "GBPAUD": 1.8914, "AUS200": 8755.7, "HK50": 24605.0,
     }
 )  # fmt: skip
 
@@ -294,6 +309,9 @@ TICK_SIZES: Mapping[str, float | None] = MappingProxyType(
         "JP225": 0.01, "EU50": 0.01, "US30": 0.01, "US2000": 0.01,
         "USOIL": 0.001, "UKOIL": 0.001, "DXY": 0.001, "NATGAS": 0.001,
         "BTCUSD": 0.01, "ETHUSD": 0.01, "BTCUSDT": None, "ETHUSDT": None,
+        # V2.6 step 9: FTMO trade_tick_size of 2026-10-27
+        "AUDJPY": 0.001, "CADJPY": 0.001, "NZDJPY": 0.001, "CHFJPY": 0.001,
+        "EURAUD": 0.00001, "GBPAUD": 0.00001, "AUS200": 0.01, "HK50": 0.01,
     }
 )  # fmt: skip
 

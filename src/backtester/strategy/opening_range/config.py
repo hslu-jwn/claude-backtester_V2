@@ -57,6 +57,7 @@ SYMBOL_CLASS = MappingProxyType(
             (
                 "GBPUSD", "GBPJPY", "EURUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF",
                 "NZDUSD", "EURJPY", "EURGBP", "XAUUSD", "XAGUSD",
+                "AUDJPY", "CADJPY", "NZDJPY", "CHFJPY", "EURAUD", "GBPAUD",
             ),
             "fx_metal",
         ),
