@@ -74,6 +74,11 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 
 ## Next step
 
+**V2.6d before research (ROADMAP, the user 2026-10-27):** (1) fill-collection demo bot 1-3 days,
+(2) FTMO fees researched and implemented, (3) news filter on the cleaned real calendar,
+(4) LibreHardwareMonitor, (5) older known issues; then research. Earlier text below.
+
+
 The user's morning check and decisions (list above), then: more symbols (step 9 download),
 step 6 when the user restarts the demo bot, the regenerated news file into V2.4e; after that
 intensive research (V2.6 lanes + queue) and V2.7 portfolio on real research results.

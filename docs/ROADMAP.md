@@ -165,6 +165,24 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   2026-10-26: which ones and from which source decided then; download + data check + costs
   per symbol); then intensive research. **Night 2026-10-26/27 (the user's decisions):** go through the steps without an ok in between (each built, reviewed, tested, committed on v2-6-research as 'built, not accepted'; the user reviews in the morning); step 6 skipped (the demo bot is the user's call); step 7 built on synthetic data only (the regenerated news file is plugged in later); step 8 fixes small bugs with tests and lists everything touching rules, defaults or the look; step 9 only a proposal list; no heavy building by Sonnet subagents; one Telegram summary in the morning. Dropped as covered by V2.4c / V2.4d (Opus proposal, user
   2026-10-26): 3.7, 12.11, 12.13.
+- ☐ **V2.6d Before research (the user, 2026-10-27; in this order, research starts after it):**
+  (1) **Fill-collection demo run:** a strategy `fill_probe` that only produces many fills (frequent
+  market entries, alternating direction, ATR stop / target and a time exit; profit does not matter)
+  on many FTMO symbols at minimal risk, 1-3 days on the FTMO demo; the bot gets `--strategy`.
+  Output (`paper.csv`, `trades.csv`, deals): slippage per symbol / session / order type (V2.4b),
+  spread at the fill, FTMO's real commission per symbol from the deals; then 12.5 reconciliation.
+  (2) **FTMO fees:** every symbol's commission (and other fees) researched online and checked
+  against the demo deals; implemented as the defaults (the user's go, 2026-10-27: "research all
+  the fees from FTMO and implement them"), golden lists re-written with a note.
+  (3) **News filter on real data:** clean the calendar (suspicious "exact" midnight / 23:59:59
+  times -> day-only, weekend rows dropped), install it at `data/news/economic_events.csv`, run
+  the split and the filter on real data, propose window sizes (the user decides), finish V2.4e.
+  (4) **LibreHardwareMonitor** installed (winget), its web server on port 8085, the queue's
+  temperature guard reading it.
+  (5) **Older known issues:** one DSR definition (research's per trade vs the trial log's daily),
+  live candles auto-refresh on the chart, remote branch `claude/ui-polish` (delete only on the
+  user's word), CLI named-preset restrictions equal to the app's.
+  A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 
