@@ -116,9 +116,15 @@ def transition(
             None,
         )
     changed = (
-        previous.get("entry_time") != orders[index]["entry_time"] or action == "run" or not matches
+        previous.get("index") != index
+        or previous.get("entry_time") != orders[index]["entry_time"]
+        or not previous.get("order")
+        or review.key(dict(previous["order"], strategy=strategy))
+        != review.key(dict(orders[index], strategy=strategy))
+        or action == "run"
+        or not matches
     )
-    state["revealed"] = action == "reveal" or (state.get("revealed", False) and not changed)
+    state["revealed"] = not changed and (action == "reveal" or state.get("revealed", False))
     state.update(
         index=index,
         entry_time=orders[index]["entry_time"],

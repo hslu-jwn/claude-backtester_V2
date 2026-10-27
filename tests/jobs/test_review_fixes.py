@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from backtester import filelock
 from backtester.jobs import storage, temperature
 from backtester.jobs.processes import process_identity, terminate_tree
 from backtester.jobs.queue import Queue, Runner, RunnerLock, queue_status
@@ -31,7 +32,7 @@ def test_replace_and_read_retry_permission_errors(tmp_path, monkeypatch):
             raise PermissionError(5, "sharing violation")
         original(*args)
 
-    monkeypatch.setattr(storage.os, "replace", busy)
+    monkeypatch.setattr(filelock.os, "replace", busy)
     storage.atomic_json(path, {"value": 1})
     assert len(calls) == 3
     original_open = Path.open
@@ -50,9 +51,11 @@ def test_replace_and_read_retry_permission_errors(tmp_path, monkeypatch):
 
 def test_permission_retry_is_bounded(tmp_path, monkeypatch):
     now = [0.0]
-    monkeypatch.setattr(storage.time, "monotonic", lambda: now[0])
-    monkeypatch.setattr(storage.time, "sleep", lambda seconds: now.__setitem__(0, now[0] + seconds))
-    monkeypatch.setattr(storage.os, "replace", lambda *a: (_ for _ in ()).throw(PermissionError()))
+    monkeypatch.setattr(filelock.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(
+        filelock.time, "sleep", lambda seconds: now.__setitem__(0, now[0] + seconds)
+    )
+    monkeypatch.setattr(filelock.os, "replace", lambda *a: (_ for _ in ()).throw(PermissionError()))
     with pytest.raises(PermissionError):
         storage.atomic_json(tmp_path / "value.json", {})
     assert 4.9 <= now[0] <= 5.1

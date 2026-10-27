@@ -19,8 +19,8 @@ unpacking. One minute per line:
     2026.09.01,00:00,1.354050,1.354070,1.354020,1.354060,0
     date,      time,  open,    high,    low,     close,   volume
 
-- Times are the minute's open on **New York's standard time (UTC−5), moved one hour
-  forward while Europe is on summer time** (UTC−4 then), so every row is converted to UTC
+- Times are the minute's open on **New York's standard time (UTC-5), moved one hour
+  forward while Europe is on summer time** (UTC-4 then), so every row is converted to UTC
   (`histdata_to_utc`). HistData's FAQ says "EST without daylight saving", but comparing
   candles with TradingView showed otherwise: the clock follows summer time, and on the
   **European** dates. In the weeks where only the US is on summer time (March and late

@@ -27,7 +27,7 @@ from backtester.filelock import file_lock
 from backtester.jobs.storage import atomic_json
 from backtester.paths import RESULTS_DIR
 
-VERSION = 1
+VERSION = 2  # invalidate development summaries that could contain holdout statistics
 SORT_KEYS = (
     "net_dd",
     "net_r",
@@ -171,7 +171,7 @@ def pool_hash(pool):
 def search_hash(pool, sources=None):
     """Include classifier defaults/implementation and days feeding development D1 bars.
 
-    D1 is resampled from cached day files; their available development days stamp its data.
+    D1 is resampled from cached day files; hash the effective development inputs' content.
     Keep this separate from the saved-trade fingerprint used by Monte Carlo manifests.
     Spec: portfolio.md > Saved searches and Monte Carlo.
     """
@@ -180,10 +180,16 @@ def search_hash(pool, sources=None):
 
     sources = sources or DEFAULT_SOURCES
     last = max(d for m in pool for d in m.days)
-    stamp = {
-        symbol: sorted(d for d in sources.cached_days(symbol) if d < CUTOFF and d <= last)
-        for symbol in sorted({s for m in pool for s in m.symbols})
-    }
+    stamp = {}
+    for symbol in sorted({s for m in pool for s in m.symbols}):
+        adapter = sources.adapter(symbol)
+        stamp[symbol] = []
+        for day in sorted(d for d in sources.cached_days(symbol) if d < CUTOFF and d <= last):
+            # Use the adapter's day-by-day feed preference, exactly as D1 loading does.
+            path = adapter._path(symbol, day)
+            with path.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256")
+            stamp[symbol].append((day, digest.hexdigest()))
     classifier = hashlib.sha256(Path(regime.__file__).read_bytes()).hexdigest()
     return hashlib.sha256(
         json.dumps(
@@ -420,7 +426,13 @@ def existing_summary(parts, results_dir, config, log=print):
     trial_path = Path(results_dir) / "trials.jsonl"
     records = read_all(trial_path)
     families = [[r.family for r in records if r.series == f"{m.folder}/daily.csv"] for m in parts]
-    n_trials, sharpes = pf.component_trials(families, [trial_path])
+    n_trials, _ = pf.component_trials(families, [trial_path])
+    selected_families = {f for group in families for f in group}
+    sharpes = [
+        r.day_sharpe
+        for r in records
+        if r.family in selected_families and development_record(r) and r.day_sharpe is not None
+    ]
     counts = pf.family_counts(families, [trial_path])
     deflated = deflated_sharpe(
         trade_stats(daily_net_r(result.trades, start, end)),
@@ -456,6 +468,20 @@ def existing_summary(parts, results_dir, config, log=print):
     )
     summary["fingerprint"] = pool_hash(parts)
     return summary
+
+
+def development_record(record):
+    """Validate statistical inputs independently of the all-attempts trial count.
+
+    Spec: portfolio.md > Saved searches and Monte Carlo (development-only diagnostics).
+    """
+    if record.source != "research":
+        return False
+    try:
+        start, end = date.fromisoformat(record.start), date.fromisoformat(record.end)
+    except (ValueError, TypeError):
+        return False
+    return start <= end < CUTOFF
 
 
 def run_existing(path, results_dir, config):

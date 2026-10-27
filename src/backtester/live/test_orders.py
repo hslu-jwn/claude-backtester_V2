@@ -2,7 +2,7 @@
 
     python -m backtester.live.test_orders XAUUSD
 
-(also the button in Settings ⚙ → Trading). Demo accounts only (DEMO LOCK, `orders.py`).
+(also the button in Settings (gear) -> Trading). Demo accounts only (DEMO LOCK, `orders.py`).
 For a buy, then the same as a sell:
 
 1. market order 2 x the minimum lot with SL and TP: fill price vs the quote it was sent

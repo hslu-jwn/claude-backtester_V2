@@ -55,7 +55,8 @@ This attribution convention is for user review; it changes no trading or classif
 member identities, daily content, saved settings, saved trade/run file fingerprints and schema
 version; pool order is irrelevant. The search key also includes the regime classifier's
 default config and implementation hash, plus the available cached development days per symbol
-from which D1 is resampled. New development data or classifier changes recompute attribution.
+and SHA-256 content hashes of their effective day files (respecting feed preference), from
+which D1 is resampled. Repairs with unchanged dates also recompute attribution.
 This search identity is separate from the saved-trade fingerprint for Monte Carlo jobs.
 Set IDs hash the JSON list of sorted member IDs, so order cannot change identity.
 
@@ -70,6 +71,12 @@ input are reused. The shared queue panel shows jobs and controls the runner; enq
 does not start a process.
 
 Development results live at `results/portfolio/<set-id>/summary.json` and `report.html`.
+Deflated-Sharpe statistical inputs (daily Sharpes for the variance estimate) come only from
+validated `research` trial records with ordered dates ending before 2021-09-14. Holdout,
+retest, malformed-period and count-only records supply no statistical values. N and the
+reported family trial counts retain all distinct attempts in the component families,
+including holdout attempts and count-only backfills, to preserve the multiple-trial penalty.
+The versioned member fingerprint invalidates older summaries so they are queued again.
 The page shows pass probability and median days to pass for each existing risk level, with
 no portfolio verdict (the development HTML report also omits the verdict banner/checklist).
 Only the Monte Carlo block polls for finished reports; selection renders the equity,

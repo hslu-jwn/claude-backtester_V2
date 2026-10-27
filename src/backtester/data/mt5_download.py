@@ -46,6 +46,7 @@ from backtester.data.cache import (
     empty_cache_frame,
     write_atomic,
 )
+from backtester.filelock import file_lock, symbol_mutation_lock
 
 DEFAULT_NAMES = {
     "NAS100": "US100.cash", "US500": "US500.cash",
@@ -159,7 +160,8 @@ def download_symbol(
                     continue
                 part = by_day.get(d)
                 frame = empty_cache_frame() if part is None else cache_frame(part)
-                write_atomic(frame, cache_path(cache_dir, symbol, d))
+                with file_lock(symbol_mutation_lock(cache_dir, symbol)):
+                    write_atomic(frame, cache_path(cache_dir, symbol, d))
                 bars_n += len(frame)
                 written += 1
                 empty += part is None

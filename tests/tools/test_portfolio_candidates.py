@@ -88,6 +88,106 @@ def test_cached_search_content_changes(tmp_path):
     assert pc.pool_hash([a, b]) != pc.pool_hash([a, Member("b", a.days, (3,))])
 
 
+def test_search_identity_tracks_effective_development_candle_content(tmp_path):
+    import pandas as pd
+
+    from backtester.data.cache import cache_path, write_atomic
+    from backtester.data.mt5_download import cache_frame
+    from backtester.data.sources import SymbolSources
+
+    main, preferred = tmp_path / "main", tmp_path / "preferred"
+    sources = SymbolSources({"US500": main}, preferred_dirs={"US500": preferred})
+    day = date(2020, 1, 6)
+    pool = [Member(i, (day,), (1,), symbols=("US500",)) for i in ("a", "b")]
+    frame = cache_frame(
+        pd.DataFrame(
+            {
+                "ts": pd.to_datetime(["2020-01-06T10:00Z"]),
+                "open": [100.0],
+                "high": [102.0],
+                "low": [99.0],
+                "close": [101.0],
+                "volume": [1.0],
+                "spread": [0.1],
+            }
+        )
+    )
+    path = cache_path(main, "US500", day)
+    write_atomic(frame, path)
+    before = pc.search_hash(pool, sources)
+    frame["bid_close"] = 100.5
+    write_atomic(frame, path)
+    assert pc.search_hash(pool, sources) != before
+    write_atomic(frame, cache_path(preferred, "US500", day))
+    before = pc.search_hash(pool, sources)
+    frame["bid_close"] = 100.25
+    write_atomic(frame, path)  # shadowed input must not invalidate attribution
+    assert pc.search_hash(pool, sources) == before
+    write_atomic(frame, cache_path(preferred, "US500", date(2021, 9, 14)))
+    assert pc.search_hash(pool, sources) == before
+
+
+def test_development_summary_excludes_holdout_statistics_but_preserves_trial_count(
+    tmp_path,
+    monkeypatch,
+):
+    from dataclasses import replace
+
+    from backtester.analytics import deflated_sharpe as ds
+    from backtester.analytics.trial_log import append, count_only, make_record
+    from backtester.runner import RunSettings
+    from backtester.settings import to_dict
+    from backtester.tools import monte_carlo as mc
+    from backtester.tools import portfolio
+
+    days = (date(2020, 1, 6), date(2020, 1, 7))
+    parts = [Member(i, days, (0, 0), settings=to_dict(RunSettings()), folder=i) for i in ("a", "b")]
+    path = tmp_path / "trials.jsonl"
+    dev = replace(
+        make_record(
+            "family", "gap_fade", {}, ["US500"], *days, "research", [], series="a/daily.csv"
+        ),
+        day_sharpe=0.1,
+    )
+    for record in (
+        dev,
+        replace(dev, start="2021-09-14", end="2022-01-01", source="research-test", day_sharpe=99),
+        replace(dev, source="research-test", day_sharpe=88),
+        replace(dev, start="broken", day_sharpe=77),
+        count_only("family", "gap_fade", 5),
+    ):
+        append(record, path)
+    monkeypatch.setattr(pc, "read_trades", lambda *a: [])
+    monkeypatch.setattr(portfolio, "combined_fills", lambda *a, **k: None)
+    monkeypatch.setattr(portfolio, "portfolio_block", lambda *a: {})
+    monkeypatch.setattr(mc, "build_summary", lambda *a, **k: {})
+    seen = []
+    monkeypatch.setattr(
+        ds, "deflated_sharpe", lambda stats, n, sharpes, cfg: seen.append((n, sharpes))
+    )
+    pc.existing_summary(parts, tmp_path, mc.ToolConfig(runs=2))
+    assert seen == [(9, [0.1])]
+
+
+def test_old_diagnostics_are_requeued_after_development_statistics_fix(tmp_path):
+    import hashlib
+    from dataclasses import asdict
+
+    from backtester.analytics.portfolio_search import set_id
+    from backtester.jobs.queue import Queue
+
+    parts = [Member(i, (date(2020, 1, 6),), (1,), folder=i) for i in ("a", "b")]
+    # Version 1 summaries may contain holdout Sharpes and must not be reused.
+    old_hash = hashlib.sha256(
+        json.dumps([1, [asdict(m) for m in parts]], sort_keys=True, default=str).encode()
+    ).hexdigest()[:20]
+    folder = tmp_path / "portfolio" / set_id(m.id for m in parts)
+    folder.mkdir(parents=True)
+    (folder / "summary.json").write_text(json.dumps({"fingerprint": old_hash}))
+    jobs = pc.queue_top(search(parts), parts, "net_r", Queue(tmp_path / "queue"), tmp_path)
+    assert len(jobs) == 1
+
+
 def test_artifact_changes_invalidate_fingerprint(tmp_path):
     run = saved_member(tmp_path)
     before, _ = pc.load_members(tmp_path)
@@ -264,7 +364,16 @@ def test_search_cache_tracks_classifier_and_d1_data(tmp_path, monkeypatch):
     from backtester.analytics import regime
 
     days = [date(2019, 12, 30)]
-    sources = SimpleNamespace(cached_days=lambda s: days)
+
+    # The content fingerprint now needs the effective file for each synthetic day.
+    def path(symbol, day):
+        return tmp_path / f"{symbol}-{day}.parquet"
+
+    for day in (date(2019, 12, 30), date(2019, 12, 31)):
+        path("X", day).write_bytes(b"synthetic day")
+    sources = SimpleNamespace(
+        cached_days=lambda s: days, adapter=lambda s: SimpleNamespace(_path=path)
+    )
     pool = [Member(i, (date(2020, 1, 2),), (1,), symbols=("X",)) for i in ("a", "b")]
     calls = []
 

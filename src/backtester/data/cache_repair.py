@@ -18,7 +18,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from backtester.data.cache import cache_path, read_cached_days, write_atomic
-from backtester.filelock import file_lock
+from backtester.filelock import atomic_json, file_lock, symbol_mutation_lock
 
 
 @dataclass(frozen=True)
@@ -44,6 +44,16 @@ DEVELOPMENT_END = date(2021, 9, 13)
 
 def original_inputs(cache_dir: Path, symbol: str) -> dict[date, Path]:
     """Retained original days take precedence, independent of repair order."""
+    inventory = cache_dir / "_v26b_original" / symbol / "inventory.json"
+    if inventory.exists():
+        days = json.loads(inventory.read_text(encoding="utf-8"))["days"]
+        return {
+            date.fromisoformat(day): cache_path(
+                cache_dir / "_v26b_original", symbol, date.fromisoformat(day)
+            )
+            for day, present in days.items()
+            if present
+        }
     return {
         date.fromisoformat(p.stem): p
         for root in (cache_dir, cache_dir / "_v26b_original")
@@ -234,14 +244,41 @@ def repair_mt5(
     cache_dir, histdata_dir = Path(cache_dir), Path(histdata_dir)
     if not symbol.isalnum() or symbol != symbol.upper():
         raise ValueError("expected an uppercase alphanumeric symbol")
-    if server_table is None:
-        server_table = build_server_clock_table(cache_dir, histdata_dir, config, log=log)
     archive = cache_dir / "_v26b_original"
     stage = cache_dir / "_v26b_staged"
-    with file_lock(cache_dir / "_v26b_locks" / f"{symbol}.lock"):
+    with file_lock(symbol_mutation_lock(cache_dir, symbol)):
         active = {date.fromisoformat(p.stem): p for p in (cache_dir / symbol).glob("*/*.parquet")}
-        originals = {date.fromisoformat(p.stem): p for p in (archive / symbol).glob("*/*.parquet")}
-        inputs = {**active, **originals}
+        inventory = archive / symbol / "inventory.json"
+        fresh = not inventory.exists()
+        days = {} if fresh else json.loads(inventory.read_text(encoding="utf-8"))["days"]
+        retained = {date.fromisoformat(p.stem): p for p in (archive / symbol).glob("*/*.parquet")}
+        # Legacy test-period originals are unshifted and safe to recover. Legacy
+        # development repairs cannot establish which active days were spill output.
+        if fresh and any(d <= DEVELOPMENT_END for d in retained):
+            raise ValueError(
+                f"{symbol}: retained repair originals lack an inventory; "
+                "restore original cache and archive before repair"
+            )
+        # New, unrelated download days can extend the inventory. A recorded absent
+        # spill destination can NEVER be promoted to an original on a later run.
+        additions = {d: p for d, p in {**active, **retained}.items() if str(d) not in days}
+        if fresh or additions:
+            days.update({str(d): True for d in additions})
+            radius = max(1, (max(map(abs, config.shifts), default=0) + 23) // 24)
+            for day, path in additions.items():
+                for offset in range(-radius, radius + 1):
+                    days.setdefault(str(day + timedelta(days=offset)), False)
+                backup = cache_path(archive, symbol, day)
+                if path != backup:
+                    backup.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(path, backup)
+            atomic_json(inventory, {"days": days})
+        inputs = original_inputs(cache_dir, symbol)
+        missing = [str(d) for d, p in inputs.items() if not p.is_file()]
+        if missing:
+            raise ValueError(f"{symbol}: missing inventoried originals: {', '.join(missing)}")
+        if server_table is None:
+            server_table = build_server_clock_table(cache_dir, histdata_dir, config, log=log)
         counts = {day: pq.ParquetFile(path).metadata.num_rows for day, path in inputs.items()}
         # A sparse MT5 weekday of the development period is dropped only when histdata
         # really fills it; otherwise (exchange holidays, MT5-only symbols) the day stays,
@@ -258,16 +295,10 @@ def repair_mt5(
             work = {
                 d: p
                 for d, p in inputs.items()
-                if d.year == year and (d <= DEVELOPMENT_END or d in sparse or d in originals)
+                if d.year == year and (d <= DEVELOPMENT_END or d in sparse or d not in active)
             }
             if not work:
                 continue
-            # Backup the complete affected year before touching ANY active file.
-            for day, path in work.items():
-                backup = cache_path(archive, symbol, day)
-                if not backup.exists():
-                    backup.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(path, backup)
             raw = read_cached_days(list(work.values()))
             by_day = dict(tuple(raw.groupby(raw["ts"].dt.date)))
             kept = []
@@ -318,10 +349,12 @@ def repair_mt5(
         # All measurements and staged files are complete before active files change.
         for day in sorted(staged_days):
             frame = read_cached_days([cache_path(stage, symbol, day)])
-            if day not in affected and day in active:
-                frame = pd.concat([read_cached_days([active[day]]), frame], ignore_index=True)
+            if day not in affected and day in inputs:
+                frame = pd.concat([read_cached_days([inputs[day]]), frame], ignore_index=True)
                 frame = frame.drop_duplicates("ts").sort_values("ts", ignore_index=True)
-            write_atomic(frame, cache_path(cache_dir, symbol, day))
+            target = cache_path(cache_dir, symbol, day)
+            if not target.exists() or not read_cached_days([target]).equals(frame):
+                write_atomic(frame, target)
         for day in affected - staged_days:
             cache_path(cache_dir, symbol, day).unlink(missing_ok=True)
         report = cache_dir / "_v26b_reports" / f"{symbol}.json"

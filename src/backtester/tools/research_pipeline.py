@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import sys
 from collections.abc import Callable
@@ -71,6 +72,20 @@ def research_folder(grid: Path | str, results_dir: Path | str = RESULTS_DIR) -> 
     spec = load_grid(grid)
     variants, _, _ = expand(spec)
     return Path(results_dir) / "research" / grid_id(spec, variants)
+
+
+def input_fingerprint(grid: Path) -> str:
+    """Selection/report controls also invalidate resumable development steps.
+
+    Spec: research-runner.md > Pipeline. Keep grid_id and its permanent test guard intact.
+    """
+    from dataclasses import asdict
+
+    from backtester.tools.research_grid import load_grid
+
+    inputs = asdict(load_grid(grid))
+    inputs.pop("path")
+    return hashlib.sha256(json.dumps(inputs, sort_keys=True, default=str).encode()).hexdigest()
 
 
 def read_state(folder: Path | str) -> dict | None:
@@ -270,8 +285,14 @@ def run_pipeline(
         raise PipelineBusy(f"the pipeline of {folder.name} is already running") from exc
     try:
         state = read_state(folder)
-        if not state or [s.get("name") for s in state.get("steps", [])] != list(STEPS):
+        fingerprint = input_fingerprint(grid)
+        if (
+            not state
+            or [s.get("name") for s in state.get("steps", [])] != list(STEPS)
+            or state.get("input_fingerprint") != fingerprint
+        ):
             state = _new_state(grid, folder)
+        state["input_fingerprint"] = fingerprint
 
         def save() -> None:
             state["updated"] = _now()

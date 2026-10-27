@@ -1,4 +1,4 @@
-"""Dash app entry point: `python -m backtester.ui.app` → http://127.0.0.1:8050
+"""Dash app entry point: `python -m backtester.ui.app` -> http://127.0.0.1:8050
 
 One top bar on every page (ui/nav.py): Chart · Backtest · Research · Live; Live is red
 while the bot runs and the app opens on `/live` then (ROADMAP 7.3).

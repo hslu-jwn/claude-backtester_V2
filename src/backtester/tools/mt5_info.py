@@ -2,7 +2,7 @@
 
     python -m backtester.tools.mt5_info [XAUUSD ... US500] [--no-save]  (default: every symbol)
 
-Connects with the login saved in Settings ⚙ → Trading (or the account the running
+Connects with the login saved in Settings (gear) -> Trading (or the account the running
 terminal is logged in to), then:
 
 1. Symbols: the server's name for each of ours (suffixes possible) and its specs

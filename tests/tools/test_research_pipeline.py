@@ -82,6 +82,25 @@ def steps(state):
     return {s["name"]: s for s in state["steps"]}
 
 
+def test_changed_selection_controls_invalidate_completed_pipeline(grid, results):
+    stubs = Stubs(results)
+    run(grid, results, stubs)
+    folder = rp.research_folder(grid, results)
+    guard = folder / "research.json"
+    guard.write_text('{"test":{"status":"done","run":1}}', encoding="utf-8")
+    grid.write_text("min_trades = 999999\n" + GRID, encoding="utf-8")
+    assert rp.research_folder(grid, results) == folder
+    stubs.chosen = None
+    state = run(grid, results, stubs)
+    assert len(stubs.research_calls) == 2
+    assert state["chosen"] is None
+    assert "monte_carlo" in state["inputs"]["missing"]
+    assert guard.read_text(encoding="utf-8") == '{"test":{"status":"done","run":1}}'
+    assert all(c[1]["dev_only"] and not c[1]["retest"] for c in stubs.research_calls)
+    run(grid, results, stubs)
+    assert len(stubs.research_calls) == 2
+
+
 def test_a1_happy_path_writes_pipeline_json(grid, results):
     stubs = Stubs(results)
     state = run(grid, results, stubs)

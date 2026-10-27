@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from backtester import filelock
 from backtester.jobs.queue import Queue, Runner, RunnerLock, process_identity
 from backtester.jobs.temperature import TemperatureGuard, parse_temperature, read_temperature
 
@@ -41,11 +42,10 @@ def test_roundtrip_order_validation_and_retry(tmp_path):
 
 
 def test_atomic_failure_preserves_old_job(tmp_path, monkeypatch):
-    from backtester.jobs import storage
 
     q = Queue(tmp_path)
     job = q.add(["backtester.tools.research"])
-    monkeypatch.setattr(storage.os, "replace", lambda *a: (_ for _ in ()).throw(OSError("disk")))
+    monkeypatch.setattr(filelock.os, "replace", lambda *a: (_ for _ in ()).throw(OSError("disk")))
     with pytest.raises(OSError):
         q.update(job.id, lambda j: replace(j, state="failed"))
     assert q.get(job.id).state == "pending"
