@@ -93,3 +93,16 @@ def test_app_registers_the_switch():
     app = app_module.create_app(SymbolSources({}))
     keys = " ".join(app.callback_map)
     assert "theme-mode.data" in keys
+
+
+def test_theme_js_recolours_plotly_figures_from_css_tokens():
+    js = (UI / "assets/theme.js").read_text(encoding="utf-8")
+    assert "Plotly.relayout" in js and ".js-plotly-plot" in js
+    assert "plotly_afterplot" in js and "MutationObserver" in js
+    for name in ("panel", "text", "line"):
+        assert f'token("{name}")' in js
+    for key in ("paper_bgcolor", "plot_bgcolor", "font.color", "hoverlabel.bgcolor"):
+        assert key in js
+    assert "gridcolor" in js and "zerolinecolor" in js
+    # the dark figure is restored exactly from what was saved before the first recolour
+    assert "_themeOrig" in js
