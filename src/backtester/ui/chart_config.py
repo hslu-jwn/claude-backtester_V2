@@ -53,6 +53,7 @@ class ChartConfig:
     replay_speeds: tuple[int, ...] = (1, 2, 5, 10, 20)  # autoplay choices, candles per second
     replay_default_speed: int = 5
     # Dark surface tokens (V2.5a); candle and overlay colours are unchanged.
+    # Candles in bright mode (V2.7); dark mode uses dark_up_color / dark_down_color below.
     up_body: str = "#6f9ceb"
     down_body: str = "#000000"
     edge_color: str = "#000000"
@@ -60,6 +61,8 @@ class ChartConfig:
     background: str = theme_color("bg")
     text_color: str = theme_color("text")
     axis_color: str = theme_color("line")  # axis lines and tick marks
+    dark_up_color: str = "#22c55e"  # dark mode: body, border and wick of up candles
+    dark_down_color: str = "#ef4444"  # dark mode: body, border and wick of down candles
     show_grid: bool = False
     grid_color: str = theme_color("line")  # very faint, used when show_grid is on
     spike_color: str = "#9598a1"  # crosshair lines

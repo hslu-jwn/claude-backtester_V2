@@ -385,7 +385,41 @@
 
   // --- chart setup ----------------------------------------------------------------------
 
-  function ensureChart(cfg) {
+  /* The chart colours of the current mode (<html data-theme>, dark by default): the flat cfg
+     keys with the mode's palette from cfg.themes laid over them (V2.7). */
+  function themed(cfg) {
+    S.theme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+    return Object.assign({}, cfg, (cfg.themes || {})[S.theme] || {});
+  }
+
+  function seriesColors(c) {
+    return {
+      upColor: c.up_body, downColor: c.down_body,
+      borderUpColor: c.edge_up_color, borderDownColor: c.edge_color,
+      wickUpColor: c.wick_up_color, wickDownColor: c.wick_color,
+    };
+  }
+
+  /* Recolour the open chart after the dark / bright switch; no data is touched. */
+  function applyTheme() {
+    if (!S.chart || !S.cfg) return;
+    const c = themed(S.cfg);
+    S.chart.applyOptions({
+      layout: { background: { type: "solid", color: c.background }, textColor: c.text_color },
+      grid: { vertLines: { color: c.grid_color }, horzLines: { color: c.grid_color } },
+      crosshair: {
+        vertLine: { labelBackgroundColor: c.text_color },
+        horzLine: { labelBackgroundColor: c.text_color },
+      },
+      rightPriceScale: { borderColor: c.axis_border },
+      timeScale: { borderColor: c.axis_border },
+    });
+    S.series.applyOptions(seriesColors(c));
+    invalidate();
+  }
+
+  function ensureChart(rawCfg) {
+    const cfg = themed(rawCfg);
     const el = document.getElementById("chart-lwc");
     if (!el) return false;
     if (S.chart && S.el === el) return true;
@@ -420,9 +454,8 @@
       localization: { dateFormat: "yyyy-MM-dd" },
     });
     S.series = S.chart.addSeries(L.CandlestickSeries, {
-      upColor: cfg.up_body, downColor: cfg.down_body,
-      borderVisible: true, borderUpColor: cfg.edge_color, borderDownColor: cfg.edge_color,
-      wickUpColor: cfg.wick_color, wickDownColor: cfg.wick_color,
+      ...seriesColors(cfg),
+      borderVisible: true,
       priceLineVisible: false, lastValueVisible: true,
     });
     S.prim = new DrawingsPrimitive();
@@ -826,6 +859,7 @@
   window.dash_clientside = Object.assign({}, window.dash_clientside, {
     chart: {
       _state: S, // for tests and debugging
+      applyTheme, // called by assets/theme.js when the dark / bright switch is used
       /* Base payload (candles up to the cursor + session lines) -> chart; returns the
          overlay request for the selected types. */
       base(payload, cfg) {

@@ -148,6 +148,7 @@ from backtester.ui.overlays import (
     overlay_summary,
 )
 from backtester.ui.review_callbacks import register_callbacks as register_review_callbacks
+from backtester.ui.theme import color as theme_color
 
 TIMEFRAMES = [tf.name for tf in Timeframe if supported(tf)]
 CALENDAR_NAMES = {tf.name for tf in CALENDAR}
@@ -957,6 +958,41 @@ def chart_settings(config: ChartConfig = DEFAULT_CONFIG) -> dict:
         "extend_margin_min": config.extend_margin_min,
         "progress_sent": config.progress_sent,
         "progress_received": config.progress_received,
+        "themes": chart_themes(config),
+    }
+
+
+def chart_themes(config: ChartConfig = DEFAULT_CONFIG) -> dict:
+    """Chart colours per mode; the browser picks one and re-applies it when the switch is used.
+
+    Dark: the shared dark tokens with green / red candles; bright: the bright tokens with the
+    original candles (`config.up_body` etc.).
+    """
+    return {
+        "dark": {
+            "background": config.background,
+            "text_color": config.text_color,
+            "axis_border": config.axis_color,
+            "grid_color": config.grid_color,
+            "up_body": config.dark_up_color,
+            "down_body": config.dark_down_color,
+            "edge_color": config.dark_down_color,
+            "edge_up_color": config.dark_up_color,
+            "wick_color": config.dark_down_color,
+            "wick_up_color": config.dark_up_color,
+        },
+        "light": {
+            "background": theme_color("bg", "light"),
+            "text_color": theme_color("text", "light"),
+            "axis_border": theme_color("line", "light"),
+            "grid_color": theme_color("line", "light"),
+            "up_body": config.up_body,
+            "down_body": config.down_body,
+            "edge_color": config.edge_color,
+            "edge_up_color": config.edge_color,
+            "wick_color": config.wick_color,
+            "wick_up_color": config.wick_color,
+        },
     }
 
 

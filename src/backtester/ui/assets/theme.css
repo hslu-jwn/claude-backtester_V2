@@ -42,6 +42,26 @@
   --Dash-Fill-Primary-Active: var(--accent-soft);
   --Dash-Fill-Interactive-Weak: var(--raised);
 }
+/* Bright mode (V2.7): only the colour tokens change; switched by data-theme on <html>. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #f6f7f9;
+  --raised: #eceef2;
+  --line: #d5d9e0;
+  --text: #131722;
+  --muted: #5d6675;
+  --green: #089981;
+  --red: #f23645;
+  --amber: #b7791f;
+  --accent: #2962ff;
+  --green-soft: #dcf3ee;
+  --red-soft: #fde3e6;
+  --amber-soft: #fbefd5;
+  --accent-soft: #e0e9ff;
+  --shadow: rgba(0, 0, 0, 0.15);
+  --scrim: rgba(0, 0, 0, 0.35);
+}
 body { margin: 0; background: var(--bg); color: var(--text); font-size: var(--font-13); }
 button, input, select { font: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -13,11 +13,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from dash import Dash, Input, Output, State, dcc, html, no_update
+from dash import ClientsideFunction, Dash, Input, Output, State, dcc, html, no_update
 
 from backtester.live.status import STATUS_NAME, read_status
 from backtester.paths import RESULTS_DIR
-from backtester.ui import live_model, update_button
+from backtester.ui import live_model, theme, update_button
 from backtester.ui.layout import info
 
 LIVE_DIR = RESULTS_DIR / "live"
@@ -60,6 +60,7 @@ def layout() -> html.Div:
             dcc.Interval(id="nav-interval", interval=REFRESH_MS),
             dcc.Interval(id="nav-boot", interval=BOOT_DELAY_MS, max_intervals=1),
             dcc.Store(id="nav-landed", storage_type="session"),
+            dcc.Store(id="theme-mode", data=theme.DEFAULT_MODE, storage_type="local"),
             html.Div("BACKTESTER", className="nav-brand"),
             dcc.Link("Chart", id="nav-chart", href="/", className="nav-link"),
             dcc.Link("Backtest", id="nav-backtest", href=BACKTEST_PATH, className="nav-link"),
@@ -71,6 +72,13 @@ def layout() -> html.Div:
                 [
                     html.Div("Bot not running", id="nav-status", className="nav-status nav-idle"),
                     *update_button.layout(),
+                    html.Button(
+                        "◑ Bright",
+                        id="theme-btn",
+                        title="Switch between dark and bright mode (remembered in this browser)",
+                        className="tb-btn tb-update",
+                        n_clicks=0,
+                    ),
                     html.A(
                         "⚙",
                         id="nav-settings",
@@ -89,6 +97,21 @@ def layout() -> html.Div:
 
 def register_callbacks(app: Dash, out_dir: Path = LIVE_DIR):
     update_button.register_callbacks(app)
+
+    @app.callback(
+        Output("theme-mode", "data"),
+        Input("theme-btn", "n_clicks"),
+        State("theme-mode", "data"),
+        prevent_initial_call=True,
+    )
+    def _toggle_theme(_clicks, mode):
+        return theme.toggled(mode)
+
+    app.clientside_callback(
+        ClientsideFunction("theme", "apply"),
+        Output("theme-btn", "children"),
+        Input("theme-mode", "data"),
+    )
 
     @app.callback(
         Output("nav-chart", "className"),
