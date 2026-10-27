@@ -9,6 +9,7 @@ import json
 from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import replace
 from datetime import UTC, date
 
 from backtester.data import news
@@ -23,6 +24,7 @@ def news_split(trades, calendar: Calendar | None, config: NewsConfig) -> list[di
     """
     if calendar is None:
         return []
+    config = replace(config, events="impact")  # the split: every High event, not FTMO's list
     boundaries = (
         sorted(
             date.fromisoformat(s.strip()) for s in config.source_boundaries.split(",") if s.strip()

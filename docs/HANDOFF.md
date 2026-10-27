@@ -75,9 +75,14 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 
 1. News filter on by default? (changes every backtest from 2020; golden lists re-written).
    The switch did nothing outside tests until 2026-10-27 (calendar never reached the engine;
-   now wired, `news.execution_calendar`). Comparison re-run on the 7 golden setups 2023
-   (`scripts/measure_news_filter.py`, `results/news_filter.md`): 1-5 % of trades blocked,
-   net R -9.1 to +26.6 per strategy, R per trade almost unchanged. The user decides.
+   now wired, `news.execution_calendar`). Since 2026-10-27 the filter blocks only FTMO's
+   restricted events (`docs/news.md` › FTMO restricted events; `events="impact"` = the old
+   all-High scope). Golden setups 2023 (`scripts/measure_news_filter.py`): FTMO scope blocks 4
+   trades in strategy 1 and 4 in strategy 3, none elsewhere (-1.2 / -1.8 R); the old all-High
+   scope blocked 1-5 % (`results/news_filter_impact.md`). Opus's call for the night (the user:
+   "use your own best judgement"): **leave it off by default**, because FTMO exempts the
+   Challenge and Verification phases and the effect is tiny; switch it on for funded-account
+   runs. The user may overrule.
 2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
 3. Merge `v2-6-research` into `main` (the user's word).
 4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).

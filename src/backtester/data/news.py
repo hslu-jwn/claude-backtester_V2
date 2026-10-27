@@ -10,6 +10,7 @@ import hashlib
 import io
 import logging
 import math
+import re
 import warnings
 from collections import Counter
 from collections.abc import Mapping
@@ -34,6 +35,30 @@ class InstrumentNews:
     currencies: str = ""  # comma-separated currency codes
     countries: str = ""  # comma-separated country codes, used only without a currency
     include_global: bool = False
+    ftmo: str = ""  # comma-separated keys of NewsConfig.restricted (FTMO's affected instruments)
+
+
+# FTMO "Can I trade news?" (ftmo.com/en/faq/can-i-trade-news/, read 2026-10-27): the restricted
+# events per affected currency / symbol group, as case-insensitive full-match patterns on the
+# calendar's event_name (both naming styles of the calendar, see source_boundaries). A currency
+# key needs the event's currency; OIL matches the name alone. JPY has no restricted events.
+FTMO_RESTRICTED = {
+    "USD": "Federal Funds Rate|FOMC Statement|FOMC Rate Decision.*|Non-Farm Employment Change"
+    r"|US Employment Situation \(Non-Farm Payrolls\).*|Unemployment Rate|US Unemployment Rate.*"
+    "|Average Hourly Earnings m/m|Advance GDP q/q|FOMC Meeting Minutes|FOMC Minutes.*|CPI y/y"
+    "|US CPI Report.*",
+    "EUR": "Main Refinancing Rate|ECB Rate Decision.*",
+    "GBP": "Official Bank Rate|MPC Official Bank Rate Votes|Bank of England MPC Rate Decision.*"
+    "|CPI y/y|UK CPI Inflation.*",
+    "CAD": "Overnight Rate|BOC Rate Statement|Bank of Canada Rate Decision.*|CPI m/m|Canada CPI.*"
+    "|Employment Change|Unemployment Rate|Canada Labour Force Survey.*",
+    "AUD": "Cash Rate|RBA Rate Statement|RBA Rate Decision.*|Employment Change|Unemployment Rate"
+    "|Australia Labour Force.*|CPI m/m|CPI y/y|Australia CPI.*|GDP q/q",
+    "NZD": "Official Cash Rate|RBNZ Rate Statement|RBNZ Rate Decision.*|Employment Change q/q"
+    "|Unemployment Rate|CPI q/q|GDP q/q",
+    "CHF": "SNB Policy Rate|SNB Rate Decision.*",
+    "OIL": "Crude Oil Inventories",
+}
 
 
 def _instruments() -> dict[str, InstrumentNews]:
@@ -66,14 +91,19 @@ def _instruments() -> dict[str, InstrumentNews]:
         "EURAUD",
         "GBPAUD",
     ):
-        currencies = (symbol[:3], symbol[3:])
+        currencies = ",".join((symbol[:3], symbol[3:]))
         out[symbol] = InstrumentNews(
-            ",".join(currencies), ",".join(countries[c] for c in currencies)
+            currencies, ",".join(countries[c] for c in currencies.split(",")), ftmo=currencies
         )
-    for symbol in ("XAUUSD", "XAGUSD", "NAS100", "US500", "US30", "US2000", "BTCUSD", "ETHUSD"):
+    # FTMO: USD news restricts gold, the US indices and DXY; silver and crypto are not listed.
+    for symbol in ("XAUUSD", "NAS100", "US500", "US30", "US2000", "DXY"):
+        out[symbol] = InstrumentNews("USD", "US", ftmo="USD")
+    for symbol in ("XAGUSD", "BTCUSD", "ETHUSD"):
         out[symbol] = InstrumentNews("USD", "US")
     out["GER40"] = InstrumentNews("EUR", "DE,EU")
     out["AUS200"] = InstrumentNews("AUD", "AU")
+    for symbol in ("USOIL", "UKOIL"):
+        out[symbol] = InstrumentNews(ftmo="OIL")
     return out
 
 
@@ -91,10 +121,22 @@ class NewsConfig:
     separate_source_periods: bool = True
     source_boundaries: str = "2025-10-24"  # comma-separated UTC coverage-change dates
     instruments: Mapping[str, InstrumentNews] = field(default_factory=_instruments)
+    # ftmo_restricted: only FTMO's restricted events, all with the High window (rule set by the
+    # user, 2026-10-27); impact: every High / Medium event of the instrument's currencies
+    events: str = "ftmo_restricted"
+    restricted: Mapping[str, str] = field(default_factory=lambda: dict(FTMO_RESTRICTED))
 
     def __post_init__(self) -> None:
         if self.policy not in ("block_entries", "flag_only"):
             raise ValueError("news policy must be block_entries or flag_only")
+        if self.events not in ("ftmo_restricted", "impact"):
+            raise ValueError("news events must be ftmo_restricted or impact")
+        try:
+            for pattern in self.restricted.values():
+                re.compile(pattern)
+        except re.error as e:
+            raise ValueError(f"invalid restricted-news pattern: {e}") from e
+        object.__setattr__(self, "restricted", MappingProxyType(dict(self.restricted)))
         if self.uncertain_policy not in ("block_day", "skip"):
             raise ValueError("uncertain news policy must be block_day or skip")
         if not math.isfinite(self.publication_delay_seconds) or self.publication_delay_seconds < 0:
@@ -170,6 +212,13 @@ def relevant(event: ScheduleEvent, instrument: str, config: NewsConfig) -> bool:
     if mapping is None:
         return False
     currency, country = event.currency.strip().upper(), event.country.strip().upper()
+    if config.events == "ftmo_restricted":
+        name = event.name.strip()
+        return any(
+            (key == "OIL" or key == currency)
+            and re.fullmatch(config.restricted.get(key, "(?!)"), name, re.IGNORECASE)
+            for key in _codes(mapping.ftmo)
+        )
     if currency == "GLOBAL" or (currency in ("", "ALL") and country == "GLOBAL"):
         return mapping.include_global
     return (
@@ -188,7 +237,8 @@ def matching_events(
     for event in calendar.events:
         if not relevant(event, instrument, config):
             continue
-        window = config.high if event.impact == "High" else config.medium
+        restricted = config.events == "ftmo_restricted"  # FTMO: one window for every event
+        window = config.high if restricted or event.impact == "High" else config.medium
         if window.before_minutes == 0 and window.after_minutes == 0:
             continue  # an impact without a window is not filtered (the user, 2026-10-27)
         if event.time_precision in ("minute", "second"):

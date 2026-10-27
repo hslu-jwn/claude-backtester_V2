@@ -83,7 +83,7 @@ def write_csv(tmp_path, rows=None, header=HEADER):
 
 def test_bom_quoting_hash_and_results_separate(tmp_path):
     path = write_csv(tmp_path)
-    calendar = load_calendar(NewsConfig(path=str(path)))
+    calendar = load_calendar(NewsConfig(events="impact", path=str(path)))
     assert calendar.sha256 == hashlib.sha256(path.read_bytes()).hexdigest()
     event = calendar.events[0]
     assert event.name == 'Synthetic, "release"'
@@ -103,7 +103,7 @@ def test_bom_quoting_hash_and_results_separate(tmp_path):
 )
 def test_strict_header(tmp_path, header):
     with pytest.raises(ValueError, match="header"):
-        load_calendar(NewsConfig(path=str(write_csv(tmp_path, header=header))))
+        load_calendar(NewsConfig(events="impact", path=str(write_csv(tmp_path, header=header))))
 
 
 @pytest.mark.parametrize(
@@ -136,7 +136,7 @@ def test_strict_header(tmp_path, header):
 )
 def test_invalid_rows_fail(tmp_path, changes):
     with pytest.raises(ValueError):
-        load_calendar(NewsConfig(path=str(write_csv(tmp_path, [row(**changes)]))))
+        load_calendar(NewsConfig(events="impact", path=str(write_csv(tmp_path, [row(**changes)]))))
 
 
 @pytest.mark.parametrize("column", ["event_id", "dedupe_key"])
@@ -144,7 +144,7 @@ def test_duplicate_identity(tmp_path, column):
     second = row(event_id="two", dedupe_key="two")
     second[column] = row()[column]
     with pytest.raises(ValueError, match=column):
-        load_calendar(NewsConfig(path=str(write_csv(tmp_path, [row(), second]))))
+        load_calendar(NewsConfig(events="impact", path=str(write_csv(tmp_path, [row(), second]))))
 
 
 @pytest.mark.parametrize("suffix", [",extra", ""])
@@ -154,7 +154,7 @@ def test_row_width(tmp_path, suffix):
     lines[-1] = lines[-1] + suffix if suffix else lines[-1].rsplit(",", 1)[0]
     path.write_text("\n".join(lines), encoding="utf-8-sig")
     with pytest.raises(ValueError, match="columns"):
-        load_calendar(NewsConfig(path=str(path)))
+        load_calendar(NewsConfig(events="impact", path=str(path)))
 
 
 @pytest.mark.parametrize("precision", ["date", "unknown", "range"])
@@ -165,7 +165,9 @@ def test_blank_timestamps_and_local_day(tmp_path, precision):
             "time_window_start_utc": "2020-01-02T12:00:00Z",
             "time_window_end_utc": "2020-01-02T15:00:00Z",
         }
-    calendar = load_calendar(NewsConfig(path=str(write_csv(tmp_path, [row(**values)]))))
+    calendar = load_calendar(
+        NewsConfig(events="impact", path=str(write_csv(tmp_path, [row(**values)])))
+    )
     assert calendar.events[0].scheduled_at is None
     assert calendar.events[0].day.isoformat() == "2020-01-02"
 
@@ -177,7 +179,7 @@ def test_utc_dst_independent_of_environment(tmp_path, monkeypatch, tz, stamp):
     day = stamp[:10]
     path = write_csv(tmp_path, [row(scheduled_timestamp_utc=stamp, scheduled_date_utc=day)])
     with pytest.warns(UserWarning, match="weekend"):
-        calendar = load_calendar(NewsConfig(path=str(path)))
+        calendar = load_calendar(NewsConfig(events="impact", path=str(path)))
     assert calendar.events[0].scheduled_at.hour == 13
     assert calendar.events[0].scheduled_at.tzinfo == UTC
 
@@ -187,7 +189,7 @@ def test_counted_quality_warning_or_error(tmp_path, label):
     path = write_csv(
         tmp_path, [row(time_label=label), row(event_id="two", dedupe_key="two", time_label=label)]
     )
-    config = NewsConfig(path=str(path))
+    config = NewsConfig(events="impact", path=str(path))
     with pytest.warns(UserWarning, match="suspicious_exact=2"):
         load_calendar(config)
     with pytest.raises(ValueError, match="suspicious_exact=2"):
@@ -209,24 +211,24 @@ def test_composition_and_skip_counts(tmp_path):
         ],
     )
     with pytest.warns(UserWarning, match="source_boundary_changes=1"):
-        calendar = load_calendar(NewsConfig(path=str(path)))
+        calendar = load_calendar(NewsConfig(events="impact", path=str(path)))
     assert calendar.high_counts == (("synthetic-A", 2020, 1), ("synthetic-B", 2025, 1))
     with pytest.raises(ValueError, match="source_boundary_changes=1"):
-        load_calendar(NewsConfig(path=str(path), quality_errors=True))
+        load_calendar(NewsConfig(events="impact", path=str(path), quality_errors=True))
     path = write_csv(tmp_path, [row(time_precision="date", scheduled_timestamp_utc="")])
     with pytest.warns(UserWarning, match="uncertain_skipped=1"):
-        load_calendar(NewsConfig(path=str(path), uncertain_policy="skip"))
+        load_calendar(NewsConfig(events="impact", path=str(path), uncertain_policy="skip"))
 
 
 def test_missing_calendar_and_simultaneous_global(tmp_path, caplog):
-    assert load_calendar(NewsConfig(path=str(tmp_path / "missing.csv"))) is None
+    assert load_calendar(NewsConfig(events="impact", path=str(tmp_path / "missing.csv"))) is None
     assert "no calendar" in caplog.text
     path = write_csv(
         tmp_path, [row(), row(event_id="two", dedupe_key="two", currency="ALL", country="GLOBAL")]
     )
-    calendar = load_calendar(NewsConfig(path=str(path)))
+    calendar = load_calendar(NewsConfig(events="impact", path=str(path)))
     assert len(calendar.events) == 2
-    config = NewsConfig()
+    config = NewsConfig(events="impact")
     assert not relevant(calendar.events[1], "EURUSD", config)
     mapping = dict(config.instruments)
     mapping["EURUSD"] = replace(mapping["EURUSD"], include_global=True)
@@ -239,10 +241,10 @@ def test_weekend_counts_can_be_errors_and_empty_csv_rejected(tmp_path):
         [row(scheduled_timestamp_utc="2020-01-04T13:30:00Z", scheduled_date_utc="2020-01-04")],
     )
     with pytest.warns(UserWarning, match="weekend=1"):
-        calendar = load_calendar(NewsConfig(path=str(path)))
+        calendar = load_calendar(NewsConfig(events="impact", path=str(path)))
     assert dict(calendar.quality_counts)["weekend"] == 1
     with pytest.raises(ValueError, match="weekend=1"):
-        load_calendar(NewsConfig(path=str(path), quality_errors=True))
+        load_calendar(NewsConfig(events="impact", path=str(path), quality_errors=True))
     path = write_csv(tmp_path, [])
     with pytest.raises(ValueError, match="no events"):
-        load_calendar(NewsConfig(path=str(path)))
+        load_calendar(NewsConfig(events="impact", path=str(path)))

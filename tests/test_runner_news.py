@@ -85,7 +85,9 @@ def _event_at(when) -> Calendar:
 
 
 def _settings(enabled: bool):
-    config = replace(SETTINGS.engine.news, enabled=enabled, high=ImpactWindow(1, 1))
+    config = replace(
+        SETTINGS.engine.news, enabled=enabled, events="impact", high=ImpactWindow(1, 1)
+    )
     return replace(SETTINGS, engine=replace(SETTINGS.engine, news=config))
 
 

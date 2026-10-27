@@ -214,6 +214,8 @@ def _convert(hint, value, path: str):
         return frozenset(member[v] for v in value)
     if isinstance(hint, type) and issubclass(hint, Enum):
         return hint[value]
+    if value == "" and hint is str:
+        return ""  # an empty code list, e.g. news.instruments.XAGUSD.ftmo (no FTMO restriction)
     if value is None or value == "":
         raise SettingsError("a value is needed", path)
     if hint is bool:

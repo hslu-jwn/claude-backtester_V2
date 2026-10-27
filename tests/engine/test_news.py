@@ -58,14 +58,14 @@ def schedule():
 def test_off_preserves_complete_trade_list_and_missing_calendar_does_too():
     baseline, _, _ = run(EngineConfig())
     off, strategy, _ = run(EngineConfig(), schedule())
-    missing, _, bt = run(EngineConfig(news=NewsConfig(enabled=True)))
+    missing, _, bt = run(EngineConfig(news=NewsConfig(events="impact", enabled=True)))
     assert off == baseline == missing
     assert strategy.skips == []
     assert bt.news_blocked == 0
 
 
 def test_on_blocks_inside_and_inclusive_endpoints_allows_adjacent_minutes():
-    config = EngineConfig(news=NewsConfig(enabled=True, high=ImpactWindow(1, 1)))
+    config = EngineConfig(news=NewsConfig(events="impact", enabled=True, high=ImpactWindow(1, 1)))
     trades, strategy, bt = run(config, schedule())
     assert [t.entry_time for t in trades] == [
         RELEASE - timedelta(minutes=2),
@@ -81,7 +81,7 @@ def test_on_blocks_inside_and_inclusive_endpoints_allows_adjacent_minutes():
 
 def test_flag_only_keeps_trades_and_collects_event_ids():
     base, _, _ = run(EngineConfig())
-    cfg = NewsConfig(enabled=True, policy="flag_only", high=ImpactWindow(1, 1))
+    cfg = NewsConfig(events="impact", enabled=True, policy="flag_only", high=ImpactWindow(1, 1))
     trades, strategy, bt = run(EngineConfig(news=cfg), schedule())
     assert trades == base
     assert strategy.skips == []
@@ -94,7 +94,7 @@ def test_settings_roundtrip():
     from backtester.runner import RunSettings
     from backtester.settings import from_json, leaves, to_json
 
-    config = EngineConfig(news=NewsConfig(enabled=True, high=ImpactWindow(2, 3)))
+    config = EngineConfig(news=NewsConfig(events="impact", enabled=True, high=ImpactWindow(2, 3)))
     settings = RunSettings(engine=config)
     assert from_json(to_json(settings)) == settings
     assert "engine.news.instruments.EURUSD.include_global" in {v.path for v in leaves(settings)}

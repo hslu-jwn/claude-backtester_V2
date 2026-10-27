@@ -2,7 +2,7 @@
 
     .venv/Scripts/python.exe scripts/measure_news_filter.py > results/measure_news_filter.log 2>&1
 
-Filter off (the default) against on (block_entries, High 2 / 2 min, Medium none, the user's
+Filter off (the default) against on (block_entries, FTMO restricted events, 2 / 2 min, the user's
 windows of 2026-10-27) with the cleaned calendar `data/news/economic_events.csv`. Current
 defaults otherwise; no default change, no trial-log line. Writes results/news_filter.md / .csv.
 A script file, not stdin: the multiprocessing workers crash on stdin scripts.
@@ -63,8 +63,8 @@ def write(rows: list[dict]) -> None:
     lines = [
         "# News filter measurement (V2.4e)",
         "",
-        "Golden setups 2023, current defaults; news filter off (default) vs on (block entries,",
-        "High 2 / 2 min, Medium none). Changes are against the filter off.",
+        "Golden setups 2023, current defaults; news filter off (default) vs on (block entries, FTMO restricted",
+        "events, 2 / 2 min). Changes are against the filter off.",
         "",
         "| Strategy | News | Trades | Wins | Net R | Avg R | Change trades | Change R |",
         "|---|---|---:|---:|---:|---:|---:|---:|",

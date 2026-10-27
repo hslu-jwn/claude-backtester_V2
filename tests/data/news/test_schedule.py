@@ -59,7 +59,7 @@ def test_result_delay_one_tick_and_missing_release():
 
 
 def test_currency_first_country_fallback_global_explicit():
-    config = NewsConfig()
+    config = NewsConfig(events="impact")
     assert relevant(event(currency="EUR"), "EURUSD", config)
     assert not relevant(event(currency="JPY", country="US"), "EURUSD", config)
     assert relevant(event(currency="", country="US"), "EURUSD", config)
@@ -85,11 +85,11 @@ def test_currency_first_country_fallback_global_explicit():
     ],
 )
 def test_default_instrument_mapping(symbol, currency):
-    assert relevant(event(currency=currency), symbol, NewsConfig())
+    assert relevant(event(currency=currency), symbol, NewsConfig(events="impact"))
 
 
 def test_inclusive_boundaries_and_simultaneous_events():
-    config = NewsConfig(enabled=True, high=ImpactWindow(5, 10))
+    config = NewsConfig(events="impact", enabled=True, high=ImpactWindow(5, 10))
     schedule = calendar(event(), event(event_id="two"))
     for at in (RELEASE - timedelta(minutes=5), RELEASE, RELEASE + timedelta(minutes=10)):
         assert blocked(at, "EURUSD", schedule, config)
@@ -103,8 +103,10 @@ def test_inclusive_boundaries_and_simultaneous_events():
 
 def test_off_missing_calendar_flag_only_and_independent_impact_windows():
     schedule = calendar(event(impact="Medium"))
-    config = NewsConfig(enabled=True, high=ImpactWindow(30, 30), medium=ImpactWindow(1, 2))
-    assert not blocked(RELEASE, "EURUSD", schedule, NewsConfig())
+    config = NewsConfig(
+        events="impact", enabled=True, high=ImpactWindow(30, 30), medium=ImpactWindow(1, 2)
+    )
+    assert not blocked(RELEASE, "EURUSD", schedule, NewsConfig(events="impact"))
     assert not blocked(RELEASE, "EURUSD", None, config)
     assert not blocked(RELEASE - timedelta(minutes=2), "EURUSD", schedule, config)
     assert blocked(RELEASE + timedelta(minutes=2), "EURUSD", schedule, config)
@@ -119,7 +121,7 @@ def test_uncertain_precision_block_day_or_explicit_skip(precision):
     if precision == "range":
         kwargs.update(window_start=RELEASE, window_end=RELEASE + timedelta(days=1))
     schedule = calendar(event(**kwargs))
-    config = NewsConfig(enabled=True, uncertain_policy="block_day")
+    config = NewsConfig(events="impact", enabled=True, uncertain_policy="block_day")
     assert blocked(RELEASE.replace(hour=0), "EURUSD", schedule, config)
     assert blocked(RELEASE.replace(hour=23, minute=59), "EURUSD", schedule, config)
     assert not blocked(RELEASE - timedelta(days=1), "EURUSD", schedule, config)
@@ -133,7 +135,9 @@ def test_an_impact_without_a_window_is_not_filtered_at_all():
     medium_day = event(event_id="m2", impact="Medium", scheduled_at=None, time_precision="date")
     high_day = event(event_id="h", scheduled_at=None, time_precision="date", day=date(2026, 1, 6))
     schedule = calendar(medium_exact, medium_day, high_day)
-    config = NewsConfig(enabled=True)  # defaults: High 2 / 2, Medium 0 / 0, block_day
+    config = NewsConfig(
+        events="impact", enabled=True
+    )  # defaults: High 2 / 2, Medium 0 / 0, block_day
     assert (config.high, config.medium) == (ImpactWindow(2, 2), ImpactWindow(0, 0))
     assert matching_events(RELEASE, "EURUSD", schedule, config) == ()
     assert not blocked(RELEASE.replace(hour=0), "EURUSD", schedule, config)
@@ -148,4 +152,9 @@ def test_invalid_windows(minutes):
 
 def test_naive_simulation_time_is_rejected():
     with pytest.raises(ValueError):
-        blocked(RELEASE.replace(tzinfo=None), "EURUSD", calendar(event()), NewsConfig(enabled=True))
+        blocked(
+            RELEASE.replace(tzinfo=None),
+            "EURUSD",
+            calendar(event()),
+            NewsConfig(events="impact", enabled=True),
+        )

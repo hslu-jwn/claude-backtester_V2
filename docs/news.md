@@ -38,7 +38,27 @@ precedence over country; country is considered only when currency is blank. Code
 and matched without case sensitivity. `GLOBAL` requires explicit per-instrument opt-in and is
 off for every default instrument. CSV `currency=ALL,country=GLOBAL` uses the same opt-in.
 An unknown instrument matches no events. Defaults cover major
-FX pairs, XAUUSD/XAGUSD, NAS100, US500, US30, US2000, GER40 and BTCUSD/ETHUSD.
+FX pairs, XAUUSD/XAGUSD, NAS100, US500, US30, US2000, DXY, GER40, AUS200, BTCUSD/ETHUSD and
+(FTMO scope only) USOIL/UKOIL.
+
+### FTMO restricted events (rule set by the user, 2026-10-27)
+
+`NewsConfig.events` picks which events count:
+
+- `ftmo_restricted` (default): only the events FTMO restricts on its funded Standard accounts
+  (FAQ "Can I trade news?", ftmo.com/en/faq/can-i-trade-news/, read 2026-10-27; Challenge,
+  Verification and Swing accounts are exempt). `NewsConfig.restricted` maps a key (USD, EUR,
+  GBP, CAD, AUD, NZD, CHF, OIL) to a case-insensitive full-match pattern on the event name,
+  covering both naming styles of the calendar. A currency key needs the event's currency; OIL
+  (Crude Oil Inventories) matches the name alone. JPY has no restricted events. Each
+  instrument's `ftmo` field lists its keys: FX pairs their two currencies; XAUUSD, NAS100,
+  US500, US30, US2000 and DXY `USD`; USOIL / UKOIL `OIL`; XAGUSD, BTCUSD, ETHUSD, GER40, AUS200
+  none. Every restricted event uses the High window (FTMO: 2 minutes before and after),
+  whatever the calendar's impact (Crude Oil Inventories is Medium there).
+- `impact`: the earlier behaviour, every High / Medium event of the instrument's currencies with
+  the High / Medium windows.
+
+The research runner's descriptive news split keeps the `impact` scope (every High event).
 
 ## Windows
 
