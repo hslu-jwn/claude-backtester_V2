@@ -3,88 +3,73 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-10-27, End of session)
+## Where things are (2026-10-27 evening, `Continue.Code` session; not an `End.`)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
-- **Branches:** all V2.6 / V2.7 work is on **`v2-6-research`** (pushed, **not merged to
-  `main`**). `main` = state of 2026-10-26 `End.`. `docs/v2.4e-economic-calendar` is contained in
-  `v2-6-research`. Merge to `main` only on the user's word.
-- **Tests:** ~4620 passed, 5 skipped, 1 xfailed (~7.5 min); ruff clean; golden lists (2023)
-  identical since the 2026-10-26 default change (`python -m backtester.tools.golden --check`).
-- **Data:** cache rebuilt 2026-10-26 (V2.6 step 2: histdata clock, MT5 server clock per date,
-  wrong instruments dropped). Backups moved to `..\old\v26b-cache-backups\` (user: move, not delete).
-- **Queue:** `python -m backtester.tools.queue status` (from the V2 folder). An end-to-end
-  pipeline run of `research/grids/orb_example.toml` was still in its Monte Carlo step at 07:45
-  (started 00:56); let it finish or `queue stop` (graceful). LibreHardwareMonitor not installed
-  yet (temperature guard shows "no sensor").
-- **App:** `restart_app.bat`; new: Portfolio tab, queue panel + pipeline state on the Research
-  page, review mode / trade inspection on the Chart page.
-- **PC quirks:** long runs in a terminal must log to a file; .ps1 disabled; the dev preview for
-  Claude is `X:\Dokumente\Projekte\backtester-claude\.claude\launch.json` (port 8052).
-- **AI team:** ChatGPT Plus + Gemini Plus. Codex hit its limit 2026-10-26 18:14-21:14 (Sonnet
-  subagents built step 3 meanwhile); Antigravity (Gemini / Claude 4.6) empty until ~2026-10-29.
-  The user: no heavy building by Sonnet subagents; delegate mechanical work.
-- **Live bot:** not running (stopped 2026-10-21). Step 6 waits for the user.
+- **Branches:** work on **`v2-6-research`** (pushed). `main` = merged 2026-10-27 at `da7efb9`
+  (step 9 and the file-lock fix); everything after (UI, V2.6d) is **not merged** yet. Merge to
+  `main` only on the user's word.
+- **Tests:** ~4800 passed, 5 skipped, 1 xfailed (~8.5 min, fine: the user 2026-10-27); ruff
+  clean. Golden lists re-written 2026-10-27 for the FTMO conversion adjustment (only strategy 1's
+  GBPJPY trades changed, -7.97 R; all files gained the `conversion_r` column).
+- **Data:** 34 FTMO symbols (+ Binance), cache rebuilt 2026-10-26; the eight step-9 symbols with
+  full MT5 history and clock repair. News calendar cleaned + imputed at
+  `data/news/economic_events.csv` (git-ignored; rebuild with `python -m
+  backtester.tools.news_clean ../backtester-news/economic_events_2020_to_2026-10-25.csv`).
+- **Demo bot RUNNING** (since 2026-10-27 16:00 UTC): `--strategy fill_probe`, 23 symbols, 0.01 %
+  risk, comment prefix `fp`; logs `results/live/probe_stdout.log` and `results/live/<date>/`.
+  Stop: create `results/live/STOP` (or `EMERGENCY` to close all). Started detached from a
+  PowerShell (`Start-Process`); it survives this chat but not a reboot.
+- **LibreHardwareMonitor** installed (winget), web server on 8085, the queue's temperature guard
+  reads the CPU. Not started with Windows: after a reboot start it (admin prompt).
+- **App:** `restart_app.bat`; dark / bright switch in the top bar (dark default); chart trade
+  list sortable by pair and minimisable; live candles refresh on today's chart of a bot symbol.
+- **PC quirks:** long runs log to a file; .ps1 disabled; dev preview for Claude:
+  `X:\Dokumente\Projekte\backtester-claude\.claude\launch.json` (port 8052).
+- **AI team:** ChatGPT Plus + Gemini Plus; Antigravity (Gemini / Claude 4.6) empty until
+  ~2026-10-29. The user: use subagents for the heavy work (2026-10-27).
 
-## Built 2026-10-26 / 27 (details: ROADMAP › V2.6 build order, `docs/review/night-2026-10-27.md`)
+## V2.6d before research (ROADMAP) — state
 
 | Step | What | State |
 |---|---|---|
-| 1 | Job queue, temperature guard, file locks | accepted |
-| 2 | Data fixes 13.12-13.16, 13.18; cache rebuilt | accepted |
-| 3 | Research pipeline, queue panel, lanes | accepted |
-| 4 | V2.7 Portfolio tab (search, top-10 Monte Carlo, one-time test CLI) | accepted |
-| 5 | Review mode, trade inspection, heat map, strong-move dropdown, 4.3 items | accepted (2026-10-27 `End.`) |
-| 6 | Live (demo bot, V2.4b, 12.5) | skipped (user) |
-| 7 | V2.4e news calendar on synthetic data, filter default off | accepted (2026-10-27 `End.`) |
-| 8 | Full check: Codex review (`docs/review/v26-full-check.md`), fixes 1-6, `--help` on Windows, live job logs | accepted (2026-10-27 `End.`) |
-| 9 | Eight symbols added (AUDJPY, CADJPY, NZDJPY, CHFJPY, EURAUD, GBPAUD, AUS200, HK50): costs, full MT5 history, clock repair (`docs/review/symbol-proposal-2026-10-27.md`) | accepted (2026-10-27) |
+| 1 | Fill-collection demo bot (`strategy/fill_probe`, not in the research registry; `live/bot.py --strategy`) | running; first report `results/fill_report/` |
+| 2 | FTMO fees: per-symbol page read (`docs/review/ftmo-fees-2026-10-27.md`); NATGAS / DXY 0.0007 % per side; 0.7 % currency conversion adjustment (`conversion_r`) | done; demo deals confirm every traded symbol's commission |
+| 3 | News: calendar cleaned (lost times -> day-only on the local date), 2,468 times imputed from siblings, windows High 2 / 2 min, Medium none (impact without window ignored) | done; **filter still off by default** |
+| 4 | LibreHardwareMonitor + guard (fixed: urllib's `Connection: close` stalled it) | done |
+| 5 | Known issues: daily DSR everywhere (old research folders re-run dev variants), live candle refresh, CLI presets = app, tests isolated from the local news file, `claude/ui-polish` already gone | done |
+| — | V2.4b fill report `tools/fill_report.py` (slippage / spread / commission vs the model) | built; first run 136 fills (NY session only) |
 
-## Accepted by the user (do not ask again)
+First fill numbers (2026-10-27, n small): entries slip about 1x the model's slippage at the
+median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far above (median 6.4 vs
+0.5). Commissions match the model for every traded symbol (NATGAS rounds to $0 on tiny lots).
 
-- 2026-10-22 / 23 / 24: see git history of this file; all V1 decisions; V2.5 UI decisions.
-- 2026-10-27 (`End.`): steps 5, 7, 8 of the V2.6 build order accepted.
-- 2026-10-27 (`Continue.Code`): step 9 accepted; v2-6-research merged into `main`; night-file decisions taken (news at candle close, spread-table cost exception, light pipeline Monte Carlo); file-lock race fixed.
-- 2026-10-26: everything up to V2.5 accepted (`End.`); tick rounding on + median spread table
-  default (spread re-checked after demo trading); build and test the whole app first, research
-  after; V2.6 build order; queue first, LibreHardwareMonitor guard; pre-registered hypotheses
-  (strategy 4 on GBPJPY, gap strategies in quiet sideways markets) tested once later; MT5 server
-  clock per date through 2021-09-13, sparse days filled by histdata only before 2021-09-14;
-  wrong instruments dropped; app may start the queue runner; one-time MT5 test CLI only; lanes
-  next to V2; portfolio: development only, equal weights, own tab, 2-4 members, MC top 10;
-  review mode + trade inspection for every strategy, heat map on the card, 4.3 items picked;
-  steps 1-4 accepted; Opus may use `../backtester-news/` for V2.4e; night plan (go through the
-  steps, skip step 6, step 7 on synthetic data, step 8 fix small / list big, step 9 list only).
+## Accepted / decided by the user (do not ask again)
 
-## Open (needs the user) — the morning list is `docs/review/night-2026-10-27.md`
+- 2026-10-27: step 9 accepted, `main` merged; night-file decisions (news at candle close,
+  spread-table cost exception, light pipeline Monte Carlo); trade list sort / minimise; dark /
+  bright mode (+ Plotly); V2.6d plan; FTMO fees as defaults ("research all the fees and
+  implement them"); news windows High 2 / 2, Medium none, day-only High times imputed; ~8 min
+  full suite is fine; use subagents for heavy work.
+- Earlier: see git history of this file.
 
-1. Steps 5, 7, 8 accepted at `End.` 2026-10-27; first in the next chat: merge `v2-6-research`
-   into `main` (the user's word).
-2. Decisions listed in the night file: news blackout timing (candle close vs fill time) and
-   window sizes; **spread table in the development period** (full check finding 7: 2015-2020
-   indices use 2021 values); more symbols (pick from the proposal); pipeline Monte Carlo speed
-   (one core, 3+ h for a small grid).
-3. Install LibreHardwareMonitor (Options › Remote Web Server, port 8085).
-4. News: the regenerated calendar file -> `data/news/economic_events.csv`.
-5. Demo bot restart for step 6 (V2.4b slippage, 12.5 reconciliation) — the user's call.
-7. Old known issues: research's own DSR per trade vs the trial log's daily DSR; chart does not
-   auto-refresh live candles; remote branch `claude/ui-polish`; CLI named-preset restrictions
-   differ slightly from the app's.
+## Open (needs the user)
+
+1. News filter on by default? (changes every backtest from 2020; golden lists re-written).
+2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
+3. Merge `v2-6-research` into `main` (the user's word).
+4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
 
 ## Next step
 
-**V2.6d state (2026-10-27 evening):** fill-probe bot running on the FTMO demo since 16:00 UTC (PID in `results/live/`, logs `results/live/probe_stdout.log`, stop with `results/live/STOP`); steps 2, 4, 5 done; news windows wait for the user's decision; slippage analysis after 1-3 days of fills.
-
-**V2.6d before research (ROADMAP, the user 2026-10-27):** (1) fill-collection demo bot 1-3 days,
-(2) FTMO fees researched and implemented, (3) news filter on the cleaned real calendar,
-(4) LibreHardwareMonitor, (5) older known issues; then research. Earlier text below.
-
-
-The user's morning check and decisions (list above), then: more symbols (step 9 download),
-step 6 when the user restarts the demo bot, the regenerated news file into V2.4e; after that
-intensive research (V2.6 lanes + queue) and V2.7 portfolio on real research results.
+Let the bot collect 1-3 days of fills (Asia / London sessions too), then: export the deals
+(`fill_report.deals_to_csv` via a read-only MT5 session, server offset +3 h until 2026-11-01,
+then +2 h), run `python -m backtester.tools.fill_report --since 2026-10-27T16:00 --deals ...`,
+and set per-symbol slippage (V2.4b) from the medians / p90 with the user; stop the bot; 12.5
+reconciliation. Then research (V2.6 lanes + queue) and V2.7 portfolio. Codex review of the
+2026-10-27 work: `results/ai/*v26d-review*` (findings to fix first).
 
 ## First prompt for the next chat
 
-`Continue.Code` (read `docs/review/night-2026-10-27.md` first)
+`Continue.Code` (read the Codex review in `results/ai/` and `results/fill_report/report.md` first)
