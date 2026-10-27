@@ -80,8 +80,8 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 2. NATGAS: done; oil / DXY: oil 0 confirmed by the deals, DXY not traded by the probe.
 3. Merge `v2-6-research` into `main` (the user's word).
 4. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
-5. The research team's reply to `../BACKTESTER_TEAM_RESPONSE.md` (intake decisions D1-D8
-   made by the user 2026-10-27, `docs/review/research-interface-review-2026-10-27.md` › 3).
+5. Research interface: contract 0.1.0 accepted by both teams 2026-10-27; next is V2.6i after
+   the fill analysis (`docs/research-intake.md`).
 
 ## Next step
 

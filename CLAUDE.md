@@ -112,6 +112,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
     the user's go.
   - End of run: short report (tested, results, research cards added, envelopes written,
     feedback sent); a very promising strategy first, and on Telegram.
+- **`Begin.`** and the research `End.` in the umbrella `../AGENTS.md` belong to the research
+  department's sessions. In a session working in this repo, `End.` always means the V2 `End.`
+  below; if the user's intent is unclear (e.g. the session started at the umbrella root), ask.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
   the step, stop lanes and job queue, commit, update the log, short report. Nothing
   half-finished stays uncommitted.

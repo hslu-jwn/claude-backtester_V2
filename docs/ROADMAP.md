@@ -195,7 +195,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   D1-D8 by the user 2026-10-27 (two stages, built after the V2.6d step-1 fill analysis,
   `jsonschema` as optional extra, stopless / portfolio and next-bar-open rejected for now with a
   future-support list, old idea backlog to research, test only on the user's go, queue files
-  kept). Open: the research team's answer on the contract edits.
+  kept). Contract 0.1.0 accepted by both teams 2026-10-27 (research applied all requested
+  edits), so i1 is down to the fixtures.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 

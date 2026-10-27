@@ -4,6 +4,18 @@ Process spec (the user, 2026-10-27). **Status: the interface is a proposal, not 
 Until ROADMAP V2.6i passes its synthetic end-to-end test, no real submission is claimed or built.
 Review of the contract: `docs/review/research-interface-review-2026-10-27.md`.
 
+**Contract 0.1.0 accepted by both teams 2026-10-27** (all 14 requests and D1-D8 applied,
+`../Shared_Interface/feedback/messages/CONTRACT_ACK_2026-10-27.json`). Fields the intake checks:
+`market.v2_compatibility` = `SUPPORTED` (universe ⊆ `../Shared_Interface/documentation/V2_SYMBOLS.json`),
+`market.holding_period` = `DAY_TRADING` (else low priority), `risk.accounting_type` =
+`R_STOP_DEFINED` with a non-null `exits.stop_loss`, `entries.execution_timing` = `SIGNAL_CLOSE` or
+`LIMIT`, parameter `domain` (`FIXED` / `VALUES` / `RANGE`) with `experiment.total_grid_size` =
+product of the tunable domains. Some checks are not expressible in the JSON Schema and live
+only in Research's validator (`status: SUBMITTED` + `submitted_at`, `RANGE` needs
+min / max / step, grid-size product, symbols list): V2.6i i2 repeats them, never trusts the
+producer's check. `V2_SYMBOLS.json` is a snapshot of `data/sources.py` `PRICE_DIGITS`; when V2 adds or
+drops a symbol, we propose the update to that file.
+
 ## Who owns what
 
 | Research department (`../Research_Department/`) | Backtester team (this repo) |
