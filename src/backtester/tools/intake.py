@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import math
 import os
 import re
 import stat
+import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -20,6 +22,7 @@ from backtester.paths import HOME_DIR, RESULTS_DIR
 
 DEFAULT_UMBRELLA = HOME_DIR.parent
 MAX_BYTES = 1024 * 1024
+TEST_DERIVED = frozenset({"test.csv", "report.md", "bayes.json"})  # research-folder test output
 FILENAME = re.compile(r"[A-Z][A-Z0-9_]{2,63}__v[0-9]+\.[0-9]+\.[0-9]+\.json")
 
 
@@ -414,24 +417,489 @@ def recover(
     return recovered
 
 
+def _contained(path: Path, umbrella: Path) -> Path:
+    """Resolve envelope/artifact paths within the umbrella, including symlink targets."""
+    root = Path(umbrella).resolve()
+    path = Path(path)
+    path = path if path.is_absolute() else root / path
+    if ".." in path.parts or not path.resolve().is_relative_to(root):
+        raise ValueError("Path must resolve inside the umbrella.")
+    return path.resolve()
+
+
+def _relative(path: Path, umbrella: Path) -> str:
+    return _contained(path, umbrella).relative_to(Path(umbrella).resolve()).as_posix()
+
+
+def _read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def _digest(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def _validate_envelope(umbrella: Path, kind: str, envelope: dict) -> None:
+    # JSON itself must also be portable: Python's NaN/Infinity extensions are forbidden.
+    json.dumps(envelope, allow_nan=False)
+    try:
+        from jsonschema import Draft202012Validator, FormatChecker
+    except ImportError:
+        return
+    schema = _contained(Path("Shared_Interface/schemas") / f"{kind}.schema.json", umbrella)
+    Draft202012Validator(_read(schema), format_checker=FormatChecker()).validate(envelope)
+
+
+def _publish(path: Path, envelope: dict, umbrella: Path) -> Path:
+    path = _contained(path, umbrella)
+    with file_lock(_contained(path.parent / ".envelope.lock", umbrella)):
+        if path.exists():
+            raise FileExistsError("Envelope already exists.")
+        atomic_json(path, envelope)
+    return path
+
+
+def _feedback_id(strategy_id: str | None) -> str:
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return f"FB_{strategy_id or 'UNKNOWN'}_{stamp}_{uuid.uuid4().hex[:4]}"
+
+
+def emit_feedback(
+    umbrella,
+    *,
+    status,
+    issues,
+    subject_file,
+    claim=None,
+    payload=None,
+    sha256=None,
+    scope="SUBMISSION",
+    in_reply_to=None,
+    related_experiment_id=None,
+) -> Path:
+    """Publish immutable feedback. Spec: research-intake.md > Pipeline, steps 1–3."""
+    payload = claim.payload if claim is not None else payload
+    payload = payload if isinstance(payload, dict) else {}
+    strategy_id, version = payload.get("strategy_id"), payload.get("specification_version")
+    if not isinstance(strategy_id, str) or not re.fullmatch(r"[A-Z][A-Z0-9_]{2,63}", strategy_id):
+        strategy_id = None
+    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        version = None
+    feedback_id = _feedback_id(strategy_id)
+    envelope = {
+        "schema_version": "0.1.0",
+        "feedback_id": feedback_id,
+        "scope": scope,
+        "subject_file": _relative(subject_file, umbrella),
+        "strategy_id": strategy_id,
+        "specification_version": version,
+        "submission_sha256": claim.sha256 if claim is not None else sha256,
+        "status": status,
+        "issues": [
+            {
+                "code": i.code,
+                "severity": i.severity,
+                "message": i.message,
+                "field": i.field,
+                "requires_revision": i.kind in ("invalid", "unsupported"),
+            }
+            for i in issues
+        ],
+        "created_at": datetime.now(UTC).isoformat(),
+        "producer": "V2 backtester team",
+        "in_reply_to": in_reply_to,
+        "related_experiment_id": related_experiment_id,
+    }
+    _validate_envelope(umbrella, "feedback", envelope)
+    return _publish(
+        Path("Shared_Interface/feedback/messages") / f"{feedback_id}.json", envelope, umbrella
+    )
+
+
+def _terminal_target(queue: Path, name: str, outcome: str) -> Path:
+    target = queue / outcome / name
+    n = 0
+    while target.exists() or target.is_symlink():
+        n += 1
+        target = queue / outcome / f"{Path(name).stem}.dup-{n}.json"
+    return target
+
+
+def reject_invalid(umbrella, results) -> list[Path]:
+    """Quarantine invalid pending bytes, retaining originals and one feedback per file."""
+    queue = _check_mutation_paths(umbrella)
+    _contained(results, umbrella)
+    outputs = []
+    with file_lock(queue / ".claim.lock"):
+        for path in pending(umbrella, results=results):
+            payload, issues, _ = _validate(path, umbrella, results)
+            if not _invalid(issues):
+                continue
+            if not path.is_file() or not _safe(path, umbrella):
+                # Never follow unsafe paths to obtain a hash; a symlink itself can be moved.
+                if not path.is_symlink():
+                    raise ValueError("Unsafe pending path cannot be quarantined as a file.")
+                digest = None
+            else:
+                digest = _digest(path)
+            target = _terminal_target(queue, path.name, "rejected")
+            out = emit_feedback(
+                umbrella,
+                status="REJECTED",
+                issues=issues,
+                subject_file=target,
+                payload=payload,
+                sha256=digest,
+            )
+            target.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(path, target)
+            outputs.append(out)
+    return outputs
+
+
+def finish(umbrella, results, claim, outcome):
+    """Move original bytes to terminal ownership under the claim lock; never delete them."""
+    if outcome not in ("completed", "rejected"):
+        raise ValueError("Invalid terminal outcome.")
+    queue = _check_mutation_paths(umbrella)
+    path = _contained(claim.path, umbrella)
+    record_path = _contained(Path(results) / "intake" / path.stem / "claim.json", umbrella)
+    with file_lock(queue / ".claim.lock"):
+        if path.parent != (queue / "claimed").resolve() or _digest(path) != claim.sha256:
+            raise ValueError("Claim path or submission hash mismatch.")
+        record = _read(record_path)
+        if record.get("sha256") != claim.sha256 or record.get("outcome") is not None:
+            raise ValueError("Claim record mismatch or already finished.")
+        target = _terminal_target(queue, path.name, outcome)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(path, target)
+        record.update(
+            finished_at=datetime.now(UTC).isoformat(),
+            outcome=outcome,
+            file=_relative(target, umbrella),
+        )
+        atomic_json(record_path, record)
+
+
+def reject_unsupported(umbrella, results, claim) -> Path:
+    issues = [i for i in claim.issues if i.kind == "unsupported" and i.severity == "ERROR"]
+    if not issues:
+        raise ValueError("Claim has no unsupported error.")
+    status = (
+        "UNSUPPORTED_DATA"
+        if any(i.code == "UNSUPPORTED_DATA" for i in issues)
+        else "UNSUPPORTED_STRATEGY_TYPE"
+    )
+    out = emit_feedback(
+        umbrella, status=status, issues=claim.issues, subject_file=claim.path, claim=claim
+    )
+    finish(umbrella, results, claim, "rejected")
+    return out
+
+
+def progress(umbrella, claim, status) -> Path:
+    if status not in ("CLAIMED", "IMPLEMENTING", "TESTING"):
+        raise ValueError("Invalid progress status.")
+    return emit_feedback(
+        umbrella,
+        status=status,
+        subject_file=claim.path,
+        claim=claim,
+        issues=[Issue("PROGRESS", "INFO", status, None, "note")],
+    )
+
+
+def _experiment_directory(results, stem):
+    if not FILENAME.fullmatch(stem + ".json"):
+        raise ValueError("Invalid submission stem.")
+    return Path(results) / "intake" / stem / "experiments"
+
+
+def next_experiment_id(results, stem, stage) -> str:
+    if stage not in ("DEVELOPMENT", "FINAL_HOLDOUT"):
+        raise ValueError("Invalid evaluation stage.")
+    folder = _experiment_directory(results, stem)
+    prefix = f"{stem}__{stage}__"
+    numbers = [
+        int(p.stem[len(prefix) :])
+        for p in folder.glob(prefix + "*.json")
+        if re.fullmatch(re.escape(prefix) + r"[1-9][0-9]*", p.stem)
+    ]
+    return prefix + str(max(numbers, default=0) + 1)
+
+
+def _run_artifacts(folder, umbrella):
+    """Hash individual files rather than inventing a hash for a directory."""
+    _contained(folder, umbrella)
+    return [
+        {"kind": p.name, "path": _relative(p, umbrella), "sha256": _digest(_contained(p, umbrella))}
+        for p in sorted(folder.rglob("*"))
+        if p.is_file() and not p.name.startswith(".")
+    ]
+
+
+def emit_result(
+    umbrella,
+    results,
+    claim,
+    *,
+    experiment_id,
+    stage,
+    research_folder,
+    requested_costs,
+    warnings=(),
+    errors=(),
+    status="COMPLETED",
+    holdout_disclosure=None,
+) -> Path:
+    """Export recorded evidence only. Spec: research-intake.md > Result metric mapping."""
+    from types import SimpleNamespace
+
+    from backtester.analytics.trial_log import read_all
+    from backtester.tools.research import _test_authorized
+
+    results = _contained(results, umbrella)
+    folder = _contained(research_folder, umbrella)
+    stem = claim.path.stem
+    if stage not in ("DEVELOPMENT", "FINAL_HOLDOUT") or not re.fullmatch(
+        re.escape(f"{stem}__{stage}__") + r"[1-9][0-9]*", experiment_id
+    ):
+        raise ValueError("Invalid experiment identity or stage.")
+    info = _read(_contained(folder / "info.json", umbrella))
+    identity = info["submission"]
+    for key, value in (
+        ("strategy_id", claim.payload["strategy_id"]),
+        ("specification_version", claim.payload["specification_version"]),
+        ("submission_sha256", claim.sha256),
+    ):
+        if identity.get(key) != value:
+            raise ValueError("Research submission identity mismatch.")
+    if stage == "FINAL_HOLDOUT":
+        _contained(results / "intake" / stem / "test_authorization.json", umbrella)
+        if not _test_authorized(SimpleNamespace(submission=identity), results):
+            raise ValueError("Final holdout requires user authorization.")
+    disclosure = holdout_disclosure or ("NONE" if stage == "DEVELOPMENT" else "REDACTED")
+    if disclosure not in (("NONE",) if stage == "DEVELOPMENT" else ("REDACTED", "FULL")):
+        raise ValueError("Invalid holdout disclosure.")
+    chosen = info.get("chosen")
+    if chosen is None:
+        with _contained(folder / "variants.csv", umbrella).open(encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+        ranked = [r for r in rows if r.get("rank")]
+        if not ranked:
+            raise ValueError("Research folder has no chosen or ranked development variant.")
+        chosen = {"id": min(ranked, key=lambda r: int(r["rank"]))["variant_id"]}
+    variant = _contained(folder / "variants" / chosen["id"], umbrella)
+    linked = []
+    if chosen.get("dev_run"):
+        linked.append(_contained(results / chosen["dev_run"], umbrella))
+    run = variant
+    if stage == "FINAL_HOLDOUT":
+        run = _contained(results / info["test"]["run_folder"], umbrella)
+        linked.append(run)
+    run_info = _read(_contained(run / "info.json", umbrella))
+    expected = identity | ({"experiment_id": experiment_id} if stage == "FINAL_HOLDOUT" else {})
+    if run_info["submission"] != expected:
+        raise ValueError("Run submission identity mismatch.")
+    if stage == "DEVELOPMENT" and identity["experiment_id"] != experiment_id:
+        raise ValueError("Development experiment identity mismatch.")
+    summary = _read(_contained(run / "summary.json", umbrella))["combined"]
+    settings = _read(_contained(run / "settings.json", umbrella))
+    card_path = _contained(variant / "scorecard.json", umbrella)
+    card = _read(card_path) if card_path.exists() else {}
+    mapping = {
+        "net_r": "net_r_net",
+        "max_drawdown_r": "max_drawdown_r_net",
+        "average_win_r": "avg_win_r",
+        "average_loss_r": "avg_loss_r",
+        "expectancy_r": "expectancy_r",
+        "profit_factor": "profit_factor",
+        "trades": "trades",
+        "win_rate": "win_rate",
+    }
+    metric_keys = (
+        "net_r",
+        "max_drawdown_r",
+        "expectancy_r",
+        "sharpe_daily_r",
+        "sortino_daily_r",
+        "net_return_pct",
+        "max_drawdown_pct",
+        "expectancy_pct",
+        "profit_factor",
+        "trades",
+        "win_rate",
+        "average_win_r",
+        "average_loss_r",
+        "exposure_pct",
+        "turnover_pct",
+    )
+    metrics = dict.fromkeys(metric_keys)
+    metrics.update({key: summary.get(source) for key, source in mapping.items()})
+    # day_sharpe is the stored daily R Sharpe; never substitute a per-trade statistic.
+    metrics["sharpe_daily_r"] = card.get("day_sharpe") if stage == "DEVELOPMENT" else None
+    diagnostics = {}
+    significance = _contained(folder / "significance.json", umbrella)
+    if significance.exists():
+        diagnostics.update(_read(significance))
+    for key in ("deflated_sharpe", "psr", "dsr", "flags"):
+        if key in info.get("test", {}) and stage == "FINAL_HOLDOUT":
+            diagnostics[key] = info["test"][key]
+        if key in card.get("scorecard", {}):
+            diagnostics[key] = card["scorecard"][key]
+    robustness = {
+        k: info[k]
+        for k in (
+            "grid_robustness",
+            "sensitivity",
+            "monkeys",
+            "twins",
+            "shocks",
+            "bayes",
+            "walk_forward",
+            "drawdown_bounds",
+        )
+        if k in info
+    }
+    if stage == "DEVELOPMENT":  # never carry test-period evidence (contract: holdout control)
+        if "drawdown_bounds" in robustness:
+            bounds = robustness["drawdown_bounds"]
+            robustness["drawdown_bounds"] = {k: v for k, v in bounds.items() if k == "development"}
+        if isinstance(robustness.get("bayes"), dict):
+            robustness["bayes"] = {**robustness["bayes"], "tests": []}
+    trials = []
+    for trial in read_all(results / "trials.jsonl"):
+        if trial.series:
+            series = _contained(results / trial.series, umbrella)
+            if series.is_relative_to(folder):
+                trials.append(trial)
+    count = sum(t.count for t in trials)
+    if count < 1:
+        raise ValueError("Research folder has no recorded trials.")
+    artifacts = _run_artifacts(folder, umbrella)
+    if stage == "DEVELOPMENT":  # files that hold test results
+        artifacts = [a for a in artifacts if a["kind"] not in TEST_DERIVED]
+    for target in linked:
+        artifacts.extend(_run_artifacts(target, umbrella))
+    artifacts = list({a["path"]: a for a in artifacts}.values())
+    configuration = dict(settings["run"])
+    if "cache_dirs" in configuration:
+        configuration["cache_dirs"] = {
+            s: _relative(Path(p), umbrella) for s, p in configuration["cache_dirs"].items()
+        }
+    dataset = dict(run_info["dataset"])
+    if isinstance(dataset["source_summary"], list):
+        dataset["source_summary"] = "; ".join(dataset["source_summary"])
+    redacted = disclosure == "REDACTED"
+    envelope = {
+        "schema_version": "0.1.0",
+        "strategy_id": claim.payload["strategy_id"],
+        "specification_version": claim.payload["specification_version"],
+        "submission_sha256": claim.sha256,
+        "experiment_id": experiment_id,
+        "implementation_version": str(info.get("version", 1)),
+        "code_commit": run_info.get("code_commit", info.get("code_commit")),
+        "accounting_type": "R_STOP_DEFINED",
+        "dataset": dataset,
+        "evaluation_stage": stage,
+        "stage_split": {
+            "protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+            "cutoff": "2021-09-14",
+            "test_requires_user_authorization": True,
+        },
+        "status": status,
+        "test_configuration": configuration,
+        "parameters": settings["strategy"],
+        "execution": settings["engine"],
+        "requested_costs": requested_costs,
+        "resolved_cost_model": settings["engine"]["costs"],
+        "metrics": dict.fromkeys(metric_keys) if redacted else metrics,
+        "statistical_diagnostics": {} if redacted else diagnostics,
+        "robustness": {} if redacted else robustness,
+        "variants_tried": count,
+        "artifacts": [] if redacted else artifacts,
+        "warnings": list(warnings),
+        "errors": list(errors),
+        "created_at": datetime.now(UTC).isoformat(),
+        "holdout_disclosure": disclosure,
+    }
+    _validate_envelope(umbrella, "result", envelope)
+    target = _contained(
+        Path("Shared_Interface/feedback/results") / f"{experiment_id}.json", umbrella
+    )
+    record = _contained(_experiment_directory(results, stem) / f"{experiment_id}.json", umbrella)
+    with file_lock(_contained(record.parent / ".experiments.lock", umbrella)):
+        if record.exists() or target.exists():
+            raise FileExistsError("Experiment envelope already exists.")
+        # Reserve the ID durably before publication so a crash can never reuse it.
+        atomic_json(record, {"envelope": envelope, "path": _relative(target, umbrella)})
+        return _publish(target, envelope, umbrella)
+
+
+def _load_claim(umbrella, results, stem):
+    _experiment_directory(results, stem)
+    record = _read(_contained(Path(results) / "intake" / stem / "claim.json", umbrella))
+    path = _contained(Path(umbrella) / record["file"], umbrella)
+    if path.stem != stem or _digest(path) != record["sha256"]:
+        raise ValueError("Claim hash or identity mismatch.")
+    return Claim(path, record["sha256"], _read(path), [Issue(**i) for i in record["issues"]])
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("validate", "claim", "recover"))
+    parser.add_argument(
+        "command",
+        choices=("validate", "claim", "recover", "reject", "progress", "finish", "result"),
+    )
+    parser.add_argument("stem", nargs="?")
+    parser.add_argument("status", nargs="?")
     parser.add_argument("--root", type=Path, default=DEFAULT_UMBRELLA)
     parser.add_argument("--worker", default="intake")
+    parser.add_argument("--research-folder", type=Path)
+    parser.add_argument("--stage", choices=("DEVELOPMENT", "FINAL_HOLDOUT"), default="DEVELOPMENT")
+    parser.add_argument("--requested-costs", default="{}")
     args = parser.parse_args(argv)
+    results = args.root / HOME_DIR.name / "results"
+    if args.command in ("progress", "finish", "result"):
+        if not args.stem:
+            parser.error("submission stem is required")
+        current = _load_claim(args.root, results, args.stem)
+        if args.command == "progress":
+            print(progress(args.root, current, args.status))
+        elif args.command == "finish":
+            finish(args.root, results, current, args.status)
+        else:
+            if args.research_folder is None:
+                parser.error("--research-folder is required")
+            print(
+                emit_result(
+                    args.root,
+                    results,
+                    current,
+                    experiment_id=next_experiment_id(results, args.stem, args.stage),
+                    stage=args.stage,
+                    research_folder=args.research_folder,
+                    requested_costs=json.loads(args.requested_costs),
+                )
+            )
+        return 0
+    if args.command == "reject":
+        for path in reject_invalid(args.root, results):
+            print(path)
+        return 0
     if args.command == "validate":
         invalid = False
-        for path in pending(args.root):
-            _, issues = validate_file(path, args.root)
+        for path in pending(args.root, results=results):
+            _, issues = validate_file(path, args.root, results=results)
             invalid |= _invalid(issues)
             print(f"{path.name}: {', '.join(issue.code for issue in issues) or 'ok'}")
         return int(invalid)
     if args.command == "claim":
-        result = claim(args.root, worker=args.worker)
+        result = claim(args.root, results, worker=args.worker)
         print(f"{result.path.name} {result.sha256}" if result else "nothing to claim")
     else:
-        for path in recover(args.root):
+        for path in recover(args.root, results):
             print(path.name)
     return 0
 
