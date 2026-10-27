@@ -66,7 +66,7 @@ def rig(q, **kwargs):
     return Runner(q, popen=launch, sensor=lambda: 60, sender=lambda s: None, **kwargs), launched
 
 
-def test_b1_default_job_runs_in_the_v2_root_without_env(tmp_path, home):
+def test_b1_default_job_runs_in_the_v2_root_with_the_runner_env(tmp_path, home):
     q = queue(tmp_path, home)
     job = q.add(ARGV)
     assert job.cwd is None
@@ -75,7 +75,8 @@ def test_b1_default_job_runs_in_the_v2_root_without_env(tmp_path, home):
     ((argv, opts),) = launched
     assert argv == [sys.executable, "-m", *ARGV]
     assert Path(opts["cwd"]) == home.resolve()
-    assert "env" not in opts
+    # the runner's environment unchanged, only unbuffered output added (test_b7)
+    assert {k: v for k, v in opts["env"].items() if k != "PYTHONUNBUFFERED"} == dict(os.environ)
 
 
 def test_b1_old_job_file_without_cwd_loads(tmp_path, home):
@@ -197,3 +198,15 @@ def test_retry_keeps_cwd(tmp_path, home, lane):
 
 def test_job_dataclass_default():
     assert Job("x", "n", ["backtester.a"]).cwd is None
+
+
+@pytest.mark.parametrize("cwd", [None, "momo"])
+def test_b7_job_output_is_unbuffered_so_the_log_fills_live(tmp_path, home, lane, cwd):
+    # night check 2026-10-27: a pipeline job's log stayed at one line for 80 minutes
+    q = queue(tmp_path, home)
+    q.add(ARGV, cwd=cwd)
+    runner, launched = rig(q)
+    runner.tick()
+    ((_, opts),) = launched
+    assert opts["env"]["PYTHONUNBUFFERED"] == "1"
+    assert opts["env"]["PATH"] == os.environ["PATH"]

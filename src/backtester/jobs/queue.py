@@ -310,14 +310,15 @@ class Runner:
             self.notify(f"Queue: job {name} failed (exit {j.exit_code}, {j.attempts} attempts)")
 
     def launch_target(self, j):
-        """(cwd, env) of a job. The default is the V2 root with the runner's environment
-        (env None). A lane job runs in its worktree with BACKTESTER_HOME = the V2 root (data and
+        """(cwd, env) of a job. The default is the V2 root with the runner's environment plus
+        PYTHONUNBUFFERED=1 (live job logs). A lane job runs in its worktree with BACKTESTER_HOME = the V2 root (data and
         results stay shared) and the lane's `src` first on PYTHONPATH (its code, not V2's).
         Raises ValueError when the lane is no longer registered."""
         lane = resolve_cwd(j.cwd, self.queue.home)
-        if lane is None:
-            return self.queue.home, None
         env = dict(os.environ)
+        env["PYTHONUNBUFFERED"] = "1"  # the job log fills live (progress on the queue panel)
+        if lane is None:
+            return self.queue.home, env
         env["BACKTESTER_HOME"] = str(self.queue.home)
         old = env.get("PYTHONPATH")
         env["PYTHONPATH"] = str(Path(lane) / "src") + (os.pathsep + old if old else "")
