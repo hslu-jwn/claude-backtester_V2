@@ -507,7 +507,8 @@ def test_strategy_one_overlay_passes_source(monkeypatch):
     monkeypatch.setattr(trades_overlay, "candles_from_frame", lambda frame: build_candles([ENTRY]))
     captured = []
 
-    def run(strategy, series, engine, *, intrabar_source):
+    def run(strategy, series, engine, *, intrabar_source, calendar):
+        assert calendar is None  # news filter off by default: no calendar, no file read
         captured.extend(intrabar_source("TEST", START, START + timedelta(minutes=5)))
         return []
 
