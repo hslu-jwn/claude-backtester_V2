@@ -89,6 +89,14 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
 5. Research interface: contract 0.1.0 accepted by both teams 2026-10-27; next is V2.6i after
    the fill analysis (`docs/research-intake.md`).
 
+## Night 2026-10-27/28 (Opus alone, the user's "use your own best judgement")
+
+Summary and Opus's decisions: `docs/review/night-2026-10-28.md` (news filter wired + FTMO scope,
+V2.6i intake built, deals export, cleanup). Fill analysis on 1,128 fills (NY + Asia, no London
+yet): `docs/review/fill-analysis-2026-10-28.md` (proposal: keep model slippage, use measured p90
+as the stressed level after London fills). All six probe positions stuck in the daily break
+closed at their reopen (UKOIL last, 00:05 UTC). Bot still running.
+
 ## Next step
 
 Let the bot collect 1-3 days of fills (Asia / London sessions too), then: export the deals
