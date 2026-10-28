@@ -20,6 +20,8 @@ from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_fade.strategy import GapFade
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
 from backtester.strategy.gap_momentum.strategy import GapMomentum
+from backtester.strategy.london_fix.config import LondonFixConfig
+from backtester.strategy.london_fix.strategy import LondonFix
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.no_wick.strategy import NoWick
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
@@ -61,6 +63,7 @@ _SPECS = (
         "gap_momentum", "Strategy 7 · Gap momentum (beyond the range)",
         GapMomentumConfig, GapMomentum,
     ),
+    StrategySpec("london_fix", "Strategy 8 · London fix reversal", LondonFixConfig, LondonFix),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

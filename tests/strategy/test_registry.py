@@ -35,6 +35,7 @@ def test_registered_names_and_order():
         "gap_fade",
         "opening_range",
         "gap_momentum",
+        "london_fix",
     ]
 
 

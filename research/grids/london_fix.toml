@@ -1,0 +1,20 @@
+strategy = "london_fix"
+symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"]
+min_trades = 100
+
+[submission]
+strategy_id = "FX_LONDON_FIX_REV"
+specification_version = "1.0.0"
+submission_sha256 = "8ec6b914e7669cc28b3eeb1008271dae8df264453934d6ce5c099b3d70ae6263"
+experiment_id = "FX_LONDON_FIX_REV__v1.0.0__DEVELOPMENT__1"
+
+[base]
+entry_time_london = "16:03"
+atr_period = 60
+stop_atr_multiplier = 4.0
+holding_minutes = 360
+force_close_london = "23:55"
+
+[grid]
+stop_atr_multiplier = [3.0, 4.0, 5.0]
+holding_minutes = [60, 180, 360]

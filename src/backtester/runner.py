@@ -72,6 +72,7 @@ from backtester.paths import RESULTS_DIR
 from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
+from backtester.strategy.london_fix.config import LondonFixConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.opening_range.config import OpeningRangeConfig
@@ -102,6 +103,7 @@ StrategyConfig = (
     | GapFadeConfig
     | OpeningRangeConfig
     | GapMomentumConfig
+    | LondonFixConfig
 )
 
 

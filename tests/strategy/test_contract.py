@@ -72,6 +72,7 @@ def _no_wick_extra() -> dict:
 
 
 FIXTURES: dict[str, Fixture] = {
+    "london_fix": Fixture("EURUSD", 1.1, 0.003, (14, 24), days=8),
     "session_zone_sweep": Fixture("XAUUSD", 2000.0, 0.0006, (0, 24), days=10, drift_sigma=2e-5),
     "ny_index_sweep": Fixture("NAS100", 18000.0, 0.0006, (12, 22), days=8, drift_sigma=2e-5),
     "no_wick": Fixture(
