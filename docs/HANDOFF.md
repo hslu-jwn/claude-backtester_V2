@@ -69,6 +69,8 @@ median, 4x at p90; stop-loss exits mostly better than the model; BTCUSD far abov
   falls into a symbol's daily break (closes rejected with `10018 market closed`, retried until
   the reopen); only enough fills for spread / slippage matter. In the fill report, treat these
   delayed time exits as outliers, not as normal exit slippage.
+- 2026-10-28: slippage (V2.4b): keep the model slippage as default; after London fills, the
+  measured p90 per symbol becomes the stressed cost level (instead of costs x 1.5).
 - Earlier: see git history of this file.
 
 ## Open (needs the user)

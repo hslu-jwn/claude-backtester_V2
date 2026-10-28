@@ -136,7 +136,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   Not in scope: the live bot (needs a live calendar source), 2015-2019 (raw Forex Factory
   cache goes back to 2007 if wanted later). **Rule set by the user, 2026-10-26:** Opus may
   use `../backtester-news/` and implement V2.4e in the repo once it is due (no extra ask).
-- ☐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23): slippage is
+- ◐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23; **decided by the user 2026-10-28** after `docs/review/fill-analysis-2026-10-28.md`: keep the current model slippage as the default (the measured median is at or below it), and once London fills are in use the measured p90 per symbol as the stressed cost level of the robustness report instead of the flat costs x 1.5; open: London fills, then build it): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
   `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)

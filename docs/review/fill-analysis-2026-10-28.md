@@ -21,7 +21,7 @@ daily break (closed at the reopen) are inside "signal" and inflate its tail slig
    not trade European indices in Asia, so this does not change their costs.
 5. **Commissions** match the model for every symbol (NATGAS rounds to $0 on 0.01-lot deals).
 
-## Proposal (the user decides; nothing changed)
+## Proposal (accepted by the user 2026-10-28; nothing built yet)
 
 - **Keep the model slippage as the default.** It already covers the median; lowering it to the
   measured median would flatter every backtest.
