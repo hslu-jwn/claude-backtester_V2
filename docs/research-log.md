@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-10-28: first research pilot FX_LONDON_FIX_REV v1.0.0 (V2.6i i8)
+
+Claimed 13:25 UTC, strategy 8 `london_fix` (Codex gpt-6.1-sol medium, Opus review), 9 variants
+on development data 2015 - 2021-09-13, six USD pairs, 10,397 trades each. **All 9 negative**
+(best v0007 stop 5 ATR / 180 min: -1,043 R, -0.10 R per trade). Pooled gross +181 R, 4 of 6
+pairs with the predicted gross sign: the postfix drift exists, costs (~1,220 R) eat it, as
+the source paper says for liquidity demanders. Criteria (`results/intake/<stem>/criteria.json`):
+1 met, 2 not met, 3-5 met, 6 not run (monkeys skipped by the user: > 5.5 h CPU, cannot change
+the outcome). Result envelope `FX_LONDON_FIX_REV__v1.0.0__DEVELOPMENT__1` sent; the user decides
+pass / fail; no holdout. Research confirmed 3 assumptions within minutes; the swap / 23:55
+assumption is open. Codex models: gpt-6.1-sol (pilot), gpt-6.1-sol (V2.4c checks; terra would
+have done).
+
 ## Model usage, night 2026-10-27/28
 
 | Tool / model | Effort | Calls | Minutes | Used for | Worth it? |

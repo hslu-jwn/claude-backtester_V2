@@ -216,7 +216,15 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   `intake inbox` (open questions of ours, unprocessed replies, age in days), `intake assume`
   (ASSUMPTION_MADE message from a list), parked claims for `NEEDS_CLARIFICATION`, the open
   count in the loop report / HANDOFF, open assumptions listed in the result envelope. Codex
-  brief after the pilot (V2.6i i8).
+  brief after the pilot (V2.6i i8). Research accepted the workflow 2026-10-28
+  (`FB_CONTRACT_REPLY_20261028T134149Z_RESEARCH`).
+- ☐ **V2.6k Fast loop (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
+  > 5.5 h single-core on 10,397 trades):** (1) fail fast: stage 1 = backtests, scorecard,
+  halves, cost stresses and the submission's cheap rejection criteria; monkeys and entry screen
+  only for a variant that survives stage 1; (2) monkeys / entry screen parallel over processes
+  (like `run_backtests`), a cheaper pre-screen, the spec's 1,000 runs for a real candidate;
+  (3) the submission's rejection criteria computed by the runner (today a script,
+  `results/intake/<stem>/criteria.json`). Codex `gpt-6.1-terra`, test-first.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 

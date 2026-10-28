@@ -1,6 +1,9 @@
 strategy = "london_fix"
 symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"]
 min_trades = 100
+# Skipped 2026-10-28 (the user): every variant already fails on cost; see ROADMAP V2.6k.
+monkeys = false
+entry_screen = false
 
 [submission]
 strategy_id = "FX_LONDON_FIX_REV"
