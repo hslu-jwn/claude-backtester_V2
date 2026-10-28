@@ -35,6 +35,7 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   | Orchestrating, check-ins, merges, routine checks | Opus medium |
   | Phase 4 review, specs, strategy design, regime classifier, hard bugs, no-lookahead / engine / risk | Opus high + Codex high |
   | All production code, specs, test-case lists | Codex medium |
+  | Codex model by task (the user, 2026-10-28; `--model`; all three checked on this account 2026-10-28, `gpt-6.1-luna` is not available) | `gpt-6.1-sol` (default): engine / no-lookahead / risk, a new strategy from a submission, hard bugs; `gpt-6.1-terra`: routine code from an exact brief (runner reports, small tools, intake commands, UI glue); `gpt-reserve` or `gpt-5.6-luna`: mechanical edits (labels, renames, doc sync, pinning tests). One level up after a failed try |
   | Review of Codex's code; second coding lane | Claude 4.6 (`claude46` medium = Sonnet, high = Opus 4.6) |
   | Writing tests from a test-case list, running tests | Gemini high |
   | Card write-ups, method look-ups for our evaluation (strategy research = research department) | Gemini medium |
