@@ -271,17 +271,20 @@ def write_diagnostics(folder, spec, variants, rows, info, results_dir, sources, 
 
 
 def decay_markdown(info):
+    def num(value, digits=2):
+        return "n/a" if value is None else f"{value:.{digits}f}"
+
     lines = ["", "## Decay and extreme trades", ""]
     for row in info.get("decay_extremes", []):
         lines += [
             f"- {row['period']} {row['variant_id']} (test run {row['test_run']}): "
-            f"slope {row['slope_per_year']} R/year, SE {row['standard_error']}, "
-            f"t {row['t_stat']}, {row['n_months']} months"
+            f"slope {num(row['slope_per_year'])} R/year, SE {num(row['standard_error'])}, "
+            f"t {num(row['t_stat'])}, {row['n_months']} months"
             + (" (perfect fit; SE and t unavailable)." if row["perfect_fit"] else "."),
             (
                 f"  Net R: {row['net_r']:.3f}; net R without the 10 best: "
                 f"{row['net_r_without_best']:.3f}; share of net R from the 10 best: "
-                f"{row['best_share']}."
+                f"{num(row['best_share'], 3)}."
             ),
         ]
     return lines
