@@ -77,6 +77,7 @@ from backtester.tools import (
     news_diagnostics,
     research_bayes,
     research_diagnostics,
+    research_entry_screen,
     research_monkeys,
     research_series,
     research_significance,
@@ -93,6 +94,7 @@ from backtester.tools.research_grid import (
     families,
     grid_id,
     load_grid,
+    swept_params,
     variant_settings,
 )
 
@@ -736,6 +738,12 @@ def _run_research_locked(
         "ranked": 0, "chosen": previous.get("chosen"), "test": test_info,
     }  # fmt: skip
     info.update(_code_version())
+    info.update(
+        swept_params=swept_params(spec),
+        free_params=len(swept_params(spec)),
+        max_free_params=cfg.max_free_params,
+    )
+    info["flags"] = ["too_many_parameters"] if info["free_params"] > cfg.max_free_params else []
     if spec.submission is not None:
         info["submission"] = spec.submission
         info["dataset"] = dataset_version(spec.symbols, first, last, sources)
@@ -794,6 +802,9 @@ def _run_research_locked(
             f"net {card['net_r']:+.1f} R ({clock.perf_counter() - started:.0f}s since start)"
         )
     rows = [_variant_row(spec, done[v.id], sc_cfg) for v in variants]
+    if info["free_params"] > cfg.max_free_params:
+        for row in rows:
+            row["flags"] = ";".join(filter(None, [row["flags"], "too_many_parameters"]))
     if spec.grids:
         for row, variant in zip(rows, variants, strict=True):
             row["family"] = variant.family
@@ -853,6 +864,20 @@ def _run_research_locked(
             )
         else:
             (folder / "monkeys.json").unlink(missing_ok=True)
+        info["entry_screen"] = None
+        if chosen is not None and spec.entry_screen:
+            variant = next(v for v in variants if v.id == chosen["id"])
+            screen = research_entry_screen.calculate(
+                folder, spec, chosen["id"], first, dev_end, variant_settings(spec, variant), sources
+            )
+            info["entry_screen"] = screen
+            _dump(folder / "entry_screen.json", screen)
+            selected = next(r for r in rows if r["variant_id"] == chosen["id"])
+            selected["flags"] = ";".join(
+                filter(None, [selected["flags"], *screen.get("flags", [])])
+            )
+        else:
+            (folder / "entry_screen.json").unlink(missing_ok=True)
         for saved in _test_rows(folder):
             number = int(saved["test_run"])
             variant = next(v for v in variants if v.id == saved["variant_id"])
@@ -884,7 +909,7 @@ def _run_research_locked(
                 drawdown_report.write(bounds, target)
                 info["drawdown_bounds"][f"test {saved['test_run']}"] = bounds
         research_diagnostics.write_diagnostics(
-            folder, spec, variants, rows, info, results_dir, sources
+            folder, spec, variants, rows, info, results_dir, sources, cfg
         )
         news_diagnostics.write_research(folder, variants, info, results_dir)
         from backtester.tools import skill_bounds
@@ -1130,6 +1155,10 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
         ),
         f"- Development {dev['start']} to {dev['end']}; test from {info['periods']['cutoff']}",
         f"- Status: {info['status']}",
+        (
+            f"- Free parameters: {info.get('free_params', 0)} "
+            f"(limit {info.get('max_free_params', 4)}): {', '.join(info.get('swept_params', []))}"
+        ),
         "",
         f"## Development, top {REPORT_TOP} by net R",
         "",
@@ -1162,6 +1191,8 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
     from backtester.analytics.monkeys import markdown as monkey_markdown
 
     lines += monkey_markdown(info.get("monkeys"))
+    lines += research_entry_screen.markdown(info.get("entry_screen"))
+    lines += research_diagnostics.decay_markdown(info)
     sensitivity = info.get("sensitivity")
     if sensitivity is not None:
         lines += [

@@ -13,13 +13,17 @@ from types import SimpleNamespace
 from backtester.analytics.market_classes import MARKET_CLASSES, market_class
 from backtester.analytics.metrics import by_period, by_symbol, split
 from backtester.analytics.robustness import (
+    extreme_summary,
     grid_stats,
+    monthly_net,
     plateau_cell,
     plateau_index,
+    returns_slope,
     shock_dates,
     shock_report,
     smooth_grid,
     smooth_series,
+    top_trades,
 )
 from backtester.core.models import Timeframe
 from backtester.tools.research_grid import families, family_variants, resolved_values
@@ -132,7 +136,11 @@ def grid_rows(spec, variants, rows):
 
 def snapshot(trades):
     """JSON-safe summaries and minimal shock inputs, reusable without backtest replay."""
+    monthly = monthly_net(trades)
     return {
+        "returns_slope": {**returns_slope(monthly), "monthly_net": monthly},
+        "top_trades": top_trades(trades),
+        "extreme_summary": extreme_summary(trades),
         "symbols": split(trades, by_symbol),
         "classes": split(trades, market_class),
         "years": by_period(trades),
@@ -151,8 +159,11 @@ def write_csv(path, rows, columns=()):
             csv.writer(stream).writerow(columns)
 
 
-def write_diagnostics(folder, spec, variants, rows, info, results_dir, sources):
+def write_diagnostics(folder, spec, variants, rows, info, results_dir, sources, config=None):
     """Refresh additive outputs from persisted snapshots, including historical retests."""
+    from backtester.tools.research_grid import ResearchConfig
+
+    cfg = config or ResearchConfig()
     grids = grid_rows(spec, variants, rows)
     write_csv(folder / "grid.csv", grids, GRID_COLUMNS)
     info["grid_robustness"] = grids
@@ -168,20 +179,32 @@ def write_diagnostics(folder, spec, variants, rows, info, results_dir, sources):
                 ("test", int(t["test_run"]), t["variant_id"], results_dir / t["run_folder"])
                 for t in csv.DictReader(stream)
             )
-    symbols, classes, years, shock_rows = [], [], [], []
+    symbols, classes, years, shock_rows, slopes, extremes = [], [], [], [], [], []
+    info["decay_extremes"] = []
     shocks = None
     last_period = "test" if any(period == "test" for period, *_ in records) else "development"
     for period, test_run, variant_id, run_folder in records:
         path = run_folder / "diagnostics.json"
         if path.exists():
             data = json.loads(path.read_text(encoding="utf-8"))
-        else:
+        if not path.exists() or "returns_slope" not in data:
             # Older completed runs are upgraded from their stored trades, never rerun.
             from backtester.analytics.records import read_trades
 
             data = snapshot(read_trades(run_folder))
             path.write_text(json.dumps(data), encoding="utf-8")
         prefix = {"period": period, "test_run": test_run, "variant_id": variant_id}
+        slope = data["returns_slope"]
+        slopes.append({**prefix, **slope, "monthly_net": json.dumps(slope["monthly_net"])})
+        extremes.extend({**prefix, **trade} for trade in data["top_trades"])
+        info["decay_extremes"].append({**prefix, **slope, **data["extreme_summary"]})
+        if (
+            period == "development"
+            and slope["t_stat"] is not None
+            and slope["t_stat"] <= cfg.decay_t
+        ):
+            selected = next(r for r in rows if r["variant_id"] == variant_id)
+            selected["flags"] = ";".join(filter(None, [selected["flags"], "declining_returns"]))
         symbols.extend({**prefix, "symbol": k, **v} for k, v in data["symbols"].items())
         classes.extend({**prefix, "market_class": k, **v} for k, v in data["classes"].items())
         years.extend(
@@ -212,6 +235,56 @@ def write_diagnostics(folder, spec, variants, rows, info, results_dir, sources):
     else:
         (folder / "shocks.csv").unlink(missing_ok=True)
     info["shocks"] = shock_rows if spec.shocks else None
+    write_csv(
+        folder / "returns_slope.csv",
+        slopes,
+        (
+            "period",
+            "test_run",
+            "variant_id",
+            "n_months",
+            "slope_per_year",
+            "standard_error",
+            "t_stat",
+            "perfect_fit",
+            "monthly_net",
+        ),
+    )
+    write_csv(
+        folder / "top_trades.csv",
+        extremes,
+        (
+            "period",
+            "test_run",
+            "variant_id",
+            "rank",
+            "side",
+            "symbol",
+            "direction",
+            "entry_time",
+            "exit_time",
+            "exit_reason",
+            "r_net",
+            "hold_hours",
+        ),
+    )
+
+
+def decay_markdown(info):
+    lines = ["", "## Decay and extreme trades", ""]
+    for row in info.get("decay_extremes", []):
+        lines += [
+            f"- {row['period']} {row['variant_id']} (test run {row['test_run']}): "
+            f"slope {row['slope_per_year']} R/year, SE {row['standard_error']}, "
+            f"t {row['t_stat']}, {row['n_months']} months"
+            + (" (perfect fit; SE and t unavailable)." if row["perfect_fit"] else "."),
+            (
+                f"  Net R: {row['net_r']:.3f}; net R without the 10 best: "
+                f"{row['net_r_without_best']:.3f}; share of net R from the 10 best: "
+                f"{row['best_share']}."
+            ),
+        ]
+    return lines
 
 
 def setting_cells(spec, overrides):

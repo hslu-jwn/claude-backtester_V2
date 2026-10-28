@@ -63,6 +63,7 @@ def test_twin_family_saved_occurrences(tmp_path, fakes, monkeypatch):
     )
     grid = """strategy = "opening_range"
 symbols = ["US500"]
+entry_screen = false  # this test checks saved twin occurrences, without M1 screening
 sensitivity = false
 min_trades = 1
 [[grids]]

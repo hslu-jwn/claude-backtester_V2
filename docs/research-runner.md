@@ -222,6 +222,50 @@ summary). The chosen variant's development and test runs are also written as nor
 (`results/<run-id>/`, so the results page and the chart open them) and the chosen settings as a preset.
 Runs are resumable: a finished variant is not run again. Every research run is written to the trial log.
 
+Additional runner-check outputs: `entry_screen.json`, `returns_slope.csv` and `top_trades.csv`
+(details below).
+
+### Runner checks (V2.4c, 2026-10-28)
+
+These are reporting warnings; they do not alter selection, verdict thresholds, strategy,
+engine or cost settings.
+
+- **Free parameters:** `swept_params` in `research.json` lists sorted distinct setting names
+  with more than one distinct value within any grid family (or `[grid]` without families).
+  Single-value settings and differences between fixed family bases do not count.
+  `free_params` is their count. `ResearchConfig.max_free_params=4` (must be >= 1) adds
+  `too_many_parameters` to every development variant row and the run-level `flags` in
+  `research.json` above the limit. The report prints
+  the count, limit and names; the grid still runs.
+- **Entry screen:** top-level grid key `entry_screen = true|false`, default `true`, runs
+  immediately after matched monkeys on the chosen development variant only. It reads that
+  variant's saved trades and M1 candles only within the development start/end, using its
+  strategy base timeframe and unchanged engine costs. `EntryScreenConfig` defaults stay
+  unchanged (1,000 random/shuffle runs, seed 42). `entry_screen.json` stores pass/fail,
+  reasons, positive-cell share, 1R/1R bracket win rate and random-exit percentile, plus counts
+  and period metadata. Failed screens add `entry_screen_failed` to the chosen row.
+  Missing M1 records an `error` in the JSON and report without stopping the run. Disabling
+  the screen, or having no chosen variant, removes any stale file. The report block is
+  "Entry screen (chosen development variant)". Existing screening thresholds are unchanged:
+  at least 70% positive cells, at least 52% bracket win rate and random-exit percentile > 90.
+- **Decay and extreme trades:** `returns_slope.csv` and `top_trades.csv` cover the chosen
+  development variant and each saved test/retest, identified by `period`, `variant_id` and
+  `test_run` (0 for development). These diagnostics use saved trades, without a new test run
+  or new test-period candle reads. Monthly net R uses UTC entry months and fills months
+  between the first and last trade with zero. Each slope CSV row contains the `monthly_net`
+  month-to-R JSON map and OLS `slope_per_year`, `standard_error` (also R/year), `t_stat` and
+  `n_months`. Below six months, slope/SE/t are empty. Perfect fits have empty SE/t (JSON
+  `null`) and `perfect_fit=true`, including constant series with slope zero.
+  `ResearchConfig.decay_t=-2.0` adds `declining_returns` only to the chosen development row
+  when t <= -2.0. `top_trades.csv` lists the 10 best descending and 10 worst ascending by
+  net R, ties by entry time, with rank, side, symbol, direction, entry/exit times, exit reason,
+  net R and hold hours. Small samples may appear on both sides. "Decay and extreme trades"
+  reports the slope, total net R, net R without the 10 best and their share of total net R;
+  the share is unavailable when total net R <= 0.
+
+UI warning labels: "more than 4 swept settings", "entries not better than chance" and
+"returns falling over time".
+
 ### Daily series (V2.4d items 1?2)
 
 The chosen development variant and each completed test run also retain

@@ -30,9 +30,92 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date
 
 from backtester.analytics.metrics import by_exit
+
+
+def monthly_net(trades) -> dict[str, float]:
+    """UTC entry-month net R, filling gaps. Spec: research-runner.md > Runner checks (V2.4c)."""
+    totals = {}
+    for trade in trades:
+        entry = trade.entry_time.astimezone(UTC)
+        month = entry.year * 12 + entry.month - 1
+        totals[month] = totals.get(month, 0.0) + trade.r_net
+    if not totals:
+        return {}
+    return {
+        f"{month // 12:04d}-{month % 12 + 1:02d}": totals.get(month, 0.0)
+        for month in range(min(totals), max(totals) + 1)
+    }
+
+
+def returns_slope(monthly: Mapping) -> dict:
+    """OLS on chronological monthly R; slope and SE in R/year, perfect-fit SE/t are null.
+
+    Spec: research-runner.md > Runner checks (V2.4c). At least six months are required.
+    """
+    values = [monthly[k] for k in sorted(monthly)]
+    n = len(values)
+    out = {
+        "n_months": n,
+        "slope_per_year": None,
+        "standard_error": None,
+        "t_stat": None,
+        "perfect_fit": False,
+    }
+    if n < 6:
+        return out
+    x_mean = (n - 1) / 2
+    mean = sum(values) / n
+    sxx = sum((i - x_mean) ** 2 for i in range(n))
+    slope = sum((i - x_mean) * (v - mean) for i, v in enumerate(values)) / sxx
+    residual = sum((v - mean - slope * (i - x_mean)) ** 2 for i, v in enumerate(values))
+    out["slope_per_year"] = slope * 12
+    if residual == 0:
+        out["perfect_fit"] = True
+    else:
+        se = math.sqrt(residual / (n - 2) / sxx)
+        out.update(standard_error=se * 12, t_stat=slope / se)
+    return out
+
+
+def top_trades(trades, n=10) -> list[dict]:
+    """Best/worst R, ties by entry time. Spec: research-runner.md > Runner checks (V2.4c)."""
+    trades = list(trades)
+    rows = []
+    for side, sign in (("best", -1), ("worst", 1)):
+        ordered = sorted(trades, key=lambda t: (sign * t.r_net, t.entry_time))[:n]
+        for rank, trade in enumerate(ordered, 1):
+            direction = getattr(trade.direction, "value", trade.direction)
+            # Use the same labels for engine enums and persisted long/short records.
+            direction = {"bullish": "long", "bearish": "short"}.get(direction, direction)
+            reason = getattr(trade, "exit_reason", "")
+            rows.append(
+                {
+                    "rank": rank,
+                    "side": side,
+                    "symbol": trade.symbol,
+                    "direction": direction,
+                    "entry_time": trade.entry_time.astimezone(UTC).isoformat(),
+                    "exit_time": trade.exit_time.astimezone(UTC).isoformat(),
+                    "exit_reason": getattr(reason, "value", reason),
+                    "r_net": trade.r_net,
+                    "hold_hours": (trade.exit_time - trade.entry_time).total_seconds() / 3600,
+                }
+            )
+    return rows
+
+
+def extreme_summary(trades, n=10) -> dict:
+    """Net R contribution of the best n. Spec: research-runner.md > Runner checks (V2.4c)."""
+    values = sorted((t.r_net for t in trades), reverse=True)
+    total, best = sum(values), sum(values[:n])
+    return {
+        "net_r": total,
+        "net_r_without_best": total - best,
+        "best_share": best / total if total > 0 else None,
+    }
 
 
 @dataclass(frozen=True, slots=True)

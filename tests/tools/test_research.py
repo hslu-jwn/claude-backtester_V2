@@ -30,6 +30,7 @@ GRID = """
 strategy = "opening_range"
 symbols = ["US500", "NAS100"]
 sensitivity = false  # these tests count the grid runs only (brief 2)
+entry_screen = false  # V2.4c: entry screening has its own synthetic M1 tests
 min_trades = 4
 
 [base]

@@ -87,7 +87,12 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   market, expectation haircut. **Re-check 2026-10-28:** all of these are built (grid merge 2,
   4d9be45; spread table default bd5a125; news split in V2.4e); what is left of the audit is
   listed in `docs/review/backtest-audit.md` › Re-check 2026-10-28 (mostly T-16 / T-17 and
-  partial checks), each needs the user's pick.
+  partial checks), each needs the user's pick. **Picked by the user 2026-10-28, built the same
+  day (Codex medium, Opus review; not accepted yet):** #2 swept-setting count (flag
+  `too_many_parameters` above 4), #6 entry screen of the chosen development variant in the
+  runner (`entry_screen.json`, flag `entry_screen_failed`), #13 monthly returns slope
+  (`returns_slope.csv`, flag `declining_returns` at t <= -2) and top-10 trades
+  (`top_trades.csv`); brief `briefs/v24c-runner-checks.md`.
 - ☑ **V2.4d Book requirements** (accepted by the user 2026-10-26; the tick-rounding default
   stays off until the user decides) (2026-10-23 / 24: items 1-9 done; open: the user's choice of
   the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,

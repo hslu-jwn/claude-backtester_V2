@@ -44,6 +44,9 @@ RESEARCH_DIR = "research"
 VARIANT_PREFIX = "research~"  # results page id of a variant folder (pages/results.py)
 RESULTS_PREFIX = "/results/"
 FLAG_SHORT = {
+    "too_many_parameters": "more than 4 swept settings",
+    "entry_screen_failed": "entries not better than chance",
+    "declining_returns": "returns falling over time",
     "skill_is_trend": "trend explains profit",
     "bayes_weak": "Bayes weak",
     "rc_not_significant": "RC p > 0.05",

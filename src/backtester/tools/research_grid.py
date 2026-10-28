@@ -59,6 +59,7 @@ TOP_LEVEL = (
     "step_months",
     "walk_forward_study",
     "monkeys",
+    "entry_screen",
 )
 ID_HASH_LENGTH = 8
 
@@ -74,12 +75,16 @@ class ResearchConfig:
     seed: int = 1  # seed of that sample
     cutoff: date = date(2021, 9, 14)  # first test day (data split rule of 2026-10-15)
     live_expectation_range: tuple[float, float] = (0.50, 0.75)
+    max_free_params: int = 4
+    decay_t: float = -2.0
 
     def __post_init__(self) -> None:
         if self.min_trades < 0:
             raise ValueError("min_trades must be >= 0")
         if self.max_variants < 1:
             raise ValueError("max_variants must be >= 1")
+        if self.max_free_params < 1:
+            raise ValueError("max_free_params must be >= 1")
         bounds = self.live_expectation_range
         if (
             len(bounds) != 2
@@ -111,6 +116,7 @@ class GridSpec:
     step_months: int = 6
     walk_forward_study: bool = False
     monkeys: bool = True
+    entry_screen: bool = True
     idea: str = ""
     submission: dict | None = None
 
@@ -312,6 +318,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("sensitivity must be true or false")
     if not isinstance(data.get("monkeys", True), bool):
         raise GridError("monkeys must be true or false")
+    if not isinstance(data.get("entry_screen", True), bool):
+        raise GridError("entry_screen must be true or false")
     if "walk_forward" in data and data["walk_forward"] not in ("anchored", "rolling"):
         raise GridError("walk_forward must be anchored or rolling")
     train_years = _number(data, "train_years", 3, 1) if "train_years" in data else None
@@ -377,6 +385,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         step_months=step_months,
         walk_forward_study=data.get("walk_forward_study", False),
         monkeys=data.get("monkeys", True),
+        entry_screen=data.get("entry_screen", True),
         idea=data.get("idea", ""),
         submission=_submission(data["submission"]) if "submission" in data else None,
     )
@@ -413,6 +422,18 @@ def _combination(spec: GridSpec | Family, index: int) -> dict:
 
 def families(spec: GridSpec) -> tuple[Family, ...]:
     return spec.grids or (Family("grid", {}, spec.grid),)
+
+
+def swept_params(spec: GridSpec) -> list[str]:
+    """Settings varied within any family. Spec: research-runner.md > Runner checks (V2.4c)."""
+    return sorted(
+        {
+            name
+            for family in families(spec)
+            for name, values in family.grid.items()
+            if values and any(v != values[0] for v in values[1:])
+        }
+    )
 
 
 def family_variants(spec: GridSpec):

@@ -16,9 +16,11 @@ intrabar M1 default (6718191, 43a4375), #14c TP penetration (42329c8, off by def
 bot running, #28 Bayes (b03ac0a), #29 effective N (84ce14a), spread table default (bd5a125),
 news calendar + research news split (0276bac, `tools/news_diagnostics.py`), block bootstrap
 for kind A + Masters bounds (30630b9).
-**Still partial:** #1 expected numbers, #2 no check of the number of swept parameters, #3 no
-sibling-symbol OOS, #6 entry screen not in the runner, #11 neighbouring timeframes, #13 slope
-and top-10 study, #21a trade-by-trade reconciliation (12.5 / T-06; fill report exists), #25
+**V2.4c runner checks (2026-10-28):** #2 swept-setting count (`research.json`), #6 chosen
+development entry screen (`entry_screen.json`), #13 returns slope and top-10 trades
+(`returns_slope.csv`, `top_trades.csv`) implemented; verification is recorded in the task report.
+**Still partial:** #1 expected numbers, #3 no sibling-symbol OOS, #11 neighbouring timeframes,
+#21a trade-by-trade reconciliation (12.5 / T-06; fill report exists), #25
 CSCV + PBO built but no CPCV and no time-reversed run, #30 pre-registered gates (T-17),
 slippage p90 stress (parked, V2.4b).
 **Still open:** #17 vol-targeted sizing, #20 Kelly / optimal f (T-16), #22 live binomial /
@@ -29,18 +31,18 @@ chi-square monitoring, #32 quit rule, performance cone, incubation (T-17).
 | # | Point | Status | Where / what is missing |
 |---|---|---|---|
 | 1 | Premise + expected numbers written down | ◐ | strategy specs in `docs/`; no fixed "expected trades / win rate / DD" section. Process: T-17 |
-| 2 | Pre-declared ranges, ≤ 4 free params, metric fixed | ◐ | grid file + net R ranking; no check of the number of swept parameters |
+| 2 | Pre-declared ranges, ≤ 4 free params, metric fixed | ☑ | `tools/research_grid.py`, `research.json`: swept names/count, warning above 4; grid file + net R ranking |
 | 3 | Data split fixed, sibling symbols as extra OOS | ◐ | split 2021-09-14 ☑; sibling-symbol OOS not built |
 | 4 | Rules checked by hand on the chart, no-lookahead tests | ☑ | chart replay, trades overlay (all strategies since V2.4a), detector tests |
 | 5 | Costs 0 / realistic / stressed | ☑ | gross vs net, `net_r_stressed` (costs × 1.5) in the scorecard |
-| 6 | Core signal profitable before stop / filter tuning | ◐ | entry screen (`analytics/entry_screen.py`), separate tool, not in the runner |
+| 6 | Core signal profitable before stop / filter tuning | ☑ | `tools/research_entry_screen.py`, `entry_screen.json`: chosen development screen in the runner |
 | 7 | Heat map: plateau, not spike | ◐ | `analytics/robustness.py` plateau; only in the archived grid tools -> grid merge (A) |
 | 8 | Mean, st.dev, % profitable combos (≥ 70 %) | ◐ | `grid_stats`; archived tools only -> grid merge (A) |
 | 9 | Sensitivity ±10-20 % around the chosen point | ☐ | = "parameter stability" of V2.6; belongs in the runner -> grid merge |
 | 10 | Every filter lifts the average of all combos | ☐ | the archived ORB / volume A/B did it by hand -> grid merge (D, twin comparison) |
 | 11 | All symbols of the class, neighbouring timeframes | ◐ | per-class table only in the archived ORB tool -> grid merge (C) |
 | 12 | Walk-forward, final hold-out untouched | ◐ | `analytics/walk_forward.py`; gap fade only -> grid merge (E) |
-| 13 | Year / half table, slope, best removed, top 10 | ◐ | halves + without best in the scorecard ☑; by-year in results page / archive; slope, top-10 study ☐ |
+| 13 | Year / half table, slope, best removed, top 10 | ☑ | `by_year.csv`, `returns_slope.csv`, `top_trades.csv`, `report.md`; `analytics/robustness.py`, `tools/research_diagnostics.py` |
 | 14 | Shock-day check | ◐ | `robustness.shock_report`; archived tools only -> grid merge (B) |
 | 14a | Random-entry baseline | ◐ | Monte Carlo kind B exists for gap fade only (needs a "follow" mode per strategy); generic version = T-14 |
 | 14b | SL and TP in one candle resolved from M1 | ☐ | engine takes SL first (conservative). T-03 / ROADMAP 12.2 |

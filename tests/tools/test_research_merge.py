@@ -27,6 +27,7 @@ fakes = research_fakes
 COMBINED = """
 strategy = "opening_range"
 symbols = ["US500", "NAS100"]
+entry_screen = false  # dedicated V2.4c tests cover screening with synthetic M1
 sensitivity = false  # these tests count the grid runs only (brief 2)
 min_trades = 4
 [base]

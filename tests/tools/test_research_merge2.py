@@ -199,6 +199,7 @@ def test_disabled_and_legacy_scorecard_cells(tmp_path, fakes):
 
 TWINS = """strategy = "opening_range"
 symbols = ["US500"]
+entry_screen = false  # twin comparisons do not exercise the entry screen
 min_trades = 4
 sensitivity = false
 [[grids]]
