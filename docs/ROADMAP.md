@@ -103,7 +103,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   mean and log profit factor; (9) prices rounded to the tick in the engine. Later (V2.6 /
   V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
   for the portfolio's member selection.
-- ◐ **V2.4e Economic calendar: news-day split + blackout filter** (synthetic build plus CSV-format addendum: loader validation, per-variant research split and settings/trial SHA256 persistence built; real-calendar validation pending;
+- ◐ **V2.4e Economic calendar: news-day split + blackout filter** (2026-10-28, accepted by the user: calendar wired into every run, scope = FTMO restricted events by default (`events="impact"` = all High), filter off by default (`docs/news.md`); synthetic build plus CSV-format addendum: loader validation, per-variant research split and settings/trial SHA256 persistence built; real-calendar validation pending;
   `docs/news.md`; not accepted; decisions by the user, 2026-10-26) — the news part of V2.4c and audit item "News" (`docs/review/backtest-audit.md`).
   Data: `../backtester-news/` (`economic_events_2020_to_2026-10-25.csv`, 9,836 High / Medium
   events 2020-01-02 .. 2026-10-23, `implementation_instructions.md`, `coverage_report.md`,
@@ -183,7 +183,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   live candles auto-refresh on the chart, remote branch `claude/ui-polish` (delete only on the
   user's word), CLI named-preset restrictions equal to the app's.
   A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
-- ◐ **V2.6i Research-department intake (the user, 2026-10-27; i1-i7 built 2026-10-28 night, not accepted by the user: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; next i8 = first real pilot when Research submits one):** strategy ideas now come from
+- ◐ **V2.6i Research-department intake (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; next i8 = first real pilot when Research submits one):** strategy ideas now come from
   `../Research_Department/` through `../Shared_Interface/` (process: `docs/research-intake.md`;
   review and decisions D1-D8: `docs/review/research-interface-review-2026-10-27.md`). Test-first
   steps, no engine change: (i1) contract frozen with the agreed edits + fixtures; (i2)

@@ -2,7 +2,7 @@
 
 Process spec (the user, 2026-10-27). **Status (2026-10-28): intake built (ROADMAP V2.6i
 steps 1-3, `tools/intake.py`), synthetic end-to-end test green; operational for
-`R_STOP_DEFINED` day-trading submissions, not yet accepted by the user.** No real submission
+`R_STOP_DEFINED` day-trading submissions, accepted by the user 2026-10-28.** No real submission
 has been claimed yet.
 Review of the contract: `docs/review/research-interface-review-2026-10-27.md`.
 
