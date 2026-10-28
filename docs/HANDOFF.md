@@ -54,6 +54,9 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 - 2026-10-28 (`End.`): everything of the night 2026-10-27/28 incl. Opus's decisions
   (`docs/review/night-2026-10-28.md`): news filter off by default, FTMO scope default, V2.6i
   built before the fill analysis, empty text settings allowed, no one-time test spent.
+- 2026-10-28 (midday): do not build the p90 stressed costs yet; the bot keeps running and the
+  user comes back to it later. Fill report re-run at 10:35 UTC (1,511 fills, 339 London);
+  brief ready in `briefs/v24b-p90-stress.md`, not dispatched.
 - 2026-10-28: slippage (V2.4b): keep the model slippage as default; after London fills, the
   measured p90 per symbol becomes the stressed cost level (instead of costs x 1.5).
 - 2026-10-27: research department split, decisions D1-D8
