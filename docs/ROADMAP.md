@@ -84,7 +84,10 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   then measure the spread table's effect on the golden lists (default stays off unless the
   user decides) and a news-day split. The grid merge (V2.4) also takes the runner-level audit
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
-  market, expectation haircut.
+  market, expectation haircut. **Re-check 2026-10-28:** all of these are built (grid merge 2,
+  4d9be45; spread table default bd5a125; news split in V2.4e); what is left of the audit is
+  listed in `docs/review/backtest-audit.md` › Re-check 2026-10-28 (mostly T-16 / T-17 and
+  partial checks), each needs the user's pick.
 - ☑ **V2.4d Book requirements** (accepted by the user 2026-10-26; the tick-rounding default
   stays off until the user decides) (2026-10-23 / 24: items 1-9 done; open: the user's choice of
   the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
@@ -133,6 +136,12 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   (6) the tests from the instructions (timezone of the PC, DST, inclusive / exclusive
   boundary, no `actual` one tick early, blank timestamps, date / range policy, two events at
   one time, duplicate keys fail, EURUSD gets no foreign currencies, hash recorded).
+  **Later, open (the user, 2026-10-28; no live news API for now):** (a) a refresh tool that
+  pulls new events into the calendar CSV through the same cleaning (`tools/news_clean`), run by
+  hand or weekly, so research has a current calendar; (b) only when a strategy with the news
+  rule goes to the demo bot: the bot reads that refreshed calendar at start and once a day (same
+  blackout logic as the backtest; touches `live/`, needs the user's go). A streaming API only if
+  unscheduled events ever matter. Source still to pick (FTMO's restricted list is what counts).
   Not in scope: the live bot (needs a live calendar source), 2015-2019 (raw Forex Factory
   cache goes back to 2007 if wanted later). **Rule set by the user, 2026-10-26:** Opus may
   use `../backtester-news/` and implement V2.4e in the repo once it is due (no extra ask).

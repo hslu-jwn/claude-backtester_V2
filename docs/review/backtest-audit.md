@@ -7,6 +7,23 @@ before the grid-tool merge: "what exactly do we need to consider for a realistic
 Status: ☑ built and used · ◐ built but not wired into the research runner, or only in part ·
 ☐ missing. "Runner" = `tools/research.py`, which every V2.6 research run goes through.
 
+## Re-check 2026-10-28 (the table below is the 2026-10-23 state)
+
+Checked against the code and git log (Sonnet subagent, read-only; Opus spot checks).
+**Done since:** #7, #8, #14 (51a99ce), #9, #10, #15, #16, #31 (4d9be45), #11 per class
+(51a99ce), #12 walk-forward in months (02a0735, 43caff6), #14a / #26 monkeys (78b2225), #14b
+intrabar M1 default (6718191, 43a4375), #14c TP penetration (42329c8, off by default), #21 demo
+bot running, #28 Bayes (b03ac0a), #29 effective N (84ce14a), spread table default (bd5a125),
+news calendar + research news split (0276bac, `tools/news_diagnostics.py`), block bootstrap
+for kind A + Masters bounds (30630b9).
+**Still partial:** #1 expected numbers, #2 no check of the number of swept parameters, #3 no
+sibling-symbol OOS, #6 entry screen not in the runner, #11 neighbouring timeframes, #13 slope
+and top-10 study, #21a trade-by-trade reconciliation (12.5 / T-06; fill report exists), #25
+CSCV + PBO built but no CPCV and no time-reversed run, #30 pre-registered gates (T-17),
+slippage p90 stress (parked, V2.4b).
+**Still open:** #17 vol-targeted sizing, #20 Kelly / optimal f (T-16), #22 live binomial /
+chi-square monitoring, #32 quit rule, performance cone, incubation (T-17).
+
 ## Checklist against the code
 
 | # | Point | Status | Where / what is missing |
