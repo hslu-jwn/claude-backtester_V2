@@ -96,8 +96,10 @@ subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `i
 idea backlog I-xx / T-xx). No new books or ideas are added here: strategy research belongs to
 the research department. Our evaluation methods (testing, statistics, costs, frameworks) stay
 in use for judging results. Files stay in place (code and docs link them); the research team
-may copy from them. New strategies come only from a submission, written into a `docs/` spec and
-approved by the user (`docs/research-intake.md`).
+may copy from them. New strategies come only from a submission, written into a `docs/` spec
+(`docs/research-intake.md`). Since 2026-10-28 (the user) the loop runs automatically: an unclear
+point is decided by Opus, recorded as an assumption and sent to Research; specs need no user
+approval; the one-time MT5 test still needs the user's go.
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
   a trading rule. Quote the spec line you are unsure about.

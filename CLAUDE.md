@@ -98,7 +98,11 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   - Rules: every strategy comes from a validated, claimed submission; its sources and
     evidence are the research department's responsibility (Opus does not re-research them,
     but returns feedback on anything that looks wrong). Every rule maps to the submission;
-    anything unclear -> `NEEDS_CLARIFICATION`, never a guess. One parameter set pooled across all
+    anything unclear: Opus decides by its own judgment, writes it into the spec's
+    "Assumptions" section, tells Research in an `ASSUMPTION_MADE` feedback message and builds
+    anyway; `NEEDS_CLARIFICATION` only when no reasonable reading exists. Specs need no user
+    approval in the loop; the one-time MT5 test still does (rule set by the user, 2026-10-28;
+    `docs/research-intake.md` › Assumptions and replies). One parameter set pooled across all
     markets by default; per-market parameters with re-optimisation only as a walk-forward
     variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the parameters
     the submission marks tunable, within its ranges. Do not judge pass / fail: record every

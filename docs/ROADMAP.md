@@ -211,6 +211,12 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   future-support list, old idea backlog to research, test only on the user's go, queue files
   kept). Contract 0.1.0 accepted by both teams 2026-10-27 (research applied all requested
   edits), so i1 is down to the fixtures.
+- ☐ **V2.6j Automatic research loop (the user, 2026-10-28):** assumptions instead of waiting,
+  async questions to Research (`docs/research-intake.md` › Assumptions and replies); build
+  `intake inbox` (open questions of ours, unprocessed replies, age in days), `intake assume`
+  (ASSUMPTION_MADE message from a list), parked claims for `NEEDS_CLARIFICATION`, the open
+  count in the loop report / HANDOFF, open assumptions listed in the result envelope. Codex
+  brief after the pilot (V2.6i i8).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 

@@ -54,11 +54,14 @@ compute job only after it is a reviewed V2 strategy.
    period? stop-defined R trade? fill timing representable? Otherwise feedback
    `UNSUPPORTED_DATA` / `UNSUPPORTED_STRATEGY_TYPE`. Never approximate (no invented far stop,
    no changed sizing, no swapped fill timing).
-3. **Clarify**: any rule that needs judgment -> feedback `NEEDS_CLARIFICATION` quoting the field
-   (JSON Pointer). Research answers with a new specification version; we never guess.
+3. **Clarify** (rule set by the user, 2026-10-28; see › Assumptions and replies): a rule that
+   needs judgment is decided by Opus, recorded as an assumption and sent to Research as an
+   `ASSUMPTION_MADE` issue; the work goes on. `NEEDS_CLARIFICATION` (stop, wait for a new
+   specification version) only when no reasonable reading exists.
 4. **Spec** (Codex): `docs/strategy-<name>.md` from the submission, with a "Submission"
-   section: strategy_id, version, sha256 of the submitted bytes, and a mapping table of every
-   parameter and rule to a config field / code location / test. The user approves the spec.
+   section: strategy_id, version, sha256 of the submitted bytes, a mapping table of every
+   parameter and rule to a config field / code location / test, and an "Assumptions" section.
+   No user approval in the automatic loop (the user, 2026-10-28).
 5. **Tests, code, review**: as AGENTS.md › Team and › Testing (test-first, lane, no-lookahead
    review).
 6. **Development experiment**: grid from the submission's tunable parameters and ranges only
@@ -71,6 +74,43 @@ compute job only after it is a reviewed V2 strategy.
    envelope discloses only what the agreed holdout policy allows.
 9. **Close**: move the queue file to `completed/` or `rejected/` (never deleted), update
    `docs/research-log.md`, ROADMAP, HANDOFF.
+
+## Assumptions and replies (the user, 2026-10-28)
+
+The loop is fully automatic: several submissions in `pending/` are taken one after another by
+`priority`, each built and run on development data without asking the user. Only the one-time
+MT5 test (step 8) still needs the user's explicit go.
+
+- **We ask without waiting.** An unclear point gets Opus's decision (the most conservative
+  reading that keeps the submission's intent: never a better fill, never a wider stop, never
+  fewer costs). It goes into the spec's "Assumptions" section and, in the same step, into one
+  feedback message (`status` `IMPLEMENTING` or `TESTING`, one issue per assumption: `code`
+  `ASSUMPTION_MADE`, `severity` `WARNING`, `field` = JSON Pointer, `message` = our reading and
+  what a different answer would change, `requires_revision` false). Fits schema 0.1.0 as it is.
+- **Research answers when it next works** (its `Begin.` sessions): a message in
+  `feedback/messages/` with `in_reply_to` = our `feedback_id`, one issue per point, `code`
+  `CONFIRMED` (our reading stands) or `CORRECTED` (the right reading in `message`). A
+  correction that changes a trading rule comes as a new specification version (submissions are
+  immutable).
+- **We read the replies** at the start of every loop step (messages whose `in_reply_to` is one
+  of our ids). `CONFIRMED`: noted in the spec and the result envelope. `CORRECTED` on a
+  reporting point: recompute that report from the saved trades. A new version: a new claim and
+  a new run; the old one stays (failed and superseded runs are kept).
+- Every result envelope lists the open (unanswered) assumptions, so a result built on an
+  unconfirmed reading is never mistaken for a confirmed one.
+- **Real doubt** (the answer would change an entry, stop, exit or sizing rule and no
+  conservative reading exists): `NEEDS_CLARIFICATION`, the submission stays parked in
+  `claimed/` and the loop takes the next clear submission; a new specification version unparks
+  it. Many submissions never block each other.
+- **Open = unanswered:** a message of ours with `ASSUMPTION_MADE` or `NEEDS_CLARIFICATION` is
+  open until a reply has `in_reply_to` = its `feedback_id`. No index file: both teams compute
+  the list at session start (ours: `intake inbox`, planned; Research: a step of its `Begin.`).
+  Every loop report and `docs/HANDOFF.md` show "Open questions for Research: n (oldest d
+  days)"; long blockers go into the evening Telegram summary. No deadline; the one-time test of
+  a strategy is not proposed to the user while its assumptions are open.
+- Sent to Research as contract note `FB_UNKNOWN_20261028T133901Z_91de` (2026-10-28); until
+  they agree, their replies may also come as plain `ACCEPTED` / `WARNING` messages and are read
+  the same way.
 
 ## Decided (the user, 2026-10-27)
 
