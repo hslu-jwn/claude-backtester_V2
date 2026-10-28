@@ -654,8 +654,6 @@ def emit_result(
     holdout_disclosure=None,
 ) -> Path:
     """Export recorded evidence only. Spec: research-intake.md > Result metric mapping."""
-    from types import SimpleNamespace
-
     from backtester.analytics.trial_log import read_all
     from backtester.tools.research import _test_authorized
 
@@ -666,7 +664,7 @@ def emit_result(
         re.escape(f"{stem}__{stage}__") + r"[1-9][0-9]*", experiment_id
     ):
         raise ValueError("Invalid experiment identity or stage.")
-    info = _read(_contained(folder / "info.json", umbrella))
+    info = _read(_contained(folder / "research.json", umbrella))
     identity = info["submission"]
     for key, value in (
         ("strategy_id", claim.payload["strategy_id"]),
@@ -677,7 +675,7 @@ def emit_result(
             raise ValueError("Research submission identity mismatch.")
     if stage == "FINAL_HOLDOUT":
         _contained(results / "intake" / stem / "test_authorization.json", umbrella)
-        if not _test_authorized(SimpleNamespace(submission=identity), results):
+        if not _test_authorized(identity, results):
             raise ValueError("Final holdout requires user authorization.")
     disclosure = holdout_disclosure or ("NONE" if stage == "DEVELOPMENT" else "REDACTED")
     if disclosure not in (("NONE",) if stage == "DEVELOPMENT" else ("REDACTED", "FULL")):
@@ -718,23 +716,8 @@ def emit_result(
         "trades": "trades",
         "win_rate": "win_rate",
     }
-    metric_keys = (
-        "net_r",
-        "max_drawdown_r",
-        "expectancy_r",
-        "sharpe_daily_r",
-        "sortino_daily_r",
-        "net_return_pct",
-        "max_drawdown_pct",
-        "expectancy_pct",
-        "profit_factor",
-        "trades",
-        "win_rate",
-        "average_win_r",
-        "average_loss_r",
-        "exposure_pct",
-        "turnover_pct",
-    )
+    schema = _read(_contained(Path("Shared_Interface/schemas/result.schema.json"), umbrella))
+    metric_keys = schema["properties"]["metrics"]["properties"]
     metrics = dict.fromkeys(metric_keys)
     metrics.update({key: summary.get(source) for key, source in mapping.items()})
     # day_sharpe is the stored daily R Sharpe; never substitute a per-trade statistic.

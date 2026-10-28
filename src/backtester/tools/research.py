@@ -265,23 +265,20 @@ def _dump(path: Path, data) -> None:
 def _code_version() -> dict:
     """Git provenance of this checkout; unavailable git metadata never blocks a run."""
     root = Path(__file__).resolve().parents[3]
+
+    def git(*args):
+        return subprocess.run(
+            ["git", *args],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout.strip()
+
     try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        ).stdout.strip()
-        dirty = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        ).stdout.strip()
+        commit = git("rev-parse", "HEAD")
+        dirty = git("status", "--porcelain")
     except (OSError, subprocess.SubprocessError):
         return {"code_commit": None, "code_dirty": None}
     return {"code_commit": commit, "code_dirty": bool(dirty)}
@@ -291,10 +288,12 @@ def _submission_stem(identity: dict) -> str:
     return f"{identity['strategy_id']}__v{identity['specification_version']}"
 
 
-def _test_authorized(spec: GridSpec, results_dir: Path) -> bool:
-    if spec.submission is None:
+def _test_authorized(identity: dict | None, results_dir: Path) -> bool:
+    if isinstance(identity, GridSpec):  # Compatibility for existing callers.
+        identity = identity.submission
+    if identity is None:
         return True
-    path = results_dir / "intake" / _submission_stem(spec.submission) / "test_authorization.json"
+    path = results_dir / "intake" / _submission_stem(identity) / "test_authorization.json"
     authorization = _read_json(path)
     if not isinstance(authorization, dict):
         return False
@@ -307,7 +306,7 @@ def _test_authorized(spec: GridSpec, results_dir: Path) -> bool:
         authorization.get("authorized_by") == "user"
         and isinstance(quote, str)
         and bool(quote.strip())
-        and authorization.get("experiment_id") == spec.submission["experiment_id"]
+        and authorization.get("experiment_id") == identity["experiment_id"]
     )
 
 
@@ -978,8 +977,6 @@ def _run_research_locked(
             (folder / "walk_forward.csv").unlink(missing_ok=True)
             (folder / "walk_forward_study.csv").unlink(missing_ok=True)
         _dump(folder / "research.json", info)
-        if spec.submission is not None:
-            _dump(folder / "info.json", info)
         _write_report(folder, info, rows, _test_rows(folder))
         return {
             "status": status, "message": message, "id": rid, "folder": folder,
@@ -1009,7 +1006,7 @@ def _run_research_locked(
         log,
     )
     authorization_skip = None
-    if not dev_only and not _test_authorized(spec, results_dir):
+    if not dev_only and not _test_authorized(spec.submission, results_dir):
         authorization_skip = (
             f"test skipped: no user authorization for {_submission_stem(spec.submission)}"
         )

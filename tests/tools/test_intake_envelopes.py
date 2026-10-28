@@ -58,7 +58,7 @@ def folder(umbrella, claimed):
         "source_summary": ["cache"],
     }
     write(
-        folder / "info.json",
+        folder / "research.json",
         {
             "submission": identity,
             "dataset": dataset,
@@ -68,7 +68,6 @@ def folder(umbrella, claimed):
             "variants": 1,
         },
     )
-    write(folder / "research.json", read(folder / "info.json"))
     run = folder / "variants/v001"
     write(run / "info.json", {"submission": identity, "dataset": dataset, "code_commit": "a" * 40})
     write(
@@ -256,7 +255,7 @@ def test_result_metrics_artifacts_and_immutable_record(umbrella, claimed, folder
 def test_holdout_authorization_and_redaction(umbrella, claimed, folder, disclosure):
     with pytest.raises(ValueError, match="authoriz"):
         emit(umbrella, claimed, folder, stage="FINAL_HOLDOUT")
-    info = read(folder / "info.json")
+    info = read(folder / "research.json")
     run = umbrella / "results/holdout"
     for name in ("info.json", "summary.json", "settings.json", "scorecard.json"):
         write(run / name, read(folder / "variants/v001" / name))
@@ -264,7 +263,7 @@ def test_holdout_authorization_and_redaction(umbrella, claimed, folder, disclosu
     meta["submission"]["experiment_id"] = claimed.path.stem + "__FINAL_HOLDOUT__1"
     write(run / "info.json", meta)
     info["test"] = {"run_folder": "holdout", "status": "done"}
-    write(folder / "info.json", info)
+    write(folder / "research.json", info)
     write(
         umbrella / "results/intake" / claimed.path.stem / "test_authorization.json",
         {
@@ -286,9 +285,9 @@ def test_holdout_authorization_and_redaction(umbrella, claimed, folder, disclosu
 
 
 def test_outside_paths_and_invalid_envelopes_refused(umbrella, claimed, folder):
-    info = read(folder / "info.json")
+    info = read(folder / "research.json")
     info["chosen"]["dev_run"] = "../../outside"
-    write(folder / "info.json", info)
+    write(folder / "research.json", info)
     with pytest.raises(ValueError, match="path|umbrella"):
         emit(umbrella, claimed, folder)
     with pytest.raises(ValueError):
@@ -485,10 +484,10 @@ def test_cli_lifecycle(umbrella, claimed, folder, monkeypatch):
 
 
 def test_development_envelope_carries_nothing_from_the_test_period(umbrella, claimed, folder):
-    info = read(folder / "info.json")
+    info = read(folder / "research.json")
     info["drawdown_bounds"] = {"development": {"p95": 5}, "test 1": {"p95": 9}}
     info["bayes"] = {"development": {"p": 0.6}, "tests": [{"test_run": 1, "p": 0.1}], "twins": []}
-    write(folder / "info.json", info)
+    write(folder / "research.json", info)
     for name in ("test.csv", "report.md", "bayes.json"):
         (folder / name).write_text("test-period content", encoding="utf-8")
     envelope = read(emit(umbrella, claimed, folder))
