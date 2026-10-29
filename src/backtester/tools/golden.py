@@ -38,6 +38,7 @@ class GoldenConfig:
         ("gap_fade", ("NAS100", "US500")),
         ("opening_range", ("US30", "US2000", "NAS100", "US500")),
         ("gap_momentum", ("XAUUSD",)),
+        ("london_fix", ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD")),
     )
 
 

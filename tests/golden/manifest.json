@@ -77,8 +77,22 @@
       "runtime_seconds": 3.4727093999972567,
       "git_commit": "9970ed345f2052549d294f5ee2b2be714a44f577",
       "date": "2026-10-27T15:55:16+00:00"
+    },
+    "london_fix": {
+      "symbols": [
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "NZDUSD",
+        "USDCHF",
+        "USDCAD"
+      ],
+      "trade_count": 1554,
+      "runtime_seconds": 23.715000400028657,
+      "git_commit": "38fd3f52a302865c6902f3972fdf23491e08a045",
+      "date": "2026-10-29T15:49:43+00:00"
     }
   },
-  "git_commit": "9970ed345f2052549d294f5ee2b2be714a44f577",
-  "date": "2026-10-27T15:55:16+00:00"
+  "git_commit": "38fd3f52a302865c6902f3972fdf23491e08a045",
+  "date": "2026-10-29T15:49:43+00:00"
 }
