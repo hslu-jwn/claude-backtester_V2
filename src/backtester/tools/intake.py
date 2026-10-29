@@ -10,6 +10,7 @@ import math
 import os
 import re
 import stat
+import sys
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -610,6 +611,263 @@ def progress(umbrella, claim, status) -> Path:
     )
 
 
+OUR_PRODUCER = "V2 backtester team"
+QUESTION_CODES = {"ASSUMPTION_MADE", "NEEDS_CLARIFICATION"}
+
+
+def open_questions(messages):
+    """Find our unanswered questions. Spec: research-intake.md > Assumptions and replies."""
+    answered = {m.get("in_reply_to") for m in messages if m.get("in_reply_to")}
+    return [
+        m
+        for m in messages
+        if m.get("producer") == OUR_PRODUCER
+        and m.get("feedback_id") not in answered
+        and any(i.get("code") in QUESTION_CODES for i in m.get("issues", []))
+    ]
+
+
+def new_replies(messages, processed):
+    ours = {m.get("feedback_id") for m in messages if m.get("producer") == OUR_PRODUCER}
+    return [
+        dict(m, unknown_reference=bool(m.get("in_reply_to") and m["in_reply_to"] not in ours))
+        for m in messages
+        if m.get("producer") != OUR_PRODUCER
+        and (m.get("in_reply_to") or m.get("producer") == "Research department")
+        and m.get("feedback_id") not in processed
+    ]
+
+
+def summary_line(open, now):
+    if not open:
+        return "Open questions for Research: 0"
+    ages = [(now - datetime.fromisoformat(m["created_at"])).days for m in open]
+    return f"Open questions for Research: {len(open)} (oldest {max(0, max(ages))} days)"
+
+
+def _messages(umbrella):
+    folder = Path(umbrella) / "Shared_Interface/feedback/messages"
+    messages = []
+    try:
+        from jsonschema import Draft202012Validator, FormatChecker
+    except ImportError:
+        validator = None
+    else:
+        schema = _read(Path(umbrella) / "Shared_Interface/schemas/feedback.schema.json")
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    for path in sorted(folder.glob("*.json")):
+        if path.name.startswith("."):
+            continue
+        try:
+            message = _read(path)
+            if validator is not None and not validator.is_valid(message):
+                raise ValueError("invalid feedback envelope")
+            if (
+                not isinstance(message, dict)
+                or not isinstance(message.get("feedback_id"), str)
+                or not isinstance(message.get("issues"), list)
+                or not isinstance(message.get("producer"), str)
+            ):
+                raise TypeError("invalid message")
+            if any(not isinstance(i, dict) for i in message["issues"]):
+                raise ValueError("invalid issues")
+            if message.get("created_at"):
+                stamp = datetime.fromisoformat(message["created_at"])
+                if stamp.utcoffset() is None:
+                    raise ValueError("timestamp lacks timezone")
+            else:
+                raise ValueError("missing timestamp")
+            messages.append(message)
+        except (OSError, ValueError, TypeError, UnicodeError) as exc:
+            print(f"Warning: {path.name}: {exc}", file=sys.stderr)
+    return messages
+
+
+def _points(claim, points, code, severity, kind):
+    if not isinstance(points, list) or not points:
+        raise ValueError("Points must be a non-empty list.")
+    issues = []
+    for point in points:
+        if not isinstance(point, dict):
+            raise TypeError("Invalid point.")
+        pointer, message = point.get("field"), point.get("message")
+        if (
+            not isinstance(pointer, str)
+            or not pointer.startswith("/")
+            or not isinstance(message, str)
+            or len(message.strip()) < 3
+        ):
+            raise ValueError(
+                "Each point needs a JSON Pointer and a message of at least three characters."
+            )
+        node = claim.payload
+        try:
+            for part in pointer[1:].split("/"):
+                if re.search(r"~(?![01])", part):
+                    raise ValueError
+                part = part.replace("~1", "/").replace("~0", "~")
+                if isinstance(node, list):
+                    if not re.fullmatch(r"0|[1-9][0-9]*", part):
+                        raise ValueError
+                    node = node[int(part)]
+                elif isinstance(node, dict):
+                    node = node[part]
+                else:
+                    raise TypeError
+        except (KeyError, IndexError, ValueError, TypeError):
+            raise ValueError(f"Pointer does not resolve: {pointer}") from None
+        issues.append(Issue(code, severity, message, pointer, kind))
+    return issues
+
+
+def assume(umbrella, claim, status, points):
+    if status not in ("IMPLEMENTING", "TESTING"):
+        raise ValueError("Invalid assumption status.")
+    issues = _points(claim, points, "ASSUMPTION_MADE", "WARNING", "note")
+    return emit_feedback(
+        umbrella, status=status, issues=issues, subject_file=claim.path, claim=claim
+    )
+
+
+def park(umbrella, results, claim, points):
+    issues = _points(claim, points, "NEEDS_CLARIFICATION", "ERROR", "invalid")
+    record_path = _contained(Path(results) / "intake" / claim.path.stem / "claim.json", umbrella)
+    with file_lock(_contained(record_path.parent / ".claim-record.lock", umbrella)):
+        record = _read(record_path)
+        if (
+            record.get("sha256") != claim.sha256
+            or record.get("outcome") is not None
+            or record.get("parked")
+        ):
+            raise ValueError("Claim record mismatch or already parked.")
+        out = emit_feedback(
+            umbrella,
+            status="NEEDS_CLARIFICATION",
+            issues=issues,
+            subject_file=claim.path,
+            claim=claim,
+        )
+        record.update(parked=True, feedback_id=out.stem, parked_at=datetime.now(UTC).isoformat())
+        atomic_json(record_path, record)
+    return out
+
+
+def parked_claims(results):
+    records = []
+    for path in sorted((Path(results) / "intake").glob("*/claim.json")):
+        try:
+            record = _read(path)
+            if record.get("parked"):
+                records.append((path, record))
+        except (OSError, ValueError, TypeError):
+            continue
+    return records
+
+
+def inbox(umbrella, results, *, ack=None, json_output=False, now=None):
+    messages = _messages(umbrella)
+    processed_path = _contained(Path(results) / "intake/inbox_processed.json", umbrella)
+    with file_lock(_contained(processed_path.parent / ".inbox.lock", umbrella)):
+        processed = set(_read(processed_path) if processed_path.exists() else [])
+        if ack:
+            eligible = new_replies(messages, set())
+            if not any(m["feedback_id"] == ack for m in eligible):
+                raise ValueError("Unknown reply id.")
+            processed.add(ack)
+            atomic_json(processed_path, sorted(processed))
+    opened = open_questions(messages)
+    replies = new_replies(messages, processed)
+    current = now or datetime.now(UTC)
+    unparked = []
+    for path, record in parked_claims(results):
+        old = tuple(map(int, record["specification_version"].split(".")))
+        for candidate in (_queue(umbrella) / "pending").glob(record["strategy_id"] + "__v*.json"):
+            match = FILENAME.fullmatch(candidate.name)
+            if match and candidate.stem.rsplit("__v", 1)[0] == record["strategy_id"]:
+                version = tuple(map(int, candidate.stem.rsplit("__v", 1)[1].split(".")))
+                if version > old:
+                    record["parked"] = False
+                    atomic_json(path, record)
+                    unparked.append(f"Unpark {path.parent.name}: newer submission {candidate.name}")
+                    break
+    summary = summary_line(opened, current)
+    if json_output:
+        details = []
+        for message in opened:
+            issues = [i for i in message["issues"] if i.get("code") in QUESTION_CODES]
+            details.append(
+                dict(
+                    message,
+                    kind="blocking"
+                    if any(i["code"] == "NEEDS_CLARIFICATION" for i in issues)
+                    else "assumption",
+                    points=len(issues),
+                    fields=[i.get("field") for i in issues],
+                    age_days=max(0, (current - datetime.fromisoformat(message["created_at"])).days),
+                )
+            )
+        print(
+            json.dumps(
+                {"open": details, "replies": replies, "summary": summary, "unparked": unparked}
+            )
+        )
+    else:
+        for message in opened:
+            issues = [i for i in message["issues"] if i.get("code") in QUESTION_CODES]
+            kind = (
+                "blocking"
+                if any(i["code"] == "NEEDS_CLARIFICATION" for i in issues)
+                else "assumption"
+            )
+            age = max(
+                0,
+                (current - datetime.fromisoformat(message["created_at"])).days,
+            )
+            print(
+                f"{message['feedback_id']} {message.get('strategy_id')} v{message.get('specification_version')} {kind} {len(issues)} points: {', '.join(str(i.get('field')) for i in issues)} ({age} days)"
+            )
+        for message in replies:
+            print(
+                f"{message['feedback_id']}"
+                + (" (unknown reference)" if message["unknown_reference"] else "")
+            )
+            for issue in message["issues"]:
+                print(f"  {issue.get('code')} {issue.get('field')}: {issue.get('message')}")
+        for line in unparked:
+            print(line)
+        print(summary)
+
+
+def _assumption_warnings(umbrella, claim):
+    messages = _messages(umbrella)
+    opened = {m["feedback_id"] for m in open_questions(messages)}
+    warnings = []
+    for m in messages:
+        if (
+            m.get("producer") != OUR_PRODUCER
+            or m.get("strategy_id") != claim.payload["strategy_id"]
+            or m.get("specification_version") != claim.payload["specification_version"]
+            or m.get("submission_sha256") != claim.sha256
+        ):
+            continue
+        issues = [i for i in m["issues"] if i.get("code") == "ASSUMPTION_MADE"]
+        if not issues:
+            continue
+        ident = m["feedback_id"]
+        if ident in opened:
+            warnings.append(
+                f"Open assumption (unanswered): {ident}: {', '.join(str(i.get('field')) for i in issues)}"
+            )
+        else:
+            for reply in messages:
+                if reply.get("in_reply_to") == ident:
+                    codes = {i.get("code") for i in reply["issues"]}
+                    for code in ("CONFIRMED", "CORRECTED"):
+                        if code in codes:
+                            warnings.append(f"Assumption {ident}: {code} by {reply['feedback_id']}")
+    return warnings
+
+
 def _experiment_directory(results, stem):
     if not FILENAME.fullmatch(stem + ".json"):
         raise ValueError("Invalid submission stem.")
@@ -802,7 +1060,7 @@ def emit_result(
         "robustness": {} if redacted else robustness,
         "variants_tried": count,
         "artifacts": [] if redacted else artifacts,
-        "warnings": list(warnings),
+        "warnings": list(warnings) + _assumption_warnings(umbrella, claim),
         "errors": list(errors),
         "created_at": datetime.now(UTC).isoformat(),
         "holdout_disclosure": disclosure,
@@ -833,7 +1091,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
-        choices=("validate", "claim", "recover", "reject", "progress", "finish", "result"),
+        choices=(
+            "validate",
+            "claim",
+            "recover",
+            "reject",
+            "progress",
+            "finish",
+            "result",
+            "inbox",
+            "assume",
+            "park",
+            "parked",
+        ),
     )
     parser.add_argument("stem", nargs="?")
     parser.add_argument("status", nargs="?")
@@ -842,8 +1112,37 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--research-folder", type=Path)
     parser.add_argument("--stage", choices=("DEVELOPMENT", "FINAL_HOLDOUT"), default="DEVELOPMENT")
     parser.add_argument("--requested-costs", default="{}")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--ack")
+    parser.add_argument("--file", type=Path)
     args = parser.parse_args(argv)
     results = args.root / HOME_DIR.name / "results"
+    if args.command == "inbox":
+        try:
+            inbox(args.root, results, ack=args.ack, json_output=args.json)
+        except ValueError as exc:
+            parser.error(str(exc))
+        return 0
+    if args.command == "parked":
+        for _, record in parked_claims(results):
+            print(
+                f"{record['strategy_id']}__v{record['specification_version']} {record['feedback_id']}"
+            )
+        return 0
+    if args.command in ("assume", "park"):
+        if not args.stem or not args.file:
+            parser.error("submission stem and --file are required")
+        try:
+            current = _load_claim(args.root, results, args.stem)
+            points = _read(args.file)
+            print(
+                assume(args.root, current, args.status, points)
+                if args.command == "assume"
+                else park(args.root, results, current, points)
+            )
+        except (ValueError, TypeError, OSError) as exc:
+            parser.error(str(exc))
+        return 0
     if args.command in ("progress", "finish", "result"):
         if not args.stem:
             parser.error("submission stem is required")

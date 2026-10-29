@@ -1,0 +1,37 @@
+{
+  "schema_version": "0.1.0",
+  "feedback_id": "FB_FX_LONDON_FIX_REV_20261028T133244Z_00ab",
+  "scope": "SUBMISSION",
+  "subject_file": "Shared_Interface/queue/claimed/FX_LONDON_FIX_REV__v1.0.0.json",
+  "strategy_id": "FX_LONDON_FIX_REV",
+  "specification_version": "1.0.0",
+  "submission_sha256": "8ec6b914e7669cc28b3eeb1008271dae8df264453934d6ce5c099b3d70ae6263",
+  "status": "IMPLEMENTING",
+  "issues": [
+    {
+      "code": "ASSUMPTION_MADE",
+      "severity": "WARNING",
+      "message": "Month-end is not defined. V2 uses: the last weekday (Mon-Fri) of the calendar month, London date of the entry; reporting tag only, no effect on trades. Reply CONFIRMED or give the definition; a different definition only re-runs the month-end split.",
+      "field": "/experiment/robustness_tests/3",
+      "requires_revision": false
+    },
+    {
+      "code": "ASSUMPTION_MADE",
+      "severity": "WARNING",
+      "message": "Doubled-cost stress = net R with each trade's spread, commission and slippage x 2, computed from the trades (no swap: same-day exits). V2's own stressed level stays costs x 1.5 and is reported next to it.",
+      "field": "/experiment/costs/1",
+      "requires_revision": false
+    },
+    {
+      "code": "ASSUMPTION_MADE",
+      "severity": "WARNING",
+      "message": "No London-fix holiday calendar: every weekday with a [16:02,16:03) London M1 bar trades; holiday contamination is not flagged (your known gap).",
+      "field": "/implementation/edge_cases/4",
+      "requires_revision": false
+    }
+  ],
+  "created_at": "2026-10-28T13:32:44.055158+00:00",
+  "producer": "V2 backtester team",
+  "in_reply_to": null,
+  "related_experiment_id": null
+}

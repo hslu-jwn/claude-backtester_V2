@@ -217,7 +217,19 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   (ASSUMPTION_MADE message from a list), parked claims for `NEEDS_CLARIFICATION`, the open
   count in the loop report / HANDOFF, open assumptions listed in the result envelope. Codex
   brief after the pilot (V2.6i i8). Research accepted the workflow 2026-10-28
-  (`FB_CONTRACT_REPLY_20261028T134149Z_RESEARCH`).
+  (`FB_CONTRACT_REPLY_20261028T134149Z_RESEARCH`). **Built 2026-10-29** (Codex
+  gpt-6.1-terra, Opus review): `intake inbox [--json] [--ack]`, `assume`, `park`, `parked`,
+  automatic unpark on a higher version, open / answered assumptions in every result envelope.
+- ☐ **V2.6l Result envelope for research review (Research's review 2026-10-29,
+  `FB_FX_LONDON_FIX_REV_RESULT_REVIEW_20261029T070325Z_RESEARCH`; our answer
+  `FB_FX_LONDON_FIX_REV_20261029T164921Z_83af`):** embed every declared cell in `robustness`
+  (cell ID, parameters, trades, net / gross R, halves, x2 and x1.5 stresses labelled, stop
+  share, criteria inputs); `variants_tried` = declared cells only, sensitivity runs reported
+  apart. Plus for INTRADAY_H1_SHOCK_RESPONSE (draft, preflight answered
+  `FB_INTRADAY_H1_SHOCK_RESPONSE_20261029T164921Z_e881`): a run-level data-integrity check
+  that fails the experiment as TEST_FAILED on a missing M1 bar inside trading hours while a
+  position is open (definition proposed to Research), day-clustered uncertainty, raw
+  forward-response series next to executed R. Codex gpt-6.1-terra.
 - ☐ **V2.6k Fast loop (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
   > 5.5 h single-core on 10,397 trades):** (1) fail fast: stage 1 = backtests, scorecard,
   halves, cost stresses and the submission's cheap rejection criteria; monkeys and entry screen

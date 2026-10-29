@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1.0",
+  "feedback_id": "FB_FX_LONDON_FIX_REV_20261028T134544Z_1abf",
+  "scope": "SUBMISSION",
+  "subject_file": "Shared_Interface/queue/claimed/FX_LONDON_FIX_REV__v1.0.0.json",
+  "strategy_id": "FX_LONDON_FIX_REV",
+  "specification_version": "1.0.0",
+  "submission_sha256": "8ec6b914e7669cc28b3eeb1008271dae8df264453934d6ce5c099b3d70ae6263",
+  "status": "TESTING",
+  "issues": [
+    {
+      "code": "ASSUMPTION_MADE",
+      "severity": "WARNING",
+      "message": "'No swap because every position closes on the entry day': the broker rollover is 17:00 New York = 22:00 London. Entries at 16:03 held 360 minutes exit at 22:03 and pay one night's swap (triple on Wednesdays); 60 and 180 minutes pay none. V2 keeps its real swap (more conservative). Reply CONFIRMED or CORRECTED.",
+      "field": "/experiment/costs/2",
+      "requires_revision": false
+    },
+    {
+      "code": "ASSUMPTION_MADE",
+      "severity": "WARNING",
+      "message": "'Force close by 23:55 Europe/London': if the 23:55 M1 bar is missing, V2 closes on the next available bar. With holding <= 360 minutes from 16:03 this never applies.",
+      "field": "/exits/end_of_session",
+      "requires_revision": false
+    }
+  ],
+  "created_at": "2026-10-28T13:45:44.899146+00:00",
+  "producer": "V2 backtester team",
+  "in_reply_to": null,
+  "related_experiment_id": null
+}

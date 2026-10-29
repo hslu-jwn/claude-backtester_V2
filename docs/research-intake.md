@@ -105,7 +105,7 @@ MT5 test (step 8) still needs the user's explicit go.
   it. Many submissions never block each other.
 - **Open = unanswered:** a message of ours with `ASSUMPTION_MADE` or `NEEDS_CLARIFICATION` is
   open until a reply has `in_reply_to` = its `feedback_id`. No index file: both teams compute
-  the list at session start (ours: `intake inbox`, planned; Research: a step of its `Begin.`).
+  the list at session start (ours: `intake inbox`; Research: a step of its `Begin.`).
   Every loop report and `docs/HANDOFF.md` show "Open questions for Research: n (oldest d
   days)"; long blockers go into the evening Telegram summary. No deadline; the one-time test of
   a strategy is not proposed to the user while its assumptions are open.
@@ -142,11 +142,20 @@ operational gate above.
 validate
 claim [--worker <name>]
 recover
+inbox [--json] [--ack <feedback_id>]
+assume <STRATEGY_ID>__v<version> IMPLEMENTING|TESTING --file <points.json>
+park <STRATEGY_ID>__v<version> --file <points.json>
+parked
 reject
 progress <STRATEGY_ID>__v<version> CLAIMED|IMPLEMENTING|TESTING
 finish <STRATEGY_ID>__v<version> completed|rejected
 result <STRATEGY_ID>__v<version> --research-folder <path> --stage DEVELOPMENT [--requested-costs <JSON-object>]
 ```
+
+`inbox` lists open questions and unprocessed replies; `--ack` records a reply as processed.
+`assume` sends non-blocking assumptions and `park` sends blocking clarification points;
+both read a JSON list of objects containing `field` (a resolving JSON Pointer) and `message`.
+`parked` lists parked claims. Inbox unparks a claim when a higher version is pending.
 
 `reject` quarantines invalid pending submissions and emits rejection feedback. Unsupported
 capabilities on an existing claim use `reject_unsupported()`; data errors take precedence over
