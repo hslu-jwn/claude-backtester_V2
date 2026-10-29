@@ -46,7 +46,7 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 |---|---|
 | V2.4b fill analysis | 1,128 fills NY + Asia (`docs/review/fill-analysis-2026-10-28.md`); median slippage at or below the model, p90 ~3x; **no London fills yet** |
 | V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted) |
-| V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, still in `claimed/` until the user decides pass / fail (`docs/research-log.md`) |
+| V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
 | Open questions for Research | 0 (inbox 2026-10-29; replies sent to the result review, the H1-shock preflight and the study-route note) |
 | Next builds | V2.6l result envelope per cell + integrity check; V2.6j and V2.6k built 2026-10-29; V2.4c checks #2 #6 #13 built, not accepted |
 | Deals export | `scripts/export_deals.py <since> --offset-hours 3` (+2 h from 2026-11-01), read-only |

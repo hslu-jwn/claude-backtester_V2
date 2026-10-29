@@ -13,7 +13,7 @@ pairs with the predicted gross sign: the postfix drift exists, costs (~1,220 R) 
 the source paper says for liquidity demanders. Criteria (`results/intake/<stem>/criteria.json`):
 1 met, 2 not met, 3-5 met, 6 not run (monkeys skipped by the user: > 5.5 h CPU, cannot change
 the outcome). Result envelope `FX_LONDON_FIX_REV__v1.0.0__DEVELOPMENT__1` sent; the user decides
-pass / fail; no holdout. Research confirmed 3 assumptions within minutes; the swap / 23:55
+pass / fail; no holdout. **Rejected by the user 2026-10-29** (moved to `queue/rejected/`, bytes unchanged, REJECTED message `FB_FX_LONDON_FIX_REV_20261029T170636Z_097b`). Research confirmed 3 assumptions within minutes; the swap / 23:55
 assumption is open. Codex models: gpt-6.1-sol (pilot), gpt-6.1-sol (V2.4c checks; terra would
 have done).
 

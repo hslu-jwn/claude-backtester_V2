@@ -197,7 +197,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   live candles auto-refresh on the chart, remote branch `claude/ui-polish` (delete only on the
   user's word), CLI named-preset restrictions equal to the app's.
   A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
-- ◐ **V2.6i Research-department intake (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; next i8 = first real pilot when Research submits one):** strategy ideas now come from
+- ◐ **V2.6i Research-department intake (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; i8 = first real pilot FX_LONDON_FIX_REV v1.0.0, run 2026-10-28, rejected by the user 2026-10-29):** strategy ideas now come from
   `../Research_Department/` through `../Shared_Interface/` (process: `docs/research-intake.md`;
   review and decisions D1-D8: `docs/review/research-interface-review-2026-10-27.md`). Test-first
   steps, no engine change: (i1) contract frozen with the agreed edits + fixtures; (i2)
