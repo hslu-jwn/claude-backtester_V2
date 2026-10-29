@@ -304,7 +304,9 @@ def test_runner_diagnostics_and_measurement(tmp_path, monkeypatch):
 
     with output.with_suffix(".csv").open() as f:
         rows = list(csv.DictReader(f))
-    assert len(rows) == 14 and all(float(r["delta_net_r"]) == 0 for r in rows)
+    assert len(rows) == 2 * len(GoldenConfig().strategies) and all(
+        float(r["delta_net_r"]) == 0 for r in rows
+    )
     assert "Default remains False" in output.with_suffix(".md").read_text()
     assert json.loads(json.dumps(result.summary()))["combined"]["tick_rounding"]["rejected"] == 1
 

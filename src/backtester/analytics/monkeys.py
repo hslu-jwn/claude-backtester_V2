@@ -5,13 +5,17 @@ All M1 exits delegate to entry_screen; no independent fill or cost simulator liv
 
 from __future__ import annotations
 
+import math
+import os
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 
 import numpy as np
 
+from backtester.analytics import _worker_data
 from backtester.analytics.entry_screen import (
     ExitResult,
     M1Data,
@@ -158,11 +162,22 @@ def _summary(real, samples, lower=False):
     }
 
 
+def _replay_chunk(chunk):
+    result = []
+    for drawn in chunk:
+        exits = replay(drawn, _worker_data.m1s, _worker_data.costs)
+        result.append(
+            statistics([r.r_net for r in exits], [r.exit_time.timestamp() for r in exits])
+        )
+    return result
+
+
 def matched_monkeys(
     trades: Sequence[ScreenTrade],
     m1s: Mapping[str, M1Data],
     costs: CostConfig,
     config: MonkeyConfig | None = None,
+    workers: int | None = None,
 ) -> dict:
     """Run all three matched models; retain samples for audit and downstream verdicts."""
     cfg = config or MonkeyConfig()
@@ -180,15 +195,52 @@ def matched_monkeys(
         return result
     candidates = _candidates(trades, m1s, cfg)
     real = statistics([t.r_net for t in trades], [t.exit_time.timestamp() for t in trades])
+    workers = max(1, (os.cpu_count() or 1) - 1) if workers is None else workers
+    if workers < 1:
+        raise ValueError("workers must be positive")
+    pool = (
+        ProcessPoolExecutor(
+            max_workers=workers, initializer=_worker_data.initialize, initargs=(m1s, costs)
+        )
+        if workers > 1
+        else None
+    )
+    try:
+        _monkey_runs(result, trades, m1s, costs, cfg, candidates, real, workers, pool)
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True, cancel_futures=True)
+    result["passed"] = all(k["passed"] for k in result["kinds"])
+    result["flags"] = [] if result["passed"] else ["monkey_beaten"]
+    return result
+
+
+def _monkey_runs(result, trades, m1s, costs, cfg, candidates, real, workers, pool):
     for kind, name in KINDS.items():
         rng = np.random.default_rng([cfg.seed, kind])
         samples = np.empty((cfg.runs, 2))
-        for run in range(cfg.runs):
-            drawn = draw_run(trades, m1s, kind, rng, cfg, candidates=candidates)
-            exits = replay(drawn, m1s, costs)
-            samples[run] = statistics(
-                [r.r_net for r in exits], [r.exit_time.timestamp() for r in exits]
-            )
+        if pool is None:
+            for run in range(cfg.runs):
+                drawn = draw_run(trades, m1s, kind, rng, cfg, candidates=candidates)
+                exits = replay(drawn, m1s, costs)
+                samples[run] = statistics(
+                    [r.r_net for r in exits], [r.exit_time.timestamp() for r in exits]
+                )
+        else:
+            size = max(1, math.ceil(cfg.runs / (4 * workers)))
+            futures = []
+            output = []
+            for start in range(0, cfg.runs, size):
+                chunk = [
+                    draw_run(trades, m1s, kind, rng, cfg, candidates=candidates)
+                    for _ in range(min(size, cfg.runs - start))
+                ]
+                futures.append(pool.submit(_replay_chunk, chunk))
+                if len(futures) >= workers:
+                    output.extend(futures.pop(0).result())
+            for future in futures:
+                output.extend(future.result())
+            samples[:] = output
         net = _summary(real[0], samples[:, 0])
         dd = _summary(real[1], samples[:, 1], lower=True)
         passed = min(net["percentile"], dd["percentile"]) >= cfg.pass_percentile
@@ -203,9 +255,6 @@ def matched_monkeys(
                 "samples_max_dd_r": samples[:, 1].tolist(),
             }
         )
-    result["passed"] = all(k["passed"] for k in result["kinds"])
-    result["flags"] = [] if result["passed"] else ["monkey_beaten"]
-    return result
 
 
 def net_percentile(result: dict | None) -> float | None:
@@ -214,6 +263,8 @@ def net_percentile(result: dict | None) -> float | None:
 
 def markdown(result: dict | None) -> list[str]:
     lines = ["", "## Matched monkeys", ""]
+    if result and result.get("skipped") == "gate":
+        return lines + ["skipped (failed the cost gate)"]
     if not result or not result["available"]:
         return lines + ["Unavailable (disabled or no trades)."]
     lines += [

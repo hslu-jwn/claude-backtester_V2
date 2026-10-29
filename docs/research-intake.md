@@ -69,7 +69,8 @@ compute job only after it is a reviewed V2 strategy.
    robustness, Monte Carlo, parameter stability, regime breakdown, flags; job queue.
 7. **Result envelope** (development stage): metrics, the submission's rejection criteria
    computed (we report them; the user decides), references to `results/<run-id>/` and
-   `results/research/<id>/`.
+   `results/research/<id>/`. The runner's `criteria_inputs.json` supplies development
+   criteria inputs for the envelope.
 8. **One-time test** after 2021-09-14: only with the user's explicit go per strategy. Its
    envelope discloses only what the agreed holdout policy allows.
 9. **Close**: move the queue file to `completed/` or `rejected/` (never deleted), update

@@ -59,6 +59,7 @@ TRADES_DIR = "trades"
 PERCENT = 100.0
 NO_BUDGET = 100.0  # daily budget (x initial balance) that never binds
 FIVE = ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")
+LONDON_FIX_SYMBOLS = ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD")
 
 
 @dataclass(frozen=True, slots=True)
@@ -301,6 +302,12 @@ def plans() -> dict[str, Plan]:
             dev_source="mt5",
             note="tick-volume filter: dev only on US30 / US2000 (FTMO MT5 before the cut-off, "
             "the only indices with tick volume then); test on the 4 forward symbols",
+        ),
+        "london_fix": Plan(
+            "london_fix",
+            default_config("london_fix"),
+            LONDON_FIX_SYMBOLS,
+            LONDON_FIX_SYMBOLS,
         ),
     }
     assert set(out) == set(REGISTRY)

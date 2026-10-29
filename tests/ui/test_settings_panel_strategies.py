@@ -13,7 +13,7 @@ from backtester.strategy.registry import default_config
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.ui import settings_panel as sp
 
-S1, S2, S3, S4, S5, S6, S7 = (
+S1, S2, S3, S4, S5, S6, S7, S8 = (
     "session_zone_sweep",
     "ny_index_sweep",
     "no_wick",
@@ -21,6 +21,7 @@ S1, S2, S3, S4, S5, S6, S7 = (
     "gap_fade",
     "opening_range",
     "gap_momentum",
+    "london_fix",
 )
 
 
@@ -74,7 +75,7 @@ def test_a_path_with_different_defaults_gets_one_widget_per_strategy():
 
 def test_shared_paths_have_one_widget_owned_by_both():
     fields = {wp: owners for wp, _, owners in sp.panel_fields()}
-    assert fields["warmup_days"] == {S1, S2, S3, S4, S5, S6, S7}
+    assert fields["warmup_days"] == {S1, S2, S3, S4, S5, S6, S7, S8}
     assert fields["strategy.zone_kill"] == {S1}
     assert fields["strategy.min_tp1_r"] == {S2}
 
@@ -223,4 +224,4 @@ def test_rows_of_the_other_strategy_are_hidden_and_marks_follow_the_shown_strate
 def test_the_page_lists_the_strategies_of_the_registry():
     from backtester.ui.pages import chart
 
-    assert [s["value"] for s in chart.STRATEGIES] == [S1, S2, S3, S4, S5, S6, S7]
+    assert [s["value"] for s in chart.STRATEGIES] == [S1, S2, S3, S4, S5, S6, S7, S8]

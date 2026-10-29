@@ -46,6 +46,7 @@ RESULTS_PREFIX = "/results/"
 FLAG_SHORT = {
     "too_many_parameters": "more than 4 swept settings",
     "entry_screen_failed": "entries not better than chance",
+    "nulls_skipped": "null tests skipped (lost after costs)",
     "declining_returns": "returns falling over time",
     "skill_is_trend": "trend explains profit",
     "bayes_weak": "Bayes weak",

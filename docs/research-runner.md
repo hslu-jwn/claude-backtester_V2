@@ -223,7 +223,26 @@ summary). The chosen variant's development and test runs are also written as nor
 Runs are resumable: a finished variant is not run again. Every research run is written to the trial log.
 
 Additional runner-check outputs: `entry_screen.json`, `returns_slope.csv` and `top_trades.csv`
-(details below).
+(details below), `monkeys.json`, and `criteria_inputs.json` (development criteria inputs).
+
+### Fast loop (V2.6k, 2026-10-28)
+
+By default the chosen development variant must have net R after costs above
+`ResearchConfig.gate_net_min` (default 0) before matched monkeys or the entry screen run.
+Set the grid key `fail_fast = false` to run the enabled null tests regardless of this gate.
+The existing `monkeys` and `entry_screen` switches still disable their respective tests.
+When gated, enabled null-test JSON files record the threshold, chosen net R and skip reason;
+the chosen row receives `nulls_skipped` and the report records the skip.
+
+The runner's `--workers` also controls matched monkeys and entry screening. Random draws
+remain in the parent process in their original seeded order; re-simulation uses workers and
+produces identical numbers for every worker count. `--workers 1` runs in process; the default
+uses one fewer than the available CPUs, at least one. The standalone entry-screen command
+accepts the same option.
+
+`criteria_inputs.json` records development variant counts, chosen gross and net R, gross R
+by symbol, stressed costs, scorecard halves, net R excluding the best 1, 5 and 10 UTC exit
+days, stop share, and counts and net R by trade tag. It feeds submission result envelopes.
 
 ### Runner checks (V2.4c, 2026-10-28)
 

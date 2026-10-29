@@ -9,7 +9,7 @@ from backtester.data.sources import UnmappedSymbolError
 from backtester.strategy.registry import make_strategy
 
 
-def calculate(folder, spec, variant_id, start, end, settings, sources) -> dict:
+def calculate(folder, spec, variant_id, start, end, settings, sources, workers=None) -> dict:
     from backtester.tools.entry_screen import load_m1
 
     trades = read_trades(folder / "variants" / variant_id)
@@ -34,6 +34,7 @@ def calculate(folder, spec, variant_id, start, end, settings, sources) -> dict:
         EntryScreenConfig(),
         variant_id,
         (start, end),
+        workers=workers,
     )
     verdict = judge([screen])
     return dict(
@@ -52,6 +53,8 @@ def markdown(result):
     if result is None:
         return []
     lines = ["", "## Entry screen (chosen development variant)", ""]
+    if result.get("skipped") == "gate":
+        return [*lines, "skipped (failed the cost gate)"]
     if "error" in result:
         return [*lines, f"Error: {result['error']}"]
     return [

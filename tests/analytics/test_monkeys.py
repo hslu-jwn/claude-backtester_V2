@@ -234,3 +234,42 @@ def test_verdict_precedence():
     assert random_entry_percentile("gap_momentum", baseline, monkey) == 91
     assert random_entry_percentile("gap_fade", None, monkey) == 91
     assert random_entry_percentile("trend_following", None, None) is None
+
+
+def test_parallel_monkeys_match_serial():
+    cfg = MonkeyConfig(runs=12)
+    assert matched_monkeys(trades(), {"X": data()}, FREE, cfg, workers=1) == matched_monkeys(
+        trades(), {"X": data()}, FREE, cfg, workers=3
+    )
+
+
+def test_serial_monkeys_do_not_create_pool(monkeypatch):
+    import backtester.analytics.monkeys as module
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("serial execution must not create a pool")
+
+    monkeypatch.setattr(module, "ProcessPoolExecutor", forbidden)
+    matched_monkeys(trades(), {"X": data()}, FREE, MonkeyConfig(runs=2), workers=1)
+
+
+def test_monkey_worker_exception_propagates(monkeypatch):
+    import backtester.analytics.monkeys as module
+
+    class Future:
+        def result(self):
+            raise RuntimeError("worker failed")
+
+    class Pool:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def submit(self, *args, **kwargs):
+            return Future()
+
+        def shutdown(self, **kwargs):
+            pass
+
+    monkeypatch.setattr(module, "ProcessPoolExecutor", Pool)
+    with pytest.raises(RuntimeError, match="worker failed"):
+        matched_monkeys(trades(), {"X": data()}, FREE, MonkeyConfig(runs=2), workers=2)

@@ -36,7 +36,10 @@ Choices the spec leaves open (documented, ROADMAP 12.12):
 
 from __future__ import annotations
 
+import math
+import os
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from functools import cached_property
@@ -44,6 +47,7 @@ from functools import cached_property
 import numpy as np
 import pandas as pd
 
+from backtester.analytics import _worker_data
 from backtester.analytics.verdict import middle_date
 from backtester.core.models import Direction
 from backtester.engine.costs import CostConfig
@@ -481,6 +485,7 @@ def screen_variant(
     trades: Sequence[ScreenTrade], m1s: Mapping[str, M1Data], bar_minutes: int,
     costs: CostConfig, config: EntryScreenConfig | None = None, label: str = "default",
     period: tuple[date, date] | None = None,
+    workers: int | None = None,
 ) -> VariantScreen:  # fmt: skip
     """Run the battery on one variant's trades (see the module docstring)."""
     cfg = config or EntryScreenConfig()
@@ -506,15 +511,44 @@ def screen_variant(
     b_rev = [exit_bracket(m1s[t.symbol], t, costs, cfg.bracket_r, True) for t in usable]
     bracket = _bracket_summary(b_orig, b_rev, usable)
     # (c)
-    random = _random_summary(usable, m1s, costs, cfg)
-    hit_rows = _hit_scan(usable, m1s, bar_minutes, cfg)
+    workers = max(1, (os.cpu_count() or 1) - 1) if workers is None else workers
+    if workers < 1:
+        raise ValueError("workers must be positive")
+    pool = (
+        ProcessPoolExecutor(
+            max_workers=workers, initializer=_worker_data.initialize, initargs=(m1s, costs)
+        )
+        if workers > 1 and usable
+        else None
+    )
+    try:
+        random = _random_summary(usable, m1s, costs, cfg, workers, pool)
+        hit_rows = _hit_scan(usable, m1s, bar_minutes, cfg, workers, pool)
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True, cancel_futures=True)
     by_symbol: dict[str, int] = {}
     for t in usable:
         by_symbol[t.symbol] = by_symbol.get(t.symbol, 0) + 1
     return VariantScreen(label, len(usable), skipped, cells, bracket, random, hit_rows, by_symbol)
 
 
-def _random_summary(usable, m1s, costs, cfg: EntryScreenConfig) -> RandomSummary:
+def _random_chunk(chunk):
+    result = []
+    for trade, holds in chunk:
+        m1 = _worker_data.m1s[trade.symbol]
+        result.append(
+            (
+                random_exit_runs(m1, trade, holds, _worker_data.costs).net,
+                random_exit_runs(m1, trade, holds, _worker_data.costs, True).net,
+            )
+        )
+    return result
+
+
+def _random_summary(
+    usable, m1s, costs, cfg: EntryScreenConfig, workers=1, pool=None
+) -> RandomSummary:
     if not usable:
         nan = float("nan")
         return RandomSummary(0.0, 0.0, cfg.random_runs, 0.0, nan, nan, nan, nan, nan, nan, nan)
@@ -525,11 +559,30 @@ def _random_summary(usable, m1s, costs, cfg: EntryScreenConfig) -> RandomSummary
     totals = np.zeros(cfg.random_runs)
     rev_totals = np.zeros(cfg.random_runs)
     hold_sum = 0.0
-    for t in usable:
-        holds = rng.uniform(0.0, 2.0 * mean_hold, cfg.random_runs)
-        hold_sum += float(holds.sum())
-        totals += random_exit_runs(m1s[t.symbol], t, holds, costs).net
-        rev_totals += random_exit_runs(m1s[t.symbol], t, holds, costs, True).net
+    if pool is None:
+        for t in usable:
+            holds = rng.uniform(0.0, 2.0 * mean_hold, cfg.random_runs)
+            hold_sum += float(holds.sum())
+            totals += random_exit_runs(m1s[t.symbol], t, holds, costs).net
+            rev_totals += random_exit_runs(m1s[t.symbol], t, holds, costs, True).net
+    else:
+        size = max(1, min(32, math.ceil(len(usable) / (4 * workers))))
+        futures = []
+        for start in range(0, len(usable), size):
+            chunk = []
+            for t in usable[start : start + size]:
+                holds = rng.uniform(0.0, 2.0 * mean_hold, cfg.random_runs)
+                hold_sum += float(holds.sum())
+                chunk.append((t, holds))
+            futures.append(pool.submit(_random_chunk, chunk))
+            if len(futures) >= workers:
+                for net, reverse in futures.pop(0).result():
+                    totals += net
+                    rev_totals += reverse
+        for future in futures:
+            for net, reverse in future.result():
+                totals += net
+                rev_totals += reverse
     strategy = float(sum(t.r_net for t in usable))
     p5, p50, p95 = np.percentile(totals, [5, 50, 95])
     r5, r50, r95 = np.percentile(rev_totals, [5, 50, 95])
@@ -540,7 +593,19 @@ def _random_summary(usable, m1s, costs, cfg: EntryScreenConfig) -> RandomSummary
     )  # fmt: skip
 
 
-def _hit_scan(usable, m1s, bar_minutes: int, cfg: EntryScreenConfig) -> list[dict]:
+def _shuffle_chunk(shuffles, draws):
+    result = []
+    for run in draws:
+        values = np.zeros(shuffles[0][0].shape[1]) if shuffles else np.zeros(0)
+        for (up, signs, _), indices in zip(shuffles, run, strict=True):
+            values += (up[indices] == signs[:, None]).sum(axis=0)
+        result.append(values)
+    return result
+
+
+def _hit_scan(
+    usable, m1s, bar_minutes: int, cfg: EntryScreenConfig, workers=1, pool=None
+) -> list[dict]:
     n_bars = len(cfg.bars)
     if not usable:
         return []
@@ -568,10 +633,26 @@ def _hit_scan(usable, m1s, bar_minutes: int, cfg: EntryScreenConfig) -> list[dic
     total = len(usable)
     rng = np.random.default_rng([cfg.seed, 1])
     sim = np.zeros((cfg.shuffle_runs, n_bars))
-    for r in range(cfg.shuffle_runs):
-        for up, signs, _n in shuffles:
-            draws = rng.integers(0, len(up), len(signs))
-            sim[r] += (up[draws] == signs[:, None]).sum(axis=0)
+    if pool is None:
+        for r in range(cfg.shuffle_runs):
+            for up, signs, _n in shuffles:
+                draws = rng.integers(0, len(up), len(signs))
+                sim[r] += (up[draws] == signs[:, None]).sum(axis=0)
+    elif shuffles:
+        size = max(1, math.ceil(cfg.shuffle_runs / (4 * workers)))
+        futures = []
+        rows = []
+        for start in range(0, cfg.shuffle_runs, size):
+            draws = [
+                [rng.integers(0, len(up), len(signs)) for up, signs, _ in shuffles]
+                for _ in range(min(size, cfg.shuffle_runs - start))
+            ]
+            futures.append(pool.submit(_shuffle_chunk, shuffles, draws))
+            if len(futures) >= workers:
+                rows.extend(futures.pop(0).result())
+        for future in futures:
+            rows.extend(future.result())
+        sim[:] = rows
     sim /= total
     rows = []
     for j, n in enumerate(cfg.bars):

@@ -44,14 +44,14 @@ def test_measurement_settings_counts_and_deltas(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "run_backtests", fake)
     out = tmp_path / "measurement"
     assert mod.main(["--output", str(out)]) == 0
-    assert len(calls) == 35
     cfg = GoldenConfig()
+    assert len(calls) == 5 * len(cfg.strategies)  # five penetration settings each
     for symbols, start, end, settings, workers in calls:
         assert start == cfg.start and end == cfg.end and workers == 1
         assert symbols in dict(cfg.strategies).values()
     with out.with_suffix(".csv").open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    assert len(rows) == 35
+    assert len(rows) == 5 * len(cfg.strategies)
     assert {float(r["tp_penetration"]) for r in rows} == {0, 0.5, 1, 2}
     for row in rows:
         distance = float(row["tp_penetration"])

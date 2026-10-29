@@ -832,22 +832,52 @@ def _run_research_locked(
     _write_csv(folder / "variants.csv", [*VARIANT_COLUMNS, *_set_columns(spec)], rows)
 
     def finish(status: str, message: str, chosen: dict | None) -> dict:
+        from backtester.analytics.criteria import criteria_inputs
         from backtester.tools import drawdown_report
+
+        saved = read_trades(folder / "variants" / chosen["id"]) if chosen else []
+        variant_nets = [
+            sum(t.r_net for t in read_trades(folder / "variants" / v.id)) for v in variants
+        ]
+        info["criteria_inputs"] = criteria_inputs(
+            saved, variant_nets, (first.year + dev_end.year) // 2, sc_cfg.cost_stress
+        )
+        _dump(folder / "criteria_inputs.json", info["criteria_inputs"])
 
         info.update(status=status, chosen=chosen, test=test_info, updated=_now())
         # Keep the once-only test guard durable even if optional reporting fails.
         _dump(folder / "research.json", info)
+        gated = chosen is not None and spec.fail_fast and chosen["dev_net_r"] <= cfg.gate_net_min
+        skipped = (
+            {
+                "skipped": "gate",
+                "reason": f"chosen development net R <= {cfg.gate_net_min} after costs",
+                "net_r": chosen["dev_net_r"],
+            }
+            if gated
+            else None
+        )
+        if gated and (spec.monkeys or spec.entry_screen):
+            selected = next(r for r in rows if r["variant_id"] == chosen["id"])
+            selected["flags"] = ";".join(
+                dict.fromkeys(filter(None, [*selected["flags"].split(";"), "nulls_skipped"]))
+            )
         info["monkeys"] = None
         if chosen is not None and spec.monkeys:
             variant = next(v for v in variants if v.id == chosen["id"])
-            info["monkeys"] = research_monkeys.calculate(
-                folder,
-                spec,
-                chosen["id"],
-                first,
-                dev_end,
-                variant_settings(spec, variant),
-                sources,
+            info["monkeys"] = (
+                skipped
+                if gated
+                else research_monkeys.calculate(
+                    folder,
+                    spec,
+                    chosen["id"],
+                    first,
+                    dev_end,
+                    variant_settings(spec, variant),
+                    sources,
+                    workers=workers,
+                )
             )
             _dump(folder / "monkeys.json", info["monkeys"])
             selected = next(r for r in rows if r["variant_id"] == chosen["id"])
@@ -867,8 +897,19 @@ def _run_research_locked(
         info["entry_screen"] = None
         if chosen is not None and spec.entry_screen:
             variant = next(v for v in variants if v.id == chosen["id"])
-            screen = research_entry_screen.calculate(
-                folder, spec, chosen["id"], first, dev_end, variant_settings(spec, variant), sources
+            screen = (
+                skipped
+                if gated
+                else research_entry_screen.calculate(
+                    folder,
+                    spec,
+                    chosen["id"],
+                    first,
+                    dev_end,
+                    variant_settings(spec, variant),
+                    sources,
+                    workers=workers,
+                )
             )
             info["entry_screen"] = screen
             _dump(folder / "entry_screen.json", screen)
@@ -1192,6 +1233,18 @@ def _write_report(folder: Path, info: dict, rows: list[dict], tests: list[dict])
 
     lines += monkey_markdown(info.get("monkeys"))
     lines += research_entry_screen.markdown(info.get("entry_screen"))
+    criteria = info.get("criteria_inputs")
+    if criteria is not None:
+        lines += [
+            "",
+            "## Criteria inputs",
+            "",
+            (
+                f"Net R: {criteria['net_r']:.3f}; "
+                f"positive variants: {criteria['variants_positive_net']}/{criteria['variants']}. "
+                "Full inputs: `criteria_inputs.json`."
+            ),
+        ]
     lines += research_diagnostics.decay_markdown(info)
     sensitivity = info.get("sensitivity")
     if sensitivity is not None:

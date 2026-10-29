@@ -31,10 +31,10 @@ def test_all_defaults_outputs_and_trials(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(tool, "append", records.append)
     assert tool.main(["--all", "--workers", "1", "--out", str(tmp_path)]) == 0
-    assert len(calls) == len(records) == 7
+    assert len(calls) == len(records) == len(tool.REGISTRY)
     assert {r.family for r in records} == {s + "-profile" for s in tool.REGISTRY}
     assert all(c[2]["workers"] == 1 for c in calls)
-    assert len(list(tmp_path.glob("*/profile.md"))) == 7
+    assert len(list(tmp_path.glob("*/profile.md"))) == len(tool.REGISTRY)
     for path in tmp_path.glob("*/profile.json"):
         assert json.loads(path.read_text())["total_trades"] == 0
 

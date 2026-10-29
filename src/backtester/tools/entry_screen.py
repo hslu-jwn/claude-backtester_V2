@@ -273,7 +273,14 @@ def main(argv: list[str] | None = None) -> int:
         ))  # fmt: skip
         trades = [ScreenTrade.from_trade(t) for t in result.trades]
         screen = screen_variant(
-            trades, m1s, bar_minutes, engine.costs, config, label, (args.start, args.end)
+            trades,
+            m1s,
+            bar_minutes,
+            engine.costs,
+            config,
+            label,
+            (args.start, args.end),
+            workers=args.workers,
         )
         screens.append(screen)
         cells += [{"variant": label, **c} for c in screen.cells]

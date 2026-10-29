@@ -47,6 +47,7 @@ FLAG_LABELS = {
     "too_many_parameters": "more than 4 swept settings",
     "entry_screen_failed": "entries not better than chance",
     "declining_returns": "returns falling over time",
+    "nulls_skipped": "null tests skipped (lost after costs)",
     "skill_is_trend": "positive result explained by market trend",
     FLAG_TOO_FEW: "too few trades",
     FLAG_HIGH_WIN_SMALL_EDGE: "high win rate, small edge",

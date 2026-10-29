@@ -40,15 +40,15 @@ def test_measurement_contract(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "run_backtests", fake)
     out = tmp_path / "measurement"
     assert mod.main(["--output", str(out)]) == 0
-    assert len(calls) == 14
     cfg = GoldenConfig()
+    assert len(calls) == 2 * len(cfg.strategies)  # each golden strategy with and without M1
     for symbols, start, end, settings, workers in calls:
         assert (start, end, workers) == (cfg.start, cfg.end, 1)
         assert symbols in dict(cfg.strategies).values()
         assert settings.engine.costs == CostConfig()
     with out.with_suffix(".csv").open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    assert len(rows) == 14
+    assert len(rows) == 2 * len(cfg.strategies)
     for row in rows:
         m1 = row["intrabar"] == "m1"
         assert float(row["delta_net_r"]) == (3 if m1 else 0)

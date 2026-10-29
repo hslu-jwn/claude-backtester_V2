@@ -217,7 +217,7 @@ def make_trade(symbol, year, r_net, n):
         symbol=symbol, entry_time=entry, exit_time=entry + timedelta(hours=2),
         direction="long",
         entry=100.0, initial_stop=99.0,
-        r_gross=r_net + 0.05, r_net=r_net, planned_r=None,
+        r_gross=r_net + 0.05, r_net=r_net, planned_r=None, tags=frozenset(), exit_reason="signal",
     )  # fmt: skip
 
 
@@ -697,3 +697,84 @@ def test_trial_log_follows_the_results_dir(tmp_path, fakes):
     run_research(tmp_path, dev_only=True)
     assert (tmp_path / "results" / "trials.jsonl").is_file()
     assert trial_log.read_all() == []  # the default log (results/trials.jsonl) is untouched
+
+
+@pytest.mark.parametrize("value, expected", [("false", False), ("true", True)])
+def test_fast_loop_grid_override(tmp_path, value, expected):
+    spec = load_grid(write_grid(tmp_path, GRID.replace("[base]", f"fail_fast = {value}\n[base]")))
+    assert spec.fail_fast is expected
+
+
+def test_fast_loop_grid_rejects_non_boolean(tmp_path):
+    with pytest.raises(GridError, match="fail_fast"):
+        load_grid(write_grid(tmp_path, GRID.replace("[base]", 'fail_fast = "no"\n[base]')))
+
+
+def test_fast_loop_cost_gate_skips_enabled_nulls(tmp_path, fakes, monkeypatch):
+    from backtester.tools import research_entry_screen, research_monkeys
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("cost gate must avoid null simulations")
+
+    monkeypatch.setattr(research_monkeys, "calculate", forbidden)
+    monkeypatch.setattr(research_entry_screen, "calculate", forbidden)
+    text = GRID.replace("entry_screen = false", "entry_screen = true")
+    out = run_research(tmp_path, text, dev_only=True, config=ResearchConfig(gate_net_min=1e9))
+    folder = out["folder"]
+    for name in ("monkeys", "entry_screen"):
+        result = json.loads((folder / f"{name}.json").read_text())
+        assert result["skipped"] == "gate"
+        assert result["net_r"] == out["chosen"]["dev_net_r"]
+    assert "nulls_skipped" in (folder / "variants.csv").read_text()
+    assert "skipped (failed the cost gate)" in (folder / "report.md").read_text()
+
+
+def test_criteria_inputs_written_from_saved_development_trades(tmp_path, fakes):
+    out = run_research(tmp_path, dev_only=True)
+    result = json.loads((out["folder"] / "criteria_inputs.json").read_text())
+    assert result["variants"] == 6
+    assert result["net_r"] == pytest.approx(out["chosen"]["dev_net_r"])
+    assert {"gross_by_symbol", "trade_tags", "net_r_costs_x2"} <= result.keys()
+    assert "Criteria inputs" in (out["folder"] / "report.md").read_text()
+    with (out["folder"] / "variants.csv").open(newline="") as stream:
+        row = next(r for r in csv.DictReader(stream) if r["variant_id"] == out["chosen"]["id"])
+    assert result["half_first_net_r"] == float(row["half_first_net_r"])
+    assert result["half_second_net_r"] == float(row["half_second_net_r"])
+
+
+@pytest.mark.parametrize(
+    "net,gate,override,called", [(-5, 0, "false", True), (5, 10, "true", False)]
+)
+def test_fast_loop_threshold_and_override(
+    tmp_path, fakes, monkeypatch, net, gate, override, called
+):
+    from backtester.tools import research_entry_screen, research_monkeys
+
+    original = fakes.run
+
+    def run(*args, **kwargs):
+        result = original(*args, **kwargs)
+        for trade in result.trades:
+            trade.r_net = net / len(result.trades)
+            trade.r_gross = trade.r_net + 0.05
+        return result
+
+    monkeypatch.setattr(fakes, "run", run)
+    calls = []
+    monkeypatch.setattr(
+        research_monkeys,
+        "calculate",
+        lambda *a, **k: calls.append("monkeys") or {"available": False},
+    )
+    monkeypatch.setattr(
+        research_entry_screen,
+        "calculate",
+        lambda *a, **k: calls.append("screen") or {"error": "fixture"},
+    )
+    text = GRID.replace("entry_screen = false", f"entry_screen = true\nfail_fast = {override}")
+    out = run_research(tmp_path, text, dev_only=True, config=ResearchConfig(gate_net_min=gate))
+    assert out["chosen"]["dev_net_r"] == net
+    assert calls == (["monkeys", "screen"] if called else [])
+    if not called:
+        result = json.loads((out["folder"] / "monkeys.json").read_text())
+        assert result["reason"] == "chosen development net R <= 10 after costs"

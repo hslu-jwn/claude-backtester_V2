@@ -60,6 +60,7 @@ TOP_LEVEL = (
     "walk_forward_study",
     "monkeys",
     "entry_screen",
+    "fail_fast",
 )
 ID_HASH_LENGTH = 8
 
@@ -77,6 +78,8 @@ class ResearchConfig:
     live_expectation_range: tuple[float, float] = (0.50, 0.75)
     max_free_params: int = 4
     decay_t: float = -2.0
+    fail_fast: bool = True
+    gate_net_min: float = 0.0
 
     def __post_init__(self) -> None:
         if self.min_trades < 0:
@@ -117,6 +120,7 @@ class GridSpec:
     walk_forward_study: bool = False
     monkeys: bool = True
     entry_screen: bool = True
+    fail_fast: bool = True
     idea: str = ""
     submission: dict | None = None
 
@@ -320,6 +324,8 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         raise GridError("monkeys must be true or false")
     if not isinstance(data.get("entry_screen", True), bool):
         raise GridError("entry_screen must be true or false")
+    if not isinstance(data.get("fail_fast", cfg.fail_fast), bool):
+        raise GridError("fail_fast must be true or false")
     if "walk_forward" in data and data["walk_forward"] not in ("anchored", "rolling"):
         raise GridError("walk_forward must be anchored or rolling")
     train_years = _number(data, "train_years", 3, 1) if "train_years" in data else None
@@ -386,6 +392,7 @@ def load_grid(path: Path | str, config: ResearchConfig | None = None) -> GridSpe
         walk_forward_study=data.get("walk_forward_study", False),
         monkeys=data.get("monkeys", True),
         entry_screen=data.get("entry_screen", True),
+        fail_fast=data.get("fail_fast", cfg.fail_fast),
         idea=data.get("idea", ""),
         submission=_submission(data["submission"]) if "submission" in data else None,
     )

@@ -48,6 +48,61 @@ def trade(direction=LONG, entry=100.0, stop=None, at=None, symbol="X", r_net=0.0
     return ScreenTrade(symbol, direction, at, entry, stop, exit_time or at + 5 * MIN, r_net)
 
 
+def test_parallel_screen_matches_serial():
+    data = m1(t0() - 10 * MIN, [(100, 101, 99, 100 + (i % 3) / 4) for i in range(80)])
+    ts = [trade(at=t0() + i * MIN, r_net=i / 10) for i in range(4)]
+    cfg = EntryScreenConfig(random_runs=12, shuffle_runs=12)
+    assert screen_variant(ts, {"X": data}, 5, FREE, cfg, workers=1) == screen_variant(
+        ts, {"X": data}, 5, FREE, cfg, workers=3
+    )
+
+
+def test_serial_screen_does_not_create_pool(monkeypatch):
+    import backtester.analytics.entry_screen as module
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("serial execution must not create a pool")
+
+    monkeypatch.setattr(module, "ProcessPoolExecutor", forbidden)
+    screen_variant(
+        [trade()],
+        {"X": m1(t0(), flat(100, 30))},
+        5,
+        FREE,
+        EntryScreenConfig(random_runs=2, shuffle_runs=2),
+        workers=1,
+    )
+
+
+def test_screen_worker_exception_propagates(monkeypatch):
+    import backtester.analytics.entry_screen as module
+
+    class Future:
+        def result(self):
+            raise RuntimeError("worker failed")
+
+    class Pool:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def submit(self, *args, **kwargs):
+            return Future()
+
+        def shutdown(self, **kwargs):
+            pass
+
+    monkeypatch.setattr(module, "ProcessPoolExecutor", Pool)
+    with pytest.raises(RuntimeError, match="worker failed"):
+        screen_variant(
+            [trade()],
+            {"X": m1(t0(), flat(100, 30))},
+            5,
+            FREE,
+            EntryScreenConfig(random_runs=2, shuffle_runs=2),
+            workers=2,
+        )
+
+
 # --- (a) N bars with the own stop active ------------------------------------------------------
 
 

@@ -70,6 +70,28 @@ def test_grid_submission_optional_and_valid(tmp_path):
     assert load_grid(write_grid(tmp_path, submission_grid())).submission == IDENTITY
 
 
+def test_submission_writes_criteria_inputs(tmp_path, fakes):
+    out = run_research(tmp_path, submission_grid(), dev_only=True)
+    data = json.loads((out["folder"] / "criteria_inputs.json").read_text())
+    assert {
+        "variants_positive_net",
+        "variants",
+        "net_r",
+        "gross_r",
+        "gross_by_symbol",
+        "symbols_positive_gross",
+        "net_r_costs_x2",
+        "costs_x2_factor",
+        "net_r_costs_stress",
+        "costs_stress_factor",
+        "half_first_net_r",
+        "half_second_net_r",
+        "net_r_without_best_days",
+        "stop_share",
+        "trade_tags",
+    } <= data.keys()
+
+
 @pytest.mark.parametrize(
     "key,value",
     [

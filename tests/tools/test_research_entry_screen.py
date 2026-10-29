@@ -30,15 +30,16 @@ def test_real_screen_on_fixture_and_development_bounds(tmp_path, fakes, monkeypa
     calculate = research_entry_screen.calculate
     screen_variant = research_entry_screen.screen_variant
 
-    def timed(*args):
+    def timed(*args, **kwargs):
         started = time.perf_counter()
-        result = calculate(*args)
+        result = calculate(*args, **kwargs)
         timings.append(time.perf_counter() - started)
         return result
 
-    def screen(*args):
+    def screen(*args, **kwargs):
         configs.append(args[4])
-        return screen_variant(*args)
+        assert kwargs["workers"] == 1
+        return screen_variant(*args, **kwargs)
 
     monkeypatch.setattr(research_entry_screen, "calculate", timed)
     monkeypatch.setattr(research_entry_screen, "screen_variant", screen)
@@ -59,7 +60,7 @@ def test_real_screen_on_fixture_and_development_bounds(tmp_path, fakes, monkeypa
 
     monkeypatch.setattr(entry_screen, "load_m1", load)
     started = time.perf_counter()
-    out = run_research(tmp_path, SCREEN_GRID, dev_only=True)
+    out = run_research(tmp_path, SCREEN_GRID, dev_only=True, workers=1)
     elapsed = time.perf_counter() - started
     print(f"entry-screen synthetic runner fixture: {elapsed:.3f}s")
     print(f"entry-screen calculate only: {timings[0]:.3f}s")
