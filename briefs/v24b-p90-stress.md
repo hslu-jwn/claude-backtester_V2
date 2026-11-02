@@ -3,7 +3,8 @@
 Decided by the user 2026-10-28 (`docs/review/fill-analysis-2026-10-28.md`, ROADMAP V2.4b): the
 model slippage stays the default; the **stressed cost level** of the robustness report becomes
 the **measured p90 slippage per symbol** from the demo fills instead of the flat "costs x 1.5".
-Fill report with London fills: `results/fill_report/report.md` (1,511 fills, 23 symbols).
+Fill report with all fill-probe days (re-run 2026-11-02, V2.8 step 3):
+`results/fill_report_2026-11-02/report.md` (5,512 fills 2026-10-27..31, 23 symbols, 1,502 London).
 
 **Test first:** write the tests (cases below) before the code, run them red, then implement.
 Never change an existing expected value to make it pass; see item 6.
@@ -15,9 +16,9 @@ Never change an existing expected value to make it pass; see item 6.
   "symbols": {SYM: {"p90": float, "n": int}}}` from the existing by-symbol table
   (`suggest_p90`, already clipped at >= 0, price units, market fills only). Only symbols with
   `n >= --p90-min-fills` (default 30) go in. Sorted keys, stable output.
-- Generate the committed default with the real data (I already ran the export):
-  `python -m backtester.tools.fill_report --since 2026-10-27T16:00 --deals results/fill_report/deals.csv --write-p90 src/backtester/analytics/slippage_p90.json`
-  (NATGAS, n = 17, stays out). Ship the file as package data like
+- Generate the committed default with the real data (the deals file only feeds commissions):
+  `python -m backtester.tools.fill_report --since 2026-10-27T16:00 --deals results/fill_report/deals.csv --out results/fill_report_2026-11-02 --write-p90 src/backtester/analytics/slippage_p90.json`
+  (all 23 symbols have n >= 30; NATGAS has 78). Ship the file as package data like
   `engine/ftmo_spread_median.json` (check `pyproject.toml`).
 
 ## 2. `analytics/robustness.py`
@@ -75,7 +76,7 @@ costs".
 12. `TradeRecord`-style objects (exit_reason as string, parts as dicts) work.
 13. fill_report `--write-p90`: min-fills filter, JSON shape, symbols sorted, p90 values equal
     the report's `suggest_p90`.
-14. `load_slippage_p90()` reads the packaged file; it has GER40, XAUUSD; not NATGAS.
+14. `load_slippage_p90()` reads the packaged file; it has GER40, XAUUSD and NATGAS (23 symbols).
 
 ## 6. Existing tests
 

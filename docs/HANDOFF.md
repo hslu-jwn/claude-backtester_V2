@@ -19,8 +19,13 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   challenge failed at max drawdown. The fill-probe run (`--strategy fill_probe`, 23 symbols,
   0.01 % risk, prefix `fp`) ran 2026-10-27..31; log `results/live/probe_stdout.log`. Its
   `status.json` was never written (R1, fixed 2026-11-02), so the Live page showed "not
-  running" throughout. A restart (new demo account?) is the user's call; restart only between
-  :21 and :28. Stop: `results/live/STOP` (`EMERGENCY` closes all).
+  running" throughout. **New account 2026-11-02:** the user opened a new FTMO 14-day trial
+  (logged in in MT5) for more fill collection and 12.5 reconciliation; the old account's deals
+  are not in it (the bot's own `paper.csv` / `trades.csv` keep every fill). A bot restart is
+  the user's call; restart only between :21 and :28. Stop: `results/live/STOP` (`EMERGENCY`
+  closes all).
+- **Fill report 2026-11-02:** `results/fill_report_2026-11-02/` (5,512 fills 2026-10-27..31,
+  23 symbols, 1,502 London; commission only from the 10-27/28 deals file).
 - **Finalization (V2.8, plan accepted 2026-11-02):** audit and baselines in
   `docs/review/finalization-audit-2026-11-02.md`; the ~30 s UI start is the chart page
   rendering all 10,397 trades of the newest run (U1).
