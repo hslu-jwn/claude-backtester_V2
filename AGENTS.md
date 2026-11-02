@@ -131,37 +131,9 @@ Every detector needs a test proving this (see Testing).
 - Keep `core/`, `detectors/`, `strategy/`, `engine/` and `risk/` free of Plotly/Dash imports.
   The UI imports from them, never the other way round.
 
-## Layout
-
-```
-src/backtester/
-  core/        Candle, Timeframe, Direction, CandleSeries/SeriesView, multi-timeframe clock
-  data/        DataAdapter interface, histdata.com importer, cache (data/cache/histdata/,
-               helpers in data/cache.py), MT5 adapter
-  detectors/   Swings, trend, BOS, ATR/strong move, FVG, OB, breaker, BPR, equilibrium, zone validation
-  sessions.py  Tokyo/London/New York session clock (DST-aware)
-  strategy/    Strategy interface, registry.py, one folder per strategy (_template/ to copy)
-  engine/      Backtest loop: steps the base timeframe, feeds views, manages trades in R
-  risk/        RiskConfig, prop-firm presets, position sizing, account simulator, Monte Carlo, sweeps
-  analytics/   Metrics on R trade lists (win rate, expectancy, drawdown in R, …)
-  live/        MT5 connection, login in the Windows Credential Manager, demo-locked orders
-  tools/       Command-line tools: data check / show / update, research runner, Monte Carlo,
-               portfolio, studies, gap_bucket_study, ai_dispatch (grids in research/grids/)
-  ui/          Dash app: chart page (Lightweight Charts in ui/assets/, data from chart_data.py),
-               backtest results page, Risk & Prop Firm page
-tests/         pytest; mirrors src/ structure
-data/raw/      histdata.com M1 files, histdata/<SYMBOL>/DAT_MT_*_M1_*.csv|zip (git-ignored)
-docs/          Specs (source of truth)
-```
-
 ## Commands
 
 ```bash
-python -m venv .venv            # then activate it (.venv\Scripts\activate on Windows)
-pip install -e ".[dev,ui,data,risk,mt5]"
-pytest                          # all tests
-pytest tests/detectors -q       # one area
-ruff check . && ruff format .   # lint + format
 python -m backtester.ui.app     # start the Dash app (or restart_app.bat)
 python -m backtester.tools.show XAUUSD M5 2026-09-02T13:00 2026-09-02T14:00  # print cached candles
 python -m backtester.data.histdata data/raw/histdata/  # import histdata files (all pair subfolders) -> cache

@@ -5,18 +5,8 @@ shared by all models are in `AGENTS.md`; they apply in full:
 
 @AGENTS.md
 
-## Status (V2, 2026-10-22)
-
-| Part | Status |
-|---|---|
-| Strategies | 7 built. 1 session zone sweep: paused (negative). 2 NY index sweep: parked. 3 no-wick: dropped. 4 Kaufman trend following: parked, but **portfolio candidate** (passed a prop-firm challenge in some tests, slowly). 5 gap fade: no edge. 6 opening-range breakout: demo forward-test candidate (tick-volume filter, fading since 2024). 7 gap momentum: no edge (gold version positive, not significant). |
-| Research | runner `tools/research.py` (data split 2021-09-14, one MT5 test of the best variant, DSR, flags, trial log), Research page, entry screening, Monte Carlo, portfolio tool; price-only research found no significant edge so far. **Since 2026-10-27 strategy ideas come from the separate research department** through `../Shared_Interface/` (`docs/research-intake.md`); intake not operational until ROADMAP V2.6i |
-| Costs | FTMO spreads / fees / swap of 2026-10-14 are the defaults; spread table off by default |
-| Data | MT5 cache 26 symbols to 2026-10-19 (preferred day by day), histdata 2015-2021, Binance BTC / ETH |
-| Live | demo forward test of strategy 6 on the FTMO demo; bot **not running** (stopped 2026-10-21) |
-| V2 | V2.1-V2.3 done; V2.4 review + speed-up done except the grid-tool merge (`docs/review/`); next V2.4b slippage from demo fills, V2.5 redesign, V2.6 research (`docs/ROADMAP.md`) |
-
-Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`.
+Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADMAP.md`
+(archive `docs/archive/ROADMAP-v1.md`).
 
 ## Working agreement with the user
 
@@ -36,7 +26,7 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   in `strategy/registry.py`; strategy settings in its config; detectors, costs and warm-up shared.
 - **Skills:** `ai-dispatch`, `ponytail` (user plugin; small changes; the rules above win), `/ponytail-review` before each
   commit, `/ponytail-audit` occasionally (findings -> ROADMAP), `backtester-testing`,
-  `backtest-evaluation-research`.
+  `continue-research`.
 
 ## Session protocol (the user does no file work)
 
@@ -49,41 +39,9 @@ Details per step: `docs/ROADMAP.md` and its archive `docs/archive/ROADMAP-v1.md`
   research department's job (`../Research_Department/`). If the user says it, point there and
   offer `Continue.Research` (intake) instead.
 - **`Continue.Research [Limit=<time>] [<STRATEGY_ID>]`:** the autonomous test loop on research
-  department submissions (V2.6 / V2.7; job queue, lanes, research log built in V2.6; intake per
-  `docs/research-intake.md`). **Blocked until ROADMAP V2.6i passes**: until then it may work
-  only on V2.6i itself or on the three pre-registered V2 hypotheses (ROADMAP V2.6).
-  - Start: read `../Shared_Interface/INTERFACE_CONTRACT.md`, list `queue/pending/` and our open
-    claims in `results/intake/`.
-  - First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything
-    unclear in the log or specs) and wait. Then run autonomously (Telegram only for urgent
-    ones). Later calls in the same chat reuse the answers.
-  - `Limit=60min` / `2h` / `3d`: write start time and deadline into `docs/research-log.md`,
-    check the clock after every step; at the deadline finish the current step cleanly
-    (commit, log) and stop. No limit = until "Stop." or the resources run out.
-  - STRATEGY_ID given: work only on that submission. Otherwise the highest-`priority`
-    submission in `queue/pending/`, then our open claims. No submission -> report and stop;
-    never invent an idea to fill the time.
-  - Rules: every strategy comes from a validated, claimed submission; its sources and
-    evidence are the research department's responsibility (Opus does not re-research them,
-    but returns feedback on anything that looks wrong). Every rule maps to the submission;
-    anything unclear: Opus decides by its own judgment, writes it into the spec's
-    "Assumptions" section, tells Research in an `ASSUMPTION_MADE` feedback message and builds
-    anyway; `NEEDS_CLARIFICATION` only when no reasonable reading exists. Specs need no user
-    approval in the loop; the one-time MT5 test still does (rule set by the user, 2026-10-28;
-    `docs/research-intake.md` › Assumptions and replies). One parameter set pooled across all
-    markets by default; per-market parameters with re-optimisation only as a walk-forward
-    variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the parameters
-    the submission marks tunable, within its ranges. Do not judge pass / fail: record every
-    strategy with all metrics and the submission's rejection criteria computed; the user decides.
-    Every experiment ends in a result envelope (or a feedback envelope) in `../Shared_Interface/feedback/`.
-    The one-time MT5 test of a submission needs the user's explicit go.
-    Develop before 2021-09-14, test the best variant once on MT5 data from 2021-09-14 (rule set
-    by the user, 2026-10-15); every variant in the trial log; DSR, robustness report, real
-    costs + swap, Monte Carlo, parameter stability, regime breakdown, warning flags. Prefer no
-    overnight holds (swap). Never change defaults (costs, sweep options, spread table) without
-    the user's go.
-  - End of run: short report (tested, results, research cards added, envelopes written,
-    feedback sent); a very promising strategy first, and on Telegram.
+  department submissions; full procedure in the `continue-research` skill (load it first).
+  Always: the one-time MT5 test of a submission needs the user's explicit go; never change
+  defaults (costs, sweep options, spread table) without the user's go.
 - **`Begin.`** and the research `End.` in the umbrella `../AGENTS.md` belong to the research
   department's sessions. In a session working in this repo, `End.` always means the V2 `End.`
   below; if the user's intent is unclear (e.g. the session started at the umbrella root), ask.
