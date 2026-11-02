@@ -281,6 +281,16 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   because the engine accepts a stop inside the spread (e.g. a 0.002 stop with the 0.06 spread
   = -54 R on one trade), which a broker rejects; question: should the engine refuse an order
   whose stop distance is below the spread / the broker's stop level?
+  **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v26l-cell-manifest.md`):
+  the result envelope carries `robustness.cell_manifest` (every declared cell: parameters,
+  trades, gross / net mean and total R, stop rate, halves, cost stresses x1.5 / x2 / fill p90)
+  and `robustness.trial_accounting`; `variants_tried` = declared cells (pilot: 9, not the 17
+  trial-log runs); sensitivity marked not selectable. Checked by Opus against the pilot's
+  numbers (identical). Assumptions (Opus, 2026-11-03): the R004-specific map
+  (`robustness.r004`) waits until R004 is queued; the data-integrity check is not built:
+  Research's reply `FB_INTRADAY_H1_SHOCK_RESPONSE_REPLY_20261102T171227Z_RESEARCH` requires an
+  authoritative versioned CFD session calendar (holidays, early closes), which V2 does not
+  have; Research is told so.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

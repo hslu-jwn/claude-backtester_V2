@@ -213,3 +213,16 @@ resolve inside the umbrella, and traversal is refused. Envelopes validate agains
 schema when `jsonschema` is installed, publish through a same-directory temporary file and
 `os.replace`, and refuse overwrites. Experiment records reserve IDs before publication, so an
 interrupted publication cannot reuse an ID.
+
+## Result envelope: declared cells (V2.6l)
+
+`robustness.cell_manifest` lists each declared development cell with its ID, parameters,
+completion status and failure reason, trade count, gross and net means and totals, stop rate,
+half-period net R and cost stresses (1.5x, 2.0x and p90 fills). Missing cost settings use
+the default cost configuration, recorded in the cell notes. `robustness.trial_accounting`
+reports declared cells, sensitivity runs and the trial-log count. `variants_tried` counts
+declared cells; if `variants.csv` is absent, it falls back to the trial-log count and the
+declared count is null. Sensitivity runs are not selectable submission trials and are marked
+`selectable: false`. Redacted holdout envelopes retain an empty `robustness` object.
+
+Data-integrity check: not supported until a versioned CFD session calendar (holidays, early closes) exists; see ROADMAP V2.6l.

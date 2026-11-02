@@ -913,6 +913,7 @@ def emit_result(
 ) -> Path:
     """Export recorded evidence only. Spec: research-intake.md > Result metric mapping."""
     from backtester.analytics.trial_log import read_all
+    from backtester.tools.intake_cells import cell_manifest, trial_accounting
     from backtester.tools.research import _test_authorized
 
     results = _contained(results, umbrella)
@@ -1019,6 +1020,11 @@ def emit_result(
     if count < 1:
         raise ValueError("Research folder has no recorded trials.")
     artifacts = _run_artifacts(folder, umbrella)
+    accounting = trial_accounting(folder, info, count)
+    robustness["cell_manifest"] = cell_manifest(folder)
+    robustness["trial_accounting"] = accounting
+    if isinstance(robustness.get("sensitivity"), dict):
+        robustness["sensitivity"] = {**robustness["sensitivity"], "selectable": False}
     if stage == "DEVELOPMENT":  # files that hold test results
         artifacts = [a for a in artifacts if a["kind"] not in TEST_DERIVED]
     for target in linked:
@@ -1058,7 +1064,9 @@ def emit_result(
         "metrics": dict.fromkeys(metric_keys) if redacted else metrics,
         "statistical_diagnostics": {} if redacted else diagnostics,
         "robustness": {} if redacted else robustness,
-        "variants_tried": count,
+        "variants_tried": accounting["declared_cells"]
+        if accounting["declared_cells"] is not None
+        else count,
         "artifacts": [] if redacted else artifacts,
         "warnings": list(warnings) + _assumption_warnings(umbrella, claim),
         "errors": list(errors),
