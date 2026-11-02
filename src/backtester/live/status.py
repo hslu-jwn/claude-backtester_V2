@@ -110,7 +110,9 @@ def session_window(now: datetime, name: str, spec: SessionSpec) -> dict:
 
 
 def _session(cfg, now: datetime) -> dict | None:
-    sessions = cfg.strategy.sessions.get(SYMBOL_CLASS.get(cfg.symbols[0], ""), {})
+    """None for a strategy without sessions (e.g. the fill probe)."""
+    all_sessions = getattr(cfg.strategy, "sessions", None) or {}
+    sessions = all_sessions.get(SYMBOL_CLASS.get(cfg.symbols[0], ""), {})
     for key, spec in sessions.items():
         return session_window(now, key.replace("_", " ").title(), spec)
     return None
@@ -141,10 +143,13 @@ def _detail(bot, symbol: str, stage: str, state) -> str:
 
 
 def build_setups(bot, now: datetime) -> dict:
-    """Stage of every symbol (see STAGES), from the strategy read-only `setup_state`."""
+    """Stage of every symbol (see STAGES), from the strategy read-only `setup_state`; a strategy
+    without one (e.g. the fill probe) has no stages."""
     out = {}
     held = {t.symbol for t in bot.by_ticket.values()}
     for name, sym in bot.symbols.items():
+        if not hasattr(sym.strategy, "setup_state"):
+            continue
         state = sym.strategy.setup_state(now)
         stage = state.phase
         if name in held:
@@ -201,7 +206,11 @@ def build_status(bot, now: datetime) -> dict:
         "last_error": bot.last_error,
         "paused": bot.paused,
         "risk_percent": cfg.risk_percent,
-        "strategy": STRATEGY_NAME,
+        "strategy": (
+            STRATEGY_NAME
+            if getattr(cfg, "strategy_name", "opening_range") == "opening_range"
+            else cfg.strategy_name
+        ),
         "session": _session(cfg, now),
         "setups": build_setups(bot, now),
     }

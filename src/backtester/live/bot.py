@@ -391,6 +391,7 @@ class Bot:
         self._fail_streak = 0  # cycles with an error in a row (13.1)
         self._persist_at: datetime | None = None
         self._journal_error_at: datetime | None = None  # last reported journal failure (#14)
+        self._status_error: str | None = None  # last reported status failure (publish)
 
     # --- logs -------------------------------------------------------------------------------
 
@@ -446,10 +447,19 @@ class Bot:
                 self.notifier.event(kind, fields)
 
     def publish(self) -> None:
-        """Write status.json (heartbeat); a failed write must not stop trading."""
-        with contextlib.suppress(Exception):
+        """Write status.json (heartbeat); a failed write must not stop trading, but it is printed
+        to stderr once per distinct error (audit 2026-11-02 R1: it was hidden for a whole run)."""
+        try:
             self.last_status = build_status(self, self.now())
             write_status(self.config.status_file, self.last_status)
+        except Exception as e:  # noqa: BLE001 - the status never stops trading
+            what = f"status: {type(e).__name__}: {scrub(str(e), self.credentials)}"
+            if what != self._status_error:
+                self._status_error = what
+                with contextlib.suppress(Exception):
+                    print(f"{self.now():%H:%M:%S} error what={what}", file=sys.stderr, flush=True)
+        else:
+            self._status_error = None
 
     def status_text(self) -> str:
         return summary_text(self.last_status)
