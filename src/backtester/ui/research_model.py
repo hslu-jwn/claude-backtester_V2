@@ -39,6 +39,7 @@ from backtester.analytics.scorecard import (
     scorecard,
 )
 from backtester.paths import RESULTS_DIR
+from backtester.settings import from_dict
 
 RESEARCH_DIR = "research"
 VARIANT_PREFIX = "research~"  # results page id of a variant folder (pages/results.py)
@@ -55,7 +56,7 @@ FLAG_SHORT = {
     FLAG_TOO_FEW: "few trades",
     FLAG_HIGH_WIN_SMALL_EDGE: "win rate / small edge",
     FLAG_HALF: "one half",
-    FLAG_STRESSED: "costs x1.5",
+    FLAG_STRESSED: "stressed costs",
     FLAG_WITHOUT_BEST: "without best",
     FLAG_TEST_FAILED: "test failed",
 }
@@ -394,15 +395,20 @@ def _plain_row(folder: Path) -> dict | None:
     summary = _json(folder / "summary.json")
     if not summary or not (folder / "trades.csv").is_file():
         return None
+    settings = _json(folder / "settings.json")
     try:
         trades = read_trades(folder)
+        costs = from_dict(settings).engine.costs
         card = scorecard(
-            trades, ScorecardConfig(), _date(summary.get("start")), _date(summary.get("end"))
+            trades,
+            ScorecardConfig(),
+            _date(summary.get("start")),
+            _date(summary.get("end")),
+            costs=costs,
         )
         keys = flags({**card, "period": "development"}, ScorecardConfig())
     except Exception:  # noqa: BLE001 - a broken run folder is skipped, never stops the page
         return None
-    settings = _json(folder / "settings.json")
     name = str((settings.get("strategy") or {}).get("name") or "session_zone_sweep")
     symbols = [str(s) for s in summary.get("symbols") or []]
     return {

@@ -257,6 +257,19 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   "1-100 of 10,397"; with a game running on the PC the chart was usable at 6-7 s and a page
   step took ~3 s in the browser (server 30-50 ms), so the < 4 s target is re-measured on an
   idle PC in step (4).
+  **Night run 2026-11-02/03 (rule set by the user, 2026-11-02):** step (3) in order, then step
+  (4); test-first, small commits, push regularly; on a Codex limit wait for the reset and do
+  Codex-free steps meanwhile (or another route of `docs/agent-routing.md` at the same cost,
+  never a paid fallback); new questions are decided by Opus as recorded assumptions; no MT5
+  one-time test, no default changes (costs, spread table, sweep options), no live trading, no
+  merge to `main`; clean stop ~10:00 with a short morning report (what the user does not
+  object to counts as accepted once checked). 12.5 scope (the user): the fill-probe trades
+  2026-10-27..31 trade by trade against the engine on the same M1 bars.
+  **V2.4b built 2026-11-02 night** (Codex gpt-6.1-terra after gpt-6.1-sol was at capacity;
+  brief `briefs/v24b-p90-stress.md`): `analytics/slippage_p90.json` (23 symbols, 5,512 fills),
+  `net_r_stressed` = measured p90 on market fills (`cost_stress_mode = "p90"`, the user's
+  2026-10-28 decision), x1.5 only for unmeasured symbols or in `factor` mode; golden lists
+  identical.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

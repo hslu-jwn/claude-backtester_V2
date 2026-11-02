@@ -12,7 +12,7 @@ run (the Research page). Works on anything with the trade attributes `analytics/
 - `half_first_net_r` / `half_second_net_r`: the trades entered up to / after the period's middle
   year, (first year + last year) // 2; the period is `start`..`end`, else the first and last
   entry year of the trades; a half without trades is 0;
-- `net_r_stressed`: net R with every trade's cost times `cost_stress` (`robustness.stressed_net`);
+- `net_r_stressed`: net R with measured p90 slippage, or factor stress when configured;
 - `net_r_without_best`: net R without the single best trade.
 
 `flags(row, cfg)` names the warnings of a scorecard row (the test row also carries `period` ==
@@ -27,8 +27,15 @@ from datetime import UTC, date, datetime, time, timedelta
 from math import sqrt
 from statistics import stdev
 
+from backtester.analytics import robustness
 from backtester.analytics.metrics import summarize
-from backtester.analytics.robustness import RobustnessConfig, stressed_net, without_best
+from backtester.analytics.robustness import (
+    RobustnessConfig,
+    stressed_net,
+    stressed_net_p90,
+    without_best,
+)
+from backtester.engine.costs import CostConfig
 
 SCORE_KEYS = (
     "trades", "win_rate", "avg_r", "net_r", "profit_factor", "max_dd_r",
@@ -52,7 +59,7 @@ FLAG_LABELS = {
     FLAG_TOO_FEW: "too few trades",
     FLAG_HIGH_WIN_SMALL_EDGE: "high win rate, small edge",
     FLAG_HALF: "one half not profitable",
-    FLAG_STRESSED: "not profitable with higher costs",
+    FLAG_STRESSED: "not profitable with stressed costs",
     FLAG_WITHOUT_BEST: "not profitable without the best trade",
     FLAG_TEST_FAILED: "test failed",
     "rc_not_significant": "best variant not significant (Reality Check)",
@@ -66,13 +73,16 @@ class ScorecardConfig:
     min_trades: int = 100  # spec: fewer trades = flag (the grid file's min_trades)
     high_win_rate: float = 0.70  # spec: win rate at or above this ...
     small_edge_avg_r: float = 0.10  # ... with an average net R below this = flag
-    cost_stress: float = RobustnessConfig().cost_stress  # spec: costs x 1.5
+    cost_stress: float = RobustnessConfig().cost_stress
+    cost_stress_mode: str = RobustnessConfig().cost_stress_mode
 
     def __post_init__(self) -> None:
         if self.min_trades < 0:
             raise ValueError("min_trades must be >= 0")
         if not 0 <= self.high_win_rate <= 1:
             raise ValueError("high_win_rate must be in [0, 1]")
+        if self.cost_stress_mode not in {"p90", "factor"}:
+            raise ValueError("cost_stress_mode must be p90 or factor")
         if self.cost_stress < 1:
             raise ValueError("cost_stress must be >= 1")
 
@@ -123,6 +133,7 @@ def scorecard(
     config: ScorecardConfig | None = None,
     start: date | None = None,
     end: date | None = None,
+    costs: CostConfig | None = None,
 ) -> dict:
     cfg = config or ScorecardConfig()
     s = summarize(trades)
@@ -144,7 +155,11 @@ def scorecard(
         "max_dd_r": s["max_drawdown_r_net"],
         "half_first_net_r": sum(t.r_net for t in trades if t.entry_time.year <= middle),
         "half_second_net_r": sum(t.r_net for t in trades if t.entry_time.year > middle),
-        "net_r_stressed": stressed_net(trades, cfg.cost_stress),
+        "net_r_stressed": stressed_net_p90(
+            trades, robustness.load_slippage_p90(), costs, cfg.cost_stress
+        )
+        if cfg.cost_stress_mode == "p90"
+        else stressed_net(trades, cfg.cost_stress),
         "net_r_without_best": without_best(trades)["net_without_best"],
         "se_avg_r": stdev(t.r_net for t in trades) / sqrt(len(trades)) if len(trades) > 1 else None,
         "time_in_market": occupancy,

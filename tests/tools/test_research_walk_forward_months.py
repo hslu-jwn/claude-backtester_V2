@@ -22,6 +22,9 @@ fakes = research_fakes
 def trade(year, month, r):
     entry = datetime(year, month, 2, tzinfo=UTC)
     return SimpleNamespace(
+        entry=100.0,
+        initial_stop=90.0,
+        exit_reason="stop_loss",
         entry_time=entry,
         exit_time=entry + timedelta(hours=1),
         r_net=r,

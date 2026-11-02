@@ -17,8 +17,9 @@ Over one trade list (`trade_robustness`):
 - kurtosis of the daily R (days with a closing trade only; normal = 3; above
   `kurtosis_warn` is an overfit warning);
 - net R without the best trade;
-- stressed costs: the cost of each trade (`r_gross - r_net`, spread + commission + swap)
-  times `cost_stress`; swap income (net above gross) is not scaled;
+- stressed costs: measured fill p90 above model slippage on market fills; unmeasured
+  symbols fall back to the factor applied to positive trade costs; factor mode applies
+  that rule to all symbols.
 - shock days (`shock_dates`, `shock_report`): a day whose true range is more than
   `shock_range_atr` times the mean true range of the `shock_atr_period` days before it;
   trades are attributed to the UTC date they exit on. If more than half of the shock days
@@ -27,12 +28,16 @@ Over one trade list (`trade_robustness`):
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date
+from pathlib import Path
 
 from backtester.analytics.metrics import by_exit
+from backtester.analytics.random_fills import RandomFillsConfig, max_slippage_r
+from backtester.engine.costs import CostConfig
 
 
 def monthly_net(trades) -> dict[str, float]:
@@ -121,7 +126,8 @@ def extreme_summary(trades, n=10) -> dict:
 @dataclass(frozen=True, slots=True)
 class RobustnessConfig:
     robust_share: float = 0.70  # share of profitable variants that counts as robust
-    cost_stress: float = 1.5  # stressed costs = cost x this
+    cost_stress: float = 1.5  # factor mode and unmeasured fallback
+    cost_stress_mode: str = "p90"
     shock_atr_period: int = 10  # days before the day, for the mean true range
     shock_range_atr: float = 3.5  # shock day: true range > this x that mean
     kurtosis_warn: float = 7.0  # daily-R kurtosis above this = overfit warning (normal 3)
@@ -131,6 +137,8 @@ class RobustnessConfig:
     def __post_init__(self) -> None:
         if not 0 < self.robust_share <= 1:
             raise ValueError("robust_share must be in (0, 1]")
+        if self.cost_stress_mode not in {"p90", "factor"}:
+            raise ValueError("cost_stress_mode must be p90 or factor")
         if self.cost_stress < 1:
             raise ValueError("cost_stress must be >= 1")
         if self.shock_atr_period < 1:
@@ -293,6 +301,27 @@ def stressed_net(trades: Iterable, factor: float) -> float:
     return total
 
 
+def load_slippage_p90(path=None) -> dict[str, float]:
+    """Load measured price-unit slippage. Spec: ROADMAP.md > V2.4b."""
+    source = Path(path) if path is not None else Path(__file__).with_name("slippage_p90.json")
+    data = json.loads(source.read_text(encoding="utf-8"))
+    return {symbol: float(row["p90"]) for symbol, row in data["symbols"].items()}
+
+
+def stressed_net_p90(trades, p90, costs: CostConfig | None = None, fallback_factor=1.5) -> float:
+    """Apply measured p90 to market fills; use factor stress for unmeasured symbols."""
+    costs = costs or CostConfig()
+    cfg = RandomFillsConfig(factor=1.0)
+    total = 0.0
+    for trade in trades:
+        if trade.symbol not in p90:
+            total += stressed_net([trade], fallback_factor)
+        else:
+            extra = max(0.0, p90[trade.symbol] - costs.slippage(trade.symbol, trade.entry))
+            total += trade.r_net - sum(max_slippage_r(trade, extra, cfg))
+    return total
+
+
 # --- shock days -----------------------------------------------------------------------------------
 
 
@@ -353,6 +382,7 @@ def trade_robustness(
     trades: Sequence,
     config: RobustnessConfig | None = None,
     shocks: Mapping[str, set[date]] | None = None,
+    costs: CostConfig | None = None,
 ) -> dict:
     """One flat row of all the measures above for a trade list (shock measures only with
     `shocks`)."""
@@ -362,11 +392,18 @@ def trade_robustness(
     welch = welch_t([t.r_net for t in first], [t.r_net for t in second], cfg)
     kurt = kurtosis(daily_r(trades))
     best = without_best(trades)
+    p90 = load_slippage_p90() if cfg.cost_stress_mode == "p90" else {}
     row = {
+        "cost_stress_mode": cfg.cost_stress_mode,
+        "stressed_unmeasured_symbols": sorted({t.symbol for t in trades if t.symbol not in p90})
+        if cfg.cost_stress_mode == "p90"
+        else [],
         "trades": len(trades),
         "net_r": best["net"],
         "net_r_without_best": best["net_without_best"],
-        "net_r_stressed": stressed_net(trades, cfg.cost_stress),
+        "net_r_stressed": stressed_net_p90(trades, p90, costs, cfg.cost_stress)
+        if cfg.cost_stress_mode == "p90"
+        else stressed_net(trades, cfg.cost_stress),
         "half_first_trades": len(first),
         "half_second_trades": len(second),
         "half_first_net_r": sum(t.r_net for t in first),

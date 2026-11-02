@@ -145,9 +145,11 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
 ## Scorecard (one row per variant and period; also for every plain backtest run)
 
 trades, win rate, average net R per trade, net R, profit factor (gross win R / gross loss R), max drawdown
-in R, net R of the two halves (split at the period's middle year), net R with costs x 1.5, net R without the
+in R, net R of the two halves (split at the period's middle year), net R with stressed costs, net R without the
 best trade; for the test row also t, deflated Sharpe and the verdict (`analytics/verdict.py`, green / yellow /
-red). Net R includes the swap.
+red). Net R includes the swap. Stressed costs use measured symbol p90 slippage on market fills,
+less model slippage and floored at zero; unmeasured symbols use costs x 1.5. Factor mode
+applies costs x 1.5 to all symbols.
 
 ### Scorecard additions (grid merge 2)
 
@@ -204,7 +206,7 @@ smaller; Opus, 2026-10-23).
 
 **Warning flags** (thresholds in a config dataclass, these defaults): too few trades (< `min_trades`);
 high win rate but small edge (win rate >= 70 % and average R < 0.1); one half not profitable; not profitable
-with costs x 1.5; not profitable without the best trade; test failed (test net R <= 0 or verdict red).
+with stressed costs; not profitable without the best trade; test failed (test net R <= 0 or verdict red).
 
 ## Defaults decided while building (2026-10-21)
 

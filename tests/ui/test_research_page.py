@@ -421,7 +421,7 @@ def test_all_diagnostics_are_chosen_only_and_cards_filled(results_dir):
         "MC DD p95",
         "Prop pass %",
         "London",
-        "Costs x1.5",
+        "Stressed costs",
     ):
         assert text in rendered
     assert chosen["href"] in rendered
@@ -638,3 +638,21 @@ def test_research_rows_name_their_folder_and_the_card_shows_the_pipeline(results
     page = _json(research.layout(results_dir))
     assert "Pipeline: step 2 of 3: monte_carlo" in page
     assert "qp-panel" in page
+
+
+def test_plain_scorecard_uses_saved_run_costs(tmp_path, monkeypatch):
+    folder = tmp_path / "run"
+    _run_folder(folder)
+    (folder / "settings.json").write_text(
+        json.dumps({"engine": {"costs": {"conversion_adjustment": 0.123}}}), encoding="utf-8"
+    )
+    original = rm.scorecard
+    received = []
+
+    def capture(*args, **kwargs):
+        received.append(kwargs.get("costs"))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(rm, "scorecard", capture)
+    assert rm._plain_row(folder) is not None
+    assert received[0].conversion_adjustment == pytest.approx(0.123)

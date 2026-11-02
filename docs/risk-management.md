@@ -341,7 +341,7 @@ be reported as unavailable, never replaced by a different period's percentile.
      matched-monkey kind 1 for all other strategies; see Matched monkeys);
   3. both halves of the run's own period (split at the middle date of start..end; rule set by the user,
      2026-10-15) net positive;
-  4. net R positive with costs x ⚙️ **1.5** (`RobustnessConfig.cost_stress`);
+  4. net R positive with stressed costs: measured symbol p90 slippage for market fills, with costs x ⚙️ **1.5** for unmeasured symbols (or all symbols in factor mode);
   5. net R positive without the best trade;
   6. median net R of the random-fill runs (kind C) > 0.
   Details (`analytics/verdict.py`; n/a rule confirmed by the user 2026-10-15): a check without

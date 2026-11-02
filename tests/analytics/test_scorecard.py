@@ -26,6 +26,9 @@ def trade(year=2020, r_net=1.0, r_gross=None, day=1):
     entry = datetime(year, 3, day, 14, 30, tzinfo=UTC)
     return SimpleNamespace(
         symbol="NAS100",
+        entry=100.0,
+        initial_stop=90.0,
+        exit_reason="stop_loss",
         entry_time=entry,
         exit_time=entry + timedelta(hours=2),
         r_gross=r_net if r_gross is None else r_gross,
@@ -85,11 +88,11 @@ def test_profit_factor_is_none_without_a_losing_trade():
 
 def test_costs_x_1_5_scales_the_cost_of_each_trade():
     # gross 1.0, net 0.8 -> cost 0.2 -> stressed 1.0 - 0.3 = 0.7
-    s = scorecard([trade(r_net=0.8, r_gross=1.0)], ScorecardConfig())
+    s = scorecard([trade(r_net=0.8, r_gross=1.0)], ScorecardConfig(cost_stress_mode="factor"))
     assert s["net_r_stressed"] == pytest.approx(0.7)
-    assert scorecard([trade(r_net=0.8, r_gross=1.0)], ScorecardConfig(cost_stress=2.0))[
-        "net_r_stressed"
-    ] == pytest.approx(0.6)
+    assert scorecard(
+        [trade(r_net=0.8, r_gross=1.0)], ScorecardConfig(cost_stress=2.0, cost_stress_mode="factor")
+    )["net_r_stressed"] == pytest.approx(0.6)
 
 
 def test_empty_list():

@@ -403,7 +403,9 @@ def _store_variant(
         "id": variant.id,
         "name": variant.name,
         "overrides": variant.overrides,
-        "scorecard": scorecard(result.trades, sc_cfg, start, end),
+        "scorecard": scorecard(
+            result.trades, sc_cfg, start, end, costs=variant_settings(spec, variant).engine.costs
+        ),
         "day_sharpe": _day_stats(result.trades, start, end).sharpe,
     }
     _dump(vdir / SCORECARD_FILE, data)
@@ -511,7 +513,13 @@ def _sensitivity(
         row = todo[index]
         sid = row["id"]
         write_results(result, folder / "sensitivity", sid)
-        card = scorecard(result.trades, sc_cfg, periods["dev_start"], periods["dev_end"])
+        card = scorecard(
+            result.trades,
+            sc_cfg,
+            periods["dev_start"],
+            periods["dev_end"],
+            costs=variant_settings(spec, Variant("", "", row["overrides"])).engine.costs,
+        )
         completed[sid] = {"scorecard": card}
         _dump(folder / "sensitivity" / sid / SCORECARD_FILE, completed[sid])
         _daily_series(
@@ -583,7 +591,13 @@ def _test_row(
     sc_cfg: ScorecardConfig,
 ) -> dict:
     trades = result.trades
-    card = scorecard(trades, sc_cfg, test_start, test_end)
+    card = scorecard(
+        trades,
+        sc_cfg,
+        test_start,
+        test_end,
+        costs=variant_settings(spec, Variant("", "", chosen["overrides"])).engine.costs,
+    )
     r_net = [t.r_net for t in trades]
     stats = trade_stats(r_net)  # per-trade: the mean R shown in the verdict only
     n_variants = len(dev_rows)

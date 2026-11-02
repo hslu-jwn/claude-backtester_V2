@@ -71,7 +71,7 @@ TILES = (
     ("Test period", "test_period", None, ""),
     ("Half 1 R", "half_first_net_r", 1, ""),
     ("Half 2 R", "half_second_net_r", 1, ""),
-    ("Costs x1.5 net R", "net_r_stressed", 1, ""),
+    ("Stressed costs net R", "net_r_stressed", 1, ""),
     ("Without best net R", "net_r_without_best", 1, ""),
     ("Deflated Sharpe", "deflated_sharpe", 2, ""),
     ("RC p", "rc_p", 2, ""),

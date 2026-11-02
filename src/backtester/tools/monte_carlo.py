@@ -155,9 +155,9 @@ def random_paths(
 
 def verdict_inputs(
     trades, baseline, fills, rcfg: RobustnessConfig, start: date, end: date,
-    dsr: float | None = None,
+    dsr: float | None = None, costs=None,
 ) -> VerdictInputs:  # fmt: skip
-    rob = trade_robustness(trades, rcfg)
+    rob = trade_robustness(trades, rcfg, costs=costs)
     rs = [t.r_net for t in trades]
     first, second = period_halves(trades, start, end)
     return VerdictInputs(
@@ -215,14 +215,21 @@ def build_summary(
         ),
     )
     inputs = verdict_inputs(
-        trades, baseline, fills, rcfg, start, end, None if deflated is None else deflated.dsr
+        trades,
+        baseline,
+        fills,
+        rcfg,
+        start,
+        end,
+        None if deflated is None else deflated.dsr,
+        costs=settings.engine.costs,
     )
     if monkeys is not None:
         inputs = replace(
             inputs, percentile=random_entry_percentile(meta["strategy"], baseline, monkeys)
         )
     verdict = evaluate(inputs, VerdictConfig())
-    rob = trade_robustness(trades, rcfg)
+    rob = trade_robustness(trades, rcfg, costs=settings.engine.costs)
     first, second = period_halves(trades, start, end)
     mid = middle_date(start, end)
     rs = [t.r_net for t in trades]
@@ -781,7 +788,7 @@ def robustness_html(summary: dict) -> str:
          f"{fmt(r['mean_net_r'], '+.3f')} / {fmt(r['t_stat'])}"],
         [f"Halves (to {split} / after), net R",
          f"{r['half_first_net_r']:+.1f} / {r['half_second_net_r']:+.1f}"],
-        [f"Costs x {r['cost_stress']:g}, net R", f"{r['net_r_stressed']:+.1f}"],
+        [("Stressed costs (fill p90), net R" + (f" (x{r['cost_stress']:g} for: {', '.join(r['stressed_unmeasured_symbols'])})" if r["stressed_unmeasured_symbols"] else "")) if r["cost_stress_mode"] == "p90" else f"Costs x {r['cost_stress']:g}, net R", f"{r['net_r_stressed']:+.1f}"],
         ["Without the best trade, net R", f"{r['net_r_without_best']:+.1f}"],
         ["Net R", f"{r['net_r']:+.1f}"],
         ["Welch t between the halves", fmt(r["welch_t"])],

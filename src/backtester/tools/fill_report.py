@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -390,11 +391,34 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--deals", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=RESULTS_DIR / "fill_report")
     ap.add_argument("--target-r", type=float, default=DEFAULT_TARGET_R)
+    ap.add_argument("--write-p90", type=Path)
+    ap.add_argument("--p90-min-fills", type=int, default=30)
     args = ap.parse_args(argv)
+    if args.p90_min_fills < 1:
+        ap.error("--p90-min-fills must be >= 1")
     fills, _ = run(
         args.live_dir, _parse_time(args.since), args.comment_prefix, args.deals, args.out,
         args.target_r,
     )  # fmt: skip
+    if args.write_p90:
+        table = symbol_table(fills, CostConfig()) if not fills.empty else pd.DataFrame()
+        symbols = {
+            str(sym): {"p90": float(row.suggest_p90), "n": int(row.n)}
+            for sym, row in table.iterrows()
+            if row.n >= args.p90_min_fills
+        }
+        until = max((_parse_time(t) for t in fills["time_utc"]), default=None)
+        payload = {
+            "source": "fill_report",
+            "since": _parse_time(args.since).isoformat(),
+            "until": until.isoformat() if until else None,
+            "min_fills": args.p90_min_fills,
+            "symbols": symbols,
+        }
+        args.write_p90.parent.mkdir(parents=True, exist_ok=True)
+        args.write_p90.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     print(f"{len(fills)} fills -> {args.out}")
     if not fills.empty:
         fmt = {"float_format": lambda v: f"{v:.3g}"}

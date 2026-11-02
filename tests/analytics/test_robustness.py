@@ -32,6 +32,9 @@ T0 = datetime(2026, 9, 2, 12, tzinfo=UTC)
 
 @dataclass(frozen=True)
 class T:
+    entry: float = 100.0
+    initial_stop: float = 90.0
+    exit_reason: str = "stop_loss"
     symbol: str = "XAUUSD"
     entry_time: datetime = T0
     exit_time: datetime = T0
@@ -319,7 +322,7 @@ def trades_in_halves():
 
 
 def test_trade_robustness_assembles_the_measures():
-    rep = trade_robustness(trades_in_halves())
+    rep = trade_robustness(trades_in_halves(), RobustnessConfig(cost_stress_mode="factor"))
     assert rep["trades"] == 12
     assert rep["net_r"] == pytest.approx(6.0 - 3.0)
     assert rep["net_r_without_best"] == pytest.approx(3.0 - 1.1)

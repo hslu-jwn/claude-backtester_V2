@@ -8,7 +8,7 @@ Spec: risk-management.md > Monte Carlo report > Verdict (ROADMAP 12.7). The chec
 3. `halves`: both halves' net R > 0 (the run's own period split at the middle date of start..end,
    `middle_date` / `period_halves`; rule set by the user 2026-10-15; a half without trades has net 0
    and fails);
-4. `cost_stress`: net R with costs x `RobustnessConfig.cost_stress` > 0;
+4. `cost_stress`: net R with stressed costs > 0;
 5. `without_best`: net R without the best trade > 0;
 6. `random_fills` (kind C): median net R of the random-fill runs > 0;
 7. `deflated_sharpe`: DSR >= `dsr_min` (rule set by the user 2026-10-16, ROADMAP 12.10; n/a when
@@ -144,7 +144,7 @@ def evaluate(inputs: VerdictInputs, config: VerdictConfig | None = None) -> Verd
             _over(weaker_half, cfg.net_min),
         ),
         Check(
-            "cost_stress", "Net R positive with costs x stress", i.stressed_net, cfg.net_min,
+            "cost_stress", "Net R positive with stressed costs", i.stressed_net, cfg.net_min,
             _over(i.stressed_net, cfg.net_min),
         ),
         Check(

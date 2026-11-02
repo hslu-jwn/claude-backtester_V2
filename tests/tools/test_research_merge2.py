@@ -39,7 +39,15 @@ fakes = research_fakes
 
 def trade(a, b, r=1):
     return SimpleNamespace(
-        symbol="US500", entry_time=a, exit_time=b, r_net=r, r_gross=r, planned_r=None
+        symbol="US500",
+        entry=100.0,
+        initial_stop=90.0,
+        exit_reason="stop_loss",
+        entry_time=a,
+        exit_time=b,
+        r_net=r,
+        r_gross=r,
+        planned_r=None,
     )
 
 

@@ -51,6 +51,9 @@ def test_invalid_options(tmp_path, option):
 def trade(year, r):
     entry = datetime(year, 3, 1, tzinfo=UTC)
     return SimpleNamespace(
+        entry=100.0,
+        initial_stop=90.0,
+        exit_reason="stop_loss",
         symbol="XAUUSD",
         planned_r=None,
         entry_time=entry,

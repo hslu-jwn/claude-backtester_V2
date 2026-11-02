@@ -185,3 +185,63 @@ def test_commission_only_positions_of_the_selected_fills():
     df = _deal_df([{"position_id": "5"}, {"ticket": "2", "position_id": "99", "comment": "fp 2"}])
     tab = fr.commission_table(df, {"5"}, CostConfig())
     assert tab.loc["NATGAS"].deals == 1
+
+
+def test_write_p90_cli_filters_and_preserves_symbol_table(tmp_path):
+    import json
+
+    paper = (
+        "2026-10-27T16:00:00+00:00,EURUSD,sell,1.1,1.1,1.101,0,0.1,filled,,1.0999,0,1,fp 1\n"
+        "2026-10-27T16:01:00+00:00,EURUSD,sell,1.1,1.1,1.101,0,0.1,filled,,1.0998,0,2,fp 1\n"
+        "2026-10-27T16:02:00+00:00,GBPUSD,sell,1.2,1.2,1.201,0,0.1,filled,,1.1999,0,3,fp 1\n"
+    )
+    live = _live(tmp_path, paper, None)
+    output = tmp_path / "p90.json"
+    assert (
+        fr.main(
+            [
+                "--live-dir",
+                str(live),
+                "--since",
+                SINCE.isoformat(),
+                "--out",
+                str(tmp_path / "out"),
+                "--write-p90",
+                str(output),
+                "--p90-min-fills",
+                "2",
+            ]
+        )
+        == 0
+    )
+    data = json.loads(output.read_text())
+    fills, _ = fr.run(live, SINCE, "fp", None, tmp_path / "out2")
+    table = fr.symbol_table(fills, CostConfig())
+    assert list(data["symbols"]) == ["EURUSD"]
+    assert data["source"] == "fill_report" and data["since"] == SINCE.isoformat()
+    assert data["until"] == "2026-10-27T16:02:00+00:00" and data["min_fills"] == 2
+    assert data["symbols"]["EURUSD"] == {
+        "n": 2,
+        "p90": pytest.approx(table.loc["EURUSD", "suggest_p90"]),
+    }
+    assert (
+        fr.main(
+            [
+                "--live-dir",
+                str(live),
+                "--since",
+                SINCE.isoformat(),
+                "--out",
+                str(tmp_path / "out"),
+                "--write-p90",
+                str(output),
+                "--p90-min-fills",
+                "1",
+            ]
+        )
+        == 0
+    )
+    all_symbols = json.loads(output.read_text())["symbols"]
+    assert list(all_symbols) == ["EURUSD", "GBPUSD"]
+    for symbol, item in all_symbols.items():
+        assert item["p90"] == pytest.approx(table.loc[symbol, "suggest_p90"])
