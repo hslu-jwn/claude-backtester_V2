@@ -10,7 +10,7 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - **Branches:** work on **`v2-6-research`** (pushed). `main` = merged 2026-10-27 at `da7efb9`;
   everything after (UI, V2.6d, news, V2.6i) is **not merged** yet. Merge to `main` only on the
   user's word.
-- **Tests:** ~4960 passed, 7 skipped, 1 xfailed (~9.5 min, fine); ruff clean. Golden lists
+- **Tests (2026-11-02):** 5070 passed, 7 skipped, 1 xfailed (16 min); ruff clean. Golden lists
   unchanged since 2026-10-27 (news filter is off by default).
 - **Data:** 34 FTMO symbols (+ Binance), cache rebuilt 2026-10-26. News calendar at
   `data/news/economic_events.csv` (git-ignored; rebuild with `python -m
@@ -24,9 +24,16 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   reboot (admin prompt).
 - **App:** `restart_app.bat`; dev preview for Claude: `..\.claude\launch.json` (port 8052).
 - **PC quirks:** long runs log to a file; .ps1 disabled; no backticks in inline PowerShell.
-- **AI team:** since 2026-11-02 one routing table, `docs/agent-routing.md` (local tools ->
-  free local Ollama -> Codex terra / sol -> Opus only for escalation); `ai_dispatch local` and
-  `ai_dispatch stats` added. Baseline before the change: tag `pre-agent-migration-2026-11-02`.
+- **AI team (session 2026-11-02, accepted by the user):** one routing table,
+  `docs/agent-routing.md` (local tools -> free local Ollama -> Codex terra / sol -> Opus only
+  for escalation; no cross-review chain). `ai_dispatch` lanes: `local` (Ollama), hosted free
+  APIs `groq`, `openrouter` (`:free` only), `gemini-api` (all probed OK), `deepseek` (key OK,
+  no balance, needs `--allow-paid`); GitHub Models off (endpoint answers "OK" to everything);
+  no Astra (no access). `ai_dispatch stats` sums usage. Keys: Windows Credential Manager,
+  `<provider>@backtester-ai`. `Continue.Research` procedure is now the `continue-research`
+  skill. Baseline before the change: tag `pre-agent-migration-2026-11-02`.
+- **Not checked 2026-11-02:** demo bot and data state above are from 2026-10-28; check before
+  relying on them. Open: top up DeepSeek to enable it.
 
 ## Research department (since 2026-10-27)
 
