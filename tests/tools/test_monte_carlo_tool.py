@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from backtester.analytics import monkeys
 from backtester.engine.costs import CostConfig
 from backtester.tools import monte_carlo as tool
 from backtester.tools.monte_carlo import ToolConfig, parse_args, path_row
@@ -78,6 +79,12 @@ def stub(monkeypatch):
     monkeypatch.setattr(tool, "run_backtests", fake_run)
     monkeypatch.setattr(tool, "load_profile", fake_profile)
     monkeypatch.setattr(tool, "write_path", fake_write)
+    # one process: a pool of cpu_count - 1 workers per test cost ~10 s on Windows for these
+    # tiny runs; seeded results do not depend on workers (tests/analytics/test_monkeys.py)
+    real_monkeys = monkeys.matched_monkeys
+    monkeypatch.setattr(
+        monkeys, "matched_monkeys", lambda *a, **k: real_monkeys(*a, **{**k, "workers": 1})
+    )
     return calls
 
 
