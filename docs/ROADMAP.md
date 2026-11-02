@@ -301,6 +301,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the cleaning does not repair; with 2 / 2 min windows the filter and the news split miss them
   in 2023-24. 311 of 4,652 High rows (6.7 %) stay day-only. Question: add a `news_clean` rule
   that moves an exact row exactly +-60 min off its event's mode onto the mode?
+  **Step (4) 2026-11-03 night, browser on the idle PC** (newest run 10,397 trades, warm): the
+  chart was usable at 4.5-4.9 s because the browser spent ~2 s on the 100 trade rows before it
+  asked for the candles; the list's first fill now waits for the candles (`chart-base` with
+  candles), later redraws keep it: chart usable **2.2-2.6 s** (target < 4 s met), the list
+  follows at ~4 s, a page step ~2.3 s. Same look; Opus, test-first. Seen once in ~10 loads:
+  a request ended in `ERR_CONNECTION_RESET` and the page stayed on "Updating..." (Dash does
+  not retry; dev server; cause not found, a reload fixes it).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

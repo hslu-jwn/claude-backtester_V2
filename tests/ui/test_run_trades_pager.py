@@ -98,3 +98,28 @@ def test_page_and_render_callbacks(tmp_path, monkeypatch):
     assert len(rows.children) == 50
     assert (label, prev, next_) == ("201-250 of 250", False, True)
     assert render("time", 1)[2:] == (True, False)
+
+
+def test_list_first_fills_after_the_chart_is_drawn(tmp_path, monkeypatch):
+    # night run 2026-11-03 (Opus): rendering the 100 rows at page load held the chart back ~2 s,
+    # so the first fill waits for the candles (chart-base); later chart redraws keep the list;
+    # sort and page changes still render at once
+    write_run(
+        tmp_path,
+        "20261001-090000_A",
+        [csv_row(i, (T0 + timedelta(minutes=i)).isoformat(), 1) for i in range(250)],
+    )
+    app = Dash(__name__)
+    chart.register_callbacks(app, SymbolSources({}), results_dir=tmp_path)
+    spec = next(c for c in app._callback_list if "run-trades-label.children" in c["output"])
+    assert spec["prevent_initial_call"] is True
+    assert {"id": "chart-base", "property": "data"} in spec["inputs"]
+    render = callback(app, "run-trades-label.children")
+    monkeypatch.setattr(chart, "ctx", SimpleNamespace(triggered_id="chart-base"))
+    base = {"candles": {"t": [1]}}
+    assert render("time", 1, None, None) == (chart.no_update,) * 4  # no candles yet
+    assert render("time", 1, {"message": "x"}, None) == (chart.no_update,) * 4
+    assert render("time", 1, base, None)[1] == "1-100 of 250"
+    assert render("time", 1, base, "1-100 of 250") == (chart.no_update,) * 4
+    monkeypatch.setattr(chart, "ctx", SimpleNamespace(triggered_id="run-trades-page"))
+    assert render("time", 2, None, "1-100 of 250")[1] == "101-200 of 250"

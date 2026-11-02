@@ -1881,8 +1881,14 @@ def register_callbacks(
         Output("run-trades-next", "disabled"),
         Input("run-trades-sort", "value"),
         Input("run-trades-page", "data"),
+        Input("chart-base", "data"),
+        State("run-trades-label", "children"),
+        prevent_initial_call=True,
     )
-    def _run_trades_render(sort, page):
+    def _run_trades_render(sort, page, base=None, shown=None):
+        # first fill once the candles arrive: 100 rows at load held the chart back ~2 s
+        if ctx.triggered_id == "chart-base" and (shown or not (base or {}).get("candles")):
+            return (no_update,) * 4
         rows, label, page, pages = newest_trade_rows(results_dir, sort, page)
         return rows, label, page == 1, page == pages
 
