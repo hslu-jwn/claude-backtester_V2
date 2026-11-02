@@ -133,3 +133,20 @@ runs strategy 6.
   days go into the MT5 cache. The chart reads `live/` only for days the MT5 / histdata caches lack.
 - "Bot trades" chart overlay: trades since the current bot start (`status.json` `started_at`), on by default
   for the bot's symbols.
+
+## Demo reconciliation (ROADMAP 12.5)
+
+Run `python -m backtester.tools.reconcile --since 2026-10-27T16:00 --out results/reconcile`.
+The offline tool compares fill-probe demo orders with the default engine on the chart's cached
+M1 sources, matching symbol and signal-bar close time. `trades.csv` contains both sides' stops,
+entry fills, exit times, reasons, fill prices and gross and net R, plus differences. Entry
+difference is adverse-positive and also expressed in model slippage units; exit price and R
+differences are demo minus engine. `report.md` summarizes matched trades by symbol and demo exit
+reason and lists up to 50 unexplained rows.
+
+For engine-only trades, a matching skipped paper row supplies its reason; otherwise times outside
+the day's paper window or inside a gap over 60 minutes are marked bot not running. Demo-only
+trades without a cached signal candle are marked bar missing in cache. Matched trades first flag
+unequal exit reasons, then stops differing by more than 1e-9 relative. Other unmatched cases
+are unexplained; remaining matched differences reflect fills and costs. The tool never connects
+to MT5 or writes to the live folder or trial log.

@@ -270,6 +270,17 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   `net_r_stressed` = measured p90 on market fills (`cost_stress_mode = "p90"`, the user's
   2026-10-28 decision), x1.5 only for unmeasured symbols or in `factor` mode; golden lists
   identical.
+  **12.5 built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v28-12-5-reconcile.md`;
+  Opus added the direction check and a 1 % R stop tolerance): `python -m
+  backtester.tools.reconcile`, run in `results/reconcile_2026-11-02/`. All 2,756 demo trades
+  matched an engine trade; 598 engine-only, all explained (450 daily stop, the rest skips /
+  bot not running); 0 unexplained. Engine more conservative: matched net R demo -750 vs
+  engine -964 without NATGAS (median 0.07 R per trade, exit reason agrees 90 %). Findings for
+  the user (no default changed): (a) 110 trades of 2026-10-27 only have the opposite direction
+  in the demo (the bot's first day; cause not found); (b) NATGAS: demo -452 R vs engine -977 R
+  because the engine accepts a stop inside the spread (e.g. a 0.002 stop with the 0.06 spread
+  = -54 R on one trade), which a broker rejects; question: should the engine refuse an order
+  whose stop distance is below the spread / the broker's stop level?
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**
