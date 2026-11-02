@@ -24,8 +24,9 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   reboot (admin prompt).
 - **App:** `restart_app.bat`; dev preview for Claude: `..\.claude\launch.json` (port 8052).
 - **PC quirks:** long runs log to a file; .ps1 disabled; no backticks in inline PowerShell.
-- **AI team:** ChatGPT Plus (Codex) + Gemini Plus; Antigravity (Gemini / Claude 4.6) empty until
-  ~2026-10-29, so Opus reviewed Codex's code. The user: use subagents for heavy work.
+- **AI team:** since 2026-11-02 one routing table, `docs/agent-routing.md` (local tools ->
+  free local Ollama -> Codex terra / sol -> Opus only for escalation); `ai_dispatch local` and
+  `ai_dispatch stats` added. Baseline before the change: tag `pre-agent-migration-2026-11-02`.
 
 ## Research department (since 2026-10-27)
 

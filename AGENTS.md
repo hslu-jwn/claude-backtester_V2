@@ -1,24 +1,14 @@
 # AGENTS.md
 
-Project rules for every model working in this repository: Claude (Opus), Codex and Gemini
-(Antigravity CLI). `CLAUDE.md` and `GEMINI.md` point here. Read this first, every task.
+Project rules for every model working in this repository (Claude, Codex, Gemini, local models).
+`CLAUDE.md` and `GEMINI.md` point here. Read this first, every task.
 
-## Team (rule set by the user, 2026-10-22)
+## Team
 
-- **Opus (Claude)** is the only dispatcher: plans, assigns tasks, checks every result itself
-  (reads the diff, runs the tests; a model's "done, tests pass" does not count), merges,
-  commits and talks to the user. It writes or reviews code itself only when the others fail or
-  the task touches no-lookahead, the engine or risk.
-- **Codex** writes all production code (strategies, fixes, speed-ups), specs and test-case
-  lists, turns accepted research-department submissions into V2 specs
-  (`docs/research-intake.md`) and gives a second opinion on decisions. Runs in shell mode
-  (edits files, runs pytest / ruff itself).
-- **Claude 4.6** (Sonnet 4.6 / Opus 4.6 through the Antigravity CLI, on the Google quota):
-  reviews Codex's code, is the second coding lane when Codex is busy or at its limit, and the
-  next step in the escalation chain before Opus.
-- **Gemini** (3.8 Flash through the Antigravity CLI) does the bulk work that is not production
-  code: writing tests from a test-case list, running tests and sweeps, research-card
-  write-ups, and method look-ups for our own evaluation (statistics, costs, testing).
+- **Routing** (who does what, models, escalation, fallback): `docs/agent-routing.md`. Cheapest
+  capable method first: local tools, then the coordinator itself, then one delegated worker.
+  The coordinator (Codex in a direct session, or the Claude Code session) checks results by
+  running the tests; a worker's "done, tests pass" does not count.
 - **Research department (since 2026-10-27, the user):** a separate team at
   `../Research_Department/` owns literature / web / study research, hypotheses, strategy ideas
   and complete strategy specifications. It hands them over only through
@@ -26,17 +16,9 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   ideas any more, do not edit `../Research_Department/`, and never keep V2-local copies of the
   shared schemas or queue. Questions for them go back as feedback envelopes
   (`docs/research-intake.md`). They never edit this repo.
-- Codex never calls the others. When Codex plans work for another model it writes a task brief
-  file (`briefs/<name>.md`) and Opus hands it on.
-- **Cross-review:** no model approves its own work. Codex writes code -> Claude 4.6 reviews it
-  and Gemini tests it; Claude 4.6 writes -> Codex reviews; Gemini writes tests -> Codex
-  reviews them. Tests (written first, from the spec) and the implementation come from
-  different models where possible; when the other models are out of quota, one model writes
-  both (tests first) and Opus reviews the tests and the code.
-- **Escalation, code:** Codex (2 tries) -> Claude 4.6 (Sonnet, then Opus 4.6) -> Opus.
-  **Tests / method look-ups:** Gemini (2 tries) -> Claude 4.6 Sonnet -> Codex -> Opus. Raise effort or
-  model one level after a failed try before passing the task on.
-- **Hard limits for Codex, Claude 4.6 and Gemini:** never start a server, app preview or any
+- Workers never call other models. A worker that plans work for another model writes a brief
+  file (`briefs/<name>.md`) and the coordinator hands it on.
+- **Hard limits for every dispatched model:** never start a server, app preview or any
   process that keeps running after your answer (a preview of the app on 2026-10-24 kept a
   dispatch open for 30 hours); never commit, push or create branches;
   never read, print or ask for credentials (they live only in the Windows Credential
@@ -49,7 +31,7 @@ Project rules for every model working in this repository: Claude (Opus), Codex a
   backtester.tools.lanes create <name>`, `tools/lanes.py`, `docs/research-runner.md` › Lanes).
   A lane may change only `src/backtester/strategy/<name>/`, `docs/strategy-<name>.md`,
   `tests/strategy/<name>/` and `research/grids/<name>*.toml` (`lanes check <name>` enforces it);
-  shared code and the `strategy/registry.py` entry go through Opus.
+  shared code and the `strategy/registry.py` entry go through the coordinator.
 - Every answer ends with a short report: what was done, files changed, test results, open
   questions. A trading rule that is unclear is reported, never guessed.
 

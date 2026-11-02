@@ -1,9 +1,13 @@
-"""Call Codex, Gemini or Claude 4.6 (both via Antigravity CLI) non-interactively for one task. Spec: AGENTS.md › Team.
+"""Call Codex, Gemini / Claude 4.6 (via Antigravity CLI) or a local Ollama model for one task.
+Spec: docs/agent-routing.md.
 
     python -m backtester.tools.ai_dispatch codex  --effort medium --brief briefs/x.md
     python -m backtester.tools.ai_dispatch gemini --effort high --write --prompt "Write tests ..."
+    python -m backtester.tools.ai_dispatch local  --brief errors.txt --prompt "Summarise ..."
+    python -m backtester.tools.ai_dispatch groq   --model <id> --prompt "..."  (also openrouter, deepseek)
+    python -m backtester.tools.ai_dispatch stats   # calls, minutes, limits per tool and model
 
-Opus is the only dispatcher. Every call:
+It never falls back to another model on its own. Every call:
 - prepends the shared limits (AGENTS.md, never commit / push, no credentials, no live/ code),
 - runs with secrets removed from the environment,
 - checks the repo afterwards (no commit, no branch switch, no protected path touched) and
@@ -32,9 +36,24 @@ EXIT_VIOLATION = 3
 EXIT_LIMIT = 4
 
 
+KEY_SERVICE = (
+    "backtester-ai"  # Windows Credential Manager: python -m keyring set backtester-ai <provider>
+)
+
+
+@dataclass(frozen=True)
+class Provider:
+    """An OpenAI-compatible chat API; text in / text out, no tools or file access."""
+
+    url: str
+    model: str | None = None  # default, set only after a verified probe
+    free_suffix: str = ""  # only models ending in this are allowed (OpenRouter free models)
+    paid: bool = False  # refused unless --allow-paid
+
+
 @dataclass(frozen=True)
 class DispatchConfig:
-    codex_model: str = "gpt-6.1-sol"
+    codex_model: str = "gpt-6.1-terra"  # cheapest first; --model gpt-6.1-sol for engine / risk
     gemini_models: Mapping[str, str] = field(
         default_factory=lambda: {
             "low": "gemini-3.8-flash-low",
@@ -47,6 +66,33 @@ class DispatchConfig:
             "low": "claude-sonnet-4-6",
             "medium": "claude-sonnet-4-6",
             "high": "claude-opus-4-6-thinking",
+        }
+    )
+    local_models: Mapping[str, str] = field(  # Ollama on this PC: zero paid tokens, text only
+        default_factory=lambda: {
+            "low": "qwen3.5:4b-q4_K_M",
+            "medium": "qwen3.5:9b-q4_K_M",
+            "high": "qwen3.5:27b-q4_K_M",
+        }
+    )
+    ollama_url: str = "http://localhost:11434/api/generate"
+    providers: Mapping[str, Provider] = field(
+        default_factory=lambda: {
+            "groq": Provider(
+                "https://api.groq.com/openai/v1/chat/completions", model="openai/gpt-oss-120b"
+            ),
+            "openrouter": Provider(
+                "https://openrouter.ai/api/v1/chat/completions",
+                model="nvidia/nemotron-3-ultra-550b-a55b:free",
+                free_suffix=":free",
+            ),
+            "deepseek": Provider("https://api.deepseek.com/chat/completions", paid=True),
+            "gemini-api": Provider(
+                "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                model="gemini-3.8-flash",
+            ),
+            # github-models: models.github.ai answered "OK" to every request, even unauthenticated
+            # (2026-11-02); left out until it returns real API responses.
         }
     )
     codex_efforts: tuple[str, ...] = ("low", "medium", "high", "xhigh")
@@ -67,12 +113,13 @@ DEFAULT = DispatchConfig()
 
 @dataclass(frozen=True)
 class Task:
-    tool: str  # "codex" | "gemini" | "claude46" (the last two run through agy)
+    tool: str  # "codex" | "gemini" | "claude46" (agy) | "local" (Ollama) | a cfg.providers key
     prompt: str
     effort: str = "medium"
     write: bool = False  # may edit files (still never commit)
     cwd: str = "."
     model: str | None = None
+    allow_paid: bool = False  # hosted APIs that bill per token
 
 
 @dataclass(frozen=True)
@@ -130,6 +177,79 @@ def build_agy_cmd(exe: str, task: Task, cfg: DispatchConfig) -> list[str]:
         exe, "--model", model, "--sandbox", "--dangerously-skip-permissions",
         "--output-format", "json", "-p", prompt_for(task, cfg),
     ]  # fmt: skip
+
+
+def build_local_request(task: Task, cfg: DispatchConfig) -> dict:
+    model = task.model or cfg.local_models[_effort(task, cfg.local_models)]
+    rule = "Answer concise and only from the text below; say so if it is not there."
+    prompt = f"{rule}\n\n{task.prompt}"
+    return {"model": model, "prompt": prompt, "stream": False, "think": False}
+
+
+def run_local(task: Task, cfg: DispatchConfig) -> tuple[str, str, int]:
+    import urllib.request
+
+    body = json.dumps(build_local_request(task, cfg)).encode()
+    req = urllib.request.Request(cfg.ollama_url, body, {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=cfg.timeout_s) as resp:
+            return json.loads(resp.read())["response"], "", 0
+    except OSError as e:  # Ollama not running: an error, never a silent switch to a paid model
+        return "", f"ollama: {e}", 1
+
+
+def build_api_request(task: Task, cfg: DispatchConfig) -> tuple[str, dict]:
+    p = cfg.providers[task.tool]
+    model = task.model or p.model
+    if not model:
+        raise ValueError(f"{task.tool}: no verified default model, give --model")
+    if p.free_suffix and not model.endswith(p.free_suffix):
+        raise ValueError(f"{task.tool}: only free models ({p.free_suffix}) are allowed")
+    if p.paid and not task.allow_paid:
+        raise ValueError(f"{task.tool} bills per token: pass --allow-paid to use it")
+    rule = "Text only: you cannot read files or run commands. Answer concise."
+    content = f"{rule}\n\n{task.prompt}"
+    return p.url, {"model": model, "messages": [{"role": "user", "content": content}],
+                   "stream": False}  # fmt: skip
+
+
+def run_api(task: Task, cfg: DispatchConfig) -> tuple[str, str, int]:
+    import urllib.error
+    import urllib.request
+
+    import keyring
+
+    url, body = build_api_request(task, cfg)
+    key = keyring.get_password(KEY_SERVICE, task.tool)
+    if not key:
+        return "", f"no key: python -m keyring set {KEY_SERVICE} {task.tool}", 1
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {key}",
+        "User-Agent": "backtester-ai-dispatch/1.0",  # Groq's Cloudflare blocks Python-urllib
+    }
+    req = urllib.request.Request(url, json.dumps(body).encode(), headers)
+    try:
+        with urllib.request.urlopen(req, timeout=cfg.timeout_s) as resp:
+            return json.loads(resp.read())["choices"][0]["message"]["content"], "", 0
+    except urllib.error.HTTPError as e:  # 429 -> exit 4 via hit_limit; never a paid fallback
+        return "", f"{task.tool}: HTTP {e.code} {e.read()[:500]!r}", 1
+    except OSError as e:
+        return "", f"{task.tool}: {e}", 1
+
+
+def usage_summary(rows: list[Mapping]) -> list[tuple[str, str, int, float, dict[str, int]]]:
+    """(tool, model, calls, minutes, statuses) per tool and model, from results/ai_calls.jsonl."""
+    groups: dict[tuple[str, str], list[Mapping]] = {}
+    for r in rows:
+        groups.setdefault((r["tool"], r["model"]), []).append(r)
+    out = []
+    for (tool, model), rs in sorted(groups.items()):
+        statuses: dict[str, int] = {}
+        for r in rs:
+            statuses[r["status"]] = statuses.get(r["status"], 0) + 1
+        out.append((tool, model, len(rs), round(sum(r["seconds"] for r in rs) / 60, 1), statuses))
+    return out
 
 
 def parse_agy_output(text: str) -> tuple[str, bool, str]:
@@ -255,6 +375,18 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     out = results / "ai" / f"{stamp}_{task.tool}_{label}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
+    before = repo_state(task.cwd)
+    start = time.monotonic()
+    if task.tool == "local":
+        model = build_local_request(task, cfg)["model"]
+        stdout, stderr, code = run_local(task, cfg)
+        out.write_text(stdout, encoding="utf-8")
+        return _finish(task, cfg, out, stamp, label, model, start, before, stdout, stderr, code, "")
+    if task.tool in cfg.providers:
+        model = build_api_request(task, cfg)[1]["model"]
+        stdout, stderr, code = run_api(task, cfg)
+        out.write_text(stdout, encoding="utf-8")
+        return _finish(task, cfg, out, stamp, label, model, start, before, stdout, stderr, code, "")
     exe = _exe(task.tool, cfg)
     if task.tool == "codex":
         cmd, stdin = build_codex_cmd(exe, task, cfg, str(out)), prompt_for(task, cfg)
@@ -262,8 +394,6 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
         cmd, stdin = build_agy_cmd(exe, task, cfg), None
     env = child_env(os.environ, cfg)
     env["PATH"] = _fresh_path(env.get("PATH", ""))
-    before = repo_state(task.cwd)
-    start = time.monotonic()
     try:
         proc = subprocess.run(
             cmd, check=False, input=stdin, cwd=task.cwd, env=env, capture_output=True,
@@ -272,7 +402,6 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
         stdout, stderr, code = proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired as e:
         stdout, stderr, code = str(e.stdout or ""), f"timeout after {cfg.timeout_s}s", 124
-    seconds = round(time.monotonic() - start)
     note = ""
     if task.tool != "codex":
         answer, ok, note = parse_agy_output(stdout)
@@ -281,16 +410,21 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
             code = 1
     elif not out.exists():
         out.write_text(stdout, encoding="utf-8")
+    model = cmd[cmd.index("-m" if task.tool == "codex" else "--model") + 1]
+    return _finish(task, cfg, out, stamp, label, model, start, before, stdout, stderr, code, note)
+
+
+def _finish(task, cfg, out, stamp, label, model, start, before, stdout, stderr, code, note) -> int:
+    seconds = round(time.monotonic() - start)
     violations = guard_violations(before, repo_state(task.cwd), cfg, write=task.write)
     limited = code != 0 and hit_limit(stdout + stderr, cfg)
     status = "violation" if violations else "limit" if limited else "ok" if code == 0 else "error"
     entry = {
-        "time": stamp, "tool": task.tool, "label": label, "model": cmd[cmd.index(
-            "-m" if task.tool == "codex" else "--model") + 1], "effort": task.effort,
+        "time": stamp, "tool": task.tool, "label": label, "model": model, "effort": task.effort,
         "write": task.write, "seconds": seconds, "exit": code, "status": status,
         "violations": violations, "note": note, "answer": str(out),
     }  # fmt: skip
-    with (results / "ai_calls.jsonl").open("a", encoding="utf-8") as log:
+    with (out.parent.parent / "ai_calls.jsonl").open("a", encoding="utf-8") as log:
         log.write(json.dumps(entry) + "\n")
     print(json.dumps(entry, indent=1))
     if code != 0:
@@ -304,22 +438,33 @@ def run(task: Task, cfg: DispatchConfig, results: Path, label: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    p.add_argument("tool", choices=["codex", "gemini", "claude46"])
+    tools = ["codex", "gemini", "claude46", "local", *DEFAULT.providers, "stats"]
+    p.add_argument("tool", choices=tools)
     p.add_argument("--prompt", help="task text (appended to --brief when both are given)")
     p.add_argument("--brief", type=Path, help="task brief file (markdown)")
     p.add_argument("--effort", default="medium")
     p.add_argument("--model", help="override the default model")
     p.add_argument("--write", action="store_true", help="allow file edits (never commits)")
+    p.add_argument("--allow-paid", action="store_true", help="allow a per-token billed API")
     p.add_argument("--cwd", default=".", help="repo or worktree to work in")
     p.add_argument("--label", default="task", help="short name for the answer file and log")
     p.add_argument("--results", type=Path, default=RESULTS_DIR)
     a = p.parse_args(argv)
+    if a.tool == "stats":
+        log = a.results / "ai_calls.jsonl"
+        rows = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines() if x.strip()]
+        for tool, model, calls, minutes, statuses in usage_summary(rows):
+            print(f"{tool:9} {model:28} {calls:4} calls {minutes:7.1f} min  {statuses}")
+        return 0
     if not (a.prompt or a.brief):
         p.error("give --prompt, --brief or both")
     parts = [a.brief.read_text(encoding="utf-8-sig") if a.brief else "", a.prompt or ""]
     prompt = "\n\n".join(x for x in parts if x)
-    task = Task(a.tool, prompt, a.effort, a.write, a.cwd, a.model)
-    return run(task, DispatchConfig(), a.results, a.label)
+    task = Task(a.tool, prompt, a.effort, a.write, a.cwd, a.model, a.allow_paid)
+    try:
+        return run(task, DispatchConfig(), a.results, a.label)
+    except ValueError as e:  # refused route (no model, not free, paid without --allow-paid)
+        p.error(str(e))
 
 
 if __name__ == "__main__":

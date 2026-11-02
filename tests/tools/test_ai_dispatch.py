@@ -10,13 +10,16 @@ from backtester.tools.ai_dispatch import (
     Task,
     _fresh_path,
     build_agy_cmd,
+    build_api_request,
     build_codex_cmd,
+    build_local_request,
     child_env,
     guard_violations,
     hit_limit,
     parse_agy_output,
     parse_porcelain_z,
     prompt_for,
+    usage_summary,
 )
 
 CFG = DispatchConfig()
@@ -241,3 +244,63 @@ def test_normal_output_is_not_a_limit():
 def test_limit_detection_ignores_case():
     assert hit_limit("USAGE LIMIT reached") is True
     assert hit_limit("Rate Limit") is True
+
+
+# --- local lane (Ollama, zero paid tokens) and usage stats --------------------------------
+
+
+@pytest.mark.parametrize("effort", ["low", "medium", "high"])
+def test_local_effort_picks_an_ollama_model_and_never_thinks(effort):
+    body = build_local_request(task(tool="local", effort=effort), CFG)
+    assert body["model"] == CFG.local_models[effort]
+    assert body["stream"] is False and body["think"] is False
+    assert body["prompt"].endswith("Review x.py")
+
+
+def test_local_prompt_is_text_only_without_repo_rules():
+    """The local model gets no tools, so it is told to answer briefly from the text alone."""
+    prompt = build_local_request(task(tool="local"), CFG)["prompt"]
+    assert "AGENTS.md" not in prompt and "concise" in prompt
+
+
+def test_usage_summary_counts_calls_minutes_and_limits_per_tool_and_model():
+    rows = [
+        {"tool": "codex", "model": "m1", "status": "ok", "seconds": 60},
+        {"tool": "codex", "model": "m1", "status": "limit", "seconds": 30},
+        {"tool": "local", "model": "q", "status": "ok", "seconds": 5},
+    ]
+    assert usage_summary(rows) == [
+        ("codex", "m1", 2, 1.5, {"ok": 1, "limit": 1}),
+        ("local", "q", 1, 0.1, {"ok": 1}),
+    ]
+
+
+# --- hosted API lanes (Groq, OpenRouter, DeepSeek): text only, key from the Credential Manager
+
+
+def test_api_request_is_openai_chat_format_with_the_limits_prompt():
+    url, body = build_api_request(task(tool="groq", model="m-1"), CFG)
+    assert url == CFG.providers["groq"].url
+    assert body["model"] == "m-1" and body["stream"] is False
+    assert body["messages"][0]["role"] == "user"
+    assert body["messages"][0]["content"].endswith("Review x.py")
+
+
+def test_api_needs_a_model_when_the_provider_has_no_default():
+    with pytest.raises(ValueError, match="--model"):
+        build_api_request(
+            task(tool="groq", model=None),
+            DispatchConfig(providers={"groq": CFG.providers["groq"].__class__(url="u")}),
+        )
+
+
+def test_openrouter_refuses_models_that_are_not_free():
+    with pytest.raises(ValueError, match=":free"):
+        build_api_request(task(tool="openrouter", model="openai/gpt-x"), CFG)
+    build_api_request(task(tool="openrouter", model="deepseek/deepseek-r1:free"), CFG)
+
+
+def test_paid_provider_is_refused_unless_allowed():
+    with pytest.raises(ValueError, match="--allow-paid"):
+        build_api_request(task(tool="deepseek", model="deepseek-chat"), CFG)
+    build_api_request(task(tool="deepseek", model="deepseek-chat", allow_paid=True), CFG)
