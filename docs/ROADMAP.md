@@ -290,7 +290,17 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   (`robustness.r004`) waits until R004 is queued; the data-integrity check is not built:
   Research's reply `FB_INTRADAY_H1_SHOCK_RESPONSE_REPLY_20261102T171227Z_RESEARCH` requires an
   authoritative versioned CFD session calendar (holidays, early closes), which V2 does not
-  have; Research is told so.
+  have; Research is told so (`FB_INTRADAY_H1_SHOCK_RESPONSE_20261102T232536Z_ca99`; the
+  reviewability proposal acknowledged in `FB_UNKNOWN_20261102T232536Z_1ebf`, review after V2.8).
+  **V2.4e real-calendar validation built 2026-11-03 night** (Codex gpt-6.1-terra, brief
+  `briefs/v24e-real-calendar-validation.md`): `python -m backtester.tools.news_validate` ->
+  `results/news_validation/`. Anchors: NFP 69/69, US CPI m/m 63/63, FOMC statement 47/47 at
+  their published times; US CPI y/y 2 and Core CPI m/m 9 rows, BoE 1 row (11:02 UTC) off.
+  **Finding for the user:** 386 High data releases (CPI, PMIs, claims, employment; 2023: 181,
+  2024: 186) are exactly 1 h off their event's usual time, the source's known DST defect that
+  the cleaning does not repair; with 2 / 2 min windows the filter and the news split miss them
+  in 2023-24. 311 of 4,652 High rows (6.7 %) stay day-only. Question: add a `news_clean` rule
+  that moves an exact row exactly +-60 min off its event's mode onto the mode?
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

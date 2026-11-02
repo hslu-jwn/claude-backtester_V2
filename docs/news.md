@@ -175,3 +175,18 @@ that local time converted to UTC with zoneinfo (DST-correct), `scheduled_date_ut
 precision `minute`, `time_label` = the local time (HH:MM), and the note gets "; release time imputed
 2026-10-27 from N of M occurrences (HH:MM zone)". Applies to High and Medium rows alike. The tool
 also prints imputed rows and rows left day-only, each by impact.
+
+## Real-calendar validation
+
+`python -m backtester.tools.news_validate [--calendar data/news/economic_events.csv] [--out results/news_validation]`
+loads the calendar through the normal loader and writes a read-only report and deviations CSV.
+It checks fixed-schedule anchors in their local time zones, release-time consistency for other
+exact events, coverage by provider and year, precision, weekday share and loader warnings.
+Imputed anchor rows are identified separately; deviations are reported, never corrected. This
+validates the calendar only and does not change the FTMO scope or filter defaults.
+
+Run 2026-11-03 on 9,836 rows (SHA256
+`4150acbd97d09ba2988ed5c82718c4409e7581ea92be34be196ec8ca6ee6ee5f`): 3 anchors passed
+and 3 failed (12 deviating anchor rows); 1,940 consistency deviations; 311 of 4,652 High rows
+remain day-only (6.69%). The full findings are in `results/news_validation/report.md` and
+`results/news_validation/deviations.csv`. User acceptance remains pending.

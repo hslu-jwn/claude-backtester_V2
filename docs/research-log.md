@@ -12,6 +12,15 @@ U1 by Codex gpt-6.1-terra medium (`briefs/v28-u1-trade-pager.md`): first call hi
 limit (reset 21:36, the user chose to wait), second call done in ~5 min, inside the brief's
 files, tests green on Opus's run; no fix round.
 
+Night run 2026-11-02/03 (V2.8 step 3): V2.4b, 12.5, V2.6l, V2.4e each by Codex gpt-6.1-terra
+medium in one call (V2.4b first went to gpt-6.1-sol, "model at capacity" after one partial test
+file, then terra per the routing's same-cost rule); Opus checked each by running the tests and
+comparing with recorded numbers; one Opus fix round on 12.5 (direction check, stop tolerance).
+Feedback to Research 2026-11-03: `FB_INTRADAY_H1_SHOCK_RESPONSE_20261102T232536Z_ca99` (no
+authoritative CFD session calendar, so the R004 integrity predicate is unsupported for all five
+symbols; `robustness.r004` deferred until R004 is queued; V2.6l cell manifest available) and
+`FB_UNKNOWN_20261102T232536Z_1ebf` (reviewability proposal received, review after V2.8).
+
 ## 2026-10-28: first research pilot FX_LONDON_FIX_REV v1.0.0 (V2.6i i8)
 
 Claimed 13:25 UTC, strategy 8 `london_fix` (Codex gpt-6.1-sol medium, Opus review), 9 variants
