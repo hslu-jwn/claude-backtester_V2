@@ -15,11 +15,15 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - **Data:** 34 FTMO symbols (+ Binance), cache rebuilt 2026-10-26. News calendar at
   `data/news/economic_events.csv` (git-ignored; rebuild with `python -m
   backtester.tools.news_clean ../backtester-news/economic_events_2020_to_2026-10-25.csv`).
-- **Demo bot RUNNING** (since 2026-10-27 16:00 UTC, restarted 18:22 UTC, PID 7380/12116):
-  `--strategy fill_probe`, 23 symbols, 0.01 % risk, prefix `fp`; log
-  `results/live/probe_stdout.log`. Stop: create `results/live/STOP` (`EMERGENCY` closes all).
-  Survives the chat, not a reboot. Restart only between :21 and :28. Probe trades whose 20-min
-  exit falls into a daily break are retried until the reopen (the user: leave it).
+- **Demo bot STOPPED** by the user (last log line 2026-10-31 01:00 local): the FTMO demo
+  challenge failed at max drawdown. The fill-probe run (`--strategy fill_probe`, 23 symbols,
+  0.01 % risk, prefix `fp`) ran 2026-10-27..31; log `results/live/probe_stdout.log`. Its
+  `status.json` was never written (R1, fixed 2026-11-02), so the Live page showed "not
+  running" throughout. A restart (new demo account?) is the user's call; restart only between
+  :21 and :28. Stop: `results/live/STOP` (`EMERGENCY` closes all).
+- **Finalization (V2.8, plan accepted 2026-11-02):** audit and baselines in
+  `docs/review/finalization-audit-2026-11-02.md`; the ~30 s UI start is the chart page
+  rendering all 10,397 trades of the newest run (U1).
 - **LibreHardwareMonitor** (port 8085) feeds the queue's temperature guard; start it after a
   reboot (admin prompt).
 - **App:** `restart_app.bat`; dev preview for Claude: `..\.claude\launch.json` (port 8052).
@@ -83,7 +87,10 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 ## Next step
 
-After the London session has traded (from 2026-10-28 ~08:00 local, one more day is best):
+V2.8 in the ROADMAP order: R1 done; U1 chart trade list in pages of 100 (Codex terra brief,
+the user looks at it); T1 slowest tests; then V2.4b p90 (below), 12.5, V2.6l, V2.4e.
+
+Older note (2026-10-28): after the London session has traded (from 2026-10-28 ~08:00 local, one more day is best):
 `scripts/export_deals.py 2026-10-27T16:00 --offset-hours 3`, then `python -m
 backtester.tools.fill_report --since 2026-10-27T16:00 --deals results/fill_report/deals.csv`;
 build the accepted V2.4b part (measured p90 per symbol as the stressed cost level in the

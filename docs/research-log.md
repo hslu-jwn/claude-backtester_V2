@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-02: finalization audit and V2.8 R1
+
+Opus (Claude Code, high effort) did the read-only audit (`docs/review/finalization-audit-2026-11-02.md`)
+and R1 itself (`live/` is Opus-only; 3 tests, about 25 lines). No dispatch.
+
 ## 2026-10-28: first research pilot FX_LONDON_FIX_REV v1.0.0 (V2.6i i8)
 
 Claimed 13:25 UTC, strategy 8 `london_fix` (Codex gpt-6.1-sol medium, Opus review), 9 variants

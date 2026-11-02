@@ -211,7 +211,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   future-support list, old idea backlog to research, test only on the user's go, queue files
   kept). Contract 0.1.0 accepted by both teams 2026-10-27 (research applied all requested
   edits), so i1 is down to the fixtures.
-- ☐ **V2.6j Automatic research loop (the user, 2026-10-28):** assumptions instead of waiting,
+- ◐ **V2.6j Automatic research loop (the user, 2026-10-28; built 2026-10-29, not accepted yet):** assumptions instead of waiting,
   async questions to Research (`docs/research-intake.md` › Assumptions and replies); build
   `intake inbox` (open questions of ours, unprocessed replies, age in days), `intake assume`
   (ASSUMPTION_MADE message from a list), parked claims for `NEEDS_CLARIFICATION`, the open
@@ -230,13 +230,27 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   that fails the experiment as TEST_FAILED on a missing M1 bar inside trading hours while a
   position is open (definition proposed to Research), day-clustered uncertainty, raw
   forward-response series next to executed R. Codex gpt-6.1-terra.
-- ☐ **V2.6k Fast loop (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
+- ◐ **V2.6k Fast loop (built 2026-10-29 in `80499b0`, not accepted yet) (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
   > 5.5 h single-core on 10,397 trades):** (1) fail fast: stage 1 = backtests, scorecard,
   halves, cost stresses and the submission's cheap rejection criteria; monkeys and entry screen
   only for a variant that survives stage 1; (2) monkeys / entry screen parallel over processes
   (like `run_backtests`), a cheaper pre-screen, the spec's 1,000 runs for a real candidate;
   (3) the submission's rejection criteria computed by the runner (today a script,
   `results/intake/<stem>/criteria.json`). Codex `gpt-6.1-terra`, test-first.
+- ◐ **V2.8 Finalization (plan accepted by the user 2026-11-02; audit
+  `docs/review/finalization-audit-2026-11-02.md`):** finish, speed up and stabilize the app, no
+  rebuild. In this order: (1) R1 bot `status.json` for every bot strategy, a failed status
+  printed once instead of hidden (`live/`, written by Opus, go by the user 2026-11-02);
+  (2) U1 chart Trades tab: the newest run's trades in pages of 100 (Time / Pair sort on the
+  server, pager, click-to-focus and Minimize unchanged; picked by the user 2026-11-02),
+  done = chart payload < 500 KB and usable < 4 s with the 10,397-trade run, the user looked at
+  it; U2 (optional) Research cards built once; T1 the slowest tests sped up without weakening
+  them, no `pytest-xdist` (the user, 2026-11-02), target ~8 min; (3) V2.4b p90 stressed costs
+  now (the user, 2026-11-02: London fills exist; re-run the fill report first), then 12.5
+  reconciliation, V2.6l, V2.4e real-calendar validation; (4) full suite + ruff, golden check,
+  fast / visual identical, timed browser pass of every page (Chart < 4 s, others < 3 s), intake
+  end-to-end test. Before / after numbers with the same scripts; merge to `main` only on the
+  user's word.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
 
