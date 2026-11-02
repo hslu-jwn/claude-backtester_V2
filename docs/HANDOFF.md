@@ -87,8 +87,9 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 ## Next step
 
-V2.8 in the ROADMAP order: R1 done; U1 chart trade list in pages of 100 (Codex terra brief,
-the user looks at it); T1 slowest tests; then V2.4b p90 (below), 12.5, V2.6l, V2.4e.
+V2.8 in the ROADMAP order: R1 and T1 built; U1 (chart trade list in pages of 100) built, the
+user looks at it (`restart_app.bat`, Chart page, Trades tab below the chart); re-measure the
+chart start on an idle PC; then V2.4b p90 (below), 12.5, V2.6l, V2.4e.
 
 Older note (2026-10-28): after the London session has traded (from 2026-10-28 ~08:00 local, one more day is best):
 `scripts/export_deals.py 2026-10-27T16:00 --offset-hours 3`, then `python -m

@@ -25,6 +25,7 @@ from backtester.analytics.records import TradeRecord, read_trades
 from backtester.ui.layout import key_strip
 from backtester.ui.pages import results
 
+RUN_TRADES_PAGE = 100
 MAX_LISTED = 40  # trades listed in the card; more are counted ("+N more: zoom in")
 NO_RUN_TEXT = "No backtest yet"
 RESULTS_PREFIX = "/results/"
@@ -247,10 +248,13 @@ def sort_run_trades(trades, by: str | None):
     return tuple(sorted(trades, key=lambda t: (t.entry_candle, t.id)))
 
 
-def run_trades_class(sort: str | None) -> str:
-    """Class of the list under the chart: "pair" reorders its rows with CSS `order` (each row
-    carries `--pair-rank`), so switching never re-renders the pattern-matched rows."""
-    return "ch-by-pair" if sort == "pair" else ""
+def trade_page(trades, sort, page, size=RUN_TRADES_PAGE):
+    """Sort and return a clamped page of newest-run trades."""
+    ordered = sort_run_trades(trades, sort)
+    pages = max(1, (len(ordered) + size - 1) // size)
+    page = max(1, min(page or 1, pages))
+    start = (page - 1) * size
+    return ordered[start : start + size], page, pages
 
 
 def run_trades_style(collapsed: bool | None) -> dict:

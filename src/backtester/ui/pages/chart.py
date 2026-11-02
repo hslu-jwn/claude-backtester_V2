@@ -1231,20 +1231,19 @@ def overlay_controls() -> list:
     ]
 
 
-def newest_trade_rows(results_dir: Path):
-    """All newest-run trades in time order, with the same order focus as the visible-trades
-    side list; each row carries its rank in pair order (`--pair-rank`) for the Pair sort."""
+def newest_trade_rows(results_dir: Path, sort="time", page=1):
+    """Render one page of trades from the newest saved run."""
     folder = chart_side.newest_run(results_dir)
-    trades = chart_side.sort_run_trades(chart_side.run_trades(folder), "time") if folder else ()
+    trades = chart_side.run_trades(folder) if folder else ()
+    selected, page, pages = chart_side.trade_page(trades, sort, page)
+    rows = html.Div(
+        [chart_side.trade_item(t, "run-trade") for t in selected], className="ch-run-trades"
+    )
     if not trades:
-        return html.Div("No trades.", className="ch-empty")
-    rank = {t.id: i for i, t in enumerate(chart_side.sort_run_trades(trades, "pair"))}
-    rows = []
-    for t in trades:
-        row = chart_side.trade_item(t, "run-trade")
-        row.style = {"--pair-rank": rank[t.id]}
-        rows.append(row)
-    return html.Div(rows, className="ch-run-trades")
+        return rows, "No trades.", page, pages
+    start = (page - 1) * chart_side.RUN_TRADES_PAGE + 1
+    end = start + len(selected) - 1
+    return rows, f"{start:,}-{end:,} of {len(trades):,}", page, pages
 
 
 def layout(
@@ -1589,6 +1588,13 @@ def layout(
                                         className="tb-timeframes",
                                     ),
                                     html.Button(
+                                        "‹", id="run-trades-prev", className="tb-btn", n_clicks=0
+                                    ),
+                                    html.Span(id="run-trades-label"),
+                                    html.Button(
+                                        "›", id="run-trades-next", className="tb-btn", n_clicks=0
+                                    ),
+                                    html.Button(
                                         chart_side.run_trades_toggle_label(False),
                                         id="run-trades-toggle",
                                         title="Minimize / show the trade list",
@@ -1598,7 +1604,7 @@ def layout(
                                 ],
                                 className="ch-run-trades-head",
                             ),
-                            html.Div(newest_trade_rows(results_dir), id="run-trades-list"),
+                            html.Div(id="run-trades-list"),
                         ],
                         id="chart-tab-trades",
                     ),
@@ -1633,6 +1639,7 @@ def layout(
             dcc.Store(id="st-apply"),
             dcc.Store(id="side-collapsed", storage_type="local"),
             dcc.Store(id="run-trades-collapsed", storage_type="local"),
+            dcc.Store(id="run-trades-page", data=1),
             dcc.Store(id="chart-config", data=chart_settings(config)),
             dcc.Store(id="chart-sweep-tweak"),
             dcc.Store(id="chart-base"),
@@ -1848,11 +1855,36 @@ def register_callbacks(
         return chart_side.collapsed_after(clicks, collapsed)
 
     @app.callback(
-        Output("run-trades-list", "className"),
+        Output("run-trades-page", "data"),
+        Input("run-trades-prev", "n_clicks"),
+        Input("run-trades-next", "n_clicks"),
         Input("run-trades-sort", "value"),
+        State("run-trades-page", "data"),
+        prevent_initial_call=True,
     )
-    def _run_trades_sort(sort):
-        return chart_side.run_trades_class(sort)
+    def _run_trades_page(_prev, _next, sort, page):
+        page = page or 1
+        if ctx.triggered_id == "run-trades-sort":
+            page = 1
+        elif ctx.triggered_id == "run-trades-prev":
+            page -= 1
+        elif ctx.triggered_id == "run-trades-next":
+            page += 1
+        folder = chart_side.newest_run(results_dir)
+        trades = chart_side.run_trades(folder) if folder else ()
+        return chart_side.trade_page(trades, sort, page)[1]
+
+    @app.callback(
+        Output("run-trades-list", "children"),
+        Output("run-trades-label", "children"),
+        Output("run-trades-prev", "disabled"),
+        Output("run-trades-next", "disabled"),
+        Input("run-trades-sort", "value"),
+        Input("run-trades-page", "data"),
+    )
+    def _run_trades_render(sort, page):
+        rows, label, page, pages = newest_trade_rows(results_dir, sort, page)
+        return rows, label, page == 1, page == pages
 
     @app.callback(
         Output("run-trades-collapsed", "data"),

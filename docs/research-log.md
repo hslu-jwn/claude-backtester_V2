@@ -7,7 +7,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 ## 2026-11-02: finalization audit and V2.8 R1
 
 Opus (Claude Code, high effort) did the read-only audit (`docs/review/finalization-audit-2026-11-02.md`)
-and R1 itself (`live/` is Opus-only; 3 tests, about 25 lines). No dispatch.
+and R1 itself (`live/` is Opus-only; 3 tests, about 25 lines). T1 (a test fixture) by Opus.
+U1 by Codex gpt-6.1-terra medium (`briefs/v28-u1-trade-pager.md`): first call hit the usage
+limit (reset 21:36, the user chose to wait), second call done in ~5 min, inside the brief's
+files, tests green on Opus's run; no fix round.
 
 ## 2026-10-28: first research pilot FX_LONDON_FIX_REV v1.0.0 (V2.6i i8)
 
