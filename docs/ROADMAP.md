@@ -252,8 +252,8 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   end-to-end test. Before / after numbers with the same scripts; merge to `main` only on the
   user's word.
   **State 2026-11-02 evening:** R1 built (`4fb5fe9`); T1 built (`417e0ab`, Monte Carlo tool
-  tests 5.5 min -> 43 s); U1 built by Codex terra, checked by Opus (787 UI tests green), **not
-  accepted yet (the user looks at it)**: chart page response 6.4 MB -> 290 KB, list 100 rows
+  tests 5.5 min -> 43 s); U1 built by Codex terra, checked by Opus (787 UI tests green), **accepted
+  by the user 2026-11-02 after looking at it**: chart page response 6.4 MB -> 290 KB, list 100 rows
   "1-100 of 10,397"; with a game running on the PC the chart was usable at 6-7 s and a page
   step took ~3 s in the browser (server 30-50 ms), so the < 4 s target is re-measured on an
   idle PC in step (4).
