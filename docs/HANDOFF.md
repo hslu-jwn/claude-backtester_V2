@@ -99,11 +99,13 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 ## Next step
 
-The user checks the night run (`docs/review/night-2026-11-03.md`) and answers its three
-questions; then V2.8 is finished (merge to `main` on the user's word). After that: a bot run on
-the new 14-day trial for more fills (the user's call), research submissions from the queue
-(`Continue.Research`), V2.7 portfolio when a strategy survives research.
+Night questions answered and built; TradingView candle check done 2026-11-03 (no data error,
+`docs/review/tradingview-check-2026-11-03.md`). Fill probe run 3 on the new 14-day trial runs
+since 2026-11-03 (terminal tab, stop with `results/live/STOP` about day 4 or at -8 %); then
+re-run the fill report and 12.5 reconciliation. Open for the user: merge to `main`; a short's
+stop triggering on the ask like the broker (changes results); the reviewability proposal; the
+research queue is empty (`Continue.Research` waits for a submission).
 
 ## First prompt for the next chat
 
-`Continue.Code` (answers to the night-run questions; then the next step above)
+`Continue.Code` (after the bot run: fill report + reconciliation; or the user's open decisions)
