@@ -73,7 +73,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   the trades of any strategy on the chart; the trade itself is enough, confluences only when
   the user asks for a strategy): the "Trades" overlay runs the selected strategy through the
   backtest runner (`ui/trades_overlay.py` `registered_run`); strategy 1 keeps its confluences.
-- ◐ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
+- ☑ **V2.4c Honesty tooling before V2.6** (done parts accepted by the user 2026-10-26; checks #2 #6 #13 accepted by the user 2026-11-03) (2026-10-23 / 24: T-10, T-09 PBO, T-19, T-14, T-03
   done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
   trade +25 to +90 % at the index open, no-wick nearly x2; **default: the median table, set by
   the user 2026-10-26; re-evaluated after a period of demo trading (V2.4b)**); news-day split
@@ -88,7 +88,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   4d9be45; spread table default bd5a125; news split in V2.4e); what is left of the audit is
   listed in `docs/review/backtest-audit.md` › Re-check 2026-10-28 (mostly T-16 / T-17 and
   partial checks), each needs the user's pick. **Picked by the user 2026-10-28, built the same
-  day (Codex medium, Opus review; not accepted yet):** #2 swept-setting count (flag
+  day (Codex medium, Opus review; accepted by the user 2026-11-03):** #2 swept-setting count (flag
   `too_many_parameters` above 4), #6 entry screen of the chosen development variant in the
   runner (`entry_screen.json`, flag `entry_screen_failed`), #13 monthly returns slope
   (`returns_slope.csv`, flag `declining_returns` at t <= -2) and top-10 trades
@@ -211,7 +211,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   future-support list, old idea backlog to research, test only on the user's go, queue files
   kept). Contract 0.1.0 accepted by both teams 2026-10-27 (research applied all requested
   edits), so i1 is down to the fixtures.
-- ◐ **V2.6j Automatic research loop (the user, 2026-10-28; built 2026-10-29, not accepted yet):** assumptions instead of waiting,
+- ☑ **V2.6j Automatic research loop (the user, 2026-10-28; built 2026-10-29, accepted by the user 2026-11-03):** assumptions instead of waiting,
   async questions to Research (`docs/research-intake.md` › Assumptions and replies); build
   `intake inbox` (open questions of ours, unprocessed replies, age in days), `intake assume`
   (ASSUMPTION_MADE message from a list), parked claims for `NEEDS_CLARIFICATION`, the open
@@ -220,7 +220,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   (`FB_CONTRACT_REPLY_20261028T134149Z_RESEARCH`). **Built 2026-10-29** (Codex
   gpt-6.1-terra, Opus review): `intake inbox [--json] [--ack]`, `assume`, `park`, `parked`,
   automatic unpark on a higher version, open / answered assumptions in every result envelope.
-- ☐ **V2.6l Result envelope for research review (Research's review 2026-10-29,
+- ☑ **V2.6l Result envelope for research review (accepted by the user 2026-11-03; Research's review 2026-10-29,
   `FB_FX_LONDON_FIX_REV_RESULT_REVIEW_20261029T070325Z_RESEARCH`; our answer
   `FB_FX_LONDON_FIX_REV_20261029T164921Z_83af`):** embed every declared cell in `robustness`
   (cell ID, parameters, trades, net / gross R, halves, x2 and x1.5 stresses labelled, stop
@@ -230,7 +230,7 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   that fails the experiment as TEST_FAILED on a missing M1 bar inside trading hours while a
   position is open (definition proposed to Research), day-clustered uncertainty, raw
   forward-response series next to executed R. Codex gpt-6.1-terra.
-- ◐ **V2.6k Fast loop (built 2026-10-29 in `80499b0`, not accepted yet) (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
+- ☑ **V2.6k Fast loop (built 2026-10-29 in `80499b0`, accepted by the user 2026-11-03) (the user, 2026-10-28; pilot: 9 variants + sensitivity 3 min, monkeys
   > 5.5 h single-core on 10,397 trades):** (1) fail fast: stage 1 = backtests, scorecard,
   halves, cost stresses and the submission's cheap rejection criteria; monkeys and entry screen
   only for a variant that survives stage 1; (2) monkeys / entry screen parallel over processes

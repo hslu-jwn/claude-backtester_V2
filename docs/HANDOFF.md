@@ -66,7 +66,7 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 | V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted); real-calendar validation built 2026-11-03 (`tools/news_validate.py`); 1-hour rows fixed by `news_clean` rule 3 (2026-11-03, 665 rows; anchors 5 / 6 pass) |
 | V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
 | Open questions for Research | 0; replies sent 2026-11-03 (no CFD session calendar for R004's integrity predicate; reviewability proposal: review when the user says so) |
-| Built, waiting for the user's acceptance | V2.6l per-cell envelope (2026-11-03); V2.6j, V2.6k (2026-10-29); V2.4c checks #2 #6 #13 |
+| Built, waiting for the user's acceptance | none; V2.6j, V2.6k, V2.6l and V2.4c checks #2 #6 #13 accepted by the user 2026-11-03 |
 | Deals export | `scripts/export_deals.py <since> --offset-hours 3` (+2 h from 2026-11-01), read-only |
 
 ## Accepted / decided by the user (do not ask again)
