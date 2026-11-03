@@ -68,7 +68,8 @@ The optional `"m1"` setting resolves only ambiguous base candles after they have
 the current stop and an outstanding TP both reached, or TP1 reached with break-even
 after TP1 enabled and its eligible BE level reached, or a limit-fill candle reaching
 an outstanding TP. TP reach uses the entry-fixed spread, `tp_penetration` and
-`short_tp_on_ask`, including for partial targets. A 1m base never requests intrabar data.
+`short_tp_on_ask`, including for partial targets; the stop uses the trigger bid of `short_sl_on_ask`.
+A 1m base never requests intrabar data.
 
 The engine receives an optional `intrabar_source(symbol, start, end)` callable. The
 runner supplies it from that symbol's adapter with a bounded UTC-day cache; it never

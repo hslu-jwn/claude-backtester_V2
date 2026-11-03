@@ -295,6 +295,11 @@ where (updated 2026-11-03).
   demo's spread at that minute was below the engine's hourly median, so the engine sees the SL
   inside its spread. Buys with a tight SL stay filled (the user, 2026-11-03: "Keep broker rule
   only"; cost filter stays off).
+  **Short stop on ask (the user, 2026-11-03):** a short's SL triggers when the ask reaches it
+  and fills at the SL, as the broker (`CostConfig.short_sl_on_ask`, default on; risk-management.md
+  › Costs); golden lists re-written, counts unchanged, net R no_wick -30.7, the others -0.5..+5.2.
+  Still open from the spread model: the exit uses the entry spread; the hourly median instead
+  of the per-bar MT5 spread.
   **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v26l-cell-manifest.md`):
   the result envelope carries `robustness.cell_manifest` (every declared cell: parameters,
   trades, gross / net mean and total R, stop rate, halves, cost stresses x1.5 / x2 / fill p90)

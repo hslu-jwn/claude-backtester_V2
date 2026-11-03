@@ -62,10 +62,13 @@ def test_fast_visual_identical(tmp_path, strategy, mirror):
         ]
         expected_exits = ["take_profit"]
     else:
-        config = TrendFollowingConfig(timeframe=Timeframe.M15, breakout_period=3, atr_period=3)
+        # stop 6 ATR: the mirrored short's ask (spread 0.48 at 00:30) stays below its stop
+        config = TrendFollowingConfig(
+            timeframe=Timeframe.M15, breakout_period=3, atr_period=3, stop_atr_mult=6
+        )
         # Three flat 15m candles seed the breakout channel and ATR in warm-up.
         warm = [(ts, 110, 110.1, 109.9, 110) for ts in ("23:15", "23:30", "23:45")]
-        # Breakout long, then reverse short without touching the long's 109.45 stop.
+        # Breakout long, then reverse short without touching the long's 108.7 stop.
         # The short closes at end of data. Both trades have no target.
         active = [
             ("00:00", 110, 110.3, 109.95, 110.2),

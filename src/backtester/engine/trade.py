@@ -185,6 +185,7 @@ class OpenTrade:
     limit_fill: bool = False
     tp_penetration: float = 0.0
     short_tp_on_ask: bool = False
+    short_sl_on_ask: bool = False
     _tp_touched: set[int] = field(default_factory=set)
     _tp_not_filled: set[int] = field(default_factory=set)
     intrabar: str = ""
@@ -220,6 +221,14 @@ class OpenTrade:
             self.tp2_share,
         )  # fmt: skip
 
+    @property
+    def stop_trigger(self) -> float:
+        """The bid that hits the SL. Spec: risk-management.md > Costs > Short stop on ask: a
+        short's SL is a buy stop, the ask reaches it at bid = SL - spread and fills at the SL."""
+        if self.sign < 0 and self.short_sl_on_ask:
+            return self.stop_loss - self.spread
+        return self.stop_loss
+
     def r_at(self, price: float) -> float:
         return self.sign * (price - self.entry) / self.risk
 
@@ -230,12 +239,12 @@ class OpenTrade:
         a later SL in the candle still wins over any TP under the SL-first rule.
         """
         worst, best = (candle.low, candle.high) if self.sign > 0 else (candle.high, candle.low)
-        stop_at_open = self.sign * (candle.open - self.stop_loss) <= 0
+        stop_at_open = self.sign * (candle.open - self.stop_trigger) <= 0
         targets = self.targets
         tp_at_open = (
             bool(targets)
             and self._beyond(candle.open, targets[-1][0])
-            and self.sign * (worst - self.stop_loss) > 0
+            and self.sign * (worst - self.stop_trigger) > 0
         )
         if stop_at_open or tp_at_open:
             worst = best = candle.open
@@ -258,7 +267,7 @@ class OpenTrade:
         outstanding = self.targets[len(self.parts) :]
         if not any(self._tp_reached(best, price) for price, _ in outstanding):
             return False
-        stop = self.sign * (worst - self.stop_loss) <= 0
+        stop = self.sign * (worst - self.stop_trigger) <= 0
         new_be = (
             not self.tp1_done
             and self.break_even_after_tp1
@@ -287,8 +296,9 @@ class OpenTrade:
                 self._tp_touched.add(i)
                 if not self._tp_reached(best, price):
                     self._tp_not_filled.add(i)
-        if self.sign * (worst - self.stop_loss) <= 0:
-            gap_fill = self.stop_loss if self._beyond(candle.open, self.stop_loss) else candle.open
+        if self.sign * (worst - self.stop_trigger) <= 0:
+            trigger = self.stop_trigger
+            gap_fill = trigger if self._beyond(candle.open, trigger) else candle.open
             reason = ExitReason.BREAK_EVEN if self.break_even_time else ExitReason.STOP_LOSS
             self._exit(self.open_share, candle, now, gap_fill, reason)
             return
@@ -320,12 +330,13 @@ class OpenTrade:
         """The candle a limit order filled in: the order of events inside it is unknown, so
         only the SL counts (SL first); a TP reached in it is not counted."""
         worst = candle.low if self.sign > 0 else candle.high
-        if self.sign * (worst - self.stop_loss) <= 0:
-            self._exit(self.open_share, candle, now, self.stop_loss, ExitReason.STOP_LOSS)
+        if self.sign * (worst - self.stop_trigger) <= 0:
+            self._exit(self.open_share, candle, now, self.stop_trigger, ExitReason.STOP_LOSS)
 
     def move_to_break_even(self, now: datetime) -> None:
         if self.break_even_time is None:
-            self.stop_loss = self.break_even_level
+            # the broker SL whose trigger is the break-even bid
+            self.stop_loss = self.break_even_level + (self.stop_loss - self.stop_trigger)
             self.break_even_time = now
 
     def _exit(

@@ -469,7 +469,9 @@ class Backtest:
             symbol, now, entry, order.direction, entry_fill
         )
         if tick is not None:
-            rounded_be = round_level(break_even, tick, up=sign > 0)
+            # a short's broker SL sits a spread above its trigger bid (short_sl_on_ask)
+            shift = spread if sign < 0 and self._config.costs.short_sl_on_ask else 0.0
+            rounded_be = round_level(break_even + shift, tick, up=sign > 0) - shift
             if rounded_be != break_even:
                 moves.append(abs(rounded_be - break_even) / tick)
             break_even = rounded_be
@@ -501,6 +503,7 @@ class Backtest:
             limit_fill=order.limit_fill,
             tp_penetration=self._config.costs.tp_penetration,
             short_tp_on_ask=self._config.costs.short_tp_on_ask,
+            short_sl_on_ask=self._config.costs.short_sl_on_ask,
         )
         return trade, placed
 

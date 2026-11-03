@@ -23,7 +23,7 @@ from backtester.engine.trade import ExitReason
 from backtester.strategy.base import Order, Strategy
 
 # touch fills (the rule before 2026-10-23): these tests check the cost arithmetic of a touch
-TOUCH = {"tp_penetration": 0.0, "short_tp_on_ask": False}
+TOUCH = {"tp_penetration": 0.0, "short_tp_on_ask": False, "short_sl_on_ask": False}
 
 LONG, SHORT = Direction.BULLISH, Direction.BEARISH
 ENTRY = (100.0, 100.0, 100.0, 100.0)

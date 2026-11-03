@@ -250,6 +250,7 @@ LABELS = {
     "engine.costs.commission_enabled": "Commission",
     "engine.costs.tp_penetration": "TP / limit penetration (spread multiple)",
     "engine.costs.short_tp_on_ask": "Short TP triggered by ask",
+    "engine.costs.short_sl_on_ask": "Short SL triggered by ask (as the broker)",
     "engine.costs.round_to_tick": "Round order levels to instrument tick",
     "warmup_days": "Warm-up days",
 }

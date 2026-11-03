@@ -90,7 +90,7 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 1. One-time MT5 test of the three pre-registered V2 hypotheses (strategy 4 on GBPJPY; gap fade
    and gap momentum in quiet sideways markets): only on the user's go.
-2. Merge `v2-6-research` into `main` (the user's word).
+2. ☑ `v2-6-research` merged into `main` 2026-11-03 (the user; fast-forward, full suite green).
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
 4. Review Research's reviewability proposal (`FB_UNKNOWN_20261102T232536Z_1ebf`) only when
@@ -99,11 +99,11 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 ## Next step
 
-Night questions answered and built; TradingView candle check done 2026-11-03 (no data error,
+Night questions answered and built; short stop on the ask built 2026-11-03 (the user); TradingView candle check done 2026-11-03 (no data error,
 `docs/review/tradingview-check-2026-11-03.md`). Fill probe run 3 on the new 14-day trial runs
 since 2026-11-03 (terminal tab, stop with `results/live/STOP` about day 4 or at -8 %); then
-re-run the fill report and 12.5 reconciliation. Open for the user: merge to `main`; a short's
-stop triggering on the ask like the broker (changes results); the reviewability proposal; the
+re-run the fill report and 12.5 reconciliation. Open for the user: JP225 exit after TSE's 15:30 close (since 2024-11-05); the
+reviewability proposal; the
 research queue is empty (`Continue.Research` waits for a submission).
 
 ## First prompt for the next chat

@@ -377,6 +377,9 @@ class CostConfig:
     tp_penetration: float = 0.5  # default set by the user 2026-10-23
     # Short TP needs ask <= target minus penetration; fills at target without extra spread
     short_tp_on_ask: bool = True  # default set by the user 2026-10-23
+    # Short SL triggered by the ask, filled at the SL, as the broker (rule set by the user,
+    # 2026-11-03); False: triggered by the bid, filled at SL + spread (results from before)
+    short_sl_on_ask: bool = True
     # Round order levels conservatively to the symbol tick (default set by the user 2026-10-26)
     round_to_tick: bool = True
     # FTMO currency conversion adjustment (rule set by the user, 2026-10-27): this share of

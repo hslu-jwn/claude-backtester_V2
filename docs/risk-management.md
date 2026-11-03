@@ -249,6 +249,14 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   trades refused (all sells, spread >= 1 R; -157 R net), no other trade changed. Demo check (12.5 re-run
   2026-11-03): 74 engine-only sells gone (the demo never filled them). A buy with a tight SL (spread > 1 R) stays
   filled, as at the broker (rule set by the user, 2026-11-03: broker rule only; the cost filter stays off by default).
+- ⚙️ **Short stop on ask** (rule set by the user, 2026-11-03): `CostConfig.short_sl_on_ask`, default **on**. A
+  short's SL is a buy stop: the broker triggers it when the **ask** reaches the SL and fills it at the SL. The
+  engine triggers it at bid = SL - the trade's (entry) spread and fills at the SL (+ slippage); a candle opening
+  beyond that bid fills at the ask of the open. The exit price stays the chart (bid) price. A short's break-even
+  stop keeps its bid trigger and fill (still 0 R net); its SL is reported at the broker level (+ spread) and rounded
+  to the tick there. Off: triggered by the bid, filled at SL + spread (the results from before). Effect on the
+  golden lists (2023): no trade count changes; net R no_wick -30.7 (tight stops trigger a spread earlier),
+  session_zone_sweep +5.2, opening_range +3.5, the others within ±0.5.
 - ⚙️ **Slippage** (B4; rule set by the user, 2026-10-22): `SymbolCosts.slippage` in price units per fill, always
   against the trader on **market entries, stop fills (including gap stops), and time / signal / end-of-data exits**.
   Never on limit entries or TP fills. Scale at the chart entry price like the fixed spread and reuse that amount at exits.

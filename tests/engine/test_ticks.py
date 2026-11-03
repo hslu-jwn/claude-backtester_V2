@@ -364,6 +364,10 @@ def test_rounded_be_not_behind_tp1_keeps_original_stop(sign):
         sign=sign,
         symbol_costs=SymbolCosts(0.6, 0, 1, tick_size=1),
     )
+    # bid-triggered short SL (with short_sl_on_ask the short's BE SL is 100 on the ask, valid)
+    engine._config = replace(
+        engine._config, costs=replace(engine._config.costs, short_sl_on_ask=False)
+    )
     [trade] = engine.run()
     assert trade.break_even_time is None  # rounded BE and TP1 both 101 / 99
 
