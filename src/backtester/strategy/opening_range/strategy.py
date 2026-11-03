@@ -11,7 +11,7 @@ the 1m candles that close in (open, exit]:
   level, optional target in R. One trade a session; with `max_reversals` = 1 a stop-out arms
   one trade the other way (close beyond the other side, stop at the first side).
 - A trade still open at the session end is closed by `exits()` at the close of the candle
-  closing at `exit_time` (or at the first later candle).
+  closing at `exit_time` (`late_exit_time` from `late_exit_from`; or at the first later candle).
 - The daily ATR is the Wilder ATR of this session's own daily ranges (high - low of the
   candles in (open, exit], with the previous session's last close), known before today's
   session. A session counts as soon as it has one candle (the spec names no "regular day"
@@ -151,7 +151,7 @@ class OpeningRange(Strategy):
         for st in self._sessions:
             local = now.astimezone(st.tz)
             t = local.time()
-            if not st.spec.open_time <= t <= st.spec.exit_time:
+            if not st.spec.open_time <= t <= st.spec.exit_on(local.date()):
                 continue
             today = local.date()
             if today != st.day:
@@ -318,7 +318,7 @@ class OpeningRange(Strategy):
         ref = self._next_ref
         self._next_ref += 1
         st.ref, st.taken, st.reversal = ref, True, None
-        exit_local = datetime.combine(st.day, st.spec.exit_time, tzinfo=st.tz)
+        exit_local = datetime.combine(st.day, st.spec.exit_on(st.day), tzinfo=st.tz)
         self._open[ref] = (st, exit_local.astimezone(now.tzinfo))
         return Order(
             direction,
@@ -338,7 +338,9 @@ class OpeningRange(Strategy):
             (
                 s
                 for s in self._sessions
-                if s.spec.open_time <= now.astimezone(s.tz).time() <= s.spec.exit_time
+                if s.spec.open_time
+                <= now.astimezone(s.tz).time()
+                <= s.spec.exit_on(now.astimezone(s.tz).date())
             ),
             self._sessions[0],
         )
@@ -346,7 +348,7 @@ class OpeningRange(Strategy):
         t = local.time()
         if local.weekday() >= 5 or t < st.spec.open_time:
             return SetupState("waiting_session")
-        if t > st.spec.exit_time:
+        if t > st.spec.exit_on(local.date()):
             return SetupState(
                 "done", rel_volume=self._rel(st, local), traded=self._today(st, local)
             )

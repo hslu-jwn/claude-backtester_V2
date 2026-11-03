@@ -633,7 +633,7 @@ def test_session_end_after_the_march_dst_change():
         ("GER40", BERLIN),
         ("EU50", BERLIN),
         ("UK100", Sess("Europe/London", time(8, 0), 505)),  # 08:00 - 16:25
-        ("JP225", Sess("Asia/Tokyo", time(9, 0), 355)),  # 09:00 - 14:55
+        ("JP225", Sess("Asia/Tokyo", time(9, 0), 385)),  # 09:00 - 15:25 (from 2024-11-05)
         ("AUS200", Sess("Australia/Sydney", time(10, 0), 355)),  # 10:00 - 15:55 (user 2026-11-03)
         ("HK50", Sess("Asia/Hong_Kong", time(9, 30), 385)),  # 09:30 - 15:55, held over lunch
     ],
@@ -672,7 +672,9 @@ def test_default_sessions_are_the_spec_table():
     assert c.sessions["hong_kong_index"]["hong_kong"] == SessionSpec(
         "Asia/Hong_Kong", time(9, 30), time(15, 55)
     )
-    assert c.sessions["tokyo_index"]["tokyo"] == SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55))
+    assert c.sessions["tokyo_index"]["tokyo"] == SessionSpec(
+        "Asia/Tokyo", time(9, 0), time(14, 55), "2024-11-05", time(15, 25)
+    )
     assert c.sessions["fx_metal"]["london"] == SessionSpec("Europe/London", time(8, 0), time(12, 0))
     assert c.sessions["fx_metal"]["new_york"] == ny
 
@@ -808,3 +810,53 @@ def test_appending_future_candles_never_changes_orders_already_given(cfg):
     for cut in (len(candles) - 1, len(candles) - 5, len(candles) // 2, 20, 70):
         prefix = orders_by_index(candles[:cut], **cfg)
         assert prefix == {i: o for i, o in full.items() if i < cut}
+
+
+# --- a changed exchange close: JP225 (TSE 15:00 -> 15:30 on 2024-11-05; the user, 2026-11-03) --
+
+
+def test_late_exit_applies_from_its_local_day_on():
+    spec = SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55), "2024-11-05", time(15, 25))
+    assert spec.exit_on(date(2024, 11, 4)) == time(14, 55)
+    assert spec.exit_on(date(2024, 11, 5)) == time(15, 25)
+    assert spec.exit_on(date(2026, 1, 5)) == time(15, 25)
+    plain = SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55))
+    assert plain.exit_on(date(2030, 1, 1)) == time(14, 55)
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"late_exit_time": time(15, 25)},  # no day
+        {"late_exit_from": "2024-11-05"},  # no time
+        {"late_exit_from": "5.11.2024", "late_exit_time": time(15, 25)},  # not an ISO date
+        {"late_exit_from": "2024-11-05", "late_exit_time": time(9, 0)},  # not after the open
+    ],
+)
+def test_late_exit_needs_an_iso_day_and_a_time_after_the_open(kw):
+    with pytest.raises(ValueError):
+        SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55), **kw)
+
+
+def _jp225_trade(start: date):
+    s = Sess("Asia/Tokyo", time(9, 0), 385)
+    days = weekdays(start, 15)
+    candles: list[Candle] = []
+    for d in days[:14]:
+        candles += session(d, s, warm_rows(s))
+    rows = [flat(0), RANGE, LONG_BREAK, flat(355, 112), flat(385, 113), flat(390, 114)]
+    candles += session(days[14], s, rows)
+    [t] = run(candles, "JP225")
+    return t, days[14], s
+
+
+def test_jp225_exits_1525_tokyo_since_the_tse_close_moved():
+    t, day, s = _jp225_trade(date(2026, 1, 5))
+    assert t.exit_reason is ExitReason.SIGNAL and t.exit_price == 113.0
+    assert t.exit_time == close_at(day, s, 385)
+
+
+def test_jp225_exits_1455_tokyo_before_2024_11_05():
+    t, day, s = _jp225_trade(date(2024, 10, 7))  # trade day 2024-10-25
+    assert t.exit_reason is ExitReason.SIGNAL and t.exit_price == 112.0
+    assert t.exit_time == close_at(day, s, 355)

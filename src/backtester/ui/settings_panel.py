@@ -400,6 +400,10 @@ def _panel_symbol(path: str) -> bool:
     # needs a widget (risk-management.md > Costs > Tick rounding).
     if path.startswith("engine.costs.symbols.") and path.endswith(".tick_size"):
         return False
+    # A moved exchange close (opening range, JP225) is a fact, not a tuning knob; editable in
+    # settings / grids, no widget (the panel stays under its widget limit).
+    if path.endswith((".late_exit_from", ".late_exit_time")):
+        return False
     if path.startswith("detectors.swings.doji_max_body."):
         return path.rsplit(".", 1)[1] in PANEL_COST_SYMBOLS
     return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS

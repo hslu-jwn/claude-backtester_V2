@@ -102,8 +102,8 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 Night questions answered and built; short stop on the ask built 2026-11-03 (the user); TradingView candle check done 2026-11-03 (no data error,
 `docs/review/tradingview-check-2026-11-03.md`). Fill probe run 3 on the new 14-day trial runs
 since 2026-11-03 (terminal tab, stop with `results/live/STOP` about day 4 or at -8 %); then
-re-run the fill report and 12.5 reconciliation. Open for the user: JP225 exit after TSE's 15:30 close (since 2024-11-05); the
-reviewability proposal; the
+re-run the fill report and 12.5 reconciliation. JP225 opening-range exit 15:25 Tokyo from 2024-11-05 (TSE close 15:30; built 2026-11-03,
+the user). Open for the user: the reviewability proposal; the
 research queue is empty (`Continue.Research` waits for a submission).
 
 ## First prompt for the next chat

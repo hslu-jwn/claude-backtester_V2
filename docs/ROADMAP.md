@@ -300,6 +300,9 @@ where (updated 2026-11-03).
   › Costs); golden lists re-written, counts unchanged, net R no_wick -30.7, the others -0.5..+5.2.
   Still open from the spread model: the exit uses the entry spread; the hourly median instead
   of the per-bar MT5 spread.
+  **JP225 exit (the user, 2026-11-03):** TSE moved its close from 15:00 to 15:30 on 2024-11-05
+  (JPX); the opening-range exit is 14:55 until 2024-11-04 and 15:25 from then on
+  (`SessionSpec.late_exit_from` / `late_exit_time`); development data unchanged.
   **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v26l-cell-manifest.md`):
   the result envelope carries `robustness.cell_manifest` (every declared cell: parameters,
   trades, gross / net mean and total R, stop rate, halves, cost stresses x1.5 / x2 / fill p90)

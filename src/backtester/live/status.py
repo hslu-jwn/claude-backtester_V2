@@ -97,7 +97,7 @@ def session_window(now: datetime, name: str, spec: SessionSpec) -> dict:
     for _ in range(MAX_SKIP_DAYS):
         if day.weekday() < 5:
             open_at = datetime.combine(day, spec.open_time, tzinfo=tz)
-            close_at = datetime.combine(day, spec.exit_time, tzinfo=tz)
+            close_at = datetime.combine(day, spec.exit_on(day), tzinfo=tz)
             if now <= close_at:
                 break
         day += timedelta(days=1)

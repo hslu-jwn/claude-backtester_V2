@@ -21,13 +21,16 @@ Every time is local wall time in the session's own zone (`zoneinfo`, DST per cit
 | US indices (NAS100, US500, US30, US2000) | New York cash | 09:30 America/New_York | 15:55 |
 | GER40, EU50 | Frankfurt cash | 09:00 Europe/Berlin | 17:25 |
 | UK100 | London cash | 08:00 Europe/London | 16:25 |
-| JP225 | Tokyo cash | 09:00 Asia/Tokyo | 14:55 |
+| JP225 | Tokyo cash (lunch 11:30-12:30 held) | 09:00 Asia/Tokyo | 14:55 until 2024-11-04, **15:25** from 2024-11-05 (TSE moved its close from 15:00 to 15:30; the user, 2026-11-03) |
 | AUS200 | Sydney cash (the user, 2026-11-03) | 10:00 Australia/Sydney | 15:55 |
 | HK50 | Hong Kong cash (the user, 2026-11-03; held over the 12:00-13:00 lunch break) | 09:30 Asia/Hong_Kong | 15:55 |
 | FX, XAUUSD, XAGUSD | London open | 08:00 Europe/London | 12:00 Europe/London |
 | FX, XAUUSD, XAGUSD | New York open | 09:30 America/New_York | 15:55 America/New_York |
 
 FX and metals trade both of their sessions, each with its own range and its own trade.
+
+A session whose exchange moved its close has ⚙️ `late_exit_from` (local day, YYYY-MM-DD) and
+⚙️ `late_exit_time`: from that day on the exit is the later time (empty / none: one exit time).
 
 ## Entry (⚙️ `entry_mode`)
 

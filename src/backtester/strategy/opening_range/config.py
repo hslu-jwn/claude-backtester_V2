@@ -29,11 +29,26 @@ class SessionSpec:
     zone: str  # time zone of the session (DST via zoneinfo, each city on its own rules)
     open_time: time  # local wall time of the session open (the opening range starts here)
     exit_time: time  # an open trade closes at the close of the 1m candle closing at this time
+    # from this local day (ISO date) on the exit is `late_exit_time` (an exchange moved its close)
+    late_exit_from: str = ""
+    late_exit_time: time | None = None
 
     def __post_init__(self) -> None:
         ZoneInfo(self.zone)  # raises for an unknown zone
         if self.exit_time <= self.open_time:
             raise ValueError("exit_time must be after open_time")
+        if (self.late_exit_time is None) != (self.late_exit_from == ""):
+            raise ValueError("late_exit_from and late_exit_time go together")
+        if self.late_exit_time is not None:
+            date.fromisoformat(self.late_exit_from)  # raises for a non-ISO day
+            if len(self.late_exit_from) != 10 or self.late_exit_time <= self.open_time:
+                raise ValueError("late_exit_from needs YYYY-MM-DD and a time after open_time")
+
+    def exit_on(self, day: date) -> time:
+        """The exit time on the local `day`."""
+        if self.late_exit_time is not None and day.isoformat() >= self.late_exit_from:
+            return self.late_exit_time
+        return self.exit_time
 
     @property
     def length_minutes(self) -> int:
@@ -80,7 +95,12 @@ def _default_sessions() -> Mapping[str, Mapping[str, SessionSpec]]:
                 {"london": SessionSpec("Europe/London", time(8, 0), time(16, 25))}
             ),
             "tokyo_index": MappingProxyType(
-                {"tokyo": SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55))}
+                # TSE closes 15:30 since 2024-11-05, 15:00 before (the user, 2026-11-03)
+                {
+                    "tokyo": SessionSpec(
+                        "Asia/Tokyo", time(9, 0), time(14, 55), "2024-11-05", time(15, 25)
+                    )
+                }
             ),
             "sydney_index": MappingProxyType(
                 {"sydney": SessionSpec("Australia/Sydney", time(10, 0), time(15, 55))}

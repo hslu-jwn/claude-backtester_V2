@@ -17,45 +17,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -63,6 +77,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -86,45 +102,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -132,6 +162,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -155,45 +187,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -201,6 +247,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -224,45 +272,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -270,6 +332,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -293,45 +357,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -339,6 +417,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -362,45 +442,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -408,6 +502,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -431,45 +527,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -477,6 +587,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -500,45 +612,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -546,6 +672,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -569,45 +697,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -615,6 +757,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -638,45 +782,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -684,6 +842,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -707,45 +867,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -753,6 +927,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -776,45 +952,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -822,6 +1012,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -845,45 +1037,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -891,6 +1097,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -914,45 +1122,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -960,6 +1182,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -983,45 +1207,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1029,6 +1267,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1052,45 +1292,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1098,6 +1352,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1121,45 +1377,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1167,6 +1437,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1190,45 +1462,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1236,6 +1522,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1259,45 +1547,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1305,6 +1607,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1328,45 +1632,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1374,6 +1692,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1397,45 +1717,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1443,6 +1777,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1466,45 +1802,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1512,6 +1862,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1535,45 +1887,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1581,6 +1947,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1604,45 +1972,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1650,6 +2032,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1673,45 +2057,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1719,6 +2117,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1742,45 +2142,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1788,6 +2202,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1811,45 +2227,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1857,6 +2287,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1880,45 +2312,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1926,6 +2372,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -1949,45 +2397,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -1995,6 +2457,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2018,45 +2482,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2064,6 +2542,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2087,45 +2567,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2133,6 +2627,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2156,45 +2652,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2202,6 +2712,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2225,45 +2737,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2271,6 +2797,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2294,45 +2822,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2340,6 +2882,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2363,45 +2907,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2409,6 +2967,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2432,45 +2992,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2478,6 +3052,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2501,45 +3077,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2547,6 +3137,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2570,45 +3162,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2616,6 +3222,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2639,45 +3247,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2685,6 +3307,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2708,45 +3332,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2754,6 +3392,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
@@ -2777,45 +3417,59 @@
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "frankfurt_index": {
           "frankfurt": {
             "zone": "Europe/Berlin",
             "open_time": "09:00:00",
-            "exit_time": "17:25:00"
+            "exit_time": "17:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "london_index": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "16:25:00"
+            "exit_time": "16:25:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "tokyo_index": {
           "tokyo": {
             "zone": "Asia/Tokyo",
             "open_time": "09:00:00",
-            "exit_time": "14:55:00"
+            "exit_time": "14:55:00",
+            "late_exit_from": "2024-11-05",
+            "late_exit_time": "15:25:00"
           }
         },
         "fx_metal": {
           "london": {
             "zone": "Europe/London",
             "open_time": "08:00:00",
-            "exit_time": "12:00:00"
+            "exit_time": "12:00:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           },
           "new_york": {
             "zone": "America/New_York",
             "open_time": "09:30:00",
-            "exit_time": "15:55:00"
+            "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null
           }
         },
         "sydney_index": {
           "sydney": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "10:00:00",
             "zone": "Australia/Sydney"
           }
@@ -2823,6 +3477,8 @@
         "hong_kong_index": {
           "hong_kong": {
             "exit_time": "15:55:00",
+            "late_exit_from": "",
+            "late_exit_time": null,
             "open_time": "09:30:00",
             "zone": "Asia/Hong_Kong"
           }
