@@ -15,12 +15,13 @@ account simulator, Monte Carlo, risk sweep, risk page, prop-firm card, adaptive 
 built in V1 (V1 status table). **Decision (user, 2026-10-22): 5.1-5.7 stay as they are**
 (not completed further, not ticked); the parts in use (Monte Carlo, prop-firm pass
 probability, adaptive risk) are checked in the V2.4 review. Phase 13 are
-findings of the 2026-10-19 audit, input for the V2.4 review.
+findings of the 2026-10-19 audit, input for the V2.4 review. Items done later in V2 point to
+where (updated 2026-11-03).
 
-- ☐ **3.3d Review mode** (Phase 3)
-- ☐ **3.5 Session view** (Phase 3)
-- ☐ **3.7 Cross-check with the manual backtest** (Phase 3)
-- ☐ **4.3 UI layout and look review** (Phase 4)
+- ☑ **3.3d Review mode** (Phase 3) — every strategy, V2.6 step (5), accepted by the user 2026-10-27
+- ☑ **3.5 Session view** (Phase 3) — built as trade inspection, every strategy, V2.6 step (5), accepted by the user 2026-10-27
+- ☐ **3.7 Cross-check with the manual backtest** (Phase 3) — needs the user's manual results
+- ☑ **4.3 UI layout and look review** (Phase 4) — Opus list, the user picked, V2.6 step (5), accepted by the user 2026-10-27
 - ☐ **5.1 RiskConfig + PositionSizer** (Phase 5)
 - ☐ **5.2 AccountSimulator** (Phase 5)
 - ☐ **5.3 Monte Carlo** (Phase 5)
@@ -29,29 +30,29 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
 - ☐ **5.6 Prop-firm field** (Phase 5)
 - ☐ **5.7 Adaptive risk for prop-firm accounts** (Phase 5)
 - ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (Phase 11)
-- ☐ **12.2 Intrabar order from M1** (Phase 12)
-- ☐ **12.4 Parameter heat map** (Phase 12)
-- ☐ **12.5 Demo reconciliation** (Phase 12)
-- ☐ **12.6 Stressed fills** (Phase 12)
+- ☑ **12.2 Intrabar order from M1** (Phase 12) — V2.4c T-03, default `engine.intrabar = "m1"` set by the user 2026-10-24
+- ☑ **12.4 Parameter heat map** (Phase 12) — on the research card, V2.6 step (5), accepted by the user 2026-10-27
+- ☑ **12.5 Demo reconciliation** (Phase 12) — V2.8, `tools/reconcile.py`, 2026-11-03
+- ☑ **12.6 Stressed fills** (Phase 12) — V2.4b measured fill p90 as the stressed cost level, 2026-11-03
 - ☑ **12.8 Engine slippage** (Phase 12) — fixed in V2.4 (B4), 2026-10-23
-- ☐ **12.9 Portfolio tool** (Phase 12)
-- ☐ **12.11 Bayesian report** (Phase 12)
-- ☐ **12.13 DSR on daily R** (Phase 12)
+- ☑ **12.9 Portfolio tool** (Phase 12) — V2.7 portfolio page, accepted by the user 2026-10-26
+- ☑ **12.11 Bayesian report** (Phase 12) — V2.4c T-10, accepted by the user 2026-10-26
+- ☑ **12.13 DSR on daily R** (Phase 12) — V2.6d step (5), daily DSR everywhere, 2026-10-27
 - ☑ **13.6 Closed-bar check on server time** (Phase 13) — fixed in V2.4 (live #1), 2026-10-23
 - ☑ **13.7 Sizing on the live price** (Phase 13) — fixed in V2.4 (live #7), 2026-10-23
 - ☑ **13.8 Wall-clock fallback exit** (Phase 13) — fixed in V2.4 (live #8), 2026-10-23
 - ☑ **13.9 Validate CLI risk** (Phase 13) — fixed in V2.4 (live #18), 2026-10-23
-- ☐ **13.12 histdata clock 2015-2018** (Phase 13)
-- ☐ **13.13 GER40 histdata changes instrument on 2020-06-15** (Phase 13)
-- ☐ **13.14 MT5 cache before 2020** (Phase 13)
-- ☐ **13.15 One-day holes on 1 January** (Phase 13)
-- ☐ **13.16 MT5 downloader swallows errors** (Phase 13)
+- ◐ **13.12 histdata clock 2015-2018** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
+- ◐ **13.13 GER40 histdata changes instrument on 2020-06-15** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
+- ◐ **13.14 MT5 cache before 2020** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
+- ◐ **13.15 One-day holes on 1 January** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
+- ◐ **13.16 MT5 downloader swallows errors** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
 - ☑ **13.17 Paths relative to the working folder** (Phase 13) — fixed in V2.4 (A2), 2026-10-23
-- ☐ **13.18 Output folders** (Phase 13)
+- ◐ **13.18 Output folders** (Phase 13) — V2.6 step (2), built 2026-10-26; open: the user's check
 - ☑ **13.19 no_wick limit fill is lookahead** (Phase 13) — refuted by two V2.4 reviews (pending limits precede the fill candle; now enforced by the engine, A1), 2026-10-23
 - ☑ **13.20 Kind C random fills never slip time exits** (Phase 13) — fixed in V2.4 (B4), 2026-10-23
 - ☑ **13.21 Parallel runner progress race** (Phase 13) — fixed in V2.4 (A5), 2026-10-23
-- ☐ **13.22 `tests/tools/test_s2_volume_ab.py`** (Phase 13)
+- ☑ **13.22 `tests/tools/test_s2_volume_ab.py`** (Phase 13) — file removed in `8310d47` (strategy contract tests)
 - ☑ **13.23 Monte Carlo FTMO pass rate** (Phase 13) — fixed in V2.4 (B2), 2026-10-23
 
 ## V2 phases (user, 2026-10-22)
