@@ -52,6 +52,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -107,6 +121,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -161,6 +189,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -217,6 +259,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -272,6 +328,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -326,6 +396,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -382,6 +466,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -436,6 +534,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -492,6 +604,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -546,6 +672,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -602,6 +742,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -657,6 +811,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -711,6 +879,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -767,6 +949,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -821,6 +1017,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -877,6 +1087,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -932,6 +1156,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -986,6 +1224,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1042,6 +1294,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1096,6 +1362,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1152,6 +1432,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1206,6 +1500,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1262,6 +1570,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1317,6 +1639,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1371,6 +1707,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1427,6 +1777,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1482,6 +1846,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1536,6 +1914,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1592,6 +1984,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1647,6 +2053,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1701,6 +2121,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1757,6 +2191,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1811,6 +2259,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -1867,6 +2329,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1922,6 +2398,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -1976,6 +2466,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -2032,6 +2536,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -2086,6 +2604,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }
@@ -2142,6 +2674,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -2197,6 +2743,20 @@
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
           }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
+          }
         }
       }
     },
@@ -2251,6 +2811,20 @@
             "zone": "America/New_York",
             "open_time": "09:30:00",
             "exit_time": "15:55:00"
+          }
+        },
+        "sydney_index": {
+          "sydney": {
+            "exit_time": "15:55:00",
+            "open_time": "10:00:00",
+            "zone": "Australia/Sydney"
+          }
+        },
+        "hong_kong_index": {
+          "hong_kong": {
+            "exit_time": "15:55:00",
+            "open_time": "09:30:00",
+            "zone": "Asia/Hong_Kong"
           }
         }
       }

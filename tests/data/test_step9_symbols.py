@@ -123,7 +123,8 @@ def test_opening_range_trades_the_crosses_in_the_fx_sessions():
     from backtester.strategy.opening_range.config import SYMBOL_CLASS
 
     assert all(SYMBOL_CLASS[s] == "fx_metal" for s in FX)
-    assert "AUS200" not in SYMBOL_CLASS and "HK50" not in SYMBOL_CLASS  # sessions: the user's call
+    # own cash sessions (the user, 2026-11-03), not the FX sessions
+    assert SYMBOL_CLASS["AUS200"] == "sydney_index" and SYMBOL_CLASS["HK50"] == "hong_kong_index"
 
 
 def test_news_currencies():
