@@ -247,8 +247,8 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   closer than the spread is still filled (the broker accepts it). The broker's extra stops level is not modelled.
   Off reproduces the results from before. Effect on the golden lists (2023): only strategy 3 changes, 31 of 4,202
   trades refused (all sells, spread >= 1 R; -157 R net), no other trade changed. Demo check (12.5 re-run
-  2026-11-03): 74 engine-only sells gone (the demo never filled them); a buy with a tight SL (spread > 1 R) can be
-  skipped with the cost filter (`max_cost_r`) instead.
+  2026-11-03): 74 engine-only sells gone (the demo never filled them). A buy with a tight SL (spread > 1 R) stays
+  filled, as at the broker (rule set by the user, 2026-11-03: broker rule only; the cost filter stays off by default).
 - ⚙️ **Slippage** (B4; rule set by the user, 2026-10-22): `SymbolCosts.slippage` in price units per fill, always
   against the trader on **market entries, stop fills (including gap stops), and time / signal / end-of-data exits**.
   Never on limit entries or TP fills. Scale at the chart entry price like the fixed spread and reuse that amount at exits.
