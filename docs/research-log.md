@@ -20,6 +20,9 @@ Feedback to Research 2026-11-03: `FB_INTRADAY_H1_SHOCK_RESPONSE_20261102T232536Z
 authoritative CFD session calendar, so the R004 integrity predicate is unsupported for all five
 symbols; `robustness.r004` deferred until R004 is queued; V2.6l cell manifest available) and
 `FB_UNKNOWN_20261102T232536Z_1ebf` (reviewability proposal received, review after V2.8).
+2026-11-03 morning: stop inside the spread refused (the user's answer to night question 1) by
+Opus inline (about 10 lines + 6 tests; routing: small edit); golden no_wick re-written (31 sells
+fewer), the other 8 identical.
 
 ## 2026-10-28: first research pilot FX_LONDON_FIX_REV v1.0.0 (V2.6i i8)
 

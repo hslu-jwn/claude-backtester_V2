@@ -361,6 +361,9 @@ class CostConfig:
     symbols: Mapping[str, SymbolCosts] = field(default_factory=lambda: DEFAULT_SYMBOL_COSTS)
     # cost filter: orders with spread + commission above this many R are not filled; 0 = off
     max_cost_r: float = 0.0
+    # refuse a sell whose SL is not above the ask at the fill, as the broker does (rule set
+    # by the user, 2026-11-03); False reproduces the results from before
+    refuse_stop_in_spread: bool = True
     funding_enabled: bool = True  # off: funding_r is 0
     # funding rates by symbol; None: read data/cache/binance_funding/<SYM>.csv when needed
     funding: Mapping[str, FundingSeries] | None = None

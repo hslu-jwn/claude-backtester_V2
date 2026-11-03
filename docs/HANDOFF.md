@@ -92,8 +92,8 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
    and gap momentum in quiet sideways markets): only on the user's go.
 2. Merge `v2-6-research` into `main` (the user's word).
 3. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
-4. The three questions in `docs/review/night-2026-11-03.md` (engine stop inside the spread,
-   calendar 1-hour rows, Research's reviewability proposal).
+4. Two questions in `docs/review/night-2026-11-03.md` (calendar 1-hour rows, Research's
+   reviewability proposal); the stop inside the spread was decided 2026-11-03 (refused, built).
 
 ## Next step
 

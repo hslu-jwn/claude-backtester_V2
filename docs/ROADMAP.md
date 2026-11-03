@@ -280,8 +280,16 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   direction in the demo: explained, the bot ran the old counter-based direction rule until its
   18:22 UTC restart (`5bb1b7d`); all 172 later trades of that day match; (b) NATGAS: demo -452 R vs engine -977 R
   because the engine accepts a stop inside the spread (e.g. a 0.002 stop with the 0.06 spread
-  = -54 R on one trade), which a broker rejects; question: should the engine refuse an order
-  whose stop distance is below the spread / the broker's stop level?
+  = -54 R on one trade). **Decided 2026-11-03 (the user: "Yes, refuse
+  them"):** the engine refuses a sell whose SL is not above the ask (`CostConfig.refuse_stop_in_spread`,
+  default on; risk-management.md › Costs), the broker's rule; golden: strategy 3 loses 31 of
+  4,202 trades (-157 R), the other 8 lists identical. Correction (Opus, 2026-11-03): the -54 R
+  NATGAS example was a buy, which the broker accepts (its SL is below the bid) and the demo also
+  filled, so it is not refused; its gap is the R basis (risk 0.002 on the bar close vs the demo's
+  fill). Re-run `results/reconcile_2026-11-03/`: engine-only 598 -> 526 (74 sells gone, 66 of them
+  NATGAS, -1,404 R: sells the demo never filled); 2 USOIL sells at 23:30 UTC now demo-only, the
+  demo's spread at that minute was below the engine's hourly median, so the engine sees the SL
+  inside its spread.
   **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v26l-cell-manifest.md`):
   the result envelope carries `robustness.cell_manifest` (every declared cell: parameters,
   trades, gross / net mean and total R, stop rate, halves, cost stresses x1.5 / x2 / fill p90)

@@ -30,10 +30,10 @@
         "NAS100",
         "US500"
       ],
-      "trade_count": 4202,
-      "runtime_seconds": 4.388618299999507,
-      "git_commit": "9970ed345f2052549d294f5ee2b2be714a44f577",
-      "date": "2026-10-27T15:55:16+00:00"
+      "trade_count": 4171,
+      "runtime_seconds": 4.313342000001285,
+      "git_commit": "3c943d0c85aad19b9f31b7181be75938268a0b9d",
+      "date": "2026-11-03T10:15:30+00:00"
     },
     "trend_following": {
       "symbols": [
@@ -93,6 +93,6 @@
       "date": "2026-10-29T15:49:43+00:00"
     }
   },
-  "git_commit": "38fd3f52a302865c6902f3972fdf23491e08a045",
-  "date": "2026-10-29T15:49:43+00:00"
+  "git_commit": "3c943d0c85aad19b9f31b7181be75938268a0b9d",
+  "date": "2026-11-03T10:15:30+00:00"
 }

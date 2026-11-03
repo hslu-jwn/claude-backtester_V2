@@ -18,7 +18,8 @@ gets exactly the views the chart replay shows. Per base candle i, `now` = its cl
    close (ExitReason.SIGNAL, costs as for any exit); `on_trade_closed` runs for each BEFORE
    the new orders are filled (stop-and-reverse, strategy 4). Unknown refs are ignored.
 4. New orders are filled at candle i's close and managed from candle i + 1, unless the
-   cost filter skips them (`CostConfig.max_cost_r`; `strategy.on_order_skipped`). A limit order
+   cost filter skips them (`CostConfig.max_cost_r`; `strategy.on_order_skipped`) or a sell's SL
+   is not above the ask (`CostConfig.refuse_stop_in_spread`, as the broker). A limit order
    (`Order.limit_fill`) must be in the previous step's `pending_limit_orders` snapshot.
    It is filled at its level inside candle i; in that candle only its SL counts (SL first,
    a TP there is not counted), then it is managed from candle i + 1.
@@ -449,6 +450,14 @@ class Backtest:
                 return None
         symbol = self._replay.symbol
         spread = self._config.costs.spread(symbol, now, entry)
+        if (
+            self._config.costs.refuse_stop_in_spread
+            and sign < 0
+            and order.stop_loss - (entry + spread) <= 1e-9 * abs(entry)
+        ):
+            # a sell closes at the ask; the broker refuses its SL at or below the ask
+            self._strategy.on_order_skipped(order.ref, now)
+            return None
         slippage = self._config.costs.slippage(symbol, entry)
         entry_fill = entry + (spread if sign > 0 else 0.0)
         if not order.limit_fill:
