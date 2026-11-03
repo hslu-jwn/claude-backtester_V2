@@ -20,7 +20,10 @@ where (updated 2026-11-03).
 
 - ☑ **3.3d Review mode** (Phase 3) — every strategy, V2.6 step (5), accepted by the user 2026-10-27
 - ☑ **3.5 Session view** (Phase 3) — built as trade inspection, every strategy, V2.6 step (5), accepted by the user 2026-10-27
-- ☐ **3.7 Cross-check with the manual backtest** (Phase 3) — needs the user's manual results
+- ☐ **3.7 Cross-check with the manual backtest** (Phase 3) — moved (the user, 2026-11-03): checks the
+  code against a strategy's written rules, so it is done for a strategy once it survives research,
+  before its MT5 test or live run (a week of its trades against the user's manual picks). Data / chart
+  check instead now: `docs/review/tradingview-check-2026-11-03.md`
 - ☑ **4.3 UI layout and look review** (Phase 4) — Opus list, the user picked, V2.6 step (5), accepted by the user 2026-10-27
 - ☐ **5.1 RiskConfig + PositionSizer** (Phase 5)
 - ☐ **5.2 AccountSimulator** (Phase 5)
