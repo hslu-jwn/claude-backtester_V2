@@ -201,3 +201,18 @@ def test_an_old_preset_without_profit_currency_takes_it_from_the_defaults():
     assert costs.symbols["MYSYM"].profit_currency == "USD"
     assert costs.symbols["EURJPY"].profit_currency == "EUR"
     assert costs.conversion_r("USDJPY", [(1.0, 1.0)]) == pytest.approx(-0.007)
+
+
+def test_type_hints_are_derived_once_per_settings_class(monkeypatch):
+    # night run 2026-11-03 (Opus): leaves() / from_dict() re-derived typing.get_type_hints for
+    # every dataclass on every call (25,639 calls, 5 s in one research-runner test)
+    import backtester.settings as st
+
+    reference = st.leaves(), st.to_dict(st.from_dict(st.to_dict(st.RunSettings())))
+    calls = []
+    real = st.get_type_hints
+    monkeypatch.setattr(st, "get_type_hints", lambda cls: calls.append(cls) or real(cls))
+    st._hints.cache_clear()
+    for _ in range(3):
+        assert (st.leaves(), st.to_dict(st.from_dict(st.to_dict(st.RunSettings())))) == reference
+    assert len(calls) == len(set(calls))  # each class once, however many calls

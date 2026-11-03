@@ -96,6 +96,12 @@ def field_comments(cls: type) -> dict[str, str]:
 # --- walking the dataclasses -----------------------------------------------------------
 
 
+@cache
+def _hints(cls: type) -> dict[str, Any]:
+    """Resolved type hints of a settings dataclass, once per class (read only by callers)."""
+    return get_type_hints(cls)
+
+
 def _optional(hint) -> Any | None:
     """X for `X | None`, else None."""
     if get_origin(hint) in (Union, types.UnionType):
@@ -145,7 +151,7 @@ def _walk(value, hint, path: str, help_: str, out: list[Leaf]) -> None:
     if is_dataclass(value) and not isinstance(value, type):
         hint = type(value)  # e.g. `strategy`: strategy 1's or strategy 2's config
     if is_dataclass(hint):
-        hints, comments = get_type_hints(hint), field_comments(hint)
+        hints, comments = _hints(hint), field_comments(hint)
         for f in fields(hint):
             sub = f"{path}.{f.name}" if path else f.name
             _walk(getattr(value, f.name), hints[f.name], sub, comments.get(f.name, ""), out)
@@ -245,7 +251,7 @@ def _strategy_class(data: Any, path: str) -> type:
 def _build(cls, data: Mapping, path: str = ""):
     if not isinstance(data, Mapping):
         raise SettingsError(f"expected a group of settings, got {data!r}", path or None)
-    hints, kwargs = get_type_hints(cls), {}
+    hints, kwargs = _hints(cls), {}
     for f in fields(cls):
         if f.name in data:
             sub = f"{path}.{f.name}" if path else f.name

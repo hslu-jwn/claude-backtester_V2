@@ -276,8 +276,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   matched an engine trade; 598 engine-only, all explained (450 daily stop, the rest skips /
   bot not running); 0 unexplained. Engine more conservative: matched net R demo -750 vs
   engine -964 without NATGAS (median 0.07 R per trade, exit reason agrees 90 %). Findings for
-  the user (no default changed): (a) 110 trades of 2026-10-27 only have the opposite direction
-  in the demo (the bot's first day; cause not found); (b) NATGAS: demo -452 R vs engine -977 R
+  the user (no default changed): (a) 110 trades of 2026-10-27 16:00-18:00 UTC have the opposite
+  direction in the demo: explained, the bot ran the old counter-based direction rule until its
+  18:22 UTC restart (`5bb1b7d`); all 172 later trades of that day match; (b) NATGAS: demo -452 R vs engine -977 R
   because the engine accepts a stop inside the spread (e.g. a 0.002 stop with the 0.06 spread
   = -54 R on one trade), which a broker rejects; question: should the engine refuse an order
   whose stop distance is below the spread / the broker's stop level?
@@ -314,6 +315,10 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   **U2 built 2026-11-03 night** (Opus, test-first): the Research layout no longer builds the
   cards the refresh callback builds again on load; layout 1.29 MB -> 144 KB, cards shown at
   1.35 s in the pane (was 9.4 s there).
+  **T1 2026-11-03 night** (Opus, test-first): `settings` caches each dataclass's type hints
+  (`get_type_hints` ran 25,639 times in one runner test); research-runner variant settings
+  8.9 s -> 3.4 s there. **Full suite 5,111 passed in 8 min 10 s** (15 min 39 s before V2.8;
+  target ~8 min met); golden lists identical.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

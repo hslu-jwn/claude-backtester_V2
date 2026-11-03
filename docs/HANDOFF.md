@@ -3,15 +3,15 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-10-28 morning, after `End.`)
+## Where things are (2026-11-03 night run, V2.8)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
 - **Branches:** work on **`v2-6-research`** (pushed). `main` = merged 2026-10-27 at `da7efb9`;
   everything after (UI, V2.6d, news, V2.6i) is **not merged** yet. Merge to `main` only on the
   user's word.
-- **Tests (2026-11-02):** 5070 passed, 7 skipped, 1 xfailed (16 min); ruff clean. Golden lists
-  unchanged since 2026-10-27 (news filter is off by default).
+- **Tests (2026-11-03):** 5111 passed, 7 skipped, 1 xfailed (8 min 10 s); ruff clean. Golden
+  lists unchanged since 2026-10-27 (news filter is off by default).
 - **Data:** 34 FTMO symbols (+ Binance), cache rebuilt 2026-10-26. News calendar at
   `data/news/economic_events.csv` (git-ignored; rebuild with `python -m
   backtester.tools.news_clean ../backtester-news/economic_events_2020_to_2026-10-25.csv`).
@@ -26,9 +26,10 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   closes all).
 - **Fill report 2026-11-02:** `results/fill_report_2026-11-02/` (5,512 fills 2026-10-27..31,
   23 symbols, 1,502 London; commission only from the 10-27/28 deals file).
-- **Finalization (V2.8, plan accepted 2026-11-02):** audit and baselines in
-  `docs/review/finalization-audit-2026-11-02.md`; the ~30 s UI start is the chart page
-  rendering all 10,397 trades of the newest run (U1).
+- **Finalization (V2.8, plan accepted 2026-11-02):** audit in
+  `docs/review/finalization-audit-2026-11-02.md`; night run 2026-11-02/03 in
+  `docs/review/night-2026-11-03.md` (phase 3 and 4 done; three questions for the user there).
+  Chart usable 2.2-2.6 s (was ~30 s).
 - **LibreHardwareMonitor** (port 8085) feeds the queue's temperature guard; start it after a
   reboot (admin prompt).
 - **App:** `restart_app.bat`; dev preview for Claude: `..\.claude\launch.json` (port 8052).
@@ -41,8 +42,7 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   no Astra (no access). `ai_dispatch stats` sums usage. Keys: Windows Credential Manager,
   `<provider>@backtester-ai`. `Continue.Research` procedure is now the `continue-research`
   skill. Baseline before the change: tag `pre-agent-migration-2026-11-02`.
-- **Not checked 2026-11-02:** demo bot and data state above are from 2026-10-28; check before
-  relying on them. Open: top up DeepSeek to enable it.
+- **Open:** top up DeepSeek to enable it (optional).
 
 ## Research department (since 2026-10-27)
 
@@ -61,15 +61,18 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 | Item | State |
 |---|---|
-| V2.4b fill analysis | 1,128 fills NY + Asia (`docs/review/fill-analysis-2026-10-28.md`); median slippage at or below the model, p90 ~3x; **no London fills yet** |
-| V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted) |
+| V2.4b | built 2026-11-03: measured fill p90 per symbol is the stressed cost level (`analytics/slippage_p90.json`, 5,512 fills) |
+| 12.5 | built 2026-11-03: `tools/reconcile.py`, all demo trades matched / explained (`results/reconcile_2026-11-02/`) |
+| V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted); real-calendar validation built 2026-11-03 (`tools/news_validate.py`): 386 High rows 2023-24 are 1 h off (question to the user) |
 | V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
-| Open questions for Research | 0 (inbox 2026-10-29; replies sent to the result review, the H1-shock preflight and the study-route note) |
-| Next builds | V2.6l result envelope per cell + integrity check; V2.6j and V2.6k built 2026-10-29; V2.4c checks #2 #6 #13 built, not accepted |
+| Open questions for Research | 0; replies sent 2026-11-03 (no CFD session calendar for R004's integrity predicate; reviewability proposal: review after V2.8) |
+| Built, waiting for the user's acceptance | V2.6l per-cell envelope (2026-11-03); V2.6j, V2.6k (2026-10-29); V2.4c checks #2 #6 #13 |
 | Deals export | `scripts/export_deals.py <since> --offset-hours 3` (+2 h from 2026-11-01), read-only |
 
 ## Accepted / decided by the user (do not ask again)
 
+- 2026-11-02: V2.8 finalization plan (audit), U1 chart pager (looked at), V2.4b now, no
+  `pytest-xdist`, R1 `live/` status fix, night-run rules (ROADMAP V2.8), 12.5 scope.
 - 2026-10-28 (`End.`): everything of the night 2026-10-27/28 incl. Opus's decisions
   (`docs/review/night-2026-10-28.md`): news filter off by default, FTMO scope default, V2.6i
   built before the fill analysis, empty text settings allowed, no one-time test spent.
@@ -89,22 +92,16 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
    and gap momentum in quiet sideways markets): only on the user's go.
 2. Merge `v2-6-research` into `main` (the user's word).
 3. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
+4. The three questions in `docs/review/night-2026-11-03.md` (engine stop inside the spread,
+   calendar 1-hour rows, Research's reviewability proposal).
 
 ## Next step
 
-V2.8 in the ROADMAP order: R1 and T1 built; U1 (chart trade list in pages of 100) accepted by
-the user 2026-11-02; re-measure the chart start on an idle PC in step (4); next V2.4b p90
-(below), 12.5, V2.6l, V2.4e.
-
-Older note (2026-10-28): after the London session has traded (from 2026-10-28 ~08:00 local, one more day is best):
-`scripts/export_deals.py 2026-10-27T16:00 --offset-hours 3`, then `python -m
-backtester.tools.fill_report --since 2026-10-27T16:00 --deals results/fill_report/deals.csv`;
-build the accepted V2.4b part (measured p90 per symbol as the stressed cost level in the
-robustness report, test-first); stop the bot (`results/live/STOP`, at a minute without probe
-positions); 12.5 demo reconciliation. Watch `../Shared_Interface/queue/pending/` for the first
-submission (V2.6i i8). Then research (V2.6 lanes + queue) and V2.7 portfolio.
+The user checks the night run (`docs/review/night-2026-11-03.md`) and answers its three
+questions; then V2.8 is finished (merge to `main` on the user's word). After that: a bot run on
+the new 14-day trial for more fills (the user's call), research submissions from the queue
+(`Continue.Research`), V2.7 portfolio when a strategy survives research.
 
 ## First prompt for the next chat
 
-`Continue.Code` (re-run the fill report with the London fills, then build the V2.4b p90 stressed
-costs; check the shared queue for a first submission)
+`Continue.Code` (answers to the night-run questions; then the next step above)
