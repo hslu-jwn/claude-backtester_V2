@@ -7,6 +7,9 @@ time in the source; they become day-only rows on the local date.
 Rule 2 (rule set by the user, 2026-10-27): such a row gets the usual release time of the same
 event (same name, currency, country; exact non-suspicious rows only) as wall-clock time in the
 event's home zone, if at least 3 siblings exist and the most common local time covers >= 60 %.
+Rule 3 (rule set by the user, 2026-11-03): an exact row exactly 1 h before or after that usual
+time (the source's DST defect, ROADMAP V2.4e) moves onto it, same sibling thresholds; its
+usual time ignores rows inside `ImputeConfig.defect_windows` (they are the 1 h early ones).
 Everything else is copied unchanged (same columns, order, values, BOM and line ending). The
 source is never modified.
 """
@@ -18,7 +21,7 @@ import sys
 import warnings
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -54,6 +57,13 @@ class ImputeConfig:
     min_siblings: int = 3
     min_share: float = 0.6
     zones: dict[str, str] = field(default_factory=lambda: dict(COUNTRY_ZONES))
+    # local dates where the source applied Iran's DST, abolished from 2023 (Asia/Tehran clock):
+    # rows 1 h early; measured 2026-11-03 from the rows rule 3 moves
+    defect_windows: tuple[tuple[date, date], ...] = (
+        (date(2023, 3, 21), date(2023, 9, 21)),
+        (date(2024, 3, 21), date(2024, 9, 20)),
+        (date(2025, 3, 21), date(2025, 4, 4)),
+    )
 
 
 def is_suspicious(row: dict[str, str]) -> bool:
@@ -103,10 +113,34 @@ def _impute(row: dict[str, str], usual: dict) -> bool:
     return True
 
 
+def _shift_hour(row: dict[str, str], usual: dict) -> bool:
+    found = usual.get(_event_key(row))
+    if found is None or row["time_precision"] not in ("second", "minute"):
+        return False
+    local_time, agree, total, zone = found
+    at = datetime.fromisoformat(row["scheduled_timestamp_utc"]).astimezone(ZoneInfo(zone))
+    wall = at.replace(tzinfo=None, second=0)
+    for hours in (1, -1):
+        moved = wall + timedelta(hours=hours)
+        if moved.time() != local_time:
+            continue
+        at = moved.replace(tzinfo=ZoneInfo(zone)).astimezone(UTC)
+        row["scheduled_timestamp_utc"] = at.strftime("%Y-%m-%dT%H:%M:%SZ")
+        row["scheduled_date_utc"] = at.date().isoformat()
+        row["time_label"] = local_time.strftime("%H:%M")
+        row["point_in_time_note"] += (
+            f"; release time moved 1 h onto the usual {local_time:%H:%M} {zone} "
+            f"({agree} of {total} occurrences)"
+        )
+        return True
+    return False
+
+
 def clean_bytes(
     content: bytes, cfg: ImputeConfig | None = None
-) -> tuple[bytes, int, Counter, Counter, Counter]:
-    """Return (cleaned bytes, rows in, rule 1 rows, imputed, left day-only), counts by impact."""
+) -> tuple[bytes, int, Counter, Counter, Counter, Counter]:
+    """Return (cleaned bytes, rows in, rule 1 rows, imputed, left day-only, moved 1 h), counts
+    by impact."""
     cfg = cfg or ImputeConfig()
     bom = content.startswith(b"\xef\xbb\xbf")
     text = content.decode("utf-8-sig")
@@ -123,10 +157,13 @@ def clean_bytes(
             raise ValueError(f"expected {len(CSV_COLUMNS)} columns, got {len(values)}")
         rows.append(dict(zip(CSV_COLUMNS, values, strict=True)))
     usual = _usual_times(rows, cfg)  # siblings = the untouched exact rows of the whole file
+    windows = [(a.isoformat(), b.isoformat()) for a, b in cfg.defect_windows]
+    clean = [r for r in rows if not any(a <= r["scheduled_date_local"] <= b for a, b in windows)]
+    usual_shift = _usual_times(clean, cfg)
     out = io.StringIO(newline="")
     writer = csv.writer(out, lineterminator=terminator)
     writer.writerow(header)
-    changed, imputed, left = Counter(), Counter(), Counter()
+    changed, imputed, left, shifted = Counter(), Counter(), Counter(), Counter()
     for row in rows:
         if is_suspicious(row):
             row["time_precision"] = "date"
@@ -139,19 +176,21 @@ def clean_bytes(
                 imputed[row["impact"]] += 1
             else:
                 left[row["impact"]] += 1
+        elif row["scheduled_timestamp_utc"] and _shift_hour(row, usual_shift):
+            shifted[row["impact"]] += 1
         writer.writerow([row[c] for c in CSV_COLUMNS])
     data = out.getvalue().encode("utf-8")
-    return (b"\xef\xbb\xbf" + data if bom else data), len(rows), changed, imputed, left
+    return (b"\xef\xbb\xbf" + data if bom else data), len(rows), changed, imputed, left, shifted
 
 
-def clean_file(source: Path, out: Path) -> tuple[int, Counter, Counter, Counter]:
-    """Return (rows in, rule 1 rows, imputed, left day-only), counts by impact."""
+def clean_file(source: Path, out: Path) -> tuple[int, Counter, Counter, Counter, Counter]:
+    """Return (rows in, rule 1 rows, imputed, left day-only, moved 1 h), counts by impact."""
     if source.resolve() == out.resolve():
         raise ValueError("output must differ from the source file")
-    data, total, changed, imputed, left = clean_bytes(source.read_bytes())
+    data, total, changed, imputed, left, shifted = clean_bytes(source.read_bytes())
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)
-    return total, changed, imputed, left
+    return total, changed, imputed, left, shifted
 
 
 def main(argv=None) -> int:
@@ -160,7 +199,7 @@ def main(argv=None) -> int:
     p.add_argument("--out", type=Path, default=Path("data/news/economic_events.csv"))
     args = p.parse_args(argv)
     try:
-        total, changed, imputed, left = clean_file(args.source, args.out)
+        total, changed, imputed, left, shifted = clean_file(args.source, args.out)
     except (OSError, ValueError) as exc:
         print(f"news_clean: {exc}", file=sys.stderr)
         return 1
@@ -171,6 +210,7 @@ def main(argv=None) -> int:
     print(f"rule 1 changed: {sum(changed.values())} " + str(dict(sorted(changed.items()))))
     print(f"imputed: {sum(imputed.values())} " + str(dict(sorted(imputed.items()))))
     print(f"left day-only: {sum(left.values())} " + str(dict(sorted(left.items()))))
+    print(f"moved 1 h: {sum(shifted.values())} " + str(dict(sorted(shifted.items()))))
     quality = dict(calendar.quality_counts) if calendar else {}
     print(f"loader quality counters: {quality or 'none'}")
     for w in caught:

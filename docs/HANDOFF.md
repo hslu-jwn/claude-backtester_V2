@@ -63,9 +63,9 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 |---|---|
 | V2.4b | built 2026-11-03: measured fill p90 per symbol is the stressed cost level (`analytics/slippage_p90.json`, 5,512 fills) |
 | 12.5 | built 2026-11-03: `tools/reconcile.py`, all demo trades matched / explained (`results/reconcile_2026-11-02/`) |
-| V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted); real-calendar validation built 2026-11-03 (`tools/news_validate.py`): 386 High rows 2023-24 are 1 h off (question to the user) |
+| V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted); real-calendar validation built 2026-11-03 (`tools/news_validate.py`); 1-hour rows fixed by `news_clean` rule 3 (2026-11-03, 665 rows; anchors 5 / 6 pass) |
 | V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
-| Open questions for Research | 0; replies sent 2026-11-03 (no CFD session calendar for R004's integrity predicate; reviewability proposal: review after V2.8) |
+| Open questions for Research | 0; replies sent 2026-11-03 (no CFD session calendar for R004's integrity predicate; reviewability proposal: review when the user says so) |
 | Built, waiting for the user's acceptance | V2.6l per-cell envelope (2026-11-03); V2.6j, V2.6k (2026-10-29); V2.4c checks #2 #6 #13 |
 | Deals export | `scripts/export_deals.py <since> --offset-hours 3` (+2 h from 2026-11-01), read-only |
 
@@ -92,8 +92,9 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
    and gap momentum in quiet sideways markets): only on the user's go.
 2. Merge `v2-6-research` into `main` (the user's word).
 3. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
-4. Two questions in `docs/review/night-2026-11-03.md` (calendar 1-hour rows, Research's
-   reviewability proposal); the stop inside the spread was decided 2026-11-03 (refused, built).
+4. Review Research's reviewability proposal (`FB_UNKNOWN_20261102T232536Z_1ebf`) only when
+   the user says so (the user, 2026-11-03). The night questions on the stop inside the spread
+   and the calendar 1-hour rows were decided and built 2026-11-03.
 
 ## Next step
 

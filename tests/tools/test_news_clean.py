@@ -63,8 +63,9 @@ def test_clean_rules(tmp_path):
     src, rows = _make(tmp_path)
     before = src.read_bytes()
     out = tmp_path / "out" / "clean.csv"
-    total, changed, imputed, left = news_clean.clean_file(src, out)
+    total, changed, imputed, left, shifted = news_clean.clean_file(src, out)
     assert (total, dict(changed)) == (4, {"High": 1, "Medium": 1})
+    assert not shifted
     assert not imputed
     assert dict(left) == {"High": 1, "Medium": 1}
     assert src.read_bytes() == before
@@ -133,7 +134,7 @@ def _run(tmp_path, rows):
     _write(src, rows)
     out = tmp_path / "o.csv"
     result = news_clean.clean_file(src, out)
-    return result, _read(out), rows
+    return result[:4], _read(out), rows
 
 
 # 2024-03-01 and 2024-03-08 are EST (13:30Z); 2024-03-15 is EDT (12:30Z, DST began 03-10).
@@ -251,3 +252,66 @@ def test_other_date_rows_untouched_and_suspicious_not_siblings(tmp_path):
     (_, _, imputed, left), got, _ = _run(tmp_path, rows)
     assert not imputed and dict(left) == {"High": 2}
     assert got[3] == other_date
+
+
+# Rule 3 (rule set by the user, 2026-11-03): an exact row exactly 1 h off its event's usual
+# local time (source DST defect, 2023-24) moves onto it. SIBS: 08:30 New York, 3 of 3.
+def _shift(tmp_path, utc, local_date="2024-03-12", sibs=SIBS):
+    row = _sib(9, local_date, utc)
+    src = tmp_path / "s.csv"
+    _write(src, [*sibs, row])
+    result = news_clean.clean_file(src, tmp_path / "o.csv")
+    return result[4], _read(tmp_path / "o.csv")[-1], row
+
+
+@pytest.mark.parametrize("utc", ["2024-03-12T13:30:00Z", "2024-03-12T11:30:00Z"])  # 09:30 / 07:30
+def test_one_hour_off_moves_onto_the_usual_time(tmp_path, utc):
+    shifted, got, row = _shift(tmp_path, utc)
+    assert dict(shifted) == {"High": 1}
+    assert got["scheduled_timestamp_utc"] == "2024-03-12T12:30:00Z"  # 08:30 EDT
+    assert got["scheduled_date_utc"] == "2024-03-12"
+    assert got["time_precision"] == row["time_precision"]
+    assert got["time_label"] == "08:30"
+    assert got["point_in_time_note"].endswith(
+        "; release time moved 1 h onto the usual 08:30 America/New_York (3 of 4 occurrences)"
+    )
+
+
+@pytest.mark.parametrize(
+    "utc", ["2024-03-12T12:30:00Z", "2024-03-12T13:00:00Z", "2024-03-12T14:30:00Z"]
+)  # on time, 30 min off, 2 h off
+def test_other_offsets_untouched(tmp_path, utc):
+    shifted, got, row = _shift(tmp_path, utc)
+    assert not shifted and got == row
+
+
+def test_weak_mode_not_shifted(tmp_path):
+    # 08:30 x2, 09:30 x1 + the row at 09:30: mode 08:30 covers 2 of 4 = 50 % < 60 %
+    sibs = [*SIBS[:2], _sib(3, "2024-03-19", "2024-03-19T13:30:00Z")]
+    shifted, got, row = _shift(tmp_path, "2024-03-12T13:30:00Z", sibs=sibs)
+    assert not shifted and got == row
+
+
+def _jun(n, day, utc):  # inside the source's 2024 defect window (Iran's abolished DST)
+    return _sib(n, f"2024-06-{day:02d}", utc)
+
+
+def test_defect_window_rows_do_not_set_the_usual_time(tmp_path):
+    # 3 June rows at 07:30 New York (1 h early) + SIBS at 08:30: all 6 -> 50 %, no mode;
+    # outside the window 08:30 is 3 of 3, so the June rows move onto it
+    june = [_jun(4 + i, d, f"2024-06-{d:02d}T11:30:00Z") for i, d in enumerate((4, 11, 18))]
+    src = tmp_path / "s.csv"
+    _write(src, [*SIBS, *june])
+    shifted = news_clean.clean_file(src, tmp_path / "o.csv")[4]
+    got = _read(tmp_path / "o.csv")
+    assert dict(shifted) == {"High": 3}
+    assert [r["scheduled_timestamp_utc"][11:16] for r in got[3:]] == ["12:30"] * 3
+    assert got[3]["point_in_time_note"].endswith("(3 of 3 occurrences)")
+
+
+def test_correct_row_not_moved_onto_a_defect_mode(tmp_path):
+    # JP National Core CPI 2025-03-21 case: 3 window rows at 07:30, the one correct row at
+    # 08:30 must stay (outside the window only 1 sibling: no usual time)
+    june = [_jun(4 + i, d, f"2024-06-{d:02d}T11:30:00Z") for i, d in enumerate((4, 11, 18))]
+    shifted, got, row = _shift(tmp_path, "2024-03-12T12:30:00Z", sibs=june)
+    assert not shifted and got == row

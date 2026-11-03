@@ -302,6 +302,9 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   authoritative versioned CFD session calendar (holidays, early closes), which V2 does not
   have; Research is told so (`FB_INTRADAY_H1_SHOCK_RESPONSE_20261102T232536Z_ca99`; the
   reviewability proposal acknowledged in `FB_UNKNOWN_20261102T232536Z_1ebf`, review after V2.8).
+  **2026-11-03 (the user):** calendar 1-hour rows: "yes" -> `news_clean` rule 3 built (docs/news.md
+  › Cleaning; 665 rows moved; anchors 5 / 6 pass, were 3 / 6); Research's reviewability proposal:
+  review it only when the user says so.
   **V2.4e real-calendar validation built 2026-11-03 night** (Codex gpt-6.1-terra, brief
   `briefs/v24e-real-calendar-validation.md`): `python -m backtester.tools.news_validate` ->
   `results/news_validation/`. Anchors: NFP 69/69, US CPI m/m 63/63, FOMC statement 47/47 at

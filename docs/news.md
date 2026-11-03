@@ -176,6 +176,21 @@ precision `minute`, `time_label` = the local time (HH:MM), and the note gets "; 
 2026-10-27 from N of M occurrences (HH:MM zone)". Applies to High and Medium rows alike. The tool
 also prints imputed rows and rows left day-only, each by impact.
 
+One-hour shift (rule 3, rule set by the user, 2026-11-03): an exact row whose release time is
+exactly 1 h before or after its event's usual local time moves onto it (same siblings, zones and
+3 / 60 % thresholds as the imputation). Cause: the source's clock is Asia/Tehran and it still
+applied Iran's daylight saving, abolished from 2023, so rows in about 21 March - 21 September
+2023 and 2024 (and 2025-03-21..04-04) are 1 h early, for every country. For this rule the usual
+time ignores rows inside those windows (`ImputeConfig.defect_windows`); otherwise an event timed
+mostly in them gets a wrong usual time (JP National Core CPI would move its correct 2025 row to
+07:30). The row keeps its precision and local date, gets the moved UTC timestamp and UTC date,
+`time_label` = the local time (HH:MM) and the note "; release time moved 1 h onto the usual
+HH:MM zone (N of M occurrences)". Run 2026-11-03: 665 rows moved (High 406, Medium 259), 659 of
+them inside the windows; of the 6 outside, US CPI 2021-03-10 and 2022-03-10 and EU Economic
+Forecasts 2023-02-13 look right, the BoC emergency cut of 2020-03-27 (really 09:00 New York) is
+moved wrongly to 10:00, two (RBNZ Statement of Intent 2022-10-20, Crude Oil Inventories
+2021-07-14) are unclear. Imputation (rule 2) is unchanged and still uses all rows.
+
 ## Real-calendar validation
 
 `python -m backtester.tools.news_validate [--calendar data/news/economic_events.csv] [--out results/news_validation]`
@@ -190,3 +205,6 @@ Run 2026-11-03 on 9,836 rows (SHA256
 and 3 failed (12 deviating anchor rows); 1,940 consistency deviations; 311 of 4,652 High rows
 remain day-only (6.69%). The full findings are in `results/news_validation/report.md` and
 `results/news_validation/deviations.csv`. User acceptance remains pending.
+Re-run 2026-11-03 after rule 3 (SHA256 `7eb092f4be7b93de57b69a9f75c897390383f8646baa91db7de86529d2258796`,
+`results/news_validation_2026-11-03/`): anchors 5 passed, 1 failed (one BoE Official Bank Rate row
+at 12:02 on 2025-05-08, a source quirk); consistency deviations 1,940 -> 1,277.
