@@ -307,7 +307,13 @@ findings of the 2026-10-19 audit, input for the V2.4 review.
   candles), later redraws keep it: chart usable **2.2-2.6 s** (target < 4 s met), the list
   follows at ~4 s, a page step ~2.3 s. Same look; Opus, test-first. Seen once in ~10 loads:
   a request ended in `ERR_CONNECTION_RESET` and the page stayed on "Updating..." (Dash does
-  not retry; dev server; cause not found, a reload fixes it).
+  not retry; dev server; cause not found, a reload fixes it). **Measurement note:** the
+  in-app browser pane needs ~19 s for any response above ~1 MB (curl: the same 2.3 MB Results
+  response in 0.5 s), so pane timings of large pages are not representative; the hangs may be
+  the pane too. Other pages in the pane: Portfolio 1.1 s, Live 0.9 s, Backtest instant.
+  **U2 built 2026-11-03 night** (Opus, test-first): the Research layout no longer builds the
+  cards the refresh callback builds again on load; layout 1.29 MB -> 144 KB, cards shown at
+  1.35 s in the pane (was 9.4 s there).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**

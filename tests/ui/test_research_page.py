@@ -636,8 +636,35 @@ def test_research_rows_name_their_folder_and_the_card_shows_the_pipeline(results
         encoding="utf-8",
     )  # fmt: skip
     page = _json(research.layout(results_dir))
-    assert "Pipeline: step 2 of 3: monte_carlo" in page
     assert "qp-panel" in page
+    # the cards (with their pipeline line) are built once, by the page's refresh callback
+    assert "Pipeline: step 2 of 3: monte_carlo" in _json(_refresh(results_dir)[0])
+
+
+def _refresh(results_dir):
+    from types import SimpleNamespace
+    from unittest import mock
+
+    from dash import Dash
+
+    app = Dash(__name__)
+    research.register_callbacks(app, results_dir)
+    cb = next(
+        v["callback"].__wrapped__ for k, v in app.callback_map.items() if "rr-cards.children" in k
+    )
+    with mock.patch.object(research, "ctx", SimpleNamespace(triggered_id=None)):
+        return cb(research.ALL, research.ALL, rm.FILTER_ALL, None, None, None, None, None)
+
+
+def test_layout_leaves_the_cards_to_the_refresh_callback(results_dir):
+    # night run 2026-11-03 (Opus, ROADMAP V2.8 U2): the layout built every card and the
+    # refresh callback built them again on load (1.3 MB + 1.15 MB); now only the callback does
+    from tests.ui.test_v25a_theme import walk
+
+    nodes = list(walk(research.layout(results_dir)))
+    cards = next(n for n in nodes if getattr(n, "id", None) == "rr-cards")
+    assert not cards.children
+    assert _refresh(results_dir)[0]  # the callback still delivers the cards
 
 
 def test_plain_scorecard_uses_saved_run_costs(tmp_path, monkeypatch):

@@ -340,7 +340,6 @@ def _load(results_dir: Path, ops: qm.QueueOps) -> list[dict]:
 def layout(results_dir: Path = RESULTS_DIR, ops: qm.QueueOps | None = None) -> html.Div:
     ops = ops if ops is not None else queue_ops(results_dir)
     rows = _load(results_dir, ops)
-    cards, exhausted, count = card_view(rows, ALL, ALL, rm.FILTER_ALL, None)
     controls = html.Div(
         [
             dcc.Dropdown(
@@ -377,7 +376,7 @@ def layout(results_dir: Path = RESULTS_DIR, ops: qm.QueueOps | None = None) -> h
                 ],
                 className="rr-label",
             ),
-            html.Span(count, id="rr-count", className="rr-count"),
+            html.Span(id="rr-count", className="rr-count"),
         ],
         className="rr-controls",
     )
@@ -414,12 +413,13 @@ def layout(results_dir: Path = RESULTS_DIR, ops: qm.QueueOps | None = None) -> h
                     controls,
                     advanced,
                     dcc.Store(id="rr-limit", data=PAGE_SIZE),
-                    html.Div(cards, id="rr-cards", className="rr-cards"),
+                    # filled by _refresh on load (it applies the persisted filters anyway)
+                    html.Div(id="rr-cards", className="rr-cards"),
                     html.Button(
                         "Show more",
                         id="rr-more",
                         n_clicks=0,
-                        hidden=exhausted,
+                        hidden=True,
                         className="rr-button",
                     ),
                 ],
