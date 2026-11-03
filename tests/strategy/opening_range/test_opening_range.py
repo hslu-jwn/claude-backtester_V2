@@ -634,6 +634,8 @@ def test_session_end_after_the_march_dst_change():
         ("EU50", BERLIN),
         ("UK100", Sess("Europe/London", time(8, 0), 505)),  # 08:00 - 16:25
         ("JP225", Sess("Asia/Tokyo", time(9, 0), 355)),  # 09:00 - 14:55
+        ("AUS200", Sess("Australia/Sydney", time(10, 0), 355)),  # 10:00 - 15:55 (user 2026-11-03)
+        ("HK50", Sess("Asia/Hong_Kong", time(9, 30), 385)),  # 09:30 - 15:55, held over lunch
     ],
 )
 def test_index_sessions_by_symbol(symbol, s):
@@ -648,6 +650,7 @@ def test_symbol_classes_cover_the_spec_symbols():
         assert SYMBOL_CLASS[sym] == "us_index"
     assert SYMBOL_CLASS["GER40"] == SYMBOL_CLASS["EU50"] == "frankfurt_index"
     assert SYMBOL_CLASS["UK100"] == "london_index" and SYMBOL_CLASS["JP225"] == "tokyo_index"
+    assert SYMBOL_CLASS["AUS200"] == "sydney_index" and SYMBOL_CLASS["HK50"] == "hong_kong_index"
     fx = "GBPUSD GBPJPY EURUSD USDJPY AUDUSD USDCAD USDCHF NZDUSD EURJPY EURGBP XAUUSD XAGUSD"
     for sym in fx.split():
         assert SYMBOL_CLASS[sym] == "fx_metal"
@@ -662,6 +665,12 @@ def test_default_sessions_are_the_spec_table():
     )
     assert c.sessions["london_index"]["london"] == SessionSpec(
         "Europe/London", time(8, 0), time(16, 25)
+    )
+    assert c.sessions["sydney_index"]["sydney"] == SessionSpec(
+        "Australia/Sydney", time(10, 0), time(15, 55)
+    )
+    assert c.sessions["hong_kong_index"]["hong_kong"] == SessionSpec(
+        "Asia/Hong_Kong", time(9, 30), time(15, 55)
     )
     assert c.sessions["tokyo_index"]["tokyo"] == SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55))
     assert c.sessions["fx_metal"]["london"] == SessionSpec("Europe/London", time(8, 0), time(12, 0))

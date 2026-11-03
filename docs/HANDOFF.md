@@ -91,7 +91,8 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 1. One-time MT5 test of the three pre-registered V2 hypotheses (strategy 4 on GBPJPY; gap fade
    and gap momentum in quiet sideways markets): only on the user's go.
 2. Merge `v2-6-research` into `main` (the user's word).
-3. Opening-range sessions for AUS200 / HK50 (left out, 2026-10-27).
+3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
+   Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
 4. Review Research's reviewability proposal (`FB_UNKNOWN_20261102T232536Z_1ebf`) only when
    the user says so (the user, 2026-11-03). The night questions on the stop inside the spread
    and the calendar 1-hour rows were decided and built 2026-11-03.

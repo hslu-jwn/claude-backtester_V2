@@ -53,6 +53,8 @@ SYMBOL_CLASS = MappingProxyType(
         **dict.fromkeys(("GER40", "EU50"), "frankfurt_index"),
         "UK100": "london_index",
         "JP225": "tokyo_index",
+        "AUS200": "sydney_index",
+        "HK50": "hong_kong_index",
         **dict.fromkeys(
             (
                 "GBPUSD", "GBPJPY", "EURUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF",
@@ -79,6 +81,12 @@ def _default_sessions() -> Mapping[str, Mapping[str, SessionSpec]]:
             ),
             "tokyo_index": MappingProxyType(
                 {"tokyo": SessionSpec("Asia/Tokyo", time(9, 0), time(14, 55))}
+            ),
+            "sydney_index": MappingProxyType(
+                {"sydney": SessionSpec("Australia/Sydney", time(10, 0), time(15, 55))}
+            ),
+            "hong_kong_index": MappingProxyType(
+                {"hong_kong": SessionSpec("Asia/Hong_Kong", time(9, 30), time(15, 55))}
             ),
             "fx_metal": MappingProxyType(
                 {

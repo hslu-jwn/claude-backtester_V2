@@ -22,6 +22,8 @@ Every time is local wall time in the session's own zone (`zoneinfo`, DST per cit
 | GER40, EU50 | Frankfurt cash | 09:00 Europe/Berlin | 17:25 |
 | UK100 | London cash | 08:00 Europe/London | 16:25 |
 | JP225 | Tokyo cash | 09:00 Asia/Tokyo | 14:55 |
+| AUS200 | Sydney cash (the user, 2026-11-03) | 10:00 Australia/Sydney | 15:55 |
+| HK50 | Hong Kong cash (the user, 2026-11-03; held over the 12:00-13:00 lunch break) | 09:30 Asia/Hong_Kong | 15:55 |
 | FX, XAUUSD, XAGUSD | London open | 08:00 Europe/London | 12:00 Europe/London |
 | FX, XAUUSD, XAGUSD | New York open | 09:30 America/New_York | 15:55 America/New_York |
 
