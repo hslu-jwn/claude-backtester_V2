@@ -39,8 +39,8 @@ Project rules for every model working in this repository (Claude, Codex, Gemini,
 
 A Python backtester and research platform for rule-based trading strategies. It replays
 historical M1 candles one at a time (no lookahead), runs the strategies in `strategy/`
-(7 so far: session zone sweep, NY index sweep, no-wick, Kaufman trend following, gap fade,
-opening-range breakout, gap momentum), simulates trades in **R multiples** with real costs
+(9 so far: session zone sweep, NY index sweep, no-wick, Kaufman trend following, gap fade,
+opening-range breakout, gap momentum, London fix reversal, alternating M15 path), simulates trades in **R multiples** with real costs
 and swap, and turns them into account results (balance, drawdown, Monte Carlo, FTMO /
 prop-firm pass probability). A research runner sweeps variants with a fixed data split
 (develop before 2021-09-14, test once on MT5 data after) and a trial log. Results show in a
@@ -65,6 +65,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-gap-fade.md` | Strategy 5: fade the index cash-open gap (0.1-1 ATR) to the previous close, stop at the mirror level, exit 16:00 (ROADMAP 11.4) |
 | `docs/strategy-opening-range.md` | Strategy 6: opening-range breakout (range / ATR band, session-end exit, narrow-range and tick-volume filters) (ROADMAP 11.10) |
 | `docs/strategy-gap-momentum.md` | Strategy 7: gap momentum (opening gap beyond the prior range, day trade) |
+| `docs/strategy-alternating-path.md` | Strategy 9: alternating M15 close path, follow/fade last change, prior ATR stop, 30/60-minute exit |
 | `docs/research-runner.md` | Research runner: data split, grids, scorecard, flags, trial log |
 | `docs/research-intake.md` | How submissions from the research department become V2 strategies, experiments and result / feedback envelopes (not operational until ROADMAP V2.6i) |
 | `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |

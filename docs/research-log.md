@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-05: M15_ALTERNATING_PATH_BATCH v0.2.0 (R014) implemented as strategy 9
+
+- Validated and claimed (sha256 `d09d44b9...`), status IMPLEMENTING; five `ASSUMPTION_MADE`
+  points sent (M15 buckets, ATR seed, data-integrity handling, R-only sizing, gates after the
+  run); spec `docs/strategy-alternating-path.md` › Assumptions. Brief
+  `briefs/r014-alternating-path.md`.
+- Codex gpt-6.1-sol medium, 1 call: config, strategy, 75 tests, spec, 4-cell grid. Opus: runner
+  config union, panel (fixed fields hidden, widget limit), tool symbol tables, golden list
+  (2,511 trades, 2023). Full suite 5,225 passed; golden 9/9 identical.
+- Not done: the development run of the 4 cells and the submission's gates (UTC halves,
+  doubled cost components, five-best-date removal, block bootstrap, M1 data-integrity count);
+  no envelope yet. Research's 17 R007-R023 preflights and the fast-lane bulk question are
+  unanswered.
+
 ## 2026-11-02: finalization audit and V2.8 R1
 
 Opus (Claude Code, high effort) did the read-only audit (`docs/review/finalization-audit-2026-11-02.md`)

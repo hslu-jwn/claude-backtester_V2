@@ -313,6 +313,21 @@ UNUSED = {
     "gap_fade": {"engine.break_even_at_next_session"},
     "gap_momentum": {"engine.break_even_at_next_session"},
     "opening_range": {"engine.break_even_at_next_session"},
+    # fixed by the submission (config rejects other values): no widget, panel widget limit
+    "alternating_path": {"engine.break_even_at_next_session"}
+    | {
+        f"strategy.{name}"
+        for name in (
+            "aggregation_minutes",
+            "alternating_changes",
+            "path_activity_atr_min",
+            "stop_atr_multiplier",
+            "atr_period",
+            "first_signal_london",
+            "last_signal_london",
+            "exit_deadline_london",
+        )
+    },
 }
 
 

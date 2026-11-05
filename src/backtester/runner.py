@@ -69,6 +69,7 @@ from backtester.engine.spread_table import SpreadTable
 from backtester.engine.ticks import TickRoundingStats
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
+from backtester.strategy.alternating_path.config import AlternatingPathConfig
 from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
@@ -104,6 +105,7 @@ StrategyConfig = (
     | OpeningRangeConfig
     | GapMomentumConfig
     | LondonFixConfig
+    | AlternatingPathConfig
 )
 
 

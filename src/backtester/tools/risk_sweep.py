@@ -309,6 +309,12 @@ def plans() -> dict[str, Plan]:
             LONDON_FIX_SYMBOLS,
             LONDON_FIX_SYMBOLS,
         ),
+        "alternating_path": Plan(
+            "alternating_path",
+            default_config("alternating_path"),
+            LONDON_FIX_SYMBOLS,
+            LONDON_FIX_SYMBOLS,
+        ),
     }
     assert set(out) == set(REGISTRY)
     return out

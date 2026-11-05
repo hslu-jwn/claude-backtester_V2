@@ -1,0 +1,25 @@
+strategy = "alternating_path"
+symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"]
+min_trades = 300
+
+[submission]
+strategy_id = "M15_ALTERNATING_PATH_BATCH"
+specification_version = "0.2.0"
+submission_sha256 = "d09d44b96cde33f45b718803eb385cc9a9fd908641d06148ea47de61acff31c5"
+experiment_id = "M15_ALTERNATING_PATH_BATCH__v0.2.0__DEVELOPMENT__1"
+
+[base]
+response_mode = "FOLLOW_LAST"
+holding_minutes = 60
+aggregation_minutes = 15
+alternating_changes = 4
+path_activity_atr_min = 1.0
+stop_atr_multiplier = 1.0
+atr_period = 96
+first_signal_london = "09:00"
+last_signal_london = "13:45"
+exit_deadline_london = "15:00"
+
+[grid]
+response_mode = ["FOLLOW_LAST", "FADE_LAST"]
+holding_minutes = [30, 60]

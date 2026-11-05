@@ -36,6 +36,7 @@ def test_registered_names_and_order():
         "opening_range",
         "gap_momentum",
         "london_fix",
+        "alternating_path",
     ]
 
 

@@ -56,6 +56,7 @@ STRATEGY_SYMBOLS = {  # each strategy's own symbols (its spec / grid tool)
     "opening_range": ("NAS100", "US500"),
     "gap_momentum": ("NAS100", "US500"),
     "london_fix": ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"),
+    "alternating_path": ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"),
 }
 FAMILY_PREFIX = "screen_"
 SOURCE = "histdata"

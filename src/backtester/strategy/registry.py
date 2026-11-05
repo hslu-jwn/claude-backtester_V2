@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from backtester.detectors.settings import DetectorSettings
+from backtester.strategy.alternating_path.config import AlternatingPathConfig
+from backtester.strategy.alternating_path.strategy import AlternatingPath
 from backtester.strategy.base import Strategy
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_fade.strategy import GapFade
@@ -64,6 +66,7 @@ _SPECS = (
         GapMomentumConfig, GapMomentum,
     ),
     StrategySpec("london_fix", "Strategy 8 · London fix reversal", LondonFixConfig, LondonFix),
+    StrategySpec("alternating_path", "Strategy 9 · Alternating M15 path", AlternatingPathConfig, AlternatingPath),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})
