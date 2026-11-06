@@ -159,12 +159,32 @@ strategy instances; no cell shares trade state. No sweep is run for this change.
 Use `--strategy alternating_path` and the six declared symbols with existing
 cost and account settings. No money sizing or cost defaults are added here.
 
-Deferred to later evaluation: cache-based post-entry integrity/failure reports,
-full breadth ledger, UTC-half and symbol tables, doubled individual costs,
-common five-date removal, 10,000 circular five-date block bootstraps with seed
-2026014, and the submission's joint cell/mode promotion gates. Record every trial
-and required cell. Final holdout access still requires explicit user authorization.
-The strategy alone does not guarantee integrity gates or portfolio sizing.
+Record every trial and required cell. Final holdout access still requires explicit user
+authorization. The strategy alone does not guarantee integrity gates or portfolio sizing.
+
+## Gates
+
+`python -m backtester.tools.alternating_path_gates <research folder>` computes the
+submission's `experiment.rejection_criteria` from the four development cells and writes
+`gates.json` (a result-envelope artifact). V2 reports them; the user decides. Readings decided by
+Opus (2026-11-06):
+
+- **Costs.** Doubling one component pays it once more: spread `spread_r`, commission
+  `commission_r`, slippage = the rest of the fill cost (`r_gross - fills - spread_r`; swap,
+  funding and the currency conversion are not trading costs). "Doubled" gates require every
+  component doubled on its own and all three together to stay positive.
+- **UTC halves.** Midpoint of `[start, end + 1 day)` of the development period; a trade belongs
+  to the half of its exit time, a close exactly on the midpoint to the first.
+- **Five-date removal.** The five London entry dates with the highest normal-cost net R of the
+  mode's centre cell (hold 60) are removed from both of the mode's cells; both must stay
+  positive at normal and all-doubled costs.
+- **Bootstrap.** Normal-cost net R per London weekday of the period (zeros included), circular
+  blocks of 5 dates, 10,000 resamples, seed 2026014, statistic = mean daily R. The submission
+  names no level: the gate uses the 2.5 % quantile (two-sided 95 %), the 5 % quantile is reported.
+  Required for both cells of a mode ("both hold=60 centre and hold=30 neighbour pass every gate").
+- **Data integrity.** A trade fails when an M1 candle closing in `(entry, exit]` is missing or
+  breaks the OHLC rules (A1) in the run's cache; the count and the first 20 are listed per cell.
+- **Benchmarks.** Zero net R (the gates) and the opposite mode's cells on the same events.
 
 ## Rule to config / code / test mapping
 

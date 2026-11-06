@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-06: R014 development run and gates
+
+- `results/research/alternating_path_1ffe705d` (2015-01-02..2021-09-13, 6 FX pairs, `--dev-only`,
+  test period untouched). Net R: FOLLOW/30 -3,925 (17,673 trades), FOLLOW/60 -3,866 (16,626),
+  FADE/30 -2,882 (15,160), FADE/60 -2,585 (14,042). Gross: FOLLOW -162 / -308, FADE +317 / +389
+  (about +0.025 R per trade, costs about 0.2 R per trade at a 1-ATR M15 stop).
+- Gates (`tools/alternating_path_gates.py`, `gates.json`): both modes fail every gate except the
+  300-trade minimum; no symbol positive in any half; bootstrap lower bounds about -1.7 to -2.5 R
+  per day; 111-170 trades per cell touch a missing / invalid M1 candle.
+- Envelope `Shared_Interface/feedback/results/M15_ALTERNATING_PATH_BATCH__v0.2.0__DEVELOPMENT__1.json`
+  (status COMPLETED). Gates tool by Opus inline (no dispatch). Claim stays TESTING until the user
+  decides; no one-time test.
+
 ## 2026-11-05: M15_ALTERNATING_PATH_BATCH v0.2.0 (R014) implemented as strategy 9
 
 - Validated and claimed (sha256 `d09d44b9...`), status IMPLEMENTING; five `ASSUMPTION_MADE`
