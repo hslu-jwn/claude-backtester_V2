@@ -14,8 +14,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   300-trade minimum; no symbol positive in any half; bootstrap lower bounds about -1.7 to -2.5 R
   per day; 111-170 trades per cell touch a missing / invalid M1 candle.
 - Envelope `Shared_Interface/feedback/results/M15_ALTERNATING_PATH_BATCH__v0.2.0__DEVELOPMENT__1.json`
-  (status COMPLETED). Gates tool by Opus inline (no dispatch). Claim stays TESTING until the user
-  decides; no one-time test.
+  (status COMPLETED). Gates tool by Opus inline (no dispatch); no one-time test.
+- **Rejected by the user 2026-11-06**: moved to `queue/rejected/`; Research told the decision and
+  the gate readings (`ASSUMPTION_MADE`, see `docs/strategy-alternating-path.md` › Gates).
 
 ## 2026-11-05: M15_ALTERNATING_PATH_BATCH v0.2.0 (R014) implemented as strategy 9
 
