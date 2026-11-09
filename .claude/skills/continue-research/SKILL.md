@@ -76,4 +76,5 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 - Count families, specs and cells honestly; a parameter cell is not a new hypothesis, and a failed
   family is not re-proposed under a new name.
 - End of run: short report (tested, results, gates, decisions needed); a very promising strategy
-  first, and on Telegram.
+  first, and on Telegram (format and command: CLAUDE.md › Telegram), sent as soon as it passes
+  its gates, not only at the end of the run.

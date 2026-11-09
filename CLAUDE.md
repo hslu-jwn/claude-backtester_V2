@@ -69,4 +69,8 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
 - **Telegram** (`live/telegram.py`, token from the Windows Credential Manager) only for: a
   decision on rules / defaults / risk, a blocker Codex can't solve, a crash or long pause of
   the loop / queue, a very promising strategy; plus one short evening summary while research
-  runs.
+  runs. Send with `python -m backtester.tools.notify "<text>"`. A very promising strategy
+  (passed every pre-registered development gate) is sent right away as one message: name,
+  symbols, trades, win rate, avg R, net R (doubled costs), profit factor, max drawdown R,
+  dev period. A session waiting for the user is announced by the user-level `Notification`
+  hook (same tool, `--hook`).
