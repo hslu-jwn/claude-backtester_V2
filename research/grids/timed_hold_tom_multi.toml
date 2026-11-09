@@ -1,0 +1,24 @@
+# Hypothesis 9 / F4M: six trading days close to close; TOM vs mid-month control.
+# Primary: US500, month_day -4, stop_atr 2.0. NYSE early closes remain trading days.
+strategy = "timed_hold"
+symbols = ["US500", "NAS100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 60
+
+[base]
+zone = "America/New_York"
+entry_time = "16:00"
+exit_time = "16:00"
+direction = "long"
+day_filter = "month_day"
+hold_days = 6
+trading_days = "nyse"
+atr_zone = "America/New_York"
+atr_open = "09:30"
+atr_close = "16:00"
+
+[grid]
+stop_atr = [2.0, 3.0]
+month_day = [-4, 8]

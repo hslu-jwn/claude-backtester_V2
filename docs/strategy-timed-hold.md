@@ -1,8 +1,9 @@
 # Strategy 10: Timed hold (published time-of-day and calendar effects)
 
 Research run 1 of `Continue.Research` (2026-11-09). Folder `strategy/timed_hold/`, config
-`TimedHoldConfig`, registry name `timed_hold`. Day trade: enter at a fixed clock time, hold in a
-fixed direction, leave at a fixed clock time the same day; a wide stop in daily ATR.
+`TimedHoldConfig`, registry name `timed_hold`. Enter at a fixed clock time, hold in a fixed
+direction, leave at a fixed clock time the same day or after a configured number of trading
+days; a wide stop in daily ATR.
 
 Why this shape: our own cost table (`knowledge/research/reports/2026-11-09_cost_in_R_table.md`)
 shows a round trip costs about 0.2 R at a 1-ATR M15 stop but only 0.02-0.04 R at a stop of half a
@@ -18,6 +19,19 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
 
 - **Entry candle:** the 1m candle that **closes** at ⚙️ `entry_time` on a qualifying day. Entry at
   its close (known at that time, no lookahead). If that candle is missing, no trade that day.
+- **Hold days:** `hold_days` (integer, default 0). Zero preserves the same-day rule and requires
+  `exit_time > entry_time`. A positive value schedules the exit `hold_days` trading days after
+  the entry date (entry date = day zero), and allows `exit_time <= entry_time`. Missing candles
+  or entire missing sessions do not change the calendar target; exit at the first candle closing
+  at or after that target date and time.
+- **Trading calendar:** `trading_days` (default `"weekdays"`): Monday-Friday, or `"nyse"`:
+  Monday-Friday minus full closures in `calendars/nyse_holidays.csv`. Early closes count as
+  trading days. This calendar governs `hold_days` and `month_day`; the existing `turn_of_month`
+  and `pre_holiday` filters retain their NYSE calendar.
+- **Month day:** `month_day` (integer, default 0), used by `day_filter = "month_day"` and required
+  to be non-zero for that filter. Positive counts from the month's first trading day (1 = first,
+  8 = eighth); negative counts from its last (-1 = last, -4 = fourth-to-last). An ordinal outside
+  the month's trading days qualifies no date.
 - **Daily ATR:** Wilder ATR(⚙️ `atr_period`, default 14) over daily sessions of the ⚙️ `atr_zone`
   clock: candles closing in (⚙️ `atr_open`, ⚙️ `atr_close`] of one local date, built with
   `strategy/session_stats.SessionStats` (regular = a last candle within ⚙️ `atr_close_tolerance_min`
@@ -30,7 +44,8 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
   - `turn_of_month`: the last trading day of a month and the first ⚙️ `tom_days_after` (default 3)
     trading days of the next one; trading days = Monday-Friday that are not a full NYSE closure
     (`calendars/nyse_holidays.csv`);
-  - `pre_holiday`: the last trading day before a full NYSE closure that falls on a weekday.
+  - `pre_holiday`: the last trading day before a full NYSE closure that falls on a weekday;
+  - `month_day`: the trading-day ordinal selected by `month_day`, using `trading_days`.
   The calendars are published in advance (scheduled meetings, exchange holiday rules), so using
   them at the entry time is not lookahead. Unscheduled FOMC actions are excluded.
 
@@ -45,9 +60,12 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
   the opposite.
 - **Stop:** entry ∓ ⚙️ `stop_atr` × daily ATR (long: below). No take profit.
 - **Time exit:** a trade still open at ⚙️ `exit_time` closes at the close of the candle closing at
-  that time, or at the first later candle if it is missing (`session_stats.TimedExit`).
-  `exit_time` must be after `entry_time` on the same local date.
-- One trade per day at most. SL inside a candle: engine rules (SL first).
+  that time on the target date, or at the first later candle if it is missing. With `hold_days = 0`,
+  the target is the entry date and `exit_time` must be after `entry_time`. Multi-day scheduling
+  stays inside `timed_hold`; shared `session_stats.TimedExit` is unchanged.
+- One trade per day at most. A multi-day position blocks new entries until it is closed or its
+  order is skipped; the candle queuing its time exit cannot open another position. Position state
+  belongs to each strategy instance. SL inside a candle: engine rules (SL first).
 
 ## Families (pre-registered 2026-11-09, before any run)
 

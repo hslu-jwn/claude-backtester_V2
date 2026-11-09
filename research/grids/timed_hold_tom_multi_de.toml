@@ -1,0 +1,23 @@
+# Hypothesis 9 / F4M breadth: GER40, weekday calendar; cache ends 2020-06.
+strategy = "timed_hold"
+symbols = ["GER40"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 60
+
+[base]
+zone = "Europe/Berlin"
+entry_time = "17:30"
+exit_time = "17:30"
+direction = "long"
+day_filter = "month_day"
+hold_days = 6
+trading_days = "weekdays"
+atr_zone = "Europe/Berlin"
+atr_open = "09:00"
+atr_close = "17:30"
+
+[grid]
+stop_atr = [2.0, 3.0]
+month_day = [-4, 8]

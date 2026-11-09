@@ -547,3 +547,139 @@ def test_skip_nyse_short_days_also_applies_to_fomc(tmp_path):
     ]
     assert entry_dates(date(2026, 1, 5), 12, tmp_path, day_filter="fomc",
                        skip_nyse_short_days=True) == []
+
+
+# --- multi-day holds (Hypothesis 9 / F4M) ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("hold", "calendar", "expected"),
+    [(1, "weekdays", date(2026, 1, 19)),
+     (1, "nyse", date(2026, 1, 20)),
+     (6, "weekdays", date(2026, 1, 26)),
+     (6, "nyse", date(2026, 1, 27))],
+)
+@pytest.mark.parametrize("missing", [False, True])
+def test_multiday_exit_counts_trading_days_and_first_later_candle(
+    tmp_path, hold, calendar, expected, missing,
+):
+    calendars(tmp_path)
+    # Thursday warm-up, Friday entry; Monday MLK closure must only affect NYSE counting.
+    candles = warm_day(date(2026, 1, 15))
+    for d in weekdays(date(2026, 1, 16), 9):
+        candles += [candle(d, "12:00", 105, 110, 100, 105)]
+        if d != expected or not missing:
+            candles += [candle(d, "16:00", 105, 105, 105, 105)]
+        candles += [candle(d, "16:01", 106, 106, 106, 106)]
+    trades = run(candles, atr_period=1, stop_atr=3, hold_days=hold,
+                 trading_days=calendar, calendar_dir=str(tmp_path),
+                 entry_time=time(16), exit_time=time(16))
+    first = trades[0]
+    assert first.entry_time == at(date(2026, 1, 16), "16:00")
+    assert first.initial_stop == 75  # finished warm-up ATR 10; entry session is excluded
+    assert first.exit_time == at(expected, "16:01" if missing else "16:00")
+    assert first.exit_price == (106 if missing else 105)
+    assert first.exit_reason is ExitReason.SIGNAL
+    # No entry on any intervening date, including the candle that queues the exit.
+    assert all(t.entry_time > first.exit_time for t in trades[1:])
+
+
+def test_multiday_exit_before_entry_clock_and_missing_entire_exit_day():
+    candles = warm_day(date(2026, 1, 15))
+    candles += [candle(date(2026, 1, 16), "16:00", 105, 105, 105, 105)]
+    candles += [candle(date(2026, 1, 19), "09:59", 105, 105, 105, 105)]
+    candles += [candle(date(2026, 1, 19), "10:00", 106, 106, 106, 106)]
+    cfg = {"atr_period": 1, "hold_days": 1, "entry_time": time(16), "exit_time": time(10)}
+    [t] = run(candles, **cfg)
+    assert t.exit_time == at(date(2026, 1, 19), "10:00")
+    candles = candles[:-2] + [candle(date(2026, 1, 20), "09:00", 107, 107, 107, 107)]
+    [t] = run(candles, **cfg)
+    assert t.exit_time == at(date(2026, 1, 20), "09:00")
+
+
+@pytest.mark.parametrize("calendar", ["weekdays", "nyse"])
+@pytest.mark.parametrize("ordinal", [-4, -1, 1, 8, -99, 99])
+def test_month_day_ordinals_with_weekend_and_holiday_month_end(tmp_path, calendar, ordinal):
+    from backtester.strategy.timed_hold.day_filter import DayFilter
+
+    calendars(tmp_path, holidays="date,name,type\n2026-01-01,New Year,closed\n"
+              "2026-01-30,Closure,closed\n2026-01-06,Early,early_close_13:00\n")
+    filt = DayFilter(TimedHoldConfig(day_filter="month_day", month_day=ordinal,
+                                    trading_days=calendar, calendar_dir=str(tmp_path)))
+    # Jan 31 is Saturday, Jan 30 a full closure, Jan 6 an early close (still counts).
+    expected = {
+        "weekdays": {-4: 27, -1: 30, 1: 1, 8: 12},
+        "nyse": {-4: 26, -1: 29, 1: 2, 8: 13},
+    }[calendar].get(ordinal)
+    got = [day for day in range(1, 32) if filt.qualifies(date(2026, 1, day))]
+    assert got == ([] if expected is None else [expected])
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"hold_days": -1}, {"hold_days": 1.5}, {"hold_days": True},
+    {"trading_days": "NYSE"}, {"day_filter": "month_day"},
+    {"month_day": 1.5}, {"month_day": True},
+])
+def test_multiday_config_rejects_invalid_fields(kwargs):
+    with pytest.raises(ValueError):
+        TimedHoldConfig(**kwargs)
+
+
+def test_multiday_defaults_and_calendar_loading(tmp_path):
+    c = TimedHoldConfig()
+    assert (c.hold_days, c.trading_days, c.month_day) == (0, "weekdays", 0)
+    # Weekdays and month_day do not require a NYSE file; NYSE counting does.
+    TimedHold("T", TimedHoldConfig(day_filter="month_day", month_day=-4,
+                                  calendar_dir=str(tmp_path)))
+    with pytest.raises(FileNotFoundError, match="calendar"):
+        TimedHold("T", TimedHoldConfig(trading_days="nyse", calendar_dir=str(tmp_path)))
+
+
+def test_month_day_filter_drives_entries(tmp_path):
+    calendars(tmp_path)
+    assert entry_dates(date(2025, 12, 22), 35, tmp_path, day_filter="month_day",
+                       month_day=-4, trading_days="nyse") == [
+        date(2025, 12, 26), date(2026, 1, 27),
+    ]
+
+
+def test_multiday_state_callbacks_and_instances():
+    cfg = TimedHoldConfig(atr_period=1, hold_days=6)
+    candles = warm_day(date(2026, 1, 15)) + warm_day(date(2026, 1, 16))
+    candles += warm_day(date(2026, 1, 19))
+    series = CandleSeries("T", M1, candles)
+    first, second = TimedHold("T", cfg), TimedHold("T", cfg)
+    for i in range(4):
+        now = candles[i].ts + M1.duration
+        a = first.on_candle(now, {M1: series.view(i)})
+        b = second.on_candle(now, {M1: series.view(i)})
+    assert a and b  # position state belongs to each instance
+    first.on_order_skipped(a[0].ref, now)
+    second.on_trade_closed(b[0].ref, None)  # callback uses only the ref
+    for i in range(4, 7):
+        now = candles[i].ts + M1.duration
+        a = first.on_candle(now, {M1: series.view(i)})
+        b = second.on_candle(now, {M1: series.view(i)})
+    assert a and b  # skipped or stopped positions no longer block entry
+
+
+def test_multiday_appending_future_never_changes_orders_or_exit_signals():
+    candles = [c for d in weekdays(date(2026, 1, 5), 18) for c in warm_day(d)]
+
+    def events(data):
+        series = CandleSeries("T", M1, data)
+        strategy = TimedHold("T", TimedHoldConfig(atr_period=1, hold_days=6,
+                                                entry_time=time(16), exit_time=time(16)))
+        out = []
+        for i, c in enumerate(data):
+            orders = strategy.on_candle(c.ts + M1.duration, {M1: series.view(i)})
+            exits = strategy.exits()
+            out.append((orders, exits))
+            for ref in exits:
+                strategy.on_trade_closed(ref, None)
+        return out
+
+    full = events(candles)
+    assert any(o for o, _ in full) and any(e for _, e in full)
+    for cut in range(1, len(candles)):
+        assert events(candles[:cut]) == full[:cut]

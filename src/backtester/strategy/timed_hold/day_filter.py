@@ -7,6 +7,7 @@ so asking them about today's date at the entry time is not lookahead.
 from __future__ import annotations
 
 import csv
+from calendar import monthrange
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -27,6 +28,7 @@ class DayFilter:
 
     def __init__(self, config: TimedHoldConfig):
         self.kind, self.tom_after = config.day_filter, config.tom_days_after
+        self.month_day, self.trading_days = config.month_day, config.trading_days
         folder = Path(config.calendar_dir) if config.calendar_dir else DEFAULT_DIR
         self._fomc: set[date] = set()
         self._closed: set[date] = set()
@@ -38,7 +40,8 @@ class DayFilter:
                 for r in rows
                 if r["scheduled"].strip().lower() == "true"
             }
-        if self.kind in ("turn_of_month", "pre_holiday") or config.skip_nyse_short_days:
+        if (self.kind in ("turn_of_month", "pre_holiday") or config.skip_nyse_short_days
+                or config.trading_days == "nyse"):
             rows = _read(folder / "nyse_holidays.csv")
             self._closed = {
                 date.fromisoformat(r["date"]) for r in rows if r["type"].strip() == "closed"
@@ -58,6 +61,21 @@ class DayFilter:
             d += timedelta(days=1)
         return d
 
+    def is_trading_day(self, d: date) -> bool:
+        """Selected calendar for multi-day holds and month_day; early closes count.
+
+        Spec: strategy-timed-hold.md > Definitions.
+        """
+        return d.weekday() < 5 and (self.trading_days == "weekdays" or d not in self._closed)
+
+    def after_trading_days(self, d: date, count: int) -> date:
+        """Calendar target, independent of missing candles. Entry date is day zero."""
+        while count:
+            d += timedelta(days=1)
+            if self.is_trading_day(d):
+                count -= 1
+        return d
+
     def qualifies(self, d: date) -> bool:
         if d in self._short_days:
             return False
@@ -65,6 +83,15 @@ class DayFilter:
             return True
         if self.kind == "fomc":
             return d in self._fomc
+        if self.kind == "month_day":
+            if not self.is_trading_day(d):
+                return False
+            days = [
+                x for n in range(1, monthrange(d.year, d.month)[1] + 1)
+                if self.is_trading_day(x := d.replace(day=n))
+            ]
+            index = self.month_day - 1 if self.month_day > 0 else self.month_day
+            return -len(days) <= index < len(days) and days[index] == d
         if not self._trading(d):
             return False
         if self.kind == "turn_of_month":

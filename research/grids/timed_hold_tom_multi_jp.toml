@@ -1,0 +1,23 @@
+# Hypothesis 9 / F4M breadth: JP225, weekday calendar (Japanese holidays not modelled).
+strategy = "timed_hold"
+symbols = ["JP225"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 60
+
+[base]
+zone = "Asia/Tokyo"
+entry_time = "15:00"
+exit_time = "15:00"
+direction = "long"
+day_filter = "month_day"
+hold_days = 6
+trading_days = "weekdays"
+atr_zone = "Asia/Tokyo"
+atr_open = "09:00"
+atr_close = "15:00"
+
+[grid]
+stop_atr = [2.0, 3.0]
+month_day = [-4, 8]

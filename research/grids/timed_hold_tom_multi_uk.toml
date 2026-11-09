@@ -1,0 +1,23 @@
+# Hypothesis 9 / F4M breadth: UK100, weekday calendar.
+strategy = "timed_hold"
+symbols = ["UK100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 60
+
+[base]
+zone = "Europe/London"
+entry_time = "16:30"
+exit_time = "16:30"
+direction = "long"
+day_filter = "month_day"
+hold_days = 6
+trading_days = "weekdays"
+atr_zone = "Europe/London"
+atr_open = "08:00"
+atr_close = "16:30"
+
+[grid]
+stop_atr = [2.0, 3.0]
+month_day = [-4, 8]
