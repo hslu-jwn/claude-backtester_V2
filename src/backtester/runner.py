@@ -79,6 +79,7 @@ from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
 from backtester.strategy.opening_range.config import OpeningRangeConfig
 from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
+from backtester.strategy.timed_hold.config import TimedHoldConfig
 from backtester.strategy.trend_following.config import TrendFollowingConfig
 
 
@@ -106,6 +107,7 @@ StrategyConfig = (
     | GapMomentumConfig
     | LondonFixConfig
     | AlternatingPathConfig
+    | TimedHoldConfig
 )
 
 

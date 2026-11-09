@@ -32,6 +32,8 @@ from backtester.strategy.opening_range.config import OpeningRangeConfig
 from backtester.strategy.opening_range.strategy import OpeningRange
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.session_zone_sweep.strategy import SessionZoneSweep
+from backtester.strategy.timed_hold.config import TimedHoldConfig
+from backtester.strategy.timed_hold.strategy import TimedHold
 from backtester.strategy.trend_following.config import TrendFollowingConfig
 from backtester.strategy.trend_following.strategy import TrendFollowing
 
@@ -67,6 +69,9 @@ _SPECS = (
     ),
     StrategySpec("london_fix", "Strategy 8 · London fix reversal", LondonFixConfig, LondonFix),
     StrategySpec("alternating_path", "Strategy 9 · Alternating M15 path", AlternatingPathConfig, AlternatingPath),
+    StrategySpec(
+        "timed_hold", "Strategy 10 · Timed hold (calendar / time of day)", TimedHoldConfig, TimedHold
+    ),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})
