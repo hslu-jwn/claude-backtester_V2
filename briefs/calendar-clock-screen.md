@@ -44,3 +44,11 @@ same block on all other days of that pair has the same sign. Report every surviv
 count of cells, survivors table (stage 1 and stage 2 numbers side by side), confirmed list, the 20 largest
 |t| cells of stage 1 for context. Opus decides which confirmed cell, if any, becomes a hypothesis (its
 test period stays unspent). Report counts and the confirmed list.
+
+## Definitions decided by Opus (2026-11-09, after Codex's question, before any run)
+
+- "15th +-1 weekday" = Monday-Friday dates 14, 15 or 16 of the month.
+- "Day after a US (NYSE) full closure" / "day after a Japanese holiday" = the first Monday-Friday after a
+  holiday that is not itself a holiday of that calendar; a run of consecutive holidays (with or without a
+  weekend inside) yields one day, the business day after the run's last holiday. Weekends alone do not
+  count as closures. Japanese holidays include Dec 31 and Jan 2-3 as in `day_filter.py`.

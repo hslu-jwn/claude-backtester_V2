@@ -13,6 +13,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
   (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
+- **Calendar x clock screen (Codex terra, pre-registered `d1334e1`, definitions fixed before the run):**
+  792 cells on 2008-2014, **0 survivors** (largest |t| about 3, the size expected from noise across 792
+  cells; threshold 4.0). Nothing goes to confirmation; 2015-2021 and the test period stay unused.
+  Report `knowledge/research/reports/2026-11-09_calendar_clock_screen.md`.
 - **Idea scan 4 (Gemini low):** nothing buildable (Breedon-Ranaldo = F1; dividend repatriation needs a
   dividend calendar; Toshin / life-insurer / holiday-asymmetry / DST unsourced). Next: pre-registered
   two-stage calendar x clock screen (`briefs/calendar-clock-screen.md`, 792 cells, discover 2008-2014,
