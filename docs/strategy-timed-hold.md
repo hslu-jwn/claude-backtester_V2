@@ -375,9 +375,11 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   bootstrap 2.5 % -0.012 R (p 0.10): **fail**; (3) halves +4.0 / +2.5: pass; (4) mean +0.0204 R vs
   0.020 required: pass (barely). Years 2021-2026: +1.5, +3.9, -0.3, -1.8, +0.1, +3.1. EURJPY +10.1 R
   (doubled +3.5). The edge is about half the development value and not significant on its own;
-  consistent with the paper's decay after the anomaly became popular. No retest (rule). Open
-  diagnostic: the gates' M1 integrity check flags 302 of 321 test trades (gaps), far above development;
-  not a test criterion, to be explained before the data is used again.
+  consistent with the paper's decay after the anomaly became popular. No retest (rule). Integrity
+  diagnostic (`knowledge/research/reports/2026-11-09_gotobi_test_integrity.md`): the 302 flags came from
+  Opus's scratch check loading histdata only; the engine used MT5 candles. On MT5 the tolerant rule
+  still flags 209 test trades, mostly the FTMO break starting 20:55 UTC (5 minutes before the
+  registered 21:00 window). Not a test criterion; the verdict stands.
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 
