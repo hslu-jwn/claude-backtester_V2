@@ -118,6 +118,15 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 - 2026-10-28 (midday): do not build the p90 stressed costs yet; the bot keeps running and the
   user comes back to it later. Fill report re-run at 10:35 UTC (1,511 fills, 339 London);
   brief ready in `briefs/v24b-p90-stress.md`, not dispatched.
+- 2026-11-09 (the user, answers to Open 5-7): (5) F1a: yes to the pre-sample check (download
+  EURUSD / GBPUSD 2008-2014 into a separate raw root and cache, clock check, `--cache-dir` runner
+  option, run F1a there); the one-time MT5 test is NOT part of it (needs its own go). (6) ok:
+  gap-tolerant data-integrity gate (fail only on > 5 consecutive missing minutes or a missing exit
+  candle) and skipping NYSE full-closure and early-close days in the index families. (7) yes:
+  apply the live-spread proposal. Opus's reading of (7), recorded as an assumption: apply the
+  proposal's raises (fixed spread of the under-charged symbols, BTCUSD slippage 0.5 -> about 2.5);
+  keep the over-charged values as they are (conservative); the session-split table (proposal
+  point 3) needs more data and is not applied. Golden lists regenerated with the new costs.
 - 2026-10-28: slippage (V2.4b): keep the model slippage as default; after London fills, the
   measured p90 per symbol becomes the stressed cost level (instead of costs x 1.5).
 - 2026-10-27: research department split, decisions D1-D8
@@ -133,13 +142,10 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
 4. ☑ Research's reviewability proposal: moot, the department is archived (2026-11-09).
-5. F1a EURUSD lead (`docs/strategy-timed-hold.md` › Run 1 follow-ups): pre-sample 2008-2014
-   download + check (`knowledge/research/reports/2026-11-09_presample_2008_2014_plan.md`), or the
-   one-time MT5 test (criteria pre-registered in the spec), or park.
-6. Gap-tolerant data-integrity gate (> 5 missing minutes) and skipping NYSE closure / early-close
-   days in index families (spec › Results, data diagnosis).
-7. Live-spread proposal `data/spreads/proposal_live_2026-11-09.json`
-   (`knowledge/research/reports/2026-11-09_live_spread_proposal.md`): apply, partly, or not.
+5. ☑ decided 2026-11-09 (pre-sample check; in progress). Still open: the one-time MT5 test of
+   F1a (criteria pre-registered in `docs/strategy-timed-hold.md`), only on the user's go.
+6. ☑ decided 2026-11-09 (gap-tolerant integrity gate, skip NYSE closure days; in progress).
+7. ☑ decided 2026-11-09 (apply the live-spread raises; in progress).
 
 ## Next step
 
