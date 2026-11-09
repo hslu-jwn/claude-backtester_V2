@@ -13,6 +13,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
   (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
+- **Idea scan 4 (Gemini low):** nothing buildable (Breedon-Ranaldo = F1; dividend repatriation needs a
+  dividend calendar; Toshin / life-insurer / holiday-asymmetry / DST unsourced). Next: pre-registered
+  two-stage calendar x clock screen (`briefs/calendar-clock-screen.md`, 792 cells, discover 2008-2014,
+  confirm 2015-2021, test period unspent), run by Codex.
 - **Gotobi one-time test (the user's go):** frozen one-cell grid `timed_hold_gotobi_test.toml`
   (dev reproduced +32.0 R); test 2021-09-14..2026-11-08 USDJPY +6.6 R, criterion 2 (bootstrap) fails:
   not confirmed, no retest. H12 falsified on 2008-2014; Gotobi pre-sample +30.9 R (gate 7 fail).
