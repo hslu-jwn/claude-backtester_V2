@@ -30,6 +30,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   times on undefined data rules; each decided by Opus and recorded); read-only sol review (no
   material finding); gates tool by Codex terra. Development run: all 18 cells net negative
   (-0.001 to -0.022 R per trade), primary response q indistinguishable from zero. Falsified.
+- **Gap scan** (Gemini Flash low, free; `results/ai/20261109-160127_gemini_gap-scan.md`, leads
+  only): intraday time-series momentum (Li, Sakkas & Urquhart 2022) = the F2 family already tested;
+  pre-release macro drift (Kurov et al., JFQA 2019) runs with the coming surprise, not tradable
+  without it; VPIN / order-flow rules need volume data we lack; one USDJPY session rule attributed to
+  Frömmel & Lampaert looks unreliable (not opened). Nothing new worth a build: the same-day idea space
+  is exhausted at our costs; the next direction waits on HANDOFF › Open 8 (multi-day holds).
 - Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
   not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
 
