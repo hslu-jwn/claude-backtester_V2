@@ -255,6 +255,20 @@ both halves of the test period; (4) mean net R per trade >= half the development
 Anything else is "not confirmed", and the result is recorded either way. GBPUSD is reported with it,
 not as a gate (it failed breadth on development).
 
+## F1a pre-sample check 2008-2014 (pre-registered 2026-11-09; the user's go the same day)
+
+Untouched EURUSD / GBPUSD histdata 2008-2014 in a separate raw root and cache
+(`data/raw/histdata_presample/`, `data/cache/histdata_presample/`), results in
+`results/presample_2008_2014/` (own trial log); the main cache, the development / test split and
+the test period are not touched. Same grid as the F1a rerun (`timed_hold_fx_eu.toml`, after the
+ATR fix), nothing re-tuned. Before the run: a per-year histdata clock check of those years
+(`results/clock_check_histdata_pre2015.md`); a year whose clock cannot be confirmed is excluded and
+named. **F1a passes the pre-sample check** only if, on EURUSD stop 0.5: (1) net R > 0 at normal and
+at all-doubled costs; (2) net R > 0 in both 2008-2011 and 2012-2014; (3) bootstrap 2.5 % quantile of
+mean net R per trade > 0. Costs there are optimistic (2008-2014 uses the nearest measured spreads),
+so (1) with doubled costs is the main cost check. GBPUSD is reported, not gated. Either outcome is
+recorded; a pass is still not a strategy pass (the MT5 test needs the user's go).
+
 ## Backtest options
 
 - Costs as the engine default (fixed spread; spread table off by default). Swap: none for a day
