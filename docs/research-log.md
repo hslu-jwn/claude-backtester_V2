@@ -19,6 +19,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **F1a pre-sample 2008-2014** (pre-registered `27b3fcb`): EURUSD +40.4 R net, +0.023 R per trade,
   doubled costs +10.8, both halves positive, bootstrap lower bound -0.009 -> **fails criterion 3**;
   5 of 7 years positive. Spec › F1a pre-sample check.
+- **Live-spread raises applied** (the user's yes; Codex gpt-6.1-sol medium): fixed spreads raised
+  for 17 symbols (e.g. GBPUSD 0.3 -> 0.59 pip, GBPJPY 1.0 -> 2.3, NAS100 1.0 -> 1.9, UK100 1.45 ->
+  2.6, GER40 1.53 -> 2.3, XAUUSD 0.25 -> 0.41, US500 0.5 -> 0.61), BTCUSD slippage 0.5 -> 2.5;
+  nothing lowered; spread table untouched. Golden lists regenerated (one count 2,511 -> 2,516);
+  full suite 5,289 passed. Earlier research results used the old (lower) costs: index and GBP
+  results above are, if anything, too kind.
 - Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
   not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
 

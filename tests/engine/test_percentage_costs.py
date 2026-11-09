@@ -231,7 +231,7 @@ def test_fixed_dollar_symbols_are_unchanged():
     assert c.commission_r("GBPUSD", 0.002, 1.25, [(1.0, 1.26)]) == pytest.approx(0.025)
     assert c.commission_r("GBPJPY", 0.2, 190.0, [(1.0, 191.0)]) == pytest.approx(0.0375)
     assert c.commission_r("NAS100", 50.0, 20000.0, [(1.0, 20050.0)]) == 0.0
-    assert c.spread_r("NAS100", 50.0) == pytest.approx(0.02)
+    assert c.spread_r("NAS100", 50.0) == pytest.approx(0.038)
     for name in ("GBPUSD", "GBPJPY", "NAS100", "US500", "EURUSD", "GER40"):
         d = DEFAULT_SYMBOL_COSTS[name]
         assert d.commission_pct_per_side == d.swap_long_pct_year == d.swap_short_pct_year == 0.0

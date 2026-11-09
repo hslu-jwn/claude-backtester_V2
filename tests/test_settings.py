@@ -42,7 +42,7 @@ def test_every_config_value_is_a_setting_with_the_spec_default():
         ("detectors.order_block.strong_move.atr_mult", "float", 2.0),
         ("detectors.swings.doji_max_body.XAUUSD", "float", 0.065),
         ("strategy.sessions.tokyo.local_time", "time", "09:00"),
-        ("engine.costs.symbols.GBPJPY.spread", "float", 0.010),
+        ("engine.costs.symbols.GBPJPY.spread", "float", 0.023),
         ("engine.costs.commission_enabled", "bool", True),
         ("engine.break_even_at_next_session", "bool", True),
         ("warmup_days", "int", 14),
@@ -107,7 +107,7 @@ def test_values_from_the_form_become_typed_settings():
     assert s.strategy.sessions.london.local_time == time(7, 30)
     assert s.engine.sessions == s.strategy.sessions  # one setting for both
     assert s.engine.costs.symbols["XAUUSD"].spread == 0.3
-    assert s.engine.costs.symbols["GBPUSD"].spread == 0.00003  # untouched
+    assert s.engine.costs.symbols["GBPUSD"].spread == 0.000059  # untouched
 
 
 @pytest.mark.parametrize(

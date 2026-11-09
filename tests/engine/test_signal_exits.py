@@ -3,6 +3,8 @@ Spec: strategy-trend-following.md › Position; CLAUDE.md › Invariant #1."""
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 from conftest import DEFAULT_START, build_series
 
@@ -10,7 +12,7 @@ from backtester.analytics.metrics import summarize
 from backtester.analytics.records import TradeRecord
 from backtester.core.models import Direction, Timeframe
 from backtester.engine.backtest import EngineConfig, run_backtest
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
 from backtester.engine.trade import ExitReason
 from backtester.strategy.base import Order, Strategy
 
@@ -23,6 +25,7 @@ SPREAD_ONLY = EngineConfig(
         commission_enabled=False,
         spread_price_scaling=False,
         spread_table=None,
+        symbols={"XAUUSD": replace(DEFAULT_SYMBOL_COSTS["XAUUSD"], spread=0.25)},
     )
 )
 ENTRY = (100.0, 100.5, 99.5, 100.0)  # close 100

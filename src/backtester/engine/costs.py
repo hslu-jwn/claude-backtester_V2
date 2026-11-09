@@ -175,10 +175,12 @@ BINANCE_TAKER_FEE = 0.0005
 # Swap: FTMO's MT5 rates of 2026-10-14 (USD per lot per night, ROADMAP 10.4), the default
 # since the user's decision of 2026-10-14. Today's rates, also applied to older years.
 
+# live fills 2026-11-03..09 (fill probe runs 3+4), raises only; the user 2026-11-09;
+# knowledge/research/reports/2026-11-09_live_spread_proposal.md
 _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
     {
         "XAUUSD": SymbolCosts(
-            spread=0.25,
+            spread=0.41,
             commission_per_lot=0.0,  # was $6 per lot until 2026-10-15
             commission_pct_per_side=FTMO_METAL_COMMISSION_PCT_SIDE,
             contract_size=100,
@@ -187,7 +189,7 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
             swap_short_per_lot=-4.20,
         ),
         "GBPUSD": SymbolCosts(
-            spread=0.00003,
+            spread=5.9e-05,
             commission_per_lot=5.0,
             contract_size=100_000,
             slippage=0.00002,
@@ -195,7 +197,7 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
             swap_short_per_lot=-4.48,
         ),
         "GBPJPY": SymbolCosts(
-            spread=0.010,
+            spread=0.023,
             commission_per_lot=5.0,
             contract_size=100_000,
             quote_to_usd=1 / USDJPY_APPROX,
@@ -207,7 +209,7 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
         # commission. contract_size 1 = $1 per point per lot (FTMO .cash indices); check it
         # with `tools.mt5_info` before Phase 5. Triple swap on Friday.
         "NAS100": SymbolCosts(
-            spread=1.0,
+            spread=1.9,
             commission_per_lot=0.0,
             contract_size=1,
             slippage=1.0,
@@ -216,7 +218,7 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
             swap_triple_weekday=FRIDAY,
         ),
         "US500": SymbolCosts(
-            spread=0.5,
+            spread=0.61,
             commission_per_lot=0.0,
             contract_size=1,
             slippage=0.25,
@@ -231,22 +233,22 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
         # commission: FX $5 as GBPUSD, XAGUSD $6 as XAUUSD (assumptions: not in symbol_info),
         # indices / energy / DXY 0. Crypto swap is a percentage mode in MT5: 0 here.
         "EURUSD": SymbolCosts(0.00002, 5.0, 100_000, slippage=0.00001, swap_long_per_lot=-8.53, swap_short_per_lot=0.21, swap_triple_weekday=WEDNESDAY),
-        "AUDUSD": SymbolCosts(0.00002, 5.0, 100_000, slippage=0.00001, swap_long_per_lot=-3.04, swap_short_per_lot=-6.54),
+        "AUDUSD": SymbolCosts(3.2e-05, 5.0, 100_000, slippage=0.00001, swap_long_per_lot=-3.04, swap_short_per_lot=-6.54),
         "NZDUSD": SymbolCosts(0.00003, 5.0, 100_000, slippage=0.000015, swap_long_per_lot=-4.78, swap_short_per_lot=0.01),
         "EURGBP": SymbolCosts(0.00004, 5.0, 100_000, 1.3271, slippage=0.00002, swap_long_per_lot=-8.4804, swap_short_per_lot=0.0),
-        "USDJPY": SymbolCosts(0.003, 5.0, 100_000, 0.00632, slippage=0.0015, swap_long_per_lot=1.0813, swap_short_per_lot=-11.0347),
-        "USDCAD": SymbolCosts(0.00003, 5.0, 100_000, 0.7047, slippage=0.000015, swap_long_per_lot=0.4792, swap_short_per_lot=-8.4426),
+        "USDJPY": SymbolCosts(0.0043, 5.0, 100_000, 0.00632, slippage=0.0015, swap_long_per_lot=1.0813, swap_short_per_lot=-11.0347),
+        "USDCAD": SymbolCosts(5.1e-05, 5.0, 100_000, 0.7047, slippage=0.000015, swap_long_per_lot=0.4792, swap_short_per_lot=-8.4426),
         "USDCHF": SymbolCosts(0.00005, 5.0, 100_000, 1.2088, slippage=0.000025, swap_long_per_lot=1.5715, swap_short_per_lot=-16.2468),
-        "EURJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00632, slippage=0.0045, swap_long_per_lot=1.328, swap_short_per_lot=-7.6199),
+        "EURJPY": SymbolCosts(0.011, 5.0, 100_000, 0.00632, slippage=0.0045, swap_long_per_lot=1.328, swap_short_per_lot=-7.6199),
         "XAGUSD": SymbolCosts(0.049, 0.0, 5000, slippage=0.0245, commission_pct_per_side=FTMO_METAL_COMMISSION_PCT_SIDE, swap_long_per_lot=-68.05, swap_short_per_lot=0.30),
-        "GER40": SymbolCosts(1.53, 0.0, 1, 1.1211, slippage=0.765, swap_long_per_lot=-5.0571, swap_short_per_lot=-0.0511, swap_triple_weekday=FRIDAY),
-        "UK100": SymbolCosts(1.45, 0.0, 1, 1.3271, slippage=0.725, swap_long_per_lot=-3.2063, swap_short_per_lot=0.148, swap_triple_weekday=FRIDAY),
-        "JP225": SymbolCosts(10.0, 0.0, 10, 0.00632, slippage=5.0, swap_long_per_lot=-0.5683, swap_short_per_lot=-0.1894, swap_triple_weekday=FRIDAY),
+        "GER40": SymbolCosts(2.3, 0.0, 1, 1.1211, slippage=0.765, swap_long_per_lot=-5.0571, swap_short_per_lot=-0.0511, swap_triple_weekday=FRIDAY),
+        "UK100": SymbolCosts(2.6, 0.0, 1, 1.3271, slippage=0.725, swap_long_per_lot=-3.2063, swap_short_per_lot=0.148, swap_triple_weekday=FRIDAY),
+        "JP225": SymbolCosts(11.0, 0.0, 10, 0.00632, slippage=5.0, swap_long_per_lot=-0.5683, swap_short_per_lot=-0.1894, swap_triple_weekday=FRIDAY),
         "EU50": SymbolCosts(1.06, 0.0, 1, 1.1211, slippage=0.53, swap_long_per_lot=-1.2359, swap_short_per_lot=-0.0124, swap_triple_weekday=FRIDAY),
-        "USOIL": SymbolCosts(0.075, 0.0, 100, slippage=0.0375, swap_long_per_lot=4.966, swap_short_per_lot=-22.54, swap_triple_weekday=FRIDAY),
-        "UKOIL": SymbolCosts(0.069, 0.0, 100, slippage=0.0345, swap_long_per_lot=6.097, swap_short_per_lot=-27.582, swap_triple_weekday=FRIDAY),
+        "USOIL": SymbolCosts(0.08, 0.0, 100, slippage=0.0375, swap_long_per_lot=4.966, swap_short_per_lot=-22.54, swap_triple_weekday=FRIDAY),
+        "UKOIL": SymbolCosts(0.073, 0.0, 100, slippage=0.0345, swap_long_per_lot=6.097, swap_short_per_lot=-27.582, swap_triple_weekday=FRIDAY),
         "DXY": SymbolCosts(0.018, 0.0, 100, slippage=0.009, commission_pct_per_side=FTMO_PCT_COMMISSION_SIDE, swap_long_per_lot=-2.337, swap_short_per_lot=0.118, swap_triple_weekday=FRIDAY),
-        "US30": SymbolCosts(2.28, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
+        "US30": SymbolCosts(2.5, 0.0, 1, slippage=1.14, swap_long_per_lot=-11.7596, swap_short_per_lot=0.5936, swap_triple_weekday=FRIDAY),
         "US2000": SymbolCosts(0.93, 0.0, 1, slippage=0.465, swap_long_per_lot=-0.5735, swap_short_per_lot=-0.0172, swap_triple_weekday=FRIDAY),
         "NATGAS": SymbolCosts(0.06, 0.0, 1000, slippage=0.03, commission_pct_per_side=FTMO_PCT_COMMISSION_SIDE, swap_long_per_lot=-5.84, swap_short_per_lot=1.27, swap_triple_weekday=FRIDAY),
         # --- V2.6 step 9 (user, 2026-10-27), FTMO symbol_info of 2026-10-27, same method ---
@@ -257,17 +259,17 @@ _BASE_SYMBOL_COSTS: dict[str, SymbolCosts] = (
         "CADJPY": SymbolCosts(0.007, 5.0, 100_000, 0.00634111, slippage=0.0035, swap_long_per_lot=0.317056, swap_short_per_lot=-3.62077),
         "NZDJPY": SymbolCosts(0.009, 5.0, 100_000, 0.00634111, slippage=0.0045, swap_long_per_lot=0.488265, swap_short_per_lot=-3.45590),
         "CHFJPY": SymbolCosts(0.015, 5.0, 100_000, 0.00634111, slippage=0.0075, swap_long_per_lot=-7.57129, swap_short_per_lot=1.13506),
-        "EURAUD": SymbolCosts(0.00006, 5.0, 100_000, 0.70261, slippage=0.00003, swap_long_per_lot=-9.52739, swap_short_per_lot=1.27875),
+        "EURAUD": SymbolCosts(9.5e-05, 5.0, 100_000, 0.70261, slippage=0.00003, swap_long_per_lot=-9.52739, swap_short_per_lot=1.27875),
         "GBPAUD": SymbolCosts(0.00011, 5.0, 100_000, 0.70261, slippage=0.000055, swap_long_per_lot=-9.41497, swap_short_per_lot=-0.878263),
         "AUS200": SymbolCosts(1.0, 0.0, 1, 0.70261, slippage=0.5, swap_long_per_lot=-1.27025, swap_short_per_lot=-0.351586, swap_triple_weekday=FRIDAY),
         "HK50": SymbolCosts(6.24, 0.0, 1, 1 / 7.80, slippage=3.12, swap_long_per_lot=-0.611700, swap_short_per_lot=-0.021090, swap_triple_weekday=FRIDAY),
         "BTCUSD": SymbolCosts(
-            1.0, 0.0, 1, slippage=0.5, swap_triple_weekday=FRIDAY,
+            1.0, 0.0, 1, slippage=2.5, swap_triple_weekday=FRIDAY,
             commission_pct_per_side=FTMO_CRYPTO_COMMISSION_PCT_SIDE,
             swap_long_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR, swap_short_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR,
         ),
         "ETHUSD": SymbolCosts(
-            0.6, 0.0, 10, slippage=0.3, swap_triple_weekday=FRIDAY,
+            0.66, 0.0, 10, slippage=0.3, swap_triple_weekday=FRIDAY,
             commission_pct_per_side=FTMO_CRYPTO_COMMISSION_PCT_SIDE,
             swap_long_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR, swap_short_pct_year=FTMO_CRYPTO_SWAP_PCT_YEAR,
         ),

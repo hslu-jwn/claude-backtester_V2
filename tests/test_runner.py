@@ -64,8 +64,8 @@ SETTINGS = RunSettings(  # read-only mappings like the defaults (pickled for the
 )
 # Spread and market entry slippage; commission 0.0007 % per side on actual fills (B4/B6).
 # (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
-# the fixed spread 0.25 is scaled to the entry price 110 (rule of 2026-10-16: x price / reference)
-SPREAD_AT_110 = 0.25 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
+# the fixed spread 0.41 is scaled to the entry price 110 (rule of 2026-10-16: x price / reference)
+SPREAD_AT_110 = 0.41 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
 SLIPPAGE_AT_110 = 0.1 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
 NET = (
     1.2
@@ -200,7 +200,7 @@ def test_results_folder(cache, tmp_path):
     assert settings["strategy"]["zone_timeframe"] == "M30"
     assert settings["strategy"]["confluence_kinds"] == ["BPR", "BREAKER", "FVG", "ORDER_BLOCK"]
     assert settings["detectors"]["swings"]["doji_max_body"]["GOLD"] == 0.065
-    assert settings["engine"]["costs"]["symbols"]["GOLD"]["spread"] == 0.25
+    assert settings["engine"]["costs"]["symbols"]["GOLD"]["spread"] == 0.41
     assert settings["engine"]["sessions"]["london"]["zone"] == "Europe/London"
 
     summary = json.loads((folder / "summary.json").read_text())

@@ -95,7 +95,7 @@ def test_the_scenario_trade_with_its_chart_positions():
     assert t.exit_reason is ExitReason.TAKE_PROFIT and t.r_gross == pytest.approx(1.2)
     # B4/B6: scaled spread + entry slippage, commission on actual fill notionals.
     # (FTMO's percentage fee since 2026-10-15; it was $6 / (0.9 x $100) before)
-    spread = 0.25 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price  # scaled (2026-10-16)
+    spread = 0.41 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price  # scaled (2026-10-16)
     slip = 0.1 * 110.0 / DEFAULT_SYMBOL_COSTS["XAUUSD"].reference_price
     assert t.r_net == pytest.approx(
         1.2 - (spread + slip) / 0.9 - 0.000007 * (110.0 + spread + slip + 111.08) / 0.9

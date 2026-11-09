@@ -10,11 +10,11 @@ from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
 @pytest.mark.parametrize(
     ("symbol", "spread", "slippage"),
     [
-        ("NAS100", 1.0, 1.0),
-        ("US500", 0.5, 0.25),
-        ("XAUUSD", 0.25, 0.10),
-        ("GBPUSD", 0.00003, 0.00002),  # 0.2 pip
-        ("GBPJPY", 0.010, 0.003),  # 0.3 pip
+        ("NAS100", 1.9, 1.0),
+        ("US500", 0.61, 0.25),
+        ("XAUUSD", 0.41, 0.10),
+        ("GBPUSD", 0.000059, 0.00002),  # 0.2 pip
+        ("GBPJPY", 0.023, 0.003),  # 0.3 pip
     ],
 )
 def test_spread_and_slippage_defaults(symbol, spread, slippage):
@@ -52,12 +52,12 @@ def test_indices_break_even_is_spread_plus_two_slips_without_commission(symbol):
 
 NEW_FTMO = [  # symbol, spread, swap long, swap short, triple weekday (0 = Monday)
     ("EURUSD", 0.00002, -8.53, 0.21, 2),
-    ("USDJPY", 0.003, 1.0813, -11.0347, 2),
+    ("USDJPY", 0.0043, 1.0813, -11.0347, 2),
     ("XAGUSD", 0.049, -68.05, 0.30, 2),
-    ("GER40", 1.53, -5.0571, -0.0511, 4),
-    ("JP225", 10.0, -0.5683, -0.1894, 4),
-    ("USOIL", 0.075, 4.966, -22.54, 4),
-    ("US30", 2.28, -11.7596, 0.5936, 4),
+    ("GER40", 2.3, -5.0571, -0.0511, 4),
+    ("JP225", 11.0, -0.5683, -0.1894, 4),
+    ("USOIL", 0.080, 4.966, -22.54, 4),
+    ("US30", 2.5, -11.7596, 0.5936, 4),
     ("NATGAS", 0.06, -5.84, 1.27, 4),
 ]
 
@@ -96,4 +96,4 @@ def test_binance_costs_are_percentage_fees_and_funding():
 def test_existing_five_symbols_are_unchanged():
     assert DEFAULT_SYMBOL_COSTS["XAUUSD"].swap_long_per_lot == -61.27
     assert DEFAULT_SYMBOL_COSTS["GBPJPY"].quote_to_usd == pytest.approx(1 / 150.0)
-    assert DEFAULT_SYMBOL_COSTS["NAS100"].spread == 1.0
+    assert DEFAULT_SYMBOL_COSTS["NAS100"].spread == 1.9

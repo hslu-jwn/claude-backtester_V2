@@ -172,7 +172,7 @@ def test_spread_return_is_spread_over_reference_price():
 
     c = DEFAULT_SYMBOL_COSTS["XAUUSD"]
     assert lm.spread_return("XAUUSD") == pytest.approx(c.spread / c.reference_price)
-    assert lm.spread_return("GBPUSD") == pytest.approx(0.00003 / 1.348)
+    assert lm.spread_return("GBPUSD") == pytest.approx(0.000059 / 1.348)
 
 
 def test_mean_in_spreads_converts_return_units():

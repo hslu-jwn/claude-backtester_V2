@@ -209,7 +209,7 @@ GOLD_USD6 = CostConfig(
     symbols={
         **DEFAULT_SYMBOL_COSTS,
         "XAUUSD": replace(
-            DEFAULT_SYMBOL_COSTS["XAUUSD"], commission_per_lot=6.0, commission_pct_per_side=0.0
+            DEFAULT_SYMBOL_COSTS["XAUUSD"], spread=0.25, commission_per_lot=6.0, commission_pct_per_side=0.0
         ),
     },
 )
@@ -285,12 +285,12 @@ def test_spread_and_commission_switches_leave_slippage_active():
 
 def test_forex_commission_depends_on_the_sl_distance():
     costs = CostConfig(**TOUCH, spread_table=None)
-    # GBPUSD 20 pips: $5 / (0.002 * 100,000) = 0.025R, spread 0.3 pip = 0.015R
+    # GBPUSD 20 pips: $5 / (0.002 * 100,000) = 0.025R, spread 0.59 pip = 0.0295R
     assert costs.commission_r("GBPUSD", 0.002) == pytest.approx(0.025)
-    assert costs.spread_r("GBPUSD", 0.002) == pytest.approx(0.015)
+    assert costs.spread_r("GBPUSD", 0.002) == pytest.approx(0.0295)
     # GBPJPY 20 pips at USDJPY 150: $5 / (0.2 * 100,000 / 150) = 0.0375R
     assert costs.commission_r("GBPJPY", 0.2) == pytest.approx(0.0375)
-    assert costs.spread_r("GBPJPY", 0.2) == pytest.approx(0.05)
+    assert costs.spread_r("GBPJPY", 0.2) == pytest.approx(0.115)
 
 
 def test_unknown_symbol_with_costs_on_raises():

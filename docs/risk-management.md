@@ -96,7 +96,10 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   during intrabar resolution). Already filled levels are no longer observed.
   Both counts are written to `trades.csv`; summary `tp_touched_not_filled_share` is the
   sum of missed levels divided by the sum of touched levels (0 when none were touched).
-- ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults (estimates until FTMO's spreads are measured): NAS100 **1.0** point, US500 **0.5** point, XAUUSD 0.25, GBPUSD 0.3 pip, GBPJPY 1.0 pip.
+- ⚙️ **Spread:** a **fixed value per symbol** for every pair (histdata.com has no ask prices, user 2026-10-10). Defaults at the reference prices: NAS100 **1.9** points, US500 **0.61** point, XAUUSD **0.41**, GBPUSD **0.59 pip**, GBPJPY **2.3 pips**.
+  Fixed spreads are raised only where proposed / previous spread is >= 1.05, rounded to two significant digits;
+  all other spreads stay unchanged (rule set by the user, 2026-11-09). Source: live fills 2026-11-03..09, fill probe runs 3+4,
+  `knowledge/research/reports/2026-11-09_live_spread_proposal.md`. The spread table and `CostConfig` switches stay unchanged.
 - ⚙️ **Spread scaled with the price level** (rule set by the user, 2026-10-16; ROADMAP 11.14): the fixed spread is today's FTMO
   value, which is far too large in R in years with lower prices (XAGUSD 2015 at about $15 against $65 now). In the fixed-spread
   mode the spread of a fill is
@@ -127,8 +130,8 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   | UKOIL | 102.245 | NATGAS | 2.876 | DXY | 99.673 |
   | BTCUSD | 79679.87 | ETHUSD | 2498.33 | | |
 
-  Note: the XAUUSD, GBPUSD, GBPJPY, NAS100 and US500 spreads are estimates, not measured in this window; their reference price is
-  still the 2026 price level they stand for.
+  The fixed spreads raised on 2026-11-09 use the live-fill mean at these unchanged reference prices;
+  the reference-price window above is unchanged.
 - ⚙️ **Commission** (per lot, round turn) and ⚙️ **swap** (per lot per night, long and short): per-symbol fields, to be updated from MT5/FTMO. Commission defaults (user, 2026-10-10, as ROADMAP 3.1): XAUUSD **$6** (replaced 2026-10-15 by FTMO's percentage fee, see *Real fees* below), GBPUSD / GBPJPY **$5**, NAS100 / US500 **0**.
   Swap defaults = FTMO's MT5 rates of 2026-10-14 (rule set by the user, 2026-10-14), USD per lot per night, long / short:
   XAUUSD **-61.27 / -4.20**, GBPUSD **-5.77 / -4.48**, GBPJPY **+2.04 / -13.85** (triple Wednesday), NAS100 **-6.912 / +0.339**,
@@ -145,32 +148,34 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   (`symbol_info`), same method as the swap defaults: swap USD per lot per night = swap points x tick value (checked: gives the stored
   XAUUSD / NAS100 values), `quote_to_usd` = tick value / (tick size x contract size) (fixed approximation, 2026-10-15 rates),
   triple weekday from `swap_rollover3days` (FX / metals Wednesday, indices / energy / crypto Friday). **Spread** = median of the bar
-  spreads of the last 60 cached FTMO days (`data/cache/mt5`), no per-time spread; **slippage** = half the spread (rough, like the others).
+  spreads of the last 60 cached FTMO days (`data/cache/mt5`), no per-time spread; **slippage** initially half the original spread.
+  The table below includes the approved fixed-spread raises of 2026-11-09; slippage retains its original setting except BTCUSD (see below).
   **Commission is not in `symbol_info`**: FX majors / crosses **$5**, XAGUSD **$6** are assumptions (as GBPUSD / XAUUSD), indices, energy,
   DXY, NATGAS **0**, all to be confirmed by the user. XAGUSD's $6, BTCUSD / ETHUSD's 0 and their swap 0 were replaced on 2026-10-15
   by the percentage model of *Real fees* below.
 
   | Symbol | Spread | Contract | Quote to USD | Swap long / short | Triple |
   |---|---|---|---|---|---|
-  | EURUSD / AUDUSD / NZDUSD | 0.00002 / 0.00002 / 0.00003 | 100,000 | 1 | -8.53 / +0.21, -3.04 / -6.54, -4.78 / +0.01 | Wed |
+  | EURUSD / AUDUSD / NZDUSD | 0.00002 / 0.000032 / 0.00003 | 100,000 | 1 | -8.53 / +0.21, -3.04 / -6.54, -4.78 / +0.01 | Wed |
   | EURGBP | 0.00004 | 100,000 | 1.3271 | -8.4804 / 0 | Wed |
-  | USDJPY / EURJPY | 0.003 / 0.009 | 100,000 | 0.00632 | +1.0813 / -11.0347, +1.328 / -7.6199 | Wed |
-  | USDCAD / USDCHF | 0.00003 / 0.00005 | 100,000 | 0.7047 / 1.2088 | +0.4792 / -8.4426, +1.5715 / -16.2468 | Wed |
+  | USDJPY / EURJPY | 0.0043 / 0.011 | 100,000 | 0.00632 | +1.0813 / -11.0347, +1.328 / -7.6199 | Wed |
+  | USDCAD / USDCHF | 0.000051 / 0.00005 | 100,000 | 0.7047 / 1.2088 | +0.4792 / -8.4426, +1.5715 / -16.2468 | Wed |
   | XAGUSD | 0.049 | 5,000 | 1 | -68.05 / +0.30 | Wed |
-  | GER40 / EU50 | 1.53 / 1.06 | 1 | 1.1211 | -5.0571 / -0.0511, -1.2359 / -0.0124 | Fri |
-  | UK100 | 1.45 | 1 | 1.3271 | -3.2063 / +0.148 | Fri |
-  | JP225 | 10.0 | 10 | 0.00632 | -0.5683 / -0.1894 | Fri |
-  | US30 / US2000 | 2.28 / 0.93 | 1 | 1 | -11.7596 / +0.5936, -0.5735 / -0.0172 | Fri |
-  | USOIL / UKOIL | 0.075 / 0.069 | 100 | 1 | +4.966 / -22.54, +6.097 / -27.582 | Fri |
+  | GER40 / EU50 | 2.3 / 1.06 | 1 | 1.1211 | -5.0571 / -0.0511, -1.2359 / -0.0124 | Fri |
+  | UK100 | 2.6 | 1 | 1.3271 | -3.2063 / +0.148 | Fri |
+  | JP225 | 11 | 10 | 0.00632 | -0.5683 / -0.1894 | Fri |
+  | US30 / US2000 | 2.5 / 0.93 | 1 | 1 | -11.7596 / +0.5936, -0.5735 / -0.0172 | Fri |
+  | USOIL / UKOIL | 0.080 / 0.073 | 100 | 1 | +4.966 / -22.54, +6.097 / -27.582 | Fri |
   | NATGAS | 0.06 | 1,000 | 1 | -5.84 / +1.27 | Fri |
   | DXY | 0.018 | 100 | 1 | -2.337 / +0.118 | Fri |
-  | BTCUSD / ETHUSD | 1.0 / 0.6 | 1 / 10 | 1 | percentage, -30 % per year, both sides (see *Real fees*) | Fri |
+  | BTCUSD / ETHUSD | 1.0 / 0.66 | 1 / 10 | 1 | percentage, -30 % per year, both sides (see *Real fees*) | Fri |
 
 - **Costs of the V2.6 step 9 symbols** (picked by the user 2026-10-27; same method, FTMO `symbol_info` of 2026-10-27;
   spread and reference price = median M1 bar spread / bid close of 2026-08-28..2026-10-26, a method check reproduced the stored
   EURJPY / GBPJPY / AUDUSD values exactly). FX commission **$5** assumed like the other pairs, indices 0. **HK50:** the terminal
   had no HKD rate (tick value 0), so `quote_to_usd` = the USD peg's midpoint **1 / 7.80** (assumption). The default median spread
   table is not re-measured (that would change the other 26 symbols' costs): these eight use the fixed spread, price-scaled.
+  EURAUD fixed spread is now **0.000095** (rule set by the user, 2026-11-09); its slippage stays **0.00003**.
   **FTMO commissions checked 2026-10-27** (subagent web research, source checked by Opus: ftmo.com "Trading update 25 Sep
   2025", effective 2025-09-29, all accounts): Forex and exotics **$2.50 per lot per side** (= our $5 round turn: the FX
   crosses' $5 is confirmed); Metals CFD, Cash III CFD and Commodities **0.0007 % per side** (metals already so); indices **0**
@@ -260,7 +265,8 @@ The seven-strategy 2023 measurement informs a later user decision on the default
 - ⚙️ **Slippage** (B4; rule set by the user, 2026-10-22): `SymbolCosts.slippage` in price units per fill, always
   against the trader on **market entries, stop fills (including gap stops), and time / signal / end-of-data exits**.
   Never on limit entries or TP fills. Scale at the chart entry price like the fixed spread and reuse that amount at exits.
-  Spread/commission switches do not disable slippage; a zero symbol setting does. Defaults (rough starting estimates, to be checked against FTMO demo fills):
+  Spread/commission switches do not disable slippage; a zero symbol setting does. Defaults below retain the starting estimates except **BTCUSD: 0.5 -> 2.5** price units per fill,
+  rounded to two significant digits from the live-fill proposal (rule set by the user, 2026-11-09). No other slippage changes:
 
   | Symbol | Slippage per fill |
   |---|---|
@@ -269,6 +275,7 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   | XAUUSD | 0.10 |
   | GBPUSD | 0.2 pip |
   | GBPJPY | 0.3 pip |
+  | BTCUSD | 2.5 |
 
 - **Break-even including costs** (B5/B6; rule set by the user, 2026-10-22): solve the remaining portion's net result
   for exactly zero using actual entry fill, adverse stop slippage, spread, and commission at the exit fill.

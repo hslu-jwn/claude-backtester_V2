@@ -127,8 +127,8 @@ def test_compare_symbol_end_to_end_with_a_fake_terminal():
     assert table[2].startswith("| XAUUSD | M5 | 2026-09-16 10:00 .. 2026-09-16 10:20 | 1 | 5 | 0 |")
 
     lines, _ = spread_report("XAUUSD", history, 0.01)
-    assert "Cost default (3.1): 0.25" in lines[0]
-    assert lines[-1] == "| all | 5 | 0.25 (25 pt) | 0.25 (25 pt) | 1.00x |"
+    assert "Cost default (3.1): 0.41" in lines[0]
+    assert lines[-1] == "| all | 5 | 0.25 (25 pt) | 0.25 (25 pt) | 0.61x |"
 
 
 def test_compare_symbol_without_common_days():

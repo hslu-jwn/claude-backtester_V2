@@ -59,7 +59,7 @@ COSTS = [  # symbol, spread, commission, contract, quote_to_usd, swap long, swap
     ("CADJPY", 0.007, 5.0, 100_000, 0.00634111, 0.317056, -3.62077, 2),
     ("NZDJPY", 0.009, 5.0, 100_000, 0.00634111, 0.488265, -3.45590, 2),
     ("CHFJPY", 0.015, 5.0, 100_000, 0.00634111, -7.57129, 1.13506, 2),
-    ("EURAUD", 0.00006, 5.0, 100_000, 0.70261, -9.52739, 1.27875, 2),
+    ("EURAUD", 0.000095, 5.0, 100_000, 0.70261, -9.52739, 1.27875, 2),
     ("GBPAUD", 0.00011, 5.0, 100_000, 0.70261, -9.41497, -0.878263, 2),
     ("AUS200", 1.0, 0.0, 1, 0.70261, -1.27025, -0.351586, 4),
     # HK50: the terminal had no HKD rate (tick value 0): the USD peg's midpoint 1 / 7.80
@@ -68,14 +68,18 @@ COSTS = [  # symbol, spread, commission, contract, quote_to_usd, swap long, swap
 
 
 @pytest.mark.parametrize(
-    ("symbol", "spread", "commission", "contract", "quote", "long", "short", "triple"), COSTS
+    ("symbol", "spread", "commission", "contract", "quote", "long", "short", "triple", "slippage"),
+    [
+        (*row, slip)
+        for row, slip in zip(COSTS, (0.0045, 0.0035, 0.0045, 0.0075, 0.00003, 0.000055, 0.5, 3.12))
+    ],
 )
-def test_ftmo_costs(symbol, spread, commission, contract, quote, long, short, triple):
+def test_ftmo_costs(symbol, spread, commission, contract, quote, long, short, triple, slippage):
     from backtester.engine.costs import DEFAULT_SYMBOL_COSTS
 
     c = DEFAULT_SYMBOL_COSTS[symbol]
     assert c.spread == pytest.approx(spread)
-    assert c.slippage == pytest.approx(spread / 2)  # half the spread, like the others
+    assert c.slippage == pytest.approx(slippage)  # original slippage is unchanged
     assert c.commission_per_lot == commission and c.contract_size == contract
     assert c.quote_to_usd == pytest.approx(quote, rel=1e-4)
     assert c.swap_long_per_lot == pytest.approx(long, abs=1e-4)
