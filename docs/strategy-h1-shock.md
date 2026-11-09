@@ -261,3 +261,26 @@ Do not run the research grid before Opus reviews the spec; holdout requires user
   gate reporting. The strategy does not evaluate experiment gates.
 
 The supplied boundary decision resolves the previous blocker. No research grid has run.
+
+## Gates tool
+
+Run `python -m backtester.tools.h1_shock_gates <research folder> [--skip-integrity]`.
+It writes `gates.json` in that folder. Raw q requires cached M1 data even when the
+integrity check is skipped. A skipped integrity check is identified in the output.
+
+## Assumption: common-event gate (Opus, 2026-11-09)
+
+Use the intersection of events actually traded in all three horizon cells of the same
+threshold and response mode, matched by symbol and signal close time. Report its size;
+if fewer than 100 events remain, the gate fails with "not enough evidence". Count and
+report h=1 events marked three-hour eligible that are absent from a longer horizon;
+they are not included in the common subset.
+
+## Codex sol read-only review (2026-11-09, before the run)
+
+Spec vs code and lookahead (`results/ai/20261109-153255_codex_review-h1-shock.md`): no future
+candle access (W60 excludes the current return, ATR includes the completed signal bar as specified),
+thresholds, response sides, 6 x ATR stop, horizon exits, session masks, validity rules, cooldown and
+the 18-cell grid match the spec; the engine cost hook affects only this strategy. One conditional
+finding: dates outside the NYSE calendar's coverage (2008-2026) are accepted as trading days; the
+development data (2015-2021) is inside it, so no effect on this run.
