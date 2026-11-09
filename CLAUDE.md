@@ -35,16 +35,13 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   `docs/HANDOFF.md` and the ROADMAP step, run tests + ruff as a baseline, say in max 10 lines
   what you will do (plan, test cases, files, models), ask all open questions at once, then work
   test-first, step by step with the user's ok.
-- **`Continue.Knowledge`:** retired 2026-10-27 (the user): literature and idea research is the
-  research department's job (`../Research_Department/`). If the user says it, point there and
-  offer `Continue.Research` (intake) instead.
-- **`Continue.Research [Limit=<time>] [<STRATEGY_ID>]`:** the autonomous test loop on research
-  department submissions; full procedure in the `continue-research` skill (load it first).
-  Always: the one-time MT5 test of a submission needs the user's explicit go; never change
-  defaults (costs, sweep options, spread table) without the user's go.
-- **`Begin.`** and the research `End.` in the umbrella `../AGENTS.md` belong to the research
-  department's sessions. In a session working in this repo, `End.` always means the V2 `End.`
-  below; if the user's intent is unclear (e.g. the session started at the umbrella root), ask.
+- **`Continue.Research [Limit=<time>] [<CANDIDATE or idea ID>]`:** the autonomous research loop
+  (research is back in this team since 2026-11-09, the user): pick a candidate or research a new
+  idea, spec with pre-registered gates, implement, development run, gates, record. Full procedure
+  in the `continue-research` skill (load it first). Always: the one-time MT5 test needs the
+  user's explicit go; never change defaults (costs, sweep options, spread table) without the
+  user's go. `Continue.Knowledge` and `Begin.` are retired; if the user says one, offer
+  `Continue.Research`.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
   the step, stop lanes and job queue, commit, update the log, short report. Nothing
   half-finished stays uncommitted.

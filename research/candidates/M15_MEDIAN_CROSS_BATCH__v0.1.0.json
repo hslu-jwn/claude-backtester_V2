@@ -1,0 +1,102 @@
+{
+  "schema_version":"0.1.0",
+  "strategy_id":"M15_MEDIAN_CROSS_BATCH",
+  "specification_version":"0.1.0",
+  "name":"M15 rolling-median cross continuation and fade screening batch",
+  "status":"DRAFT",
+  "classification":"SPECULATIVE",
+  "priority":52,
+  "submitted_at":null,
+  "research":{
+    "research_ids":["R-2026-012"],
+    "category":"intraday rolling-location threshold-cross screening",
+    "source_references":[{"id":"ROSA2022_BOUNDARY","citation":"Rosa (2022), Understanding Intraday Momentum Strategies, Journal of Futures Markets","url":"https://doi.org/10.1002/fut.22375","source_type":"PRIMARY","supports":"Registered abstract-level contrary context: an adjacent intraday-momentum strategy disappears out of sample. It does not establish a rolling-median FX rule or profitability."}],
+    "evidence_summary":"No direct source supports this M15 rolling-median cross rule. Adjacent intraday-momentum evidence is contrary and the existing I-58 raw-price mean-reversion territory is adverse/parked, so this is a compact speculative falsification.",
+    "feasibility":{"rating":"YELLOW","rationale":"Only supported M1 OHLC, causal completed M15 bars, signal-close fills, one fixed ATR stop and same-day exits are required; V2 still must confirm isolated result transport."}
+  },
+  "market":{
+    "asset_class":"foreign-exchange CFDs",
+    "universe":["EURUSD","GBPUSD","AUDUSD","NZDUSD","USDCHF","USDCAD"],
+    "v2_compatibility":"SUPPORTED",
+    "base_timeframe":"M1 aggregated causally to M15",
+    "session":"Weekday signals from completed M15 bars ending 09:00 through 13:45 Europe/London; every exit due no later than 15:00",
+    "timezone":"Europe/London",
+    "directions":["LONG","SHORT"],
+    "holding_period":"DAY_TRADING"
+  },
+  "data":{
+    "required_fields":["open","high","low","close"],
+    "frequency":"Interval-start M1 OHLC aggregated into Europe/London wall-clock M15 intervals",
+    "minimum_history":"Fixed V2 development data only, with 98 valid observed M15 closes through signal t; elapsed gaps do not reset ATR, but every median/event bar t-L through t must be physically adjacent",
+    "preprocessing":["Treat M1 timestamp ts as [ts,ts+1 minute) and require exactly 15 consecutive unique valid M1 candles per London M15 bar","Valid OHLC is finite and positive with high>=max(open,close), low<=min(open,close), high>=low; duplicates invalidate aggregation","Compute observed-sequence TR from previous observed close, seed Wilder ATR(96) from the first 96 valid TRs, recur ATR_i=(95*ATR_{i-1}+TR_i)/96, and freeze through t-1","Use IANA Europe/London rules and canonical UTC storage"],
+    "dependencies":["V2 M1 OHLC source","IANA Europe/London rules","V2 resolved signal-time spread, commission and slippage"],
+    "limitations":["A rolling price median has no stationarity guarantee","Crosses may be frequent bid-ask noise","Six correlated symbols and eight cells are not independent trials","No result authorizes final-holdout access"]
+  },
+  "hypothesis":{
+    "behavior":"A completed close crossing a causally frozen rolling median may continue as a location/regime shift or fade as a transient threshold excursion.",
+    "mechanism":"Follow-through may reflect persistent directional flow through a local reference level; fading may reflect noisy oscillation around a nonstationary center.",
+    "works_when":["The frozen median captures a locally relevant price reference","One response sign survives both lookbacks and adjacent holds after costs"],
+    "fails_when":["Median crossings are random and over-frequent","The price level drifts too quickly to be a center","Costs dominate repeated crossings"],
+    "falsifiable_predictions":["A response-mode center and at least one exact neighbor have positive net R","The center is positive in both UTC halves and at least three symbols","The center and required neighbor survive doubled costs and five-date removal"]
+  },
+  "math":{
+    "definitions":[
+      {"name":"atr96_prior","formula":"Wilder ATR(96) through t-1 over valid observed true ranges","timing":"Frozen before signal bar t; require finite and positive"},
+      {"name":"median_L_prior","formula":"median of closes t-L through t-1; because L is even, arithmetic mean of the two middle sorted closes","timing":"Frozen before evaluating close_t"},
+      {"name":"cross_direction","formula":"+1 when close_{t-1}<=median_L_prior and close_t>median_L_prior; -1 when close_{t-1}>=median_L_prior and close_t<median_L_prior; otherwise no event","timing":"Strict current-bar crossing at completed close; prior equality is eligible"},
+      {"name":"trade_side","formula":"cross_direction for FOLLOW_CROSS and -cross_direction for FADE_CROSS","timing":"Mechanical mapping at completed signal close"}
+    ],
+    "parameters":[
+      {"name":"aggregation_minutes","type":"integer","baseline":15,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"median_lookback","type":"integer","baseline":8,"domain":{"kind":"VALUES","values":[8,16]},"tunable":true},
+      {"name":"response_mode","type":"string","baseline":"FOLLOW_CROSS","domain":{"kind":"VALUES","values":["FOLLOW_CROSS","FADE_CROSS"]},"tunable":true},
+      {"name":"holding_minutes","type":"integer","baseline":60,"domain":{"kind":"VALUES","values":[30,60]},"tunable":true},
+      {"name":"stop_atr_multiplier","type":"number","baseline":1.0,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"risk_fraction_equity","type":"number","baseline":0.0025,"domain":{"kind":"FIXED"},"tunable":false}
+    ]
+  },
+  "entries":{
+    "long_condition":"eligible completed t AND ((cross_direction=+1 AND response_mode=FOLLOW_CROSS) OR (cross_direction=-1 AND response_mode=FADE_CROSS)) AND finite atr96_prior>0 AND cell flat",
+    "short_condition":"eligible completed t AND ((cross_direction=-1 AND response_mode=FOLLOW_CROSS) OR (cross_direction=+1 AND response_mode=FADE_CROSS)) AND finite atr96_prior>0 AND cell flat",
+    "signal_time":"Close of a London M15 interval ending 09:00 through 13:45 on a weekday when signal time plus holding_minutes is no later than 15:00",
+    "execution_timing":"SIGNAL_CLOSE",
+    "execution_details":"Enter at the final M1 chart/bid close of completed M15 bar t; V2 applies resolved or fixed-fallback spread, commission and slippage. The entry candle cannot trigger the new stop; management begins next M1.",
+    "order_type":"Market order at supported signal-close execution",
+    "restrictions":["One open position per symbol per cell","No pyramiding or reset from overlapping crosses","Every bar t-L through t is physically adjacent","Current close equality to median is no event"]
+  },
+  "exits":{
+    "stop_loss":"Long bid-chart stop=signal_close_bid-atr96_prior; short bid-chart stop=signal_close_bid+atr96_prior. Long triggers on bid, short on executable ask; adverse gaps fill at V2's worse executable open with all costs.",
+    "profit_target":null,
+    "time_exit":"Exit at the M1 close ending exactly signal_time plus holding_minutes; invalid M1 in (entry_time,due_exit_time] fails affected cells; on a valid due bar STOP_LOSS precedes TIME_EXIT",
+    "signal_exit":null,
+    "maximum_holding":"At most 60 minutes and never after 15:00 Europe/London",
+    "end_of_session":"No entry may mature after 15:00 London; post-entry defects fail only affected cells",
+    "priority":["STOP_LOSS","TIME_EXIT","DATA_INTEGRITY_FAILURE"]
+  },
+  "risk":{
+    "accounting_type":"R_STOP_DEFINED",
+    "position_sizing":"Each cell owns an isolated portfolio. Within a cell, same-timestamp symbols size from one common pre-entry equity snapshot so chart stop risk is 0.25% before costs; no state crosses cells.",
+    "maximum_risk_per_trade":"0.25% of current equity before costs",
+    "gross_exposure_limit":"Per cell at most six symbols and 1.50% aggregate initial stop risk; no cap shared across eight portfolios",
+    "leverage":"Use lower of stop-risk size and V2 limits; skip unrepresentable size",
+    "concurrent_positions":"Within each cell one per symbol and six total; all eight cells have independent position/equity/exposure/overlap/failure state"
+  },
+  "experiment":{
+    "baseline":"median_lookback=8, response_mode=FOLLOW_CROSS, holding_minutes=60, fixed stop=1 ATR",
+    "stage_protocol":"V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size":8,
+    "robustness_tests":["Report all eight cells and retain complete contemporaneous breadth ledger","Report every symbol and UTC-midpoint development half; midpoint close belongs to first half","Double spread, commission and slippage individually","For each mode center L=8/hold=60 remove its five best normal-cost London dates from center and exact neighbors L=16 and hold=30; require retained normal/doubled net R positive","For each center/neighbor use eligible London weekdays including zeros and 10000 circular five-date block-bootstrap resamples with seed 2026012; center normal-cost lower bound must exceed zero","A mode advances only if center and at least one of L=16 or hold=30 passes every gate"],
+    "costs":["Use resolved or frozen-fallback spread, commission and slippage at every fill","Double each cost component for stress","No swap because exits precede 15:00 London"],
+    "benchmarks":["Zero net R after costs","Opposite response mode on identical crossings"],
+    "multiple_testing":"Count all 304 selectable R007-R012 cells, R008's two diagnostics, and every named legacy trial including I-58/raw-price mean-reversion and intraday-momentum variants. Cross-batch promotion uses the full ledger. Incomplete historical IDs prohibit confirmation; no best-cell/family rescue.",
+    "rejection_criteria":["Reject a mode unless center and at least one exact neighbor are positive after normal/doubled costs","Reject if center is non-positive in either UTC half or fewer than three symbols are positive in each half","Reject if center has fewer than 300 pooled trades","Reject if five-date removal makes center or required neighbor non-positive","Reject if center bootstrap lower bound is not above zero","Reject promotion if required cells fail data integrity","Never access final holdout without explicit authorization for a separately frozen promoted version"]
+  },
+  "implementation":{
+    "pseudocode":["Build valid London M15 bars causally.","Maintain observed-sequence ATR(96) through t-1.","Freeze sorted-close medians for L=8/16 before t.","Require prior close on/equivalent side and current close strictly across median; map follow/fade.","Enter flat cells at signal close; from next M1 process stop before due exit and fail only affected cells on defects.","Publish eight cells, neighbors, robustness and full breadth-ledger identities."],
+    "required_libraries":["Python standard library","existing V2 candle, timezone, cost, fill and R-accounting components"],
+    "data_structures":["Causal M15 aggregator","Wilder ATR(96)","Rolling sorted closes for L=8/16","Independent eight-cell state"],
+    "edge_cases":["duplicates invalidate aggregation","even-L median averages middle values","prior equality qualifies but current equality does not","event-window gap suppresses signal while elapsed gaps remain in ATR","entry candle cannot stop trade","stop precedes due exit","adverse gap uses worse executable open","post-entry defects fail affected cells"],
+    "computational_requirements":"One causal pass per symbol with shared rolling features and isolated eight-cell portfolios.",
+    "known_backtester_gaps":["Queue waits for V2 M15/fill/cell-state compatibility and confirmation of required result rows"]
+  }
+}

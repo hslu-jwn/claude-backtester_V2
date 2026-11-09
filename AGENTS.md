@@ -9,13 +9,11 @@ Project rules for every model working in this repository (Claude, Codex, Gemini,
   capable method first: local tools, then the coordinator itself, then one delegated worker.
   The coordinator (Codex in a direct session, or the Claude Code session) checks results by
   running the tests; a worker's "done, tests pass" does not count.
-- **Research department (since 2026-10-27, the user):** a separate team at
-  `../Research_Department/` owns literature / web / study research, hypotheses, strategy ideas
-  and complete strategy specifications. It hands them over only through
-  `../Shared_Interface/` (queue, schemas, contract). We do not research or invent strategy
-  ideas any more, do not edit `../Research_Department/`, and never keep V2-local copies of the
-  shared schemas or queue. Questions for them go back as feedback envelopes
-  (`docs/research-intake.md`). They never edit this repo.
+- **Research is part of this team again (since 2026-11-09, the user):** literature / web /
+  study research, hypotheses and strategy specs happen here (`Continue.Research`, skill
+  `continue-research`). The separate research department (2026-10-27 to 2026-11-06) is archived
+  in `../archive/`; its records are in `knowledge/research/`, its unbuilt drafts in
+  `research/candidates/`. There is no queue or envelope exchange any more.
 - Workers never call other models. A worker that plans work for another model writes a brief
   file (`briefs/<name>.md`) and the coordinator hands it on.
 - **Hard limits for every dispatched model:** never start a server, app preview or any
@@ -67,22 +65,19 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | `docs/strategy-gap-momentum.md` | Strategy 7: gap momentum (opening gap beyond the prior range, day trade) |
 | `docs/strategy-alternating-path.md` | Strategy 9: alternating M15 close path, follow/fade last change, prior ATR stop, 30/60-minute exit |
 | `docs/research-runner.md` | Research runner: data split, grids, scorecard, flags, trial log |
-| `docs/research-intake.md` | How submissions from the research department become V2 strategies, experiments and result / feedback envelopes (not operational until ROADMAP V2.6i) |
 | `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
 | `docs/ARCHITECTURE.md` | Layers, data flow, how the engine steps through time, data sources (histdata.com, MT5) |
 | `docs/ROADMAP.md` | What to build next and its status; V1 history in `docs/archive/ROADMAP-v1.md` (step IDs like "ROADMAP 11.4" point there) |
 
-**Knowledge base (background, not rules; frozen 2026-10-27):** `knowledge/` holds what the
-trading books in `00_Literature/Trading` teach: `README.md` (index), `topics/` (synthesis per
-subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (the old
-idea backlog I-xx / T-xx). No new books or ideas are added here: strategy research belongs to
-the research department. Our evaluation methods (testing, statistics, costs, frameworks) stay
-in use for judging results. Files stay in place (code and docs link them); the research team
-may copy from them. New strategies come only from a submission, written into a `docs/` spec
-(`docs/research-intake.md`). Since 2026-10-28 (the user) the loop runs automatically: an unclear
-point is decided by Opus, recorded as an assumption and sent to Research; specs need no user
-approval; the one-time MT5 test still needs the user's go.
+**Knowledge base (background, not rules; live again since 2026-11-09):** `knowledge/` holds what
+the trading books in `00_Literature/Trading` teach: `README.md` (index), `topics/` (synthesis per
+subject, incl. the backtest checklist in `topics/testing-and-robustness.md`), `ideas.md` (the idea
+backlog I-xx / T-xx, new ideas added here) and `research/` (the former research department's
+records and evidence checks). New strategies come from a candidate in `research/candidates/` or
+a researched idea, written into a `docs/` spec. The loop runs automatically (the user,
+2026-10-28): an unclear point is decided by Opus and recorded as an assumption in the spec;
+specs need no user approval; the one-time MT5 test still needs the user's go.
 
 - If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
   a trading rule. Quote the spec line you are unsure about.

@@ -1,0 +1,103 @@
+{
+  "schema_version":"0.1.0",
+  "strategy_id":"M15_OUTSIDE_ENVELOPE_BATCH",
+  "specification_version":"0.1.0",
+  "name":"M15 outside-envelope close continuation and fade screening batch",
+  "status":"DRAFT",
+  "classification":"SPECULATIVE",
+  "priority":50,
+  "submitted_at":null,
+  "research":{
+    "research_ids":["R-2026-013"],
+    "category":"intraday two-bar range-expansion envelope screening",
+    "source_references":[{"id":"KAUFMAN_OUTSIDE_CONTEXT","citation":"Perry J. Kaufman, Trading Systems and Methods; frozen legacy backlog cites an unspecified edition at pages 111 and 157-158 for outside-bar/key-reversal context","url":"https://www.wiley.com/en-us/trading-systems-and-methods-6th-edition-p-9781119605355","source_type":"SECONDARY","supports":"Wiley verifies current bibliographic metadata only. The cited pages were not opened and do not establish a cost-aware M15 FX rule; they motivate only the two-bar envelope territory."}],
+    "evidence_summary":"No inspected source establishes this M15 FX pattern. The legacy book context is weak and adjacent breakout/reversal families are adverse, so the strict outside-envelope close rule is a compact speculative falsification.",
+    "feasibility":{"rating":"YELLOW","rationale":"The rule uses supported M1 OHLC, two contiguous completed M15 bars, signal-close fills, one fixed ATR stop and same-day exits; V2 still must confirm result transport."}
+  },
+  "market":{
+    "asset_class":"foreign-exchange CFDs",
+    "universe":["EURUSD","GBPUSD","AUDUSD","NZDUSD","USDCHF","USDCAD"],
+    "v2_compatibility":"SUPPORTED",
+    "base_timeframe":"M1 aggregated causally to M15",
+    "session":"Weekday signals from completed M15 bars ending 09:00 through 13:45 Europe/London; every exit due no later than 15:00",
+    "timezone":"Europe/London",
+    "directions":["LONG","SHORT"],
+    "holding_period":"DAY_TRADING"
+  },
+  "data":{
+    "required_fields":["open","high","low","close"],
+    "frequency":"Interval-start M1 OHLC aggregated into Europe/London wall-clock M15 intervals",
+    "minimum_history":"Fixed V2 development data only, with 98 valid observed M15 closes through t; elapsed gaps do not reset ATR, but event bars t-1 and t must be physically adjacent",
+    "preprocessing":["Treat M1 timestamp ts as [ts,ts+1 minute) and require exactly 15 consecutive unique valid M1 candles per London M15 bar","Valid OHLC is finite and positive with high>=max(open,close), low<=min(open,close), high>=low; duplicates invalidate aggregation","Compute observed-sequence TR from previous observed close, seed Wilder ATR(96) from first 96 valid TRs, recur ATR_i=(95*ATR_{i-1}+TR_i)/96, and freeze through t-1","Use IANA Europe/London rules and canonical UTC storage"],
+    "dependencies":["V2 M1 OHLC source","IANA Europe/London rules","V2 resolved signal-time spread, commission and slippage"],
+    "limitations":["A two-sided range expansion does not identify information or exhaustion","Completed-close entry may follow most of the move","Six correlated symbols and eight cells are not independent trials","No result authorizes final-holdout access"]
+  },
+  "hypothesis":{
+    "behavior":"When one completed M15 bar strictly exceeds both the prior high and low and closes beyond one prior extreme, that directional close may continue or fade.",
+    "mechanism":"Continuation may reflect decisive repricing after absorbing both sides; fading may reflect a liquidity sweep whose completed close is already exhausted.",
+    "works_when":["The outside range is material relative to prior ATR","One response sign survives both range thresholds and adjacent holds after costs"],
+    "fails_when":["Outside bars are volatility noise","The close-beyond-extreme filter enters too late","Costs absorb the response"],
+    "falsifiable_predictions":["A response-mode center and at least one exact neighbor have positive net R","The center is positive in both UTC halves and at least three symbols","The center and required neighbor survive doubled costs and five-date removal"]
+  },
+  "math":{
+    "definitions":[
+      {"name":"atr96_prior","formula":"Wilder ATR(96) through t-1 over valid observed true ranges","timing":"Frozen before signal bar t; require finite and positive"},
+      {"name":"outside_envelope","formula":"high_t>high_{t-1} AND low_t<low_{t-1}","timing":"Both inequalities strict at completed t close"},
+      {"name":"range_ratio","formula":"(high_t-low_t)/atr96_prior","timing":"Require >= range_atr_min at completed t close"},
+      {"name":"close_break_direction","formula":"+1 when outside_envelope and close_t>high_{t-1}; -1 when outside_envelope and close_t<low_{t-1}; otherwise no event","timing":"Wick-only outside bars and closes inside/equal to the prior envelope are no event"},
+      {"name":"trade_side","formula":"close_break_direction for FOLLOW_CLOSE and -close_break_direction for FADE_CLOSE","timing":"Mechanical mapping at signal close"}
+    ],
+    "parameters":[
+      {"name":"aggregation_minutes","type":"integer","baseline":15,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"range_atr_min","type":"number","baseline":1.0,"domain":{"kind":"VALUES","values":[1.0,1.5]},"tunable":true},
+      {"name":"response_mode","type":"string","baseline":"FOLLOW_CLOSE","domain":{"kind":"VALUES","values":["FOLLOW_CLOSE","FADE_CLOSE"]},"tunable":true},
+      {"name":"holding_minutes","type":"integer","baseline":60,"domain":{"kind":"VALUES","values":[30,60]},"tunable":true},
+      {"name":"stop_atr_multiplier","type":"number","baseline":1.0,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"risk_fraction_equity","type":"number","baseline":0.0025,"domain":{"kind":"FIXED"},"tunable":false}
+    ]
+  },
+  "entries":{
+    "long_condition":"eligible completed t AND range_ratio>=range_atr_min AND ((close_break_direction=+1 AND response_mode=FOLLOW_CLOSE) OR (close_break_direction=-1 AND response_mode=FADE_CLOSE)) AND cell flat",
+    "short_condition":"eligible completed t AND range_ratio>=range_atr_min AND ((close_break_direction=-1 AND response_mode=FOLLOW_CLOSE) OR (close_break_direction=+1 AND response_mode=FADE_CLOSE)) AND cell flat",
+    "signal_time":"Close of a London M15 interval ending 09:00 through 13:45 on a weekday when signal time plus holding_minutes is no later than 15:00",
+    "execution_timing":"SIGNAL_CLOSE",
+    "execution_details":"Enter at final M1 chart/bid close of completed t; V2 applies resolved or fixed-fallback spread, commission and slippage. Entry candle cannot trigger the new stop; management begins next M1.",
+    "order_type":"Market order at supported signal-close execution",
+    "restrictions":["One open position per symbol per cell","No pyramiding or reset from overlap","t-1 and t are physically adjacent","Exact prior high/low equality is not outside and exact close at prior boundary is no event"]
+  },
+  "exits":{
+    "stop_loss":"Long bid-chart stop=signal_close_bid-atr96_prior; short bid-chart stop=signal_close_bid+atr96_prior. Long triggers on bid, short on executable ask; adverse gaps fill at V2's worse executable open with all costs.",
+    "profit_target":null,
+    "time_exit":"Exit at M1 close ending exactly signal_time plus holding_minutes; invalid M1 in (entry_time,due_exit_time] fails affected cells; on valid due bar STOP_LOSS precedes TIME_EXIT",
+    "signal_exit":null,
+    "maximum_holding":"At most 60 minutes and never after 15:00 Europe/London",
+    "end_of_session":"No entry may mature after 15:00 London; post-entry defects fail only affected cells",
+    "priority":["STOP_LOSS","TIME_EXIT","DATA_INTEGRITY_FAILURE"]
+  },
+  "risk":{
+    "accounting_type":"R_STOP_DEFINED",
+    "position_sizing":"Each cell owns an isolated portfolio. Within a cell, same-timestamp symbols size from one common pre-entry equity snapshot so chart stop risk is 0.25% before costs; no state crosses cells.",
+    "maximum_risk_per_trade":"0.25% of current equity before costs",
+    "gross_exposure_limit":"Per cell at most six symbols and 1.50% aggregate initial stop risk; no cap shared across eight portfolios",
+    "leverage":"Use lower of stop-risk size and V2 limits; skip unrepresentable size",
+    "concurrent_positions":"Within each cell one per symbol and six total; all eight cells have independent position/equity/exposure/overlap/failure state"
+  },
+  "experiment":{
+    "baseline":"range_atr_min=1.0, response_mode=FOLLOW_CLOSE, holding_minutes=60, fixed stop=1 ATR",
+    "stage_protocol":"V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size":8,
+    "robustness_tests":["Report all eight cells and retain complete contemporaneous breadth ledger","Report every symbol and UTC-midpoint development half; midpoint close belongs to first half","Double spread, commission and slippage individually","For each mode center threshold=1.0/hold=60 remove its five best normal-cost London dates from center and exact neighbors threshold=1.5 and hold=30; require retained normal/doubled net R positive","For each center/neighbor use eligible London weekdays including zeros and 10000 circular five-date block-bootstrap resamples with seed 2026013; center normal-cost lower bound must exceed zero","A mode advances only if center and at least one of threshold=1.5 or hold=30 passes every gate"],
+    "costs":["Use resolved or frozen-fallback spread, commission and slippage at every fill","Double each component for stress","No swap because exits precede 15:00 London"],
+    "benchmarks":["Zero net R after costs","Opposite response mode on identical events"],
+    "multiple_testing":"Count all 312 selectable R007-R013 cells, R008's two diagnostics, and every named legacy trial including I-12 outside-bar/key-reversal and R008/R009 related breakout/geometry variants. Cross-batch promotion uses the full ledger. Incomplete historical IDs prohibit confirmation; no best-cell/family rescue.",
+    "rejection_criteria":["Reject mode unless center and at least one exact neighbor are positive after normal/doubled costs","Reject if center is non-positive in either UTC half or fewer than three symbols are positive in each half","Reject if center has fewer than 200 pooled trades","Reject if five-date removal makes center or required neighbor non-positive","Reject if center bootstrap lower bound is not above zero","Reject promotion if required cells fail data integrity","Never access final holdout without explicit authorization for a separately frozen promoted version"]
+  },
+  "implementation":{
+    "pseudocode":["Build valid London M15 bars causally.","Maintain observed-sequence ATR(96) through t-1.","Require strict high/low outside envelope and completed close strictly beyond one prior extreme.","Apply range threshold, map follow/fade and enter flat cells at signal close.","From next M1 process stop before due exit and fail only affected cells on defects.","Publish eight cells, neighbors, robustness and full breadth ledger."],
+    "required_libraries":["Python standard library","existing V2 candle, timezone, cost, fill and R-accounting components"],
+    "data_structures":["Causal M15 aggregator","Wilder ATR(96)","Previous-bar envelope","Independent eight-cell state"],
+    "edge_cases":["duplicates invalidate aggregation","strict outside inequalities and strict close break","wick-only outside bar is no event","event-pair gap suppresses signal while elapsed gaps remain in ATR","entry candle cannot stop trade","stop precedes due exit","adverse gap uses worse executable open","post-entry defects fail affected cells"],
+    "computational_requirements":"One causal pass per symbol with shared envelope features and isolated eight-cell portfolios.",
+    "known_backtester_gaps":["Queue waits for V2 M15/fill/cell-state compatibility and required result rows"]
+  }
+}

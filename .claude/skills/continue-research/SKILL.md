@@ -1,43 +1,71 @@
 ---
 name: continue-research
-description: Procedure for the user's Continue.Research command - the autonomous test loop on research-department submissions (intake, specs, sweeps, one-time MT5 test, result envelopes). Load when the user says Continue.Research.
+description: Procedure for the user's Continue.Research command - the autonomous research loop (pick or research a strategy idea, spec with pre-registered gates, implement, development run, gates, record; one-time MT5 test only on the user's go). Load when the user says Continue.Research.
 ---
 
-# Continue.Research (moved from CLAUDE.md, 2026-11-02)
+# Continue.Research (research back in this team since 2026-11-09, the user)
 
-- **`Continue.Research [Limit=<time>] [<STRATEGY_ID>]`:** the autonomous test loop on research
-department submissions (V2.6 / V2.7; job queue, lanes, research log built in V2.6; intake per
-`docs/research-intake.md`). **Blocked until ROADMAP V2.6i passes**: until then it may work
-only on V2.6i itself or on the three pre-registered V2 hypotheses (ROADMAP V2.6).
-- Start: read `../Shared_Interface/INTERFACE_CONTRACT.md`, list `queue/pending/` and our open
-  claims in `results/intake/`.
-- First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything
-  unclear in the log or specs) and wait. Then run autonomously (Telegram only for urgent
-  ones). Later calls in the same chat reuse the answers.
-- `Limit=60min` / `2h` / `3d`: write start time and deadline into `docs/research-log.md`,
-  check the clock after every step; at the deadline finish the current step cleanly
-  (commit, log) and stop. No limit = until "Stop." or the resources run out.
-- STRATEGY_ID given: work only on that submission. Otherwise the highest-`priority`
-  submission in `queue/pending/`, then our open claims. No submission -> report and stop;
-  never invent an idea to fill the time.
-- Rules: every strategy comes from a validated, claimed submission; its sources and
-  evidence are the research department's responsibility (Opus does not re-research them,
-  but returns feedback on anything that looks wrong). Every rule maps to the submission;
-  anything unclear: Opus decides by its own judgment, writes it into the spec's
-  "Assumptions" section, tells Research in an `ASSUMPTION_MADE` feedback message and builds
-  anyway; `NEEDS_CLARIFICATION` only when no reasonable reading exists. Specs need no user
-  approval in the loop; the one-time MT5 test still does (rule set by the user, 2026-10-28;
-  `docs/research-intake.md` › Assumptions and replies). One parameter set pooled across all
-  markets by default; per-market parameters with re-optimisation only as a walk-forward
-  variant of a promising strategy (rule set by the user, 2026-10-23). Vary only the parameters
-  the submission marks tunable, within its ranges. Do not judge pass / fail: record every
-  strategy with all metrics and the submission's rejection criteria computed; the user decides.
-  Every experiment ends in a result envelope (or a feedback envelope) in `../Shared_Interface/feedback/`.
-  The one-time MT5 test of a submission needs the user's explicit go.
-  Develop before 2021-09-14, test the best variant once on MT5 data from 2021-09-14 (rule set
-  by the user, 2026-10-15); every variant in the trial log; DSR, robustness report, real
-  costs + swap, Monte Carlo, parameter stability, regime breakdown, warning flags. Prefer no
-  overnight holds (swap). Never change defaults (costs, sweep options, spread table) without
-  the user's go.
-- End of run: short report (tested, results, research cards added, envelopes written,
-  feedback sent); a very promising strategy first, and on Telegram.
+`Continue.Research [Limit=<time>] [<CANDIDATE or idea ID>]` runs the whole research loop in this
+repo. The former research department (2026-10-27 to 2026-11-06) is archived; its records are in
+`knowledge/research/`, its unbuilt drafts in `research/candidates/`. There is no queue, no JSON
+envelope and no feedback file any more: decisions go into the spec and `docs/research-log.md`.
+
+## Start
+
+- Read `docs/HANDOFF.md`, the last entry of `docs/research-log.md`, `research/candidates/README.md`
+  and the top of `knowledge/ideas.md`.
+- First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything unclear)
+  and wait. Then run autonomously (Telegram only for urgent items, CLAUDE.md). Later calls in the
+  same chat reuse the answers.
+- `Limit=60min` / `2h` / `3d`: write start time and deadline into `docs/research-log.md`, check the
+  clock after every step; at the deadline finish the current step cleanly (commit, log) and stop.
+  No limit = until `Stop.` or the resources run out.
+
+## Pick the work
+
+1. ID given: only that candidate / idea.
+2. Otherwise the highest-priority open candidate in `research/candidates/README.md` that V2 can
+   run (blocked / parked rows skipped).
+3. No runnable candidate: research a new idea (below). Never fill time with an unfounded idea.
+
+## Research a new idea (when needed)
+
+- Day trading first (open and close the same session, the user); V2's M1 symbols and supported
+  execution only; stop-defined, results in R.
+- Cheapest route first (`docs/agent-routing.md`): local search of `knowledge/`, then a free model
+  for literature / web look-ups (`ai_dispatch gemini --effort low`, `gemini-api`, `openrouter`).
+  A model's citation is only a lead: Opus opens the source before relying on it.
+- Write a card in `knowledge/ideas.md`: mechanism, falsifiable prediction, sources actually read,
+  label (PUBLISHED finding / ADAPTATION / ORIGINAL / SPECULATIVE), expected gross edge per trade.
+- **Cost pre-check:** estimate gross R per trade against our costs at that stop size (R014: about
+  0.2 R per trade at a 1-ATR M15 stop). An idea whose plausible gross edge is far below the cost
+  stays a card; do not build it.
+- **Skeptic pass** (Opus itself, or one free model on a brief): leakage, selection bias, costs,
+  sample size, multiple testing, alternative explanations. Record the answers on the card.
+
+## Build and run
+
+- Spec `docs/strategy-<name>.md` before any code: rules (quoted from the candidate JSON when there
+  is one), an "Assumptions" section for every point Opus decided, the grid in
+  `research/grids/<name>.toml` with every cell counted, and the **rejection criteria fixed before
+  the run** (gates: costs doubled, halves, symbol breadth, best-date removal, bootstrap lower bound,
+  minimum trades, data integrity; see `docs/strategy-alternating-path.md` › Gates and
+  `tools/alternating_path_gates.py` as the pattern). Specs need no user approval in the loop.
+- Implement: new strategy folder via Codex `gpt-6.1-sol` medium on a brief
+  (`briefs/<name>.md`); registry, panel, golden lists and tool tables by Opus; full suite green.
+- Vary only the parameters the spec marks tunable, within its ranges; one parameter set pooled
+  across markets (rule set by the user, 2026-10-23). Development only:
+  `python -m backtester.tools.research research/grids/<name>.toml --dev-only` (before 2021-09-14).
+- Compute the gates on the development run. Do not judge pass / fail: report every cell with all
+  metrics and the gates; the user decides. Failed and rejected strategies stay recorded.
+- The one-time MT5 test (2021-09-14 onward) of a strategy needs the user's explicit go. Never
+  change defaults (costs, sweep options, spread table) without the user's go.
+
+## Record
+
+- `docs/research-log.md`: what was tested, cells, net / gross R, gates, model and effort per task.
+- Candidate row / idea card status (built, rejected by the user <date>, ...); `docs/HANDOFF.md`.
+- Count families, specs and cells honestly; a parameter cell is not a new hypothesis, and a failed
+  family is not re-proposed under a new name.
+- End of run: short report (tested, results, gates, decisions needed); a very promising strategy
+  first, and on Telegram.

@@ -1,0 +1,102 @@
+{
+  "schema_version": "0.1.0",
+  "strategy_id": "ETF_ABSMOM_12M_LC",
+  "specification_version": "0.1.0",
+  "name": "Diversified 12-month ETF absolute momentum, long/cash",
+  "status": "DRAFT",
+  "classification": "ADAPTATION",
+  "priority": 5,
+  "submitted_at": null,
+  "research": {
+    "research_ids": ["R-2026-001"],
+    "category": "cross-asset time-series momentum",
+    "source_references": [
+      {"id": "MOP2012", "citation": "Moskowitz, Ooi and Pedersen (2012), Time Series Momentum, Journal of Financial Economics 104(2)", "url": "https://doi.org/10.1016/j.jfineco.2011.11.003", "source_type": "PRIMARY", "supports": "Own past futures excess-return sign predicts subsequent return in the studied sample; the source strategy is not this ETF adaptation."},
+      {"id": "HLWZ2020", "citation": "Huang, Li, Wang and Zhou (2020), Time Series Momentum: Is It There?, Journal of Financial Economics 135", "url": "https://doi.org/10.1016/j.jfineco.2019.08.004", "source_type": "PRIMARY", "supports": "Counterevidence on asset-level, pooled, and out-of-sample predictability."},
+      {"id": "HH2020", "citation": "Huang and Huang (2020), Testing Moving Average Trading Strategies on ETFs, Journal of Empirical Finance 57", "url": "https://pure.psu.edu/en/publications/testing-moving-average-trading-strategies-on-etfs/", "source_type": "PRIMARY", "supports": "Caution that tradable ETF implementations can differ materially from index evidence."}
+    ],
+    "evidence_summary": "The source evidence is for diversified futures/forwards strategies. This fixed seven-ETF long/cash rule removes the short leg and volatility scaling and is a proposed retail adaptation with meaningful published counterevidence.",
+    "feasibility": {"rating": "YELLOW", "rationale": "Operationally simple in a portfolio system, but V2 lacks the required adjusted ETF data, cash series, target weights, next-open portfolio rebalance, and stopless return accounting."}
+  },
+  "market": {
+    "asset_class": "multi-asset ETFs",
+    "universe": ["SPY", "EFA", "EEM", "IEF", "TLT", "GLD", "DBC"],
+    "v2_compatibility": "UNSUPPORTED_DATA",
+    "base_timeframe": "D1",
+    "session": "Each ETF's official US regular trading session, including official early closes",
+    "timezone": "America/New_York",
+    "directions": ["LONG"],
+    "holding_period": "OVERNIGHT"
+  },
+  "data": {
+    "required_fields": ["point_in_time_total_return_close", "raw_open", "split_factor", "cash_total_return", "trading_calendar"],
+    "frequency": "Daily observations plus official month-end markers",
+    "minimum_history": "All seven ETFs with twelve complete prior month-ends; common tradable start no earlier than DBC availability",
+    "preprocessing": ["Build point-in-time split/dividend-consistent total-return levels without future corporate-action leakage", "Retain raw executable next-session opens separately", "Apply each instrument's exchange calendar and mark stale/missing data"],
+    "dependencies": ["Corporate-action history", "Three-month Treasury-bill or predeclared cash total-return series", "Point-in-time universe manifest"],
+    "limitations": ["Fixed surviving ETFs introduce selection risk", "DBC embeds futures roll and product effects", "Current V2 cache does not establish these ETF/corporate-action/cash inputs"]
+  },
+  "hypothesis": {
+    "behavior": "An ETF with a positive total return over the preceding twelve complete month-end intervals has a higher next-month return or provides a useful exposure filter relative to holding it continuously.",
+    "mechanism": "Medium-horizon persistence could reflect gradual information diffusion or slow-moving capital, but the mechanism is not causally established; long/cash may work mainly by reducing left-tail exposure.",
+    "works_when": ["Cross-asset trends persist longer than one rebalance interval", "Turnover and open slippage are small relative to the conditional-return difference"],
+    "fails_when": ["Markets reverse sharply and repeatedly", "Total-return signals or next-open execution data are biased", "Cash and trading costs erase any exposure-filter benefit"],
+    "falsifiable_predictions": ["Out-of-sample next-month returns after positive signals exceed returns after nonpositive signals", "Net risk-adjusted performance exceeds the frozen equal-weight benchmark", "Maximum drawdown is at least 20 percent lower than the frozen equal-weight benchmark"]
+  },
+  "math": {
+    "definitions": [
+      {"name": "R12_i_m", "formula": "TRI[i,m] / TRI[i,m-12] - 1, using official month-end total-return levels", "timing": "Computed only after the final official regular-session close of month m"},
+      {"name": "target_weight_i_m", "formula": "1/7 if R12_i_m > 0, otherwise 0", "timing": "Target for the first regular-session open of month m+1"},
+      {"name": "cash_weight_m", "formula": "1 - sum_i(target_weight_i_m)", "timing": "Accrues the predeclared cash total-return series until the next rebalance"}
+    ],
+    "parameters": [
+      {"name": "lookback_month_ends", "type": "integer", "baseline": 12, "domain": {"kind": "VALUES", "values": [6, 9, 12]}, "tunable": true},
+      {"name": "sleeve_weight", "type": "number", "baseline": 0.142857142857, "domain": {"kind": "FIXED"}, "tunable": false},
+      {"name": "one_way_cost_bps", "type": "number", "baseline": 10, "domain": {"kind": "FIXED"}, "tunable": false}
+    ]
+  },
+  "entries": {
+    "long_condition": "At month-end m, valid_data_i AND R12_i_m > 0 AND current_weight_i < 1/7",
+    "short_condition": null,
+    "signal_time": "After the final official regular-session close of month m and after corporate-action-consistent data for that close are available",
+    "execution_timing": "NEXT_BAR_OPEN",
+    "execution_details": "First executable regular-session open of month m+1; never the signal close",
+    "order_type": "Market-on-open proxy using raw executable open with declared spread/slippage",
+    "restrictions": ["No entry with missing/stale signal or executable price", "Maximum target weight 1/7 per ETF", "Fractional shares required; otherwise predeclare deterministic floor rounding and retain residual cash"]
+  },
+  "exits": {
+    "stop_loss": null,
+    "profit_target": null,
+    "time_exit": "At the next monthly first-session open when target weight becomes zero or decreases",
+    "signal_exit": "R12_i_m <= 0 or invalid required data at a rebalance",
+    "maximum_holding": "Until the next monthly rebalance decision",
+    "end_of_session": "Hold overnight; no daily close-out",
+    "priority": ["Invalid/delisted instrument liquidation under a separately reviewed data rule", "Monthly target rebalance", "Sample-end liquidation for reporting only"]
+  },
+  "risk": {
+    "accounting_type": "TARGET_WEIGHT",
+    "position_sizing": "Fixed 1/7 portfolio sleeve per ETF when active; inactive sleeves accrue cash return",
+    "maximum_risk_per_trade": null,
+    "gross_exposure_limit": "100 percent",
+    "leverage": "None",
+    "concurrent_positions": "At most seven long ETF positions; weights sum to no more than one"
+  },
+  "experiment": {
+    "baseline": "One frozen seven-ETF universe, 12-month signal, next-open monthly rebalance, 10 bps one-way changed-notional cost, cash return included",
+    "stage_protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size": 3,
+    "robustness_tests": ["Leave one ETF out", "Report each sleeve and long/cash exposure separately", "Exclude the largest one percent of monthly portfolio returns", "Compare point-in-time total-return and price-only diagnostic signals", "Block-bootstrap paired performance differences by month"],
+    "costs": ["Charge spread, slippage, commission and fees on both purchases and sales", "Baseline 10 bps per one-way changed notional with 5 and 25 bps stresses", "ETF expense and roll drag remain embedded in total returns"],
+    "benchmarks": ["Monthly rebalanced 1/7 equal-weight buy-and-hold of the same seven ETFs using identical execution and costs", "All-cash series as context only"],
+    "multiple_testing": "Log all three lookbacks, cost stresses, delay, cash, and leave-one-out variants; do not promote the best diagnostic; adjust inferential families or use a synchronized block max-statistic.",
+    "rejection_criteria": ["Any unresolved corporate-action, stale-price, or executable-open audit failure", "Untouched test has nonpositive net delta Sharpe and no drawdown improvement versus equal-weight", "Benefit fails at 25 bps one-way costs or one-session delay", "Benefit vanishes in leave-one-out tests or is dominated by one ETF or episode", "Insufficient common history for a defensible test"]
+  },
+  "implementation": {
+    "pseudocode": ["After each official month-end close, compute each valid ETF's R12 from point-in-time total-return levels", "Set each next-month target to 1/7 if R12 is positive, else zero", "At the next regular-session open, trade changed notional to each target and charge two-sided realized costs", "Accrue inactive and residual weight on the declared cash series", "Mark all holdings and cash daily; record every diagnostic variant without selection"],
+    "required_libraries": ["Calendar and corporate-action-aware market-data library", "Portfolio accounting and statistics"],
+    "data_structures": ["Point-in-time daily ETF panel", "Corporate-action ledger", "Cash total-return series", "Daily portfolio holdings/equity ledger"],
+    "edge_cases": ["Holiday or early-close month end", "Missing/stale month-end or next-open price", "Split/dividend between signal and execution", "ETF inception or delisting", "Share rounding and residual cash"],
+    "computational_requirements": "Low compute; correctness of point-in-time data and portfolio accounting dominates runtime.",
+    "known_backtester_gaps": ["No established ETF total-return/corporate-action/cash dataset", "No cross-symbol target-weight next-open rebalancer", "Order requires stop_loss and R-based accounting", "No faithful stopless daily mark-to-market portfolio path"]
+  }
+}

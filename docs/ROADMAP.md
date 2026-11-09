@@ -201,7 +201,7 @@ where (updated 2026-11-03).
   live candles auto-refresh on the chart, remote branch `claude/ui-polish` (delete only on the
   user's word), CLI named-preset restrictions equal to the app's.
   A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
-- ◐ **V2.6i Research-department intake (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; i8 = first real pilot FX_LONDON_FIX_REV v1.0.0, run 2026-10-28, rejected by the user 2026-10-29):** strategy ideas now come from
+- ☒ **V2.6i Research-department intake — retired 2026-11-09 (the user: research back in this team; `tools/intake.py`, its tests and `docs/research-intake.md` moved to `../archive/v2-intake-tool/`, `dataset_version` moved to `tools/research.py`; second submission R014 rejected by the user 2026-11-06). History: (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; i8 = first real pilot FX_LONDON_FIX_REV v1.0.0, run 2026-10-28, rejected by the user 2026-10-29):** strategy ideas now come from
   `../Research_Department/` through `../Shared_Interface/` (process: `docs/research-intake.md`;
   review and decisions D1-D8: `docs/review/research-interface-review-2026-10-27.md`). Test-first
   steps, no engine change: (i1) contract frozen with the agreed edits + fixtures; (i2)
@@ -380,10 +380,10 @@ where (updated 2026-11-03).
 ### V2.6 Continuous research
 Goal: a library of tested, research-based strategies. Do NOT judge pass / fail; record every
 strategy with all metrics; the user decides later.
-- **Changed 2026-10-27 (the user):** research and ideas are the research department's job;
-  every new strategy comes from a submission in `../Shared_Interface/queue/`
-  (`docs/research-intake.md`), which carries its sources. The pipeline below is replaced by
-  the intake pipeline there; the safeguards, Monte Carlo, stability, regime, flags, lanes and
+- **Changed 2026-11-09 (the user):** research is back in this team (`Continue.Research`, skill
+  `continue-research`); new strategies come from `research/candidates/` (drafts of the former
+  research department, 2026-10-27 to 2026-11-06, archived in `../archive/`) or a researched
+  idea in `knowledge/ideas.md`. The safeguards, Monte Carlo, stability, regime, flags, lanes and
   job queue below still apply.
 - Every strategy comes from research (book, paper, study, reputable source), cited in its
   `docs/` spec. Never invent or data-mine rules

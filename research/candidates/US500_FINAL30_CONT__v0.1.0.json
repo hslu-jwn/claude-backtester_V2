@@ -1,0 +1,100 @@
+{
+  "schema_version": "0.1.0",
+  "strategy_id": "US500_FINAL30_CONT",
+  "specification_version": "0.1.0",
+  "name": "US500 CFD final-30-minute same-day continuation adaptation",
+  "status": "DRAFT",
+  "classification": "ADAPTATION",
+  "priority": 10,
+  "submitted_at": null,
+  "research": {
+    "research_ids": ["R-2026-001"],
+    "category": "intraday seasonality and hedging demand",
+    "source_references": [
+      {"id": "BDLM2021", "citation": "Baltussen, Da, Lammers and Martens (2021), Hedging Demand and Market Intraday Momentum, Journal of Financial Economics", "url": "https://doi.org/10.1016/j.jfineco.2021.04.029", "source_type": "PRIMARY", "supports": "Return through 30 minutes before the close predicts the final half-hour return across the paper's futures sample; headline trading results generally omit costs."},
+      {"id": "GAO2018", "citation": "Gao et al. (2018), Market Intraday Momentum, Journal of Financial Economics", "url": "https://www.sciencedirect.com/science/article/pii/S0304405X18301351", "source_type": "PRIMARY", "supports": "Related evidence that SPY's first-half-hour return predicts its final-half-hour return."}
+    ],
+    "evidence_summary": "Published evidence concerns futures and SPY. This draft freezes the locally available US500 CFD as a proxy and tests a stronger same-day return-through-T-minus-30 signal; transfer and net implementability are unverified.",
+    "feasibility": {"rating": "RED", "rationale": "The fixed development segment does not establish the draft's five-year minimum, and next-bar-open entry, stopless/notional accounting, close execution, and verified early-close calendars are unsupported. Preserve as research evidence but do not adapt around these gaps."}
+  },
+  "market": {
+    "asset_class": "equity-index CFD proxy",
+    "universe": ["US500"],
+    "v2_compatibility": "SUPPORTED",
+    "base_timeframe": "M1",
+    "session": "US equity regular session 09:30 to 16:00 local time, or 09:30 to 13:00 on official early closes",
+    "timezone": "America/New_York",
+    "directions": ["LONG", "SHORT"],
+    "holding_period": "DAY_TRADING"
+  },
+  "data": {
+    "required_fields": ["open", "high", "low", "close", "spread", "official_session_calendar"],
+    "frequency": "Complete M1 bars with explicit half-open interval timestamps",
+    "minimum_history": "At least five years spanning multiple volatility regimes; more is preferred",
+    "preprocessing": ["Map UTC bars to the official US regular session with DST", "Set T from the official calendar including early closes", "Require the prior official regular-session close, the bar ending at T-30, the next bar open, and the final bar ending at T"],
+    "dependencies": ["Verified official holiday/early-close calendar", "Documented US500 feed and cost versions"],
+    "limitations": ["US500 CFD is not the futures or SPY instrument in the papers", "CFD session and close behavior may differ from the underlying auction", "Candle data do not observe queue position or close price impact"]
+  },
+  "hypothesis": {
+    "behavior": "The sign of the US500 regular-session return from the prior official close through the fully closed M1 bar ending thirty minutes before today's close predicts the sign of the final thirty-minute return.",
+    "mechanism": "End-of-day hedging and leveraged-product rebalancing may create price-insensitive demand in the direction of the same-day move; this is a proposed explanation, not causal proof.",
+    "works_when": ["Closing hedging/rebalancing demand dominates liquidity provision", "Two aggressive executions cost less than the conditional final-window return"],
+    "fails_when": ["The CFD proxy does not track the relevant close mechanism", "Liquidity providers reverse the same-day move", "Spread and close slippage absorb the signal"],
+    "falsifiable_predictions": ["Out-of-sample regression beta of final-window return on return-through-T-minus-30 is positive", "The sign strategy has positive net mean daily return under documented costs", "The final window outperforms predeclared adjacent-window placebos", "A one-session-lagged signal has little predictive value"]
+  },
+  "math": {
+    "definitions": [
+      {"name": "r_rod_t", "formula": "P[t,T-30] / P[t-1,T] - 1", "timing": "P[t,T-30] is the close of the last fully closed M1 interval ending exactly at T-30; P[t-1,T] is the prior session's last M1 close"},
+      {"name": "direction_t", "formula": "+1 if r_rod_t > 0; -1 if r_rod_t < 0; 0 otherwise", "timing": "Known only after the T-30 boundary bar closes"},
+      {"name": "final_return_t", "formula": "P[t,T] / P[t,T-30,next_open] - 1 with sign applied for the short leg", "timing": "Entry uses the next M1 interval open and exit uses the final regular-session M1 close"}
+    ],
+    "parameters": [
+      {"name": "window_minutes", "type": "integer", "baseline": 30, "domain": {"kind": "FIXED"}, "tunable": false},
+      {"name": "notional_units", "type": "number", "baseline": 1, "domain": {"kind": "FIXED"}, "tunable": false}
+    ]
+  },
+  "entries": {
+    "long_condition": "complete_session_inputs AND r_rod_t > 0",
+    "short_condition": "complete_session_inputs AND r_rod_t < 0",
+    "signal_time": "Immediately after the M1 bar ending exactly at the official T-30 boundary has closed",
+    "execution_timing": "NEXT_BAR_OPEN",
+    "execution_details": "Open of the next M1 interval, which begins at T-30; never the signal bar close",
+    "order_type": "Aggressive market order proxy at next M1 open plus spread, commission, and slippage",
+    "restrictions": ["One position per session", "No trade when r_rod_t equals zero", "No trade for any missing/duplicate/out-of-order boundary bar", "No overnight position"]
+  },
+  "exits": {
+    "stop_loss": null,
+    "profit_target": null,
+    "time_exit": "Close at the last M1 bar ending at official regular-session close T, with close-specific slippage stress",
+    "signal_exit": null,
+    "maximum_holding": "Thirty regular-session minutes",
+    "end_of_session": "Mandatory flat at official regular-session close, including early-close days",
+    "priority": ["Official session-close time exit", "Sample-end safety close if and only if the scheduled close is present"]
+  },
+  "risk": {
+    "accounting_type": "UNIT_NOTIONAL",
+    "position_sizing": "One fixed normalized notional unit per session; report returns per unit and do not infer stop-defined R",
+    "maximum_risk_per_trade": null,
+    "gross_exposure_limit": "One unit in US500",
+    "leverage": "None in normalized research accounting",
+    "concurrent_positions": "Exactly zero or one"
+  },
+  "experiment": {
+    "baseline": "US500 only, 30-minute window, next-M1-open entry, official-close exit, no filters, documented current costs",
+    "stage_protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size": 1,
+    "robustness_tests": ["Long and short legs separately", "By calendar year and volatility regime", "Exclude largest one percent absolute returns", "One-session-lagged signal control", "Adjacent-window timing placebos", "HAC and synchronized month-block bootstrap confidence intervals"],
+    "costs": ["Charge half/full resolved spread as appropriate on both aggressive entry and exit", "Charge commission and entry/close slippage", "Stress close-specific slippage at 1.5x and 2x documented baseline"],
+    "benchmarks": ["Always long for the identical final window", "Random signs with identical trade dates and costs", "One-session-lagged signal", "Adjacent-window placebos"],
+    "multiple_testing": "Primary asset and window are frozen. Log every asset, timing window, threshold, filter, and cost variant ever inspected; use family adjustment or synchronized max-stat bootstrap for placebo families.",
+    "rejection_criteria": ["Untouched test net mean daily return is nonpositive or its predeclared confidence interval includes zero", "Result fails documented baseline costs or conservative close-slippage stress", "Effect is concentrated in the largest one percent of days or a few crisis episodes", "Final window is not superior to adjacent-window placebos", "One-session-lagged control performs similarly", "Unexplained failure of either long or short leg or boundary/calendar audit"]
+  },
+  "implementation": {
+    "pseudocode": ["For each official session, determine close T from the calendar", "After the M1 bar ending T-30 closes, read prior official close and compute r_rod", "If all boundary data are complete and r_rod is nonzero, enter its sign at the next M1 open with aggressive costs", "Exit at the last regular-session M1 close with close-slippage costs", "Record session, signal, entry, exit, both cost legs, and every placebo/control observation"],
+    "required_libraries": ["Python zoneinfo", "Verified exchange-calendar provider", "V2 analytics/robustness tools where semantically applicable"],
+    "data_structures": ["Per-session boundary record", "Normalized-notional trade ledger", "Daily signal and placebo series"],
+    "edge_cases": ["Official early close", "Holiday or missing prior session", "DST transition", "Missing or duplicate boundary M1 bar", "Spread spike at entry or close", "r_rod exactly zero"],
+    "computational_requirements": "Low; one signal and trade per eligible day. Calendar and execution correctness dominate runtime.",
+    "known_backtester_gaps": ["The available fixed development segment does not establish the required five years of US500 history", "Order.stop_loss is mandatory and outcomes are expressed in stop-defined R", "Normal orders fill at current candle close rather than the next M1 open", "No normalized-notional return path for stopless trades", "Official early-close calendar support is not established for the US500 CFD proxy"]
+  }
+}

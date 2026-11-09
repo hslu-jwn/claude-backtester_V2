@@ -1,9 +1,8 @@
 # Strategy ideas backlog
 
-**Frozen 2026-10-27 (the user):** no new ideas here; new strategies come from the research
-department through `../Shared_Interface/` (`docs/research-intake.md`). This backlog is handed
-to the research department (the user, 2026-10-27, decision D6): they copy it, this file stays
-here frozen. Status updates of ideas V2 already tests are still recorded here.
+**Live again since 2026-11-09 (the user):** research is back in this team. New ideas are added
+here (skill `continue-research`). The former research department's evidence checks of these
+ideas (I-xx) are in `knowledge/research/reports/`, its unbuilt drafts in `research/candidates/`.
 
 Testable ideas from the books, merged and de-duplicated. **Nothing here is a trading rule**: an idea
 becomes a rule only when the user picks it, it is written into a `docs/` spec and tested (CLAUDE.md ›

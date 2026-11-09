@@ -1,0 +1,271 @@
+{
+  "schema_version": "0.1.0",
+  "strategy_id": "M15_SMA_CROSS_BATCH",
+  "specification_version": "0.1.0",
+  "name": "M15 fast-slow SMA cross continuation and fade batch",
+  "status": "DRAFT",
+  "classification": "SPECULATIVE",
+  "priority": 31,
+  "submitted_at": null,
+  "research": {
+    "research_ids": [
+      "R-2026-024"
+    ],
+    "category": "intraday moving-average state-transition screening",
+    "source_references": [
+      {
+        "id": "BROCK_LAKONISHOK_LEBARON_1992",
+        "citation": "Brock, Lakonishok and LeBaron (1992), Simple Technical Trading Rules and the Stochastic Properties of Stock Returns, Journal of Finance 47, 1731-1764",
+        "url": "https://doi.org/10.1111/j.1540-6261.1992.tb04681.x",
+        "source_type": "PRIMARY",
+        "supports": "Opened publisher abstract tests moving-average rules on the Dow Jones Index from 1897-1986, not this M15 FX rule, costs or profitability."
+      }
+    ],
+    "evidence_summary": "Historical equity-index moving-average evidence is a narrow measurement boundary. The M15 FX crossover, response mappings and holds are an original falsification with no profitability claim.",
+    "feasibility": {
+      "rating": "YELLOW",
+      "rationale": "Causal M15 closes, prior ATR, signal-close fills and day-flat exits are supported inputs; implementation transport needs V2 confirmation."
+    }
+  },
+  "market": {
+    "asset_class": "foreign-exchange CFDs",
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "AUDUSD",
+      "NZDUSD",
+      "USDCHF",
+      "USDCAD"
+    ],
+    "v2_compatibility": "SUPPORTED",
+    "base_timeframe": "M1 aggregated to completed London M15 bars",
+    "session": "Weekday signals ending 09:00 through 13:45 Europe/London; exit by 15:00",
+    "timezone": "Europe/London",
+    "directions": [
+      "LONG",
+      "SHORT"
+    ],
+    "holding_period": "DAY_TRADING"
+  },
+  "data": {
+    "required_fields": [
+      "open",
+      "high",
+      "low",
+      "close"
+    ],
+    "frequency": "Interval-start M1 OHLC aggregated causally to M15",
+    "minimum_history": "Seventeen consecutive valid M15 closes ending at signal t plus ATR96 through t-1",
+    "preprocessing": [
+      "Every M15 bar in the 17-close union requires exactly fifteen physically consecutive valid M1 candles",
+      "OHLC must be finite/positive with high>=max(open,close), low<=min(open,close)",
+      "Build true ranges only from valid observed M15 bars without forward fill. ATR96 through t-1 is Wilder ATR on that observed sequence; after an earlier elapsed gap, the next valid bar uses the latest valid observed close as previous-close reference. The 17-close signal union remains physically consecutive.",
+      "Use IANA Europe/London and canonical UTC"
+    ],
+    "dependencies": [
+      "V2 M1 aggregation",
+      "V2 signal-time costs/fills"
+    ],
+    "limitations": [
+      "Long-horizon equity evidence is not intraday FX evidence",
+      "Crosses can be delayed noise",
+      "Six symbols/four cells are correlated",
+      "No holdout is authorized"
+    ]
+  },
+  "hypothesis": {
+    "behavior": "A first SMA4/SMA16 M15 cross may briefly continue with or fade against its direction over 30-60 minutes.",
+    "mechanism": "A cross may summarize temporary gradual repricing, while the inverse tests lagged reversal.",
+    "works_when": [
+      "A cross marks a real temporary state change beyond costs"
+    ],
+    "fails_when": [
+      "The crossover is delayed noise or costs dominate"
+    ],
+    "falsifiable_predictions": [
+      "Both holds for one mode are positive normal/doubled",
+      "Center is positive in both UTC halves and three symbols",
+      "Both holds survive removal/bootstrap"
+    ]
+  },
+  "math": {
+    "definitions": [
+      {
+        "name": "sma4_prior",
+        "formula": "mean(close_{t-4},...,close_{t-1})",
+        "timing": "Known at completed t-1 close"
+      },
+      {
+        "name": "sma16_prior",
+        "formula": "mean(close_{t-16},...,close_{t-1})",
+        "timing": "Known at completed t-1 close"
+      },
+      {
+        "name": "sma4_current",
+        "formula": "mean(close_{t-3},...,close_t)",
+        "timing": "Known after t close"
+      },
+      {
+        "name": "sma16_current",
+        "formula": "mean(close_{t-15},...,close_t)",
+        "timing": "Known after t close"
+      },
+      {
+        "name": "cross_direction",
+        "formula": "+1 iff SMA4_prior<=SMA16_prior and SMA4_current>SMA16_current; -1 iff prior >= and current <; otherwise 0",
+        "timing": "Strict current crossing after t close"
+      },
+      {
+        "name": "trade_side",
+        "formula": "cross_direction for FOLLOW_CROSS and negative cross_direction for FADE_CROSS",
+        "timing": "Mechanical at signal close"
+      },
+      {
+        "name": "atr96_prior",
+        "formula": "Wilder ATR96 through t-1",
+        "timing": "Frozen before t"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "fast_sma",
+        "type": "integer",
+        "baseline": 4,
+        "domain": {
+          "kind": "FIXED"
+        },
+        "tunable": false
+      },
+      {
+        "name": "slow_sma",
+        "type": "integer",
+        "baseline": 16,
+        "domain": {
+          "kind": "FIXED"
+        },
+        "tunable": false
+      },
+      {
+        "name": "response_mode",
+        "type": "string",
+        "baseline": "FOLLOW_CROSS",
+        "domain": {
+          "kind": "VALUES",
+          "values": [
+            "FOLLOW_CROSS",
+            "FADE_CROSS"
+          ]
+        },
+        "tunable": true
+      },
+      {
+        "name": "holding_minutes",
+        "type": "integer",
+        "baseline": 60,
+        "domain": {
+          "kind": "VALUES",
+          "values": [
+            30,
+            60
+          ]
+        },
+        "tunable": true
+      }
+    ]
+  },
+  "entries": {
+    "long_condition": "eligible cross and trade_side=+1 and cell flat",
+    "short_condition": "eligible cross and trade_side=-1 and cell flat",
+    "signal_time": "Completed London M15 boundary 09:00-13:45 where hold ends by 15:00",
+    "execution_timing": "SIGNAL_CLOSE",
+    "execution_details": "Enter at V2 supported executable signal-close fill; unavailable fill suppresses and reports event. Stop eligibility starts next M1.",
+    "order_type": "Market order",
+    "restrictions": [
+      "One position per symbol/cell",
+      "No pyramiding",
+      "All 17 closes physically consecutive",
+      "Prior equality qualifies; current equality is no event",
+      "A qualifying cross while its symbol/cell is non-flat is skipped, not queued or deferred; a later trade requires a newly qualifying cross"
+    ]
+  },
+  "exits": {
+    "stop_loss": "Let B_t be signal-close bid and A_t ATR96_prior. S_long=B_t-A_t and S_short=B_t+A_t. Long triggers on bid at/below S_long; short triggers on executable ask at/above S_short. Gaps fill at worse executable next open. Chart-stop distance defines sizing, not a realized-loss guarantee.",
+    "profit_target": null,
+    "time_exit": "Exit at executable M1 close exactly due; STOP_LOSS before TIME_EXIT; unavailable post-entry M1 or due fill invalidates complete affected cell without substituted P&L.",
+    "signal_exit": null,
+    "maximum_holding": "At most 60 minutes and never after 15:00 London",
+    "end_of_session": "Only admit entries maturing by 15:00; defect is simulation-fatal to affected cell",
+    "priority": [
+      "DATA_INTEGRITY_FAILURE",
+      "STOP_LOSS",
+      "TIME_EXIT"
+    ]
+  },
+  "risk": {
+    "accounting_type": "R_STOP_DEFINED",
+    "position_sizing": "For long d=entry_ask-S_long; for short d=S_short-entry_bid. Require finite d>0. Size q so q*d is 0.25% of common pre-entry cell equity, excluding commission/slippage; spread is embedded in executable entry versus chart stop. Skip invalid/unrepresentable size. Gaps, commission and slippage can exceed 0.25%.",
+    "maximum_risk_per_trade": "0.25% current equity at executable entry-to-chart-stop distance before commission/slippage; realized loss can exceed it",
+    "gross_exposure_limit": "Six symbols and 1.50% aggregate initial risk per cell",
+    "leverage": "Use lower of risk size and V2 limit",
+    "concurrent_positions": "One per symbol; four cells have independent state"
+  },
+  "experiment": {
+    "baseline": "SMA4/SMA16 first cross; FOLLOW_CROSS; hold=60; one-ATR chart stop",
+    "stage_protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size": 4,
+    "robustness_tests": [
+      "Report four cells and frozen pre-R024 ledger snapshot reports/STRATEGY_THROUGHPUT_LEDGER.md updated 2026-11-05T21:43:00Z SHA-256 c52bff77b31b9b519af2107af3a15d2af1452396cfd1663f9af30ab5cc0ae63c plus four cells",
+      "Let m be the exact UTC midpoint timestamp of fixed V2 development interval; boundary close at m belongs to first half. Center hold=60 must have positive net R in both halves and at least three symbols with positive net R in each half",
+      "Double costs individually and jointly",
+      "For each mode, rank normal-cost hold=60 aggregate six-symbol net R by London date descending, ties ISO date ascending; remove same top five dates from both holds, or reject if fewer than five eligible dates",
+      "For each cell bootstrap total net R from its zero-filled eligible London-weekday daily net-R series: 10000 circular five-date blocks, original series length, seed 2026024; both 2.5th percentile bounds must exceed zero",
+      "Define R010/R014/R017 overlap as same symbol and same completed M15 boundary; report normal/doubled intersection and complement R. Complement below 100 trades rejects promotion; every informative complement must be positive under both costs"
+    ],
+    "costs": [
+      "Resolved/fallback spread, commission and slippage",
+      "Double components individually/jointly",
+      "No swap"
+    ],
+    "benchmarks": [
+      "Zero after-cost net R",
+      "Opposite response mode"
+    ],
+    "multiple_testing": "Frozen pre-R024 inventory is reports/STRATEGY_THROUGHPUT_LEDGER.md snapshot 2026-11-05T21:43:00Z SHA-256 c52bff77b31b9b519af2107af3a15d2af1452396cfd1663f9af30ab5cc0ae63c: 17 families/352 selectable cells. This fixed four-cell batch makes 18 families/356 cells. Diagnostics, sources, robustness and overlaps are non-selectable context; no best-cell rescue.",
+    "rejection_criteria": [
+      "Reject mode unless both holds positive normal/doubled",
+      "Reject center non-positive in either UTC half or fewer than three symbols per half",
+      "Reject fewer than 300 center trades",
+      "Reject unless after date removal both holds retain positive normal- and doubled-cost net R and their bootstrap lower bounds exceed zero; reject any non-positive informative overlap complement",
+      "Reject data-integrity failure",
+      "No holdout without explicit authorization"
+    ]
+  },
+  "implementation": {
+    "pseudocode": [
+      "Build M15/ATR causally",
+      "Compute prior/current SMA4/SMA16",
+      "Trigger strict first cross; map follow/fade; enter flat cell",
+      "Stop before time exit from next M1; invalidate defect cell",
+      "Publish cells, stresses, overlap, ledger"
+    ],
+    "required_libraries": [
+      "existing V2 candle/timezone/cost/fill/R-accounting components"
+    ],
+    "data_structures": [
+      "17-close M15 buffer",
+      "ATR96",
+      "four isolated cell states"
+    ],
+    "edge_cases": [
+      "M1 defect invalidates union",
+      "prior equality qualifies/current equality does not",
+      "no entry-candle stop",
+      "adverse gap",
+      "due-fill defect invalidates cell"
+    ],
+    "computational_requirements": "One causal M1 pass per symbol.",
+    "known_backtester_gaps": [
+      "V2 confirmation needed for feature, fill, invalidation and result rows"
+    ]
+  }
+}

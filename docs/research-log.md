@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-09: research back in this team
+
+- The user folded the research department back into V2 and asked for everything not needed to be
+  archived. Department + shared interface in `../archive/research-department-2026-11/` (its last
+  session state, `ACTIVE` since 2026-11-06, frozen as is); 21 research records, 75 reports and the
+  registries copied to `knowledge/research/`; 20 unbuilt drafts to `research/candidates/`
+  (R014 v0.1.0 dropped as superseded). Intake tool removed (`../archive/v2-intake-tool/`).
+- Unanswered at the merge (now moot): the 17 R007-R024 compatibility preflights, the fast-lane
+  bulk question, the reviewability proposal. The fast-lane idea (one shared harness for the M15
+  batches) stays worth considering when the first candidate is built.
+- `Continue.Research` rewritten (skill `continue-research`): candidate or researched idea ->
+  spec with pre-registered gates -> build -> development run -> gates -> record. Opus inline,
+  no dispatch.
+
 ## 2026-11-06: R014 development run and gates
 
 - `results/research/alternating_path_1ffe705d` (2015-01-02..2021-09-13, 6 FX pairs, `--dev-only`,

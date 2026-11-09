@@ -1,0 +1,105 @@
+{
+  "schema_version":"0.1.0",
+  "strategy_id":"M15_TREND_PULLBACK_BATCH",
+  "specification_version":"0.1.0",
+  "name":"M15 trend-plus-pullback continuation and failure screening batch",
+  "status":"DRAFT",
+  "classification":"SPECULATIVE",
+  "priority":54,
+  "submitted_at":null,
+  "research":{
+    "research_ids":["R-2026-011"],
+    "category":"intraday trend-pullback path screening",
+    "source_references":[{"id":"KAUFMAN_PULLBACK_CONTEXT","citation":"Perry J. Kaufman, Trading Systems and Methods; frozen legacy backlog cites an unspecified edition at pages 418, 835 and 950 for pullback-with-trend context","url":"https://www.wiley.com/en-us/trading-systems-and-methods-6th-edition-p-9781119605355","source_type":"SECONDARY","supports":"Wiley verifies current bibliographic metadata only. The cited legacy pages were not opened and provide no direct cost-aware M15 FX result; they motivate only the general pullback territory."}],
+    "evidence_summary":"No inspected source establishes this compact M15 FX rule. The frozen legacy backlog supplies only book-level pullback context, so the symmetric continuation-versus-failure specification is original, speculative, and low-prior.",
+    "feasibility":{"rating":"YELLOW","rationale":"The rule uses only supported M1 OHLC, causal contiguous M15 bars, signal-close fills, one fixed ATR stop and same-day exits; V2 still must confirm isolated cell/result transport."}
+  },
+  "market":{
+    "asset_class":"foreign-exchange CFDs",
+    "universe":["EURUSD","GBPUSD","AUDUSD","NZDUSD","USDCHF","USDCAD"],
+    "v2_compatibility":"SUPPORTED",
+    "base_timeframe":"M1 aggregated causally to M15",
+    "session":"Weekday signals from completed M15 bars ending 09:00 through 13:45 Europe/London; every exit due no later than 15:00",
+    "timezone":"Europe/London",
+    "directions":["LONG","SHORT"],
+    "holding_period":"DAY_TRADING"
+  },
+  "data":{
+    "required_fields":["open","high","low","close"],
+    "frequency":"Interval-start M1 OHLC aggregated into Europe/London wall-clock M15 intervals",
+    "minimum_history":"Fixed V2 development data only, with 98 valid observed M15 closes through signal t; elapsed gaps do not reset ATR, but every event bar t-P-8 through t must be physically adjacent",
+    "preprocessing":["Treat M1 timestamp ts as [ts,ts+1 minute) and require exactly 15 consecutive unique valid M1 candles per London M15 bar","Valid OHLC is finite and positive with high>=max(open,close), low<=min(open,close), high>=low; duplicates are invalid before aggregation","Compute observed-sequence TR using previous observed close, seed Wilder ATR(96) from the first 96 valid TRs, recur ATR_i=(95*ATR_{i-1}+TR_i)/96, and freeze ATR through t-1","Use IANA Europe/London rules and canonical UTC storage"],
+    "dependencies":["V2 M1 OHLC source","IANA Europe/London rules","V2 resolved signal-time spread, commission and slippage"],
+    "limitations":["An eight-bar net move is not an independently established trend regime","A one/two-bar pullback can be random sign noise","Six correlated symbols and eight cells are not independent trials","No development result authorizes final-holdout access"]
+  },
+  "hypothesis":{
+    "behavior":"After an ATR-material eight-change directional move ending before a one- or two-change strict pullback, price may resume the prior direction or continue with the pullback.",
+    "mechanism":"Resumption may reflect staggered trend-following flow; failure may reflect exhaustion of the preceding move and the start of reversal.",
+    "works_when":["The prior move is material and the pullback is orderly across contiguous bars","One response sign survives both pullback lengths and adjacent holding periods after costs"],
+    "fails_when":["The trend label is retrospective path fitting","Pullbacks do not predict beyond unconditional serial dependence","Costs absorb the response"],
+    "falsifiable_predictions":["A response-mode center and at least one exact neighbor have positive net R","The center is positive in both UTC-midpoint halves and at least three symbols","The center and required neighbor survive doubled costs and five-date removal"]
+  },
+  "math":{
+    "definitions":[
+      {"name":"atr96_prior","formula":"Wilder ATR(96) over valid observed M15 true ranges through t-1, using previous observed close across elapsed gaps","timing":"Frozen at signal close; require finite and positive"},
+      {"name":"trend_direction","formula":"sign(close_{t-P}-close_{t-P-8}); zero means no event","timing":"Uses eight completed close changes ending immediately before the P-change pullback"},
+      {"name":"trend_displacement_ratio","formula":"abs(close_{t-P}-close_{t-P-8})/atr96_prior","timing":"Require >=1.0 at completed signal close"},
+      {"name":"pullback_valid","formula":"for every i=t-P+1...t, sign(close_i-close_{i-1})=-trend_direction and close_i!=close_{i-1}","timing":"Uses exactly P completed strict opposite close changes"},
+      {"name":"trade_side","formula":"trend_direction for RESUMPTION and -trend_direction for FAILURE","timing":"Mechanical mapping at signal close"}
+    ],
+    "parameters":[
+      {"name":"aggregation_minutes","type":"integer","baseline":15,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"trend_changes","type":"integer","baseline":8,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"trend_displacement_atr_min","type":"number","baseline":1.0,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"pullback_changes","type":"integer","baseline":1,"domain":{"kind":"VALUES","values":[1,2]},"tunable":true},
+      {"name":"response_mode","type":"string","baseline":"RESUMPTION","domain":{"kind":"VALUES","values":["RESUMPTION","FAILURE"]},"tunable":true},
+      {"name":"holding_minutes","type":"integer","baseline":60,"domain":{"kind":"VALUES","values":[30,60]},"tunable":true},
+      {"name":"stop_atr_multiplier","type":"number","baseline":1.0,"domain":{"kind":"FIXED"},"tunable":false},
+      {"name":"risk_fraction_equity","type":"number","baseline":0.0025,"domain":{"kind":"FIXED"},"tunable":false}
+    ]
+  },
+  "entries":{
+    "long_condition":"eligible t AND trend_displacement_ratio>=1.0 AND pullback_valid AND ((trend_direction=+1 AND response_mode=RESUMPTION) OR (trend_direction=-1 AND response_mode=FAILURE)) AND cell flat",
+    "short_condition":"eligible t AND trend_displacement_ratio>=1.0 AND pullback_valid AND ((trend_direction=-1 AND response_mode=RESUMPTION) OR (trend_direction=+1 AND response_mode=FAILURE)) AND cell flat",
+    "signal_time":"Close of a London M15 interval ending 09:00 through 13:45 on a weekday when signal time plus holding_minutes is no later than 15:00",
+    "execution_timing":"SIGNAL_CLOSE",
+    "execution_details":"Enter at the final M1 chart/bid close of completed M15 bar t; V2 separately applies resolved or fixed-fallback spread, commission and slippage. The entry candle cannot trigger the new stop; management begins next M1.",
+    "order_type":"Market order at supported signal-close execution",
+    "restrictions":["One open position per symbol per cell","No pyramiding or reset from overlapping events","Every event bar t-P-8 through t is physically adjacent","Equal close changes invalidate the affected trend direction or pullback"]
+  },
+  "exits":{
+    "stop_loss":"Long bid-chart stop=signal_close_bid-atr96_prior; short bid-chart stop=signal_close_bid+atr96_prior. Long triggers on bid, short on executable ask; adverse gaps fill at V2's worse executable open with all costs.",
+    "profit_target":null,
+    "time_exit":"Exit at the M1 close ending exactly signal_time plus holding_minutes; any invalid M1 in (entry_time,due_exit_time] fails affected cells; on a valid due bar STOP_LOSS precedes TIME_EXIT",
+    "signal_exit":null,
+    "maximum_holding":"At most 60 minutes and never after 15:00 Europe/London",
+    "end_of_session":"No entry may mature after 15:00 London; post-entry defects fail only affected cells",
+    "priority":["STOP_LOSS","TIME_EXIT","DATA_INTEGRITY_FAILURE"]
+  },
+  "risk":{
+    "accounting_type":"R_STOP_DEFINED",
+    "position_sizing":"Each cell owns an isolated portfolio. Within a cell, same-timestamp symbols size from one common pre-entry equity snapshot so chart stop risk is 0.25% before costs; no state crosses cells.",
+    "maximum_risk_per_trade":"0.25% of current equity before costs",
+    "gross_exposure_limit":"Per cell: at most six symbols and 1.50% aggregate initial stop risk; no cap is shared across eight portfolios",
+    "leverage":"Use the lower of stop-risk size and V2 limits; skip unrepresentable size",
+    "concurrent_positions":"Within each cell one per symbol and six total; all eight cells have independent positions, equity, exposure, overlap and failures"
+  },
+  "experiment":{
+    "baseline":"pullback_changes=1, response_mode=RESUMPTION, holding_minutes=60, fixed trend_changes=8, displacement=1 ATR and stop=1 ATR",
+    "stage_protocol":"V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size":8,
+    "robustness_tests":["Report all eight cells and retain the complete contemporaneous breadth ledger","Report every symbol and UTC-midpoint development half; a close exactly at midpoint belongs to the first half","Multiply spread, commission and slippage individually by two","For each response-mode center P=1/hold=60, remove its five best normal-cost London dates from the center and exact neighbors P=2 and hold=30; require retained normal/doubled net R positive","For each center and neighbor use eligible London weekdays including zeros and 10000 circular five-date block-bootstrap resamples with seed 2026011; center normal-cost lower bound must exceed zero","A mode advances only if its center and at least one of the two exact neighbors P=2 or hold=30 passes every gate"],
+    "costs":["Use resolved or frozen-fallback spread, commission and slippage at every fill","Double each cost component for stress","No swap because all exits precede 15:00 London"],
+    "benchmarks":["Zero net R after costs","Opposite response mode on identical events"],
+    "multiple_testing":"Count all 296 selectable R007-R011 cells, R008's two diagnostics, and every named legacy trial including I-05 pullback variants. Any cross-batch comparison or promotion uses the complete ledger. Incomplete historical IDs prohibit confirmation; no best-cell or best-family rescue.",
+    "rejection_criteria":["Reject a mode unless center and at least one exact neighbor are positive after normal/doubled costs","Reject if center is non-positive in either UTC half or fewer than three symbols are positive in each half","Reject if center has fewer than 200 pooled trades","Reject if five-date removal makes center or required neighbor non-positive","Reject if center bootstrap lower bound is not above zero","Reject promotion if required cells fail data integrity","Never access final holdout without explicit authorization for a separately frozen promoted version"]
+  },
+  "implementation":{
+    "pseudocode":["Build valid London M15 bars causally.","Maintain observed-sequence Wilder ATR(96) through t-1.","For P=1/2 calculate the preceding eight-change direction/displacement and require P strict opposite changes.","Map resumption/failure and enter flat cells at signal close.","From next M1 process stop before due exit and fail only affected cells on defects.","Publish eight cells, neighbors, robustness and full breadth-ledger identities."],
+    "required_libraries":["Python standard library","existing V2 candle, timezone, cost, fill and R-accounting components"],
+    "data_structures":["Causal M15 aggregator","Wilder ATR(96)","Rolling 11-bar close window","Independent eight-cell state"],
+    "edge_cases":["duplicates invalidate aggregation","equal closes invalidate strict direction","event-window gap suppresses signal while elapsed gaps remain in ATR","exact displacement threshold qualifies","entry candle cannot stop trade","stop precedes due exit","adverse gap uses worse executable open","post-entry defects fail affected cells"],
+    "computational_requirements":"One causal pass per symbol with shared features and isolated eight-cell portfolios.",
+    "known_backtester_gaps":["Queue waits for V2 M15/fill/cell-state compatibility and confirmation of required result rows"]
+  }
+}

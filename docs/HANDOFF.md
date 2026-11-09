@@ -3,22 +3,27 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-11-09, End.)
+## Where things are (2026-11-09)
 
-- **Fill probe run 4** (new 14-day trial, started 2026-11-05 21:21 UTC, terminal tab, log
-  `results/live/probe_stdout_run4.log`): on 2026-11-09 08:27 UTC balance 90,236.72 of 100,000
-  (-9.76 %, 237 above FTMO's 10 % max loss); the user's stop rule (about day 4 or -8 %) is met.
-  Claude's STOP file was refused by the permission check: the user stops it (`results/live/STOP`)
-  or decides otherwise. Afterwards: fill report + 12.5 reconciliation on runs 3 and 4.
-- **Tests (2026-11-09):** 5237 passed, 10 skipped, 2 xfailed (8 min 27 s); ruff clean.
-- **Next:** the user asked 2026-11-09 to fold the research department back into this team
-  (`Continue.Research` again, research department archived); plan proposed, waiting for the
-  user's ok.
+- **Fill probe run 4 STOPPED** 2026-11-09 08:39 UTC (STOP file, the user's go; closed nothing):
+  ran from 2026-11-05 21:21 UTC on the new 14-day trial, final balance 90,159 of 100,000
+  (-9.84 %, just above FTMO's 10 % max loss). Log `results/live/probe_stdout_run4.log`. Next:
+  fill report + 12.5 reconciliation on runs 3 and 4.
+- **Research back in this team (the user, 2026-11-09):** the research department is archived in
+  `../archive/research-department-2026-11/` (with `Shared_Interface/`); its records, evidence
+  checks and registries are in `knowledge/research/`, its 20 unbuilt drafts in
+  `research/candidates/` (prioritised README). `Continue.Research` = skill `continue-research`
+  (pick a candidate or research an idea, spec with pre-registered gates, build, development run,
+  gates). Intake tool removed (archived in `../archive/v2-intake-tool/`). Also archived: V1,
+  `old/`, `book-notes-2026-10-23/`; the merged `bt-live` worktree was removed (branch `v2-live`
+  kept). Umbrella layout: `../AGENTS.md`, `../archive/README.md`.
+- **Tests (2026-11-09, after the merge):** 5159 passed, 8 skipped, 2 xfailed (8 min 7 s; the
+  intake tests left with the tool); ruff clean.
 
 ## Earlier state (2026-11-03 night run, V2.8)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
-  `hslu-jwn/claude-backtester_V2`. V1 is read-only.
+  `hslu-jwn/claude-backtester_V2`. V1 is archived (`../archive/`), read-only.
 - **Branches:** work on **`v2-6-research`** (pushed). `main` = merged 2026-10-27 at `da7efb9`;
   everything after (UI, V2.6d, news, V2.6i) is **not merged** yet. Merge to `main` only on the
   user's word.
@@ -56,18 +61,11 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   skill. Baseline before the change: tag `pre-agent-migration-2026-11-02`.
 - **Open:** top up DeepSeek to enable it (optional).
 
-## Research department (since 2026-10-27)
+## Research (one team again since 2026-11-09)
 
-Strategy research is a separate team at `../Research_Department/`; strategies arrive as JSON in
-`../Shared_Interface/queue/` (contract 0.1.0, accepted by both teams 2026-10-27). We keep
-implementation, data, costs, validation, experiments and the one-time test. Process
-`docs/research-intake.md`; tool `python -m backtester.tools.intake
-validate|claim|recover|reject|progress|result|finish` (V2.6i i1-i7 built and accepted
-2026-10-28). Focus: **day trading** (the user). `Continue.Knowledge` is retired;
-`Continue.Research` now works on queue submissions. Queue empty so far; the two research
-drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Research on
-2026-10-28 that we are ready for a first R-type day-trading pilot. Gemini guide for them:
-`../RESEARCH_TEAM_GEMINI_GUIDE.md`.
+Focus: **day trading** (the user). Backlog: `research/candidates/README.md` (former department's
+drafts, highest priority M15_SHOCK_RESPONSE_BATCH) and `knowledge/ideas.md`. Tested and rejected
+by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (2026-11-06).
 
 ## State of the current work
 
@@ -76,14 +74,15 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 | V2.4b | built 2026-11-03: measured fill p90 per symbol is the stressed cost level (`analytics/slippage_p90.json`, 5,512 fills) |
 | 12.5 | built 2026-11-03: `tools/reconcile.py`, all demo trades matched / explained (`results/reconcile_2026-11-02/`) |
 | V2.4e news filter | wired into every run; FTMO restricted-event scope; **off by default** (accepted); real-calendar validation built 2026-11-03 (`tools/news_validate.py`); 1-hour rows fixed by `news_clean` rule 3 (2026-11-03, 665 rows; anchors 5 / 6 pass) |
-| V2.6i intake | i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
+| V2.6i intake | retired 2026-11-09 (tool archived); i1-i7 done; i8 pilot FX_LONDON_FIX_REV run 2026-10-28: all 9 variants negative, result envelope sent, **rejected by the user 2026-10-29**, moved to `queue/rejected/`, Research told (`docs/research-log.md`) |
 | R014 M15_ALTERNATING_PATH_BATCH v0.2.0 | claimed 2026-11-05, strategy 9 `alternating_path` built (`docs/strategy-alternating-path.md`, grid `research/grids/alternating_path.toml`); development run 2026-11-06: all 4 cells negative (-2,585 to -3,925 R), every gate fails except the trade count (`results/research/alternating_path_1ffe705d/gates.json`); envelope published; **rejected by the user 2026-11-06**, moved to `queue/rejected/`, Research told (decision + gate readings) |
-| Open questions for Research | 0; replies sent 2026-11-03 (no CFD session calendar for R004's integrity predicate; reviewability proposal: review when the user says so) |
 | Built, waiting for the user's acceptance | none; V2.6j, V2.6k, V2.6l and V2.4c checks #2 #6 #13 accepted by the user 2026-11-03 |
 | Deals export | `scripts/export_deals.py <since> --offset-hours 3` (+2 h from 2026-11-01), read-only |
 
 ## Accepted / decided by the user (do not ask again)
 
+- 2026-11-09: research department folded back into this team and archived; intake tool
+  removed; V1, old folders and the bt-live worktree archived / removed; fill probe run 4 stopped.
 - 2026-11-06: R014 M15_ALTERNATING_PATH_BATCH v0.2.0 rejected after the development stage.
 - 2026-11-02: V2.8 finalization plan (audit), U1 chart pager (looked at), V2.4b now, no
   `pytest-xdist`, R1 `live/` status fix, night-run rules (ROADMAP V2.8), 12.5 scope.
@@ -107,18 +106,13 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 2. ☑ `v2-6-research` merged into `main` 2026-11-03 (the user; fast-forward, full suite green).
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
-4. Review Research's reviewability proposal (`FB_UNKNOWN_20261102T232536Z_1ebf`) only when
-   the user says so (the user, 2026-11-03). The night questions on the stop inside the spread
-   and the calendar 1-hour rows were decided and built 2026-11-03.
+4. ☑ Research's reviewability proposal: moot, the department is archived (2026-11-09).
 
 ## Next step
 
-Stop fill probe run 4 (see top), then re-run the fill report and 12.5 reconciliation. Research
-department merge per the user's decision 2026-11-09. JP225 opening-range exit 15:25 Tokyo from 2024-11-05 (TSE close 15:30; built 2026-11-03,
-the user). Open for the user: the reviewability proposal; the
-research queue is empty (`Continue.Research` waits for a submission).
+Fill report + 12.5 reconciliation on fill probe runs 3 and 4 (`Continue.Code`), or
+`Continue.Research` on the next candidate.
 
 ## First prompt for the next chat
 
-The research-department merge (if the user accepted the plan), else `Continue.Code` (after the
-bot run: fill report + reconciliation).
+`Continue.Code` (fill report + reconciliation) or `Continue.Research`.

@@ -29,7 +29,7 @@ by habit. One coordinator at a time; no review chains by default.
 |---|---|---|
 | Mechanical edits (renames, labels, doc sync, pinning tests) | Codex `--model gpt-reserve` low, or Claude subagent `haiku` | 2026-10-28 |
 | Routine code from an exact brief (tools, reports, UI glue) | Codex `gpt-6.1-terra` medium (dispatcher default) | 2026-11-02 |
-| Engine / no-lookahead / risk, a new strategy from a submission, hard bugs | Codex `--model gpt-6.1-sol` medium, high only when needed | 2026-10-29 |
+| Engine / no-lookahead / risk, a new strategy from a spec, hard bugs | Codex `--model gpt-6.1-sol` medium, high only when needed | 2026-10-29 |
 | Codex failed twice at sol | Claude subagent `sonnet` (no Astra: OpenAI flagship, no access) | in-session |
 | Quick bounded fixes, short text tasks | `ai_dispatch groq` (`openai/gpt-oss-120b`; also `--model qwen/qwen3.8-27b`), free tier | 2026-11-02 |
 | Long-text extraction, summaries | `ai_dispatch openrouter` (`nvidia/nemotron-3-ultra-550b-a55b:free`; also `cohere/north-mini-code:free`); only `:free` models accepted | 2026-11-02 |

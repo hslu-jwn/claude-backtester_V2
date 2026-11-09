@@ -1,0 +1,168 @@
+{
+  "schema_version": "0.1.0",
+  "strategy_id": "M15_COMPRESSION_BREAK_BATCH",
+  "specification_version": "0.1.0",
+  "name": "M15 compression-break continuation and reversal screening batch",
+  "status": "DRAFT",
+  "classification": "SPECULATIVE",
+  "priority": 60,
+  "submitted_at": null,
+  "research": {
+    "research_ids": ["R-2026-008"],
+    "category": "intraday compression and completed-close breakout screening",
+    "source_references": [
+      {
+        "id": "HLL2013",
+        "citation": "Holmberg, Lönnbark and Lundström (2013), Assessing the profitability of intraday opening range breakout strategies, Finance Research Letters 10",
+        "url": "https://doi.org/10.1016/j.frl.2012.09.001",
+        "source_type": "PRIMARY",
+        "supports": "Indirect evidence that some intraday breakouts can trend; its opening-range crude-oil event does not support a preceding FX compression rule."
+      },
+      {
+        "id": "MSL2026",
+        "citation": "Magner, Sanhueza and Lavín (2026), When is a breakout informative? Market conditions and technical signals, Finance Research Letters",
+        "url": "https://doi.org/10.1016/j.frl.2026.110774",
+        "source_type": "PRIMARY",
+        "supports": "Contrary long-horizon evidence: equity breakouts load on momentum and lack significant factor-adjusted alpha; transfer to intraday FX is unsupported."
+      },
+      {
+        "id": "GIRGIN2026",
+        "citation": "Girgin (2026), The Calm Before More Calm? Daily Bollinger and TTM Squeezes, Volatility Clustering and the Leverage Effect in S&P 500 Stocks, SSRN",
+        "url": "https://doi.org/10.2139/ssrn.7600800",
+        "source_type": "PRIMARY",
+        "supports": "Adverse working-paper evidence: daily squeezes do not precede volatility bursts and the tested squeeze-breakout rule loses; it is not peer reviewed."
+      }
+    ],
+    "evidence_summary": "No direct cost-aware intraday study supports the rule. Evidence is indirect or adverse, so this is an explicitly speculative falsification batch inside the existing I-32/I-33 family.",
+    "feasibility": {
+      "rating": "YELLOW",
+      "rationale": "The design uses only supported FX M1 OHLC, causal M15 state, signal-close fills, fixed ATR stops and same-day exits, but shared batch primitives still await V2 preflight confirmation."
+    }
+  },
+  "market": {
+    "asset_class": "foreign-exchange CFDs",
+    "universe": ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"],
+    "v2_compatibility": "SUPPORTED",
+    "base_timeframe": "M1 aggregated causally to M15",
+    "session": "Weekday signals from completed M15 bars ending 09:00 through 12:45 Europe/London; every exit due no later than 15:00",
+    "timezone": "Europe/London",
+    "directions": ["LONG", "SHORT"],
+    "holding_period": "DAY_TRADING"
+  },
+  "data": {
+    "required_fields": ["open", "high", "low", "close"],
+    "frequency": "Interval-start M1 OHLC aggregated into Europe/London wall-clock M15 intervals",
+    "minimum_history": "Fixed V2 development data only, with 98 valid observed completed M15 closes through the signal bar; elapsed market gaps do not reset ATR, but the complete prior compression block and signal bar must be physically contiguous M15 intervals",
+    "preprocessing": [
+      "Treat M1 timestamp ts as [ts,ts+1 minute); a London M15 bar ending 09:00 contains [08:45,09:00)",
+      "Require exactly 15 consecutive unique M1 candles; valid OHLC means finite positive open/high/low/close, high>=max(open,close), low<=min(open,close), and high>=low; a duplicate is invalid before aggregation",
+      "Compute TR=max(high-low,abs(high-prior_observed_close),abs(low-prior_observed_close)), including elapsed daily/weekend gaps; initialize Wilder ATR(96) as the arithmetic mean of the first 96 valid observed TRs, then update ATR_t=(95*ATR_{t-1}+TR_t)/96; freeze ATR through t-1 before evaluating close_t",
+      "Use IANA Europe/London rules and canonical UTC storage"
+    ],
+    "dependencies": ["V2 M1 OHLC source", "IANA Europe/London rules", "V2 resolved signal-time spread, commission and slippage"],
+    "limitations": [
+      "Compression describes volatility state but supplies no established directional prediction",
+      "The closest registered squeeze study is adverse and nearby V2 breakout families have failed or decayed",
+      "Six correlated symbols and 72 correlated cells are not independent trials",
+      "No development result authorizes final-holdout access"
+    ]
+  },
+  "hypothesis": {
+    "behavior": "After a low-range M15 block, a completed close outside the frozen block may continue as volatility expands or reverse as a failed breakout.",
+    "mechanism": "Continuation could reflect delayed order execution after a range constraint; reversal could reflect stop-triggered liquidity demand that exhausts at the completed break.",
+    "works_when": ["The block is genuinely compressed relative to prior-only ATR", "One response sign persists across exact neighboring settings and survives all costs"],
+    "fails_when": ["Compression has no incremental directional information", "The completed close enters after the move is exhausted", "Spread, slippage and false breaks absorb gross returns"],
+    "falsifiable_predictions": [
+      "A declared response-mode center and at least two exact one-axis neighbors have positive net R",
+      "The cluster is positive in both UTC-midpoint development halves and at least three symbols",
+      "The cluster survives doubled costs and removal of the center's five best London dates"
+    ]
+  },
+  "math": {
+    "definitions": [
+      {"name": "atr96_prior", "formula": "TR_i=max(high_i-low_i,abs(high_i-previous_observed_close),abs(low_i-previous_observed_close)), including elapsed gaps; seed with arithmetic mean of first 96 valid observed TRs, then ATR_i=(95*ATR_{i-1}+TR_i)/96 through t-1", "timing": "Frozen before signal bar t; 98 valid observed closes through t provide prior close, 96 prior TRs, and close_t"},
+      {"name": "block_high_low", "formula": "high_L=max(high_{t-L:t-1}); low_L=min(low_{t-L:t-1})", "timing": "Uses only L completed bars before t"},
+      {"name": "compression_ratio", "formula": "median(sorted true_range_{t-L:t-1}) / atr96_prior; for even L the median is the arithmetic mean of the two middle sorted TRs", "timing": "Require finite atr96_prior>0 and compare before direction mapping"},
+      {"name": "break_direction", "formula": "+1 if close_t>high_L; -1 if close_t<low_L; otherwise no signal", "timing": "Known only at the completed M15 close; wick-only breaks do not count"},
+      {"name": "trade_side", "formula": "break_direction for CONTINUATION and -break_direction for REVERSAL", "timing": "Mechanical mapping at signal close"}
+    ],
+    "parameters": [
+      {"name": "aggregation_minutes", "type": "integer", "baseline": 15, "domain": {"kind": "FIXED"}, "tunable": false},
+      {"name": "atr_period", "type": "integer", "baseline": 96, "domain": {"kind": "FIXED"}, "tunable": false},
+      {"name": "compression_lookback", "type": "integer", "baseline": 8, "domain": {"kind": "VALUES", "values": [4, 8, 16]}, "tunable": true},
+      {"name": "compression_ratio_max", "type": "number", "baseline": 0.75, "domain": {"kind": "VALUES", "values": [0.5, 0.75]}, "tunable": true},
+      {"name": "response_mode", "type": "string", "baseline": "CONTINUATION", "domain": {"kind": "VALUES", "values": ["CONTINUATION", "REVERSAL"]}, "tunable": true},
+      {"name": "holding_minutes", "type": "integer", "baseline": 60, "domain": {"kind": "VALUES", "values": [30, 60, 120]}, "tunable": true},
+      {"name": "stop_atr_multiplier", "type": "number", "baseline": 1.0, "domain": {"kind": "VALUES", "values": [1.0, 2.0]}, "tunable": true},
+      {"name": "risk_fraction_equity", "type": "number", "baseline": 0.0025, "domain": {"kind": "FIXED"}, "tunable": false}
+    ]
+  },
+  "entries": {
+    "long_condition": "eligible completed M15 t AND compression_ratio<=compression_ratio_max AND ((close_t>high_L AND response_mode=CONTINUATION) OR (close_t<low_L AND response_mode=REVERSAL)) AND finite atr96_prior>0 AND no open position for this symbol and cell",
+    "short_condition": "eligible completed M15 t AND compression_ratio<=compression_ratio_max AND ((close_t<low_L AND response_mode=CONTINUATION) OR (close_t>high_L AND response_mode=REVERSAL)) AND finite atr96_prior>0 AND no open position for this symbol and cell",
+    "signal_time": "Close of a London-aligned M15 interval ending 09:00 through 12:45 on a weekday when signal time plus holding_minutes is no later than 15:00",
+    "execution_timing": "SIGNAL_CLOSE",
+    "execution_details": "entry_price is the chart/bid close of M1 [signal_time-1 minute,signal_time), also the completed M15 close. Stop distance uses that chart price; V2 separately applies resolved or fixed-fallback spread, commission and slippage. The entry candle cannot trigger the new stop; management begins with the next M1.",
+    "order_type": "Market order at supported signal-close execution",
+    "restrictions": ["One open position per symbol per cell", "No pyramiding or reset from an overlapping event", "Wick-only block breaks do not qualify", "Bars t-L through t must be physically adjacent 15-minute intervals; any gap inside that event window means no signal"]
+  },
+  "exits": {
+    "stop_loss": "Long bid-chart stop = signal_close_bid-stop_atr_multiplier*atr96_prior; short bid-chart stop = signal_close_bid+stop_atr_multiplier*atr96_prior. Long triggers on bid, short on executable ask; adverse gap fills at V2's worse executable open with all costs.",
+    "profit_target": null,
+    "time_exit": "Exit at the M1 close ending exactly signal_time plus holding_minutes; any invalid M1 in (entry_time,due_exit_time] fails the affected cell before exit; a valid due bar touching the stop resolves STOP_LOSS first",
+    "signal_exit": null,
+    "maximum_holding": "At most 120 minutes and never after 15:00 Europe/London",
+    "end_of_session": "No eligible entry may mature after 15:00 London; no pre-entry bars means no signal, while an in-position data defect fails only affected cells",
+    "priority": ["STOP_LOSS", "TIME_EXIT", "DATA_INTEGRITY_FAILURE"]
+  },
+  "risk": {
+    "accounting_type": "R_STOP_DEFINED",
+    "position_sizing": "Each grid cell owns an isolated virtual portfolio. Within one cell, size same-timestamp symbol signals from that cell's common pre-entry equity snapshot so chart entry-to-stop risk equals 0.25% before costs; no equity, exposure, position or skip state crosses cells.",
+    "maximum_risk_per_trade": "0.25% of current equity before costs",
+    "gross_exposure_limit": "Per cell: maximum six symbols and 1.50% aggregate initial stop risk; there is no global cap shared across the 72 isolated cell portfolios",
+    "leverage": "Use the lower of stop-risk size and V2 limits; skip if valid size cannot be represented",
+    "concurrent_positions": "Within each cell, one per symbol and six across its universe; all 72 cells have independent positions, equity, exposure, overlap decisions and data-failure state"
+  },
+  "experiment": {
+    "baseline": "compression_lookback=8, compression_ratio_max=0.75, response_mode=CONTINUATION, holding_minutes=60, stop_atr_multiplier=1.0",
+    "stage_protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size": 72,
+    "robustness_tests": [
+      "Report all 72 cells and every prior compression/opening-breakout trial that can be identified",
+      "Report every symbol and halves split at the exact UTC midpoint of V2's fixed development interval; a close exactly at midpoint belongs to the first half",
+      "Multiply spread, commission and slippage individually by two for cost stress",
+      "For each mode center L=8/c=0.75/hold=60/stop=1, rank dates by normal-cost pooled net R, tie by ascending date, remove its top five from the center and exact neighbors, and require retained normal- and doubled-cost net R to remain positive",
+      "For every center and neighbor, form a London-weekday daily net-R series from its first eligible post-warm-up date to development end, including zero on eligible no-trade dates; report a 95% percentile interval for mean daily net R from 10000 circular five-date block-bootstrap resamples with seed 2026008; the normal-cost center interval lower bound must exceed zero, while neighbor intervals are report-only",
+      "A mode advances only if its center and at least two exact one-axis neighbors L=4, L=16, c=0.50, hold=30, hold=120 pass all gates"
+    ],
+    "costs": ["Use V2 timestamp-resolved or frozen fixed-fallback spread plus commission and slippage at every fill", "Doubled stress multiplies each cost component by two", "No swap because all positions close before 15:00 London"],
+    "benchmarks": ["Zero net R after costs", "Opposite response mode on identical compression breaks", "Exactly two non-selectable plain-break diagnostic rows: CONTINUATION and REVERSAL at L=8, hold=60, stop=1, with no compression condition; each uses its own isolated position state and otherwise identical signal clock, fills, costs and failure rules; report trade count, mean daily net R, and compressed-center minus plain mean daily net R"],
+    "multiple_testing": "Count all 72 selectable cells, the two frozen non-selectable plain-break diagnostic rows, and all identifiable prior I-32/I-33 and opening-breakout trials. The plain rows cannot alter advancement or become promoted settings. If the historical ledger is incomplete, label multiplicity incomplete and prohibit a confirmatory claim; no best-cell rescue is allowed.",
+    "rejection_criteria": [
+      "Reject a mode unless its center and at least two exact neighbors are positive after normal and doubled costs",
+      "Reject if the cluster is non-positive in either UTC-midpoint development half",
+      "Reject if fewer than three symbols have positive center net R in each half",
+      "Reject if the center has fewer than 300 pooled trades",
+      "Reject if five-date removal makes the center or required neighbors non-positive under either normal or doubled costs",
+      "Reject if the normal-cost center's seeded circular-block-bootstrap 95% interval for mean London-weekday daily net R does not lie wholly above zero",
+      "Reject affected cells on any invalid M1 in (entry_time,due_exit_time] and prohibit promotion if a required cluster contains a failed cell",
+      "Never access the final holdout without explicit authorization for a separately frozen promoted version"
+    ]
+  },
+  "implementation": {
+    "pseudocode": [
+      "Build valid London-aligned M15 bars causally from interval-start M1.",
+      "Maintain prior-only Wilder ATR(96) and freeze L-bar high, low and median true range for each L.",
+      "At eligible M15 close t require compression and a close strictly outside the frozen block.",
+      "Map continuation or reversal mechanically and enter at signal close when that cell is flat.",
+      "Freeze the bid-chart ATR stop; starting next M1 process adverse gap/intrabar stop before due time exit.",
+      "Fail only affected cells on an invalid interval through and including the due exit.",
+      "Run exactly two separate non-selectable plain-break center diagnostics and publish their incremental mean-daily-net-R comparisons, all 72 cells, exact neighbors and robustness rows."
+    ],
+    "required_libraries": ["Python standard library", "existing V2 candle, timezone, cost, fill and R-accounting components"],
+    "data_structures": ["Causal M15 aggregator", "Wilder ATR(96) state", "Rolling high/low/median state for L=4/8/16", "Independent 72-cell position state"],
+    "edge_cases": ["duplicate M1 is invalid before aggregation", "valid OHLC is finite and positive with high>=max(open,close), low<=min(open,close), high>=low", "elapsed market gaps count in observed-sequence ATR but any gap within t-L through t suppresses the signal", "close exactly at block boundary is no signal", "wick-only break is no signal", "non-positive ATR skips", "entry candle cannot stop trade", "stop and time exit collide as stop first", "gap stop uses worse executable open", "post-entry defects fail affected cells"],
+    "computational_requirements": "One causal pass per symbol; cache shared M15, ATR and block features while preserving independent position state for 72 cells.",
+    "known_backtester_gaps": ["Queue submission waits for V2's response to the shared R007 M15/fill/cell-state preflight and a batch-specific result-shape compatibility review"]
+  }
+}

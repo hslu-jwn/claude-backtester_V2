@@ -1,0 +1,326 @@
+{
+  "schema_version": "0.1.0",
+  "strategy_id": "INTRADAY_H1_SHOCK_RESPONSE",
+  "specification_version": "0.1.0",
+  "name": "Sign-agnostic response after unusually large hourly returns",
+  "status": "DRAFT",
+  "classification": "ORIGINAL",
+  "priority": 40,
+  "submitted_at": null,
+  "research": {
+    "research_ids": ["R-2026-004"],
+    "category": "intraday shock continuation versus reversal",
+    "source_references": [
+      {
+        "id": "CP2020",
+        "citation": "Caporale and Plastun (2020), Daily abnormal price changes and trading strategies in the FOREX, Journal of Economic Studies 48(1), 211-222",
+        "url": "https://doi.org/10.1108/JES-11-2019-0503",
+        "source_type": "PRIMARY",
+        "supports": "Daily abnormal FX moves continue during the event day and reverse the next day, but the reported trading exercise omits all transaction costs."
+      },
+      {
+        "id": "BCH2021",
+        "citation": "Borgards, Czudaj and Hoang (2021), Price overreactions in the commodity futures market: An intraday analysis of the Covid-19 pandemic impact, Resources Policy 71, 101966",
+        "url": "https://doi.org/10.1016/j.resourpol.2020.101966",
+        "source_type": "PRIMARY",
+        "supports": "Extreme intraday commodity-futures turning-point legs are followed by contrary legs, especially in precious metals, but turning points are not causal entries and fees and slippage are omitted."
+      },
+      {
+        "id": "ZKA2004",
+        "citation": "Zawadowski, Kertesz and Andor (2004), Large price changes on small scales, Physica A 344, 221-226",
+        "url": "https://doi.org/10.1016/j.physa.2004.06.121",
+        "source_type": "PRIMARY",
+        "supports": "Causally detected extreme 15-minute stock moves reverse over the next 10-30 minutes; the paper supports same-clock normalization and non-overlapping events but does not test economic significance."
+      },
+      {
+        "id": "ZAK2006",
+        "citation": "Zawadowski, Andor and Kertesz (2006), Short-term market reaction after extreme price changes of liquid stocks, Quantitative Finance 6(4), 283-295",
+        "url": "https://doi.org/10.1080/14697680600699894",
+        "source_type": "PRIMARY",
+        "supports": "Causal extreme 60-minute individual-stock moves reverse over the next 30-60 minutes; best-ask to best-bid returns survive on NASDAQ but mostly lose significance on NYSE when spreads widen."
+      },
+      {
+        "id": "RU2021",
+        "citation": "Rif and Utz (2021), Short-term stock price reversals after extreme downward price movements, Quarterly Review of Economics and Finance 81, 123-133",
+        "url": "https://doi.org/10.1016/j.qref.2021.05.004",
+        "source_type": "PRIMARY",
+        "supports": "In 2014-2019 Nasdaq-100 constituents, 31% of an extreme negative one-minute return reverses in the next minute, while the average quoted spread nearly triples during crash intervals."
+      },
+      {
+        "id": "EL1995",
+        "citation": "Ederington and Lee (1995), The Short-Run Dynamics of the Price Adjustment to New Information, Journal of Financial and Quantitative Analysis 30(1), 117-134",
+        "url": "https://doi.org/10.2307/2331256",
+        "source_type": "PRIMARY",
+        "supports": "Scheduled-news adjustment in interest-rate and FX futures was largely complete within 40 seconds and limited overreaction corrected within minutes, arguing against assuming that reversal remains exploitable at an H1 close."
+      }
+    ],
+    "evidence_summary": "Primary evidence gives opposing continuation and reversal predictions and no source establishes net profitability for this H1 CFD rule. The frozen V2 backlog also records an earlier I-61 test as no robust edge, dominated by the top 1% of events. This stricter two-sign design is a low-priority falsification re-study, not a claimed edge, and prior trials remain counted.",
+    "feasibility": {
+      "rating": "YELLOW",
+      "rationale": "V2 has the required M1 OHLC, supported symbols, signal-close execution, costs, and stop-defined R, but the mixed-timezone session masks and same-clock robust normalization require compatibility review before submission."
+    }
+  },
+  "market": {
+    "asset_class": "foreign-exchange, precious-metal, and equity-index CFDs",
+    "universe": ["XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"],
+    "v2_compatibility": "SUPPORTED",
+    "base_timeframe": "M1 aggregated to per-symbol local-clock H1 event bars",
+    "session": "Weekdays outside defined opening, final-30-minute, daily-reopen, and rollover windows",
+    "timezone": "Europe/London for XAUUSD, GBPUSD, and GBPJPY; America/New_York for NAS100 and US500; timestamps stored in UTC",
+    "directions": ["LONG", "SHORT"],
+    "holding_period": "DAY_TRADING"
+  },
+  "data": {
+    "required_fields": ["open", "high", "low", "close"],
+    "frequency": "Complete M1 OHLC bars aggregated into half-open IANA local-clock H1 intervals",
+    "minimum_history": "At least 60 earlier structurally valid H1 observations for the same symbol and local clock hour before an event is eligible; validity is independent of event magnitude and trading eligibility",
+    "preprocessing": [
+      "Aggregate M1 intervals [t,t+1m) into local H1 intervals [H,H+1h) using Europe/London for XAUUSD, GBPUSD, and GBPJPY and America/New_York for NAS100 and US500",
+      "For each symbol and IANA local clock hour retain the previous 60 valid H1 open-to-close log returns",
+      "For the W60 baseline, structurally valid means exactly 60 unique non-stale M1 bars and no reopen, weekend, missing-data, duplicate-timestamp, or timezone-transition defect; retain complete bars even if they were prior events or were in an entry-excluded opening/final window",
+      "Before reading experiment OHLC, resolve one immutable, version-identified expected-M1 schedule for each symbol and date from V2's authoritative CFD symbol-session calendar; it must mark regular open intervals, recurring daily breaks, weekends, exchange holidays, and early closes independently of whether a price bar exists",
+      "Compute H1 Wilder ATR(20) from completed H1 bars only",
+      "Convert exclusion windows with IANA Europe/London and America/New_York rules"
+    ],
+    "dependencies": ["V2 M1 OHLC source", "IANA timezone database", "V2 resolved cost model", "Version-identified V2 symbol-session calendar resolved independently of experiment OHLC availability"],
+    "limitations": [
+      "CFD quotes differ from the futures, spot, and equity data in the source studies",
+      "OHLC bars cannot distinguish news-driven permanent moves from temporary liquidity shocks",
+      "The event threshold and session masks are an original adaptation rather than a direct replication",
+      "The directly relevant stock study required both a 4% move and eight times normal volatility, much more extreme than this draft's 2-4 robust-scale thresholds",
+      "Modern one-minute reversal evidence may be an ultra-fast liquidity-provision effect that is gone by an H1 signal close",
+      "NAS100 and US500 events and GBPUSD and GBPJPY events are cross-correlated"
+    ]
+  },
+  "hypothesis": {
+    "behavior": "The direction-normalized return after an unusually large completed H1 move has a stable non-zero sign over the next one to three hours.",
+    "mechanism": "Continuation may reflect information diffusion or persistent order flow; reversal may reflect temporary liquidity pressure or overreaction. Both signs are tested and the zero-after-cost null is preferred absent broad stability.",
+    "works_when": [
+      "A common response sign survives same-clock normalization across thresholds, symbols, directions, and development halves",
+      "The gross conditional move is large enough to exceed V2 spread, commission, slippage, and occasional wide-stop losses"
+    ],
+    "fails_when": [
+      "Continuation and reversal signs differ by symbol, threshold, direction, or development half",
+      "A few crash or macro-news events dominate the estimate",
+      "Resolved costs remove the conditional move"
+    ],
+    "falsifiable_predictions": [
+      "For the primary k=3.0, h=1 sample, the two-sided day-clustered 95% confidence interval for pooled raw q excludes zero and the mechanically mapped response mode has a day-clustered 95% confidence interval for mean net R wholly above zero",
+      "One response mode has positive pooled net R in both fixed development halves",
+      "The same response mode has positive gross expectancy on at least three of five symbols",
+      "At least 100 pooled non-overlapping events and 20 events per supporting symbol exist for the primary k=3.0, h=1 setting",
+      "Removing the five most profitable events does not make pooled net R non-positive"
+    ]
+  },
+  "math": {
+    "definitions": [
+      {
+        "name": "event_return_s_H",
+        "formula": "ln(close_s_H/open_s_H) for the completed per-symbol IANA local-clock H1 event bar represented by UTC boundaries",
+        "timing": "Known only at H1 close H+1h"
+      },
+      {
+        "name": "q_s_H_h",
+        "formula": "sign(event_return_s_H) * ln(close_s_H_plus_h/close_s_H), using the exact h-hour causal forward close for the same eligible event; positive q means continuation and negative q means reversal",
+        "timing": "An outcome known only at the scheduled h-hour evaluation close; never available to entry selection"
+      },
+      {
+        "name": "robust_z_s_H",
+        "formula": "(event_return_s_H-median(W60_s_clock))/(1.4826*MAD(W60_s_clock)), where W60 contains only the previous 60 valid returns for the same symbol and IANA local clock hour; skip the event when MAD is zero or non-finite",
+        "timing": "Window ends before the event bar and never includes current or future data"
+      },
+      {
+        "name": "trade_side_s_H",
+        "formula": "sign(event_return_s_H) for CONTINUATION and -sign(event_return_s_H) for REVERSAL",
+        "timing": "Frozen at the event H1 close"
+      },
+      {
+        "name": "stop_distance_s_H",
+        "formula": "6.0 * WilderATR20_H1_s_H",
+        "timing": "Computed from completed H1 bars at entry and never widened"
+      },
+      {
+        "name": "event_cost_multiple_s_H",
+        "formula": "abs(close_s_H-open_s_H) / (2 * resolved_one_way_signal_price_cost_s_H), where the one-way denominator component is the deterministic V2 spread plus commission plus slippage schedule resolved at the signal timestamp and expressed in symbol price units",
+        "timing": "Computed causally at signal time from the authoritative V2 cost schedule, identically for every response mode and holding horizon; never use a future exit schedule or realized quote and skip if non-finite or non-positive"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "response_mode",
+        "type": "string",
+        "baseline": "CONTINUATION",
+        "domain": {"kind": "VALUES", "values": ["CONTINUATION", "REVERSAL"]},
+        "tunable": true
+      },
+      {
+        "name": "event_z_threshold",
+        "type": "number",
+        "baseline": 3.0,
+        "domain": {"kind": "VALUES", "values": [2.0, 3.0, 4.0]},
+        "tunable": true
+      },
+      {
+        "name": "holding_hours",
+        "type": "integer",
+        "baseline": 1,
+        "domain": {"kind": "VALUES", "values": [1, 2, 3]},
+        "tunable": true
+      },
+      {
+        "name": "same_clock_lookback",
+        "type": "integer",
+        "baseline": 60,
+        "domain": {"kind": "FIXED"},
+        "tunable": false
+      },
+      {
+        "name": "atr_period_h1",
+        "type": "integer",
+        "baseline": 20,
+        "domain": {"kind": "FIXED"},
+        "tunable": false
+      },
+      {
+        "name": "stop_atr_multiplier",
+        "type": "number",
+        "baseline": 6.0,
+        "domain": {"kind": "FIXED"},
+        "tunable": false
+      },
+      {
+        "name": "minimum_event_cost_multiple",
+        "type": "number",
+        "baseline": 5.0,
+        "domain": {"kind": "FIXED"},
+        "tunable": false
+      },
+      {
+        "name": "risk_fraction_equity",
+        "type": "number",
+        "baseline": 0.001,
+        "domain": {"kind": "FIXED"},
+        "tunable": false
+      }
+    ]
+  },
+  "entries": {
+    "long_condition": "weekday AND abs(robust_z_s_H)>=event_z_threshold AND event_cost_multiple_s_H>=minimum_event_cost_multiple AND trade_side_s_H=+1 AND the completed event bar and proposed holding interval pass every deterministic calendar/session exclusion knowable at signal time AND no position or horizon cooldown is active for the symbol within this independently executed grid cell",
+    "short_condition": "weekday AND abs(robust_z_s_H)>=event_z_threshold AND event_cost_multiple_s_H>=minimum_event_cost_multiple AND trade_side_s_H=-1 AND the completed event bar and proposed holding interval pass every deterministic calendar/session exclusion knowable at signal time AND no position or horizon cooldown is active for the symbol within this independently executed grid cell",
+    "signal_time": "The close of each fully completed per-symbol IANA local-clock H1 bar, represented by its UTC timestamp",
+    "execution_timing": "SIGNAL_CLOSE",
+    "execution_details": "Fill at the event H1 close under V2 costs; never use the event high or low and never substitute next-bar-open",
+    "order_type": "Market order at supported signal-close execution",
+    "restrictions": [
+      "For NAS100 and US500 reject any event or holding interval intersecting [09:30,10:30) or [15:30,16:00) America/New_York and require exit no later than 15:30 America/New_York",
+      "For XAUUSD, GBPUSD, and GBPJPY reject any event or holding interval intersecting [08:00,09:00) Europe/London and require exit before 16:55 America/New_York broker rollover",
+      "At signal time reject an incomplete event H1 bar or any past input containing a missing M1 bar, duplicate timestamp, stale bar, daily reopen, or weekend boundary",
+      "An expected M1 interval is a half-open UTC minute marked open by the immutable symbol-session calendar resolved before experiment OHLC is read; infer neither a holiday nor a scheduled closure from an absent price bar",
+      "Use only deterministic calendar/session boundaries known at signal time to test the proposed future horizon; never suppress an entry because a historical file reveals a later unexpected missing, duplicate, or stale bar",
+      "A missing M1 bar is unexpected exactly when an interval marked open by that frozen schedule has no unique fresh OHLC record; a duplicate timestamp or stale/non-advancing OHLC record in such an interval is likewise an unexpected defect",
+      "If an unexpected missing, duplicate, or stale M1 defect first occurs after entry and before or at the bar required to establish the actual close, mark the affected experiment TEST_FAILED and publish the symbol, UTC interval, calendar version, and defect type; do not erase the trade, impute stop survival, or backfill an exit",
+      "If the authoritative calendar or its version identifier is unavailable or ambiguous for any in-scope symbol-date, fail the experiment before publishing strategy metrics; do not infer expected intervals from bar presence, absence, neighboring dates, or realized returns",
+      "Reject each symbol's local-calendar day when its session timezone changes UTC offset",
+      "Only the first eligible event per symbol is allowed until its holding interval expires; overlapping events are ignored",
+      "Each of the 18 grid cells is executed with independent position and cooldown state; state from one cell must never suppress an event in another cell",
+      "After any entry, that cell's symbol remains in horizon cooldown until the originally scheduled time exit even if the safety stop closes the trade early",
+      "Require finite non-zero MAD, finite positive ATR, and all 60 prior same-clock observations",
+      "Never remove an observation from W60 because of its return magnitude, event label, trade eligibility, or later outcome",
+      "Require the absolute event move to cover at least five resolved round-trip price-cost units; the multiplier is fixed and cannot be optimized",
+      "The event cost floor uses twice the one-way deterministic price cost resolved at the signal timestamp and is identical across holding horizons; never use a future exit schedule or realized quote for event selection",
+      "Do not use opening gaps, opening ranges, or final-30-minute returns as signals"
+    ]
+  },
+  "exits": {
+    "stop_loss": "Long: entry_price-stop_distance_s_H; short: entry_price+stop_distance_s_H; fixed at entry under V2 adverse fill rules",
+    "profit_target": null,
+    "time_exit": "Close on the first completed M1 bar ending exactly holding_hours*60 minutes after the signal close",
+    "signal_exit": null,
+    "maximum_holding": "Three hours, always within the eligible same-day session window",
+    "end_of_session": "Skip the entry unless its scheduled holding interval ends by the applicable predeclared cutoff. If data corruption prevents an entered position from being observed through its planned exit, mark the experiment TEST_FAILED; never backfill an exit at an earlier bar",
+    "priority": ["STOP_LOSS", "TIME_EXIT", "END_OF_SESSION_FORCE_CLOSE"]
+  },
+  "risk": {
+    "accounting_type": "R_STOP_DEFINED",
+    "position_sizing": "Size so initial entry-to-stop risk equals 0.10% of current equity before costs; never resize or widen",
+    "maximum_risk_per_trade": "0.10% of current equity before costs",
+    "gross_exposure_limit": "Maximum five concurrent positions and 0.50% aggregate initial stop risk",
+    "leverage": "Use the lower of stop-risk size and V2 limits; skip if the position cannot be represented",
+    "concurrent_positions": "Within each independently executed grid cell, at most one position per symbol and five positions total; correlated cross-symbol events remain separate trades but are aggregated by date for inference"
+  },
+  "experiment": {
+    "baseline": "Primary diagnostic setting: event_z_threshold=3.0 and holding_hours=1. Map positive pooled q to CONTINUATION and negative pooled q to REVERSAL; both response-mode cells remain counted and no non-primary cell may rescue a failed primary setting.",
+    "stage_protocol": "V2_FIXED_DEVELOPMENT_THEN_USER_AUTHORIZED_TEST",
+    "total_grid_size": 18,
+    "robustness_tests": [
+      "Report all 18 response-mode by threshold by horizon cells and count all 18 trials",
+      "Report each symbol, event direction, IANA local clock hour, and both fixed development halves without post hoc selection",
+      "Report each horizon on its own predeclared eligible sample and all horizons on the fixed subset whose complete three-hour holding interval is eligible; this is report-only",
+      "Treat event_z_threshold=3.0 and holding_hours=1 as the sole primary setting; map its pooled q sign mechanically to response mode and use all other cells only for robustness",
+      "For the mandatory adjacent-cell sign gate, adjacent means exactly k=2/h=1, k=4/h=1, and k=3/h=2; k=3/h=3 remains reported but is not called adjacent",
+      "Report pooled day-clustered uncertainty and effective event count",
+      "For the primary k=3/h=1 setting report a two-sided day-clustered 95% confidence interval for mean raw q and a day-clustered 95% confidence interval for the mechanically mapped mode's mean net R; both are mandatory gates rather than descriptive outputs",
+      "Remove the largest one and five profitable events and report March 2020 separately",
+      "Compare with same-clock non-event returns and shuffled event signs",
+      "Report stop frequency; a frequently hit safety stop means the time-exit study was materially altered",
+      "Repeat net accounting under doubled spread, commission, and slippage"
+      ,"Publish the compact decision summaries frozen in Research_Department/reports/R004_CANONICAL_RESULT_MAP.md under canonical result robustness.r004: calendar and integrity identity, exactly 18 complete cell rows, deterministic primary selector, mapped-mode diagnostics, every required split/sample/check, and an explicit status and reason for every skipped or failed diagnostic"
+    ],
+    "costs": [
+      "Use resolved V2 spread, commission, slippage, and any applicable financing without research overrides",
+      "Session eligibility is intended to avoid broker rollover; disclose and charge any real swap rather than assuming same-day means zero swap",
+      "Include doubled spread, commission, and slippage stress"
+    ],
+    "benchmarks": ["Zero direction-normalized forward return", "Zero net R after costs", "Same-clock non-event returns", "Shuffled event-sign null"],
+    "multiple_testing": "Count exactly 18 strategy cells plus every registered prior V2 trial, including the failed I-61 family. Symbols, directions, clock hours, halves, and event exclusions are reporting splits and may not become post hoc selection parameters.",
+    "rejection_criteria": [
+      "Reject the family if the k=3.0, h=1 primary setting fails any mandatory net, breadth, half-sample, concentration, common-event, or doubled-cost gate; no other cell may rescue it",
+      "Reject if the primary pooled raw q two-sided day-clustered 95% confidence interval includes zero or if the mechanically mapped response mode's day-clustered 95% confidence interval for mean net R includes zero or extends below zero",
+      "Reject if neither response mode has positive pooled net R in both development halves",
+      "Reject if the primary setting's mechanically mapped response mode has positive gross expectancy on fewer than three of five symbols; a supporting symbol is exactly a symbol whose primary raw mean q has the pooled primary q sign and therefore whose mapped-mode gross expectancy is positive",
+      "Reject if fewer than 100 pooled events or fewer than 20 primary events exist for each supporting symbol as defined by the frozen gross-sign breadth gate",
+      "Reject if removing the five most profitable events makes pooled net R non-positive",
+      "Reject if the primary response-mode cell is non-positive under doubled costs",
+      "Reject if any of the exactly predeclared adjacent cells k=2/h=1, k=4/h=1, or k=3/h=2 does not preserve the primary pooled q sign",
+      "Reject if the fixed common three-hour-eligible event subset reverses the primary sign",
+      "If this re-study fails, reject further re-specification of the same shock-response family on the existing development data",
+      "Never run the final holdout without later explicit user authorization for an independently reviewed immutable version"
+    ]
+  },
+  "implementation": {
+    "pseudocode": [
+      "Build completed per-symbol IANA local-clock H1 event bars and H1 ATR from UTC M1 data without crossing missing intervals.",
+      "Maintain a rolling deque of the previous 60 valid returns separately for each symbol and IANA local clock hour.",
+      "Populate each deque from every structurally complete same-clock bar, including prior event bars and bars whose entries were session-ineligible; exclude only predeclared data-integrity and calendar defects.",
+      "At H1 close compute robust_z from only the prior deque, then append the current return after signal evaluation.",
+      "Require both the robust-z threshold and fixed five-times signal-timestamp round-trip-cost floor, identical across horizons, then derive side from response_mode and the event sign for every passing grid cell.",
+      "Apply timezone-aware exclusion masks to both the event bar and complete proposed holding interval.",
+      "Fill at signal close, freeze the 6 ATR stop, size to 0.10% equity risk, and ignore overlapping events for that symbol.",
+      "Process stop first under V2 intrabar rules; otherwise exit at the exact time horizon; aggregate results by date for inference."
+    ],
+    "required_libraries": ["Python zoneinfo", "Existing V2 candle engine and cost model"],
+    "data_structures": ["M1 OHLC frame by UTC timestamp and symbol", "Per-symbol local-clock H1 bar and ATR cache", "Per-symbol per-local-clock-hour 60-return deque", "Timezone-aware exclusion mask"],
+    "edge_cases": [
+      "Europe/London and America/New_York change DST on different dates",
+      "MAD is zero or non-finite",
+      "An H1 interval contains fewer or more than 60 unique M1 bars",
+      "A threshold crossing occurs while another trade or horizon cooldown is active in the same grid cell",
+      "Stop and time exit occur in the same M1 candle and use adverse V2 ordering",
+      "Gap beyond stop uses the worse executable V2 price",
+      "A proposed horizon intersects an excluded open, close, daily reopen, rollover, or weekend window",
+                       "A frozen calendar-open M1 interval lacks one unique fresh OHLC record after entry and before or at the bar needed to establish the actual close; this is a TEST_FAILED data-integrity condition, not grounds to erase the trade or assume the stop survived",
+                       "The authoritative symbol-session calendar or its version identity is unavailable or ambiguous for an in-scope date; fail before metrics rather than infer closures from the OHLC file"
+    ],
+    "computational_requirements": "Five symbols times 18 predeclared cells on M1 development data; cache H1 bars, robust statistics, ATR, and masks but log every cell and exclusion count.",
+    "known_backtester_gaps": [
+      "Compatibility of per-clock rolling median and MAD with the intake adapter is unreviewed",
+      "Mixed IANA session masks need explicit mapping review",
+      "Signal-time conversion of spread, commission, and slippage to a quantity-independent price-unit event floor is unreviewed",
+      "Independent position and cooldown state for all 18 cells is unreviewed",
+                                  "V2 must confirm that an authoritative version-identified symbol-session calendar, independent of experiment OHLC availability, exists for every in-scope symbol-date and can drive TEST_FAILED handling",
+                                  "V2 must confirm serialization of the frozen Research_Department/reports/R004_CANONICAL_RESULT_MAP.md decision summaries under canonical result robustness.r004",
+      "Separate reporting of raw direction-normalized response and stop-defined executed R is unreviewed",
+      "M1 OHLC cannot identify news type, order flow, or whether a shock is permanent information"
+    ]
+  }
+}

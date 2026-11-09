@@ -303,7 +303,7 @@ Derived from K ch.21-24 (full version with page refs: `books/kaufman-tsm-ch21-24
 38. Limit orders fill only on penetration by X ticks, not on a touch; report the share touched but not filled (RP ch.6).
 
 See also: [costs-and-execution.md](costs-and-execution.md), [position-sizing-and-risk.md](position-sizing-and-risk.md),
-online research on the same question: the research department (`../Research_Department/`).
+online research on the same question: [../research/](../research/README.md) (former research department).
 
 ## Discretionary books: how to read them
 - Volman, Aziz and Coulling give **no statistics at all** (no win rates, samples or costs); every example
