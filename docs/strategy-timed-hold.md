@@ -350,6 +350,15 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   doubled; (2) bootstrap 2.5 % quantile of mean net R per trade > 0 (gate scheme); (3) net R > 0 in
   both halves of the test period; (4) mean net R per trade >= half the development value (0.020 R).
   Anything else is "not confirmed", recorded either way. EURJPY reported alongside, not a gate.
+- **Pre-sample check 2008-2014 (pre-registered 2026-11-09 before any of that data was read; the
+  user's go for the download the same day):** USDJPY / EURJPY histdata 2008-2014 in the pre-sample
+  setup of F1a (`data/raw/histdata_presample/`, `data/cache/histdata_presample/`, results in
+  `results/presample_2008_2014/`), per-year clock check, same grid `timed_hold_gotobi.toml`, nothing
+  re-tuned. G1 passes only if, on USDJPY gotobi stop 1.0: (1) net R > 0 at normal costs and with every
+  cost doubled; (2) bootstrap 2.5 % quantile of mean net R per trade > 0; (3) net R > 0 in both
+  halves (2008-2011, 2012-2014); (4) gate 3: gotobi minus the disjoint other days, bootstrap 2.5 % > 0;
+  gate 7 with the rollover tolerance. EURJPY reported, not a gate. A fail is recorded and parked for
+  the user next to the one-time test (it does not cancel the test on its own).
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 

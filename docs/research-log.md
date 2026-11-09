@@ -13,6 +13,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
   (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
+- **Idea scans 2-3 (Gemini Flash low, free):** fixings / flows: quarter-end USD funding is a
+  forward-basis effect (not spot), gold / ECB fixes dead per the scan; the W pattern of Krohn, Mueller,
+  Whelan (JF 2024, confirmed via the Bank of Canada summary) -> Codex screen -> hypothesis 12. Scheduled
+  flows: LETF end-of-day = the falsified F2L family; index rebalance days about 28 events (too few);
+  Nikkei SQ and post-NFP drift unsourced (bp claims of 25-55 look inflated): screened out.
+- **Routing note (the user, 2026-11-09 evening):** Claude tokens run out as fast as Codex and Codex
+  can be reset, so more work goes to Codex (screens, runs, diagnostics, not only code).
 - **User decisions:** pre-sample check of F1a (yes), gap-tolerant integrity gate + NYSE short-day
   skip (ok), live-spread raises (yes); see HANDOFF › Accepted.
 - **Tooling (Codex gpt-6.1-terra, medium):** `tools/time_of_day_profile.py` (screen hourly drift
