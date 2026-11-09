@@ -3,6 +3,10 @@
 # FTSE rest-of-day slope 4.28 (t 7.35), OOS R2 2.03 %. Cash session 08:00-16:30 London.
 strategy = "timed_hold"
 symbols = ["UK100"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 300
 
 [base]

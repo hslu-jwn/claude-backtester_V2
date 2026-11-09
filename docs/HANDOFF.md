@@ -17,6 +17,20 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   gates). Intake tool removed (archived in `../archive/v2-intake-tool/`). Also archived: V1,
   `old/`, `book-notes-2026-10-23/`; the merged `bt-live` worktree was removed (branch `v2-live`
   kept). Umbrella layout: `../AGENTS.md`, `../archive/README.md`.
+- **Continue.Research run 1 (2026-11-09, 11:43-13:59):** strategy 10 `timed_hold`
+  (`docs/strategy-timed-hold.md`, registry `timed_hold`, gates `tools/timed_hold_gates.py`), 5
+  pre-registered hypotheses / 12 cells from published effects, development only. **No family
+  advances.** Lead for the user: F1a EURUSD short 07:00-13:00 London (+72.5 R / 1,723 trades,
+  p 0.008, passes costs x2 / halves / bootstrap / best dates) fails breadth (GBPUSD) and the joint
+  F1 rule (F1b fails). Literature, cost table and M15 triage in `knowledge/research/reports/
+  2026-11-09_*`: none of the 18 M15 candidates is worth a build. Open decisions: (1) what to do
+  with the F1a lead (a new pre-registered EURUSD-only test would be a new hypothesis, counted as
+  such); (2) a gap-tolerant integrity gate and skipping NYSE closure days for index families
+  (spec › Results); (3) the live-spread proposal (below) when its agent reports.
+- **Live spreads (2026-11-09, the user):** a Sonnet sub-agent measures runs 3 and 4 against the
+  cost model: `results/fill_report_2026-11-09/`, proposal only in
+  `data/spreads/proposal_live_2026-11-09.json` (not wired in; defaults change only on the user's
+  go).
 - **Tests (2026-11-09, after the merge):** 5159 passed, 8 skipped, 2 xfailed (8 min 7 s; the
   intake tests left with the tool); ruff clean.
 

@@ -2,7 +2,12 @@
 # Turn of month (Etula et al. 2020; McConnell & Xu 2008), open-to-close on T-1..T+3.
 # Primary cell: day_filter turn_of_month vs the all baseline, US500.
 strategy = "timed_hold"
-symbols = ["US500", "NAS100", "US30"]
+# US30 dropped before any result: its cache starts 2019-02 and the replay needs data over the whole period
+symbols = ["US500", "NAS100"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 100
 
 [base]

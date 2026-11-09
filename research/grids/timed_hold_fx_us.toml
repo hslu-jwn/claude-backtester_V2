@@ -2,6 +2,10 @@
 # Breedon & Ranaldo (2013): USD falls in US hours. Primary cell: stop_atr 0.5, EURUSD.
 strategy = "timed_hold"
 symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 300
 
 [base]

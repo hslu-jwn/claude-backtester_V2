@@ -122,8 +122,54 @@ window changed except F1a's start, see below):
 - **Data timing checked** (2016-2019, US-DST-but-not-EU weeks): US500 volatility peaks at 20:00
   UTC (16:00 EDT close) and both US500 and EURUSD peak at 18:00 UTC on the March FOMC days (14:00
   EDT), so the cached UTC timestamps are right in those weeks.
+- **US30 dropped from F2 and F4** (before any F2 / F4 result): its cache starts 2019-02 and the
+  runner's replay fails on years without candles. Breadth for both is NAS100 alone (1 of 1).
+- **Diagnostics off** in the grids (`monkeys`, `sensitivity`, `entry_screen` = false): the matched
+  monkeys took over 30 minutes per family; the gates above are the decision basis, the switches do
+  not change what is tested.
 - **Costs are lower bounds:** FX pairs other than GBPUSD and the indices before 2021 use today's
   FTMO spread scaled by price (the cost table report); gate 1 doubles every component.
+
+## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
+
+Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
+`gates.json` in each `results/research/timed_hold_<family>_<hash>/`. Primary cells; R per trade
+net of normal costs; "boot" = bootstrap 2.5 % quantile of mean net R per trade; p = raw one-sided.
+Nothing is reported as profitable: no family advances. The user decides.
+
+| Family | Primary | Trades | Net R | Gross R | Net R / trade | Halves | boot | p | Failed gates |
+|---|---|---|---|---|---|---|---|---|---|
+| F1a FX_EU_SHORT | EURUSD 0.5 | 1,723 | +72.5 | +112.9 | +0.042 | +56.4 / +16.0 | +0.007 | 0.008 | breadth (GBPUSD -25.8 net, +70.4 gross), data integrity (32 trades) |
+| F1b FX_US_LONG | EURUSD 0.5 | 1,719 | +39.5 | +79.9 | +0.023 | +58.0 / -18.5 | -0.018 | 0.14 | costs x2, halves, boot, breadth (AUD, GBP, NZD negative), best dates, integrity |
+| F2 ROD momentum US | US500 0.5 | 1,605 | -54.7 | +16.1 | -0.034 | -47.5 / -7.1 | -0.055 | 1.00 | all but min trades (NAS100 -21.3 net, +21.2 gross) |
+| F2-EU UK | UK100 0.5 | 1,666 | -54.1 | +28.8 | -0.032 | -27.0 / -27.1 | -0.047 | 1.00 | all but min trades |
+| F2-EU DE | EU50 0.5 | 882 | -34.8 | +10.2 | -0.039 | -30.0 / -4.7 | -0.062 | 1.00 | all; 556 of 882 trades touch a missing candle; GER40 +9.9 net (p 0.18) |
+| F3 FOMC_MORNING | US500 fomc | 52 | -14.1 | -11.7 | -0.271 | -7.0 / -7.1 | diff -0.44 | 1.00 | all; filter minus other days -0.26 R / trade (NAS100 -0.32 R / trade) |
+| F4 TOM_INTRADAY | US500 tom | 315 | -18.6 | -4.1 | -0.059 | -18.7 / 0.0 | diff -0.17 | 0.86 | all; filter minus other days -0.05 R / trade |
+
+Reading (Opus):
+
+- **F1 (local-hours depreciation) is not supported by the pre-registered rule** (both legs must
+  pass on EURUSD; F1b fails). F1a alone on EURUSD is the strongest single result in V2 so far
+  (net positive with every cost doubled, both halves, five best dates removed, p 0.008 < 0.01),
+  but GBPUSD disagrees after costs (it agrees gross) and the second half is weaker. It was 1 of 12
+  cells; it is a lead for the user's decision, not a pass.
+- **F2:** the last-30-minute momentum has the predicted sign gross in every market (US500 +16,
+  NAS100 +21, UK100 +29, GER40 +36, EU50 +10 R) but at about +0.01-0.03 R per trade it is far below
+  the 0.04-0.05 R cost. Same finding as R014 and the M15 batches: a real but tiny gross edge.
+- **F3 is falsified** in 2015-2021: FOMC mornings were worse than other mornings, the opposite of
+  the published 1994-2011 drift (in line with the post-2015 decay reports).
+- **F4:** no turn-of-month effect open to close.
+- **Data:** many index trades touch a missing M1 candle (US500 in the `all` baseline: 808 of
+  1,669; EU50 556 of 882; AUDUSD / NZDUSD about 25 % in F1b). Diagnosis (2026-11-09): the US500
+  development data is histdata only (MT5 from 2021-09-15); the gaps are mostly omitted quiet
+  minutes (about 10,000 one-minute gaps, only about 130 longer than 5 minutes; worst year 2017,
+  median 23 missing minutes per cash day; NAS100 about 15 times fewer). They do not change a price
+  path, so the strict gate (any missing minute) over-flags: with a 5-minute tolerance 78 of the 808
+  US500 trades remain. 39 index trades of the `all` baselines carry swap: holiday / early-close days
+  with no 16:00 candle, where `TimedExit` closes at the first later candle (18:01-18:03 ET).
+  Neither changes a verdict above (every family fails other gates too). Open for the user: a
+  gap-tolerant integrity gate and skipping NYSE closure / early-close days in index families.
 
 ## Backtest options
 

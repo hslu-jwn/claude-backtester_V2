@@ -4,6 +4,10 @@
 # Xetra / Eurex cash 09:00-17:30 Berlin. Data: GER40 to 2020-06, EU50 to 2018-12 (cost table).
 strategy = "timed_hold"
 symbols = ["EU50", "GER40"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 300
 
 [base]

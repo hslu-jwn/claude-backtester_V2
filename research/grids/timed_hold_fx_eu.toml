@@ -2,6 +2,10 @@
 # Breedon & Ranaldo (2013): EUR falls in European hours (07:00 = the paper's European open, SNB WP 2011-04 Table 1). Primary cell: stop_atr 0.5, EURUSD.
 strategy = "timed_hold"
 symbols = ["EURUSD", "GBPUSD"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 300
 
 [base]

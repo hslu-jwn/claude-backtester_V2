@@ -3,6 +3,10 @@
 # Primary cell: day_filter fomc vs the all baseline, US500.
 strategy = "timed_hold"
 symbols = ["US500", "NAS100"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 40
 
 [base]

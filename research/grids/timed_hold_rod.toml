@@ -2,7 +2,12 @@
 # Baltussen et al. (2021): previous close -> 15:30 return predicts the last 30 minutes.
 # Primary cell: stop_atr 0.5, US500.
 strategy = "timed_hold"
-symbols = ["US500", "NAS100", "US30"]
+# US30 dropped before any result: its cache starts 2019-02 and the replay needs data over the whole period
+symbols = ["US500", "NAS100"]
+# diagnostics off for time (2026-11-09): the pre-registered gates are tools/timed_hold_gates.py
+monkeys = false
+sensitivity = false
+entry_screen = false
 min_trades = 300
 
 [base]

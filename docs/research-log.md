@@ -11,6 +11,34 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   it; (3) literature on effects with published, post-publication evidence whose gross edge per
   trade can exceed our costs (macro-announcement days, FX time-of-day, index intraday momentum,
   calendar effects); (4) best idea -> spec with pre-registered gates -> build -> `--dev-only` run.
+- **Literature (Sonnet sub-agents, sources marked opened / abstract):** reports in
+  `knowledge/research/reports/2026-11-09_*.md` (macro announcements, FX / gold time of day, index
+  intraday momentum, calendar effects, commodity / EU / Asia intraday, cost-in-R table, M15
+  triage). Kept: Breedon & Ranaldo FX sessions, Baltussen et al. last-30-minute momentum,
+  Lucca & Moench pre-FOMC (falsification only), turn of month. Dead: pre-holiday, day of week,
+  macro-day long, pre-ECB, gold sessions, overnight drift. M15 candidates: none worth a build.
+- **Cost table:** 0.2 R per trade at a 1-ATR M15 stop, 0.02-0.04 R at a 0.5 daily-ATR stop
+  (indices, majors). Only session-sized holds leave room for a published few-bp effect.
+- **Strategy 10 `timed_hold`** (`docs/strategy-timed-hold.md`): fixed-time hold, ATR stop, day
+  filters (FOMC, turn of month, pre-holiday) from published calendars, `with_day` direction.
+  Pre-registered in `6e4569c` (families, gates) and `4b8819a` (F2 European legs) before any run;
+  skeptic review by a sub-agent applied before the run (disjoint baselines, F1 joint rule,
+  p-values vs 0.01). Built by a Sonnet sub-agent (51 tests), gates tool by a second one
+  (`tools/timed_hold_gates.py`), both checked by Opus (code read, targeted suite 916 passed).
+- **Results (12 cells, 5 hypotheses, development only, test period untouched):** no family
+  advances. F1a EURUSD short 07:00-13:00 London +72.5 R net / 1,723 trades (+0.042 R, p 0.008,
+  passes costs x2, halves, bootstrap, best dates) but GBPUSD -25.8 net and F1b (USD-hours long)
+  fails, so F1 is not supported by its pre-registered joint rule. F2 last-30-minute momentum:
+  positive gross in all 5 indices (+10 to +36 R) but net negative (costs 0.04-0.05 R vs about
+  +0.01-0.03 R gross per trade). F3 FOMC mornings -0.27 R per trade vs other days (falsified,
+  opposite of the 1994-2011 drift). F4 turn of month: no effect. Table: spec › Results.
+- **Data finding:** US500 histdata 2015-2021 omits many quiet minutes (2017 worst); the strict
+  integrity gate over-flags; holiday / early-close days exit after the rollover (spec › Results).
+- **Process:** the runner's matched monkeys took 30+ minutes per family; the grids now switch
+  monkeys / sensitivity / entry screen off (diagnostics only). US30 dropped (cache from 2019-02).
+- Models: Opus (coordination, spec, review, gates edits); Sonnet sub-agents x15 (literature x6,
+  cost table, triage, calendars, implementation, gates tool, paper check, skeptic review, data
+  gaps, live-spread measurement). No Codex / Gemini.
 
 ## 2026-11-09: research back in this team
 
