@@ -131,6 +131,12 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
   2015-2020 use the 2021 values, and 2021 is measured over the whole year, across the cutoff). Accepted
   because costs are no trading signal (rule set by the user, 2026-10-27; full check finding 7).
 
+Use `--cache-dir PATH` to read every grid symbol from a separate cache; PATH and each symbol's
+subfolder must exist. The selected folders are saved in run settings as `cache_dirs` for downstream
+tools. The cutoff is unchanged, so a cache ending before 2021-09-14 has no test data; use
+`--dev-only` for a pre-sample check. Use a separate `--results-dir PATH` to isolate its research
+folder and trial log from runs of the same grid on the default cache.
+
 ## Ranking and selection
 
 - Ranked by **net R on the development period** (user), only variants with at least `min_trades`

@@ -1410,6 +1410,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="allow a second test run of this grid (recorded in the trial log)")  # fmt: skip
     p.add_argument("--dev-only", action="store_true",
                    help="development and selection only; the test stays unspent")  # fmt: skip
+    p.add_argument("--cache-dir", type=Path, default=None,
+                   help="read every grid symbol from this cache folder")  # fmt: skip
     p.add_argument(
         "--walk-forward",
         action="store_true",
@@ -1422,9 +1424,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
+        sources = DEFAULT_SOURCES
+        if args.cache_dir is not None:
+            if not args.cache_dir.is_dir():
+                raise SystemExit(f"cache directory not found: {args.cache_dir}")
+            symbols = load_grid(args.grid).symbols
+            for symbol in symbols:
+                symbol_dir = args.cache_dir / symbol
+                if not symbol_dir.is_dir():
+                    raise SystemExit(f"symbol cache directory not found: {symbol_dir}")
+            sources = SymbolSources.single(args.cache_dir, symbols)
         out = run_research(
             args.grid, results_dir=args.results_dir, workers=args.workers, retest=args.retest,
-            dev_only=args.dev_only, walk_forward=args.walk_forward,
+            dev_only=args.dev_only, walk_forward=args.walk_forward, sources=sources,
         )  # fmt: skip
     except (GridError, ResearchError) as e:
         print(f"error: {e}", file=sys.stderr)
