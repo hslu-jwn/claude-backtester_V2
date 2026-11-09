@@ -141,8 +141,8 @@ class SymbolCosts:
     swap_long_pct_year: float = 0.0  # per year, charged per night (negative = cost)
     swap_short_pct_year: float = 0.0
     funding: bool = False  # Binance perpetual funding from data/cache/binance_funding
-    # median price of the window the fixed spread stands for (REFERENCE_PRICES); None: the
-    # spread is never scaled with the price level (CostConfig.spread_price_scaling)
+    # Reference level for fixed spread/slippage and per-lot swap (REFERENCE_PRICES);
+    # None: no price scaling (CostConfig.spread_price_scaling / swap_price_scaling).
     reference_price: float | None = None
     # Spec: risk-management.md > Costs > Tick rounding; None leaves levels unchanged.
     tick_size: float | None = None
@@ -389,6 +389,9 @@ class CostConfig:
     # 0 = off (reproduces the results from before)
     conversion_adjustment: float = 0.007
     account_currency: str = "USD"
+    # Per-lot swap x entry / reference_price (rule set by the user, 2026-11-09).
+    # False reproduces the fixed money amount; percentage swap is unchanged.
+    swap_price_scaling: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.conversion_adjustment) or not 0 <= self.conversion_adjustment < 1:
@@ -571,7 +574,12 @@ class CostConfig:
         self, symbol: str, direction: Direction, risk: float, nights: float, entry: float = 0.0
     ) -> float:
         """Swap in R for `nights` (share-weighted, triple nights already counted); linear in
-        `nights`, so `swap_r_nights(.., 1.0)` is the swap of one night. `swap_r` calls this."""
+        `nights`, so `swap_r_nights(.., 1.0)` is the swap of one night. `swap_r` calls this.
+
+        Spec: risk-management.md > Costs > Swap scaled with the price level.
+        Per-lot money scales by entry / reference_price when enabled and available;
+        percentage swap already uses entry notional and is never scaled again.
+        """
         costs = self.symbols.get(symbol)
         if not self.swap_enabled or costs is None:
             return 0.0
@@ -579,6 +587,8 @@ class CostConfig:
         rate = costs.swap_long_per_lot if long else costs.swap_short_per_lot
         pct = costs.swap_long_pct_year if long else costs.swap_short_pct_year
         usd = nights * rate / (risk * costs.value_per_price_unit)
+        if self.swap_price_scaling and costs.reference_price and entry > 0:
+            usd *= entry / costs.reference_price
         if not pct:
             return usd
         if entry <= 0:

@@ -144,6 +144,14 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   swap_R = nights' swap per lot / (SL distance x value of a 1.0 price move per lot). It changes **net R
   only** (gross = chart prices) and is reported as `swap_r` per trade. ⚙️ `swap_enabled` (CostConfig) switches it
   off so results can be shown with and without swap. Rates come from FTMO via `tools.mt5_info` (defaults above).
+- **Swap scaled with the price level** (rule set by the user, 2026-11-09): by default,
+  `CostConfig.swap_price_scaling = True` multiplies the per-lot money component of swap by
+  `entry / SymbolCosts.reference_price`, using the same reference prices as spread scaling.
+  This scales costs and positive credits alike; percentage swap (`swap_*_pct_year`) already
+  uses entry notional and is unchanged. With no reference price, an omitted or non-positive
+  entry price, or `swap_price_scaling = False`, the per-lot component keeps its fixed money
+  amount. The switch is independent of `spread_price_scaling`; rollover nights and partial
+  exit shares are unchanged. Historical interest-rate differences are still not modelled.
 - **Costs of the symbols of ROADMAP 11.8 / 11.9** (added 2026-10-15; the five symbols above are unchanged). Source: the running FTMO MT5 terminal
   (`symbol_info`), same method as the swap defaults: swap USD per lot per night = swap points x tick value (checked: gives the stored
   XAUUSD / NAS100 values), `quote_to_usd` = tick value / (tick size x contract size) (fixed approximation, 2026-10-15 rates),

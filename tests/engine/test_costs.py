@@ -2,9 +2,58 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 
-from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig
+from backtester.core.models import Direction
+from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig, SymbolCosts
+
+
+@pytest.mark.parametrize("direction, expected", [(Direction.BULLISH, -0.3), (Direction.BEARISH, 0.15)])
+@pytest.mark.parametrize("entry, multiplier", [(50.0, 0.5), (100.0, 1.0), (200.0, 2.0)])
+def test_per_lot_swap_scales_with_entry_price(direction, expected, entry, multiplier):
+    # Three nights: -12 USD (long) / +6 USD (short), divided by 2 * 20 USD risk.
+    config = CostConfig(symbols={"TEST": SymbolCosts(
+        0, 0, 20, swap_long_per_lot=-4, swap_short_per_lot=2, reference_price=100,
+    )})
+    assert config.swap_r_nights("TEST", direction, 2, 3, entry) == pytest.approx(expected * multiplier)
+
+
+def test_swap_price_scaling_can_be_disabled_independently_of_spread():
+    config = CostConfig(swap_price_scaling=False, symbols={"TEST": SymbolCosts(
+        0, 0, 20, swap_long_per_lot=-4, reference_price=100,
+    )})
+    assert config.swap_r_nights("TEST", Direction.BULLISH, 2, 3, 50) == pytest.approx(-0.3)
+
+
+@pytest.mark.parametrize("reference, entry", [(None, 50.0), (100.0, 0.0), (100.0, -1.0)])
+def test_per_lot_swap_without_reference_or_positive_entry_is_unchanged(reference, entry):
+    config = CostConfig(symbols={"TEST": SymbolCosts(
+        0, 0, 20, swap_long_per_lot=-4, reference_price=reference,
+    )})
+    assert config.swap_r_nights("TEST", Direction.BULLISH, 2, 3, entry) == pytest.approx(-0.3)
+
+
+@pytest.mark.parametrize("scaling", [False, True])
+@pytest.mark.parametrize("rate, fixed_r", [(0, 0), (-4, -0.3)])
+def test_percentage_swap_is_not_price_scaled_again(scaling, rate, fixed_r):
+    config = CostConfig(swap_price_scaling=scaling, symbols={"TEST": SymbolCosts(
+        0, 0, 20, swap_long_per_lot=rate, swap_long_pct_year=-0.365, reference_price=100,
+    )})
+    # Percentage component: 3 * -0.365 / 365 * 50 / 2 = -0.075 R, with either switch value.
+    expected = fixed_r * (0.5 if scaling else 1) - 0.075
+    assert config.swap_r_nights("TEST", Direction.BULLISH, 2, 3, 50) == pytest.approx(expected)
+
+
+def test_swap_r_scales_share_weighted_triple_nights_using_entry():
+    config = CostConfig(spread_price_scaling=False, symbols={"TEST": SymbolCosts(
+        0, 0, 20, swap_long_per_lot=-4, reference_price=100,
+    )})
+    entry_time = datetime(2026, 1, 7, 20, tzinfo=UTC)  # Wednesday, triple rollover at 22 UTC
+    exits = [(0.5, datetime(2026, 1, 7, 21, tzinfo=UTC)),
+             (0.5, datetime(2026, 1, 7, 22, tzinfo=UTC))]
+    assert config.swap_r("TEST", Direction.BULLISH, 2, entry_time, exits, 50) == pytest.approx(-0.075)
 
 
 @pytest.mark.parametrize(
