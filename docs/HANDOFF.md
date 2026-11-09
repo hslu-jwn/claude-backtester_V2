@@ -118,6 +118,9 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 - 2026-10-28 (midday): do not build the p90 stressed costs yet; the bot keeps running and the
   user comes back to it later. Fill report re-run at 10:35 UTC (1,511 fills, 339 London);
   brief ready in `briefs/v24b-p90-stress.md`, not dispatched.
+- 2026-11-09 (the user): research multi-day holds too, with every fee counted (overnight swap
+  incl. the triple-swap day, spread, commission, slippage; FTMO cost model). Day trading is no
+  longer the only scope.
 - 2026-11-09 (the user, answers to Open 5-7): (5) F1a: yes to the pre-sample check (download
   EURUSD / GBPUSD 2008-2014 into a separate raw root and cache, clock check, `--cache-dir` runner
   option, run F1a there); the one-time MT5 test is NOT part of it (needs its own go). (6) ok:
@@ -147,10 +150,7 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
    pre-registered in the spec), only on the user's go; Opus's view: weak, park it.
 6. ☑ done 2026-11-09 (`0c2178c`): gap-tolerant integrity gate, `skip_nyse_short_days` in the index grids.
 7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
-8. Research scope: every same-day idea so far dies on costs (gross +0.01-0.03 R per trade,
-   `knowledge/topics/cost-wall.md`). Research multi-day holds (effects that grow with holding time
-   while the round-trip cost is fixed; swap counted), or stay with day trading only? (asked
-   2026-11-09)
+8. ☑ decided 2026-11-09: multi-day holds are in scope ("yes, but regard the fees"; in progress).
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or

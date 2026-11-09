@@ -31,7 +31,8 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 
 ## Research a new idea (when needed)
 
-- Day trading first (open and close the same session, the user); V2's M1 symbols and supported
+- Day trading and multi-day holds (multi-day in scope since 2026-11-09, the user: count every fee,
+  overnight swap incl. the triple-swap day); V2's M1 symbols and supported
   execution only; stop-defined, results in R.
 - Cheapest route first (`docs/agent-routing.md`): local search of `knowledge/`, then a free model
   for literature / web look-ups (`ai_dispatch gemini --effort low`, `gemini-api`, `openrouter`).
