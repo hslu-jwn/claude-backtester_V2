@@ -284,6 +284,10 @@ at about half the development size before 2015. GBPUSD -0.9 net (+59.4 gross). 5
 a missing minute (older histdata is sparser; strict rule). Reading: a small, persistent EURUSD
 European-hours drift that is about at the edge of our costs, not a robust edge.
 
+Gap-tolerant integrity gate (the user, 2026-11-09; > 5 consecutive missing minutes or a missing exit
+candle): F1a EURUSD failures drop from 33 to 6 (development, ATR-fixed run) and from 589 to 3
+(pre-sample); the verdicts do not change (breadth, and the pre-sample bootstrap, still fail).
+
 ## Backtest options
 
 - Costs as the engine default (fixed spread; spread table off by default). Swap: none for a day

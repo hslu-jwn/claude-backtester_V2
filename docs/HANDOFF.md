@@ -145,8 +145,8 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 5. ☑ decided 2026-11-09; pre-sample check done: F1a does NOT pass (EURUSD 2008-2014 +40 R net
    but bootstrap lower bound -0.009). Still open: the one-time MT5 test of F1a (criteria
    pre-registered in the spec), only on the user's go; Opus's view: weak, park it.
-6. ☑ decided 2026-11-09 (gap-tolerant integrity gate, skip NYSE closure days; in progress).
-7. ☑ decided 2026-11-09 (apply the live-spread raises; in progress).
+6. ☑ done 2026-11-09 (`0c2178c`): gap-tolerant integrity gate, `skip_nyse_short_days` in the index grids.
+7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
 
 ## Next step
 
