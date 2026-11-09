@@ -180,11 +180,12 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 
 ## Next step
 
-The user's decisions on the F1a lead (pre-sample data / MT5 test / drop), the integrity gate and
-the live-spread proposal (Where things are › Continue.Research run 1). Then either
-`Continue.Research` (ideas must clear `knowledge/topics/cost-wall.md`: about 0.05 R gross per
-trade on the cheapest symbols at session-length holds) or `Continue.Code` (12.5 reconciliation on
-runs 3 and 4; the fill report of runs 3 + 4 is done, `results/fill_report_2026-11-09/`).
+Research front (2026-11-09 night): hypotheses 11 (Gotobi: dev and pre-sample strong, one-time test
+not confirmed) and 12 (falsified) done; two pre-registered calendar x clock screens (792 FX cells
+2008-2014, 660 index cells 2010-2014) found 0 survivors; four free idea scans used up the literature
+at our cost level. Open low-priority call: gate 7's rollover window from 20:55 UTC (Open 12 note).
+Next: `Continue.Code` (12.5 reconciliation on runs 3 and 4), or new research only with a new idea
+source (e.g. order-book / tick data, or other asset classes).
 
 ## First prompt for the next chat
 
