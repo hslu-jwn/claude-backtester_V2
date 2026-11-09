@@ -62,7 +62,9 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
     trading days of the next one; trading days = Monday-Friday that are not a full NYSE closure
     (`calendars/nyse_holidays.csv`);
   - `pre_holiday`: the last trading day before a full NYSE closure that falls on a weekday;
-  - `month_day`: the trading-day ordinal selected by `month_day`, using `trading_days`.
+  - `month_day`: the trading-day ordinal selected by `month_day`, using `trading_days`;
+  - `gotobi`: the Tokyo business day on or immediately before each month's 5th, 10th, 15th,
+    20th, 25th and last calendar day, independently of `trading_days` (see Hypothesis 11).
   The calendars are published in advance (scheduled meetings, exchange holiday rules), so using
   them at the entry time is not lookahead. Unscheduled FOMC actions are excluded.
 

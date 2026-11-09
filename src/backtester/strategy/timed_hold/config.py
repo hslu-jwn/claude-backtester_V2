@@ -10,7 +10,7 @@ from datetime import time
 from zoneinfo import ZoneInfo
 
 DIRECTIONS = ("long", "short", "with_day", "against_day", "rsi")
-DAY_FILTERS = ("all", "fomc", "turn_of_month", "pre_holiday", "month_day")
+DAY_FILTERS = ("all", "fomc", "turn_of_month", "pre_holiday", "month_day", "gotobi")
 TRADING_DAYS = ("weekdays", "nyse")
 
 
@@ -35,7 +35,7 @@ class TimedHoldConfig:
     # FX: leave Saturday / Sunday atr_zone dates out of the ATR (the Sunday-evening stub is not a day)
     atr_skip_weekend: bool = False
     skip_nyse_short_days: bool = False  # skip NYSE closures and early closes
-    day_filter: str = "all"  # all, fomc, turn_of_month, pre_holiday, month_day
+    day_filter: str = "all"  # all, fomc, turn_of_month, pre_holiday, month_day, gotobi
     month_day: int = 0  # positive from month start, negative from end; 0 = unused
     tom_days_after: int = 3  # turn_of_month: trading days of the new month that qualify
     calendar_dir: str = ""  # "" = the package folder strategy/timed_hold/calendars/

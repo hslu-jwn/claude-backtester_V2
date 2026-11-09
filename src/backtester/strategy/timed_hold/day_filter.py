@@ -33,6 +33,11 @@ class DayFilter:
         self._fomc: set[date] = set()
         self._closed: set[date] = set()
         self._short_days: set[date] = set()
+        self._jp_holidays: set[date] = set()
+        if self.kind == "gotobi":
+            self._jp_holidays = {
+                date.fromisoformat(r["date"]) for r in _read(folder / "jp_holidays.csv")
+            }
         if self.kind == "fomc":
             rows = _read(folder / "fomc_statements.csv")
             self._fomc = {
@@ -83,6 +88,8 @@ class DayFilter:
             return True
         if self.kind == "fomc":
             return d in self._fomc
+        if self.kind == "gotobi":
+            return self._gotobi(d)
         if self.kind == "month_day":
             if not self.is_trading_day(d):
                 return False
@@ -106,3 +113,19 @@ class DayFilter:
         while x.weekday() >= 5:
             x += timedelta(days=1)
         return x in self._closed
+
+    def _tokyo_business_day(self, d: date) -> bool:
+        return (d.weekday() < 5 and d not in self._jp_holidays
+                and (d.month, d.day) not in ((12, 31), (1, 2), (1, 3)))
+
+    def _gotobi(self, d: date) -> bool:
+        """Targets rolled back to this business day. Spec: Hypothesis 11, Gotobi day."""
+        if not self._tokyo_business_day(d):
+            return False
+        target = d
+        while True:
+            if target.day in (5, 10, 15, 20, 25, monthrange(target.year, target.month)[1]):
+                return True
+            target += timedelta(days=1)
+            if self._tokyo_business_day(target):
+                return False
