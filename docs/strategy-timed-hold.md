@@ -366,6 +366,9 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   +12.4 R. Gate 7: 36 USDJPY trades fail even with the rollover tolerance (102 strict), 22 of them in
   2010-2011 histdata; without them +28.5 R (379 trades, +0.075 R). Clock check: no year excluded. As
   registered, **G1 does not pass the pre-sample check** (gate 7); parked for the user (HANDOFF › Open 12).
+- **One-time test go (the user, 2026-11-09: "Yes, run the test"):** runs once with
+  `research/grids/timed_hold_gotobi_test.toml` (G1 base, `day_filter = "gotobi"`, stop 1.0; USDJPY
+  primary, EURJPY reported), criteria above unchanged; no retest after a fail.
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 

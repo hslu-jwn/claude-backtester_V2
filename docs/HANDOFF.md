@@ -164,13 +164,10 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 11. ☑ decided 2026-11-09 ("Yes, all four pairs"): AUDUSD, NZDUSD, USDJPY, EURJPY histdata
     2008-2014 downloaded (28 files, `data/raw/histdata_presample/`) for the four-pair H12
     confirmation and a Gotobi pre-sample check (criteria pre-registered in the spec).
-12. **Gotobi G1 pre-sample 2008-2014: strong, but gate 7 fails** (spec › Hypothesis 11 › Pre-sample
-    result): USDJPY +30.9 R (415 trades, +0.074 R each, doubled costs +24.6 R, bootstrap and gate 3
-    clearly > 0, both halves and 5 of 7 years positive); 36 trades have M1 gaps beyond the rollover
-    tolerance (mostly 2010-2011 histdata); without them +28.5 R. Decision: give the go for G1's
-    one-time MT5 test (Opus's view: yes; the edge held in older data, the gaps are data-source
-    quality, and the MT5 test data passes gate 7 cleanly in development), or hold. H12 (month-end
-    post-fix USD) is falsified on 2008-2014.
+12. ☑ decided 2026-11-09 (the user: "Yes, run the test"): Gotobi G1's one-time MT5 test runs once
+    on 2021-09-14 to the last cached day, grid `research/grids/timed_hold_gotobi_test.toml` (the frozen
+    primary cell only), criteria in spec › Hypothesis 11. Pre-sample: +30.9 R, gate 7 failed on
+    histdata gaps (recorded). H12 falsified on 2008-2014.
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or
