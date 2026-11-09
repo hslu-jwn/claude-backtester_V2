@@ -152,6 +152,11 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
    while the round-trip cost is fixed; swap counted), or stay with day trading only? (asked
    2026-11-09)
 
+- **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
+  tested and falsified (all 18 cells net negative). With it, every research candidate is tested or
+  triaged out; new work needs new researched ideas (and the user's answer to Open 8, multi-day
+  holds).
+
 ## Next step
 
 The user's decisions on the F1a lead (pre-sample data / MT5 test / drop), the integrity gate and

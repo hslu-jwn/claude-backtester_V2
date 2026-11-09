@@ -25,6 +25,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   nothing lowered; spread table untouched. Golden lists regenerated (one count 2,511 -> 2,516);
   full suite 5,289 passed. Earlier research results used the old (lower) costs: index and GBP
   results above are, if anything, too kind.
+- **Strategy 11 `h1_shock`** (candidate INTRADAY_H1_SHOCK_RESPONSE, unblocked by the NYSE calendar
+  and Opus's session / data-validity decisions): spec draft + build by Codex sol (it stopped three
+  times on undefined data rules; each decided by Opus and recorded); read-only sol review (no
+  material finding); gates tool by Codex terra. Development run: all 18 cells net negative
+  (-0.001 to -0.022 R per trade), primary response q indistinguishable from zero. Falsified.
 - Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
   not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
 

@@ -25,7 +25,7 @@ Order = the department's priority (higher first). "Cells" = `experiment.total_gr
 | 44 | M15_PRIOR_SESSION_EXTREME_CROSS_BATCH | 4 | R-2026-016 | reviewed |
 | 42 | M15_EFFICIENCY_TRANSITION_BATCH | 4 | R-2026-017 | reviewed |
 | 40 | M15_RSI_EXTREME_ENTRY_BATCH | 4 | R-2026-018 | reviewed |
-| 40 | INTRADAY_H1_SHOCK_RESPONSE | 18 | R-2026-004 | blocked: needs an authoritative CFD session calendar (we have none) |
+| 40 | INTRADAY_H1_SHOCK_RESPONSE | 18 | R-2026-004 | **tested 2026-11-09 as strategy 11 `h1_shock`: falsified** (all 18 cells net negative; `docs/strategy-h1-shock.md`) |
 | 38 | M15_USD_BREADTH_TRANSITION_BATCH | 4 | R-2026-019 | reviewed; multi-symbol basket |
 | 36 | M15_FX_RELATIVE_STRENGTH_RANK_BATCH | 4 | R-2026-020 | reviewed; multi-symbol basket |
 | 34 | M15_EURGBP_RELATIVE_DISLOCATION_BATCH | 4 | R-2026-021 | reviewed; two-symbol basket |

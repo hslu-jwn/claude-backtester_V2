@@ -284,3 +284,13 @@ thresholds, response sides, 6 x ATR stop, horizon exits, session masks, validity
 the 18-cell grid match the spec; the engine cost hook affects only this strategy. One conditional
 finding: dates outside the NYSE calendar's coverage (2008-2026) are accepted as trading days; the
 development data (2015-2021) is inside it, so no effect on this run.
+
+## Result, development run (2026-11-09, `--dev-only`, 2015-2021; test period untouched)
+
+`results/research/h1_shock_1d710243` (`gates.json` by `tools/h1_shock_gates.py`). **Falsified: no cell
+advances.** All 18 cells are net negative: CONTINUATION k 2 / 3 / 4: -0.012 / -0.009 / -0.007 R per
+trade at h = 1 (8,460 / 3,697 / 1,821 trades), best cell k = 4, h = 3: -1.0 R over 1,172 trades;
+REVERSAL every cell -0.011 to -0.022 R per trade. Primary (k = 3, h = 1): raw direction-normalized
+response q mean +0.00003, 2.5-97.5 % interval -0.00013 / +0.00019 (3,693 events, 1,113 date clusters),
+so no response mode is mapped and every dependent gate fails. Large H1 moves carry no tradable
+follow-through either way after costs, the same reading as I-61 (2026-10-20). 18 cells counted.
