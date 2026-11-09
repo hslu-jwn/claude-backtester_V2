@@ -337,6 +337,18 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   never passed" if only the rollover hour fails) does not strictly apply either: **G1 fails gate 7
   as registered**, parked for the user (HANDOFF › Open 10). Without the 23 trades: USDJPY +17.1 R
   (404 trades), EURJPY +16.4 R (399).
+- **Gate 7 decision (rule set by the user, 2026-11-09, option a):** for holds that cross the FTMO
+  daily rollover, M1 gaps inside the rollover hour (21:00-23:00 UTC) and gaps of up to 6 minutes
+  elsewhere do not fail gate 7; a missing exit candle or an invalid candle still does. Under this
+  rule G1 has 0 integrity failures and **passes all seven gates: ready for the one-time test**
+  (Test=manual; criteria below).
+- **One-time test criteria (pre-registered 2026-11-09, before any test data is seen; runs only on
+  the user's go):** the primary cell exactly as run (`research/grids/timed_hold_gotobi.toml`, family
+  G1, `day_filter = "gotobi"`, stop 1.0, USDJPY), nothing re-tuned, on 2021-09-14 to the last cached
+  day. **Confirmed** only if all hold: (1) USDJPY net R > 0 at normal costs and with every cost
+  doubled; (2) bootstrap 2.5 % quantile of mean net R per trade > 0 (gate scheme); (3) net R > 0 in
+  both halves of the test period; (4) mean net R per trade >= half the development value (0.020 R).
+  Anything else is "not confirmed", recorded either way. EURJPY reported alongside, not a gate.
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 

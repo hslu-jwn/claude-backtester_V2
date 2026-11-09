@@ -120,6 +120,8 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
   brief ready in `briefs/v24b-p90-stress.md`, not dispatched.
 - 2026-11-09 (the user, Open 9): swap is scaled by price / reference price like spreads (option a;
   no historical rate table).
+- 2026-11-09 (the user, Open 10, option a): gate 7 tolerates rollover-hour gaps and gaps up to 6
+  minutes for holds crossing the FTMO daily rollover; Gotobi G1 is ready for the one-time test.
 - 2026-11-09 (the user): research multi-day holds too, with every fee counted (overnight swap
   incl. the triple-swap day, spread, commission, slippage; FTMO cost model). Day trading is no
   longer the only scope.
@@ -154,15 +156,11 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
 8. ☑ decided 2026-11-09: multi-day holds are in scope ("yes, but regard the fees"; in progress).
 9. ☑ done 2026-11-09 (`df600b4`): swap scaled by price / reference price, golden regenerated.
-10. **Hypothesis 11 Gotobi USDJPY (G1, long 03:00 -> 09:55 JST on gotobi days): passes gates 1-6,
-    fails only gate 7** (spec › Hypothesis 11 › Result): USDJPY 413 trades +16.5 R net, doubled
-    costs +9.7 R, p 0.0035, beats the other days by +0.078 R per trade; EURJPY +15.4 R. 23 trades
-    have M1 gaps > 5 min: 21 in the FTMO rollover hour, 2 are 6-minute gaps outside it. Decision:
-    (a) accept rollover-hour gaps plus gaps up to 6 minutes for holds that cross the daily rollover
-    (all exit candles are present; the result is higher without those trades) -> G1 counts as
-    passed and is "ready for the one-time test" (Test=manual); or (b) keep gate 7 strict -> G1 is
-    rejected. Opus's view: (a) is fair (the gaps are the broker's daily break, not bad data), but
-    it is a gate change after seeing the result, so it is your call.
+10. ☑ decided 2026-11-09 (option a, rule in spec › Hypothesis 11): rollover-hour gaps and gaps up to
+    6 minutes do not fail gate 7 for holds crossing the daily rollover. **Gotobi G1 (USDJPY long
+    03:00 -> 09:55 JST on gotobi days, stop 1.0) passes all seven gates: ready for the one-time
+    test** (dev: 413 trades, +16.5 R net, doubled costs +9.7 R, p 0.0035). Criteria pre-registered
+    in the spec; the test runs only on your go.
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or
