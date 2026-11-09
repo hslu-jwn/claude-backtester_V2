@@ -151,6 +151,13 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 6. ☑ done 2026-11-09 (`0c2178c`): gap-tolerant integrity gate, `skip_nyse_short_days` in the index grids.
 7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
 8. ☑ decided 2026-11-09: multi-day holds are in scope ("yes, but regard the fees"; in progress).
+9. Swap model for multi-day research: `engine/costs.py` charges overnight swap as a fixed money
+   amount per lot (2026 FTMO values at 2026 prices). For 2015-2021 that overstates index financing
+   in percent terms by about the price ratio (US500 about 2.7x: about 4-5 bp per night instead of
+   about 1.6 bp), and policy rates were lower then too. Options: (a) scale swap by price / reference
+   price, like spreads (rule of 2026-10-16); (b) also scale by a historical policy-rate table; (c)
+   leave it (conservative). Opus's recommendation: (a) now, (b) later if multi-day work continues.
+   This is a cost default: only on the user's go. (F4M's verdict does not depend on it.)
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or

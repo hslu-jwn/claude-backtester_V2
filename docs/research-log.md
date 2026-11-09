@@ -36,6 +36,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   without it; VPIN / order-flow rules need volume data we lack; one USDJPY session rule attributed to
   Frömmel & Lampaert looks unreliable (not opened). Nothing new worth a build: the same-day idea space
   is exhausted at our costs; the next direction waits on HANDOFF › Open 8 (multi-day holds).
+- **Multi-day scope** (the user: "yes, but regard the fees"). Free-model scan (Gemini low; leads
+  only). **Hypothesis 9 F4M** (turn of the month close to close, pre-registered `915b43c`, multi-day
+  support by Codex sol `cb954f8`): falsified, TOM is no better than a mid-month control week in
+  US500 / NAS100 / UK100 / GER40 / JP225 (spec). Found: the engine's swap is not price-scaled, so it
+  overstates 2015-2021 index financing about 3x (HANDOFF › Open 9).
 - Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
   not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
 

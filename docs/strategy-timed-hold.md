@@ -222,6 +222,17 @@ window. Counted as a new hypothesis (9 hypotheses so far).
 - **Gates:** the seven gates; min trades 60 (12 a year x about 6.7 years); breadth: >= 2 of NAS100,
   UK100, GER40, JP225 net > 0. Falsified if US500 TOM minus control <= 0 or its bootstrap bound <= 0.
 
+**Result (2026-11-09, development 2015-2021; `results/research/timed_hold_tom_multi*_<hash>/`):**
+falsified on gate 3. TOM minus mid-month control, mean net R per trade (bootstrap 2.5 %): US500 stop 2:
++0.014 (-0.20), stop 3: +0.046 (-0.10); NAS100 -0.047 / -0.028; UK100 +0.142 (-0.09) / +0.097 (-0.07);
+GER40 -0.004 / -0.071; JP225 -0.162 / -0.059. US500 TOM itself: 78 trades, gross +6.8 R, swap -14.9 R,
+net -9.0 R (stop 2). The month turn is no better than a mid-month week in any market at a significant
+level; the gate does not depend on the swap level (both windows pay about the same nights).
+**Swap caveat:** the engine charges swap as a fixed money amount per lot at 2026 rates and prices; at
+2015-2021 index levels that is about 3x too much in percent terms (US500 about 4-5 bp per night
+instead of about 1.6), before the lower policy rates of those years. Multi-day results are therefore
+conservative on financing until the user decides on scaling (HANDOFF › Open 9).
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
