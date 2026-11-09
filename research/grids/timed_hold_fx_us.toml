@@ -1,0 +1,19 @@
+# F1b FX_US_LONG (docs/strategy-timed-hold.md > Families). Pre-registered 2026-11-09.
+# Breedon & Ranaldo (2013): USD falls in US hours. Primary cell: stop_atr 0.5, EURUSD.
+strategy = "timed_hold"
+symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD"]
+min_trades = 300
+
+[base]
+zone = "Europe/London"
+entry_time = "13:00"
+exit_time = "20:30"
+direction = "long"
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+atr_close_tolerance_min = 30
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5, 1.0]

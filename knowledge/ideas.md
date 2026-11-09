@@ -108,6 +108,16 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | open |
 | I-61 | Momentum after a large hourly move: after an H1 bar beyond k robust sd, trade its direction for h bars (11.11: small moves revert, big ones continue) | momentum | FX, metals, indices / H1 | none if flat by the session end | 11.11 study | tested 2026-10-20 (ROADMAP 11.13): no robust edge; continuation carried by the top 1 % events; NAS100 H1 k4 h2 closest (+0.20 sd trimmed, t 1.7, decaying) |
 | I-62 | No-wick retest: limit at the no-wick end of a trend candle (Bard FX video), many stops / targets / filters | signal | all; 5m-1h | none (16:55 exit) | user 2026-10-21 | **no edge** 2026-10-21 (ROADMAP 11.17): 0.4 % of 4,608 variants positive; gold H1 cluster failed out of sample (-0.02 R/trade) |
+| I-63 | FX local-hours depreciation (Breedon & Ranaldo 2013): short EURUSD in European hours, long XXXUSD in US hours; extends I-17 | time of day | EURUSD, GBPUSD, AUDUSD, NZDUSD; session hold | none (exit 20:30 London) | PUBLISHED (sample to 2007, unreplicated); `knowledge/research/reports/2026-11-09_fx_gold_time_of_day.md` | strategy 10 families F1a / F1b, run 2026-11-09 |
+| I-64 | Index last-30-minute momentum (Baltussen et al. 2021): sign of previous close -> 15:30 return, hold to 16:00 | intraday momentum | US500, NAS100, US30 | none | PUBLISHED (60+ futures to 2020; one blog: flat 2022-26); `2026-11-09_index_intraday_momentum.md` | strategy 10 family F2, run 2026-11-09 |
+| I-65 | FOMC-morning long (Lucca & Moench 2015 pre-FOMC drift, decayed after 2015) | event | US500, NAS100 | none | PUBLISHED, decayed; falsification only; `2026-11-09_macro_announcement_equity.md` | strategy 10 family F3, run 2026-11-09 |
+| I-66 | Turn-of-month open-to-close long (T-1..T+3), day-trade form of I-18 | calendar | US500, NAS100, US30 | none | ADAPTATION (published close-to-close only); `2026-11-09_calendar_effects.md` | strategy 10 family F4, run 2026-11-09 |
+
+Not carried forward from the 2026-11-09 literature pass (dead or no evidence): pre-holiday,
+day-of-week, generic macro-day long, pre-ECB drift, gold session pattern, overnight drift. The 18
+M15 candidates: cost-infeasible or duplicates of failed families
+(`knowledge/research/reports/2026-11-09_m15_candidate_triage.md`); only INTRADAY_H1_SHOCK_RESPONSE
+passes the cost screen (low prior, I-61 re-study).
 
 ## Suggested order (Claude's proposal, the user decides)
 1. **Tooling first** (T-01, I-22): every later test then reports robustness the Kaufman way.

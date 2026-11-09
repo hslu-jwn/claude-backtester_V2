@@ -1,0 +1,19 @@
+# F1a FX_EU_SHORT (docs/strategy-timed-hold.md > Families). Pre-registered 2026-11-09.
+# Breedon & Ranaldo (2013): EUR falls in European hours (07:00 = the paper's European open, SNB WP 2011-04 Table 1). Primary cell: stop_atr 0.5, EURUSD.
+strategy = "timed_hold"
+symbols = ["EURUSD", "GBPUSD"]
+min_trades = 300
+
+[base]
+zone = "Europe/London"
+entry_time = "07:00"
+exit_time = "13:00"
+direction = "short"
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+atr_close_tolerance_min = 30
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5, 1.0]

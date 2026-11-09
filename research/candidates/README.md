@@ -43,4 +43,10 @@ that cost level first (`knowledge/research/reports/I52_COST_LIMIT_SCREEN_METHOD_
 Their evidence is thin by the department's own grading (`knowledge/research/research_registry.csv`
 › evidence_class: mostly "legacy_book_context_only", "adjacent" or "adverse prior"); none has
 direct published support on M15 FX after costs.
+**Triage 2026-11-09 (`knowledge/research/reports/2026-11-09_m15_candidate_triage.md`, against the
+cost table `2026-11-09_cost_in_R_table.md`):** none of the 18 M15 drafts is worth a build. Each is
+either cost-infeasible (about 0.1-0.2 R cost per trade with no supported gross edge) or a duplicate
+of a failed family. The drafts reduce to 5 families. Only INTRADAY_H1_SHOCK_RESPONSE passes the
+cost screen (6 H1-ATR stop, about 0.02 R); it is still blocked, and its prior is low (I-61).
+
 Done / rejected: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH (2026-11-06).

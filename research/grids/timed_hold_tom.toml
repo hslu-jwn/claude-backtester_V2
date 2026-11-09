@@ -1,0 +1,20 @@
+# F4 TOM_INTRADAY (docs/strategy-timed-hold.md > Families). Pre-registered 2026-11-09.
+# Turn of month (Etula et al. 2020; McConnell & Xu 2008), open-to-close on T-1..T+3.
+# Primary cell: day_filter turn_of_month vs the all baseline, US500.
+strategy = "timed_hold"
+symbols = ["US500", "NAS100", "US30"]
+min_trades = 100
+
+[base]
+zone = "America/New_York"
+entry_time = "09:30"
+exit_time = "16:00"
+direction = "long"
+stop_atr = 0.5
+atr_zone = "America/New_York"
+atr_open = "09:30"
+atr_close = "16:00"
+tom_days_after = 3
+
+[grid]
+day_filter = ["turn_of_month", "all"]

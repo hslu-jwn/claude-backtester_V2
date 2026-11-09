@@ -1,0 +1,19 @@
+# F3 FOMC_MORNING (docs/strategy-timed-hold.md > Families). Pre-registered 2026-11-09.
+# Lucca & Moench (2015) pre-FOMC drift; falsification only (decayed after 2015, low power).
+# Primary cell: day_filter fomc vs the all baseline, US500.
+strategy = "timed_hold"
+symbols = ["US500", "NAS100"]
+min_trades = 40
+
+[base]
+zone = "America/New_York"
+entry_time = "09:30"
+exit_time = "13:45"
+direction = "long"
+stop_atr = 0.5
+atr_zone = "America/New_York"
+atr_open = "09:30"
+atr_close = "16:00"
+
+[grid]
+day_filter = ["fomc", "all"]

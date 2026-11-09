@@ -1,0 +1,19 @@
+# F2 INDEX_ROD_MOMENTUM (docs/strategy-timed-hold.md > Families). Pre-registered 2026-11-09.
+# Baltussen et al. (2021): previous close -> 15:30 return predicts the last 30 minutes.
+# Primary cell: stop_atr 0.5, US500.
+strategy = "timed_hold"
+symbols = ["US500", "NAS100", "US30"]
+min_trades = 300
+
+[base]
+zone = "America/New_York"
+entry_time = "15:30"
+exit_time = "16:00"
+direction = "with_day"
+atr_zone = "America/New_York"
+atr_open = "09:30"
+atr_close = "16:00"
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5, 0.25]

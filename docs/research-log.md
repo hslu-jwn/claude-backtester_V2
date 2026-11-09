@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-09: Continue.Research run 1 (11:43 to 13:59 CET, the user)
+
+- Limit 13:59 CET; the user asked for quality research with Sonnet sub-agents (more than usual).
+- Plan: (1) cost-in-R table per symbol and stop size; (2) triage of the 18 M15 candidates against
+  it; (3) literature on effects with published, post-publication evidence whose gross edge per
+  trade can exceed our costs (macro-announcement days, FX time-of-day, index intraday momentum,
+  calendar effects); (4) best idea -> spec with pre-registered gates -> build -> `--dev-only` run.
+
 ## 2026-11-09: research back in this team
 
 - The user folded the research department back into V2 and asked for everything not needed to be
