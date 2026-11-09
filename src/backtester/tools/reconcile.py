@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import itertools
+import re
 from collections import Counter
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -88,6 +90,118 @@ def load_demo(live_dir, since, until, prefix, symbols):
     return window, demos
 
 
+@dataclass
+class ProbeRun:
+    start: datetime
+    symbols: set[str]
+    evaluations: dict[str, datetime]
+
+
+def load_probe_history(live_dir):
+    """Date time-only probe logs using matching, dated order tickets."""
+    tickets = {}
+    fills = []
+    for day in live_dir.iterdir() if live_dir.exists() else ():
+        if not day.is_dir():
+            continue
+        for filename, time_field in (("paper.csv", "time_utc"), ("trades.csv", "entry_time")):
+            data = _read(day / filename)
+            if data is None or "ticket" not in data or time_field not in data:
+                continue
+            for row in data.to_dict("records"):
+                ticket = _ticket(row.get("ticket"))
+                try:
+                    when = _parse_time(str(row[time_field]))
+                except (ValueError, TypeError):
+                    continue
+                if ticket:
+                    tickets.setdefault(ticket, set()).add(when)
+                if filename == "trades.csv" and row.get("symbol"):
+                    fills.append((row["symbol"], when))
+    runs, skipped = [], []
+    pattern = re.compile(r"^(\d\d):(\d\d):(\d\d) (\S+)(.*)$")
+    for path in sorted(live_dir.glob("probe_stdout*.log")):
+        raw = path.read_bytes()
+        try:
+            content = raw.decode(
+                "utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
+            )
+        except UnicodeError:
+            skipped.append(path.name)
+            continue
+        events = []
+        previous = None
+        day_offset = 0
+        for line in content.splitlines():
+            match = pattern.match(line)
+            if not match:
+                continue
+            hour, minute, second = map(int, match.group(1, 2, 3))
+            seconds = hour * 3600 + minute * 60 + second
+            if previous is not None and seconds < previous - 12 * 3600:
+                day_offset += 1
+            previous = seconds
+            events.append(
+                (timedelta(days=day_offset, seconds=seconds), match.group(4), match.group(5))
+            )
+        anchors = set()
+        for offset, kind, details in events:
+            ticket_match = re.search(r"\bticket=(\d+)", details)
+            if kind != "order" or not ticket_match:
+                continue
+            for when in tickets.get(_ticket(ticket_match.group(1)), ()):
+                for delta in (-1, 0, 1):
+                    date = when.date() + timedelta(days=delta)
+                    logged = datetime.combine(date, datetime.min.time(), UTC) + offset % timedelta(
+                        days=1
+                    )
+                    if abs(logged - when) <= timedelta(minutes=5):
+                        anchors.add(date - timedelta(days=offset.days))
+        if len(anchors) != 1 or not events:
+            skipped.append(path.name)
+            continue
+        midnight = datetime.combine(anchors.pop(), datetime.min.time(), UTC)
+        start = midnight + events[0][0]
+        symbols, evaluations = set(), {}
+        for offset, kind, details in events:
+            symbol_match = re.search(r"\bsymbol=([^\s]+)", details)
+            if not symbol_match:
+                continue
+            symbol = symbol_match.group(1)
+            when = midnight + offset
+            if kind == "no_history":
+                symbols.add(symbol)
+            elif symbol in symbols:
+                evaluations.setdefault(symbol, when)
+        for symbol, when in fills:
+            if (
+                symbol in symbols
+                and when > start
+                and (symbol not in evaluations or when < evaluations[symbol])
+            ):
+                evaluations[symbol] = when
+        runs.append(ProbeRun(start, symbols, evaluations))
+    return sorted(runs, key=lambda run: run.start), skipped
+
+
+def _no_history(symbol, when, runs, paper):
+    for index, run in enumerate(runs):
+        if symbol not in run.symbols or when <= run.start:
+            continue
+        if index + 1 < len(runs) and when >= runs[index + 1].start:
+            continue
+        end = run.evaluations.get(symbol)
+        for row in paper:
+            if row.get("symbol") != symbol or row.get("status") != "filled":
+                continue
+            fill = _parse_time(str(row["time_utc"]))
+            if fill > run.start and (end is None or fill < end):
+                end = fill
+        if end is None or when < end:
+            return True
+    return False
+
+
 def _engine_row(t):
     return {
         "symbol": t.symbol,
@@ -116,7 +230,7 @@ def _running(when, paper):
     )
 
 
-def reconcile(demos, engines, paper, candles, skipped_paper=None):
+def reconcile(demos, engines, paper, candles, skipped_paper=None, history=()):
     ds = {(d["symbol"], d["signal_time"]): d for d in demos}
     es = {(e["symbol"], e["signal_time"]): e for e in engines}
     skipped = {
@@ -168,11 +282,17 @@ def reconcile(demos, engines, paper, candles, skipped_paper=None):
                 if not _running(key[1], paper)
                 else "unexplained"
             )
+        if (
+            row["status"] == "engine_only"
+            and row["explanation"] == "unexplained"
+            and _no_history(key[0], key[1], history, paper)
+        ):
+            row["explanation"] = "no price history at bot start"
         rows.append(row)
     return rows
 
 
-def build_report(rows):
+def build_report(rows, history=(), skipped_logs=()):
     counts = Counter(r["status"] for r in rows)
     out = [
         "# Demo reconciliation\n",
@@ -201,6 +321,11 @@ def build_report(rows):
                 )
                 stats[key] = data
         out.append(f"## {title}\n" + _md(pd.DataFrame.from_dict(stats, orient="index")))
+    out.append("## No history at bot start\n")
+    for run in history:
+        out.append(f"- {run.start}: {', '.join(sorted(run.symbols)) or 'none'}")
+    for name in skipped_logs:
+        out.append(f"- Skipped {name}: start date could not be established or log unreadable")
     unexplained = [r for r in rows if r["explanation"] == "unexplained"]
     out.append(f"## Unexplained\n\n{len(unexplained)} unexplained\n")
     out.append(
@@ -269,10 +394,11 @@ def main(argv=None):
                 if t.entry_time >= since and (until is None or t.entry_time <= until)
             )
     # Skipped rows must obey the same prefix and date selection as demo trades.
-    rows = reconcile(demos, engines, paper, candle_keys, selected)
+    history, skipped_logs = load_probe_history(args.live_dir)
+    rows = reconcile(demos, engines, paper, candle_keys, selected, history)
     args.out.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows, columns=COLUMNS).to_csv(args.out / "trades.csv", index=False)
-    (args.out / "report.md").write_text(build_report(rows), encoding="utf-8")
+    (args.out / "report.md").write_text(build_report(rows, history, skipped_logs), encoding="utf-8")
     counts = Counter(r["status"] for r in rows)
     print(
         ", ".join(f"{s}: {counts[s]}" for s in ("matched", "demo_only", "engine_only"))

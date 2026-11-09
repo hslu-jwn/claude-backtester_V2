@@ -157,3 +157,104 @@ def test_missing_trade_exit_is_left_empty(tmp_path):
     row = rec.reconcile(demos, [engine()], [paper()], set())[0]
     assert row["demo_exit_time"] is None
     assert row["diff_exit_seconds"] == ""
+
+
+def test_no_history_probe_evidence_and_boundaries(tmp_path):
+    live = tmp_path / "live"
+    day = live / "2026-10-27"
+    day.mkdir(parents=True)
+    anchor = dict(paper(T + timedelta(minutes=30)), symbol="GBPUSD", ticket="42")
+    fill = dict(paper(T + timedelta(minutes=45)), symbol="EURUSD", ticket="43")
+    pd.DataFrame([anchor, fill]).to_csv(day / "paper.csv", index=False)
+    (live / "probe_stdout_run3.log").write_text(
+        "16:00:00 connected\n16:00:01 no_history symbol=EURUSD\n"
+        "16:30:02 order symbol=GBPUSD ticket=42 confirmed=True\n",
+        encoding="utf-16",
+    )
+    runs, skipped = rec.load_probe_history(live)
+    assert not skipped
+    assert runs[0].start == T
+    assert runs[0].symbols == {"EURUSD"}
+    papers, _ = rec.load_demo(live, T, None, "fp", None)
+    engines = [
+        engine(T + timedelta(minutes=15)),
+        engine(T + timedelta(minutes=15), symbol="GBPUSD"),
+        engine(T + timedelta(minutes=50)),
+    ]
+    rows = rec.reconcile(
+        [], engines, papers + [paper(T), paper(T + timedelta(minutes=60))], set(), history=runs
+    )
+    assert [r["explanation"] for r in rows] == [
+        "no price history at bot start",
+        "unexplained",
+        "unexplained",
+    ]
+    report = rec.build_report(rows, runs, skipped)
+    assert "2026-10-27 16:00:00+00:00" in report and "EURUSD" in report
+
+
+def test_probe_without_date_is_skipped_and_reported(tmp_path):
+    (tmp_path / "probe_stdout.log").write_text(
+        "16:00:00 connected\n16:00:01 no_history symbol=EURUSD\n", encoding="utf-8"
+    )
+    runs, skipped = rec.load_probe_history(tmp_path)
+    assert runs == []
+    assert skipped == ["probe_stdout.log"]
+    assert "probe_stdout.log" in rec.build_report([], runs, skipped)
+
+
+def test_probe_non_history_evaluation_and_existing_reason(tmp_path):
+    day = tmp_path / "2026-10-27"
+    day.mkdir()
+    pd.DataFrame([dict(paper(T + timedelta(minutes=30)), ticket="42")]).to_csv(
+        day / "paper.csv", index=False
+    )
+    (tmp_path / "probe_stdout.log").write_text(
+        "16:00:00 connected\n16:00:01 no_history symbol=EURUSD\n"
+        "16:10:00 skip symbol=EURUSD reason=other\n"
+        "16:30:02 order symbol=EURUSD ticket=42 confirmed=True\n",
+        encoding="utf-8",
+    )
+    runs, skipped = rec.load_probe_history(tmp_path)
+    assert not skipped
+    p = [paper(T), paper(T + timedelta(minutes=30))]
+    first = engine(T + timedelta(minutes=5))
+    later = engine(T + timedelta(minutes=15))
+    rows = rec.reconcile([], [first, later], p, set(), history=runs)
+    assert [r["explanation"] for r in rows] == ["no price history at bot start", "unexplained"]
+    skipped_paper = [dict(paper(T + timedelta(minutes=5)), status="skipped", reason="risk")]
+    assert (
+        rec.reconcile([], [first], p, set(), skipped_paper, history=runs)[0]["explanation"]
+        == "risk"
+    )
+
+
+def test_trade_record_ends_missing_history_without_paper_fill(tmp_path):
+    day = tmp_path / "2026-10-27"
+    day.mkdir()
+    pd.DataFrame([dict(paper(T + timedelta(minutes=30)), symbol="GBPUSD", ticket="42")]).to_csv(
+        day / "paper.csv", index=False
+    )
+    pd.DataFrame(
+        [
+            {
+                "ticket": "43",
+                "symbol": "EURUSD",
+                "entry_time": (T + timedelta(minutes=10)).isoformat(),
+            }
+        ]
+    ).to_csv(day / "trades.csv", index=False)
+    (tmp_path / "probe_stdout.log").write_text(
+        "16:00:00 connected\n16:00:01 no_history symbol=EURUSD\n"
+        "16:30:02 order symbol=GBPUSD ticket=42 confirmed=True\n",
+        encoding="utf-8",
+    )
+    runs, _ = rec.load_probe_history(tmp_path)
+    rows = rec.reconcile(
+        [],
+        [engine(T + timedelta(minutes=15))],
+        [paper(T), paper(T + timedelta(minutes=30))],
+        set(),
+        history=runs,
+    )
+    assert rows[0]["explanation"] == "unexplained"
