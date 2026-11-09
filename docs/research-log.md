@@ -4,6 +4,24 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-09: continuous Continue.Research (routing back to Codex first, the user)
+
+- **User decisions:** pre-sample check of F1a (yes), gap-tolerant integrity gate + NYSE short-day
+  skip (ok), live-spread raises (yes); see HANDOFF › Accepted.
+- **Tooling (Codex gpt-6.1-terra, medium):** `tools/time_of_day_profile.py` (screen hourly drift
+  vs costs, dev only); research runner `--cache-dir`; histdata clock rule US DST through 2018
+  (Opus measured the 2008-2014 clock on NFP / FOMC release spikes: one hour off in every
+  US-summer / Europe-winter week under the old rule).
+- **Screen (Opus, profile tool):** hourly profiles of six USD pairs (London clock, 2015-2021): the
+  USD strengthens in the European morning in every pair, but a 07:00-13:00 hold sums to only
+  1.2-1.9 bp per day on USDJPY / AUDUSD / NZDUSD / USDCAD / USDCHF vs 1.0-1.8 bp cost; only EURUSD
+  (-2.9 bp vs 0.8 bp) clears. No new family built (screen, not a hypothesis).
+- **F1a pre-sample 2008-2014** (pre-registered `27b3fcb`): EURUSD +40.4 R net, +0.023 R per trade,
+  doubled costs +10.8, both halves positive, bootstrap lower bound -0.009 -> **fails criterion 3**;
+  5 of 7 years positive. Spec › F1a pre-sample check.
+- Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
+  not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
+
 ## 2026-11-09: Continue.Research run 1 (11:43 to 13:59 CET, the user)
 
 - Limit 13:59 CET; the user asked for quality research with Sonnet sub-agents (more than usual).

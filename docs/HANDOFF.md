@@ -142,8 +142,9 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
 4. ☑ Research's reviewability proposal: moot, the department is archived (2026-11-09).
-5. ☑ decided 2026-11-09 (pre-sample check; in progress). Still open: the one-time MT5 test of
-   F1a (criteria pre-registered in `docs/strategy-timed-hold.md`), only on the user's go.
+5. ☑ decided 2026-11-09; pre-sample check done: F1a does NOT pass (EURUSD 2008-2014 +40 R net
+   but bootstrap lower bound -0.009). Still open: the one-time MT5 test of F1a (criteria
+   pre-registered in the spec), only on the user's go; Opus's view: weak, park it.
 6. ☑ decided 2026-11-09 (gap-tolerant integrity gate, skip NYSE closure days; in progress).
 7. ☑ decided 2026-11-09 (apply the live-spread raises; in progress).
 

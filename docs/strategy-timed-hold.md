@@ -269,6 +269,17 @@ mean net R per trade > 0. Costs there are optimistic (2008-2014 uses the nearest
 so (1) with doubled costs is the main cost check. GBPUSD is reported, not gated. Either outcome is
 recorded; a pass is still not a strategy pass (the MT5 test needs the user's go).
 
+**Result (2026-11-09):** histdata clock fixed first (US rule through 2018, verified on release
+times: `knowledge/research/reports/2026-11-09_clock_check_pre2015.md`), pre-sample re-imported and
+re-checked. `results/presample_2008_2014/research/timed_hold_fx_eu_6d5397f8/gates.json`. EURUSD stop
+0.5: 1,789 trades, net **+40.4 R** (+0.023 R per trade, gross +69.9), all costs doubled +10.8,
+2008-2011 +6.2 / 2012-2014 +34.2, bootstrap 2.5 % quantile **-0.009**, p 0.09; by year +7.0, -1.6,
++6.3, -5.5, +10.9, +7.4, +15.8. Criteria (1) and (2) hold, **(3) fails: F1a does not pass the
+pre-sample check.** The sign holds over all 14 years 2008-2021 (2008-14 +40 R, 2015-21 +69 R),
+at about half the development size before 2015. GBPUSD -0.9 net (+59.4 gross). 589 EURUSD trades touch
+a missing minute (older histdata is sparser; strict rule). Reading: a small, persistent EURUSD
+European-hours drift that is about at the edge of our costs, not a robust edge.
+
 ## Backtest options
 
 - Costs as the engine default (fixed spread; spread table off by default). Swap: none for a day
