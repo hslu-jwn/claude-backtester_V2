@@ -115,8 +115,21 @@
       "runtime_seconds": 5.838033700012602,
       "git_commit": "aa354029c641366623c771dce92316b752e21540",
       "date": "2026-11-09T13:53:28+00:00"
+    },
+    "h1_shock": {
+      "symbols": [
+        "XAUUSD",
+        "GBPUSD",
+        "GBPJPY",
+        "NAS100",
+        "US500"
+      ],
+      "trade_count": 405,
+      "runtime_seconds": 18.76642709999578,
+      "git_commit": "f9ffc6159e54fb1e139f88d92a9df39403424d75",
+      "date": "2026-11-09T15:11:10+00:00"
     }
   },
-  "git_commit": "aa354029c641366623c771dce92316b752e21540",
-  "date": "2026-11-09T13:53:28+00:00"
+  "git_commit": "f9ffc6159e54fb1e139f88d92a9df39403424d75",
+  "date": "2026-11-09T15:11:10+00:00"
 }

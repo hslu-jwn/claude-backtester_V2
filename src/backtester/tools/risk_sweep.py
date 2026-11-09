@@ -315,6 +315,11 @@ def plans() -> dict[str, Plan]:
             LONDON_FIX_SYMBOLS,
             LONDON_FIX_SYMBOLS,
         ),
+        "h1_shock": Plan(
+            "h1_shock", default_config("h1_shock"),
+            ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"),
+            ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"),
+        ),
         "timed_hold": Plan(
             "timed_hold", default_config("timed_hold"), ("NAS100", "US500"), ("NAS100", "US500")
         ),

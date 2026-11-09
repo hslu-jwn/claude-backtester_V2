@@ -73,6 +73,7 @@ from backtester.strategy.alternating_path.config import AlternatingPathConfig
 from backtester.strategy.base import UnsupportedSymbolError
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
+from backtester.strategy.h1_shock.config import H1ShockConfig
 from backtester.strategy.london_fix.config import LondonFixConfig
 from backtester.strategy.no_wick.config import NoWickConfig
 from backtester.strategy.ny_index_sweep.config import NyIndexSweepConfig
@@ -108,6 +109,7 @@ StrategyConfig = (
     | LondonFixConfig
     | AlternatingPathConfig
     | TimedHoldConfig
+    | H1ShockConfig
 )
 
 

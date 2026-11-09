@@ -129,6 +129,7 @@ class Backtest:
         if missing:
             raise ValueError(f"no series for {sorted(tf.name for tf in missing)}")
         self._strategy = strategy
+        strategy.configure_costs(config.costs)
         self._config = config
         self._calendar = calendar
         self.news_blocked = 0

@@ -22,6 +22,8 @@ from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_fade.strategy import GapFade
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
 from backtester.strategy.gap_momentum.strategy import GapMomentum
+from backtester.strategy.h1_shock.config import H1ShockConfig
+from backtester.strategy.h1_shock.strategy import H1Shock
 from backtester.strategy.london_fix.config import LondonFixConfig
 from backtester.strategy.london_fix.strategy import LondonFix
 from backtester.strategy.no_wick.config import NoWickConfig
@@ -72,6 +74,7 @@ _SPECS = (
     StrategySpec(
         "timed_hold", "Strategy 10 · Timed hold (calendar / time of day)", TimedHoldConfig, TimedHold
     ),
+    StrategySpec("h1_shock", "Strategy 11 · H1 shock response", H1ShockConfig, H1Shock),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

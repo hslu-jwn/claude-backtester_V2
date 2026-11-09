@@ -1,0 +1,19 @@
+# Exactly 18 independent cells. Spec review required before running.
+strategy = "h1_shock"
+symbols = ["XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 100
+
+[base]
+same_clock_lookback = 60
+atr_period_h1 = 20
+stop_atr_multiplier = 6.0
+minimum_event_cost_multiple = 5.0
+risk_fraction_equity = 0.001
+
+[grid]
+response_mode = ["CONTINUATION", "REVERSAL"]
+event_z_threshold = [2.0, 3.0, 4.0]
+holding_hours = [1, 2, 3]

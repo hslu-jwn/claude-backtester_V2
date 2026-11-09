@@ -23,6 +23,7 @@ from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
 
 if TYPE_CHECKING:
+    from backtester.engine.costs import CostConfig
     from backtester.engine.trade import TradeResult
 
 
@@ -55,6 +56,15 @@ class UnsupportedSymbolError(ValueError):
 
 
 class Strategy(ABC):
+    signal_price_cost: Callable[[str, datetime, float], float] | None = None
+
+    def configure_costs(self, costs: CostConfig) -> None:
+        """Resolve causal one-way signal costs. Spec: strategy-h1-shock.md › Definitions."""
+        self.signal_price_cost = lambda symbol, at, price: (
+            costs.spread(symbol, at, price) + costs.commission_price(symbol, price) / 2
+            + costs.slippage(symbol, price)
+        )
+
     # Engine-supplied execution check, before the strategy consumes a pending limit.
     # None preserves touch fills. Spec: risk-management.md > Costs > Limit penetration.
     limit_fill_check: Callable[[Order, Candle, datetime], bool] | None = None

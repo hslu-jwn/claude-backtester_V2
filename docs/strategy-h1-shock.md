@@ -1,6 +1,6 @@
 # Strategy 11: H1 shock response (draft)
 
-**Status: blocked on boundary-price semantics; no research run authorized.**
+**Status: implementation draft; Opus review required before any research run.**
 
 Sources: `research/candidates/INTRADAY_H1_SHOCK_RESPONSE__v0.1.0.json` (v0.1.0)
 and `knowledge/research/records/R-2026-004_INTRADAY_SHOCK_RESPONSE.md`.
@@ -241,32 +241,23 @@ Do not run the research grid before Opus reviews the spec; holdout requires user
   (the gate tool integrity count). TEST_FAILED applies to the experiment report,
   not to dropping trades from the backtest.
 
-No additional trading-rule assumptions have been adopted in this draft.
+- Boundary candles (Opus, 2026-11-09): first and last M1 candles must both be
+  present in every valid H1 bar, for events and W60; missing minutes are interior only.
 
-## Open trading-rule question (implementation blocked)
+## Assumptions: implementation conventions (additional)
 
-The supplied tolerance rule says:
+- Wilder ATR uses valid completed H1 bars, including the signal bar. Seed with the
+  arithmetic mean of the first 20 true ranges, then recurse; invalid bars do not update
+  ATR or its previous close. True range includes gaps from the preceding valid close.
+- One-way signal-price cost = resolved spread + half the round-turn commission + one
+  market-fill slippage. Evaluate percentage commission at the signal bid close. Use
+  the same cost floor for both directions; actual execution costs are charged by V2.
+- Reuse TimedExit's first-later-candle fallback when the exact exit is absent. Report
+  the missing exit as an integrity defect and retain the actual later fill timestamp.
+- Request at least 120 calendar days of warm-up; still require all W60 observations.
+- Each instance owns symbol/cell state. Skipped orders release position and cooldown;
+  an early stop retains the original horizon cooldown.
+- Session records expose signal statistics and per-trade integrity defects for later
+  gate reporting. The strategy does not evaluate experiment gates.
 
-> An H1 event bar is **valid** only if it has >= 55 of its 60 expected M1 candles,
-> no run of more than 5 consecutive missing minutes, and no stale run (1.).
-
-The candidate defines:
-
-> ln(close_s_H/open_s_H) for the completed per-symbol IANA local-clock H1 event bar represented by UTC boundaries
-
-And requires:
-
-> Fill at the event H1 close under V2 costs; never use the event high or low and never substitute next-bar-open
-
-The tolerance permits the first or last M1 candle of an hour to be missing without
-defining the resulting H1 boundary prices. A missing final candle also leaves no candle
-at which to execute the required signal-close order.
-
-Decision needed: must first and last M1 candles both be present for bars entering W60
-and event detection, with the five-minute tolerance applying only to interior gaps?
-If W60 may retain boundary-incomplete bars while entries cannot, specify their open/close
-prices. No boundary-price substitution has been assumed.
-
-Strategy code, tests, integration, golden generation and grid creation are paused pending
-this trading-rule decision. No research grid has run.
-
+The supplied boundary decision resolves the previous blocker. No research grid has run.

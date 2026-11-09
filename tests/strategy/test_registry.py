@@ -38,6 +38,7 @@ def test_registered_names_and_order():
         "london_fix",
         "alternating_path",
         "timed_hold",
+        "h1_shock",
     ]
 
 

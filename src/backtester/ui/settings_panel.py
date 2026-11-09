@@ -407,6 +407,14 @@ def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
 
 
 def _panel_symbol(path: str) -> bool:
+    # Strategy 11's fixed research protocol is configured in its TOML grid.
+    if path in {"strategy.response_mode", "strategy.event_z_threshold", "strategy.holding_hours",
+                "strategy.same_clock_lookback", "strategy.atr_period_h1",
+                "strategy.stop_atr_multiplier", "strategy.minimum_event_cost_multiple",
+                "strategy.risk_fraction_equity", "strategy.minimum_m1_count",
+                "strategy.maximum_missing_run", "strategy.stale_run_minutes",
+                "strategy.mad_scale", "strategy.warmup_days"}:
+        return False
     # Calendar loading and runner wiring are pending (news.md); keep this partial
     # feature configurable in JSON/grids without adding unusable panel controls.
     if path.startswith("engine.news."):
