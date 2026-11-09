@@ -359,6 +359,13 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   halves (2008-2011, 2012-2014); (4) gate 3: gotobi minus the disjoint other days, bootstrap 2.5 % > 0;
   gate 7 with the rollover tolerance. EURJPY reported, not a gate. A fail is recorded and parked for
   the user next to the one-time test (it does not cancel the test on its own).
+- **Pre-sample result (2026-11-09; `knowledge/research/reports/2026-11-09_gotobi_presample.md`):**
+  criteria (1)-(4) pass, gate 7 fails. USDJPY 415 trades, net +30.9 R, doubled +24.6 R, +0.074 R per
+  trade (about twice the development value), bootstrap 2.5 % +0.043, halves +12.8 / +18.0, gate 3
+  difference +0.075 (2.5 % +0.039); years 2008-2014: +0.0, -1.0, +6.0, +7.8, +6.2, +9.5, +2.3. EURJPY
+  +12.4 R. Gate 7: 36 USDJPY trades fail even with the rollover tolerance (102 strict), 22 of them in
+  2010-2011 histdata; without them +28.5 R (379 trades, +0.075 R). Clock check: no year excluded. As
+  registered, **G1 does not pass the pre-sample check** (gate 7); parked for the user (HANDOFF › Open 12).
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 
@@ -394,6 +401,10 @@ rests on unseen 2010-2014 data. Counted as hypothesis 12 (the 84 screen cells ar
   EURUSD and GBPUSD are cached; AUDUSD and NZDUSD need a histdata download (the user's go,
   HANDOFF › Open 11). Criteria (1)-(5) unchanged over the 4 pairs; if the user declines the download,
   they apply to EURUSD + GBPUSD with criterion (2) = both pairs net R > 0. About 330 trades (4 pairs).
+- **Confirmation result (2026-11-09, `knowledge/research/reports/2026-11-09_me_fix_h12.md`): H12
+  falsified.** Four pairs 2008-2014: criteria (3) pooled bootstrap 2.5 % -0.015 R and (4) 2008-2011
+  half -0.002 R fail (3 of 5 pass); EURUSD + GBPUSD alone already failed all five. The development
+  signal does not carry to earlier years.
 - **Development (descriptive, `results/research/timed_hold_me_fix_d686ffdd/`):** 312 pooled month-end
   trades, +18.7 R net, +13.5 R doubled costs, bootstrap 2.5 % +0.027 R; all seven tool gates pass
   (expected: the screen found it here). Report `knowledge/research/reports/2026-11-09_me_fix_h12.md`.
