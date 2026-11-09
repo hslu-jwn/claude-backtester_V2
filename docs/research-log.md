@@ -32,6 +32,17 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   positive gross in all 5 indices (+10 to +36 R) but net negative (costs 0.04-0.05 R vs about
   +0.01-0.03 R gross per trade). F3 FOMC mornings -0.27 R per trade vs other days (falsified,
   opposite of the 1994-2011 drift). F4 turn of month: no effect. Table: spec › Results.
+- **Hypothesis 6 F2L** (pre-registered `fdb450c` after the F2 results, counted as new): F2 only on
+  days with |move| >= 0.5 daily ATR. Falsified: US500 -0.035 R per trade net, gross +0.008 R;
+  NAS100 / UK100 negative, GER40 +6.6 net (fails costs x2). 6 hypotheses, 15 cells in total.
+- **Live spreads** (the user's request, Sonnet sub-agent): `results/fill_report_2026-11-09/`
+  (7,019 fills of runs 3+4, 23 symbols, about 4.6 days): FX medians match the model; means 1.4-2x
+  from Asia / rollover bars (NY hour 18 about 5x). Under-charged spread: GBPJPY 2.25x, GBPUSD
+  1.97x, NAS100 1.95x, UK100 1.77x, GER40 1.52x; slippage under-charged only on BTCUSD (5x).
+  Proposal only, `data/spreads/proposal_live_2026-11-09.json` (not wired in). For this run: the
+  F1a EURUSD lead is not flattered by the cost model (EURUSD spread median 0, slippage 0.81x of
+  the model); UK100 / NAS100 / GER40 were under-charged, so F2's net results are if anything
+  too kind.
 - **Data finding:** US500 histdata 2015-2021 omits many quiet minutes (2017 worst); the strict
   integrity gate over-flags; holiday / early-close days exit after the rollover (spec › Results).
 - **Process:** the runner's matched monkeys took 30+ minutes per family; the grids now switch

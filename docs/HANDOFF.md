@@ -27,10 +27,13 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   with the F1a lead (a new pre-registered EURUSD-only test would be a new hypothesis, counted as
   such); (2) a gap-tolerant integrity gate and skipping NYSE closure days for index families
   (spec › Results); (3) the live-spread proposal (below) when its agent reports.
-- **Live spreads (2026-11-09, the user):** a Sonnet sub-agent measures runs 3 and 4 against the
-  cost model: `results/fill_report_2026-11-09/`, proposal only in
-  `data/spreads/proposal_live_2026-11-09.json` (not wired in; defaults change only on the user's
-  go).
+- **Live spreads (2026-11-09, the user):** fill report on runs 3 and 4 (7,019 fills):
+  `results/fill_report_2026-11-09/` (`report.md`, `spread_proposal.md`); under-charged spread
+  GBPJPY 2.25x, GBPUSD 1.97x, NAS100 1.95x, UK100 1.77x, GER40 1.52x (means; FX medians fit, the
+  tail is Asia / rollover hours); BTCUSD slippage 5x. Proposal only in
+  `data/spreads/proposal_live_2026-11-09.json`, not wired in: applying it is the user's decision
+  (4.6 days, demo account).
+- Hypothesis 6 (F2L, momentum on large-move days) also falsified (spec).
 - **Tests (2026-11-09, after the merge):** 5159 passed, 8 skipped, 2 xfailed (8 min 7 s; the
   intake tests left with the tool); ruff clean.
 

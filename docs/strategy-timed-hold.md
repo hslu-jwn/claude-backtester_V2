@@ -147,6 +147,12 @@ below the 0.04-0.05 R cost; the hypothesis is that the edge per trade is larger 
 - Gates: the same seven. Falsified if US500 mean net R per trade <= 0 or its bootstrap lower
   bound <= 0.
 
+**Result (2026-11-09, development):** falsified. US500 675 trades, net -23.9 R (-0.035 R per
+trade), gross +5.5 R (about +0.008 R per trade, smaller than on all days); NAS100 -13.0 net
+(+4.6 gross), UK100 -23.9 (+13.4), GER40 +6.6 net (+17.5 gross, p 0.19, fails costs x2). Large-move
+days do not lift the gross edge per trade above the cost. Folders
+`results/research/timed_hold_rodl*_<hash>/gates.json`.
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
