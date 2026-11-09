@@ -67,3 +67,8 @@ in the JSON you found ambiguous (quote it).
    - An entered trade whose holding interval later breaks these rules is kept and reported (the
      gate tool's integrity count), not dropped; the JSON's "TEST_FAILED" applies to the experiment
      report, not to the backtest.
+3. **Boundary candles (second dispatch's question):** yes, for every valid H1 bar (events and W60)
+   both the first M1 candle (its open = the H1 open) and the last M1 candle (its close = the H1
+   close, the signal and fill price) must be present; the up to 5 allowed missing minutes may only
+   be inside the hour. The spec draft `docs/strategy-h1-shock.md` from the second dispatch exists:
+   extend it, then implement.
