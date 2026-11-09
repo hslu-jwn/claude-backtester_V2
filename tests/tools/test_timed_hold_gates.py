@@ -188,3 +188,95 @@ def test_end_to_end_skip_integrity(tmp_path, capsys):
     assert set(v["symbols"]) == {"EURUSD", "GBPUSD"} and v["pooled"]["trades"] == 80
     assert v["baseline_difference"]["difference"] > 0.5
     assert len(capsys.readouterr().out.strip().splitlines()) == 2
+
+
+def _m1_for_trade(t, missing=(), invalid=False):
+    from backtester.analytics.entry_screen import M1Data
+
+    times = [
+        int((t.entry_time + timedelta(minutes=i)).timestamp())
+        for i in range(int((t.exit_time - t.entry_time).total_seconds() // 60))
+        if t.entry_time + timedelta(minutes=i) not in missing
+    ]
+    n = len(times)
+    high = np.full(n, 1.2)
+    if invalid and n:
+        high[0] = 0.5
+    return M1Data(np.array(times, dtype=np.int64), np.ones(n), high, np.full(n, 0.8), np.ones(n))
+
+
+@pytest.mark.parametrize(
+    ("entry", "minutes", "gap_start", "gap_length", "fails"),
+    [
+        (
+            datetime(2020, 7, 1, 20, tzinfo=UTC),
+            150,
+            datetime(2020, 7, 1, 21, 10, tzinfo=UTC),
+            30,
+            False,
+        ),
+        (
+            datetime(2020, 1, 6, 21, tzinfo=UTC),
+            150,
+            datetime(2020, 1, 6, 22, 10, tzinfo=UTC),
+            30,
+            False,
+        ),
+        (
+            datetime(2020, 7, 1, 18, tzinfo=UTC),
+            240,
+            datetime(2020, 7, 1, 18, 40, tzinfo=UTC),
+            6,
+            False,
+        ),
+        (
+            datetime(2020, 7, 1, 18, tzinfo=UTC),
+            240,
+            datetime(2020, 7, 1, 18, 40, tzinfo=UTC),
+            7,
+            True,
+        ),
+        (
+            datetime(2020, 7, 1, 18, tzinfo=UTC),
+            120,
+            datetime(2020, 7, 1, 18, 40, tzinfo=UTC),
+            6,
+            True,
+        ),
+    ],
+)
+def test_rollover_gap_tolerance(entry, minutes, gap_start, gap_length, fails):
+    t = trade(entry, minutes=minutes)
+    missing = {gap_start + timedelta(minutes=i) for i in range(gap_length)}
+    data = _m1_for_trade(t, missing)
+    assert bool(g.rollover_integrity_failures([t], data)) is fails
+    assert g.integrity_failures([t], data) == [t]
+
+
+def test_rollover_missing_exit_invalid_and_empty_fail():
+    t = trade(datetime(2020, 7, 1, 20, tzinfo=UTC), minutes=120)
+    assert g.rollover_integrity_failures(
+        [t], _m1_for_trade(t, {t.exit_time - timedelta(minutes=1)})
+    ) == [t]
+    assert g.rollover_integrity_failures([t], _m1_for_trade(t, invalid=True)) == [t]
+    missing = {t.entry_time + timedelta(minutes=i) for i in range(120)}
+    assert g.rollover_integrity_failures([t], _m1_for_trade(t, missing)) == [t]
+
+
+def test_strict_count_reported_independently():
+    t = trade(T0)
+    variants = {"a": {"settings": {"day_filter": "all"}, "trades": [t]}}
+    report = g.evaluate(
+        variants,
+        START,
+        END,
+        {"a": {"EURUSD": []}},
+        "EURUSD",
+        1,
+        0,
+        strict_failures={"a": {"EURUSD": [t]}},
+    )["a"]
+    assert report["symbols"]["EURUSD"]["data_integrity_failures"] == 0
+    assert report["symbols"]["EURUSD"]["data_integrity_failures_strict"] == 1
+    assert report["pooled"]["data_integrity_failures_strict"] == 1
+    assert report["gates"]["no_data_integrity_failure"]

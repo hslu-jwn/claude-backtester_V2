@@ -14,8 +14,10 @@ import csv
 import json
 import math
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, time, timedelta
+from itertools import pairwise
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 
@@ -33,6 +35,39 @@ from backtester.tools.entry_screen import load_m1
 
 BEST_DATES = 5
 BLOCK, RESAMPLES, SEED = 5, 10_000, 2026110
+NEW_YORK = ZoneInfo("America/New_York")
+
+
+def rollover_integrity_failures(trades, data, *, max_gap_minutes: int = 5) -> list:
+    """Apply Gate 7 tolerance. Spec: strategy-timed-hold.md > Hypothesis 11 > Gate 7 decision."""
+    bad = []
+    for t in integrity_failures(trades, data, max_gap_minutes=max_gap_minutes):
+        day = t.entry_time.astimezone(NEW_YORK).date()
+        last_day = t.exit_time.astimezone(NEW_YORK).date()
+        crosses = False
+        while day <= last_day:
+            rollover = datetime.combine(day, time(17), NEW_YORK)
+            if t.entry_time < rollover <= t.exit_time:
+                crosses = True
+                break
+            day += timedelta(days=1)
+        if not crosses or integrity_failures([t], data, max_gap_minutes=10**9):
+            bad.append(t)
+            continue
+        first, last = int(t.entry_time.timestamp()), int(t.exit_time.timestamp()) - 60
+        lo = np.searchsorted(data.open_s, first, side="left")
+        hi = np.searchsorted(data.open_s, last, side="right")
+        edges = np.concatenate(([first - 60], data.open_s[lo:hi], [last + 60]))
+        for left, right in pairwise(edges):
+            missing = (right - left) // 60 - 1
+            if missing <= 6:
+                continue
+            start = datetime.fromtimestamp(int(left + 60), UTC)
+            end = datetime.fromtimestamp(int(right - 60), UTC)
+            if start.date() != end.date() or start.hour < 21 or end.hour >= 23:
+                bad.append(t)
+                break
+    return bad
 
 
 def _ordered(trades) -> list:
@@ -43,7 +78,13 @@ def _nets(trades) -> np.ndarray:
     return np.array([t.r_net for t in _ordered(trades)])
 
 
-def variant_report(trades, start: date, end: date, failures: list | None = None) -> dict:
+def variant_report(
+    trades,
+    start: date,
+    end: date,
+    failures: list | None = None,
+    strict_failures: list | None = None,
+) -> dict:
     """All numbers of one trade set (one symbol or the pool)."""
     trades = _ordered(trades)
     n = len(trades)
@@ -76,6 +117,8 @@ def variant_report(trades, start: date, end: date, failures: list | None = None)
     }
     if failures is not None:
         report["data_integrity_failures"] = len(failures)
+        if strict_failures is not None:
+            report["data_integrity_failures_strict"] = len(strict_failures)
         report["data_integrity_examples"] = [
             t.entry_time.isoformat() + " " + t.symbol for t in failures[:20]
         ]
@@ -125,7 +168,9 @@ def _baseline(settings: dict, variants: dict) -> dict | None:
     return None
 
 
-def evaluate(variants, start, end, failures, primary, min_trades, min_breadth) -> dict:
+def evaluate(
+    variants, start, end, failures, primary, min_trades, min_breadth, strict_failures=None
+) -> dict:
     """variants: key -> {"settings": {name: value}, "trades": [...]}; failures: key -> symbol ->
     failing trades, or None when integrity is skipped."""
     out = {}
@@ -138,6 +183,7 @@ def evaluate(variants, start, end, failures, primary, min_trades, min_breadth) -
                 start,
                 end,
                 None if failures is None else mine.get(s, []),
+                None if strict_failures is None else strict_failures[vid].get(s, []),
             )
             for s in sorted({t.symbol for t in trades} | {primary})
         }
@@ -145,7 +191,15 @@ def evaluate(variants, start, end, failures, primary, min_trades, min_breadth) -
         row = {
             "settings": settings,
             "symbols": reports,
-            "pooled": variant_report(trades, start, end, pooled_fails),
+            "pooled": variant_report(
+                trades,
+                start,
+                end,
+                pooled_fails,
+                None
+                if strict_failures is None
+                else [t for f in strict_failures[vid].values() for t in f],
+            ),
             "skipped_integrity": failures is None,
             "notes": [],
         }
@@ -216,18 +270,26 @@ def main(argv: list[str] | None = None) -> int:
     start, end = date.fromisoformat(run["start"]), date.fromisoformat(run["end"])
     max_gap_minutes = 5
     failures = None
+    strict_failures = None
     if not args.skip_integrity:
         sources = SymbolSources({s: Path(d) for s, d in run["cache_dirs"].items()})
         failures = {vid: {} for vid in variants}
+        strict_failures = {vid: {} for vid in variants}
         for symbol in run["symbols"]:
             data = load_m1(symbol, sources, start, end + timedelta(days=1))
             for vid, v in variants.items():
                 mine = [t for t in v["trades"] if t.symbol == symbol]
-                failures[vid][symbol] = integrity_failures(mine, data, max_gap_minutes=max_gap_minutes)
+                strict_failures[vid][symbol] = integrity_failures(
+                    mine, data, max_gap_minutes=max_gap_minutes
+                )
+                failures[vid][symbol] = rollover_integrity_failures(
+                    mine, data, max_gap_minutes=max_gap_minutes
+                )
     result = {
         "period": {"start": start.isoformat(), "end": end.isoformat()},
         "settings": {
             "max_gap_minutes": max_gap_minutes,
+            "rollover_tolerance": True,
             "primary_symbol": args.primary_symbol,
             "min_trades": args.min_trades,
             "min_breadth": args.min_breadth,
@@ -235,7 +297,14 @@ def main(argv: list[str] | None = None) -> int:
             "best_dates_removed": BEST_DATES,
         },
         "variants": evaluate(
-            variants, start, end, failures, args.primary_symbol, args.min_trades, args.min_breadth
+            variants,
+            start,
+            end,
+            failures,
+            args.primary_symbol,
+            args.min_trades,
+            args.min_breadth,
+            strict_failures=strict_failures,
         ),
     }
     (args.folder / "gates.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
