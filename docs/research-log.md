@@ -6,6 +6,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
 ## 2026-11-09: continuous Continue.Research (routing back to Codex first, the user)
 
+- **Hypothesis 11 Gotobi USDJPY (evening):** idea scan Gemini Flash low (free; month-end fix, OPEX,
+  gap fade, quarter-end already covered or built; Gotobi new); Opus opened arXiv:2301.13204 via a
+  fetch agent (Gemini's NBER Gotobi citation is a Tokyo-fixing paper without Gotobi results). JP
+  holiday calendar from the Cabinet Office CSV. Build: Codex gpt-6.1-terra medium (`day_filter =
+  "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
+  (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
+  G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
 - **User decisions:** pre-sample check of F1a (yes), gap-tolerant integrity gate + NYSE short-day
   skip (ok), live-spread raises (yes); see HANDOFF › Accepted.
 - **Tooling (Codex gpt-6.1-terra, medium):** `tools/time_of_day_profile.py` (screen hourly drift

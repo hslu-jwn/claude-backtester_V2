@@ -320,6 +320,26 @@ cross-symbol signals; the gap fade is strategy 5; not re-tested here.
   the rollover hour, the result is parked for the user, never passed.
 - 16 runs (2 families x 4 cells x 2 symbols), 8 cells counted.
 
+**Result (2026-11-09, development 2015-01-02..2021-09-13; `results/research/timed_hold_gotobi_d9ea62c1`,
+gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-breadth 1`):**
+
+- **G1 primary (gotobi, stop 1.0): passes gates 1-6, fails gate 7 (data integrity).** USDJPY 413
+  trades, net +16.5 R (gross +23.2), +0.040 R per trade, every cost doubled +9.7 R, halves +9.7 / +6.9,
+  without the 5 best dates +11.0 (doubled +4.2), bootstrap 2.5 % +0.013, p 0.0035 (below the
+  family-wise 0.05 / 11 = 0.0045). Gate 3: gotobi minus the disjoint other days +0.078 R per trade,
+  2.5 % bound +0.047 (the all-days cell is -62 R pooled, so the window itself loses). Breadth EURJPY
+  +15.4 R (p 0.0016). Years USDJPY 2015-2021: +1.0, +4.1, +4.2, +4.9, -2.6, +1.6, +3.3 (EURJPY all seven
+  positive); 2015-2017 lies before the paper's 2018-2020 sample. Stop 2.0: same gates, +17.9 R pooled.
+- **Gate 7:** 9 USDJPY and 14 EURJPY trades have a gap of more than 5 M1 minutes; all exit candles
+  present, no invalid candles. 21 of the 23 gaps fall in the FTMO daily rollover hour (21:00-23:00
+  UTC, 6-60 minutes, Dec 24 the longest); 2 USDJPY trades have a 6-minute gap outside it
+  (2020-12-29 18:41 UTC, 2021-06-03 20:21 UTC). So the pre-registered rule ("parked for the user,
+  never passed" if only the rollover hour fails) does not strictly apply either: **G1 fails gate 7
+  as registered**, parked for the user (HANDOFF › Open 10). Without the 23 trades: USDJPY +17.1 R
+  (404 trades), EURJPY +16.4 R (399).
+- **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
+- Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
+
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
