@@ -1,0 +1,25 @@
+# Hypothesis 12: month-end post-fix USD rise (docs/strategy-timed-hold.md > Hypothesis 12). Pre-registered 2026-11-09.
+# Found in the development screen; decisive check on 2010-2014. Primary: month_day -1, pooled 4 pairs.
+strategy = "timed_hold"
+symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 60
+
+[base]
+zone = "Europe/London"
+entry_time = "16:00"
+exit_time = "18:00"
+direction = "short"
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+atr_close_tolerance_min = 180
+atr_skip_weekend = true
+trading_days = "weekdays"
+month_day = -1
+stop_atr = 1.0
+
+[grid]
+day_filter = ["month_day", "all"]

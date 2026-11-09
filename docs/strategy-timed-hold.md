@@ -342,6 +342,7 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   elsewhere do not fail gate 7; a missing exit candle or an invalid candle still does. Under this
   rule G1 has 0 integrity failures and **passes all seven gates: ready for the one-time test**
   (Test=manual; criteria below).
+- The timed-hold gate report applies this tolerance and also reports the strict integrity count.
 - **One-time test criteria (pre-registered 2026-11-09, before any test data is seen; runs only on
   the user's go):** the primary cell exactly as run (`research/grids/timed_hold_gotobi.toml`, family
   G1, `day_filter = "gotobi"`, stop 1.0, USDJPY), nothing re-tuned, on 2021-09-14 to the last cached
@@ -352,6 +353,31 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 
+
+## Hypothesis 12: month-end post-fix USD rise (pre-registered 2026-11-09, before the confirmation run)
+
+Origin: **found in the development data**, not taken from a paper (screen
+`knowledge/research/reports/2026-11-09_fix_w_pattern_screen.md`, Codex, 84 window x symbol cells): on the
+last weekday of the month the USD rises in 16:00-18:00 London after the WMR fix, EURUSD 5.5 bp (t 3.2),
+GBPUSD 7.9 (3.6), AUDUSD 8.1 (3.4), NZDUSD 8.0 (3.6), 78 month-ends each, costs 0.8-1.8 bp. Mechanism
+in print: equity-hedge rebalancing into the month-end fix that "partly reverts" afterwards (Melvin and
+Prins, J. Financial Markets 22, 2015, abstract only); the USD falls after fixes on ordinary days (Krohn,
+Mueller, Whelan, JF 79(1) 2024, Bank of Canada summary), so the month-end sign is the opposite of the
+daily pattern. Because the development data found it, **development gates prove nothing**; the decision
+rests on unseen 2010-2014 data. Counted as hypothesis 12 (the 84 screen cells are reported with it).
+
+- Rule: short EURUSD, GBPUSD, AUDUSD, NZDUSD (USD long) at the close of the candle closing 16:00
+  Europe/London on the last weekday of the month (`day_filter = "month_day"`, `month_day = -1`,
+  `trading_days = "weekdays"`), exit at the candle closing 18:00 London; stop 1.0 x daily ATR (UTC days,
+  as F1a). No swap (exit before the 17:00 New York rollover). Control cell: the same window on all days.
+- Grid `research/grids/timed_hold_me_fix.toml`: day_filter {month_day, all} x stop {1.0}; 4 symbols.
+- **Confirmation (decisive), 2010-01-01..2014-12-31** (data before the development split, outside
+  the test period; MT5 cache from 2010, results in `results/presample_2010_2014/`): passes only if
+  (1) pooled net R of the 4 pairs > 0 at normal costs and with every cost doubled; (2) at least 3 of 4
+  pairs net R > 0; (3) pooled bootstrap 2.5 % quantile of mean net R per trade > 0 (gate scheme);
+  (4) pooled net R > 0 in both halves (2010-2012, 2013-2014); (5) pooled month-end mean net R per trade
+  minus the disjoint all-days mean > 0 (bootstrap 2.5 % > 0). About 240 trades.
+- Development run reported alongside (descriptive). Pass -> parked "ready for the one-time test".
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
