@@ -16,6 +16,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **Index screen (the user's go "Yes, download indices"):** histdata SPXUSD, NSXUSD, GRXEUR, UKXGBP,
   JPXJPY 2010-2014 downloaded (25 files, `data/raw/histdata_presample/`); two-stage screen pre-registered
   in `briefs/index-clock-screen.md` (660 cells), run by Codex.
+  **Result: 0 survivors of 660** on 2010-11..2014 (index files start November 2010; no clock year
+  excluded); nothing confirmed. Report `knowledge/research/reports/2026-11-09_index_clock_screen.md`.
 - **Calendar x clock screen (Codex terra, pre-registered `d1334e1`, definitions fixed before the run):**
   792 cells on 2008-2014, **0 survivors** (largest |t| about 3, the size expected from noise across 792
   cells; threshold 4.0). Nothing goes to confirmation; 2015-2021 and the test period stay unused.
