@@ -22,7 +22,8 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
   ATR-session closes (`atr_zone` / `atr_open` / `atr_close`, as `SessionStats.prev_close`),
   plus the entry candle's close as today's close. Seed with the simple mean of the first
   `rsi_period` gains and losses; subsequent averages use Wilder's recurrence. No signal until
-  `rsi_period + 1` closes exist. Finished closes are retained in a bounded strategy-local deque;
+  `rsi_period + 1` closes exist. All-equal closes: no signal (Opus 2026-11-09).
+  Finished closes are retained in a bounded strategy-local deque;
   smoothing state advances once per regular session, including while a position is open.
 - **RSI thresholds:** `rsi_long_below` (default 10.0) admits longs strictly below it;
   `rsi_short_above` (default 90.0) admits shorts strictly above it. Both range from 0 to 100;

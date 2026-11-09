@@ -159,7 +159,7 @@ class TimedHold(Strategy):
             return None
         gain, loss = averages
         if gain + loss == 0:
-            raise ValueError("Flat RSI history needs an explicit specification (zero gains and losses)")
+            return None
         return 100 * gain / (gain + loss)
 
     def _rsi_direction(self, price: float) -> Direction | None:

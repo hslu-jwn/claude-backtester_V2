@@ -89,9 +89,8 @@ def test_no_signal_until_rsi_and_sma_have_enough_closes():
     assert len(replay(sessions([103, 102, 101]))[1]) == 1
 
 
-def test_flat_seed_refuses_to_guess_the_unspecified_rsi_convention():
-    with pytest.raises(ValueError, match="Flat RSI history.*specification"):
-        replay(sessions([100, 100, 100]))
+def test_flat_closes_produce_no_order():
+    assert replay(sessions([100, 100, 100, 100]))[1] == []
 
 
 def test_only_regular_session_closes_count_once_not_intraday_or_late_candles():
