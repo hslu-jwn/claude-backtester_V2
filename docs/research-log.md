@@ -13,6 +13,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
   (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
+- **Index screen (the user's go "Yes, download indices"):** histdata SPXUSD, NSXUSD, GRXEUR, UKXGBP,
+  JPXJPY 2010-2014 downloaded (25 files, `data/raw/histdata_presample/`); two-stage screen pre-registered
+  in `briefs/index-clock-screen.md` (660 cells), run by Codex.
 - **Calendar x clock screen (Codex terra, pre-registered `d1334e1`, definitions fixed before the run):**
   792 cells on 2008-2014, **0 survivors** (largest |t| about 3, the size expected from noise across 792
   cells; threshold 4.0). Nothing goes to confirmation; 2015-2021 and the test period stay unused.
