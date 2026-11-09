@@ -1,0 +1,19 @@
+# F2-EU (UK) INDEX_ROD_MOMENTUM breadth leg (docs/strategy-timed-hold.md > Families).
+# Pre-registered 2026-11-09 before any F2 result was seen. Baltussen et al. (2021) Table B1:
+# FTSE rest-of-day slope 4.28 (t 7.35), OOS R2 2.03 %. Cash session 08:00-16:30 London.
+strategy = "timed_hold"
+symbols = ["UK100"]
+min_trades = 300
+
+[base]
+zone = "Europe/London"
+entry_time = "16:00"
+exit_time = "16:30"
+direction = "with_day"
+atr_zone = "Europe/London"
+atr_open = "08:00"
+atr_close = "16:30"
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5]

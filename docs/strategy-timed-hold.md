@@ -50,13 +50,14 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
 
 From the literature reports in `knowledge/research/reports/2026-11-09_*.md` (sources marked opened
 in full / abstract only there). Every number below is the papers', gross, on their samples; none
-is ours. 4 families, 5 hypotheses, 10 grid cells. Primary cell = the first stop value listed.
+is ours. 4 families, 5 hypotheses, 12 grid cells. Primary cell = the first stop value listed.
 
 | Family | Source and prior | Rule (zone, entry -> exit, direction) | Symbols (primary first) | Cells | Min trades | Breadth |
 |---|---|---|---|---|---|---|
 | F1a FX_EU_SHORT | Breedon & Ranaldo (2013): a currency falls in its own trading hours; EURUSD only pair profitable after the EBS spread; sample ends 2007, no replication found | London 07:00 -> 13:00, short | EURUSD, GBPUSD | stop 0.5, 1.0 daily ATR | 300 | GBPUSD > 0 (1) |
 | F1b FX_US_LONG | same paper: USD falls in US hours | London 13:00 -> 20:30, long | EURUSD, GBPUSD, AUDUSD, NZDUSD | stop 0.5, 1.0 | 300 | 2 of 3 |
 | F2 INDEX_ROD_MOMENTUM | Baltussen, Da, Lammers & Martens (JFE 2021): return from the previous close to 15:30 predicts the last 30 minutes in 60+ futures (ES OOS R² 2.3 %); one blog finds it flat 2022-26 | New York 15:30 -> 16:00, `with_day` | US500, NAS100, US30 | stop 0.5, 0.25 | 300 | 1 of 2 |
+| F2-EU (breadth legs of F2) | Baltussen et al. Table B1: rest-of-day slope Euro Stoxx 4.98, FTSE 4.28, DAX 3.42 (all t > 6, gross); added 2026-11-09 before any F2 result | London 16:00 -> 16:30 (UK100); Berlin 17:00 -> 17:30 (EU50, GER40), `with_day` | UK100; EU50, GER40 | stop 0.5 | 300 | reported with F2: F2 counts as broad if >= 2 of UK100, EU50, GER40 are > 0 |
 | F3 FOMC_MORNING | Lucca & Moench (2015): +49 bp in the 24 h before FOMC statements 1994-2011; mostly gone after 2015 (Kurov et al.); falsification only, low power | New York 09:30 -> 13:45, long, `fomc` vs `all` | US500, NAS100 | filter fomc, all (stop 0.5) | 40 | 1 of 1 |
 | F4 TOM_INTRADAY | Etula et al. (RFS 2020), McConnell & Xu (2008): turn of month +48 bp over T-3..T+3, close-to-close only, intraday share unknown | New York 09:30 -> 16:00, long, `turn_of_month` (T-1..T+3) vs `all` | US500, NAS100, US30 | filter turn_of_month, all (stop 0.5) | 100 | 1 of 2 |
 

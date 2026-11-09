@@ -1,0 +1,20 @@
+# F2-EU (DE) INDEX_ROD_MOMENTUM breadth leg (docs/strategy-timed-hold.md > Families).
+# Pre-registered 2026-11-09 before any F2 result was seen. Baltussen et al. (2021) Table B1:
+# Euro Stoxx 50 slope 4.98 (t 7.61, OOS R2 3.67 %), DAX 3.42 (t 6.28, OOS R2 0.42 %).
+# Xetra / Eurex cash 09:00-17:30 Berlin. Data: GER40 to 2020-06, EU50 to 2018-12 (cost table).
+strategy = "timed_hold"
+symbols = ["EU50", "GER40"]
+min_trades = 300
+
+[base]
+zone = "Europe/Berlin"
+entry_time = "17:00"
+exit_time = "17:30"
+direction = "with_day"
+atr_zone = "Europe/Berlin"
+atr_open = "09:00"
+atr_close = "17:30"
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5]
