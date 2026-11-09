@@ -178,6 +178,32 @@ is gross positive in the predicted direction (EURJPY +41.6, EURAUD +34.0, GBPAUD
 trade. Reading: the European-hours depreciation looks real but small (about 0.02 R per trade gross
 at this stop); only EURUSD, the cheapest pair, clears its costs.
 
+## Hypothesis 9: F4M, turn of the month held close to close (pre-registered 2026-11-09)
+
+Multi-day holds are in scope since 2026-11-09 (the user: "yes, but regard the fees"). F4 tested only
+open-to-close; the published effect is close to close: Etula, Rinne, Suominen & Vaittinen (RFS 2020,
+"Dash for cash"): abnormal +48 bp over the turn-of-month window T-3..T+3 and -37 bp over T-8..T-4,
+20 of 23 countries (as quoted in `knowledge/research/reports/2026-11-09_calendar_effects.md`; the
+paper's day indexing is not re-checked here, so the rule below is defined on its own terms); McConnell & Xu (2008) about 15 bp per day over the 4-day
+window. Counted as a new hypothesis (9 hypotheses so far).
+
+- **Rule (needs `hold_days` / `month_day`, brief `briefs/timed-hold-multiday.md`):** long at the close of
+  the M1 candle closing at the cash close of the 4th-to-last trading day of the month; exit at the cash
+  close of the 3rd trading day of the next month: the hold earns the returns of the last 3 and the first
+  3 trading days of the month turn (6 trading days, about 8 nights). Stop 2 x daily ATR (primary) or 3 x (second cell); no target.
+- **Markets:** US500 (primary), NAS100 (New York 16:00 close, NYSE trading days, NYSE short days not
+  skipped for this family: the window is calendar-defined); breadth legs UK100 (London 16:30), JP225
+  (Tokyo 15:00 close; Monday-Friday trading days, Japanese holidays not modelled: assumption),
+  GER40 (Berlin 17:30; data to 2020-06) on Monday-Friday trading days.
+- **Control (gate 3):** the same 6-trading-day hold entered at the cash close of the 8th trading day
+  of the month (a mid-month window); gate = mean net R per trade of TOM minus control > 0, bootstrap 2.5 %
+  quantile > 0 (disjoint by construction).
+- **Fees:** every fee in the engine: overnight swap (today's FTMO rates applied to 2015-2021, so
+  conservative), triple swap on the Friday night, spread, commission, slippage. Pre-check: about 9
+  swap nights x 1.6-2.3 bp (US500 / NAS100) = 15-21 bp vs about 48 bp published gross: feasible.
+- **Gates:** the seven gates; min trades 60 (12 a year x about 6.7 years); breadth: >= 2 of NAS100,
+  UK100, GER40, JP225 net > 0. Falsified if US500 TOM minus control <= 0 or its bootstrap bound <= 0.
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
