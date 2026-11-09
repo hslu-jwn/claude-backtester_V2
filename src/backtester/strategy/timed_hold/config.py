@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import time
 from zoneinfo import ZoneInfo
 
-DIRECTIONS = ("long", "short", "with_day", "against_day")
+DIRECTIONS = ("long", "short", "with_day", "against_day", "rsi")
 DAY_FILTERS = ("all", "fomc", "turn_of_month", "pre_holiday", "month_day")
 TRADING_DAYS = ("weekdays", "nyse")
 
@@ -22,6 +22,10 @@ class TimedHoldConfig:
     hold_days: int = 0  # 0 = same day; otherwise trading days after the entry date
     trading_days: str = "weekdays"  # calendar for hold_days and month_day
     direction: str = "long"  # long, short, with_day / against_day (vs the last finished ATR close)
+    rsi_period: int = 2
+    rsi_long_below: float = 10.0  # strict threshold; 0 disables longs
+    rsi_short_above: float = 90.0  # strict threshold; 0 disables shorts
+    sma_filter_days: int = 0  # 0 = off; includes the signal close
     stop_atr: float = 0.5  # stop distance in daily ATR
     atr_period: int = 14  # Wilder ATR over the daily sessions of atr_zone
     atr_zone: str = "America/New_York"  # clock of the ATR sessions
@@ -67,5 +71,12 @@ class TimedHoldConfig:
             raise ValueError("tom_days_after must be >= 0")
         if self.min_move_atr < 0:
             raise ValueError("min_move_atr must be >= 0")
-        if self.min_move_atr and self.direction in ("long", "short"):
+        if self.min_move_atr and self.direction not in ("with_day", "against_day"):
             raise ValueError("min_move_atr needs direction with_day or against_day")
+        if type(self.rsi_period) is not int or self.rsi_period < 1:
+            raise ValueError("rsi_period must be an integer >= 1")
+        for name in ("rsi_long_below", "rsi_short_above"):
+            if not 0 <= getattr(self, name) <= 100:
+                raise ValueError(f"{name} must be between 0 and 100")
+        if type(self.sma_filter_days) is not int or self.sma_filter_days < 0:
+            raise ValueError("sma_filter_days must be an integer >= 0")

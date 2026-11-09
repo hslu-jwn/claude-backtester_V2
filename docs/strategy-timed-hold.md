@@ -17,6 +17,22 @@ gates before any run. It does not search for windows: entry and exit times come 
 
 Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zoneinfo`).
 
+- **RSI direction:** `direction = "rsi"` selects Hypothesis 10; the default direction remains
+  `"long"`. `rsi_period` (positive integer, default 2) uses Wilder smoothing on regular
+  ATR-session closes (`atr_zone` / `atr_open` / `atr_close`, as `SessionStats.prev_close`),
+  plus the entry candle's close as today's close. Seed with the simple mean of the first
+  `rsi_period` gains and losses; subsequent averages use Wilder's recurrence. No signal until
+  `rsi_period + 1` closes exist. Finished closes are retained in a bounded strategy-local deque;
+  smoothing state advances once per regular session, including while a position is open.
+- **RSI thresholds:** `rsi_long_below` (default 10.0) admits longs strictly below it;
+  `rsi_short_above` (default 90.0) admits shorts strictly above it. Both range from 0 to 100;
+  zero disables the respective side (so `rsi_short_above = 0` is long only). Equality gives no
+  signal. Hypothesis 10 uses entry at `atr_close`, when today's signal close is known.
+- **SMA filter:** `sma_filter_days` (non-negative integer, default 0 = disabled). In RSI mode,
+  positive values require the last `sma_filter_days` regular daily closes **including the
+  signal close**: longs require that close strictly above their simple mean, shorts strictly
+  below. No trade before enough closes exist. Defaults leave existing directions unchanged.
+
 - **Entry candle:** the 1m candle that **closes** at ⚙️ `entry_time` on a qualifying day. Entry at
   its close (known at that time, no lookahead). If that candle is missing, no trade that day.
 - **Hold days:** `hold_days` (integer, default 0). Zero preserves the same-day rule and requires

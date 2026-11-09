@@ -9,6 +9,7 @@ finished sessions count.
 from __future__ import annotations
 
 import math
+from collections import deque
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
@@ -52,7 +53,13 @@ class TimedHold(Strategy):
         self._days = DayFilter(config)
         self._multi_ref: object | None = None
         self._exit_day: date | None = None
-        self.min_warmup_days = math.ceil((config.atr_period + 1) * CALENDAR_PER_TRADING_DAY) + (
+        self._closes: deque[float] = deque(maxlen=max(config.rsi_period + 1, config.sma_filter_days))
+        self._rsi_changes = 0
+        self._gain = self._loss = 0.0  # seed sums, then Wilder averages
+        warmup = config.atr_period + 1
+        if config.direction == "rsi":
+            warmup = max(warmup, config.rsi_period + 1, config.sma_filter_days)
+        self.min_warmup_days = math.ceil(warmup * CALENDAR_PER_TRADING_DAY) + (
             WARMUP_MARGIN_DAYS
         )
 
@@ -72,6 +79,9 @@ class TimedHold(Strategy):
         # a later ATR date ends the session in progress, so it counts at this candle's entry
         if self._atr_day is not None and a.date() > self._atr_day:
             self._stats.finish()
+            if cfg.direction == "rsi" and self._stats.prev_regular:
+                self._remember_close(self._stats.prev_close)
+            self._atr_day = None
         orders: list[Order] = []
         if (self._multi_ref is None and local.time() == cfg.entry_time
                 and self._days.qualifies(local.date())):
@@ -89,6 +99,10 @@ class TimedHold(Strategy):
             return []
         if cfg.direction in ("long", "short"):
             direction = Direction.BULLISH if cfg.direction == "long" else Direction.BEARISH
+        elif cfg.direction == "rsi":
+            direction = self._rsi_direction(price)
+            if direction is None:
+                return []
         else:  # vs the close of the last finished regular ATR session
             prev = self._stats.prev_close
             if prev is None or price == prev or abs(price - prev) < cfg.min_move_atr * atr:
@@ -110,6 +124,60 @@ class TimedHold(Strategy):
                 ref=ref,
             )
         ]
+
+    def _averages_with(self, price: float) -> tuple[float, float] | None:
+        """Preview one close without advancing Wilder state. Spec: Hypothesis 10."""
+        if not self._closes:
+            return None
+        change = price - self._closes[-1]
+        gain, loss = max(change, 0.0), max(-change, 0.0)
+        period = self.config.rsi_period
+        if self._rsi_changes < period:
+            if self._rsi_changes + 1 < period:
+                return None
+            return (self._gain + gain) / period, (self._loss + loss) / period
+        return ((self._gain * (period - 1) + gain) / period,
+                (self._loss * (period - 1) + loss) / period)
+
+    def _remember_close(self, price: float) -> None:
+        """Commit each finished regular ATR-session close once. Spec: Hypothesis 10."""
+        if self._closes:
+            averages = self._averages_with(price)
+            if averages is None:
+                change = price - self._closes[-1]
+                self._gain += max(change, 0.0)
+                self._loss += max(-change, 0.0)
+            else:
+                self._gain, self._loss = averages
+            self._rsi_changes = min(self._rsi_changes + 1, self.config.rsi_period)
+        self._closes.append(price)
+
+    def _rsi(self, price: float) -> float | None:
+        """Wilder RSI including today's known signal close. Spec: Hypothesis 10."""
+        averages = self._averages_with(price)
+        if averages is None:
+            return None
+        gain, loss = averages
+        if gain + loss == 0:
+            raise ValueError("Flat RSI history needs an explicit specification (zero gains and losses)")
+        return 100 * gain / (gain + loss)
+
+    def _rsi_direction(self, price: float) -> Direction | None:
+        cfg = self.config
+        rsi = self._rsi(price)
+        if rsi is None or (cfg.sma_filter_days and len(self._closes) + 1 < cfg.sma_filter_days):
+            return None
+        sma = None
+        if cfg.sma_filter_days:
+            previous = list(self._closes)[-(cfg.sma_filter_days - 1):] if cfg.sma_filter_days > 1 else []
+            sma = (sum(previous) + price) / cfg.sma_filter_days
+        for direction, threshold in ((Direction.BULLISH, cfg.rsi_long_below),
+                                     (Direction.BEARISH, cfg.rsi_short_above)):
+            sign = 1 if direction is Direction.BULLISH else -1
+            if (threshold > 0 and sign * (rsi - threshold) < 0
+                    and (sma is None or sign * (price - sma) > 0)):
+                return direction
+        return None
 
     def exits(self) -> list[object]:
         return self._exit.take()

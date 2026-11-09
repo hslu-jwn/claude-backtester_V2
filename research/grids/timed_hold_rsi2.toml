@@ -1,0 +1,50 @@
+# Hypothesis 10 / I-03: daily RSI(2) mean reversion. Eight cells, each on both symbols.
+# Families K10 / K5 = Kaufman paired thresholds; C = Connors-style long only.
+# Cell names: K10 hold1/hold3, K5 hold1/hold3, C long10/long5 x hold1/hold3.
+# Primary: K10 hold1 (10/90, hold_days 1), US500; NAS100 breadth.
+strategy = "timed_hold"
+symbols = ["US500", "NAS100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 100
+
+[base]
+zone = "America/New_York"
+atr_zone = "America/New_York"
+entry_time = "16:00"
+exit_time = "16:00"
+atr_open = "09:30"
+atr_close = "16:00"
+trading_days = "nyse"
+skip_nyse_short_days = true
+direction = "rsi"
+stop_atr = 2.0
+day_filter = "all"
+
+[[grids]]
+name = "K10"
+[grids.base]
+rsi_long_below = 10.0
+rsi_short_above = 90.0
+sma_filter_days = 0
+[grids.grid]
+hold_days = [1, 3]
+
+[[grids]]
+name = "K5"
+[grids.base]
+rsi_long_below = 5.0
+rsi_short_above = 95.0
+sma_filter_days = 0
+[grids.grid]
+hold_days = [1, 3]
+
+[[grids]]
+name = "C"
+[grids.base]
+rsi_short_above = 0.0
+sma_filter_days = 200
+[grids.grid]
+rsi_long_below = [10.0, 5.0]
+hold_days = [1, 3]
