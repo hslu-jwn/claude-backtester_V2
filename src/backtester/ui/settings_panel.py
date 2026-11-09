@@ -428,7 +428,7 @@ def _panel_symbol(path: str) -> bool:
         return False
     # Its own research knobs too (paths only strategy 10 has): set per grid family
     if path in ("strategy.entry_time", "strategy.direction", "strategy.day_filter",
-                "strategy.min_move_atr"):  # fmt: skip
+                "strategy.min_move_atr", "strategy.skip_nyse_short_days"):  # fmt: skip
         return False
     if path.startswith("detectors.swings.doji_max_body."):
         return path.rsplit(".", 1)[1] in PANEL_COST_SYMBOLS

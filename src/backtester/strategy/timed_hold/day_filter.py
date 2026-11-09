@@ -30,6 +30,7 @@ class DayFilter:
         folder = Path(config.calendar_dir) if config.calendar_dir else DEFAULT_DIR
         self._fomc: set[date] = set()
         self._closed: set[date] = set()
+        self._short_days: set[date] = set()
         if self.kind == "fomc":
             rows = _read(folder / "fomc_statements.csv")
             self._fomc = {
@@ -37,11 +38,16 @@ class DayFilter:
                 for r in rows
                 if r["scheduled"].strip().lower() == "true"
             }
-        elif self.kind in ("turn_of_month", "pre_holiday"):
+        if self.kind in ("turn_of_month", "pre_holiday") or config.skip_nyse_short_days:
             rows = _read(folder / "nyse_holidays.csv")
             self._closed = {
                 date.fromisoformat(r["date"]) for r in rows if r["type"].strip() == "closed"
             }
+            if config.skip_nyse_short_days:
+                self._short_days = {
+                    date.fromisoformat(r["date"]) for r in rows
+                    if r["type"].strip() in ("closed", "early_close_13:00")
+                }
 
     def _trading(self, d: date) -> bool:
         return d.weekday() < 5 and d not in self._closed
@@ -53,6 +59,8 @@ class DayFilter:
         return d
 
     def qualifies(self, d: date) -> bool:
+        if d in self._short_days:
+            return False
         if self.kind == "all":
             return True
         if self.kind == "fomc":

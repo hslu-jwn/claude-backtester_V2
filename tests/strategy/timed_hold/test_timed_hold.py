@@ -528,3 +528,22 @@ def test_appending_future_candles_never_changes_orders_already_given():
     for cut in (len(candles) - 1, len(candles) - 5, len(candles) // 2, 20):
         prefix = orders_by_index(candles[:cut])
         assert prefix == {i: o for i, o in full.items() if i < cut}
+
+
+def test_skip_nyse_short_days_defaults_off_and_excludes_both_types(tmp_path):
+    calendars(tmp_path)
+    assert TimedHoldConfig().skip_nyse_short_days is False
+    normal = entry_dates(date(2026, 1, 5), 12, tmp_path)
+    filtered = entry_dates(date(2026, 1, 5), 12, tmp_path, skip_nyse_short_days=True)
+    for day in (date(2026, 1, 6), date(2026, 1, 19)):
+        assert day in normal
+        assert day not in filtered
+
+
+def test_skip_nyse_short_days_also_applies_to_fomc(tmp_path):
+    calendars(tmp_path, fomc="date,scheduled\n2026-01-06,true\n2026-01-19,true\n")
+    assert entry_dates(date(2026, 1, 5), 12, tmp_path, day_filter="fomc") == [
+        date(2026, 1, 6), date(2026, 1, 19)
+    ]
+    assert entry_dates(date(2026, 1, 5), 12, tmp_path, day_filter="fomc",
+                       skip_nyse_short_days=True) == []

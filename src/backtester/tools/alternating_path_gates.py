@@ -119,15 +119,22 @@ def _valid(data: M1Data, i: np.ndarray) -> np.ndarray:
     )
 
 
-def integrity_failures(trades, data: M1Data) -> list:
-    """Trades with a missing or invalid M1 candle closing in (entry, exit]."""
+def integrity_failures(trades, data: M1Data, *, max_gap_minutes: int = 5) -> list:
+    """Trades failing the M1 integrity gate. Spec: strategy-alternating-path.md > Gates."""
     bad = []
     for t in trades:
         first, last = int(t.entry_time.timestamp()), int(t.exit_time.timestamp()) - 60
         lo = np.searchsorted(data.open_s, first, side="left")
         hi = np.searchsorted(data.open_s, last, side="right")
         i = np.arange(lo, hi)
-        if len(i) != (last - first) // 60 + 1 or not _valid(data, i).all():
+        times = data.open_s[lo:hi]
+        gaps = np.diff(np.concatenate(([first - 60], times, [last + 60]))) // 60 - 1
+        if (
+            len(times) == 0
+            or times[-1] != last
+            or np.any(gaps > max_gap_minutes)
+            or not _valid(data, i).all()
+        ):
             bad.append(t)
     return bad
 

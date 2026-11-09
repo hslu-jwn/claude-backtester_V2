@@ -182,8 +182,9 @@ Opus (2026-11-06):
   blocks of 5 dates, 10,000 resamples, seed 2026014, statistic = mean daily R. The submission
   names no level: the gate uses the 2.5 % quantile (two-sided 95 %), the 5 % quantile is reported.
   Required for both cells of a mode ("both hold=60 centre and hold=30 neighbour pass every gate").
-- **Data integrity.** A trade fails when an M1 candle closing in `(entry, exit]` is missing or
-  breaks the OHLC rules (A1) in the run's cache; the count and the first 20 are listed per cell.
+- **Data integrity.** A trade fails when more than 5 consecutive M1 minutes are missing in
+  `(entry, exit]`, the exit candle is missing, or any present candle breaks the OHLC rules (A1)
+  (the user, 2026-11-09); the count and the first 20 are listed per cell.
 - **Benchmarks.** Zero net R (the gates) and the opposite mode's cells on the same events.
 
 ## Rule to config / code / test mapping

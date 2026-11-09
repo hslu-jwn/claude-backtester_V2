@@ -182,6 +182,7 @@ def test_end_to_end_skip_integrity(tmp_path, capsys):
     argv = [str(tmp_path), "--primary-symbol", "EURUSD", "--min-trades", "10"]
     assert g.main([*argv, "--min-breadth", "1", "--skip-integrity"]) == 0
     res = json.loads((tmp_path / "gates.json").read_text(encoding="utf-8"))
+    assert res["settings"]["max_gap_minutes"] == 5
     v = res["variants"]["day_filter=fomc|hold=60"]
     assert v["gates"]["no_data_integrity_failure"] and v["skipped_integrity"] is True
     assert set(v["symbols"]) == {"EURUSD", "GBPUSD"} and v["pooled"]["trades"] == 80

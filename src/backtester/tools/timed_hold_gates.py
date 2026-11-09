@@ -214,6 +214,7 @@ def main(argv: list[str] | None = None) -> int:
     some = next(iter(args.folder.glob("variants/*/settings.json")))
     run = json.loads(some.read_text(encoding="utf-8"))["run"]
     start, end = date.fromisoformat(run["start"]), date.fromisoformat(run["end"])
+    max_gap_minutes = 5
     failures = None
     if not args.skip_integrity:
         sources = SymbolSources({s: Path(d) for s, d in run["cache_dirs"].items()})
@@ -222,10 +223,11 @@ def main(argv: list[str] | None = None) -> int:
             data = load_m1(symbol, sources, start, end + timedelta(days=1))
             for vid, v in variants.items():
                 mine = [t for t in v["trades"] if t.symbol == symbol]
-                failures[vid][symbol] = integrity_failures(mine, data)
+                failures[vid][symbol] = integrity_failures(mine, data, max_gap_minutes=max_gap_minutes)
     result = {
         "period": {"start": start.isoformat(), "end": end.isoformat()},
         "settings": {
+            "max_gap_minutes": max_gap_minutes,
             "primary_symbol": args.primary_symbol,
             "min_trades": args.min_trades,
             "min_breadth": args.min_breadth,

@@ -34,6 +34,9 @@ Base timeframe **1m**. Times are local clock times in ⚙️ `zone` (DST via `zo
   The calendars are published in advance (scheduled meetings, exchange holiday rules), so using
   them at the entry time is not lookahead. Unscheduled FOMC actions are excluded.
 
+- **Skip NYSE short days:** `skip_nyse_short_days` (default false) excludes entry dates that
+  are NYSE full closures or 13:00 early closes, with any `day_filter` (the user, 2026-11-09).
+
 ## Rule
 
 - **Direction:** ⚙️ `direction` = `long` or `short` (one code path by `Direction`), or
@@ -96,7 +99,8 @@ the user decides. A family passes only if its **primary cell** passes all of:
    the family names.
 5. **Best-date removal:** net R stays > 0 without the 5 best trade dates.
 6. **Minimum trades:** the family's minimum (fewer = "not enough evidence", not a pass).
-7. **Data integrity:** count of trades with a missing or invalid M1 candle inside the hold.
+7. **Data integrity:** count trades with more than 5 consecutive missing M1 minutes in
+   `(entry, exit]`, a missing exit candle, or any invalid present candle (the user, 2026-11-09).
 
 Multiple testing: every cell of every family is counted in the trial log; the family count and the
 cell count are reported with the result. A cell that is not the primary cell is a robustness

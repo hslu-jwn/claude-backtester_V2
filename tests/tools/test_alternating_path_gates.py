@@ -112,5 +112,21 @@ def test_integrity_counts_trades_with_a_missing_or_broken_minute():
     edge = trade(
         T0 - timedelta(minutes=29), minutes=59
     )  # (entry, exit] = minutes -29..29: before data
-    assert g.integrity_failures([ok, missing, bad], data) == [missing, bad]
+    assert g.integrity_failures([ok, missing, bad], data) == [bad]
     assert g.integrity_failures([edge], data) == [edge]
+
+
+@pytest.mark.parametrize(
+    ("skip", "fails"),
+    [(range(10, 13), False), (range(10, 15), False), (range(10, 16), True),
+     ((59,), True), ((2, 4, 6, 8, 10, 12), False)],
+)
+def test_integrity_tolerates_only_short_internal_gaps(skip, fails):
+    t = trade(T0)
+    assert bool(g.integrity_failures([t], m1(T0, 60, skip=skip))) is fails
+
+
+def test_integrity_gap_limit_is_configurable_and_invalid_still_fails():
+    t = trade(T0)
+    assert g.integrity_failures([t], m1(T0, 60, skip=range(10, 13)), max_gap_minutes=2) == [t]
+    assert g.integrity_failures([t], m1(T0, 60, broken=(10,))) == [t]

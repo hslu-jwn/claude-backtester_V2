@@ -10,6 +10,7 @@ entry_screen = false
 min_trades = 40
 
 [base]
+skip_nyse_short_days = true # the user 2026-11-09
 zone = "America/New_York"
 entry_time = "09:30"
 exit_time = "13:45"
