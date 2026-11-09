@@ -43,3 +43,11 @@ end-to-end run on a temp folder with `--skip-integrity`.
 
 New tests green, `python -m pytest tests/tools -q` green, `python -m ruff check .` clean. Report
 files, tests, and every convention you chose.
+
+## Decision on the first dispatch's question (Opus, 2026-11-09; write it into the spec's assumptions)
+
+Common-event gate ("fixed subset whose complete three-hour holding interval is eligible"): use the
+events actually present (traded) in all three horizon cells (h = 1, 2, 3) of the same k and response
+mode, matched by symbol and signal close time (the intersection). Report its size; if it has fewer
+than the spec's minimum events, the gate reads "not enough evidence" (fails). The h = 1 events flagged
+three-hour eligible but suppressed in a longer horizon by cooldown are counted and reported, not used.
