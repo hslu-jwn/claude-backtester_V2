@@ -12,8 +12,9 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 
 ## Start
 
-- Read `docs/HANDOFF.md`, the last entry of `docs/research-log.md`, `research/candidates/README.md`
-  and the top of `knowledge/ideas.md`.
+- Read `docs/HANDOFF.md`, the last entry of `docs/research-log.md`, `research/candidates/README.md`,
+  the top of `knowledge/ideas.md` and `knowledge/topics/cost-wall.md` (what every test so far says
+  about gross edge vs costs; read it before proposing anything).
 - First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything unclear)
   and wait. Then run autonomously (Telegram only for urgent items, CLAUDE.md). Later calls in the
   same chat reuse the answers.

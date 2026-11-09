@@ -16,7 +16,9 @@ direction = "long"
 atr_zone = "UTC"
 atr_open = "00:00"
 atr_close = "23:59"
-atr_close_tolerance_min = 30
+# ATR fix 2026-11-09 (code review): Fridays counted, Sunday stubs left out (run 1 had a ~8 % small ATR)
+atr_close_tolerance_min = 180
+atr_skip_weekend = true
 day_filter = "all"
 
 [grid]

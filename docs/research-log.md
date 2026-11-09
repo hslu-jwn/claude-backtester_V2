@@ -35,6 +35,20 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **Hypothesis 6 F2L** (pre-registered `fdb450c` after the F2 results, counted as new): F2 only on
   days with |move| >= 0.5 daily ATR. Falsified: US500 -0.035 R per trade net, gross +0.008 R;
   NAS100 / UK100 negative, GER40 +6.6 net (fails costs x2). 6 hypotheses, 15 cells in total.
+- **Hypothesis 7 F1X** (pre-registered `e2d8744`): short EURJPY / EURAUD / GBPJPY / GBPAUD in
+  European hours. Gross positive on all four (+25 to +42 R), net negative on all four (costs
+  0.04-0.06 R vs +0.02 R gross per trade). 7 hypotheses, 16 cells in total. The mechanism shows
+  up gross everywhere; it clears costs only on EURUSD.
+- **Follow-ups (spec › Run 1 follow-ups):** a code review found the FX daily ATR about 8 % too
+  small (Fridays irregular, Sunday stubs counted); fixed (`atr_skip_weekend`, tolerance 180) and
+  the FX families rerun: no verdict changes (F1a EURUSD +68.9 R, p 0.0067). EURUSD placebo
+  profile (6-hour long holds from every London hour): a smooth Breedon-Ranaldo shape, 07:00 the
+  extreme. F1a dissection: 6 of 7 years positive but faded in 2020-21, top 1 % of trades = 58 %
+  of net. More literature: EURUSD-specific effects (nothing better than Breedon-Ranaldo), crypto
+  intraday (nothing that beats costs; leads: fade after large 1-4 h moves, first-to-last
+  30-minute momentum as a filter), commodity / EU / Asia intraday; synthesis
+  `knowledge/topics/cost-wall.md`; pre-sample 2008-2014 data plan
+  (`knowledge/research/reports/2026-11-09_presample_2008_2014_plan.md`, needs the user's go).
 - **Live spreads** (the user's request, Sonnet sub-agent): `results/fill_report_2026-11-09/`
   (7,019 fills of runs 3+4, 23 symbols, about 4.6 days): FX medians match the model; means 1.4-2x
   from Asia / rollover bars (NY hour 18 about 5x). Under-charged spread: GBPJPY 2.25x, GBPUSD

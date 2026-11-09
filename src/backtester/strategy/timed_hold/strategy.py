@@ -66,7 +66,8 @@ class TimedHold(Strategy):
         orders: list[Order] = []
         if local.time() == cfg.entry_time and self._days.qualifies(local.date()):
             orders = self._entry(candle.close, local.date())
-        if cfg.atr_open < a.time() <= cfg.atr_close:
+        weekend = cfg.atr_skip_weekend and a.weekday() >= 5
+        if cfg.atr_open < a.time() <= cfg.atr_close and not weekend:
             self._stats.take_in(a.date(), a.time(), candle)
             self._atr_day = a.date()
         return orders
@@ -87,7 +88,10 @@ class TimedHold(Strategy):
         sign = 1 if direction is Direction.BULLISH else -1
         return [
             Order(
-                direction, price, price - sign * cfg.stop_atr * atr, None,
+                direction,
+                price,
+                price - sign * cfg.stop_atr * atr,
+                None,
                 reason=f"timed hold {cfg.direction} {cfg.stop_atr} ATR",
                 ref=self._exit.open(today),
             )

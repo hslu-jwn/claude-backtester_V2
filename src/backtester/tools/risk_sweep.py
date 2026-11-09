@@ -315,6 +315,9 @@ def plans() -> dict[str, Plan]:
             LONDON_FIX_SYMBOLS,
             LONDON_FIX_SYMBOLS,
         ),
+        "timed_hold": Plan(
+            "timed_hold", default_config("timed_hold"), ("NAS100", "US500"), ("NAS100", "US500")
+        ),
     }
     assert set(out) == set(REGISTRY)
     return out

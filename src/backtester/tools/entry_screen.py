@@ -57,6 +57,7 @@ STRATEGY_SYMBOLS = {  # each strategy's own symbols (its spec / grid tool)
     "gap_momentum": ("NAS100", "US500"),
     "london_fix": ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"),
     "alternating_path": ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"),
+    "timed_hold": ("US500", "NAS100"),  # default config = New York cash session
 }
 FAMILY_PREFIX = "screen_"
 SOURCE = "histdata"

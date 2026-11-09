@@ -202,7 +202,12 @@ def main(argv: list[str] | None = None) -> int:
     variants = {}
     for row in rows:
         settings = {k[4:]: v for k, v in row.items() if k.startswith("set.")}
-        variants[_name(settings)] = {
+        if row.get("family"):  # [[grids]] families differ by their base, not by set.* columns
+            settings = {"family": row["family"], **settings}
+        key = _name(settings)
+        if key in variants:
+            raise SystemExit(f"two variants share the key {key!r}; gates need distinct cells")
+        variants[key] = {
             "settings": settings,
             "trades": read_trades(args.folder / "variants" / row["variant_id"]),
         }

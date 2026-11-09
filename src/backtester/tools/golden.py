@@ -40,6 +40,7 @@ class GoldenConfig:
         ("gap_momentum", ("XAUUSD",)),
         ("london_fix", ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD")),
         ("alternating_path", ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD")),
+        ("timed_hold", ("NAS100", "US500")),
     )
 
 

@@ -24,7 +24,9 @@ class TimedHoldConfig:
     atr_zone: str = "America/New_York"  # clock of the ATR sessions
     atr_open: time = time(9, 30)  # a session = candles closing in (atr_open, atr_close]
     atr_close: time = time(16, 0)
-    atr_close_tolerance_min: int = 0  # FX: 30 with 00:00-23:59 UTC
+    atr_close_tolerance_min: int = 0  # FX: 180 with 00:00-23:59 UTC (Friday data ends ~21:00)
+    # FX: leave Saturday / Sunday atr_zone dates out of the ATR (the Sunday-evening stub is not a day)
+    atr_skip_weekend: bool = False
     day_filter: str = "all"  # all, fomc, turn_of_month, pre_holiday
     tom_days_after: int = 3  # turn_of_month: trading days of the new month that qualify
     calendar_dir: str = ""  # "" = the package folder strategy/timed_hold/calendars/

@@ -177,6 +177,49 @@ def test_min_move_atr_filters_small_day_moves(price, k, trades):
     assert len(scenario(price, rest=QUIET_WIDE, direction="with_day", min_move_atr=k)) == trades
 
 
+def _fx_week_with_sunday_stub(sunday_range: float) -> list[Candle]:
+    """3 weeks of UTC days (range 10 each, close 105 at 20:59 on Fridays, 23:59 otherwise), each
+    week preceded by a Sunday-evening stub (21:00-23:59 UTC) of `sunday_range`; then a Monday
+    trade at 07:00 London."""
+    utc = ZoneInfo("UTC")
+    out: list[Candle] = []
+    for d in weekdays(date(2026, 1, 5), 15):
+        if d.weekday() == 0:  # the Sunday before
+            s = d - timedelta(days=1)
+            half = sunday_range / 2
+            out.append(candle(s, "22:00", 105, 105 + half, 105 - half, 105, utc))
+            out.append(candle(s, "23:59", 105, 105, 105, 105, utc))
+        out.append(candle(d, "08:00", 105, 110, 100, 105, utc))
+        out.append(candle(d, "20:59" if d.weekday() == 4 else "23:59", 105, 105, 105, 105, utc))
+    monday = date(2026, 1, 26)
+    stub = monday - timedelta(days=1)
+    out.append(candle(stub, "22:00", 105, 105, 105, 105, utc))
+    out.append(candle(monday, "07:00", 105, 105, 105, 105, LONDON))
+    out.append(candle(monday, "13:00", 105, 106, 104, 105, LONDON))
+    return out
+
+
+FX_ATR = {
+    "zone": "Europe/London",
+    "entry_time": time(7, 0),
+    "exit_time": time(13, 0),
+    "direction": "short",
+    "atr_zone": "UTC",
+    "atr_open": time(0, 0),
+    "atr_close": time(23, 59),
+}
+
+
+def test_fx_atr_skip_weekend_counts_fridays_and_drops_sunday_stubs():
+    # weekdays only, Fridays regular (tolerance 180): every true range is 10 -> stop 105 + 5
+    [t] = run(_fx_week_with_sunday_stub(1.0), **FX_ATR, atr_close_tolerance_min=180,
+              atr_skip_weekend=True)  # fmt: skip
+    assert t.initial_stop == pytest.approx(110.0)
+    # without the switch the 1-point Sunday stubs enter the ATR and shrink the stop
+    [t] = run(_fx_week_with_sunday_stub(1.0), **FX_ATR, atr_close_tolerance_min=180)
+    assert t.initial_stop < 110.0
+
+
 def test_min_move_atr_needs_a_day_direction():
     with pytest.raises(ValueError):
         TimedHoldConfig(direction="long", min_move_atr=0.5)
@@ -209,14 +252,18 @@ def test_irregular_session_gives_no_atr():
 def test_no_trade_when_the_entry_candle_is_missing():
     days = weekdays(date(2026, 1, 5), 15)
     candles = [c for d in days[:14] for c in warm_day(d)]
-    candles += [candle(days[14], "09:31", 108, 108, 108, 108)] + trade_day(days[14], 108.0, QUIET)[1:]
+    candles += [candle(days[14], "09:31", 108, 108, 108, 108)] + trade_day(days[14], 108.0, QUIET)[
+        1:
+    ]
     assert run(candles) == []
 
 
 def test_one_trade_per_day_and_one_on_each_of_two_days():
     days = weekdays(date(2026, 1, 5), 16)
     candles = [c for d in days[:14] for c in warm_day(d)]
-    candles += trade_day(days[14], 108.0, [("10:00", 109.0, 102.0, 103.0), ("16:00", 105, 104, 104)])
+    candles += trade_day(
+        days[14], 108.0, [("10:00", 109.0, 102.0, 103.0), ("16:00", 105, 104, 104)]
+    )
     candles += trade_day(days[15], 105.0, QUIET)
     trades = run(candles)
     assert [t.entry_time.astimezone(NY).date() for t in trades] == [days[14], days[15]]
@@ -303,7 +350,9 @@ def test_turn_of_month_with_holidays(tmp_path):
 
 def test_turn_of_month_days_after_is_a_setting(tmp_path):
     calendars(tmp_path)
-    got = entry_dates(date(2025, 12, 22), 12, tmp_path, day_filter="turn_of_month", tom_days_after=0)
+    got = entry_dates(
+        date(2025, 12, 22), 12, tmp_path, day_filter="turn_of_month", tom_days_after=0
+    )
     assert got == [date(2025, 12, 31)]
 
 

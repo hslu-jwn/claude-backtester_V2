@@ -157,6 +157,20 @@ def _write_variant(folder, vid, per_symbol, offset=0):
                 i += 1
 
 
+def test_grid_families_stay_separate_variants(tmp_path):
+    win = [1.0, 0.8] * 20
+    _write_variant(tmp_path, "v1", {"EURUSD": win})
+    _write_variant(tmp_path, "v2", {"EURUSD": [-1.0] * 40})
+    with (tmp_path / "variants.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["variant_id", "family", "set.direction"])
+        w.writerows([["v1", "h07", "long"], ["v2", "h13", "long"]])
+    argv = [str(tmp_path), "--primary-symbol", "EURUSD", "--min-trades", "10", "--min-breadth", "0"]
+    assert g.main([*argv, "--skip-integrity"]) == 0
+    res = json.loads((tmp_path / "gates.json").read_text(encoding="utf-8"))["variants"]
+    assert set(res) == {"family=h07|direction=long", "family=h13|direction=long"}
+
+
 def test_end_to_end_skip_integrity(tmp_path, capsys):
     win = [1.0, 0.8] * 20
     _write_variant(tmp_path, "v1", {"EURUSD": win, "GBPUSD": win})

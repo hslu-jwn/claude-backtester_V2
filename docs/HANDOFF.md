@@ -17,16 +17,24 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   gates). Intake tool removed (archived in `../archive/v2-intake-tool/`). Also archived: V1,
   `old/`, `book-notes-2026-10-23/`; the merged `bt-live` worktree was removed (branch `v2-live`
   kept). Umbrella layout: `../AGENTS.md`, `../archive/README.md`.
-- **Continue.Research run 1 (2026-11-09, 11:43-13:59):** strategy 10 `timed_hold`
-  (`docs/strategy-timed-hold.md`, registry `timed_hold`, gates `tools/timed_hold_gates.py`), 5
-  pre-registered hypotheses / 12 cells from published effects, development only. **No family
-  advances.** Lead for the user: F1a EURUSD short 07:00-13:00 London (+72.5 R / 1,723 trades,
-  p 0.008, passes costs x2 / halves / bootstrap / best dates) fails breadth (GBPUSD) and the joint
-  F1 rule (F1b fails). Literature, cost table and M15 triage in `knowledge/research/reports/
-  2026-11-09_*`: none of the 18 M15 candidates is worth a build. Open decisions: (1) what to do
-  with the F1a lead (a new pre-registered EURUSD-only test would be a new hypothesis, counted as
-  such); (2) a gap-tolerant integrity gate and skipping NYSE closure days for index families
-  (spec › Results); (3) the live-spread proposal (below) when its agent reports.
+- **Continue.Research run 1 (2026-11-09, 11:43-14:30):** strategy 10 `timed_hold`
+  (`docs/strategy-timed-hold.md`, registry `timed_hold`, gates `tools/timed_hold_gates.py`),
+  7 pre-registered hypotheses / 16 cells from published effects, development only (test period
+  untouched). **No family advances.** The one lead: F1a, short EURUSD 07:00-13:00 London
+  (Breedon & Ranaldo): +68.9 R / 1,723 trades after the FX ATR fix, p 0.0067, passes costs x2,
+  halves, bootstrap and best-date removal; fails breadth (GBPUSD net negative, gross positive) and
+  the joint F1 rule (F1b fails). The EURUSD placebo profile has the paper's daily shape with 07:00
+  as its extreme; but the edge faded in 2020-21 and 17 trades carry 58 % of it. Every published
+  effect tested shows the predicted sign gross (indices, crosses) at +0.01-0.03 R per trade, below
+  the 0.04-0.06 R cost: `knowledge/topics/cost-wall.md`. None of the 18 M15 candidates is worth a
+  build (triage report). Decisions for the user:
+  (1) F1a: download EURUSD / GBPUSD 2008-2014 for an untouched pre-sample check (plan
+      `knowledge/research/reports/2026-11-09_presample_2008_2014_plan.md`: separate cache, runner
+      `--cache-dir` option about 10 lines, histdata clock check first), and / or the one-time MT5
+      test of F1a (2021-09-14 on), or drop it;
+  (2) a gap-tolerant integrity gate (> 5 missing minutes) and skipping NYSE closure / early-close
+      days in index families (US500 histdata omits many quiet minutes, spec › Results);
+  (3) the live-spread proposal (below).
 - **Live spreads (2026-11-09, the user):** fill report on runs 3 and 4 (7,019 fills):
   `results/fill_report_2026-11-09/` (`report.md`, `spread_proposal.md`); under-charged spread
   GBPJPY 2.25x, GBPUSD 1.97x, NAS100 1.95x, UK100 1.77x, GER40 1.52x (means; FX medians fit, the
@@ -127,9 +135,12 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 
 ## Next step
 
-Fill report + 12.5 reconciliation on fill probe runs 3 and 4 (`Continue.Code`), or
-`Continue.Research` on the next candidate.
+The user's decisions on the F1a lead (pre-sample data / MT5 test / drop), the integrity gate and
+the live-spread proposal (Where things are › Continue.Research run 1). Then either
+`Continue.Research` (ideas must clear `knowledge/topics/cost-wall.md`: about 0.05 R gross per
+trade on the cheapest symbols at session-length holds) or `Continue.Code` (12.5 reconciliation on
+runs 3 and 4; the fill report of runs 3 + 4 is done, `results/fill_report_2026-11-09/`).
 
 ## First prompt for the next chat
 
-`Continue.Code` (fill report + reconciliation) or `Continue.Research`.
+`Continue.Research` after the user's F1a decision, or `Continue.Code` (12.5 reconciliation).

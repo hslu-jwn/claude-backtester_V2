@@ -1,0 +1,166 @@
+# PLACEBO / diagnostic for F1a (docs/strategy-timed-hold.md): EURUSD long, 6-hour holds starting
+# every hour 00:00-17:00 London. Not a hypothesis and never a selection: it profiles the time-of-day
+# shape that Breedon & Ranaldo predict (negative in European hours, positive in US hours). Short =
+# the negative of long before costs. Counted in the trial log as its own family.
+strategy = "timed_hold"
+symbols = ["EURUSD"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 300
+
+[base]
+zone = "Europe/London"
+direction = "long"
+stop_atr = 0.5
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+# ATR fix 2026-11-09 (code review): Fridays counted, Sunday stubs left out (run 1 had a ~8 % small ATR)
+atr_close_tolerance_min = 180
+atr_skip_weekend = true
+day_filter = "all"
+
+[[grids]]
+name = "h00"
+[grids.base]
+entry_time = "00:00"
+exit_time = "06:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h01"
+[grids.base]
+entry_time = "01:00"
+exit_time = "07:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h02"
+[grids.base]
+entry_time = "02:00"
+exit_time = "08:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h03"
+[grids.base]
+entry_time = "03:00"
+exit_time = "09:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h04"
+[grids.base]
+entry_time = "04:00"
+exit_time = "10:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h05"
+[grids.base]
+entry_time = "05:00"
+exit_time = "11:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h06"
+[grids.base]
+entry_time = "06:00"
+exit_time = "12:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h07"
+[grids.base]
+entry_time = "07:00"
+exit_time = "13:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h08"
+[grids.base]
+entry_time = "08:00"
+exit_time = "14:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h09"
+[grids.base]
+entry_time = "09:00"
+exit_time = "15:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h10"
+[grids.base]
+entry_time = "10:00"
+exit_time = "16:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h11"
+[grids.base]
+entry_time = "11:00"
+exit_time = "17:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h12"
+[grids.base]
+entry_time = "12:00"
+exit_time = "18:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h13"
+[grids.base]
+entry_time = "13:00"
+exit_time = "19:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h14"
+[grids.base]
+entry_time = "14:00"
+exit_time = "20:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h15"
+[grids.base]
+entry_time = "15:00"
+exit_time = "21:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h16"
+[grids.base]
+entry_time = "16:00"
+exit_time = "22:00"
+[grids.grid]
+direction = ["long"]
+
+[[grids]]
+name = "h17"
+[grids.base]
+entry_time = "17:00"
+exit_time = "23:00"
+[grids.grid]
+direction = ["long"]

@@ -419,6 +419,13 @@ def _panel_symbol(path: str) -> bool:
     # settings / grids, no widget (the panel stays under its widget limit).
     if path.endswith((".late_exit_from", ".late_exit_time")):
         return False
+    # Strategy 10's ATR clock and calendar plumbing are research settings (one per grid family),
+    # editable in settings / grids; no widget, so the panel stays under its widget limit.
+    if path.endswith(
+        (".atr_zone", ".atr_open", ".atr_close", ".atr_close_tolerance_min", ".atr_skip_weekend",
+         ".calendar_dir", ".tom_days_after")
+    ):  # fmt: skip
+        return False
     if path.startswith("detectors.swings.doji_max_body."):
         return path.rsplit(".", 1)[1] in PANEL_COST_SYMBOLS
     return not path.startswith("engine.costs.symbols.") or path.split(".")[3] in PANEL_COST_SYMBOLS

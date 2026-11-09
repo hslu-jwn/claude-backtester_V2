@@ -167,6 +167,13 @@ hours, JPY and AUD are not, so EUR and GBP should fall against them.
   mean net R per trade <= 0 or its bootstrap lower bound <= 0. Gross R is reported too (crosses
   are expensive: GBPJPY about 0.065 R per trade at this stop).
 
+**Result (2026-11-09, development):** falsified after costs, sign confirmed gross. Every cross
+is gross positive in the predicted direction (EURJPY +41.6, EURAUD +34.0, GBPAUD +35.7, GBPJPY
++25.4 R over about 1,720 trades each, about +0.015-0.025 R per trade) and every one is net negative
+(EURJPY -41.8, EURAUD -26.1, GBPAUD -32.3, GBPJPY -72.4 R): the crosses cost about 0.04-0.06 R per
+trade. Reading: the European-hours depreciation looks real but small (about 0.02 R per trade gross
+at this stop); only EURUSD, the cheapest pair, clears its costs.
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
@@ -207,6 +214,46 @@ Reading (Opus):
   with no 16:00 candle, where `TimedExit` closes at the first later candle (18:01-18:03 ET).
   Neither changes a verdict above (every family fails other gates too). Open for the user: a
   gap-tolerant integrity gate and skipping NYSE closure / early-close days in index families.
+
+## Run 1 follow-ups (2026-11-09)
+
+- **FX ATR fix (code review by a sub-agent):** with UTC days 00:00-23:59 and tolerance 30, no
+  Friday was regular (the FX data ends about 21:00 UTC) and the Sunday-evening stubs were, so the
+  FX daily ATR was about 8 % too small and the FX stops too tight. Fixed as a measurement change:
+  ⚙️ `atr_skip_weekend` (leave Saturday / Sunday ATR dates out) and tolerance 180 in the FX grids.
+  Rerun: F1a EURUSD +68.9 R net (+0.040 R per trade, halves +50.1 / +18.9, bootstrap +0.008,
+  p 0.0067), GBPUSD -25.6; F1b EURUSD +29.2 (second half -20.2); F1X all four net negative, gross
+  positive. **No verdict changes.** Index families are not affected.
+- **Placebo profile (diagnostic, not a selection; `timed_hold_placebo_eurusd.toml`):** EURUSD
+  long, 6-hour holds from every London hour 00-17. Gross R long: 00-01 h +42 / +45, 04-11 h -30 to
+  -86 (07 h the extreme: -86), 13-15 h +66 / +47 / +38, 17 h -33. A smooth daily shape that matches
+  Breedon & Ranaldo (EUR weak in European hours, strong in US hours); the pre-registered 07:00 window
+  (taken from the paper before any run) is its extreme. European weakness is negative in both
+  halves for every 04-11 h start; the US-hours strength is positive in the first half only.
+- **F1a dissection** (`knowledge/research/reports/2026-11-09_f1a_eurusd_dissection.md`): 6 of 7
+  years positive, but 2020-21 together only +2.4 R vs +70 R in 2015-19; the top 1 % of trades
+  (17) carry 58 % of the net; F1a and F1b daily R are uncorrelated (0.003), and the yearly drift
+  does not explain F1a (correlation -0.10). A thin, fading lead.
+- **Independent replication** (`knowledge/research/reports/2026-11-09_f1a_independent_replication.md`,
+  plain M1 script, no engine): EURUSD short 07:00 -> 13:00 London close-to-close is +3.28 pips per
+  day gross (t 4.34, 1,732 days), positive in every year but decaying (2015 5.6, 2016-18 about
+  3.5, 2019 2.5, 2020 1.5, 2021 2.2 pips per day); GBPUSD +2.25 (t 1.96, uneven). The engine's
+  trades match it exactly (entry / exit prices within 0.5 pip on 100 % of time exits, per-day
+  correlation 1.000). Our EURUSD round trip costs about 0.9 pip. The hourly shape: European hours
+  negative in both 2015-17 and 2018-21; the US-hours positive half only in 2015-17.
+- **Gates tool:** variants of a grid with `[[grids]]` families are now keyed by family too (the
+  hypothesis grids each had one family; only the placebo grid needed it).
+
+## F1a one-time test criteria (pre-registered 2026-11-09; the test runs only on the user's go)
+
+If the user approves the one-time MT5 test (2021-09-14 to the last cached day) of F1a, it runs the
+primary cell exactly as rerun after the ATR fix (`research/grids/timed_hold_fx_eu.toml`, EURUSD,
+stop 0.5, `atr_skip_weekend`, tolerance 180), nothing re-tuned. F1a counts as **confirmed** only if
+all hold on the test period: (1) EURUSD net R > 0 at normal costs and with every cost doubled;
+(2) mean net R per trade bootstrap 2.5 % quantile > 0 (same scheme as the gates); (3) net R > 0 in
+both halves of the test period; (4) mean net R per trade >= half the development value (0.020 R).
+Anything else is "not confirmed", and the result is recorded either way. GBPUSD is reported with it,
+not as a gate (it failed breadth on development).
 
 ## Backtest options
 
