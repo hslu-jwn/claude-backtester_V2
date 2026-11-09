@@ -1,1 +1,1 @@
-Calendar CSVs for `day_filter`: fomc_statements.csv (date,scheduled,statement_time_et,press_conference,source_url) and nyse_holidays.csv (date,name,type,source_url). Added by the coordinator.
+Calendar CSVs for `day_filter`: fomc_statements.csv (date,scheduled,statement_time_et,press_conference,source_url), nyse_holidays.csv (date,name,type,source_url) and jp_holidays.csv (date,type,source_url; Japanese national holidays 2008-2026 from the Cabinet Office list, fetched 2026-11-09; the bank holidays Dec 31 and Jan 2-3 are rules in the code, not rows). Added by the coordinator.

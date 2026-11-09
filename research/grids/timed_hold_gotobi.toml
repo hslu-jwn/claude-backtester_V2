@@ -1,0 +1,37 @@
+# Hypothesis 11 Gotobi USDJPY (docs/strategy-timed-hold.md > Hypothesis 11). Pre-registered 2026-11-09.
+# Bessho, Sugimoto, Suzuki (arXiv:2301.13204): long USDJPY 03:00 -> 09:55 JST on gotobi days.
+# Families: G1 (this [base], long into the fix) and G2 (short 09:55 -> 12:00 JST).
+# Primary cells: G1 and G2, day_filter gotobi, stop_atr 1.0, USDJPY. Baseline: day_filter all (disjoint in gate 3).
+strategy = "timed_hold"
+symbols = ["USDJPY", "EURJPY"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "Asia/Tokyo"
+direction = "long"
+entry_time = "03:00"
+exit_time = "09:55"
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+atr_close_tolerance_min = 180
+atr_skip_weekend = true
+
+[[grids]]
+name = "G1"
+[grids.grid]
+day_filter = ["gotobi", "all"]
+stop_atr = [1.0, 2.0]
+
+[[grids]]
+name = "G2"
+[grids.base]
+direction = "short"
+entry_time = "09:55"
+exit_time = "12:00"
+[grids.grid]
+day_filter = ["gotobi", "all"]
+stop_atr = [1.0, 2.0]

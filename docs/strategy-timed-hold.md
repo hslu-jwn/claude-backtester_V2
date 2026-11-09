@@ -285,6 +285,39 @@ negative: a robustness cell, not a pass. Kaufman's post-1998 S&P reversal does n
 round trip: cost-infeasible. Currency carry on FTMO CFDs: both swap sides are negative for most pairs
 (e.g. AUDUSD long -3.04 / short -6.54 per lot), so the carry is not harvestable here.
 
+## Hypothesis 11: Gotobi USDJPY (pre-registered 2026-11-09, before any run)
+
+Source: Bessho, Sugimoto, Suzuki, "Forex Trading Strategy That Might Be Executed Due to the Popularity
+of Gotobi Anomaly", arXiv:2301.13204 (2023), OPENED (HTML): EBS USDJPY 2018-2020, Tuesday-Friday;
+long from about 03:00 JST to the 09:55 JST Tokyo fix on gotobi days, net of spread "N=185, PF=1.46,
+W=0.60" (no moving-average filter), non-gotobi days PF 0.52 with the MA filter; a second rule sells
+09:55-12:00 JST. No gross bp per day given. Mechanism: Japanese importers buy USD at the 09:55
+bank fixing on settlement days (5th, 10th, ... ; Ito and Yamada, JIE 2017, on the Tokyo fixing; the
+gotobi magnitude of 4-9 bp in a Gemini scan is NOT verified). Label PUBLISHED (working paper, short
+sample inside our development period, so not out of sample). Counted as hypothesis 11. Fee pre-check:
+USDJPY round trip about 1.1 bp (spread + commission at 2015-21 prices) plus a long-swap credit for the
+night crossed; daily ATR about 60 bp, so a 1-ATR stop costs about 0.02 R against an unknown gross edge.
+Gemini's month-end-fix, OPEX and quarter-end items were already covered (calendar report) or need
+cross-symbol signals; the gap fade is strategy 5; not re-tested here.
+
+- **Gotobi day:** for each month the target dates 5, 10, 15, 20, 25 and the last calendar day; the
+  gotobi day is the target date if it is a Tokyo business day, else the previous Tokyo business day
+  (paper: "the previous business days were included if Gotobi days were holiday"). Tokyo business
+  day = Monday-Friday, not a Japanese national holiday (`calendars/jp_holidays.csv`, Cabinet Office
+  list) and not Dec 31, Jan 2 or Jan 3 (bank holidays). Two targets on the same day = one day.
+- **G1 (primary family):** long USDJPY, entry at the close of the candle closing 03:00 Asia/Tokyo, exit
+  at the close of the candle closing 09:55 Asia/Tokyo, same day; stop `stop_atr` x daily ATR (UTC days,
+  as F1a). Monday entries fall on Sunday 18:00 UTC (market closed): no trade, which matches the paper's
+  Tuesday-Friday sample. Cells: day_filter {gotobi, all} x stop_atr {1.0, 2.0}. **Primary: gotobi,
+  stop 1.0, USDJPY.** Breadth: EURJPY (1 of 1; yen-side, not independent of USDJPY).
+- **G2:** short USDJPY 09:55 -> 12:00 Asia/Tokyo on gotobi days (the paper's second rule without its
+  pre-09:00 profit condition); same cells; primary gotobi, stop 1.0; breadth EURJPY.
+- Gates: the seven above; gate 3 = gotobi minus the disjoint non-gotobi days of the `all` cell; min
+  trades 200 (about 380 expected); family-wise level 0.05 / 11. G1 crosses the FTMO daily rollover
+  (one swap night, triple on Wednesdays, counted): if gate 7 fails only through missing minutes in
+  the rollover hour, the result is parked for the user, never passed.
+- 16 runs (2 families x 4 cells x 2 symbols), 8 cells counted.
+
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
