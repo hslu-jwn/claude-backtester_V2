@@ -35,11 +35,17 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   `docs/HANDOFF.md` and the ROADMAP step, run tests + ruff as a baseline, say in max 10 lines
   what you will do (plan, test cases, files, models), ask all open questions at once, then work
   test-first, step by step with the user's ok.
-- **`Continue.Research [Limit=<time>] [<CANDIDATE or idea ID>]`:** the autonomous research loop
+- **`Continue.Research [Limit=<time>] [Test=manual|auto] [<CANDIDATE or idea ID>]`:** the autonomous research loop
   (research is back in this team since 2026-11-09, the user): pick a candidate or research a new
   idea, spec with pre-registered gates, implement, development run, gates, record. Full procedure
-  in the `continue-research` skill (load it first). Always: the one-time MT5 test needs the
-  user's explicit go; never change defaults (costs, sweep options, spread table) without the
+  in the `continue-research` skill (load it first). **One-time MT5 test mode (rule set by the user, 2026-11-09):** default `Test=manual`: a
+  candidate that passes all pre-registered development gates is parked in HANDOFF › Open as
+  "ready for the one-time test" and the loop moves on. `Test=auto`, given with the command (e.g.
+  `Continue.Research Test=auto`): the loop runs the one-time test itself, only for a candidate that
+  passed every pre-registered development gate. Both modes: exactly once per candidate, no retest
+  after a fail, the variant is frozen before the test, pass or fail recorded in the research log
+  and HANDOFF. Auto lasts for that run only; the next session is manual unless the user says
+  `Test=auto` again. Never change defaults (costs, sweep options, spread table) without the
   user's go. `Continue.Knowledge` and `Begin.` are retired; if the user says one, offer
   `Continue.Research`.
 - **Continuous `Continue.Research` (the user, 2026-11-09):** runs with no time limit until

@@ -147,6 +147,10 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
    pre-registered in the spec), only on the user's go; Opus's view: weak, park it.
 6. ☑ done 2026-11-09 (`0c2178c`): gap-tolerant integrity gate, `skip_nyse_short_days` in the index grids.
 7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
+8. Research scope: every same-day idea so far dies on costs (gross +0.01-0.03 R per trade,
+   `knowledge/topics/cost-wall.md`). Research multi-day holds (effects that grow with holding time
+   while the round-trip cost is fixed; swap counted), or stay with day trading only? (asked
+   2026-11-09)
 
 ## Next step
 

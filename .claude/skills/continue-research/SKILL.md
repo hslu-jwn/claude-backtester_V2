@@ -1,6 +1,6 @@
 ---
 name: continue-research
-description: Procedure for the user's Continue.Research command - the autonomous research loop (pick or research a strategy idea, spec with pre-registered gates, implement, development run, gates, record; one-time MT5 test only on the user's go). Load when the user says Continue.Research.
+description: Procedure for the user's Continue.Research command - the autonomous research loop (pick or research a strategy idea, spec with pre-registered gates, implement, development run, gates, record; one-time MT5 test per Test=manual (default) / Test=auto). Load when the user says Continue.Research.
 ---
 
 # Continue.Research (research back in this team since 2026-11-09, the user)
@@ -59,8 +59,15 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   `python -m backtester.tools.research research/grids/<name>.toml --dev-only` (before 2021-09-14).
 - Compute the gates on the development run. Do not judge pass / fail: report every cell with all
   metrics and the gates; the user decides. Failed and rejected strategies stay recorded.
-- The one-time MT5 test (2021-09-14 onward) of a strategy needs the user's explicit go. Never
-  change defaults (costs, sweep options, spread table) without the user's go.
+- **One-time MT5 test mode (rule set by the user, 2026-11-09):** default `Test=manual`: a
+  candidate that passes all pre-registered development gates is parked in HANDOFF › Open as
+  "ready for the one-time test" and the loop moves on. `Test=auto`, given with the command (e.g.
+  `Continue.Research Test=auto`): the loop runs the one-time test itself, only for a candidate that
+  passed every pre-registered development gate. Both modes: exactly once per candidate, no retest
+  after a fail, the variant is frozen before the test, pass or fail recorded in the research log
+  and HANDOFF. Auto lasts for that run only; the next session is manual unless the user says
+  `Test=auto` again. Never change defaults (costs, sweep options, spread table) without the
+  user's go.
 
 ## Record
 

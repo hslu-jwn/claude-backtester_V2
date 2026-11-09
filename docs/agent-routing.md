@@ -71,6 +71,29 @@ credentials, `.env`, MT5 / Telegram data or `src/backtester/live/`.
   records, reviews by running tests) and resumes coding after the reset (~5 h window). Never fall
   back to a paid model on its own.
 
+## Codex quota and sol reviews (rules set by the user, 2026-11-09)
+
+- **Use 90-100 % of every 5-hour Codex window.** Up to 2 parallel Codex dispatches, each in its own
+  lane worktree on independent files (never two writers in one checkout; no commits in a checkout
+  while a write dispatch runs there). Keep a backlog so Codex never idles: next research
+  candidates, open tool briefs, read-only Codex reviews of risk-adjacent changes. Spare quota goes
+  to quality first (sol or higher effort where it helps, tests, reviews). No busywork: if nothing
+  useful is left, idle quota is fine.
+- **Claude usage is the brake:** Opus still reviews every result by running the tests; if the
+  Claude limit gets close, lower the Codex rate instead of skipping reviews.
+- **Weekly Codex limit:** when it is out, stop coding, report it in HANDOFF › Open and continue with
+  non-Codex work; the user decides on a weekly reset (two left); never reset or buy anything.
+- **Codex `gpt-6.1-sol` as a read-only reviewer, selectively:** for changes near costs, fills,
+  risk or no-lookahead, and for every new strategy built from a spec (spec vs code, lookahead),
+  where tests may not catch a wrong rule; it counts toward the Codex use. Not for UI glue, docs or
+  small tools (the tests decide there). Read-only, one round per change: sol reports findings with
+  evidence; Opus decides which are real, fixes go through the normal route, Opus verifies by running
+  the tests.
+- **Opus effort:** the user may run this session at medium effort for long / overnight runs and
+  switch to high for decisions. At medium, a high-stakes judgement (ambiguous trading rule, gates /
+  pre-registration, one-time test, a bug two workers could not fix) is parked in HANDOFF › Open for a
+  high-effort pass instead of being decided.
+
 ## Escalation to Opus (strategic only)
 
 Architecture decisions, a trade-off the user must decide, a bug two workers could not fix,
