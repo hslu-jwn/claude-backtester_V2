@@ -378,6 +378,16 @@ rests on unseen 2010-2014 data. Counted as hypothesis 12 (the 84 screen cells ar
   (4) pooled net R > 0 in both halves (2010-2012, 2013-2014); (5) pooled month-end mean net R per trade
   minus the disjoint all-days mean > 0 (bootstrap 2.5 % > 0). About 240 trades.
 - Development run reported alongside (descriptive). Pass -> parked "ready for the one-time test".
+- **Amendment (2026-11-09, before any confirmation data was read):** the MT5 cache has no candles
+  before 2015 (the 2010-2014 folders are empty), so the confirmation runs on the pre-sample histdata
+  setup of F1a instead: **2008-01-01..2014-12-31**, `data/cache/histdata_presample/`, results in
+  `results/presample_2008_2014/`; halves 2008-2011 / 2012-2014; per-year clock check as for F1a.
+  EURUSD and GBPUSD are cached; AUDUSD and NZDUSD need a histdata download (the user's go,
+  HANDOFF › Open 11). Criteria (1)-(5) unchanged over the 4 pairs; if the user declines the download,
+  they apply to EURUSD + GBPUSD with criterion (2) = both pairs net R > 0. About 330 trades (4 pairs).
+- **Development (descriptive, `results/research/timed_hold_me_fix_d686ffdd/`):** 312 pooled month-end
+  trades, +18.7 R net, +13.5 R doubled costs, bootstrap 2.5 % +0.027 R; all seven tool gates pass
+  (expected: the screen found it here). Report `knowledge/research/reports/2026-11-09_me_fix_h12.md`.
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 

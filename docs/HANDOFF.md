@@ -161,6 +161,11 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
     03:00 -> 09:55 JST on gotobi days, stop 1.0) passes all seven gates: ready for the one-time
     test** (dev: 413 trades, +16.5 R net, doubled costs +9.7 R, p 0.0035). Criteria pre-registered
     in the spec; the test runs only on your go.
+11. **Download histdata AUDUSD + NZDUSD 2008-2014?** (hypothesis 12, month-end post-fix USD rise;
+    spec › Hypothesis 12 › Amendment). The confirmation runs on the pre-sample histdata setup; EURUSD
+    and GBPUSD are cached, these two pairs are not (14 yearly M1 files from histdata.com via
+    `tools/histdata_download.py`, into `data/raw/histdata_presample/`). Without them the check runs on
+    EURUSD + GBPUSD only (rule pre-registered).
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or
