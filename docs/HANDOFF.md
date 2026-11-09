@@ -3,7 +3,19 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-11-03 night run, V2.8)
+## Where things are (2026-11-09, End.)
+
+- **Fill probe run 4** (new 14-day trial, started 2026-11-05 21:21 UTC, terminal tab, log
+  `results/live/probe_stdout_run4.log`): on 2026-11-09 08:27 UTC balance 90,236.72 of 100,000
+  (-9.76 %, 237 above FTMO's 10 % max loss); the user's stop rule (about day 4 or -8 %) is met.
+  Claude's STOP file was refused by the permission check: the user stops it (`results/live/STOP`)
+  or decides otherwise. Afterwards: fill report + 12.5 reconciliation on runs 3 and 4.
+- **Tests (2026-11-09):** 5237 passed, 10 skipped, 2 xfailed (8 min 27 s); ruff clean.
+- **Next:** the user asked 2026-11-09 to fold the research department back into this team
+  (`Continue.Research` again, research department archived); plan proposed, waiting for the
+  user's ok.
+
+## Earlier state (2026-11-03 night run, V2.8)
 
 - **Repo:** V2 = `X:\Dokumente\Projekte\backtester-claude\backtester-claude_V2`, GitHub
   `hslu-jwn/claude-backtester_V2`. V1 is read-only.
@@ -101,13 +113,12 @@ drafts are stopless / monthly (would be `UNSUPPORTED_STRATEGY_TYPE`). We told Re
 
 ## Next step
 
-Night questions answered and built; short stop on the ask built 2026-11-03 (the user); TradingView candle check done 2026-11-03 (no data error,
-`docs/review/tradingview-check-2026-11-03.md`). Fill probe run 3 on the new 14-day trial runs
-since 2026-11-03 (terminal tab, stop with `results/live/STOP` about day 4 or at -8 %); then
-re-run the fill report and 12.5 reconciliation. JP225 opening-range exit 15:25 Tokyo from 2024-11-05 (TSE close 15:30; built 2026-11-03,
+Stop fill probe run 4 (see top), then re-run the fill report and 12.5 reconciliation. Research
+department merge per the user's decision 2026-11-09. JP225 opening-range exit 15:25 Tokyo from 2024-11-05 (TSE close 15:30; built 2026-11-03,
 the user). Open for the user: the reviewability proposal; the
 research queue is empty (`Continue.Research` waits for a submission).
 
 ## First prompt for the next chat
 
-`Continue.Code` (after the bot run: fill report + reconciliation; or the user's open decisions)
+The research-department merge (if the user accepted the plan), else `Continue.Code` (after the
+bot run: fill report + reconciliation).
