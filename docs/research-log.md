@@ -13,6 +13,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   "gotobi"`); review: gpt-6.1-sol medium, read-only, no defects. Dev run: G1 passes gates 1-6
   (USDJPY +16.5 R, p 0.0035), fails gate 7 on rollover-hour gaps (23 trades) -> HANDOFF › Open 10;
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
+- **Gotobi one-time test (the user's go):** frozen one-cell grid `timed_hold_gotobi_test.toml`
+  (dev reproduced +32.0 R); test 2021-09-14..2026-11-08 USDJPY +6.6 R, criterion 2 (bootstrap) fails:
+  not confirmed, no retest. H12 falsified on 2008-2014; Gotobi pre-sample +30.9 R (gate 7 fail).
 - **Idea scans 2-3 (Gemini Flash low, free):** fixings / flows: quarter-end USD funding is a
   forward-basis effect (not spot), gold / ECB fixes dead per the scan; the W pattern of Krohn, Mueller,
   Whelan (JF 2024, confirmed via the Bank of Canada summary) -> Codex screen -> hypothesis 12. Scheduled

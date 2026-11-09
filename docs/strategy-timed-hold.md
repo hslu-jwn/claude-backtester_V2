@@ -369,6 +369,15 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
 - **One-time test go (the user, 2026-11-09: "Yes, run the test"):** runs once with
   `research/grids/timed_hold_gotobi_test.toml` (G1 base, `day_filter = "gotobi"`, stop 1.0; USDJPY
   primary, EURJPY reported), criteria above unchanged; no retest after a fail.
+- **One-time test result (2026-11-09; `results/research/timed_hold_gotobi_test_45c0b28a/`, run
+  `results/20261109-215845_USDJPY-EURJPY/`, criteria in its `gotobi_test_criteria.json`): NOT
+  CONFIRMED.** USDJPY 2021-09-14..2026-11-08, 321 trades: (1) net +6.6 R, doubled +2.5 R: pass; (2)
+  bootstrap 2.5 % -0.012 R (p 0.10): **fail**; (3) halves +4.0 / +2.5: pass; (4) mean +0.0204 R vs
+  0.020 required: pass (barely). Years 2021-2026: +1.5, +3.9, -0.3, -1.8, +0.1, +3.1. EURJPY +10.1 R
+  (doubled +3.5). The edge is about half the development value and not significant on its own;
+  consistent with the paper's decay after the anomaly became popular. No retest (rule). Open
+  diagnostic: the gates' M1 integrity check flags 302 of 321 test trades (gaps), far above development;
+  not a test criterion, to be explained before the data is used again.
 - **G2 (short 09:55 -> 12:00): falsified** (gate 3, breadth and best-date removal fail).
 - Gap listing (diagnostic, not a gate): `integrity_failures` per trade, gap start and length.
 

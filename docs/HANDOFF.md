@@ -168,6 +168,9 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
     on 2021-09-14 to the last cached day, grid `research/grids/timed_hold_gotobi_test.toml` (the frozen
     primary cell only), criteria in spec › Hypothesis 11. Pre-sample: +30.9 R, gate 7 failed on
     histdata gaps (recorded). H12 falsified on 2008-2014.
+    **Result: not confirmed** (USDJPY 321 trades, +6.6 R net, +2.5 R doubled, but bootstrap 2.5 %
+    -0.012 R; spec › One-time test result). No retest. The 302 integrity flags on the test trades are
+    unexplained (diagnostic, Codex next).
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or
