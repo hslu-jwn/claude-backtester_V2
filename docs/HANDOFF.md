@@ -153,8 +153,7 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 6. ☑ done 2026-11-09 (`0c2178c`): gap-tolerant integrity gate, `skip_nyse_short_days` in the index grids.
 7. ☑ done 2026-11-09 (`d0bbcd8`): spreads of 17 symbols and BTCUSD slippage raised; golden regenerated.
 8. ☑ decided 2026-11-09: multi-day holds are in scope ("yes, but regard the fees"; in progress).
-9. ☑ decided 2026-11-09: (a) scale swap by price / reference price, like spreads (in progress,
-   `briefs/swap-price-scaling.md`).
+9. ☑ done 2026-11-09 (`df600b4`): swap scaled by price / reference price, golden regenerated.
 
 - **Strategy 11 `h1_shock` (2026-11-09):** the last drafted candidate that passed the cost screen,
   tested and falsified (all 18 cells net negative). With it, every research candidate is tested or

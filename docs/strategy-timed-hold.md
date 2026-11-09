@@ -232,6 +232,30 @@ level; the gate does not depend on the swap level (both windows pay about the sa
 2015-2021 index levels that is about 3x too much in percent terms (US500 about 4-5 bp per night
 instead of about 1.6), before the lower policy rates of those years. Multi-day results are therefore
 conservative on financing until the user decides on scaling (HANDOFF › Open 9).
+**Rerun with price-scaled swap** (the user's Open 9 (a), `df600b4`; `results/swapfix_2026-11-09/`):
+US500 TOM stop 2 swap -5.0 R (was -14.9), net +0.9 R (gross +6.8, 78 trades); TOM minus control +0.012
+(-0.21); NAS100 -0.067 (-0.29), UK100 +0.144 (-0.09), GER40 -0.008 (-0.27), JP225 -0.168 (-0.40).
+Verdict unchanged: no turn-of-month effect beyond a mid-month week.
+
+## Hypothesis 10: I-03 RSI(2) index mean reversion (pre-registered 2026-11-09)
+
+Source: Kaufman, *Trading Systems and Methods* p.389-390 (knowledge card I-03): RSI(2) of daily closes,
+long below 10 / short above 90, exit after one bar; S&P showed continuation before about 1998 and mean
+reversion after, both sides working 2000-2008, cost-sensitive. Second cell family: the long-only
+practitioner form with a 200-day trend filter (Connors; named as an optional filter on the card).
+Label PUBLISHED (book, gross, pre-2009 sample); our 2015-2021 data is out of its sample. Counted as a
+new hypothesis (10 so far). Multi-day hold allowed (fees counted).
+
+- Signal on the daily cash session close (New York 16:00; RSI(2) of the regular-session closes, Wilder
+  smoothing, known at that close); entry at that close, exit at the cash close `hold_days` later, stop
+  2 x daily ATR. One position at a time per symbol.
+- Cells (8): rule {K = both sides, RSI2 < 10 long / > 90 short; C = long only, RSI2 < 10 and close >
+  200-day SMA of closes} x threshold {10/90, 5/95} x hold {1, 3 days}. **Primary: K, 10/90, hold 1**
+  (Kaufman's rule exactly). Symbols US500 (primary), NAS100 (breadth).
+- Gates: the seven, bootstrap of mean net R per trade > 0 (no calendar baseline); min trades 100;
+  breadth NAS100 net > 0. Fee pre-check: one swap night about 1.6 bp + spread about 1.6 bp vs a
+  next-day reversal of tens of bp in Kaufman's sample: feasible, unknown edge.
+
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
