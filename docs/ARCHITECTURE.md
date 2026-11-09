@@ -227,14 +227,15 @@ Research tools that name `MT5_CACHE_DIR` / `DEFAULT_CACHE_DIR` explicitly keep t
   |---|---|---|
   | 2015-01-01 through 2018-12-31 | `America/New_York` including US DST | Every sampled US/EU gap-week GBPUSD Sunday open and Friday close is 18:00 NY under the old conversion; the US rule restores 17:00. Gold closes corroborate it. |
   | 2019 onward | NY standard time plus `Europe/London` DST | 2019 gap-week FX opens/closes are already 17:00 NY; 2020/2021 checks agree. Existing later-year conversion retained. |
-  | Before 2015 | Existing European-date rule retained, unverified here | No histdata cache/reference available in this audit; no new clock rule inferred. |
+  | 2008 through 2014 | `America/New_York` including US DST | Verified on 2026-11-09 using EURUSD release times: `knowledge/research/reports/2026-11-09_clock_check_pre2015.md`. |
+  | Before 2008 | `America/New_York` including US DST | Same rule applied, unverified. |
 
   `histdata_to_utc` uses `zoneinfo` for these periods and rejects ambiguous/nonexistent
   wall-clock minutes. Measurements precede implementation: `results/clock_check_histdata.md`,
   dated edges and price matches in `results/v26b_clock_*.csv`; reproduce with
   `python scripts/v26b_clock_evidence.py` against the original caches. Its two measurement
   passes are bounded to 540 seconds each (observed approximately 2 and 6 seconds).
-  The European-clock description below applies from 2019, not to 2015–2018.
+  The European-clock description below applies from 2019; the US rule is verified for 2008–2018.
 - **V2.6b import validation:** `ImportConfig.max_day_close_jump` defaults to 0.25.
   An unexplained daily-close jump above it stops that symbol before writes and names
   the file/date; weekends alone do not explain an instrument substitution. Documented

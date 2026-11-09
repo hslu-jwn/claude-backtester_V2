@@ -201,6 +201,18 @@ def test_clock_changes_on_europes_dates(tmp_path, local, utc):
 
 
 @pytest.mark.parametrize(
+    ("local", "utc"),
+    [
+        ("2012.03.14,09:00", "2012-03-14 13:00"),
+        ("2012.10.31,09:00", "2012-10-31 13:00"),
+    ],
+)
+def test_pre_2015_clock_follows_us_summer_time(tmp_path, local, utc):
+    frame = parse_histdata_mt(write(tmp_path, "a.csv", [f"{local},1.30,1.31,1.29,1.305,0"]))
+    assert frame["ts"][0] == pd.Timestamp(utc, tz="UTC")
+
+
+@pytest.mark.parametrize(
     "local",
     # Europe's change at 01:00 UTC Sunday = Saturday 20:00 on this clock (FX closed):
     # repeated hour (back to winter time), skipped hour (to summer time)

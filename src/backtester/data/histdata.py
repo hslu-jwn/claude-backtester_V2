@@ -29,7 +29,7 @@ unpacking. One minute per line:
   the one that was cached at 13:00). Europe changes on a Sunday at 01:00 UTC, when FX is
   closed, so the skipped and the repeated hour should have no minutes; if one does, the
   import stops (`HistdataError`) instead of guessing its UTC time.
-  Exception proven in V2.6b: local dates 2015–2018 follow America/New_York US DST.
+  Local dates through 2018 follow America/New_York US DST (verified for 2008–2018).
   See ARCHITECTURE.md > Data sources and results/clock_check_histdata.md for evidence.
 - Prices are **bid** only and already decimal (no point factor). The `ask_*` columns are
   left empty (NaN), so candles get `spread` = NaN (unknown).
@@ -414,14 +414,14 @@ def _summer_time(utc: pd.Series) -> pd.Series:
 
 
 def histdata_to_utc(local: pd.Series) -> pd.Series:
-    """Naive file clock -> UTC: US DST in 2015–2018, European dates otherwise.
+    """Naive file clock -> UTC: US DST through 2018, European dates from 2019.
 
     Spec: ARCHITECTURE.md > Data sources > histdata.com. Ambiguous/nonexistent
     transition minutes have no single answer and raise `HistdataError`.
     """
-    # Proven 2015–2018 US dates: results/clock_check_histdata.md. Other years retain
-    # the previously measured European dates. Spec: ARCHITECTURE.md > Data sources.
-    us = local.dt.year.between(2015, 2018)
+    # US dates verified for 2008–2018; earlier years use the same rule unverified.
+    # From 2019, use European dates. Spec: ARCHITECTURE.md > Data sources.
+    us = local.dt.year <= 2018
     if us.any():
         try:
             converted = local[us].dt.tz_localize(NEW_YORK, ambiguous="raise", nonexistent="raise")
