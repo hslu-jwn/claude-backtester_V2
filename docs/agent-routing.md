@@ -55,6 +55,22 @@ the Windows Credential Manager (generic credential `<provider>@backtester-ai`, u
 Free tiers may log or train on prompts: send excerpts of our own code and logs only, never
 credentials, `.env`, MT5 / Telegram data or `src/backtester/live/`.
 
+## Continuous research run (rule set by the user, 2026-11-09)
+
+- **Codex first:** all coding (strategies, tools, tests, fixes) goes to Codex via `ai_dispatch`:
+  `gpt-6.1-terra` by default, `gpt-6.1-sol` for engine / risk code. Opus reviews by running the
+  tests.
+- **Literature / web research:** free models first (`ai_dispatch gemini --effort low`,
+  `gemini-api`, `openrouter`); Opus opens the sources before relying on them.
+- **Claude Sonnet sub-agents** only when Codex fails, is rate-limited or at its limit, or as a
+  parallel addition while Codex is busy; never to fill a wait. The research log names the model of
+  every task. (The user's "use Sonnet" of 2026-11-09 morning applied to that run only.)
+- **Opus only coordinates, decides and reviews**; it paces Claude token use so the session limit is
+  never hit (small context, filtered logs, short reports; slow down or wait for the reset when
+  close). When Codex hits its limit, Opus does work that needs no Codex (research, specs, gates,
+  records, reviews by running tests) and resumes coding after the reset (~5 h window). Never fall
+  back to a paid model on its own.
+
 ## Escalation to Opus (strategic only)
 
 Architecture decisions, a trade-off the user must decide, a bug two workers could not fix,

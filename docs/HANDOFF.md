@@ -42,7 +42,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   `data/spreads/proposal_live_2026-11-09.json`, not wired in: applying it is the user's decision
   (4.6 days, demo account).
 - Hypothesis 6 (F2L, momentum on large-move days) also falsified (spec).
-- **Tests (2026-11-09, after the merge):** 5159 passed, 8 skipped, 2 xfailed (8 min 7 s; the
+- **Tests (2026-11-09, after research run 1):** 5238 passed, 11 skipped, 3 xfailed (8 min 35 s);
+  ruff clean. Earlier the same day after the merge: 5159 passed (8 min 7 s; the
   intake tests left with the tool); ruff clean.
 
 ## Earlier state (2026-11-03 night run, V2.8)
@@ -132,6 +133,13 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
 4. ☑ Research's reviewability proposal: moot, the department is archived (2026-11-09).
+5. F1a EURUSD lead (`docs/strategy-timed-hold.md` › Run 1 follow-ups): pre-sample 2008-2014
+   download + check (`knowledge/research/reports/2026-11-09_presample_2008_2014_plan.md`), or the
+   one-time MT5 test (criteria pre-registered in the spec), or park.
+6. Gap-tolerant data-integrity gate (> 5 missing minutes) and skipping NYSE closure / early-close
+   days in index families (spec › Results, data diagnosis).
+7. Live-spread proposal `data/spreads/proposal_live_2026-11-09.json`
+   (`knowledge/research/reports/2026-11-09_live_spread_proposal.md`): apply, partly, or not.
 
 ## Next step
 

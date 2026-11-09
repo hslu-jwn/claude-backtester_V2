@@ -42,6 +42,13 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   user's explicit go; never change defaults (costs, sweep options, spread table) without the
   user's go. `Continue.Knowledge` and `Begin.` are retired; if the user says one, offer
   `Continue.Research`.
+- **Continuous `Continue.Research` (the user, 2026-11-09):** runs with no time limit until
+  `Stop.`; after each finished step take the next one (candidate, researched idea, follow-up,
+  tooling the research needs); commit and push after every step; keep the session alive across
+  waits (self-paced `/loop`); routing as in `docs/agent-routing.md` › Continuous research run.
+  Items that need the user's decision go to HANDOFF › Open, and the run continues with the rest.
+- **`Pause.`:** finish the current step cleanly (commit, push, log) and wait until `Continue.`.
+- **`Continue.`:** resume where the run paused.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
   the step, stop lanes and job queue, commit, update the log, short report. Nothing
   half-finished stays uncommitted.

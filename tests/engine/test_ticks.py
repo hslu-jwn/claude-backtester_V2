@@ -491,7 +491,7 @@ def test_panel_exposes_switch_without_tick_metadata_widgets():
     paths = [leaf.path for _, leaf, _ in panel_fields()]
     assert "engine.costs.round_to_tick" in paths
     assert not any(p.endswith(".tick_size") for p in paths)
-    assert len(paths) < 300  # guards against per-symbol metadata widgets; 258 with strategy 10
+    assert len(paths) < 250
     values = form_values()
     key = "engine.costs.symbols.XAUUSD.tick_size"
     assert key in values
