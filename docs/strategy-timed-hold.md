@@ -153,6 +153,20 @@ trade), gross +5.5 R (about +0.008 R per trade, smaller than on all days); NAS10
 days do not lift the gross edge per trade above the cost. Folders
 `results/research/timed_hold_rodl*_<hash>/gates.json`.
 
+## Hypothesis 7: F1X, European-hours depreciation on crosses (pre-registered 2026-11-09)
+
+Registered **after** the F1 results (counted as new; 7 hypotheses, 16 cells). F1a on EURUSD was
+the only near-pass, and on EURUSD both legs were positive in opposite directions (+72.5 / +39.5 R),
+which a trend cannot do. A sharper test of the mechanism (Breedon & Ranaldo: a currency falls in its
+own trading hours) on pairs never run here: in 07:00-13:00 London, EUR and GBP are in their home
+hours, JPY and AUD are not, so EUR and GBP should fall against them.
+
+- Rule: F1a's (London 07:00 -> 13:00, short, stop 0.5 daily ATR, UTC daily ATR).
+- Grid `timed_hold_fx_eu_x.toml`: EURJPY (primary), EURAUD, GBPJPY, GBPAUD; one cell.
+- Gates: the same seven; breadth >= 2 of EURAUD, GBPJPY, GBPAUD net > 0. Falsified if EURJPY
+  mean net R per trade <= 0 or its bootstrap lower bound <= 0. Gross R is reported too (crosses
+  are expensive: GBPJPY about 0.065 R per trade at this stop).
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->

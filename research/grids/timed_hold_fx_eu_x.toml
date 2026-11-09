@@ -1,0 +1,23 @@
+# Hypothesis 7 F1X (docs/strategy-timed-hold.md): local-hours depreciation, European session,
+# EUR / GBP against currencies whose home market is closed (JPY, AUD). Pre-registered 2026-11-09
+# AFTER the F1 results (counted as new); none of these pairs was run before. Primary EURJPY.
+strategy = "timed_hold"
+symbols = ["EURJPY", "EURAUD", "GBPJPY", "GBPAUD"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 300
+
+[base]
+zone = "Europe/London"
+entry_time = "07:00"
+exit_time = "13:00"
+direction = "short"
+atr_zone = "UTC"
+atr_open = "00:00"
+atr_close = "23:59"
+atr_close_tolerance_min = 30
+day_filter = "all"
+
+[grid]
+stop_atr = [0.5]
