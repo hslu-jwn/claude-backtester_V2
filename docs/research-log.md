@@ -41,6 +41,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   support by Codex sol `cb954f8`): falsified, TOM is no better than a mid-month control week in
   US500 / NAS100 / UK100 / GER40 / JP225 (spec). Found: the engine's swap is not price-scaled, so it
   overstates 2015-2021 index financing about 3x (HANDOFF › Open 9).
+- **Hypothesis 10 (I-03 RSI(2) index mean reversion,** Kaufman; RSI signal by Codex sol, flat-RSI fix
+  by Codex terra): falsified, primary US500 -3.9 R net over 309 trades, no cell advances. Overnight
+  drift and FX carry screened out on fees (spec). Multi-day idea space with published support at our
+  fees is now thin; next candidates need new research.
 - Models: Codex terra x3 (all ok, no violations; one false-positive risk avoided after Opus learned
   not to commit during a dispatch); Opus coordination, clock check, screen, review. No Sonnet.
 

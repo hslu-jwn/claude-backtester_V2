@@ -273,6 +273,18 @@ new hypothesis (10 so far). Multi-day hold allowed (fees counted).
   breadth NAS100 net > 0. Fee pre-check: one swap night about 1.6 bp + spread about 1.6 bp vs a
   next-day reversal of tens of bp in Kaufman's sample: feasible, unknown edge.
 
+**Result (2026-11-09, development 2015-2021, price-scaled swap; `results/research/timed_hold_rsi2_b7a03afb`):**
+falsified, no cell advances. Primary K 10/90 hold 1: US500 309 trades, net -3.9 R (gross +1.9; longs
++0.3, shorts -4.1), bootstrap -0.063, p 0.70; NAS100 -7.3. Long-only C cells: 31-69 trades, all within
++-2.3 R. Best non-primary cell K 5/95 hold 3: NAS100 +9.1 R (p 0.16), US500 +3.3 (p 0.35), first half
+negative: a robustness cell, not a pass. Kaufman's post-1998 S&P reversal does not show net of fees in
+2015-2021. 8 cells counted (10 hypotheses, 32 cells in total).
+
+**Screened out, not built:** overnight index drift (close to open): about 1.5 bp per night gross
+(Boyarchenko et al., NY Fed, as quoted in the calendar report) vs about 1.6 bp spread + 1-2 bp swap per
+round trip: cost-infeasible. Currency carry on FTMO CFDs: both swap sides are negative for most pairs
+(e.g. AUDUSD long -3.04 / short -6.54 per lot), so the carry is not harvestable here.
+
 
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
