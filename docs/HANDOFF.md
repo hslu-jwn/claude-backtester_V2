@@ -9,6 +9,14 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
   ran from 2026-11-05 21:21 UTC on the new 14-day trial, final balance 90,159 of 100,000
   (-9.84 %, just above FTMO's 10 % max loss). Log `results/live/probe_stdout_run4.log`. Next:
   fill report + 12.5 reconciliation on runs 3 and 4.
+- **12.5 reconciliation of runs 3 + 4 (2026-11-09 night, `results/reconcile_2026-11-09/`, today's
+  costs, live-spread proposal not applied):** 2026-11-03 11:21 .. 2026-11-09 08:39 UTC: 3,502 matched,
+  15 demo-only (2026-11-04 00:00, bar missing in cache), 621 engine-only, all explained: 606 by the tool
+  (daily stop, skips, bot down) and 15 at 2026-11-03 11:30 because the bot had no price history for
+  those symbols at its 11:21 start (`no_history` in `probe_stdout_run3.log`; the tool does not read that
+  log yet). Exit reason agrees 87-99 % per symbol except NATGAS (52 %); the engine is more conservative
+  on matched trades for most symbols (e.g. US500 -38 vs demo -29 R); NATGAS demo -525 vs engine
+  -1,111 R (the R-basis gap of 2026-11-03). Baseline: 5,479 passed, ruff clean. No default changed.
 - **Research back in this team (the user, 2026-11-09):** the research department is archived in
   `../archive/research-department-2026-11/` (with `Shared_Interface/`); its records, evidence
   checks and registries are in `knowledge/research/`, its 20 unbuilt drafts in

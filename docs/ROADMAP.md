@@ -35,7 +35,7 @@ where (updated 2026-11-03).
 - ☐ **11.3 Time-of-day drift by session for XAUUSD / GBPUSD / GBPJPY** (Phase 11)
 - ☑ **12.2 Intrabar order from M1** (Phase 12) — V2.4c T-03, default `engine.intrabar = "m1"` set by the user 2026-10-24
 - ☑ **12.4 Parameter heat map** (Phase 12) — on the research card, V2.6 step (5), accepted by the user 2026-10-27
-- ☑ **12.5 Demo reconciliation** (Phase 12) — V2.8, `tools/reconcile.py`, 2026-11-03
+- ☑ **12.5 Demo reconciliation** (Phase 12) — V2.8, `tools/reconcile.py`, 2026-11-03; runs 3 + 4 reconciled 2026-11-09 (`results/reconcile_2026-11-09/`, all explained)
 - ☑ **12.6 Stressed fills** (Phase 12) — V2.4b measured fill p90 as the stressed cost level, 2026-11-03
 - ☑ **12.8 Engine slippage** (Phase 12) — fixed in V2.4 (B4), 2026-10-23
 - ☑ **12.9 Portfolio tool** (Phase 12) — V2.7 portfolio page, accepted by the user 2026-10-26
