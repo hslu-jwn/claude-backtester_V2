@@ -80,7 +80,7 @@ class TimedHold(Strategy):
             direction = Direction.BULLISH if cfg.direction == "long" else Direction.BEARISH
         else:  # vs the close of the last finished regular ATR session
             prev = self._stats.prev_close
-            if prev is None or price == prev:
+            if prev is None or price == prev or abs(price - prev) < cfg.min_move_atr * atr:
                 return []
             up = (price > prev) == (cfg.direction == "with_day")
             direction = Direction.BULLISH if up else Direction.BEARISH

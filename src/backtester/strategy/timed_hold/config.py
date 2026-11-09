@@ -28,6 +28,8 @@ class TimedHoldConfig:
     day_filter: str = "all"  # all, fomc, turn_of_month, pre_holiday
     tom_days_after: int = 3  # turn_of_month: trading days of the new month that qualify
     calendar_dir: str = ""  # "" = the package folder strategy/timed_hold/calendars/
+    # with_day / against_day only: trade only when |entry - previous close| >= this x ATR (0 = off)
+    min_move_atr: float = 0.0
 
     def __post_init__(self) -> None:
         ZoneInfo(self.zone)  # raises for an unknown zone
@@ -48,3 +50,7 @@ class TimedHoldConfig:
             raise ValueError(f"day_filter must be one of {DAY_FILTERS}")
         if self.tom_days_after < 0:
             raise ValueError("tom_days_after must be >= 0")
+        if self.min_move_atr < 0:
+            raise ValueError("min_move_atr must be >= 0")
+        if self.min_move_atr and self.direction in ("long", "short"):
+            raise ValueError("min_move_atr needs direction with_day or against_day")

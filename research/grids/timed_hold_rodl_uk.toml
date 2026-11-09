@@ -1,0 +1,24 @@
+# F2L ROD momentum on large-move days (docs/strategy-timed-hold.md > Families, hypothesis 6).
+# Pre-registered 2026-11-09 AFTER the F2 results (counted as a new hypothesis): Gao et al. (2018)
+# and Baltussen et al. (2021) report stronger last-30-minute momentum on volatile / large-move
+# days (gamma hedging scales with the move). One cell: min_move_atr 0.5, stop 0.5.
+strategy = "timed_hold"
+symbols = ["UK100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 150
+
+[base]
+zone = "Europe/London"
+entry_time = "16:00"
+exit_time = "16:30"
+direction = "with_day"
+atr_zone = "Europe/London"
+atr_open = "08:00"
+atr_close = "16:30"
+day_filter = "all"
+min_move_atr = 0.5
+
+[grid]
+stop_atr = [0.5]

@@ -163,6 +163,27 @@ def test_day_direction_ignores_the_session_in_progress():
     assert t.direction is LONG  # 108 > 105, not compared with 90
 
 
+@pytest.mark.parametrize(
+    ("price", "k", "trades"),
+    [
+        (108.0, 0.3, 1),  # |108 - 105| = 0.3 ATR: at the threshold (inclusive)
+        (108.0, 0.31, 0),  # below
+        (100.0, 0.5, 1),  # |100 - 105| = 0.5 ATR, short side
+        (100.0, 0.51, 0),
+        (108.0, 0.0, 1),  # 0 = no filter (default)
+    ],
+)
+def test_min_move_atr_filters_small_day_moves(price, k, trades):
+    assert len(scenario(price, rest=QUIET_WIDE, direction="with_day", min_move_atr=k)) == trades
+
+
+def test_min_move_atr_needs_a_day_direction():
+    with pytest.raises(ValueError):
+        TimedHoldConfig(direction="long", min_move_atr=0.5)
+    with pytest.raises(ValueError):
+        TimedHoldConfig(direction="with_day", min_move_atr=-0.1)
+
+
 # --- no trade ---------------------------------------------------------------------------------
 
 
@@ -418,6 +439,7 @@ def test_config_defaults_are_the_spec():
     assert (c.stop_atr, c.atr_period, c.atr_zone) == (0.5, 14, "America/New_York")
     assert (c.atr_open, c.atr_close, c.atr_close_tolerance_min) == (time(9, 30), time(16, 0), 0)
     assert (c.day_filter, c.tom_days_after, c.calendar_dir) == ("all", 3, "")
+    assert c.min_move_atr == 0.0
 
 
 # --- no lookahead -----------------------------------------------------------------------------

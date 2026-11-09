@@ -130,6 +130,23 @@ window changed except F1a's start, see below):
 - **Costs are lower bounds:** FX pairs other than GBPUSD and the indices before 2021 use today's
   FTMO spread scaled by price (the cost table report); gate 1 doubles every component.
 
+## Hypothesis 6: F2L, momentum on large-move days (pre-registered 2026-11-09, after run 1)
+
+Registered **after** the F2 results were seen, so it is a new hypothesis and counted as such
+(6 hypotheses, 15 cells in total). The literature pass named it before any run (index momentum
+report, rule 3): Gao et al. (2018) report stronger last-30-minute momentum on volatile days;
+Baltussen et al. (2021) tie it to dealer gamma hedging, which scales with the size of the day's
+move. F2 itself found the predicted sign gross in every index but about +0.01-0.03 R per trade,
+below the 0.04-0.05 R cost; the hypothesis is that the edge per trade is larger on large-move days.
+
+- Rule: F2 (`with_day`, last 30 minutes of the cash session, stop 0.5 daily ATR) plus
+  ⚙️ `min_move_atr` = 0.5: trade only when |entry price - previous cash close| >= 0.5 daily ATR.
+- Grids: `timed_hold_rodl.toml` (US500 primary, NAS100), `timed_hold_rodl_uk.toml` (UK100),
+  `timed_hold_rodl_de.toml` (GER40; EU50 left out for its data gaps, decided before this run).
+  One cell each; min trades 150; breadth: >= 2 of NAS100, UK100, GER40 net > 0.
+- Gates: the same seven. Falsified if US500 mean net R per trade <= 0 or its bootstrap lower
+  bound <= 0.
+
 ## Results, development run 1 (2026-11-09, `--dev-only`, 2015-01-02..2021-09-13)
 
 Gates: `python -m backtester.tools.timed_hold_gates <folder> --primary-symbol ...` ->
