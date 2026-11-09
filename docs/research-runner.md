@@ -64,7 +64,8 @@ strategy instead of a grid tool per strategy, and see at a glance which variants
 
 ### Submission identity (V2.6i step 2)
 
-Grids handed over through research intake may add exactly these four fields:
+A grid may add this optional identity table (used by the former research department's
+submissions; it also guards the one-time test, below) with exactly these four fields:
 
 ```toml
 [submission]
@@ -244,7 +245,7 @@ accepts the same option.
 
 `criteria_inputs.json` records development variant counts, chosen gross and net R, gross R
 by symbol, stressed costs, scorecard halves, net R excluding the best 1, 5 and 10 UTC exit
-days, stop share, and counts and net R by trade tag. It feeds submission result envelopes.
+days, stop share, and counts and net R by trade tag. It feeds the gate report.
 
 ### Runner checks (V2.4c, 2026-10-28)
 

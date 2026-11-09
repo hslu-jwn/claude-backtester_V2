@@ -1,4 +1,4 @@
-"""Submission identity and explicit holdout authorization (research-intake.md)."""
+"""Submission identity and explicit holdout authorization (research-runner.md)."""
 
 import hashlib
 import json
@@ -11,10 +11,12 @@ import pytest
 from backtester.analytics import trial_log
 from backtester.data.cache import cache_path
 from backtester.data.sources import SymbolSources
-from backtester.tools import intake, research
+from backtester.tools import research
 from backtester.tools.research_grid import GridError, expand, grid_id, load_grid
 from tests.tools import test_research as helpers
 from tests.tools.test_research import GRID, run_research, write_grid
+
+dataset_version = research.dataset_version  # the real one; the autouse fixture patches the module
 
 fakes = helpers.fakes
 
@@ -165,7 +167,7 @@ def test_trial_bytes_unchanged_and_identity_not_in_key(tmp_path):
 
 
 def test_dataset_fingerprint_resolves_preferred_files_and_filters_symbols(tmp_path, monkeypatch):
-    monkeypatch.setattr(intake, "HOME_DIR", tmp_path)
+    monkeypatch.setattr(research, "HOME_DIR", tmp_path)
     main, preferred = tmp_path / "data/cache/histdata", tmp_path / "data/cache/mt5"
     day = date(2020, 1, 2)
     for folder, symbol, content in [
@@ -177,7 +179,7 @@ def test_dataset_fingerprint_resolves_preferred_files_and_filters_symbols(tmp_pa
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)
     sources = SymbolSources({"US500": main, "NAS100": main}, {"US500": preferred})
-    version = intake.dataset_version(["US500"], day, day, sources)
+    version = dataset_version(["US500"], day, day, sources)
     line = "US500\tdata/cache/mt5/US500/2020/2020-01-02.parquet\t8"
     assert version == {
         "dataset_id": "v2-cache",
@@ -187,13 +189,13 @@ def test_dataset_fingerprint_resolves_preferred_files_and_filters_symbols(tmp_pa
         "end": str(day),
         "source_summary": ["data/cache/mt5"],
     }
-    assert version == intake.dataset_version(["US500", "US500"], day, day, sources)
+    assert version == dataset_version(["US500", "US500"], day, day, sources)
     cache_path(main, "US500", day).write_bytes(b"ignored size change")
-    assert version == intake.dataset_version(["US500"], day, day, sources)
+    assert version == dataset_version(["US500"], day, day, sources)
     cache_path(preferred, "US500", day).write_bytes(b"changed size")
-    assert version["version"] != intake.dataset_version(["US500"], day, day, sources)["version"]
+    assert version["version"] != dataset_version(["US500"], day, day, sources)["version"]
     assert (
-        intake.dataset_version(["US500"], date(2020, 1, 3), date(2020, 1, 3), sources)["version"]
+        dataset_version(["US500"], date(2020, 1, 3), date(2020, 1, 3), sources)["version"]
         == hashlib.sha256(b"").hexdigest()
     )
 
@@ -297,7 +299,7 @@ def test_code_provenance(monkeypatch, status, dirty):
 
 
 def test_dataset_sorted_symbols_sources_and_fallback(tmp_path, monkeypatch):
-    monkeypatch.setattr(intake, "HOME_DIR", tmp_path)
+    monkeypatch.setattr(research, "HOME_DIR", tmp_path)
     main, preferred, fallback = (tmp_path / name for name in ("main", "preferred", "fallback"))
     a, b = date(2020, 1, 1), date(2020, 1, 2)
     entries = [(main, "US500", a), (fallback, "US500", b), (main, "NAS100", a)]
@@ -308,8 +310,8 @@ def test_dataset_sorted_symbols_sources_and_fallback(tmp_path, monkeypatch):
     sources = SymbolSources(
         {"US500": main, "NAS100": main}, {"US500": preferred}, {"US500": fallback}
     )
-    version = intake.dataset_version(["US500", "NAS100"], a, b, sources)
-    assert version == intake.dataset_version(["NAS100", "US500"], a, b, sources)
+    version = dataset_version(["US500", "NAS100"], a, b, sources)
+    assert version == dataset_version(["NAS100", "US500"], a, b, sources)
     lines = sorted(
         f"{symbol}\t{cache_path(root, symbol, day).relative_to(tmp_path).as_posix()}\t1"
         for root, symbol, day in entries
@@ -323,14 +325,14 @@ def test_dataset_cache_on_another_drive(tmp_path, monkeypatch):
     from pathlib import Path
 
     other_drive = "Z:/repo" if tmp_path.drive.upper() != "Z:" else "Y:/repo"
-    monkeypatch.setattr(intake, "HOME_DIR", Path(other_drive))
+    monkeypatch.setattr(research, "HOME_DIR", Path(other_drive))
     sources = SymbolSources.single(tmp_path / "cache", ["US500"])
     day = date(2020, 1, 1)
     path = cache_path(tmp_path / "cache", "US500", day)
     path.parent.mkdir(parents=True)
     path.write_bytes(b"cache")
-    version = intake.dataset_version(["US500"], day, day, sources)
-    assert version == intake.dataset_version(["US500"], day, day, sources)
+    version = dataset_version(["US500"], day, day, sources)
+    assert version == dataset_version(["US500"], day, day, sources)
     assert version["source_summary"]
     assert all(not Path(label).is_absolute() for label in version["source_summary"])
 

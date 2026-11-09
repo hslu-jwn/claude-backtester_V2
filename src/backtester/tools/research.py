@@ -33,7 +33,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -60,7 +62,7 @@ from backtester.analytics.verdict import (
 from backtester.data.sources import DEFAULT_SOURCES, SymbolSources, UnmappedSymbolError
 from backtester.engine.ticks import TickRoundingStats
 from backtester.filelock import file_lock
-from backtester.paths import RESULTS_DIR
+from backtester.paths import HOME_DIR, RESULTS_DIR
 from backtester.presets import save_preset
 from backtester.runner import (
     RunResult,
@@ -84,7 +86,6 @@ from backtester.tools import (
     research_stability,
     research_walk_forward,
 )
-from backtester.tools.intake import dataset_version
 from backtester.tools.research_grid import (
     GridError,
     GridSpec,
@@ -118,6 +119,40 @@ Log = Callable[..., None]
 
 
 # --- data ---------------------------------------------------------------------------------------
+
+
+def dataset_version(symbols, start: date, end: date, sources: SymbolSources) -> dict:
+    """Fingerprint resolved day files by path and size, without reading candle contents.
+
+    Spec: research-runner.md > Submission identity. Dates are inclusive; preferred/main/
+    fallback resolution is delegated to the same cache adapter that reads the candles.
+    """
+
+    def relative(path):
+        try:
+            return Path(os.path.relpath(path, HOME_DIR)).as_posix()
+        except ValueError:
+            # Windows cannot express a relative path across volumes. Retain the volume
+            # as a relative manifest label (C/cache/...), without changing file access.
+            return Path(path).as_posix().replace(":", "", 1).lstrip("/")
+
+    lines, directories = [], set()
+    names = sorted(set(symbols))
+    for symbol in names:
+        adapter = sources.adapter(symbol)
+        for day in sources.cached_days(symbol):
+            if start <= day <= end:
+                path = adapter._path(symbol, day)
+                lines.append(f"{symbol}\t{relative(path)}\t{path.stat().st_size}")
+                directories.add(relative(path.parents[2]))
+    return {
+        "dataset_id": "v2-cache",
+        "version": hashlib.sha256("\n".join(sorted(lines)).encode("utf-8")).hexdigest(),
+        "symbols": names,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "source_summary": sorted(directories),
+    }
 
 
 def cached_span(symbols: Sequence[str], sources: SymbolSources) -> tuple[date, date]:
