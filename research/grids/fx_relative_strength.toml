@@ -1,0 +1,43 @@
+# Strategy: fx_relative_strength (docs/strategy-fx_relative_strength.md). Pre-registered 2026-11-10, before any run.
+# DRAFT: needs multi-symbol step B (pairs) or C (baskets); do not run before integration
+# The cross-sectional basket ranking and two-leg group engine do not exist yet. Keys marked
+# "proposed" below are the spec's names; the implementer may rename them in the same commit.
+# Source: Menkhoff et al. (JFE 2012), currency momentum strategies; harvest idea 1.
+# Data: 7 USD FX majors histdata 2015-01-02..2021-09-13 (universe ranked weekly).
+# Always --dev-only (before 2021-09-14).
+strategy = "fx_relative_strength"
+symbols = ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCHF", "USDCAD"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "UTC"
+rebalance_day = "Friday"           # proposed: Friday weekly rebalance
+evaluation_time = "21:00"          # proposed: 21:00 UTC weekly close
+universe_size = 7                  # proposed: requires all 7 pairs present
+stop_atr_period = 14
+max_open_positions = 1             # one weekly basket at a time
+notional_split = "50_50"           # proposed: equal gross USD notional
+
+# Family S: the signal rule. Primary cell: lookback 100 bars (20 weeks), stop 2.0 ATR, hold 1 week.
+[[grids]]
+name = "S"
+[grids.base]
+ranking_mode = "cross_sectional"   # proposed: buy winner, sell loser vs USD
+[grids.grid]
+lookback_bars = [80, 100]          # proposed: 16 weeks (80 bars), 20 weeks (100 bars)
+stop_atr = [1.5, 2.0]              # individual leg stop in daily ATR(14)
+hold_weeks = [1, 2]                # 1 week (5 daily bars), 2 weeks (10 daily bars)
+
+# Family C: control, fixed directional pair baseline (Long EURUSD / Short USDJPY).
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+[[grids]]
+name = "C"
+[grids.base]
+ranking_mode = "fixed_control"
+[grids.grid]
+direction = ["long_eur_short_jpy", "short_eur_long_jpy"]
+stop_atr = [1.5, 2.0]
+hold_weeks = [1, 2]

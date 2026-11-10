@@ -1,0 +1,44 @@
+# Strategy: gold_silver_ratio (docs/strategy-gold_silver_ratio.md). Pre-registered 2026-11-10, before any run.
+# DRAFT: needs multi-symbol step B (pairs); do not run before integration
+# The strategy and linked two-leg group engine do not exist yet. Keys marked "proposed" below
+# are the spec's names; the implementer may rename them in the same commit as the spec.
+# Source: World Gold Council, gold vs silver wildcard; pairs trading literature; harvest idea 5.
+# Data: XAUUSD and XAGUSD histdata 2015-01-02..2021-09-13 (both traded as linked legs).
+# Always --dev-only (before 2021-09-14).
+strategy = "gold_silver_ratio"
+symbols = ["XAUUSD", "XAGUSD"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 40
+
+[base]
+zone = "UTC"
+evaluation_time = "21:00"          # proposed: daily evaluation at 21:00 UTC
+spread_type = "log_ratio"          # proposed: ln(XAUUSD) - ln(XAGUSD)
+lookback_bars = 120                # proposed: 120 completed weekday daily closes
+stop_atr_period = 14
+max_open_positions = 1             # one pair position at a time, no overlapping trades
+notional_split = "50_50"           # proposed: equal gross USD notional
+
+# Family S: the signal rule. Primary cell: z_threshold 2.0, stop 1.5 ATR, max_hold 20 days.
+[[grids]]
+name = "S"
+[grids.base]
+exit_on_mean_cross = true          # proposed: exit when ratio crosses frozen entry mean
+[grids.grid]
+z_threshold = [1.75, 2.0]          # proposed: entry threshold on ratio z-score
+stop_atr = [1.5, 2.0]              # individual leg stop in daily ATR(14)
+max_hold_days = [15, 20]           # timeout in completed daily sessions
+
+# Family C: control, the same holding periods and stops on all trading days, fixed direction.
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+[[grids]]
+name = "C"
+[grids.base]
+z_threshold = 0.0
+exit_on_mean_cross = false
+[grids.grid]
+direction = ["long_gold_short_silver", "short_gold_long_silver"]
+stop_atr = [1.5, 2.0]
+max_hold_days = [15, 20]

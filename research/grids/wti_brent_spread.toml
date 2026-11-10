@@ -1,0 +1,45 @@
+# Strategy: wti_brent_spread (docs/strategy-wti_brent_spread.md). Pre-registered 2026-11-10, before any run.
+# DRAFT: needs multi-symbol step B (pairs); do not run before integration
+# The strategy and linked two-leg group engine do not exist yet. Keys marked "proposed" below
+# are the spec's names; the implementer may rename them in the same commit as the spec.
+# Source: GCARD Summer 2018 (pp. 77-80), commodity pairs and data snooping; harvest idea 3.
+# Data: USOIL and UKOIL histdata 2015-01-02..2021-09-13 (both traded as linked legs).
+# Always --dev-only (before 2021-09-14).
+strategy = "wti_brent_spread"
+symbols = ["USOIL", "UKOIL"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 40
+
+[base]
+zone = "UTC"
+evaluation_time = "21:00"          # proposed: daily evaluation at 21:00 UTC
+spread_type = "log_spread"         # proposed: ln(USOIL) - ln(UKOIL)
+lookback_bars = 120                # proposed: 120 completed weekday daily closes
+stop_atr_period = 14
+max_open_positions = 1             # one pair position at a time, no overlapping trades
+notional_split = "50_50"           # proposed: equal gross USD notional
+reject_nonpositive_prices = true   # proposed: skip entry if price <= 0
+
+# Family S: the signal rule. Primary cell: z_threshold 2.0, stop 1.5 ATR, max_hold 20 days.
+[[grids]]
+name = "S"
+[grids.base]
+exit_on_mean_cross = true          # proposed: exit when spread crosses frozen entry mean
+[grids.grid]
+z_threshold = [1.75, 2.0]          # proposed: entry threshold on spread z-score
+stop_atr = [1.5, 2.0]              # individual leg stop in daily ATR(14)
+max_hold_days = [15, 20]           # timeout in completed daily sessions
+
+# Family C: control, the same holding periods and stops on all trading days, fixed direction.
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+[[grids]]
+name = "C"
+[grids.base]
+z_threshold = 0.0
+exit_on_mean_cross = false
+[grids.grid]
+direction = ["long_wti_short_brent", "short_wti_long_brent"]
+stop_atr = [1.5, 2.0]
+max_hold_days = [15, 20]
