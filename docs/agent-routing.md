@@ -62,6 +62,9 @@ credentials, `.env`, MT5 / Telegram data or `src/backtester/live/`.
   tests.
 - **Literature / web research:** free models first (`ai_dispatch gemini --effort low`,
   `gemini-api`, `openrouter`); Opus opens the sources before relying on them.
+- **Sonnet only for small work (rule set by the user, 2026-11-10):** Sonnet sub-agents do small finishes
+  and bounded tasks (a spec draft, a check), never heavy builds (engine steps, new strategies), even when
+  Codex is at its limit; heavy work waits for the Codex reset.
 - **Claude Sonnet sub-agents** only when Codex fails, is rate-limited or at its limit, or as a
   parallel addition while Codex is busy; never to fill a wait. The research log names the model of
   every task. (The user's "use Sonnet" of 2026-11-09 morning applied to that run only.)

@@ -202,6 +202,11 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
     **Result: not confirmed** (test 215 trades +5.0 R, doubled costs incl. swap -18.9 R, second half
     negative, bootstrap -0.114). No retest.
 
+14. **Codex at its weekly limit (2026-11-10 14:54):** heavy work waits for the weekly reset (the user: "We'll
+    wait for codex weekly reset tomorrow"). Next Codex job: multi-symbol step 1a (`briefs/multi-symbol-1a.md`),
+    then 1b, then the five pre-registered lead-lag strategies (14 `us_close_de_open`, gold->silver, BTC->ETH,
+    oil->CAD, USD breadth->USDCAD).
+
 ## Next step
 
 Research front (2026-11-09 night): hypotheses 11 (Gotobi: dev and pre-sample strong, one-time test
