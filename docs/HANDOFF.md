@@ -192,8 +192,11 @@ Research front (2026-11-09 night): hypotheses 11 (Gotobi: dev and pre-sample str
 not confirmed) and 12 (falsified) done; two pre-registered calendar x clock screens (792 FX cells
 2008-2014, 660 index cells 2010-2014) found 0 survivors; four free idea scans used up the literature
 at our cost level. Open low-priority call: gate 7's rollover window from 20:55 UTC (Open 12 note).
-Next: `Continue.Code` (12.5 reconciliation on runs 3 and 4), or new research only with a new idea
-source (e.g. order-book / tick data, or other asset classes).
+12.5 on runs 3 + 4 done 2026-11-09/10 (all trades explained; reconcile reads `no_history` starts).
+Open ROADMAP code items are parked by the user (3.7 after a surviving strategy, 5.1-5.7 frozen,
+V2.7 challenge simulator "not now"; 11.3 is covered by the FX time-of-day screens). Waiting on the
+user: the live-spread proposal (`data/spreads/proposal_live_2026-11-09.json`), gate 7's 20:55 UTC
+rollover start, and the next direction (new data source for research, or a code item).
 
 ## First prompt for the next chat
 
