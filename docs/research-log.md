@@ -17,6 +17,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **Strategy 13 `daily_reversal`** (Connors E8 / capitulation, 6 indices; US30 dropped before any result):
   falsified, primary E8 2R -35.0 R (335 trades); CAP +5 to +7 R on only 32 trades (min 80).
 - Next: Kaufman trend following on BTCUSD / ETHUSD (never run on crypto; FTMO crypto swap -30 %/year).
+- **C1 crypto trend following (strategy 4, BTCUSD / ETHUSD):** two data fixes on the way (runner D1 UTC,
+  crypto Saturday closures; segments 102 -> 18); primary 23 trades < 40: inconclusive; all 16 cells positive,
+  momentum-20 lead parked (HANDOFF › Open 13).
+- **C3 crypto intraday momentum: screened out on costs.** Shen, Urquhart, Wang (Reading, 2021) report 2.8 bp
+  gross per trade (break-even about 3 bp) vs FTMO crypto commission 6.5 bp per round trip; Wen et al. 2022
+  tables not accessible. Not built.
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 
