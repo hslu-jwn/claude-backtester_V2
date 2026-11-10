@@ -10,6 +10,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   scientifically backed; find new ones online when the backlog is empty); pre-sample check before the
   MT5 test whenever older data exists; routing as before (Codex for screens, runs, code and some web
   research; free models for literature); Telegram for a promising strategy or > 5 min waiting.
+- **Idea harvests (Codex web research, medium):** 24 ideas (`knowledge/research/reports/2026-11-10_idea_harvest_*.md`);
+  multi-leg / basket ideas not runnable, RSI2-like pullbacks already falsified, crypto funding too short.
+- **Strategy 12 `energy_report`** (EIA oil report, follow / fade; Codex sol build + terra integration, sol
+  review: 3 defects fixed): falsified on development, all 8 report cells negative (primary -7.5 R, 322 trades).
+- **Strategy 13 `daily_reversal`** (Connors E8 / capitulation, 6 indices; US30 dropped before any result):
+  falsified, primary E8 2R -35.0 R (335 trades); CAP +5 to +7 R on only 32 trades (min 80).
+- Next: Kaufman trend following on BTCUSD / ETHUSD (never run on crypto; FTMO crypto swap -30 %/year).
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 
