@@ -23,6 +23,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **C3 crypto intraday momentum: screened out on costs.** Shen, Urquhart, Wang (Reading, 2021) report 2.8 bp
   gross per trade (break-even about 3 bp) vs FTMO crypto commission 6.5 bp per round trip; Wen et al. 2022
   tables not accessible. Not built.
+- **Idea harvest round 2** (Codex web, 12 ideas). **Hypothesis 15 Turtle Soup** (failed 20-day extreme,
+  daily, 7 symbols; setup TS of strategy 13, Codex sol): falsified, primary 38 trades -9.2 R.
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 

@@ -256,3 +256,10 @@ consume rejected first-minute entries and skip stop-touch candles. Daily labels 
 the closing date, including Sunday evening in Monday's full FX session. Exit counting
 differs explicitly from E8/CAP (whose fill session remains zero). Financing follows
 actual rollover timestamps, so session counts are not a promise of one/two swap nights.
+
+## Result, setup TS / hypothesis 15 (2026-11-10, development; `results/research/daily_reversal_ts_24938244/`)
+
+**Falsified (primary net negative, and below its trade minimum).** Pooled over 7 symbols: lookback 20, exit
+next close (primary) 38 trades -9.2 R; exit after 2 sessions 38 trades -9.9 R; lookback 55: 0 trades in both
+cells (the 55-session warm-up plus the age / close-back rules leave no signal; noted, not investigated:
+it cannot rescue a negative primary). The harvest's guess of 70-200 trades a year was far too high. Cells: 4.
