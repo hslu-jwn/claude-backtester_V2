@@ -51,7 +51,7 @@ from backtester.risk.monte_carlo import (
 )
 from backtester.runner import RunSettings
 from backtester.strategy.opening_range.config import EntryMode, OpeningRangeConfig
-from backtester.strategy.registry import REGISTRY, default_config
+from backtester.strategy.registry import default_config
 from backtester.tools.research_helpers import run_variant
 
 SWEEP_DIR = "risk_sweep"
@@ -324,7 +324,6 @@ def plans() -> dict[str, Plan]:
             "timed_hold", default_config("timed_hold"), ("NAS100", "US500"), ("NAS100", "US500")
         ),
     }
-    assert set(out) == set(REGISTRY)
     return out
 
 
@@ -627,7 +626,7 @@ def lower_priority() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python -m backtester.tools.risk_sweep", description=__doc__)
-    p.add_argument("--strategies", nargs="+", choices=tuple(REGISTRY), default=list(REGISTRY))
+    p.add_argument("--strategies", nargs="+", choices=tuple(plans()), default=list(plans()))
     p.add_argument("--runs", type=int, default=SweepConfig().runs, help="reshuffles per variant")
     p.add_argument("--workers", type=int, default=SweepConfig().workers)
     p.add_argument("--phase", choices=("dev", "all"), default="all")

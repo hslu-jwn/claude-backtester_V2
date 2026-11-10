@@ -72,6 +72,8 @@ def _no_wick_extra() -> dict:
 
 
 FIXTURES: dict[str, Fixture] = {
+    "energy_report": Fixture("USOIL", 70.0, 0.001, (0, 24), days=35),
+    "daily_reversal": Fixture("US500", 5000.0, 0.0006, (0, 24), days=40),
     "london_fix": Fixture("EURUSD", 1.1, 0.003, (14, 24), days=8),
     "session_zone_sweep": Fixture("XAUUSD", 2000.0, 0.0006, (0, 24), days=10, drift_sigma=2e-5),
     "ny_index_sweep": Fixture("NAS100", 18000.0, 0.0006, (12, 22), days=8, drift_sigma=2e-5),
@@ -129,6 +131,11 @@ def m1_frame(fx: Fixture) -> pd.DataFrame:
         }
     )  # fmt: skip
     price_cols = [c for c in frame.columns if c.startswith(("bid_", "ask_")) and "volume" not in c]
+    # A visible Wednesday reaction after 10:29 New York ensures the oil fixture
+    # exercises entries after its completed-day ATR warm-up (winter UTC clock).
+    if fx.symbol == "USOIL":
+        event = (frame.ts.dt.day_of_week == 2) & (frame.ts.dt.hour == 15) & (frame.ts.dt.minute >= 35)
+        frame.loc[event, price_cols] *= 1.03
     frame[price_cols] = frame[price_cols].round(digits)
     # rounding must keep each candle consistent
     frame["bid_high"] = frame[["bid_high", "bid_open", "bid_close"]].max(axis=1)

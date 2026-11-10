@@ -71,6 +71,8 @@ from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.alternating_path.config import AlternatingPathConfig
 from backtester.strategy.base import UnsupportedSymbolError
+from backtester.strategy.daily_reversal.config import DailyReversalConfig
+from backtester.strategy.energy_report.config import EnergyReportConfig
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
 from backtester.strategy.h1_shock.config import H1ShockConfig
@@ -110,6 +112,8 @@ StrategyConfig = (
     | AlternatingPathConfig
     | TimedHoldConfig
     | H1ShockConfig
+    | EnergyReportConfig
+    | DailyReversalConfig
 )
 
 

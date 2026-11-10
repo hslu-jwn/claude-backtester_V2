@@ -128,8 +128,33 @@
       "runtime_seconds": 19.63218020001659,
       "git_commit": "8ab0408c322c406e2c0a4159bb0d5778e8533643",
       "date": "2026-11-09T19:36:18+00:00"
+    },
+    "energy_report": {
+      "symbols": [
+        "USOIL",
+        "UKOIL"
+      ],
+      "trade_count": 0,
+      "runtime_seconds": 6.761060799999996,
+      "git_commit": "47f5afff46dda1eeb470707ebae5cd54c83f4658",
+      "date": "2026-11-10T11:27:45+00:00"
+    },
+    "daily_reversal": {
+      "symbols": [
+        "US500",
+        "NAS100",
+        "US30",
+        "GER40",
+        "UK100",
+        "JP225",
+        "AUS200"
+      ],
+      "trade_count": 46,
+      "runtime_seconds": 22.970239400000082,
+      "git_commit": "47f5afff46dda1eeb470707ebae5cd54c83f4658",
+      "date": "2026-11-10T11:27:45+00:00"
     }
   },
-  "git_commit": "8ab0408c322c406e2c0a4159bb0d5778e8533643",
-  "date": "2026-11-09T19:36:18+00:00"
+  "git_commit": "47f5afff46dda1eeb470707ebae5cd54c83f4658",
+  "date": "2026-11-10T11:27:45+00:00"
 }

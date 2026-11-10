@@ -402,7 +402,10 @@ def strategy_leaves(strategy: str = DEFAULT_STRATEGY) -> list[Leaf]:
     return [
         leaf
         for leaf in leaves(base)
-        if leaf.path not in UNUSED.get(strategy, ()) and _panel_symbol(leaf.path)
+        if leaf.path not in UNUSED.get(strategy, ())
+        and not (strategy in {"energy_report", "daily_reversal"}
+                 and leaf.path.startswith("strategy."))
+        and _panel_symbol(leaf.path)
     ]
 
 

@@ -18,6 +18,10 @@ from backtester.detectors.settings import DetectorSettings
 from backtester.strategy.alternating_path.config import AlternatingPathConfig
 from backtester.strategy.alternating_path.strategy import AlternatingPath
 from backtester.strategy.base import Strategy
+from backtester.strategy.daily_reversal.config import DailyReversalConfig
+from backtester.strategy.daily_reversal.strategy import DailyReversal
+from backtester.strategy.energy_report.config import EnergyReportConfig
+from backtester.strategy.energy_report.strategy import EnergyReport
 from backtester.strategy.gap_fade.config import GapFadeConfig
 from backtester.strategy.gap_fade.strategy import GapFade
 from backtester.strategy.gap_momentum.config import GapMomentumConfig
@@ -75,6 +79,8 @@ _SPECS = (
         "timed_hold", "Strategy 10 · Timed hold (calendar / time of day)", TimedHoldConfig, TimedHold
     ),
     StrategySpec("h1_shock", "Strategy 11 · H1 shock response", H1ShockConfig, H1Shock),
+    StrategySpec("energy_report", "Strategy 12 · Energy report", EnergyReportConfig, EnergyReport),
+    StrategySpec("daily_reversal", "Strategy 13 · Daily reversal (Connors)", DailyReversalConfig, DailyReversal),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

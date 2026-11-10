@@ -38,3 +38,18 @@ Strategy folder, config dataclass (defaults = primary cell), tests first (hand-b
 CAP, order expiry, gap fill at the open, stop below entry check, target vs timed exit, swap days, no
 lookahead), grid `research/grids/daily_reversal.toml` (diagnostics off). Note what a gates tool needs.
 `python -m pytest tests/strategy/daily_reversal -q` green, ruff clean. Report files, registry line, assumptions.
+
+## Decisions by Opus (2026-11-10, after Codex's questions, before any code or run; record as assumptions)
+
+1. `hold_sessions` counting starts with the session after the fill session; the timed exit is at the close
+   of the `hold_sessions`-th full session after the fill session.
+2. If a long and a short entry level are both crossed inside the same M1 candle, skip both (no trade).
+3. No engine change: the strategy emulates the stop entry. It watches M1 candles; the first candle whose
+   high >= buy level (low <= sell level for shorts) triggers a market entry at that candle's close (the
+   engine's close-price entry, costs and slippage as usual). Conservative vs a real stop fill (usually a
+   slightly worse price); a candle that opens beyond the level also fills at its close. State this in the spec.
+4. Overlapping setups: at most one pending setup per direction and symbol; a newer qualifying setup of
+   the same direction replaces (cancels) the older pending one. No new setup is armed while a position is
+   open. Any FURTHER minor ambiguity: Opus pre-authorizes you to choose the more conservative option (fewer
+   or later trades, worse fills) and list it under Assumptions for review; stop only for a rule that
+   changes the hypothesis itself.

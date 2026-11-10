@@ -256,3 +256,18 @@ def test_full_sweep_writes_report_and_test_picks(tmp_path):
     assert (
         (tmp_path / "out" / "variants.csv").read_text(encoding="utf8").startswith("strategy,period")
     )
+
+
+def test_unvalidated_strategies_are_not_automatically_risk_swept(monkeypatch):
+    plans = risk_sweep.plans()
+    assert "energy_report" not in plans and "daily_reversal" not in plans
+    seen = []
+
+    def capture(cfg, strategies, *args):
+        seen.extend(strategies)
+        raise RuntimeError("stop before any sweep")
+
+    monkeypatch.setattr(risk_sweep, "sweep", capture)
+    with pytest.raises(RuntimeError, match="stop before any sweep"):
+        risk_sweep.main(["--no-lower-priority"])
+    assert "energy_report" not in seen and "daily_reversal" not in seen

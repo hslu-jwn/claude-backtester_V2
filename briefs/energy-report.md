@@ -39,3 +39,11 @@ appending future candles never changes earlier orders), grid `research/grids/ene
 (diagnostics off like the timed_hold grids). If an existing gates tool fits with a flag, say how; else
 note what the coordinator must add. `python -m pytest tests/strategy/energy_report -q` green, ruff clean.
 Report files, the registry line needed, and every assumption.
+
+## Decisions by Opus (2026-11-10, after Codex's questions, before any code or run; record as assumptions)
+
+1. Reaction threshold in price units: |close(10:45) - close(10:29)| >= k x ATR (ATR in price units); the
+   direction is the sign of that difference.
+2. Control (gate 3): the same clock rules on Tuesdays and Thursdays (non-report days; skip a day with a
+   NYSE full closure), disjoint from the report Wednesdays. Implement as a config switch
+   (`days = "report"` / `"control"`), with the grid running both.

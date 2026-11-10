@@ -59,6 +59,8 @@ STRATEGY_SYMBOLS = {  # each strategy's own symbols (its spec / grid tool)
     "alternating_path": ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD"),
     "h1_shock": ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500"),
     "timed_hold": ("US500", "NAS100"),  # default config = New York cash session
+    "energy_report": ("USOIL", "UKOIL"),
+    "daily_reversal": ("US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200"),
 }
 FAMILY_PREFIX = "screen_"
 SOURCE = "histdata"

@@ -39,6 +39,8 @@ def test_registered_names_and_order():
         "alternating_path",
         "timed_hold",
         "h1_shock",
+        "energy_report",
+        "daily_reversal",
     ]
 
 
@@ -80,7 +82,8 @@ def test_every_registered_strategy_follows_the_contract():
         assert dataclasses.is_dataclass(spec.config_cls)
         assert spec.config_cls.__dataclass_params__.frozen  # configs are frozen
         assert spec.label
-        strategy = spec.strategy_cls("XAUUSD", spec.config_cls())
+        symbol = {"energy_report": "USOIL", "daily_reversal": "US500"}.get(spec.name, "XAUUSD")
+        strategy = spec.strategy_cls(symbol, spec.config_cls())
         assert strategy.base_timeframe in strategy.timeframes
         assert isinstance(strategy.full_history, tuple)
         assert isinstance(strategy.h4_alignment, H4Alignment)

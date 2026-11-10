@@ -42,6 +42,8 @@ class GoldenConfig:
         ("alternating_path", ("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCHF", "USDCAD")),
         ("timed_hold", ("NAS100", "US500")),
         ("h1_shock", ("XAUUSD", "GBPUSD", "GBPJPY", "NAS100", "US500")),
+        ("energy_report", ("USOIL", "UKOIL")),
+        ("daily_reversal", ("US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200")),
     )
 
 
