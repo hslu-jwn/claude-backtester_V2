@@ -34,6 +34,10 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 - Day trading and multi-day holds (multi-day in scope since 2026-11-09, the user: count every fee,
   overnight swap incl. the triple-swap day); V2's M1 symbols and supported
   execution only; stop-defined, results in R.
+- **Idea sources (rule set by the user, 2026-11-10):** search broadly on the internet (forums,
+  practitioner blogs, trading books, videos, papers); an idea need not be scientifically backed to be
+  tested (label it SPECULATIVE / PRACTITIONER), but every test keeps the pre-registered gates. When the
+  backlog is empty, look for new ideas online. Codex may do web research too (not overdone).
 - Cheapest route first (`docs/agent-routing.md`): local search of `knowledge/`, then a free model
   for literature / web look-ups (`ai_dispatch gemini --effort low`, `gemini-api`, `openrouter`).
   A model's citation is only a lead: Opus opens the source before relying on it.

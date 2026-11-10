@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-10: continuous Continue.Research Test=auto (the user)
+
+- Answers: continuous until `Stop.`; research generally (any source on the internet, ideas need not be
+  scientifically backed; find new ones online when the backlog is empty); pre-sample check before the
+  MT5 test whenever older data exists; routing as before (Codex for screens, runs, code and some web
+  research; free models for literature); Telegram for a promising strategy or > 5 min waiting.
+- Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
+  gets its one-time MT5 test in this run, once, frozen.
+
 ## 2026-11-09: continuous Continue.Research (routing back to Codex first, the user)
 
 - **Hypothesis 11 Gotobi USDJPY (evening):** idea scan Gemini Flash low (free; month-end fix, OPEX,

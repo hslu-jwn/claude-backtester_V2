@@ -66,6 +66,9 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
 - **During any session:** when the user says ok / yes, it is final: write it into the repo in
   the same commit (rule -> `docs/` "(rule set by the user, <date>)"; accepted -> ROADMAP
   "accepted by the user <date>"). Never ask about it again.
+- **Telegram default (rule set by the user, 2026-11-10):** send a message when a promising strategy
+  is found (passed its pre-registered gates) or when the session has been waiting for the user for
+  more than 5 minutes; this replaces "no Telegram" from earlier runs.
 - **Telegram** (`live/telegram.py`, token from the Windows Credential Manager) only for: a
   decision on rules / defaults / risk, a blocker Codex can't solve, a crash or long pause of
   the loop / queue, a very promising strategy; plus one short evening summary while research
