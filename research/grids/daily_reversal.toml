@@ -1,0 +1,17 @@
+# Draft pre-registration input only. DO NOT RUN until registration and integration.
+# target_r=0 encodes none; all symbols share each cell. Primary E8 / 2R.
+# Full conjunctive gates: docs/strategy-daily_reversal.md; standard verdict insufficient.
+strategy = "daily_reversal"
+symbols = ["US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+shocks = false
+min_trades = 80
+
+[base]
+hold_sessions = 5
+
+[grid]
+setup = ["E8", "CAP"]
+target_r = [2.0, 0.0]
