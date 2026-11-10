@@ -62,9 +62,6 @@ def send_if_still_pending(token: str, delay_s: float = DELAY_S) -> None:
 
 def main(argv: list[str]) -> int:
     try:
-        if argv[:1] != ["--clear"]:  # trace which hooks the app actually fires (no message text)
-            with PENDING.with_suffix(".log").open("a", encoding="utf-8") as f:
-                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {argv[:1]}\n")
         if argv == ["--clear"]:
             PENDING.unlink(missing_ok=True)
         elif argv == ["--hook"]:
