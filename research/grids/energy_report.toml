@@ -1,0 +1,19 @@
+# Strategy 12, pre-registered 2026-11-10. DO NOT RUN before coordinator integration.
+# 8 report cells + 8 matched controls per symbol; USOIL primary, UKOIL breadth.
+# Primary F / k=0.15 / stop_atr=1.0 / days=report. Spec: strategy-energy_report.md.
+# Development only, 2015-01-01..2021-09-13, explicitly histdata source (no mixed MT5).
+strategy = "energy_report"
+symbols = ["USOIL", "UKOIL"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 150
+
+[base]
+atr_period = 14
+
+[grid]
+family = ["F", "V"]
+k = [0.15, 0.30]
+stop_atr = [0.5, 1.0]
+days = ["report", "control"]
