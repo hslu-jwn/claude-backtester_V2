@@ -140,3 +140,16 @@ user's go, criteria to be fixed then; GER40 and UK100 MT5 candles exist from 202
 4. The weighted control (signal-day long / short mix) and the UK100 per-symbol overrides are part of the
    gates; the gates tool must implement them before the run (integration work).
 5. Cells at the 0.20 % threshold may end below 200 trades: reported as "not enough evidence", as written.
+
+**Decided by Opus 2026-11-10, before any build or run:**
+
+Global (all five lead-lag specs, after the skeptic review `knowledge/research/reports/2026-11-10_leadlag_skeptic.md`):
+- G1 Daily bars / ATR: FX, metals, oil = 17:00 New York trading days, weekend stubs excluded (as timed_hold's
+  `atr_skip_weekend`); crypto = UTC days with the Saturday-closure rule of `docs/research-runner.md`.
+- G2 Execution: entries and timed exits fill at the close of the named candle (the engine's close-price
+  entry, costs and slippage as usual), like every timed strategy; "the HH:MM candle" = the candle CLOSING at
+  HH:MM (timestamps are opens).
+- G3 A trade that crosses the FTMO daily rollover is allowed and pays the modelled swap (triple day included).
+- G4 Minimum trades not reached = "not enough evidence", never "falsified" and never a pass.
+- G5 A missing reference or entry candle = no trade that day (no fallback, no partial universe).
+- S14 UK100 breadth runs as its own grid file `research/grids/us_close_de_open_uk.toml` (UK100 traded, entry 08:00 London close, exits 08:30 / 09:00), same cells.

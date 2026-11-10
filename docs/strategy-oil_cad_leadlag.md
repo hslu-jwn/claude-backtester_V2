@@ -174,3 +174,16 @@ user's explicit go.
 10. **Costs:** Standard engine defaults; Gate 1 doubles all components (spread, slippage, commission, swap).
 
 ## Decisions by Opus
+
+**Decided by Opus 2026-11-10, before any build or run:**
+
+Global (all five lead-lag specs, after the skeptic review `knowledge/research/reports/2026-11-10_leadlag_skeptic.md`):
+- G1 Daily bars / ATR: FX, metals, oil = 17:00 New York trading days, weekend stubs excluded (as timed_hold's
+  `atr_skip_weekend`); crypto = UTC days with the Saturday-closure rule of `docs/research-runner.md`.
+- G2 Execution: entries and timed exits fill at the close of the named candle (the engine's close-price
+  entry, costs and slippage as usual), like every timed strategy; "the HH:MM candle" = the candle CLOSING at
+  HH:MM (timestamps are opens).
+- G3 A trade that crosses the FTMO daily rollover is allowed and pays the modelled swap (triple day included).
+- G4 Minimum trades not reached = "not enough evidence", never "falsified" and never a pass.
+- G5 A missing reference or entry candle = no trade that day (no fallback, no partial universe).
+- S17 Evaluation at the 17:00 New York close. Oil roll jumps: skip a signal day whose USOIL daily move is in `histdata.py`'s documented / explained jump list or exceeds 10 % (conservative). Breadth (binding) = the same rule with UKOIL as the reference on USDCAD, own grid file.
