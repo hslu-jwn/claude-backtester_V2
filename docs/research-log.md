@@ -32,6 +32,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - **Pre-sample data (the user's go "download the data"):** histdata XAUUSD, XAGUSD (from 2009), USDCAD (2008),
   WTIUSD / BCOUSD = USOIL / UKOIL (from 2010) to 2014: 29 files, imported into `data/cache/histdata_presample/`
   (effective starts: gold 2009-03, silver 2009-05, oil 2010-11). Per-year clock check still to do (Codex).
+- **Free research while Codex is out (Gemini Flash medium):** pair / basket draft specs (WTI-Brent, gold-silver
+  ratio, FX relative strength); skeptic review of the five lead-lag specs (priors: S14 15-20 %, oil-CAD 5-8 %,
+  USD breadth 4-6 %, gold-silver < 2 %, BTC-ETH < 1 %), all open points decided by Opus; literature for S14:
+  3-7 bp gross per trade expected vs 2-6 bp GER40 costs (cost wall risk).
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 
