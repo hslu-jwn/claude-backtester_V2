@@ -1,0 +1,29 @@
+# C1 breadth grid: ETHUSD only (split from the BTCUSD grid before any result; ETHUSD cache starts 2018).
+# Primary: breakout 20, stop 4 ATR. Development only until separately authorized.
+strategy = "trend_following"
+symbols = ["ETHUSD"]
+min_trades = 40
+max_variants = 8
+monkeys = false
+sensitivity = false
+entry_screen = false
+
+[base]
+timeframe = "D1"
+"engine.costs.swap_enabled" = true
+
+[[grids]]
+name = "breakout"
+[grids.base]
+signal = "BREAKOUT"
+[grids.grid]
+breakout_period = [20, 55]
+stop_atr_mult = [2.0, 4.0]
+
+[[grids]]
+name = "momentum"
+[grids.base]
+signal = "MOMENTUM"
+[grids.grid]
+momentum_period = [20, 55]
+stop_atr_mult = [2.0, 4.0]

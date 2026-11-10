@@ -1,7 +1,7 @@
 # C1: eight pre-registered D1 cells; BTCUSD primary, ETHUSD breadth.
 # Primary: breakout 20, stop 4 ATR. Development only until separately authorized.
 strategy = "trend_following"
-symbols = ["BTCUSD", "ETHUSD"]
+symbols = ["BTCUSD"]
 min_trades = 40
 max_variants = 8
 monkeys = false

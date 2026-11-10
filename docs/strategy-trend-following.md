@@ -146,3 +146,9 @@ five-best-trade removal separately; audit missing exit candles for both symbols 
 `daily_integrity_failures` helper checks exits and observed OHLC but also flags invalid OHLC).
 Verify the runner's recorded period covers the intended BTCUSD history, and use the primary cell,
 not the automatically selected cell. No existing CLI computes all C1 gates as specified.
+
+**C1 amendment (Opus, 2026-11-10, before any result):** the first development run stopped at load time
+("Replay needs at least one candle"): ETHUSD has no candles in 2017, while the joint period starts at
+BTCUSD's first day (2017-04-06). The grid is split, nothing else changes: `trend_following_crypto.toml`
+(BTCUSD, primary) and `trend_following_crypto_eth.toml` (ETHUSD, breadth; its development period starts at
+its first cached day in 2018). Same 8 cells each.
