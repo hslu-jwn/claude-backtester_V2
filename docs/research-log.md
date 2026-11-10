@@ -27,6 +27,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   daily, 7 symbols; setup TS of strategy 13, Codex sol): falsified, primary 38 trades -9.2 R.
 - **C2 crypto momentum one-time test (the user's go):** BTCUSD momentum 20 / stop 2, test 2021-09-14..2026-11-08:
   215 trades +5.0 R, doubled costs incl. swap -18.9 R, halves +12.7 / -7.8: not confirmed.
+- **Codex at its weekly limit (14:54):** heavy work waits for the reset (the user); Sonnet only for small work.
+  Done meanwhile: strategy 14 spec (Sonnet, small), four lead-lag specs (Gemini, free), multi-symbol design.
+- **Pre-sample data (the user's go "download the data"):** histdata XAUUSD, XAGUSD (from 2009), USDCAD (2008),
+  WTIUSD / BCOUSD = USOIL / UKOIL (from 2010) to 2014: 29 files, imported into `data/cache/histdata_presample/`
+  (effective starts: gold 2009-03, silver 2009-05, oil 2010-11). Per-year clock check still to do (Codex).
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 
