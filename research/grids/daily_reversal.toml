@@ -2,7 +2,7 @@
 # target_r=0 encodes none; all symbols share each cell. Primary E8 / 2R.
 # Full conjunctive gates: docs/strategy-daily_reversal.md; standard verdict insufficient.
 strategy = "daily_reversal"
-symbols = ["US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200"]
+symbols = ["US500", "NAS100", "GER40", "UK100", "JP225", "AUS200"]
 monkeys = false
 sensitivity = false
 entry_screen = false

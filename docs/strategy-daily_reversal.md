@@ -155,3 +155,10 @@ later than open+1m; skip entries for that partial session.
 No new hypothesis-changing trading rule was inferred. Numeric zero means no target for
 compatibility with the existing grid parser. Tick defaults come from shared `TICK_SIZES`;
 configured symbol tick metadata overrides that default unless an explicit strategy tick is set.
+
+## Amendment (Opus, 2026-11-10, before any result existed)
+
+The first development run stopped at load time ("Replay needs at least one candle"): US30 has no candles
+before 2019 (MT5 from 2019-02, no histdata), as in the timed_hold grids. US30 is dropped; the pool is 6
+indices (US500, NAS100, GER40, UK100, JP225, AUS200) and the breadth gate becomes **at least 4 of 6**
+indices net R > 0. Everything else unchanged.
