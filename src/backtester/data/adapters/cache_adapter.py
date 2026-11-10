@@ -302,15 +302,22 @@ def weekly_closures(symbol: str, cached: set[date]) -> set[date]:
 
     BTCUSD/ETHUSD years without any Saturday file have a regular Saturday closure.
     Infer coverage only between physical files in that year, using file dates only,
-    never prices. A year with Saturday files retains strict gap checks. Other symbols
-    keep their existing requirement for explicit (possibly empty) day files.
+    never prices. In every year, an isolated missing Saturday with physical Friday
+    and Sunday files is also a closure, even if other Saturdays are cached. Other
+    symbols keep their requirement for explicit (possibly empty) day files.
     """
     if symbol not in ("BTCUSD", "ETHUSD"):
         return set()
     years: dict[int, list[date]] = {}
     for day in cached:
         years.setdefault(day.year, []).append(day)
-    closed = set()
+    closed = {
+        day + timedelta(days=1)
+        for day in cached
+        if day.weekday() == 4
+        and day + timedelta(days=1) not in cached
+        and day + timedelta(days=2) in cached
+    }
     for days in years.values():
         if any(d.weekday() == 5 for d in days):
             continue

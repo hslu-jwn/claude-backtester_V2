@@ -161,3 +161,10 @@ momentum 20/2 +14.7 R (74), 20/4 +8.0 (70), 55/2 +3.8 (25), 55/4 +2.5 (21); ETHU
 (3-50 trades). Robustness cells cannot replace the primary. Trades stay few because the cache is still cut
 into 102 (BTCUSD) / 98 (ETHUSD) segments (2018 and 2021 have partial Saturday files; indicators restart per
 segment). The cuts are investigated before any follow-up hypothesis.
+
+**C1 result after the isolated-Saturday rule (2026-11-10; segments BTCUSD 102 -> 18, ETHUSD 98 -> 15;
+`results/crypto_isolated_saturday_20261110/summary.json`):** primary BTCUSD breakout 20 / stop 4: **23
+trades, +3.6 R: still below the minimum of 40 -> not enough evidence; C1 is closed as inconclusive (no MT5
+test).** All 16 cells net positive again: BTCUSD breakout 20/2 +8.2 (25), 55/2 +3.6 (9), 55/4 +2.6 (7);
+momentum 20/2 +14.3 R (117), 20/4 +7.5 (113), 55/2 +4.0 (54), 55/4 +3.7 (48); ETHUSD +0.7 to +8.9 R per cell.
+The momentum-20 cells are a lead chosen after seeing the data (parked for the user, HANDOFF › Open), not a pass.
