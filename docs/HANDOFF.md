@@ -196,6 +196,14 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
   triaged out; new work needs new researched ideas (and the user's answer to Open 8, multi-day
   holds).
 
+13. **Crypto momentum lead (C1, 2026-11-10):** C1 (strategy 4 on BTCUSD / ETHUSD, pre-registered primary
+    breakout 20 / stop 4) is closed as inconclusive (23 trades < 40), but all 16 cells are positive, best
+    momentum 20 / stop 2: BTCUSD 117 trades +14.3 R, ETHUSD 89 trades +4.8 R (development 2017/18-2021-09,
+    swap -30 %/year counted). It was chosen after seeing the data, so a development pass means little;
+    no crypto pre-sample exists. Option: pre-register it as hypothesis C2 and let its one-time MT5 test
+    (2021-09-14 .. today, about 4 years) be the confirmation. Your call (it spends the crypto test data
+    on a data-chosen cell).
+
 ## Next step
 
 Research front (2026-11-09 night): hypotheses 11 (Gotobi: dev and pre-sample strong, one-time test
