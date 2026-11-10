@@ -1,5 +1,18 @@
 # Research runner and Research page (ROADMAP 6.1 + 6.2)
 
+## Weekly market closures
+
+Decision by Opus, 2026-11-10: a regular weekly instrument closure is a market closure,
+not a data gap. For BTCUSD and ETHUSD, a cache year containing no Saturday day files
+treats missing Saturdays between that year's first and last cached days as closed.
+A year containing any Saturday file keeps strict missing-Saturday checks. This rule
+uses only the cache inventory, never candle prices; it creates no files or candles.
+Physical cached-day lists and dataset fingerprints remain unchanged. Research segments,
+runner warm-up/history, and adapter completeness checks share this coverage rule,
+including candles spanning UTC days. Genuine missing trading days still split segments
+and restart indicators. All other symbols retain their existing explicit day-file
+coverage, including FX weekends cached as empty files. No trading or cost defaults change.
+
 ## Skill vs trend, and bounds (V2.4d 7 + 8)
 
 After selection, report the chosen development variant and each already executed test

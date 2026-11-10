@@ -8,10 +8,11 @@ resampled (`data/resample.py`). Every intraday timeframe divides a day, so no ca
 two days. D and W candles (trading days, `DayBoundary`) and New York-aligned 4h candles
 (`H4Alignment`) can span several UTC days: the cached days around the range are read too,
 a candle belongs to the range when it CLOSES in it, and a candle is only returned when
-every UTC day it covers is cached (no half candles at the edges of the cache).
+every UTC day it covers is cached or a regular weekly closure (no half candles at
+the edges of the cache; research-runner.md > Weekly market closures).
 
-A day that was never imported raises `MissingCacheError`, so gaps in the cache are never
-silent. A day cached as empty (the source had no data) simply has no candles. Only past days
+A missing trading day raises `MissingCacheError`, so gaps in the cache are never silent.
+A regular closure or a day cached as empty simply has no candles. Only past days
 are ever cached, so every candle returned is closed.
 """
 
@@ -53,6 +54,15 @@ class CacheAdapter(DataAdapter):
         """The day file of `symbol` (a subclass may read some days from another folder)."""
         return cache_path(self.cache_dir, symbol, day)
 
+    def cached_days(self, symbol: str) -> list[date]:
+        """Physical day files available through this adapter."""
+        return cached_days(symbol, self.cache_dir)
+
+    def covered_days(self, symbol: str) -> set[date]:
+        """Physical days plus regular closures; no candle or cache file is invented."""
+        days = set(self.cached_days(symbol))
+        return days | weekly_closures(symbol, days)
+
     def fetch(
         self, symbol: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]:
@@ -79,8 +89,9 @@ class CacheAdapter(DataAdapter):
             raise ValueError(f"end {end} must be after start {start}")
 
         days = _days(start, end)
-        paths = [self._path(symbol, d) for d in days]
-        missing = [d for d, p in zip(days, paths) if not p.exists()]
+        closures = weekly_closures(symbol, set(self.cached_days(symbol)))
+        paths = [self._path(symbol, d) for d in days if d not in closures]
+        missing = [d for d in days if d not in closures and not self._path(symbol, d).exists()]
         if missing:
             raise MissingCacheError(
                 f"{symbol}: {len(missing)} day(s) not in {self.cache_dir}: {day_ranges(missing)}. "
@@ -89,16 +100,16 @@ class CacheAdapter(DataAdapter):
             )
 
         if spans_utc_days(timeframe, h4):
-            return self._spanning(symbol, timeframe, start, end, days, boundary, h4, on_read)
+            return self._spanning(symbol, timeframe, start, end, closures, boundary, h4, on_read)
         m1 = read_cached_days(paths, on_read)
         candles = resample(drop_flat_minutes(m1), timeframe)
         in_range = (candles["ts"] >= start) & (candles["ts"] < end)
         return candles[in_range].reset_index(drop=True)
 
     def _spanning(
-        self, symbol, timeframe, start, end, days, boundary, h4, on_read=None
+        self, symbol, timeframe, start, end, closures, boundary, h4, on_read=None
     ) -> pd.DataFrame:
-        """Candles closing in (start, end] whose UTC days are all cached (D, W, NY 4h)."""
+        """Candles closing in (start, end] whose UTC days are covered (D, W, NY 4h)."""
         span = timeframe.duration + timedelta(days=1)  # a DST day is up to 25 hours
         around = _days(start - span, end + span)
         loaded = [d for d in around if self._path(symbol, d).exists()]
@@ -107,7 +118,7 @@ class CacheAdapter(DataAdapter):
             return resample(pd.DataFrame(), timeframe)
         candles = resample(drop_flat_minutes(m1), timeframe, boundary, h4)
         close = candles["ts"] + timeframe.duration
-        cached = set(loaded)
+        cached = set(loaded) | closures
         complete = [all(d in cached for d in _days(c - timeframe.duration, c)) for c in close]
         keep = (close > start) & (close <= end) & pd.Series(complete, index=candles.index)
         return candles[keep].reset_index(drop=True)
@@ -128,6 +139,13 @@ class PreferredCacheAdapter(CacheAdapter):
         super().__init__(cache_dir)
         self.preferred_dir = None if preferred_dir is None else Path(preferred_dir)
         self.last_dir = None if last_dir is None else Path(last_dir)
+
+    def cached_days(self, symbol: str) -> list[date]:
+        days = set(super().cached_days(symbol))
+        for folder in (self.preferred_dir, self.last_dir):
+            if folder is not None:
+                days.update(cached_days(symbol, folder))
+        return sorted(days)
 
     def _path(self, symbol: str, day: date) -> Path:
         if self.preferred_dir is not None:
@@ -277,6 +295,31 @@ def cached_days(symbol: str, cache_dir: str | Path = DEFAULT_CACHE_DIR) -> list[
         return list(kept[1])
     _DAY_LISTS[key] = found = _scan_days(symbol_dir)
     return list(found[1])
+
+
+def weekly_closures(symbol: str, cached: set[date]) -> set[date]:
+    """Spec: research-runner.md > Weekly market closures (decision 2026-11-10).
+
+    BTCUSD/ETHUSD years without any Saturday file have a regular Saturday closure.
+    Infer coverage only between physical files in that year, using file dates only,
+    never prices. A year with Saturday files retains strict gap checks. Other symbols
+    keep their existing requirement for explicit (possibly empty) day files.
+    """
+    if symbol not in ("BTCUSD", "ETHUSD"):
+        return set()
+    years: dict[int, list[date]] = {}
+    for day in cached:
+        years.setdefault(day.year, []).append(day)
+    closed = set()
+    for days in years.values():
+        if any(d.weekday() == 5 for d in days):
+            continue
+        first, last = min(days), max(days)
+        saturday = first + timedelta(days=(5 - first.weekday()) % 7)
+        while saturday < last:
+            closed.add(saturday)
+            saturday += timedelta(days=7)
+    return closed
 
 
 def latest_run(days: list[date]) -> tuple[date, date] | None:

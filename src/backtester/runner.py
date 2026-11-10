@@ -230,7 +230,7 @@ def _load(
     step: StepProgress | None = None,
     cache: SeriesCache | None = None,
 ) -> _Job:
-    cached = set(sources.cached_days(symbol))
+    cached = sources.covered_days(symbol)
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     in_range = [d for d in days if d in cached]
     if not in_range:

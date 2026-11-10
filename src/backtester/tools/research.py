@@ -174,13 +174,19 @@ def cached_span(symbols: Sequence[str], sources: SymbolSources) -> tuple[date, d
 def segments(
     symbol: str, start: date, end: date, sources: SymbolSources = DEFAULT_SOURCES
 ) -> list[tuple[date, date]]:
-    """The runs of consecutive cached days of `symbol` inside [start, end]. The runner needs
-    every day of a range in the cache; histdata.com has no file for a closed 1 January, so a
-    long range is run in pieces at such days (the daily ATR restarts after the gap)."""
-    cached = sorted(d for d in set(sources.cached_days(symbol)) if start <= d <= end)
+    """Consecutive covered days inside [start, end], including weekly market closures.
+
+    Spec: research-runner.md > Weekly market closures. Genuine missing days still
+    split the run and restart indicators; regular closures preserve their history.
+    """
+    covered = sources.covered_days(symbol)
+    cached = sorted(d for d in sources.cached_days(symbol) if start <= d <= end)
     out: list[list[date]] = []
     for d in cached:
-        if out and d - out[-1][1] == timedelta(days=1):
+        if out and all(
+            out[-1][1] + timedelta(days=i) in covered
+            for i in range(1, (d - out[-1][1]).days)
+        ):
             out[-1][1] = d
         else:
             out.append([d, d])

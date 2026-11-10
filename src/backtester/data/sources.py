@@ -98,6 +98,10 @@ class SymbolSources:
                 days |= set(cached_days(symbol, folders[symbol]))
         return sorted(days)
 
+    def covered_days(self, symbol: str) -> set[date]:
+        """Cached days and regular market closures (research-runner.md)."""
+        return self.adapter(symbol).covered_days(symbol)
+
     def fallback_stamp(self, symbol: str) -> tuple:
         """(name, modification time, file id, size) of the fallback folder's day files: part of
         the chart's cache key, so a day the bot rewrites is read again (Windows file times move in

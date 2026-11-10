@@ -152,3 +152,12 @@ not the automatically selected cell. No existing CLI computes all C1 gates as sp
 BTCUSD's first day (2017-04-06). The grid is split, nothing else changes: `trend_following_crypto.toml`
 (BTCUSD, primary) and `trend_following_crypto_eth.toml` (ETHUSD, breadth; its development period starts at
 its first cached day in 2018). Same 8 cells each.
+
+**C1 result (2026-11-10, development; `results/research/trend_following_crypto_*` latest runs after the D1 and
+Saturday-closure data fixes, `b53d70c` and the following commit):** primary BTCUSD breakout 20 / stop 4 ATR:
+**14 trades, +4.8 R: fails the minimum of 40 trades -> not enough evidence (neither pass nor falsified).**
+All 16 cells (8 per coin) are net positive: BTCUSD breakout 20/2 +9.0 R (15), 55/2 +2.0 (5), 55/4 +2.3 (3);
+momentum 20/2 +14.7 R (74), 20/4 +8.0 (70), 55/2 +3.8 (25), 55/4 +2.5 (21); ETHUSD +1.3 to +6.5 R per cell
+(3-50 trades). Robustness cells cannot replace the primary. Trades stay few because the cache is still cut
+into 102 (BTCUSD) / 98 (ETHUSD) segments (2018 and 2021 have partial Saturday files; indicators restart per
+segment). The cuts are investigated before any follow-up hypothesis.
