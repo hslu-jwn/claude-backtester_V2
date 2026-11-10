@@ -1,0 +1,45 @@
+# Strategy 15 gold_silver_leadlag (docs/strategy-gold_silver_leadlag.md). Pre-registered 2026-11-10, before any run.
+# DO NOT RUN before multi-symbol step 1a (reference symbols, docs/design/multi-symbol.md > A) has landed:
+# the strategy does not exist yet and the keys marked "proposed" below are not implemented. They are the
+# spec's names; the implementer may rename them in the same commit as the spec.
+# Source: World Gold Council, gold safe haven vs silver wildcard (Granger significance); harvest idea 11.
+# Data: XAGUSD histdata 2015-01-02..2021-09-13 (traded), XAUUSD histdata 2015-01-02..2021-09-13 (reference, read-only).
+# Always --dev-only (before 2021-09-14).
+strategy = "gold_silver_leadlag"
+symbols = ["XAGUSD"]           # traded symbol; XAUUSD is reference, never traded.
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "UTC"
+active_from = "12:00"          # proposed: evaluate H1 closes from 12:00 to 19:00 UTC
+active_to = "19:00"
+ref_symbol = "XAUUSD"          # proposed: read-only reference symbol
+ref_timeframe = "H1"           # proposed: 1-hour log return
+signal_type = "log_return"     # proposed: 100 * ln(C_t / C_{t-1})
+stop_atr_period = 14
+max_open_positions = 1         # one position at a time, no overlapping trades
+
+# Family S: the signal rule. Primary cell: threshold 0.50 %, stop 1.0 ATR, hold 120 min.
+[[grids]]
+name = "S"
+[grids.base]
+direction = "with_ref"         # proposed: long if ref return >= +threshold, short if <= -threshold
+[grids.grid]
+min_ref_return_pct = [0.40, 0.50] # proposed: H1 return threshold in percent
+stop_atr = [1.0, 1.5]
+hold_minutes = [120, 180]      # 2 hours, 3 hours
+
+# Family C: control, the same window on all days, fixed direction, no reference signal.
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+# Only the hold duration and the stop vary (the threshold has no meaning here).
+[[grids]]
+name = "C"
+[grids.base]
+min_ref_return_pct = 0.0
+[grids.grid]
+direction = ["long", "short"]
+stop_atr = [1.0, 1.5]
+hold_minutes = [120, 180]
