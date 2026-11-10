@@ -75,6 +75,16 @@ class EnergyReport(Strategy):
 
         if local.date() != self._day:
             self._day, self._reference = local.date(), None
+        if local.time() in (REFERENCE, ENTRY):
+            prices = (c.open, c.high, c.low, c.close)
+            valid = (all(isfinite(x) and x > 0 for x in prices)
+                     and c.low <= min(c.open, c.close) <= max(c.open, c.close) <= c.high)
+            if not valid:
+                self._reference = None
+                self._records.append({"ref": None, "signal_time": now, "scheduled_exit": now,
+                                      "reaction": None, "atr": None, "skipped": True,
+                                      "defects": {"invalid_signal_candle"}})
+                return []
         if local.time() == REFERENCE:
             self._reference = c.close
         if (local.time() != ENTRY or self._attempted == local.date()

@@ -14,6 +14,7 @@ import csv
 import json
 import math
 from collections import defaultdict
+from dataclasses import replace
 from datetime import UTC, date, datetime, time, timedelta
 from itertools import pairwise
 from pathlib import Path
@@ -25,6 +26,7 @@ from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.tools.alternating_path_gates import (
     STRESSES,
+    _valid,
     block_bootstrap,
     block_indices,
     halves,
@@ -257,19 +259,22 @@ def evaluate_energy(variants, start, end, failures, records, strict_failures=Non
             row["notes"].append("control cell is not an event hypothesis")
             continue
         rest = {k: v for k, v in settings.items() if k != "days"}
-        matches = [v for v in variants.values() if v["settings"].get("days") == "control"
+        matches = [(key, v) for key, v in variants.items() if v["settings"].get("days") == "control"
                    and {k: x for k, x in v["settings"].items() if k != "days"} == rest]
         mine = [t for t in variant["trades"] if t.symbol == "USOIL"]
-        control = [t for t in matches[0]["trades"] if t.symbol == "USOIL"] if len(matches) == 1 else []
+        control = [t for t in matches[0][1]["trades"] if t.symbol == "USOIL"] if len(matches) == 1 else []
         dates = lambda ts: {t.entry_time.astimezone(NEW_YORK).date() for t in ts}
         diff = difference_bootstrap(mine, control) if not dates(mine) & dates(control) else None
         row["baseline_difference"] = diff
         row["gates"]["effect_not_drift"] = diff is not None and diff["lower_2_5"] > 0
         row["gates"]["breadth"] = row["symbols"].get("UKOIL", {}).get("net_r", {}).get("normal", 0) > 0
-        known = failures is not None and records is not None and vid in failures and vid in records
+        control_id = matches[0][0] if len(matches) == 1 else None
+        known = (failures is not None and records is not None and control_id is not None
+                 and all(key in failures and key in records for key in (vid, control_id)))
         row["gates"]["no_data_integrity_failure"] = bool(
-            known and not any(failures[vid].values())
-            and not any(r.get("integrity_failed") or r.get("defects") for r in records[vid])
+            known and all(not any(failures[key].values())
+            and not any(r.get("integrity_failed") or r.get("defects") for r in records[key])
+            for key in (vid, control_id))
         )
         row["anchor"] = (settings.get("family") in ("F", "V")
                          and float(settings.get("k", 0)) == 0.15
@@ -279,7 +284,7 @@ def evaluate_energy(variants, start, end, failures, records, strict_failures=Non
 
 
 
-DAILY_SYMBOLS = ("US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200")
+DAILY_SYMBOLS = ("US500", "NAS100", "GER40", "UK100", "JP225", "AUS200")
 
 
 def date_cluster_bootstrap(trades) -> dict | None:
@@ -341,10 +346,85 @@ def evaluate_daily_reversal(normal, stressed, start, end, integrity, covered_sym
             "advances": all(gates.values())}
 
 
+
+def daily_doubled_costs(costs):
+    """Double specified trading costs, including all spread-table values."""
+    fields = ("spread", "slippage", "commission_per_lot", "commission_pct_per_side",
+              "swap_long_per_lot", "swap_short_per_lot", "swap_long_pct_year",
+              "swap_short_pct_year")
+    symbols = {name: replace(value, **{f: 2 * getattr(value, f) for f in fields})
+               for name, value in costs.symbols.items()}
+    table = costs.spread_table
+    if table is not None:
+        values = {symbol: {year: {hour: 2 * value for hour, value in hours.items()}
+                           for year, hours in years.items()}
+                  for symbol, years in table.values.items()}
+        table = replace(table, values=values)
+    return replace(costs, symbols=symbols, spread_table=table)
+
+
+def daily_integrity_failures(trades, data):
+    """Check the exit candle and observed OHLC in (entry, exit]; gaps are not audited."""
+    bad = []
+    for trade in trades:
+        first = int(trade.entry_time.timestamp())
+        last = int(trade.exit_time.timestamp()) - 60
+        lo = np.searchsorted(data.open_s, first, side="left")
+        hi = np.searchsorted(data.open_s, last, side="right")
+        if hi == lo or data.open_s[hi - 1] != last or not _valid(data, np.arange(lo, hi)).all():
+            bad.append(trade)
+    return bad
+
+
+def daily_cli(folder, rows, start, end, run, skip_integrity):
+    from backtester.settings import from_dict
+    from backtester.tools.research import run_period
+
+    sources = SymbolSources({s: Path(d) for s, d in run["cache_dirs"].items()})
+    symbols = run["symbols"]
+    data = {} if skip_integrity else {
+        symbol: load_m1(symbol, sources, start, end + timedelta(days=1)) for symbol in symbols
+    }
+    cached = {s: set(sources.cached_days(s)) for s in symbols}
+    missing_days = {s: sum(1 for i in range((end - start).days + 1)
+                           if (day := start + timedelta(days=i)).weekday() < 5
+                           and day not in cached[s]) for s in symbols}
+    output = {}
+    for row in rows:
+        folder_v = folder / "variants" / row["variant_id"]
+        raw = json.loads((folder_v / "settings.json").read_text(encoding="utf-8"))
+        settings = from_dict(raw)
+        costs = daily_doubled_costs(settings.engine.costs)
+        stressed_settings = replace(settings, engine=replace(settings.engine, costs=costs))
+        stressed_run = run_period(symbols, start, end, stressed_settings, sources, workers=1)
+        normal = read_trades(folder_v)
+        records_path = folder_v / "sessions.json"
+        records = json.loads(records_path.read_text(encoding="utf-8")) if records_path.exists() else None
+        failed = []
+        if not skip_integrity:
+            for symbol in symbols:
+                failed.extend(daily_integrity_failures([t for t in normal if t.symbol == symbol], data[symbol]))
+                failed.extend(daily_integrity_failures([t for t in stressed_run.trades if t.symbol == symbol], data[symbol]))
+        stress_records = [r for run_ in stressed_run.runs.values() for r in run_.sessions]
+        normal_records = [] if records is None else [r for group in records.values() for r in group]
+        defects = [r for r in normal_records + stress_records
+                   if r.get("kind") in ("missing_exit_candle", "censored_position")]
+        integrity = (not skip_integrity and records is not None and set(records) == set(symbols)
+                     and not failed and not defects)
+        report = evaluate_daily_reversal(normal, stressed_run.trades, start, end, integrity, symbols)
+        report["integrity_details"] = {"trade_failures": len(failed),
+            "strategy_defects": len(defects),
+            "missing_weekday_cache_days": missing_days,
+            "exchange_calendar_audited": False}
+        key = _name({k[4:]: v for k, v in row.items() if k.startswith("set.")})
+        output[key] = report
+        print(key, "advances" if report["advances"] else "rejected", report["gates"], flush=True)
+    return {"period": {"start": start.isoformat(), "end": end.isoformat()}, "variants": output}
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("folder", type=Path)
-    p.add_argument("--mode", choices=("timed_hold", "energy_report"), default="timed_hold")
+    p.add_argument("--mode", choices=("timed_hold", "energy_report", "daily_reversal"), default="timed_hold")
     p.add_argument("--primary-symbol")
     p.add_argument("--min-trades", type=int)
     p.add_argument("--min-breadth", type=int)
@@ -355,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
                 or args.min_breadth not in (None, 1)):
             p.error("energy_report has fixed primary USOIL, 150 trades and UKOIL breadth")
         args.primary_symbol, args.min_trades, args.min_breadth = "USOIL", 150, 1
-    elif args.primary_symbol is None or args.min_trades is None or args.min_breadth is None:
+    elif args.mode == "timed_hold" and (args.primary_symbol is None or args.min_trades is None or args.min_breadth is None):
         p.error("timed_hold requires --primary-symbol, --min-trades and --min-breadth")
     with (args.folder / "variants.csv").open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
@@ -380,6 +460,10 @@ def main(argv: list[str] | None = None) -> int:
     some = next(iter(args.folder.glob("variants/*/settings.json")))
     run = json.loads(some.read_text(encoding="utf-8"))["run"]
     start, end = date.fromisoformat(run["start"]), date.fromisoformat(run["end"])
+    if args.mode == "daily_reversal":
+        result = daily_cli(args.folder, rows, start, end, run, args.skip_integrity)
+        (args.folder / "gates.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        return 0
     max_gap_minutes = 5
     failures = None
     strict_failures = None

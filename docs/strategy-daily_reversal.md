@@ -162,3 +162,11 @@ The first development run stopped at load time ("Replay needs at least one candl
 before 2019 (MT5 from 2019-02, no histdata), as in the timed_hold grids. US30 is dropped; the pool is 6
 indices (US500, NAS100, GER40, UK100, JP225, AUS200) and the breadth gate becomes **at least 4 of 6**
 indices net R > 0. Everything else unchanged.
+
+## Result, development 2015-2021 (2026-11-10; `results/research/daily_reversal_2f40768b/`, gates `timed_hold_gates --mode daily_reversal`)
+
+**Falsified: no cell passes.** Pooled over 6 indices: E8 target 2R (primary) 335 trades -35.0 R (doubled
+costs -58.7), 1 of 6 indices positive, bootstrap 2.5 % -0.247; E8 no target -40.5 R. CAP (long only) 2R
++5.1 R / no target +7.2 R but only 32 trades (minimum 80), bootstrap 2.5 % -0.21 / -0.19: not enough
+evidence, a robustness cell at most. All cells also fail integrity (E8 exit / censoring defects; one CAP
+holding-candle gap each; GER40 has 326 missing weekday cache days, not audited). Cells counted: 4.

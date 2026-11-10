@@ -281,3 +281,11 @@ def test_preregistered_grid_all_cells_and_diagnostics_off():
     cells = grid["grid"]
     assert set(product(cells["family"], cells["k"], cells["stop_atr"], cells["days"])) == set(
         product(("F", "V"), (.15, .30), (.5, 1.), ("report", "control")))
+
+@pytest.mark.parametrize("clock", ["10:29", "10:45"])
+def test_invalid_signal_candle_records_defect_and_never_trades(clock):
+    candles = warm() + [bar(DAY, clock, 0.) if c.ts + M1.duration == at(DAY, clock) else c
+                        for c in event()]
+    strategy = EnergyReport("USOIL")
+    assert run_backtest(strategy, [CandleSeries("USOIL", M1, candles)], FREE) == []
+    assert any("invalid_signal_candle" in r["defects"] for r in strategy.session_records())

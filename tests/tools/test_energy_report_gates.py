@@ -64,3 +64,17 @@ def test_energy_strategy_defects_fail_integrity_and_non_anchor_cannot_advance():
     assert not row["gates"]["no_data_integrity_failure"]
     assert row["anchor"] is False
     assert not row["advances"]
+
+
+def test_energy_control_defects_fail_integrity():
+    settings = {"family": "F", "k": "0.15", "stop_atr": "1.0", "days": "report"}
+    variants = {"r": {"settings": settings, "trades": [trade(0, 1)]},
+                "c": {"settings": {**settings, "days": "control"}, "trades": [trade(1, 0)]}}
+    failures = {"r": {"USOIL": []}, "c": {"USOIL": [trade(1, 0)]}}
+    records = {"r": [], "c": []}
+    row = gates.evaluate_energy(variants, date(2020, 1, 1), date(2020, 12, 31), failures, records)["r"]
+    assert not row["gates"]["no_data_integrity_failure"]
+    failures["c"] = {"USOIL": []}
+    records["c"] = [{"defects": ["missing_exit"]}]
+    row = gates.evaluate_energy(variants, date(2020, 1, 1), date(2020, 12, 31), failures, records)["r"]
+    assert not row["gates"]["no_data_integrity_failure"]

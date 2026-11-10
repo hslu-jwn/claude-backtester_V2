@@ -281,7 +281,7 @@ def test_unsupported_symbol_and_candle_validation():
 def test_grid_has_exactly_four_pooled_cells_and_diagnostics_off():
     data = tomllib.loads(Path("research/grids/daily_reversal.toml").read_text())
     assert data["strategy"] == "daily_reversal"
-    assert set(data["symbols"]) == set(SESSIONS)
+    assert set(data["symbols"]) == set(SESSIONS) - {"US30"}
     assert data["min_trades"] == 80
     for name in ("monkeys", "sensitivity", "entry_screen", "shocks"):
         assert data[name] is False
@@ -425,3 +425,18 @@ def test_duplicate_candle_rejected_and_session_records_do_not_mutate_state():
     assert strategy.integrity_records() == first
     with pytest.raises(ValueError, match="strictly increasing"):
         feed(cap()[-1:], strategy)
+
+
+def test_research_session_file_accepts_strategy_defects(tmp_path):
+    import json
+    from types import SimpleNamespace
+
+    from backtester.runner import _session_file
+
+    strategy, _ = execute(e8() + session(10, 114, 116, 113, 115))
+    records = strategy.session_records()
+    result = SimpleNamespace(runs={"US500": SimpleNamespace(sessions=records)})
+    path = tmp_path / "sessions.json"
+    path.write_text(json.dumps(_session_file(result, [])), encoding="utf-8")
+    assert json.loads(path.read_text(encoding="utf-8"))["US500"][0]["trading_date"]
+
