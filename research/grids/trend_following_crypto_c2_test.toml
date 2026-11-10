@@ -1,0 +1,16 @@
+# ONE-TIME TEST grid of hypothesis C2 (crypto momentum, chosen from C1's development cells), the user's go
+# 2026-11-10 ("Yes, test C2"). Frozen cell: momentum 20, stop 2 ATR, D1, BTCUSD. Do not rerun.
+strategy = "trend_following"
+symbols = ["BTCUSD"]
+min_trades = 40
+max_variants = 1
+monkeys = false
+sensitivity = false
+entry_screen = false
+
+[base]
+timeframe = "D1"
+"engine.costs.swap_enabled" = true
+signal = "MOMENTUM"
+momentum_period = 20
+stop_atr_mult = 2.0

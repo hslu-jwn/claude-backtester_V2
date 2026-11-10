@@ -168,3 +168,15 @@ trades, +3.6 R: still below the minimum of 40 -> not enough evidence; C1 is clos
 test).** All 16 cells net positive again: BTCUSD breakout 20/2 +8.2 (25), 55/2 +3.6 (9), 55/4 +2.6 (7);
 momentum 20/2 +14.3 R (117), 20/4 +7.5 (113), 55/2 +4.0 (54), 55/4 +3.7 (48); ETHUSD +0.7 to +8.9 R per cell.
 The momentum-20 cells are a lead chosen after seeing the data (parked for the user, HANDOFF › Open), not a pass.
+
+## Hypothesis C2: crypto momentum (pre-registered 2026-11-10; the user's go for its one-time test: "Yes, test C2")
+
+Chosen **after** seeing C1's development cells (BTCUSD momentum 20 / stop 2 ATR: 117 trades, +14.3 R,
++0.1225 R per trade; ETHUSD +4.8 R): the development result is selection-biased and proves nothing; the
+one-time MT5 test is the only confirmation. Frozen: `research/grids/trend_following_crypto_c2_test.toml`
+(D1, momentum 20, stop 2 ATR, swap on, BTCUSD), nothing re-tuned, test 2021-09-14 to the last cached day.
+**Confirmed** only if all hold on the test period: (1) BTCUSD net R > 0 at normal costs and with every cost
+doubled, swap included (computed per trade as gross minus twice all costs); (2) bootstrap 2.5 % quantile of
+mean net R per trade > 0 (blocks of 5, 10,000 resamples, seed 2026110); (3) net R > 0 in both halves of the
+test period; (4) mean net R per trade >= half the development value (0.061 R); (5) at least 40 trades.
+Anything else is "not confirmed", recorded either way; no retest. ETHUSD is not tested (kept unspent).
