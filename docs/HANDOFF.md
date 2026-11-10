@@ -3,7 +3,17 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-11-09)
+## Where things are (2026-11-10, `End.` of the 2026-11-09/10 session)
+
+- **Session summary:** research hypotheses 11 (Gotobi USDJPY: development +16.5 R, pre-sample
+  2008-2014 +30.9 R, one-time MT5 test **not confirmed**, bootstrap bound -0.012) and 12 (month-end
+  post-fix USD: falsified on 2008-2014); two pre-registered calendar x clock screens (FX 792 cells,
+  indices 660 cells) with 0 survivors; pre-sample histdata 2008-2014 for 6 FX pairs and 2010-2014
+  for 5 indices in `data/cache/histdata_presample/` (the user's go). Code: gate 7 rollover tolerance
+  in `tools/timed_hold_gates.py`; 12.5 reconciliation of runs 3 + 4 (all trades explained);
+  `tools/reconcile.py` reads `no_history` starts. The live-spread proposal stays unapplied (its spread
+  raises were already in; the rest would lower slippage). Tests at `End.`: 5,483 passed, 14 skipped, 4 xfailed (8 min 52 s), ruff clean.
+- **Uncommitted, not Opus's:** `src/backtester/tools/notify.py` (hook trace log lines); the user decides.
 
 - **Fill probe run 4 STOPPED** 2026-11-09 08:39 UTC (STOP file, the user's go; closed nothing):
   ran from 2026-11-05 21:21 UTC on the new 14-day trial, final balance 90,159 of 100,000
@@ -200,4 +210,6 @@ rollover start, and the next direction (new data source for research, or a code 
 
 ## First prompt for the next chat
 
-`Continue.Research` after the user's F1a decision, or `Continue.Code` (12.5 reconciliation).
+`Continue.Research Test=auto` (the user, 2026-11-10; auto lasts for that run only). Open: refresh
+of the stressed-cost p90 table with runs 3 + 4 (needs the user's go), the user's check of data
+fixes 13.12-13.18, `notify.py`.
