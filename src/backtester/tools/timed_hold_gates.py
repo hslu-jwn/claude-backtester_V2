@@ -285,6 +285,7 @@ def evaluate_energy(variants, start, end, failures, records, strict_failures=Non
 
 
 DAILY_SYMBOLS = ("US500", "NAS100", "GER40", "UK100", "JP225", "AUS200")
+TS_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "XAUUSD", "US500", "NAS100")
 
 
 def date_cluster_bootstrap(trades) -> dict | None:
@@ -323,22 +324,25 @@ def _daily_report(trades, start, end):
     return report
 
 
-def evaluate_daily_reversal(normal, stressed, start, end, integrity, covered_symbols) -> dict:
+def evaluate_daily_reversal(normal, stressed, start, end, integrity, covered_symbols,
+                            *, setup="E8") -> dict:
     """Score supplied independent reruns; integrity must be positively established externally."""
     pooled = _daily_report(normal, start, end)
+    pool = TS_SYMBOLS if setup == "TS" else DAILY_SYMBOLS
     symbols = {symbol: _daily_report([t for t in normal if t.symbol == symbol], start, end)
-               for symbol in DAILY_SYMBOLS}
+               for symbol in pool}
     bootstrap = date_cluster_bootstrap(normal)
     doubled = None if stressed is None else _daily_report(stressed, start, end)
-    covered = set(covered_symbols) == set(DAILY_SYMBOLS)
+    covered = set(covered_symbols) == set(pool)
     gates = {
         "positive_normal_and_doubled": pooled["net_r"]["normal"] > 0 and doubled is not None
         and doubled["net_r"]["normal"] > 0,
         "positive_both_halves": all(x > 0 for x in pooled["halves_net_r"]),
-        "breadth": covered and sum(r["net_r"]["normal"] > 0 for r in symbols.values()) >= 4,
+        "breadth": covered and sum(r["net_r"]["normal"] > 0 for r in symbols.values())
+        >= (5 if setup == "TS" else 4),
         "best_date_removal_positive": pooled["net_r_without_best_dates"]["normal"] > 0,
         "bootstrap_positive": bootstrap is not None and bootstrap["lower_2_5"] > 0,
-        "min_trades": len(normal) >= 80,
+        "min_trades": len(normal) >= (150 if setup == "TS" else 80),
         "integrity": integrity is True and covered,
     }
     return {"pooled": pooled, "doubled": doubled, "symbols": symbols,
@@ -411,7 +415,13 @@ def daily_cli(folder, rows, start, end, run, skip_integrity):
                    if r.get("kind") in ("missing_exit_candle", "censored_position")]
         integrity = (not skip_integrity and records is not None and set(records) == set(symbols)
                      and not failed and not defects)
-        report = evaluate_daily_reversal(normal, stressed_run.trades, start, end, integrity, symbols)
+        setup = settings.strategy.setup
+        if setup == "TS":
+            # No exchange-calendar/interior-coverage audit exists in this CLI yet.
+            # Unknown integrity must never award a TS pass from exit-only checks.
+            integrity = False
+        report = evaluate_daily_reversal(normal, stressed_run.trades, start, end, integrity,
+                                         symbols, setup=setup)
         report["integrity_details"] = {"trade_failures": len(failed),
             "strategy_defects": len(defects),
             "missing_weekday_cache_days": missing_days,

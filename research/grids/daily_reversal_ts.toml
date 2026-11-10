@@ -1,0 +1,17 @@
+# Hypothesis 15: pre-registration draft 2026-11-10. DO NOT RUN before Opus commits.
+# PRACTITIONER; primary EURUSD, pooled fixed parameters; primary cell 20 / 1.
+strategy = "daily_reversal"
+symbols = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "XAUUSD", "US500", "NAS100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+shocks = false
+min_trades = 150
+
+[base]
+setup = "TS"
+target_r = 0.0
+
+[grid]
+ts_lookback = [20, 55]
+ts_exit_sessions = [1, 2]

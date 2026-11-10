@@ -170,3 +170,89 @@ costs -58.7), 1 of 6 indices positive, bootstrap 2.5 % -0.247; E8 no target -40.
 +5.1 R / no target +7.2 R but only 32 trades (minimum 80), bootstrap 2.5 % -0.21 / -0.19: not enough
 evidence, a robustness cell at most. All cells also fail integrity (E8 exit / censoring defects; one CAP
 holding-candle gap each; GER40 has 326 missing weekday cache days, not audited). Cells counted: 4.
+
+## Setup TS (hypothesis 15, pre-registered 2026-11-10)
+
+**PRACTITIONER**, Raschke / Connors, *Street Smarts* (1996), daily failed extreme
+adaptation described by [The Right Trader](https://therighttrader.com/learn/trading-strategies/turtle-soup).
+Idea 1 in `knowledge/research/reports/2026-11-10_idea_harvest_round2.md`.
+This is a hypothesis, with no established edge. TS uses a 20-session extreme, an age
+filter and daily close recovery; intraday session zone sweeps use session liquidity and
+entry confluences. Connors E8 uses a multi-day sequence and delayed day-2 stop trigger;
+CAP uses a nine-day wide-range breakdown and top-quarter close, long only. TS instead
+enters the session immediately after a single failed daily extreme and holds briefly.
+These related falsified reversal families remain adverse background, not independent
+evidence. E8/CAP specifications, grid, defaults and historical results above stay unchanged.
+
+### Sessions, signal and execution
+
+TS FX/metals (EURUSD, GBPUSD, USDJPY, AUDUSD, XAUUSD) use daily candles closing
+in (17:00 America/New_York on the preceding calendar day, 17:00 on the session date].
+Only Monday-Friday **closing dates** count: Sunday evening belongs to Monday; Saturday
+and Sunday closing-date stubs are excluded. ZoneInfo follows New York DST. TS indices
+use the existing regular cash sessions above. Require both exact boundary M1 closes
+(start+1 minute and end); partial/invalid sessions reset history and Wilder ATR. Interior
+coverage and absent trading dates still require an external calendar audit. No synthetic bars.
+
+Long (short mirrored with Direction): today's low is strictly below the minimum low
+of the previous `ts_lookback=20` completed valid sessions; today's close is strictly above
+that old low. The **most recent** session sharing the old minimum must be at least
+`ts_min_age=4` sessions before today. Equal extremes or equal recovery closes fail.
+Skip when today's high-low exceeds `ts_range_atr=3.0` times the **prior** Wilder
+ATR(`ts_atr_period=14`); equality passes. Seed ATR with the arithmetic mean of the
+first 14 true ranges (first true range = high-low), then use Wilder smoothing; gaps
+use the prior valid session close. Require positive finite ATR. Evaluate before updating
+ATR with the signal day, so a large signal cannot inflate its own threshold.
+If both directional signals qualify on one daily close, skip the day.
+
+Enter at the **close of the first M1 candle of the next observed valid session**,
+using the existing engine close-price market entry. This is the explicitly accepted
+one-minute approximation to next-session open, including gaps; actual engine costs and
+tick rounding apply. Stop one tick below the signal low (above signal high for shorts).
+Consume the signal on this first candle even if its close gives nonpositive risk or
+the candle touched the stop (unknown intraminute ordering); no retry. A missing first
+minute cancels the signal and flags integrity. One position per symbol; no setups armed
+while occupied. Rejection/closure callbacks release the slot. No profit target for TS,
+regardless of the E8 `target_r` field, no trailing, partial exit or break-even.
+
+Signal session = 0, entry session = 1. Exit on session `ts_exit_sessions=1`'s daily
+close (primary), or on session 2's close. Stops apply on subsequent M1 candles at all
+hours and take precedence over the scheduled exit. Missing scheduled close exits at
+the first later candle, flags `missing_exit_candle`; early end-of-data liquidation is
+censored. Count observed sessions, excluding weekends; absent dates need external audit.
+Shared engine charges actual side-specific swap at 17:00 New York, including weekends
+and triple rollover. The cells cover one/two sessions of exposure: indices entering in
+cash hours and exiting the same cash day cross **zero** rollovers in the primary cell;
+FX/metals cross one at the 17:00 close. Two-session index holds usually cross one.
+Do not add fictitious financing to force one/two charges; verify symbol financing metadata.
+
+### Frozen TS cells and gates
+
+`research/grids/daily_reversal_ts.toml`: pooled EURUSD (primary), GBPUSD, USDJPY,
+AUDUSD, XAUUSD, US500, NAS100, one parameter set, diagnostics off.
+Exactly four cells: `ts_lookback={20,55}` x `ts_exit_sessions={1,2}`; primary 20/1.
+The 55-session cell is a robustness variation, not the original Turtle Soup rule.
+Develop before 2021-09-14 only; holdout requires separate user authorization.
+**Implementation/pre-registration draft only: no grid execution until Opus commits
+the registration.** No run or performance claim is made by this amendment.
+
+Use `python -m backtester.tools.timed_hold_gates results/research/<TS-folder> --mode daily_reversal`
+after separately authorized runs. The mode reads setup=TS from each cell's settings;
+it fixes all seven symbols, at least **5 of 7** positive and **150 pooled trades**.
+All other gates follow the pooled E8/CAP definitions above: normal and independently
+rerun doubled spread/commission/slippage/swap total net R >0; both fixed chronological
+halves >0; best five whole UTC entry dates removed >0; pooled date-cluster bootstrap
+lower 2.5% >0 (seed 13, 10,000 draws); integrity positively established. Report every
+cell, symbol, half and long/short, trial and cluster counts; do not replace the primary.
+Unknown session-calendar/interior coverage must fail TS integrity: the current CLI
+reports these audits as unavailable and cannot award an integrity pass from trade
+exit checks alone. Synthetic gate-unit tests may supply externally established integrity.
+
+### TS assumptions recorded before results
+
+Authorized minor conservative choices: most recent tied extreme sets the age; prior
+ATR prevents self-inflation; strict recovery and breakout; exact boundary candles;
+consume rejected first-minute entries and skip stop-touch candles. Daily labels name
+the closing date, including Sunday evening in Monday's full FX session. Exit counting
+differs explicitly from E8/CAP (whose fill session remains zero). Financing follows
+actual rollover timestamps, so session counts are not a promise of one/two swap nights.

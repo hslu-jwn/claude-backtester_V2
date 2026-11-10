@@ -6,7 +6,7 @@ from math import isfinite
 
 @dataclass(frozen=True, slots=True)
 class DailyReversalConfig:
-    setup: str = "E8"  # E8 (both directions) or CAP (long only)
+    setup: str = "E8"  # E8 / TS (both directions) or CAP (long only)
     target_r: float = 2.0  # 0 = no target (TOML encoding of none)
     hold_sessions: int = 5  # full cash sessions after the fill session
     tick_size: float | None = None  # None = shared symbol tick metadata
@@ -17,10 +17,15 @@ class DailyReversalConfig:
     cap_lookback: int = 9  # preceding sessions for low and range comparisons
     cap_top_fraction: float = 0.25  # inclusive close in the top quarter
     cap_valid_sessions: int = 2  # subsequent sessions for the pending trigger
+    ts_lookback: int = 20
+    ts_min_age: int = 4  # most recent tied extreme must be this old
+    ts_atr_period: int = 14  # prior completed sessions, Wilder smoothing
+    ts_range_atr: float = 3.0
+    ts_exit_sessions: int = 1  # signal session = 0, entry session = 1
 
     def __post_init__(self) -> None:
-        if self.setup not in ("E8", "CAP"):
-            raise ValueError("setup must be E8 or CAP")
+        if self.setup not in ("E8", "CAP", "TS"):
+            raise ValueError("setup must be E8, CAP or TS")
         if isinstance(self.target_r, bool) or not isfinite(self.target_r) or self.target_r < 0:
             raise ValueError("target_r must be finite and >= 0 (0 disables target)")
         if self.tick_size is not None and (
@@ -35,10 +40,22 @@ class DailyReversalConfig:
             "e8_valid_sessions",
             "cap_lookback",
             "cap_valid_sessions",
+            "ts_lookback",
+            "ts_min_age",
+            "ts_atr_period",
+            "ts_exit_sessions",
         ):
             value = getattr(self, name)
             if type(value) is not int or value < 1:
                 raise ValueError(f"{name} must be a positive integer")
+        if self.ts_exit_sessions not in (1, 2):
+            raise ValueError("ts_exit_sessions must be 1 or 2")
+        if (
+            isinstance(self.ts_range_atr, bool)
+            or not isfinite(self.ts_range_atr)
+            or self.ts_range_atr <= 0
+        ):
+            raise ValueError("ts_range_atr must be finite and > 0")
         if not 3 <= self.e8_first_day <= self.e8_last_day:
             raise ValueError("E8 confirmation window must start at or after day 3")
         if not isfinite(self.cap_top_fraction) or not 0 < self.cap_top_fraction <= 1:

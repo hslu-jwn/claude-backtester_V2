@@ -1,6 +1,6 @@
-"""Incremental M1 cash-session reversal strategy.
+"""Incremental M1 daily reversal strategy.
 
-Spec: strategy-daily_reversal.md > Cash sessions, E8, CAP, Execution and exits.
+Spec: strategy-daily_reversal.md > Cash sessions, E8, CAP, Setup TS, Execution and exits.
 Only the current closed candle of the supplied SeriesView is read.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from math import isfinite
 from types import MappingProxyType
 from typing import TYPE_CHECKING
@@ -37,6 +37,7 @@ SESSIONS = MappingProxyType(
         "AUS200": ("Australia/Sydney", time(10), time(16)),
     }
 )
+TS_FX_SYMBOLS = frozenset({"EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "XAUUSD"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,16 +82,26 @@ class DailyReversal(Strategy):
         config: DailyReversalConfig | None = None,
         detectors: DetectorSettings | None = None,
     ):
-        if symbol not in SESSIONS:
+        self.config = config or DailyReversalConfig()
+        self._ts_fx = self.config.setup == "TS" and symbol in TS_FX_SYMBOLS
+        if symbol not in SESSIONS and not self._ts_fx:
             raise UnsupportedSymbolError(f"daily_reversal has no cash session for {symbol}")
         self.symbol = symbol
-        self.config = config or DailyReversalConfig()
-        zone, self._open, self._close = SESSIONS[symbol]
+        zone, self._open, self._close = (
+            ("America/New_York", time(17), time(17)) if self._ts_fx else SESSIONS[symbol]
+        )
         self._tz = ZoneInfo(zone)
         self._tick = self.config.tick_size or TICK_SIZES[symbol]
         self._history: deque[DailyBar] = deque(
-            maxlen=max(self.config.e8_lookback + 1, self.config.cap_lookback)
+            maxlen=max(
+                self.config.e8_lookback + 1,
+                self.config.cap_lookback,
+                self.config.ts_lookback if self.config.setup == "TS" else 0,
+            )
         )
+        self._session_end: datetime | None = None
+        self._ts_atr: float | None = None
+        self._ts_trs: list[float] = []
         self._candidates: list[Candidate] = []
         self._pending: dict[Direction, Pending] = {}
         self._position: tuple[int, int] | None = None  # ref, fill-session counter
@@ -109,6 +120,17 @@ class DailyReversal(Strategy):
             max(self.config.e8_lookback + self.config.e8_last_day, self.config.cap_lookback + 1) * 2
             + 7
         )
+        if self.config.setup == "TS":
+            self.min_warmup_days = max(self.config.ts_lookback, self.config.ts_atr_period) * 2 + 7
+
+    def _bounds(self, local: datetime) -> tuple[datetime, datetime]:
+        """Spec: Setup TS > Sessions. FX session dates name the 17:00 closing day."""
+        day = local.date()
+        if self._ts_fx and local.time() > self._close:
+            day += timedelta(days=1)
+        end = datetime.combine(day, self._close, self._tz)
+        start_day = day - timedelta(days=1) if self._ts_fx else day
+        return datetime.combine(start_day, self._open, self._tz), end
 
     def configure_costs(self, costs: CostConfig) -> None:
         super().configure_costs(costs)
@@ -143,11 +165,16 @@ class DailyReversal(Strategy):
             raise ValueError("now must equal the M1 candle close time")
         self._last_now = now
         local = now.astimezone(self._tz)
-        inside = local.weekday() < 5 and self._open < local.time() <= self._close
-        if self._day is not None and local.date() > self._day and not self._finished:
+        start, end = self._bounds(local)
+        session_day = end.date()
+        inside = session_day.weekday() < 5 and start < local <= end
+        if self.config.setup == "TS":
+            self._check_exit(local, now)  # retain the old due close across a session change
+        if self._day is not None and session_day > self._day and not self._finished:
             self._discard_session(now)
-        if inside and local.date() != self._day:
-            self._day = local.date()
+        if inside and session_day != self._day:
+            self._day = session_day
+            self._session_end = end
             self._index += 1
             self._bar = None
             self._has_open = self._finished = self._invalid = False
@@ -168,9 +195,9 @@ class DailyReversal(Strategy):
             return []
         if not inside:
             return []
-        first_close = (datetime.combine(local.date(), self._open) + Timeframe.M1.duration).time()
+        first_close = start + Timeframe.M1.duration
         if self._bar is None:
-            self._has_open = local.time() == first_close
+            self._has_open = local == first_close
             if not self._has_open:
                 self._flag("incomplete_session", now)
                 self._invalid = True
@@ -181,7 +208,7 @@ class DailyReversal(Strategy):
                 max(self._bar.high, candle.high), min(self._bar.low, candle.low), candle.close
             )
         orders = [] if self._invalid else self._entry(candle)
-        if local.time() == self._close:
+        if local == end:
             self._finish(now)
         return orders
 
@@ -189,6 +216,16 @@ class DailyReversal(Strategy):
         if self._position is None or self._exit_requested:
             return
         ref, filled = self._position
+        if self.config.setup == "TS":
+            due = filled + self.config.ts_exit_sessions - 1
+            if self._index >= due and self._session_end is not None and (
+                self._index > due or now >= self._session_end
+            ):
+                if self._index != due or now != self._session_end:
+                    self._flag("missing_exit_candle", now)
+                self._exits.append(ref)
+                self._exit_requested = True
+            return
         due = filled + self.config.hold_sessions
         # Before a new observed session, _day still names the preceding cash day.
         later_date = self._day is not None and local.date() > self._day
@@ -207,9 +244,9 @@ class DailyReversal(Strategy):
             p
             for p in self._pending.values()
             if (
-                candle.high >= p.level
-                if p.direction is Direction.BULLISH
-                else candle.low <= p.level
+                self.config.setup == "TS"
+                or (candle.high >= p.level if p.direction is Direction.BULLISH
+                    else candle.low <= p.level)
             )
         ]
         if len(touched) > 1:
@@ -230,7 +267,14 @@ class DailyReversal(Strategy):
         self._exit_requested = False
         self._pending.clear()
         self._candidates.clear()
-        target = candle.close + sign * self.config.target_r * risk if self.config.target_r else None
+        target = (
+            candle.close + sign * self.config.target_r * risk
+            if self.config.target_r and self.config.setup != "TS" else None
+        )
+        execution = (
+            "next session first M1 close" if self.config.setup == "TS"
+            else "stop trigger / M1 close"
+        )
         return [
             Order(
                 pending.direction,
@@ -238,7 +282,7 @@ class DailyReversal(Strategy):
                 pending.stop,
                 target,
                 tags=frozenset({self.config.setup, "daily_reversal"}),
-                reason=f"daily reversal {self.config.setup}: stop trigger / M1 close",
+                reason=f"daily reversal {self.config.setup}: {execution}",
                 confluence=self.config.setup,
                 ref=ref,
             )
@@ -249,10 +293,13 @@ class DailyReversal(Strategy):
         self._history.clear()
         self._candidates.clear()
         self._pending.clear()
+        if self.config.setup == "TS":
+            self._ts_atr = None
+            self._ts_trs.clear()
         self._finished = True
 
     def _finish(self, now: datetime) -> None:
-        """Spec: E8 / CAP. Called once at the confirming cash close, never earlier."""
+        """Spec: E8 / CAP / Setup TS. Commit only at the confirming session close."""
         if self._invalid or not self._has_open:
             self._discard_session(now)
             return
@@ -261,9 +308,56 @@ class DailyReversal(Strategy):
         if self._position is None:
             if self.config.setup == "E8":
                 self._e8(bar)
+            elif self.config.setup == "TS":
+                self._ts(bar)
             else:
                 self._cap(bar)
+        if self.config.setup == "TS":
+            self._ts_update_atr(bar)
         self._history.append(bar)
+
+    def _ts(self, bar: DailyBar) -> None:
+        """Spec: Setup TS. Signal uses prior bars/ATR only; both directions cancel."""
+        cfg = self.config
+        self._pending.clear()
+        if (
+            len(self._history) < cfg.ts_lookback
+            or self._ts_atr is None
+            or not isfinite(self._ts_atr)
+            or self._ts_atr <= 0
+        ):
+            return
+        if bar.high - bar.low > cfg.ts_range_atr * self._ts_atr:
+            return
+        previous = list(self._history)[-cfg.ts_lookback:]
+        signals = []
+        for direction in Direction:
+            sign = _sign(direction)
+            lows = [_extremes(b, sign)[1] for b in previous]
+            old_low = min(lows)
+            age = next(i for i, low in enumerate(reversed(lows), 1) if low == old_low)
+            _, low = _extremes(bar, sign)
+            if age >= cfg.ts_min_age and low < old_low < sign * bar.close:
+                stop = sign * (low - self._tick)
+                signals.append(Pending(direction, bar.close, stop, self._index + 1))
+        if len(signals) == 1 and isfinite(signals[0].stop) and signals[0].stop > 0:
+            pending = signals[0]
+            self._pending[pending.direction] = pending
+
+    def _ts_update_atr(self, bar: DailyBar) -> None:
+        """Spec: Setup TS > Sessions: seed mean TR, then Wilder, after signal evaluation."""
+        tr = bar.high - bar.low
+        if self._history:
+            close = self._history[-1].close
+            tr = max(tr, abs(bar.high - close), abs(bar.low - close))
+        period = self.config.ts_atr_period
+        if self._ts_atr is None:
+            self._ts_trs.append(tr)
+            if len(self._ts_trs) == period:
+                self._ts_atr = sum(self._ts_trs) / period
+                self._ts_trs.clear()
+        else:
+            self._ts_atr = (self._ts_atr * (period - 1) + tr) / period
 
     def _arm(self, direction: Direction, high: float, low: float, valid: int) -> None:
         sign = _sign(direction)
