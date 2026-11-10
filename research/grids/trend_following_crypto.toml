@@ -1,0 +1,29 @@
+# C1: eight pre-registered D1 cells; BTCUSD primary, ETHUSD breadth.
+# Primary: breakout 20, stop 4 ATR. Development only until separately authorized.
+strategy = "trend_following"
+symbols = ["BTCUSD", "ETHUSD"]
+min_trades = 40
+max_variants = 8
+monkeys = false
+sensitivity = false
+entry_screen = false
+
+[base]
+timeframe = "D1"
+"engine.costs.swap_enabled" = true
+
+[[grids]]
+name = "breakout"
+[grids.base]
+signal = "BREAKOUT"
+[grids.grid]
+breakout_period = [20, 55]
+stop_atr_mult = [2.0, 4.0]
+
+[[grids]]
+name = "momentum"
+[grids.base]
+signal = "MOMENTUM"
+[grids.grid]
+momentum_period = [20, 55]
+stop_atr_mult = [2.0, 4.0]

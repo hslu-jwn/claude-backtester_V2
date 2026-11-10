@@ -93,3 +93,56 @@ and net on development data with scorecard halves, plus a small parameter sweep 
 parameter. Reported per variant: trades, win rate, avg R gross / net, sum R, profit factor, max
 drawdown in R, avg holding time. A variant counts only if neighbouring parameters and both periods
 agree.
+
+## Hypothesis C1: crypto trend following (pre-registered 2026-11-10, before any run)
+
+**Hypothesis and sources.** Persistent crypto price movements may allow daily trend signals to
+capture multi-week moves after costs, although reversals and financing can erase the edge. Liu and
+Tsyvinski, [Risks and Returns of Cryptocurrency](https://www.nber.org/papers/w24877) (Review of
+Financial Studies, 2021), report time-series momentum; Liu, Tsyvinski and Wu,
+[Common Risk Factors in Cryptocurrency](https://doi.org/10.1111/jofi.13119) (Journal of Finance,
+2022), document a cross-sectional momentum factor. These results motivate this test; they do not
+establish profitability for this stop-and-reverse strategy or FTMO costs.
+
+**Data and costs.** Use the default cache, BTCUSD primary (MT5 history from 2017), ETHUSD breadth
+(from 2018), through 2021-09-13 inclusive; verify actual coverage. D1 candles are UTC-aligned.
+At reference prices the configured spreads are about 1.0 BTCUSD and 0.66 ETHUSD, small relative to
+daily ranges; commission is 3.25 bp per side. Swap is enabled: -30% per year on both sides,
+approximately 8 bp per charged night, with triple charge Friday. Report results with and without
+swap as required above; all gates below use swap-inclusive net R.
+
+**Fixed grid.** `research/grids/trend_following_crypto.toml` has eight cells: signal breakout or
+momentum, its corresponding period 20 or 55, and fixed protective stop 2 or 4 times ATR(20).
+All other settings use the strategy defaults. The primary is BTCUSD breakout 20 with 4 ATR stop;
+ETHUSD is breadth. Monkeys, sensitivity and entry screen are off. No cell is substituted for the
+primary based on results.
+
+**Gates fixed before running.** Evaluate the primary on BTCUSD unless otherwise stated:
+
+- Sum net R > 0 at normal costs and with every cost doubled, including swap.
+- Sum net R > 0 in each half of the BTCUSD development period; split at the UTC midpoint of the
+  runner's development interval and assign trades by exit time (midpoint belongs to the first half).
+- ETHUSD sum net R > 0 at normal costs: breadth 1 of 1, with correlated markets.
+- Sum net R > 0 after removing the five highest individual net-R trades at normal costs.
+- Circular block bootstrap of entry-time-ordered net R per trade: 2.5% quantile of the mean > 0,
+  blocks of 5 trades, 10,000 resamples, seed 2026110.
+- At least 40 BTCUSD trades. Report long and short separately, including their counts and net R,
+  in view of the 2017 and 2020-21 bull runs.
+- Check data integrity, including missing exit candles, for the primary and breadth trades.
+
+The eight cells are multiple tests and C1 also adds one hypothesis to the program's cumulative
+hypothesis count; report that count and the eight cells alongside any selection or significance
+claim. The gates are development checks, not a substitute for the separately authorized one-time
+holdout test.
+
+**Tooling for a future run.** Development command (do not run as part of preregistration):
+`python -m backtester.tools.research research/grids/trend_following_crypto.toml --dev-only`.
+Afterward, `python -m backtester.tools.timed_hold_gates results/research/<folder> --primary-symbol BTCUSD --min-trades 40 --min-breadth 1`
+reports normal net R, exit-time halves, breadth, count, directions and the specified trade bootstrap
+per symbol. Its overall `advances` is not C1's decision: its doubled costs omit swap, it removes the
+best five entry dates rather than individual trades, and its rollover-tolerant integrity check is
+different from the requested missing-exit-candle check. Compute doubled swap-inclusive costs and
+five-best-trade removal separately; audit missing exit candles for both symbols (the
+`daily_integrity_failures` helper checks exits and observed OHLC but also flags invalid OHLC).
+Verify the runner's recorded period covers the intended BTCUSD history, and use the primary cell,
+not the automatically selected cell. No existing CLI computes all C1 gates as specified.
