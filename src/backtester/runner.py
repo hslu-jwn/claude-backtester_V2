@@ -56,6 +56,7 @@ from backtester.core.series import CandleSeries
 from backtester.data.adapters.base import DataAdapter
 from backtester.data.adapters.cache_adapter import MissingCacheError, candles_from_frame
 from backtester.data.news import execution_calendar
+from backtester.data.resample import DayBoundary
 from backtester.data.sources import (
     DEFAULT_SOURCES,
     SymbolSources,
@@ -297,8 +298,11 @@ def _timeframe_series(
 def _load_timeframe(adapter, symbol, tf, start, end, h4, step: StepProgress) -> CandleSeries:
     """One timeframe's candles; `step(share)` after every chunk of day files and of candles."""
     share = LOAD.read_share
+    # Spec: strategy-trend-following.md > Timeframes: D1 candles are UTC-aligned.
+    # The adapter's chart default is a New York trading day, spanning two cache days.
     frame = adapter.fetch_frame(
-        symbol, tf, start, end, h4=h4, on_read=lambda done, total: step(share * done / total)
+        symbol, tf, start, end, boundary=DayBoundary.UTC, h4=h4,
+        on_read=lambda done, total: step(share * done / total),
     )
     candles = []
     for i in range(0, len(frame), LOAD.chunk_rows):
