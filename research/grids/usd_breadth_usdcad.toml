@@ -1,0 +1,45 @@
+# Strategy 18 usd_breadth_usdcad (docs/strategy-usd_breadth_usdcad.md). Pre-registered 2026-11-10, before any run.
+# DO NOT RUN before multi-symbol step 1a (reference symbols, docs/design/multi-symbol.md > A) has landed:
+# the strategy does not exist yet and the keys marked "proposed" below are not implemented. They are the
+# spec's names; the implementer may rename them in the same commit as the spec.
+# Source: Bank of Canada, commodity prices and CAD (FB3-7-2016-2-eng.pdf); harvest idea 8.
+# Data: USDCAD histdata 2015-01-02..2021-09-13 (traded);
+# Reference (read-only): EURUSD, GBPUSD, USDJPY, AUDUSD, NZDUSD, USDCHF histdata 2015-01-02..2021-09-13.
+# Always --dev-only (before 2021-09-14).
+strategy = "usd_breadth_usdcad"
+symbols = ["USDCAD"]           # traded symbol; 6 USD majors are reference, never traded.
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "UTC"
+evaluation_time = "21:00"      # proposed: daily close evaluation at 21:00 UTC
+ref_symbols = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "NZDUSD", "USDCHF"] # proposed
+ref_timeframe = "D1"           # proposed: daily log return
+min_votes = 4                  # proposed: at least 4 of 6 pairs must agree on USD direction
+stop_atr_period = 14
+max_open_positions = 1         # one position at a time, no overlapping trades
+
+# Family S: the signal rule. Primary cell: threshold 0.20 %, stop 1.5 ATR, hold 1440 min (next 21:00 UTC).
+[[grids]]
+name = "S"
+[grids.base]
+direction = "with_usd_strength" # proposed: long USDCAD if USD breadth >= +threshold, short if <= -threshold
+[grids.grid]
+min_breadth_return_pct = [0.15, 0.20] # proposed: mean USD daily return threshold in percent
+stop_atr = [1.0, 1.5]
+hold_minutes = [720, 1440]     # 12 hours (London morning), 24 hours (next daily close)
+
+# Family C: control, the same window on all days, fixed direction, no reference signal.
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+# Only the hold duration and the stop vary (the threshold has no meaning here).
+[[grids]]
+name = "C"
+[grids.base]
+min_breadth_return_pct = 0.0
+[grids.grid]
+direction = ["long", "short"]
+stop_atr = [1.0, 1.5]
+hold_minutes = [720, 1440]

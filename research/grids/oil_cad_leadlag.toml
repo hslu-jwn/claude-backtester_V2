@@ -1,0 +1,45 @@
+# Strategy 17 oil_cad_leadlag (docs/strategy-oil_cad_leadlag.md). Pre-registered 2026-11-10, before any run.
+# DO NOT RUN before multi-symbol step 1a (reference symbols, docs/design/multi-symbol.md > A) has landed:
+# the strategy does not exist yet and the keys marked "proposed" below are not implemented. They are the
+# spec's names; the implementer may rename them in the same commit as the spec.
+# Source: Bank of Canada, commodity prices and CAD (FB3-7-2016-2-eng.pdf); harvest idea 9.
+# Data: USDCAD histdata 2015-01-02..2021-09-13 (traded), USOIL histdata 2015-01-02..2021-09-13 (reference, read-only).
+# Always --dev-only (before 2021-09-14).
+strategy = "oil_cad_leadlag"
+symbols = ["USDCAD"]           # traded symbol; USOIL is reference, never traded.
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "UTC"
+evaluation_time = "21:00"      # proposed: daily close evaluation at 21:00 UTC
+ref_symbol = "USOIL"           # proposed: read-only reference symbol
+ref_timeframe = "D1"           # proposed: daily return
+signal_type = "pct_return"     # proposed: 100 * (C_t / C_{t-1} - 1)
+stop_atr_period = 14
+max_open_positions = 1         # one position at a time, no overlapping trades
+reject_nonpositive_prices = true # proposed: skip if oil price <= 0 or roll jump
+
+# Family S: the signal rule. Primary cell: threshold 2.0 %, stop 1.5 ATR, hold 1440 min (next 21:00 UTC).
+[[grids]]
+name = "S"
+[grids.base]
+direction = "inverse_ref"      # proposed: short USDCAD if USOIL return >= +threshold, long if <= -threshold
+[grids.grid]
+min_ref_return_pct = [1.5, 2.0] # proposed: USOIL daily return threshold in percent
+stop_atr = [1.0, 1.5]
+hold_minutes = [720, 1440]     # 12 hours (London morning), 24 hours (next daily close)
+
+# Family C: control, the same window on all days, fixed direction, no reference signal.
+# The gates tool removes the signal-trade dates/times from these series (disjoint samples).
+# Only the hold duration and the stop vary (the threshold has no meaning here).
+[[grids]]
+name = "C"
+[grids.base]
+min_ref_return_pct = 0.0
+[grids.grid]
+direction = ["long", "short"]
+stop_atr = [1.0, 1.5]
+hold_minutes = [720, 1440]
