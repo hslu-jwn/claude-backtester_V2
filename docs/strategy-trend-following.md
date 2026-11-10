@@ -180,3 +180,11 @@ doubled, swap included (computed per trade as gross minus twice all costs); (2) 
 mean net R per trade > 0 (blocks of 5, 10,000 resamples, seed 2026110); (3) net R > 0 in both halves of the
 test period; (4) mean net R per trade >= half the development value (0.061 R); (5) at least 40 trades.
 Anything else is "not confirmed", recorded either way; no retest. ETHUSD is not tested (kept unspent).
+
+**C2 one-time test result (2026-11-10; `results/research/trend_following_crypto_c2_test_52370dda/`, run
+`results/20261110-134534_BTCUSD/`): NOT CONFIRMED.** Development reproduced (117 trades, +14.3 R). Test
+2021-09-14..2026-11-08, BTCUSD: 215 trades, net +5.0 R (+0.023 R per trade, p 0.39). Criteria: (1) normal
++5.0 R but doubled costs incl. swap -18.9 R: **fail**; (2) bootstrap 2.5 % -0.114: **fail**; (3) halves
++12.7 / -7.8: **fail**; (4) mean 0.023 < 0.061: **fail**; (5) 215 trades: pass. Years 2021-2026: +1.9,
+-5.4, +13.2, +0.6, -9.5, +4.1. The C1 development edge was mostly the 2017-2021 crypto trend regime plus
+selection. No retest.

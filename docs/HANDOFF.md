@@ -199,6 +199,8 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 13. ☑ decided 2026-11-10 (the user: "Yes, test C2"): crypto momentum C2 (BTCUSD momentum 20 / stop 2,
     chosen from C1's cells) gets its one-time MT5 test; criteria in `docs/strategy-trend-following.md` ›
     Hypothesis C2.
+    **Result: not confirmed** (test 215 trades +5.0 R, doubled costs incl. swap -18.9 R, second half
+    negative, bootstrap -0.114). No retest.
 
 ## Next step
 

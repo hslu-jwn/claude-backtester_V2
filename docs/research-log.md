@@ -25,6 +25,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   tables not accessible. Not built.
 - **Idea harvest round 2** (Codex web, 12 ideas). **Hypothesis 15 Turtle Soup** (failed 20-day extreme,
   daily, 7 symbols; setup TS of strategy 13, Codex sol): falsified, primary 38 trades -9.2 R.
+- **C2 crypto momentum one-time test (the user's go):** BTCUSD momentum 20 / stop 2, test 2021-09-14..2026-11-08:
+  215 trades +5.0 R, doubled costs incl. swap -18.9 R, halves +12.7 / -7.8: not confirmed.
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 
