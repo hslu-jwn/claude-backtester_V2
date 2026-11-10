@@ -28,6 +28,9 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 2. Otherwise the highest-priority open candidate in `research/candidates/README.md` that V2 can
    run (blocked / parked rows skipped).
 3. No runnable candidate: research a new idea (below). Never fill time with an unfounded idea.
+4. Nothing worth building: never idle or schedule quiet holds (the user, 2026-11-10). Propose the next
+   steps (with a pick) or ask the user for direction, start the best real option (tooling the research
+   needs, a new idea source), and Telegram the question if it waits more than 5 minutes.
 
 ## Research a new idea (when needed)
 

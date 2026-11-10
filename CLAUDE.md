@@ -53,6 +53,10 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   tooling the research needs); commit and push after every step; keep the session alive across
   waits (self-paced `/loop`); routing as in `docs/agent-routing.md` › Continuous research run.
   Items that need the user's decision go to HANDOFF › Open, and the run continues with the rest.
+- **Never idle (rule set by the user, 2026-11-10):** in any run, keep working; never just wait or hold
+  quietly. When the work runs out or the ideas look weak, propose concrete next steps (with a pick) or ask
+  the user for direction in the same turn, start the best real option meanwhile, and send a Telegram if
+  the question waits more than 5 minutes.
 - **`Pause.`:** finish the current step cleanly (commit, push, log) and wait until `Continue.`.
 - **`Continue.`:** resume where the run paused.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
