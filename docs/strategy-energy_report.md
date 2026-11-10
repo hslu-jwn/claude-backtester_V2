@@ -163,3 +163,12 @@ contract fixture and gates integration are coordinator work before any run.
 - Two local hypothesis families, F/V; V's anchor shares the primary k/stop. Wider
   research multiplicity must still be reported by the coordinator.
 - Expected no swap depends on valid exits; malformed/missing data cannot guarantee it.
+
+## Result, development 2015-2021 (2026-11-10; `results/research/energy_report_8abe116a/`, histdata via `--cache-dir data/cache/histdata`)
+
+**Falsified: no cell passes.** All 8 report-day cells are net negative (USOIL + UKOIL pooled):
+F (follow) k 0.15 stop 0.5 / 1.0: 322 trades -7.3 / -7.5 R (primary -7.5); k 0.30: 125 trades -3.3 / -0.3 R.
+V (fade) k 0.15: -49.8 / -23.9 R; k 0.30: -26.9 / -13.1 R. Gates (`timed_hold_gates --mode energy_report`):
+the primary fails gates 1-5 (min trades and integrity pass). Only F k 0.30 beats its control (gate 3) but
+is itself negative with 125 trades. The fade loses most: the EIA reaction does not reverse within hours.
+Cells counted: 16 (8 report + 8 control) on 2 symbols.
