@@ -168,3 +168,6 @@ Global (all five lead-lag specs, after the skeptic review `knowledge/research/re
 - U3 Built by Codex `gpt-6.1-sol` from this spec; Opus reviews (spec vs code, lookahead, tests).
 - U4 The gates tool (weighted control, UK100 breadth) is a separate step after the build and before any
   research run.
+- U5 Gate 5 (best-date removal) must hold at normal **and** doubled costs, as the timed_hold gates tool.
+- U6 The gates tool is `tools/us_close_de_open_gates.py`, built by Codex `gpt-6.1-terra` medium (sol only
+  if terra fails); Opus reviews.
