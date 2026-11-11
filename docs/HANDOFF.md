@@ -110,8 +110,8 @@ protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md
 - **Fill report 2026-11-02:** `results/fill_report_2026-11-02/` (5,512 fills 2026-10-27..31,
   23 symbols, 1,502 London; commission only from the 10-27/28 deals file).
 - **Finalization (V2.8, plan accepted 2026-11-02):** audit in
-  `docs/review/finalization-audit-2026-11-02.md`; night run 2026-11-02/03 in
-  `docs/review/night-2026-11-03.md` (phase 3 and 4 done; three questions for the user there).
+  `docs/archive/review/finalization-audit-2026-11-02.md`; night run 2026-11-02/03 in
+  `docs/archive/review/night-2026-11-03.md` (phase 3 and 4 done; three questions for the user there).
   Chart usable 2.2-2.6 s (was ~30 s).
 - **LibreHardwareMonitor** (port 8085) feeds the queue's temperature guard; start it after a
   reboot (admin prompt).
@@ -153,11 +153,11 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 - 2026-11-02: V2.8 finalization plan (audit), U1 chart pager (looked at), V2.4b now, no
   `pytest-xdist`, R1 `live/` status fix, night-run rules (ROADMAP V2.8), 12.5 scope.
 - 2026-10-28 (`End.`): everything of the night 2026-10-27/28 incl. Opus's decisions
-  (`docs/review/night-2026-10-28.md`): news filter off by default, FTMO scope default, V2.6i
+  (`docs/archive/review/night-2026-10-28.md`): news filter off by default, FTMO scope default, V2.6i
   built before the fill analysis, empty text settings allowed, no one-time test spent.
 - 2026-10-28 (midday): do not build the p90 stressed costs yet; the bot keeps running and the
   user comes back to it later. Fill report re-run at 10:35 UTC (1,511 fills, 339 London);
-  brief ready in `briefs/v24b-p90-stress.md`, not dispatched.
+  brief ready in `docs/archive/briefs/v24b-p90-stress.md`, not dispatched.
 - 2026-11-09 (the user, Open 9): swap is scaled by price / reference price like spreads (option a;
   no historical rate table).
 - 2026-11-09 (the user, Open 10, option a): gate 7 tolerates rollover-hour gaps and gaps up to 6
@@ -177,14 +177,16 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 - 2026-10-28: slippage (V2.4b): keep the model slippage as default; after London fills, the
   measured p90 per symbol becomes the stressed cost level (instead of costs x 1.5).
 - 2026-10-27: research department split, decisions D1-D8
-  (`docs/review/research-interface-review-2026-10-27.md` › 3), day-trading focus, fill probe
+  (`docs/archive/review/research-interface-review-2026-10-27.md` › 3), day-trading focus, fill probe
   left as it is, FTMO fees as defaults, news windows High 2 / 2, Medium none.
 - Earlier: see git history of this file.
 
 ## Open (needs the user)
 
-1. One-time MT5 test of the three pre-registered V2 hypotheses (strategy 4 on GBPJPY; gap fade
-   and gap momentum in quiet sideways markets): only on the user's go.
+1. One-time MT5 test of the two remaining pre-registered V2 hypotheses (strategy 4 on GBPJPY; gap
+   momentum in quiet sideways markets): only on the user's go. Gap fade's test is struck (review B3,
+   the user 2026-11-11): V1 11.4 / 11.6 already ran it on 2021-09..2026, so only forward demo data
+   could still test it.
 2. ☑ `v2-6-research` merged into `main` 2026-11-03 (the user; fast-forward, full suite green).
 3. ☑ Opening-range sessions for AUS200 / HK50 added 2026-11-03 (the user: AUS200 10:00-15:55
    Sydney, HK50 09:30-15:55 Hong Kong, held over lunch).
@@ -225,7 +227,7 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
     negative, bootstrap -0.114). No retest.
 
 14. **Codex at its weekly limit (2026-11-10 14:54):** heavy work waits for the weekly reset (the user: "We'll
-    wait for codex weekly reset tomorrow"). Next Codex job: multi-symbol step 1a (`briefs/multi-symbol-1a.md`),
+    wait for codex weekly reset tomorrow"). Next Codex job: multi-symbol step 1a (`docs/archive/briefs/multi-symbol-1a.md`),
     then 1b, then the five pre-registered lead-lag strategies (14 `us_close_de_open`, gold->silver, BTC->ETH,
     oil->CAD, USD breadth->USDCAD).
 

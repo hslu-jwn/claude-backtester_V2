@@ -55,3 +55,11 @@ All times New York (`America/New_York`, DST via `zoneinfo`); base timeframe **1m
 Research runner commands (development only):
 
 - `python -m backtester.tools.research research/grids/gap_fade.toml --dev-only`
+
+## One-time test: not clean (review B3, the user 2026-11-11)
+
+The rule was developed on 2020-01..2026 (V1 11.4) and all 36 variants ran on FTMO 2021-09..2026-09
+(V1 11.6, +13.9 R net default). The MT5 test period is therefore spent for gap fade; the
+pre-registered "quiet sideways" test is struck from HANDOFF Open 1. Only forward demo data can
+test it now. The study tools that defaulted to the test period (`open_gap_study`, `noise_study`,
+`strategy2_explore`, `no_wick_retest_study`) were removed the same day (git history keeps them).
