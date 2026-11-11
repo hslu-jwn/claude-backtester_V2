@@ -171,6 +171,11 @@ costs -58.7), 1 of 6 indices positive, bootstrap 2.5 % -0.247; E8 no target -40.
 evidence, a robustness cell at most. All cells also fail integrity (E8 exit / censoring defects; one CAP
 holding-candle gap each; GER40 has 326 missing weekday cache days, not audited). Cells counted: 4.
 
+**Proposed follow-up, UNTESTED (review D1, 2026-11-11):** the frozen CAP rule unchanged on the
+2010/11-2014 index pre-sample (`--cache-dir data/cache/histdata_presample`) plus development, pooled.
+Kills it: still < 80 trades; doubled-cost net <= 0; bootstrap lower bound <= 0; more than half the
+profit from March 2020. A new look in this family (counted), not a new idea; not scheduled.
+
 ## Setup TS (hypothesis 15, pre-registered 2026-11-10)
 
 **PRACTITIONER**, Raschke / Connors, *Street Smarts* (1996), daily failed extreme

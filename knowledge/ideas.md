@@ -112,6 +112,9 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-64 | Index last-30-minute momentum (Baltussen et al. 2021): sign of previous close -> 15:30 return, hold to 16:00 | intraday momentum | US500, NAS100, US30 | none | PUBLISHED (60+ futures to 2020; one blog: flat 2022-26); `2026-11-09_index_intraday_momentum.md` | tested 2026-11-09 (strategy 10 F2): gross positive in 5 indices, net negative (cost > edge); no edge after costs |
 | I-65 | FOMC-morning long (Lucca & Moench 2015 pre-FOMC drift, decayed after 2015) | event | US500, NAS100 | none | PUBLISHED, decayed; falsification only; `2026-11-09_macro_announcement_equity.md` | tested 2026-11-09 (strategy 10 F3): falsified, FOMC mornings -0.27 R / trade vs other days |
 | I-66 | Turn-of-month open-to-close long (T-1..T+3), day-trade form of I-18 | calendar | US500, NAS100, US30 | none | ADAPTATION (published close-to-close only); `2026-11-09_calendar_effects.md` | tested 2026-11-09 (strategy 10 F4): no effect open to close |
+| I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | open, UNTESTED; same family as F4 / F4M |
+| I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | parked: needs EIA front / second-month settlements |
+| T-20 | Resting limit entries for clock-based holds (cost side, no new edge) | tooling | cheap FX / indices | – | review D5 | open, UNTESTED |
 
 Not carried forward from the 2026-11-09 literature pass (dead or no evidence): pre-holiday,
 day-of-week, generic macro-day long, pre-ECB drift, gold session pattern, overnight drift. The 18
@@ -594,6 +597,10 @@ Daily forecasts as in T-12 for three speeds and a carry forecast from the FTMO s
 Carver SR ~0.5 on 6 instruments after costs, honest haircut 65-75 %; Chan Sharpe ~1.0 on three futures, momentum crash after 2008. Fit: moderate; D1, holds weeks, so swap is the whole cost question;
 gold carry is funding only (rule shorts gold), FX carry has negative skew (CHF peg); five symbols give a small IDM. Differs from strategy 4: continuous blend, slow speeds, carry earned by swap
 instead of paid. Related: I-29.
+Review 2026-11-11 (D3, UNTESTED): judge it as **one** volatility-scaled portfolio over all cached D1
+symbols (12-month sign, monthly rebalance, spread and swap charged), not symbol by symbol as strategy 4
+was. Kills it: net portfolio Sharpe < 0.4 on development; more than half the profit from 3 symbols; the
+result needs positive swap credits (off by default since 2026-11-11, review B5). Same family as strategy 4.
 
 ### I-52 Cost-limit screen (Carver)
 Per idea and instrument: standardised cost = 2 x (half spread + commission) in price units / (16 x daily volatility in price units) (intraday: replace 16 by sqrt(bars per year)); turnover =
@@ -651,3 +658,23 @@ a clean-structure trend filter, 4h agreement and the video's session windows. Te
 edge on any symbol class. Lesson: the limit fills mostly when price returns through the candle with momentum (adverse
 selection); tight stops make costs and the cost model dominate, and a gold "edge" came only from unpriced overnight
 holds and the default spread at the daily reopen.
+
+### I-67 Month-end rebalancing with a conditional sign (review D2, 2026-11-11; UNTESTED)
+Funds with fixed weights sell equities after a strong month and buy after a weak one, so the sign of the
+last days is known before the trade. F4 (open to close) and F4M (unconditional close to close) were
+falsified; the conditional sign was not tested. Cheap test (pandas, development D1 closes, US500 only):
+signed T-3..T-1 return given the sign of T-8..T-4. Kills it: signed mean < 15 bp, t < 2, or opposite
+signs in the two halves (declare the 2017 T+2 settlement shift first). Counts in the F4 family.
+
+### I-68 Oil carry from the futures curve (review D4, 2026-11-11; parked, needs data)
+Theory of storage: backwardation (scarce inventory) has paid longs, contango the opposite. Needs daily
+front and second-month WTI settlements (EIA, free; download needs the user's go). Financing must come
+from the curve, not today's swap. Kills it before any build: fewer than 10 regime changes in development,
+or net <= 0 after a 3 % per year broker markup.
+
+### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
+Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
+`Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
+fill goes against the order by at least the half-spread saved, or fill rate < 60 %. Only for cells whose
+gross is already near cost.
+
