@@ -1,0 +1,44 @@
+# Strategy 14 UK100 breadth (docs/strategy-us_close_de_open.md, S14).
+# Development only, --dev-only; gates tool pending (U4).
+# UK100 histdata 2015-01-02..2021-09-13; US500 is an optional read-only reference.
+# Only the primary (0.10 %, 0.5 ATR, 08:30 exit) is a breadth gate; other cells are reported.
+strategy = "us_close_de_open"
+symbols = ["UK100"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+min_trades = 200
+
+[base]
+zone = "Europe/London"
+entry_time = "08:00"           # candle closing at the London cash open
+ref_symbol = "US500"
+ref_zone = "America/New_York"
+ref_from = "15:30"
+ref_to = "16:00"               # previous weekday, exactly as the GER40 family
+skip_nyse_short_days = true    # both signal and trade dates; controls too (U1)
+atr_zone = "Europe/London"
+atr_open = "08:00"
+atr_close = "16:30"
+atr_period = 14
+
+# Family S: same 8 cells; primary threshold 0.10, stop 0.5, exit 08:30.
+[[grids]]
+name = "S"
+[grids.base]
+direction = "with_ref"
+[grids.grid]
+min_ref_return_pct = [0.10, 0.20]
+stop_atr = [0.5, 1.0]
+exit_time = ["08:30", "09:00"]
+
+# Family C: full-session day filter, no US500 candles required (U1).
+# The gates tool removes signal-trade dates from these baselines (disjoint samples).
+[[grids]]
+name = "C"
+[grids.base]
+min_ref_return_pct = 0.0
+[grids.grid]
+direction = ["long", "short"]
+stop_atr = [0.5, 1.0]
+exit_time = ["08:30", "09:00"]

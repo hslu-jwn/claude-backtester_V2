@@ -1,11 +1,12 @@
 # Strategy 14: US close -> German open (cross-market overnight momentum)
 
-Spec drafted 2026-11-10 (docs only, nothing built, nothing run). Planned folder
+Spec drafted 2026-11-10; strategy built 2026-11-11, no research run. Folder
 `strategy/us_close_de_open/`, config `UsCloseDeOpenConfig`, registry name `us_close_de_open`.
 First strategy that reads a **reference symbol** (US500) while trading another (GER40):
 `docs/design/multi-symbol.md` > A (opt-in `on_market_candle`, one execution symbol, reference data
-only through a snapshot bounded by the current engine time). Cannot run before multi-symbol step 1a.
-Grid: `research/grids/us_close_de_open.toml` (marked do not run before integration).
+only through a snapshot bounded by the current engine time), using the reference-symbol API.
+Grids: `research/grids/us_close_de_open.toml` (GER40) and `us_close_de_open_uk.toml` (UK100).
+Development only, `--dev-only`; gates tool pending (U4), registry integration separate.
 
 ## Source and prior
 
@@ -125,8 +126,13 @@ user's go, criteria to be fixed then; GER40 and UK100 MT5 candles exist from 202
 6. **ATR:** same Berlin cash session definition as `strategy-timed-hold.md` F2-EU; the daily ATR needs
    14 finished sessions.
 7. **Gate-2 split date** 2017-10-08 is fixed now from the period midpoint, not from data.
-8. **Config keys** in the grid (`ref_symbol`, `ref_zone`, `ref_from`, `ref_to`, `ref_day_offset`,
-   `min_ref_return_pct`, `direction = "with_ref"`) are proposed names, not implemented.
+8. **Config keys:** `zone="Europe/Berlin"`, `entry_time=09:00`, `exit_time=09:30`,
+   `direction="with_ref"` (`with_ref | long | short`), `min_ref_return_pct=0.10`, `stop_atr=0.5`,
+   `atr_period=14`, `atr_zone="Europe/Berlin"`, `atr_open=09:00`, `atr_close=17:30`,
+   `atr_close_tolerance_min=0`, `ref_symbol="US500"`, `ref_zone="America/New_York"`,
+   `ref_from=15:30`, `ref_to=16:00`, `skip_nyse_short_days=True`, `calendar_dir=""`
+   (the timed_hold calendars folder). No `ref_day_offset`: always the previous weekday.
+   Threshold comparisons use a 1e-9 percentage-point tolerance for equality (Assumption 3).
 9. **UK100 breadth** uses London 08:00 -> 08:30 with the same threshold and stop; its London clock and the
    New York clock keep the 5-hour gap except in DST mismatch weeks.
 10. **Costs** are the engine defaults (fixed spread, no spread table); no defaults changed.

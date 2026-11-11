@@ -1,12 +1,10 @@
 # Strategy 14 us_close_de_open (docs/strategy-us_close_de_open.md). Pre-registered 2026-11-10, before any run.
-# DO NOT RUN before multi-symbol step 1a (reference symbols, docs/design/multi-symbol.md > A) has landed:
-# the strategy does not exist yet and the keys marked "proposed" below are not implemented. They are the
-# spec's names; the implementer may rename them in the same commit as the spec.
+# Development only, --dev-only; gates tool pending (U4).
 # Source: Xu et al., cross-market overnight time-series momentum (abstract only); harvest idea 10.
 # Data: GER40 histdata 2015-01-02..2020-06-14 (INVALID_PERIODS cuts 2020-06-15), UK100 histdata 2015..2021,
 # US500 (reference, read-only) histdata 2015.. . Always --dev-only (before 2021-09-14).
 strategy = "us_close_de_open"
-symbols = ["GER40", "UK100"] # traded symbols; GER40 primary. US500 is a reference, never traded.
+symbols = ["GER40"] # traded symbol; UK100 breadth has its own grid (S14). US500 is never traded.
 monkeys = false
 sensitivity = false
 entry_screen = false
@@ -15,11 +13,10 @@ min_trades = 200
 [base]
 zone = "Europe/Berlin"
 entry_time = "09:00"           # close of the 09:00 Berlin candle
-ref_symbol = "US500"           # proposed
-ref_zone = "America/New_York"  # proposed
-ref_from = "15:30"             # proposed: close of the candle closing 15:30 ...
-ref_to = "16:00"               # proposed: ... to close of the candle closing 16:00
-ref_day_offset = "previous_weekday" # proposed: signal day = previous Mon-Fri; must be a full NYSE session
+ref_symbol = "US500"           # optional reference (U2); both exact signal candles required (G5)
+ref_zone = "America/New_York"
+ref_from = "15:30"             # close of the candle closing 15:30 ...
+ref_to = "16:00"               # ... to close of the candle closing 16:00 on the previous weekday
 skip_nyse_short_days = true    # signal day and trade day must be full NYSE sessions
 atr_zone = "Europe/Berlin"
 atr_open = "09:00"
@@ -30,13 +27,14 @@ atr_period = 14
 [[grids]]
 name = "S"
 [grids.base]
-direction = "with_ref"         # proposed: long if ref return >= +threshold, short if <= -threshold
+direction = "with_ref"         # long if ref return >= +threshold, short if <= -threshold
 [grids.grid]
-min_ref_return_pct = [0.10, 0.20] # proposed
+min_ref_return_pct = [0.10, 0.20]
 stop_atr = [0.5, 1.0]
 exit_time = ["09:30", "10:00"]
 
-# Family C: control, the same window on all days, fixed direction, no reference signal.
+# Family C: control, the same window on qualifying full NYSE days (U1), fixed direction,
+# no reference signal candles required.
 # The gates tool removes the signal-trade dates from these series (disjoint samples).
 # Only the exit time and the stop vary (the threshold has no meaning here).
 [[grids]]
@@ -49,7 +47,7 @@ stop_atr = [0.5, 1.0]
 exit_time = ["09:30", "10:00"]
 
 # Breadth symbol UK100: entry 08:00 London (its cash open), exit 30 / 60 minutes later, same US500 signal.
-# Run the S and C families with these overrides (a second grid file or per-symbol override, implementer's choice):
+# Run the S and C families in us_close_de_open_uk.toml (S14) with these overrides:
 #   zone = "Europe/London", entry_time = "08:00", exit_time = "08:30" / "09:00",
 #   atr_zone = "Europe/London", atr_open = "08:00", atr_close = "16:30"
 # Only the primary cell (0.10 %, 0.5 ATR, +30 min) is a breadth gate; the other UK100 cells are reported.
