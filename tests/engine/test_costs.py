@@ -13,8 +13,9 @@ from backtester.engine.costs import DEFAULT_SYMBOL_COSTS, CostConfig, SymbolCost
 @pytest.mark.parametrize("direction, expected", [(Direction.BULLISH, -0.3), (Direction.BEARISH, 0.15)])
 @pytest.mark.parametrize("entry, multiplier", [(50.0, 0.5), (100.0, 1.0), (200.0, 2.0)])
 def test_per_lot_swap_scales_with_entry_price(direction, expected, entry, multiplier):
-    # Three nights: -12 USD (long) / +6 USD (short), divided by 2 * 20 USD risk.
-    config = CostConfig(symbols={"TEST": SymbolCosts(
+    # Three nights: -12 USD (long) / +6 USD (short), divided by 2 * 20 USD risk; the credit
+    # needs swap_credit (off by default since review B5, 2026-11-11).
+    config = CostConfig(swap_credit=True, symbols={"TEST": SymbolCosts(
         0, 0, 20, swap_long_per_lot=-4, swap_short_per_lot=2, reference_price=100,
     )})
     assert config.swap_r_nights("TEST", direction, 2, 3, entry) == pytest.approx(expected * multiplier)
@@ -146,3 +147,4 @@ def test_existing_five_symbols_are_unchanged():
     assert DEFAULT_SYMBOL_COSTS["XAUUSD"].swap_long_per_lot == -61.27
     assert DEFAULT_SYMBOL_COSTS["GBPJPY"].quote_to_usd == pytest.approx(1 / 150.0)
     assert DEFAULT_SYMBOL_COSTS["NAS100"].spread == 1.9
+

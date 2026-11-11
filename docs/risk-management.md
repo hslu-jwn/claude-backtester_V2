@@ -152,6 +152,12 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   entry price, or `swap_price_scaling = False`, the per-lot component keeps its fixed money
   amount. The switch is independent of `spread_price_scaling`; rollover nights and partial
   exit shares are unchanged. Historical interest-rate differences are still not modelled.
+- **No positive swap credit** (review B5, rule set by the user 2026-11-11): today's FTMO rates are
+  applied to every year, and a positive rate (for example USOIL long +4.966 USD per lot and night,
+  about +19.6 % a year of the notional; JPY-cross and USD-base longs; index shorts) would pay a
+  credit that older years with other rates and curves did not pay. `CostConfig.swap_credit = False`
+  (default) clamps a positive per-lot rate to 0; costs stay costs. `True` reproduces older results.
+  Percentage swap (crypto) is unchanged.
 - **Costs of the symbols of ROADMAP 11.8 / 11.9** (added 2026-10-15; the five symbols above are unchanged). Source: the running FTMO MT5 terminal
   (`symbol_info`), same method as the swap defaults: swap USD per lot per night = swap points x tick value (checked: gives the stored
   XAUUSD / NAS100 values), `quote_to_usd` = tick value / (tick size x contract size) (fixed approximation, 2026-10-15 rates),

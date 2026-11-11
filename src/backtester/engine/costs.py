@@ -392,6 +392,9 @@ class CostConfig:
     # Per-lot swap x entry / reference_price (rule set by the user, 2026-11-09).
     # False reproduces the fixed money amount; percentage swap is unchanged.
     swap_price_scaling: bool = True
+    # A positive per-lot swap (today's credit) is not paid out: older years had other rates
+    # and curves (review B5, rule set by the user 2026-11-11); True reproduces older results.
+    swap_credit: bool = False
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.conversion_adjustment) or not 0 <= self.conversion_adjustment < 1:
@@ -585,6 +588,8 @@ class CostConfig:
             return 0.0
         long = direction is Direction.BULLISH
         rate = costs.swap_long_per_lot if long else costs.swap_short_per_lot
+        if not self.swap_credit:
+            rate = min(rate, 0.0)
         pct = costs.swap_long_pct_year if long else costs.swap_short_pct_year
         usd = nights * rate / (risk * costs.value_per_price_unit)
         if self.swap_price_scaling and costs.reference_price and entry > 0:

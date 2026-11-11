@@ -141,9 +141,26 @@ def test_one_night_long_pays_exactly_the_rate_in_r():
 
 
 def test_one_night_short_uses_the_short_rate_and_a_credit_adds_to_net():
-    t = run(utc(2026, 1, 5, 20), 24, direction=SHORT)
+    t = run(utc(2026, 1, 5, 20), 24, direction=SHORT, cost=costs(swap_credit=True))
     assert t.swap_r == pytest.approx(SHORT_NIGHT_R) and t.swap_r > 0
     assert t.r_net == pytest.approx(t.r_gross + SHORT_NIGHT_R)
+
+
+def test_positive_swap_is_not_credited_by_default():
+    """Review B5 (the user, 2026-11-11): today's positive rate is not applied to old years."""
+    t = run(utc(2026, 1, 5, 20), 24, direction=SHORT)
+    assert t.swap_r == 0.0
+    assert t.r_net == pytest.approx(t.r_gross)
+    long = run(utc(2026, 1, 5, 20), 24)  # a cost stays a cost
+    assert long.swap_r == pytest.approx(LONG_NIGHT_R)
+
+
+def test_default_config_gives_no_oil_long_credit():
+    cfg = CostConfig()
+    assert cfg.symbols["USOIL"].swap_long_per_lot > 0  # the FTMO rate itself is unchanged
+    assert cfg.swap_r_nights("USOIL", LONG, 1.0, 3.0, entry=60.0) == 0.0
+    assert cfg.swap_r_nights("USOIL", SHORT, 1.0, 1.0, entry=60.0) < 0
+    assert replace(cfg, swap_credit=True).swap_r_nights("USOIL", LONG, 1.0, 1.0, entry=60.0) > 0
 
 
 def test_rollover_at_the_entry_close_does_not_count():
