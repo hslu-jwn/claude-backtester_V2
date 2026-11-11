@@ -153,3 +153,12 @@ Global (all five lead-lag specs, after the skeptic review `knowledge/research/re
 - G4 Minimum trades not reached = "not enough evidence", never "falsified" and never a pass.
 - G5 A missing reference or entry candle = no trade that day (no fallback, no partial universe).
 - S14 UK100 breadth runs as its own grid file `research/grids/us_close_de_open_uk.toml` (UK100 traded, entry 08:00 London close, exits 08:30 / 09:00), same cells.
+
+**Decided by the user 2026-11-11 (Opus's picks, before the build):**
+- U1 Control days (family C) use the same day filter as the signal cells: `D_s` and `D_t` full NYSE
+  sessions and a traded-symbol entry candle present; the US500 signal candles are **not** required.
+- U2 US500 is an **optional** reference (`required = False`): stale or missing US500 data never blocks
+  a decision and never cuts research pieces; only G5 applies (both signal candles present, else no trade).
+- U3 Built by Codex `gpt-6.1-sol` from this spec; Opus reviews (spec vs code, lookahead, tests).
+- U4 The gates tool (weighted control, UK100 breadth) is a separate step after the build and before any
+  research run.
