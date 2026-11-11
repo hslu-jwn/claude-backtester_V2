@@ -344,10 +344,11 @@ where (updated 2026-11-03).
   8.9 s -> 3.4 s there. **Full suite 5,111 passed in 8 min 10 s** (15 min 39 s before V2.8;
   target ~8 min met); golden lists identical.
 - ◐ **V2.9 Multi-symbol strategies** (2026-11-10/11, design `docs/design/multi-symbol.md`, Codex sol): ☑ 1a
-  reference-symbol snapshots / market-aware strategies (`0741e6a`, golden identical); ◐ 1b research
+  reference-symbol snapshots / market-aware strategies (`0741e6a`, golden identical); ☑ 1b research
   integration (strategy-declared references, research pieces cut at reference gaps, manifest, blocked
   counts; Opus's picks accepted by the user 2026-11-11: references in the strategy config, not a grid
-  table / CLI flag; per-decision journal deferred; Opus builds it, not Codex); ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
+  table / CLI flag; per-decision journal deferred; Opus builds it, not Codex; `5b33a5f`, done per the
+  user 2026-11-11); ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
 - ◐ **V2.10 Review follow-up** (Fable review + harvest framework, `knowledge/reviews/2026-11-11-*`; Opus's
   picks accepted by the user 2026-11-11): ☑ B2 test opt-in, ☑ B3 gap fade test struck, ☑ B5 / B9 / B1 / B8
   cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger
