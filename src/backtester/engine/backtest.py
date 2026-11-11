@@ -185,6 +185,7 @@ class Backtest:
             now = replay.close_time(cursor)
             still_open = []
             for trade in open_trades:
+                self._refresh_short_spread(trade, candle)
                 self._manage_candle(trade, candle, now)
                 if trade.is_closed:
                     result = self._result(trade)
@@ -244,6 +245,13 @@ class Backtest:
             progress(total, total)
         closed.sort(key=lambda t: t.entry_time)
         return closed
+
+    def _refresh_short_spread(self, trade: OpenTrade, candle: Candle) -> None:
+        """A short pays the ask when it closes, so its spread (SL trigger, exit fill) is the one
+        of the candle that manages it; a long paid its spread at the entry (review B8, the user
+        2026-11-11). Spec: risk-management.md > Costs > Short stop on ask."""
+        if trade.sign < 0:
+            trade.spread = self._config.costs.spread(trade.symbol, candle.ts, trade.entry)
 
     def _manage_candle(
         self, trade: OpenTrade, candle: Candle, now: datetime, *, placed: Order | None = None

@@ -284,12 +284,17 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   filled, as at the broker (rule set by the user, 2026-11-03: broker rule only; the cost filter stays off by default).
 - ⚙️ **Short stop on ask** (rule set by the user, 2026-11-03): `CostConfig.short_sl_on_ask`, default **on**. A
   short's SL is a buy stop: the broker triggers it when the **ask** reaches the SL and fills it at the SL. The
-  engine triggers it at bid = SL - the trade's (entry) spread and fills at the SL (+ slippage); a candle opening
+  engine triggers it at bid = SL - the current candle's spread (B8 below) and fills at the SL (+ slippage); a candle opening
   beyond that bid fills at the ask of the open. The exit price stays the chart (bid) price. A short's break-even
   stop keeps its bid trigger and fill (still 0 R net); its SL is reported at the broker level (+ spread) and rounded
   to the tick there. Off: triggered by the bid, filled at SL + spread (the results from before). Effect on the
   golden lists (2023): no trade count changes; net R no_wick -30.7 (tight stops trigger a spread earlier),
   session_zone_sweep +5.2, opening_range +3.5, the others within ±0.5.
+- **A short's spread follows the managing candle** (review B8, rule set by the user 2026-11-11): from the candle after
+  the entry, a short's spread (SL trigger above, exit fill at the ask, TP penetration, reported `spread_r`) is the
+  spread at that candle's open time (`costs.spread(symbol, candle.ts, entry)`), so a short held into the rollover
+  hour pays the rollover spread. Longs still pay the spread once, at the entry. Before: the entry's spread for the
+  whole trade.
 - ⚙️ **Slippage** (B4; rule set by the user, 2026-10-22): `SymbolCosts.slippage` in price units per fill, always
   against the trader on **market entries, stop fills (including gap stops), and time / signal / end-of-data exits**.
   Never on limit entries or TP fills. Scale at the chart entry price like the fixed spread and reuse that amount at exits.
@@ -321,7 +326,7 @@ The seven-strategy 2023 measurement informs a later user decision on the default
 - ⚙️ **Drawdown scaling:** when the equity falls **4%** below its highest point so far, the risk per trade is **halved** (⚙️ factor 0.5). Back to normal as soon as the equity is **less than 4% below the high again** (rule set by the user). Example: peak 104,000 → at 99,840 (−4%) risk 1% → 0.5%; back to 1% above 99,840.
 - Near-target scaling: dropped for now; it belongs to the prop-firm field (› Later).
 
-### Account simulator (`risk/account_sim.py`)
+### Account simulator (not built; the `risk/account_sim.py` stub was removed 2026-11-11, review C)
 - Replays the trades in time order, candle by candle, without lookahead.
 - Tracks balance and **equity including floating P/L**, using the worst point of each candle.
 - Applies sizing, costs, the daily stop, max open risk and drawdown scaling; skipped trades are listed with their reason.
@@ -625,7 +630,7 @@ Why: combine weak, uncorrelated edges into one account without fooling ourselves
   gold gap momentum (`fx`, entry_z 0.1, stop_atr 0.5, exit 11:00); gap fade defaults on NAS100 / US500; FTMO MT5 data
   2021-09-14..today. This period was used by the ORB and gold tests: the result is a sanity check, not a fresh test.
 
-### Risk sweep (`risk/sweep.py`)
+### Risk sweep (`tools/risk_sweep.py`; the `risk/sweep.py` stub was removed 2026-11-11)
 - A grid over the settings to compare results (max drawdown, return, Monte Carlo 95% drawdown).
 - Sweepable: risk per trade (e.g. 0.25–1.5%), daily stop (1–3%), **max open risk** (rule set by the user), drawdown-scaling threshold and factor.
 
@@ -719,9 +724,9 @@ percentage x initial balance (rule set by the user, 2026-10-22). The personal da
 a percentage of the day-start balance.
 
 ## Components (`risk/`)
-1. **RiskConfig** (`config.py`): all settings above, plus per-symbol contract specs and costs. Fully editable in the UI.
+1. **RiskConfig**: not built as a module (stub removed 2026-11-11); settings live in `RunSettings` / `CostConfig`.
 2. **PositionSizer** (`sizer.py`): lots per trade and per TP part (› Account & sizing).
-3. **AccountSimulator** (`account_sim.py`): › Account simulator.
+3. **AccountSimulator**: not built (› Account simulator).
 4. **MonteCarlo** (`monte_carlo.py`): › Monte Carlo.
-5. **RiskSweep** (`sweep.py`): › Risk sweep.
+5. **RiskSweep** (`tools/risk_sweep.py`): › Risk sweep.
 6. **PropFirmRules** (`prop_rules.py`): FTMO presets and custom; used only by the prop-firm field (later).
