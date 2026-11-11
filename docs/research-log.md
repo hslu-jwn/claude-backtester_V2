@@ -36,6 +36,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   ratio, FX relative strength); skeptic review of the five lead-lag specs (priors: S14 15-20 %, oil-CAD 5-8 %,
   USD breadth 4-6 %, gold-silver < 2 %, BTC-ETH < 1 %), all open points decided by Opus; literature for S14:
   3-7 bp gross per trade expected vs 2-6 bp GER40 costs (cost wall risk).
+- **2026-11-11:** Codex reset; multi-symbol step 1a built (Codex sol, 1,417 s; golden identical); pre-sample
+  clock check (Codex terra): excluded XAUUSD 2009, XAGUSD 2009 + 2011, USDCAD 2009, USOIL + UKOIL 2010.
+  `End.` on the user's word (full suite: 5733 passed, 14 skipped, 4 xfailed, 45 warnings; ruff clean); the rest is in HANDOFF › Next step.
 - Test=auto: a candidate passing every pre-registered development gate (and its pre-sample check)
   gets its one-time MT5 test in this run, once, frozen.
 

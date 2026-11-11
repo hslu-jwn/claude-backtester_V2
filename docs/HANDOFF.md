@@ -3,7 +3,29 @@
 Read first in every session; rewritten at the end of every session (CLAUDE.md › Session
 protocol). Current state only; history is in git and `docs/archive/ROADMAP-v1.md`.
 
-## Where things are (2026-11-10, `End.` of the 2026-11-09/10 session)
+## Where things are (2026-11-11, `End.` of the 2026-11-10/11 research session, Test=auto)
+
+- **Tested and recorded (research log 2026-11-10):** strategy 12 `energy_report` (EIA oil) falsified;
+  strategy 13 `daily_reversal` (Connors E8 / CAP) falsified; hypothesis 15 Turtle Soup (setup TS)
+  falsified; C1 crypto trend following inconclusive (primary 23 trades < 40, all 16 cells positive);
+  C2 crypto momentum one-time MT5 test **not confirmed** (the user's go; +5.0 R, doubled -18.9 R);
+  C3 crypto intraday momentum screened out on costs. Idea harvests: 4 Codex web rounds (48 ideas).
+- **Code:** runner D1 UTC-aligned; crypto weekly / isolated-Saturday closures do not cut research
+  segments; gates modes for energy_report / daily_reversal; **multi-symbol step 1a** (reference-symbol
+  snapshots, `MarketAwareStrategy.on_market_candle`, `ReferenceInput`, golden identical, `0741e6a`;
+  design `docs/design/multi-symbol.md`).
+- **Pre-registered, not built:** five lead-lag strategies (specs + grids, all open points decided by
+  Opus after a skeptic review): 14 `us_close_de_open` (prior 15-20 %, literature 3-7 bp gross vs 2-6 bp
+  costs), `oil_cad_leadlag`, `usd_breadth_usdcad`, `gold_silver_leadlag`, `btc_eth_leadlag`; three DRAFT
+  pair / basket specs (`wti_brent_spread`, `gold_silver_ratio`, `fx_relative_strength`) that need steps B / C.
+- **Pre-sample data added (the user's go):** histdata 2008/09/10-2014 XAUUSD, XAGUSD, USDCAD, USOIL, UKOIL
+  in `data/cache/histdata_presample/`; clock check `results/presample_2008_2014/clock_check_metals_cad_oil.md`:
+  excluded years XAUUSD 2009, XAGUSD 2009 + 2011, USDCAD 2009, USOIL + UKOIL 2010.
+- **Rules set by the user this session:** Telegram on a promising strategy or > 5 min waiting; broad idea
+  sources (no academic backing needed); never idle (propose or ask); Sonnet only for small work.
+- **Uncommitted, not Opus's:** `src/backtester/tools/notify.py` (hook trace log lines); the user decides.
+
+## Earlier: 2026-11-10 `End.` of the 2026-11-09/10 session
 
 - **Session summary:** research hypotheses 11 (Gotobi USDJPY: development +16.5 R, pre-sample
   2008-2014 +30.9 R, one-time MT5 test **not confirmed**, bootstrap bound -0.012) and 12 (month-end
@@ -209,18 +231,17 @@ by the user: FX_LONDON_FIX_REV (2026-10-29), M15_ALTERNATING_PATH_BATCH / R014 (
 
 ## Next step
 
-Research front (2026-11-09 night): hypotheses 11 (Gotobi: dev and pre-sample strong, one-time test
-not confirmed) and 12 (falsified) done; two pre-registered calendar x clock screens (792 FX cells
-2008-2014, 660 index cells 2010-2014) found 0 survivors; four free idea scans used up the literature
-at our cost level. Open low-priority call: gate 7's rollover window from 20:55 UTC (Open 12 note).
-12.5 on runs 3 + 4 done 2026-11-09/10 (all trades explained; reconcile reads `no_history` starts).
-Open ROADMAP code items are parked by the user (3.7 after a surviving strategy, 5.1-5.7 frozen,
-V2.7 challenge simulator "not now"; 11.3 is covered by the FX time-of-day screens). Waiting on the
-user: the live-spread proposal (`data/spreads/proposal_live_2026-11-09.json`), gate 7's 20:55 UTC
-rollover start, and the next direction (new data source for research, or a code item).
+In this order (Codex sol for engine work, terra for runs; Sonnet only for small work):
+1. **Multi-symbol step 1b** (`docs/design/multi-symbol.md` › Delivery 1b): research grids / CLI with
+   reference inputs, bundle coverage, gates support (weighted control, per-symbol overrides).
+2. **Build and run the five lead-lag strategies** in prior order (14, oil-CAD, USD breadth, gold-silver,
+   BTC-ETH) from their specs; sol review per new strategy; development gates; pre-sample checks on
+   2008/10-2014 (excluded years above) before any one-time test; Test mode per the user's command.
+3. Steps B / C (pairs, baskets: 13-21 + 7-12 engineering days) only on the user's go; then the three drafts.
+Other open items: stressed-cost p90 refresh with runs 3 + 4 (needs the user's go); the user's check of data
+fixes 13.12-13.18; gate 7's 20:55 UTC rollover start (low priority); `notify.py`.
 
 ## First prompt for the next chat
 
-`Continue.Research Test=auto` (the user, 2026-11-10; auto lasts for that run only). Open: refresh
-of the stressed-cost p90 table with runs 3 + 4 (needs the user's go), the user's check of data
-fixes 13.12-13.18, `notify.py`.
+`Continue.Code` for multi-symbol step 1b, then `Continue.Research` (Test=manual unless the user says
+`Test=auto`) to build and run the five pre-registered lead-lag strategies.

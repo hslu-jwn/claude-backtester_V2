@@ -343,6 +343,9 @@ where (updated 2026-11-03).
   (`get_type_hints` ran 25,639 times in one runner test); research-runner variant settings
   8.9 s -> 3.4 s there. **Full suite 5,111 passed in 8 min 10 s** (15 min 39 s before V2.8;
   target ~8 min met); golden lists identical.
+- ◐ **V2.9 Multi-symbol strategies** (2026-11-10/11, design `docs/design/multi-symbol.md`, Codex sol): ☑ 1a
+  reference-symbol snapshots / market-aware strategies (`0741e6a`, golden identical); ☐ 1b research
+  integration; ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**
