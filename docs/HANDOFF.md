@@ -41,9 +41,13 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 1. One-time MT5 tests still pre-registered: strategy 4 on GBPJPY; gap momentum in quiet sideways
    markets. Only on your go.
-2. **B4 dividends:** no dividend handling in the engine; FTMO's booking is unverified (saved deal
-   exports hold only intraday deals). Start MT5 and Opus runs a read-only export of all deal types
-   since 2026-11-02, or approve one free web lookup of FTMO's dividend rule.
+2. **B4 dividends:** no dividend handling in the engine; FTMO's booking is still unverified. Read-only
+   export 2026-11-11 of all deal types on the demo account (7,035 deals, 2026-11-02..11-09): only one
+   non-trade deal (the initial balance), no dividend or adjustment deal, no position held > 2 h; only
+   4 index shorts crossed one rollover (2026-11-03, swap US500 +0.06, US100 +0.04, US30 +0.10, GER40
+   -0.23 USD). Settles nothing: the export can't show whether FTMO books dividends as balance deals
+   or folds them into swap. Next: approve one free web lookup of FTMO's dividend rule, or hold an
+   index position across a known ex-date on the demo.
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
 4. **Harvest web access:** a one-line probe of Codex web search (or Gemini) before any batch; then
