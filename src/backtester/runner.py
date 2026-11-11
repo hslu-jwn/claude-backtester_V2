@@ -862,6 +862,17 @@ def write_results(
     return folder
 
 
+def _input_symbols(result: RunResult) -> tuple[str, ...]:
+    """Traded symbols, then the references their strategy declares, so tools that rebuild the
+    sources from settings.json load every input (design/multi-symbol.md > Delivery 1b)."""
+    refs: dict[str, None] = {}
+    for symbol in result.runs:
+        strategy = make_strategy(symbol, result.settings.strategy, result.settings.detectors)
+        if isinstance(strategy, MarketAwareStrategy):
+            refs.update((r.symbol, None) for r in strategy.references)
+    return (*result.symbols, *(r for r in refs if r not in result.symbols))
+
+
 def _write_files(result: RunResult, folder: Path, run_id: str, preset: str | None) -> None:
     rows = trade_rows(result)
     with open(folder / "trades.csv", "w", newline="", encoding="utf-8") as f:
@@ -875,7 +886,7 @@ def _write_files(result: RunResult, folder: Path, run_id: str, preset: str | Non
             "start": result.start,
             "end": result.end,
             "warmup_days": result.settings.warmup_days,
-            "cache_dirs": {s: result.sources.cache_dir(s) for s in result.symbols},
+            "cache_dirs": {s: result.sources.cache_dir(s) for s in _input_symbols(result)},
         },
         "strategy": {
             "name": strategy_name(result.settings.strategy),

@@ -134,3 +134,16 @@ def test_blocked_decisions_are_counted_in_notes(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "make_strategy", lambda *a: Declared())
     result = runner.run_backtests(["TEST"], DAY, DAY, sources=sources, workers=1)
     assert any(n.startswith("reference decisions blocked: 2 x ") for n in result.runs["TEST"].notes)
+
+
+def test_settings_json_saves_reference_cache_dirs(tmp_path, monkeypatch):
+    import json
+
+    _cache(tmp_path, "TEST", DAY)
+    _cache(tmp_path, "B", DAY)
+    sources = SymbolSources.single(tmp_path, ["TEST", "B"])
+    monkeypatch.setattr(runner, "make_strategy", lambda *a: Declared())
+    result = runner.run_backtests(["TEST"], DAY, DAY, sources=sources, workers=1)
+    folder = runner.write_results(result, tmp_path / "out", run_id="r")
+    run = json.loads((folder / "settings.json").read_text(encoding="utf-8"))["run"]
+    assert run["symbols"] == ["TEST"] and set(run["cache_dirs"]) == {"TEST", "B"}
