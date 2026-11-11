@@ -5,7 +5,7 @@ description: Procedure for the user's Continue.Research command - the autonomous
 
 # Continue.Research (research back in this team since 2026-11-09, the user)
 
-`Continue.Research [Limit=<time>] [<CANDIDATE or idea ID>]` runs the whole research loop in this
+`Continue.Research [Limit=<time>] [Test=manual|auto] [<CANDIDATE or idea ID>]` runs the whole research loop in this
 repo. The former research department (2026-10-27 to 2026-11-06) is archived; its records are in
 `knowledge/research/`, its unbuilt drafts in `research/candidates/`. There is no queue, no JSON
 envelope and no feedback file any more: decisions go into the spec and `docs/research-log.md`.
@@ -15,9 +15,10 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 - Read `docs/HANDOFF.md`, the last entry of `docs/research-log.md`, `research/candidates/README.md`,
   the top of `knowledge/ideas.md` and `knowledge/topics/cost-wall.md` (what every test so far says
   about gross edge vs costs; read it before proposing anything).
-- First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything unclear)
-  and wait. Then run autonomously (Telegram only for urgent items, CLAUDE.md). Later calls in the
-  same chat reuse the answers.
+- First call in a chat: ask ALL open questions at once, numbered (limit, topic, anything unclear);
+  meanwhile start the work they do not block (never idle) and Telegram after 5 minutes of waiting
+  (CLAUDE.md › Telegram). Then run autonomously; an unclear point is decided by Opus and recorded
+  as an assumption (AGENTS.md › Specs, per mode). Later calls in the same chat reuse the answers.
 - `Limit=60min` / `2h` / `3d`: write start time and deadline into `docs/research-log.md`, check the
   clock after every step; at the deadline finish the current step cleanly (commit, log) and stop.
   No limit = until `Stop.` or the resources run out.
@@ -44,11 +45,19 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 - Cheapest route first (`docs/agent-routing.md`): local search of `knowledge/`, then a free model
   for literature / web look-ups (`ai_dispatch gemini --effort low`, `gemini-api`, `openrouter`).
   A model's citation is only a lead: Opus opens the source before relying on it.
+- **Filter by mechanism and size (review tips, the user 2026-11-11):** prefer a counterparty that
+  must trade (rebalancing, hedging, settlement, index rules) and an effect stated in bp per event;
+  halve a published effect before the cost check (post-publication decay). Every harvest or
+  literature prompt starts with the "stop proposing" list of `knowledge/topics/cost-wall.md` §4.
 - Write a card in `knowledge/ideas.md`: mechanism, falsifiable prediction, sources actually read,
   label (PUBLISHED finding / ADAPTATION / ORIGINAL / SPECULATIVE), expected gross edge per trade.
-- **Cost pre-check:** estimate gross R per trade against our costs at that stop size (R014: about
-  0.2 R per trade at a 1-ATR M15 stop). An idea whose plausible gross edge is far below the cost
-  stays a card; do not build it.
+- **Screen first, before any spec or build (hard step, review A2, the user 2026-11-11):** a fixed
+  clock window or a daily-bar rule gets a small pandas / `tools/time_of_day_profile.py` screen of
+  gross bp per trade vs the cost from the cost table, on development data only; only survivors get a
+  spec. Every screen is counted. Otherwise estimate gross R per trade against our costs at that stop
+  size (R014: about 0.2 R per trade at a 1-ATR M15 stop); an idea far below the cost stays a card.
+- **Required size:** before a build, check with the Monte Carlo / prop tools what edge per trade the
+  FTMO goal needs at the expected trade count; an idea that cannot reach it is not built.
 - **Skeptic pass** (Opus itself, or one free model on a brief): leakage, selection bias, costs,
   sample size, multiple testing, alternative explanations. Record the answers on the card.
 
@@ -60,18 +69,31 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   the run** (gates: costs doubled, halves, symbol breadth, best-date removal, bootstrap lower bound,
   minimum trades, data integrity; see `docs/strategy-alternating-path.md` › Gates and
   `tools/alternating_path_gates.py` as the pattern). Specs need no user approval in the loop.
+- **Power line in every spec (review tip 1):** the minimum detectable edge at the planned sample
+  (trade sd from a pilot or a similar family). If the one-time test is underpowered, pre-register a
+  combined estimate (pre-sample + development + test) or a forward demo instead of a pass / fail gate.
+- **Stop rules (review tip 5, the user 2026-11-11):** one Codex window per hypothesis; stop at the
+  first failed gate; no rescue variants (a changed rule is a new, counted hypothesis); a family is
+  closed after two falsifications; a lead expires after one failed independent check (closed, not
+  parked).
+- **Pipeline controls (review tip 2):** after any change to a gates tool, run a planted drift
+  (positive control, must pass about as often as the power says) and shuffled days (negative
+  control, at most 5 % passes) through it once (`data/random_walk.py`, `analytics/monkeys.py`).
 - Implement: new strategy folder via Codex `gpt-6.1-sol` medium on a brief
   (`briefs/<name>.md`); registry, panel, golden lists and tool tables by Opus; full suite green.
 - Vary only the parameters the spec marks tunable, within its ranges; one parameter set pooled
   across markets (rule set by the user, 2026-10-23). Development only:
-  `python -m backtester.tools.research research/grids/<name>.toml --dev-only` (before 2021-09-14).
-- Compute the gates on the development run. Do not judge pass / fail: report every cell with all
-  metrics and the gates; the user decides. Failed and rejected strategies stay recorded.
+  `python -m backtester.tools.research research/grids/<name>.toml` (development only, before
+  2021-09-14; the one-time test needs `--test`, review B2, 2026-11-11).
+- Compute the gates on the development run and report every cell with all metrics. Pass / fail is
+  read mechanically from the pre-registered gates (that is what `Test=auto` acts on); anything beyond
+  them (a retest, a rule change, a rescue) is the user's decision. Failed and rejected strategies stay
+  recorded.
 - **One-time MT5 test mode (rule set by the user, 2026-11-09):** default `Test=manual`: a
   candidate that passes all pre-registered development gates is parked in HANDOFF › Open as
   "ready for the one-time test" and the loop moves on. `Test=auto`, given with the command (e.g.
   `Continue.Research Test=auto`): the loop runs the one-time test itself, only for a candidate that
-  passed every pre-registered development gate. Both modes: exactly once per candidate, no retest
+  passed every pre-registered development gate (runner `--test`). Both modes: exactly once per candidate, no retest
   after a fail, the variant is frozen before the test, pass or fail recorded in the research log
   and HANDOFF. Auto lasts for that run only; the next session is manual unless the user says
   `Test=auto` again. Never change defaults (costs, sweep options, spread table) without the
@@ -81,6 +103,9 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 
 - `docs/research-log.md`: what was tested, cells, net / gross R, gates, model and effort per task.
 - Candidate row / idea card status (built, rejected by the user <date>, ...); `docs/HANDOFF.md`.
+- **Count every look (review tip 4):** screens, cells and one-time tests all go into the committed
+  ledger `research/ledger.csv` (one row per idea or hypothesis, the user 2026-11-11); one family-level
+  threshold covers all hypotheses together.
 - Count families, specs and cells honestly; a parameter cell is not a new hypothesis, and a failed
   family is not re-proposed under a new name.
 - End of run: short report (tested, results, gates, decisions needed); a very promising strategy
