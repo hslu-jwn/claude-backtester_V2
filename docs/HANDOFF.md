@@ -46,8 +46,12 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    non-trade deal (the initial balance), no dividend or adjustment deal, no position held > 2 h; only
    4 index shorts crossed one rollover (2026-11-03, swap US500 +0.06, US100 +0.04, US30 +0.10, GER40
    -0.23 USD). Settles nothing: the export can't show whether FTMO books dividends as balance deals
-   or folds them into swap. Next: approve one free web lookup of FTMO's dividend rule, or hold an
-   index position across a known ex-date on the demo.
+   or folds them into swap. Web lookup 2026-11-11 (approved, one search + one fetch): no FTMO page
+   states the rule. The search summary claimed "dividends folded into swap for rolling index
+   contracts since 2026-01-30", but its only FTMO link (ftmo.oanda.com home page) does not say so:
+   UNVERIFIED. General CFD practice (Dukascopy): longs credited, shorts debited. Next: ask FTMO
+   support, fetch `ftmo.oanda.com/simulated-assets/`, or hold an index position across a known
+   ex-date on the demo.
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
 4. **Harvest web access:** a one-line probe of Codex web search (or Gemini) before any batch; then
