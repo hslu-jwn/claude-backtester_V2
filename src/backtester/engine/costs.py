@@ -355,6 +355,13 @@ def default_spread_table() -> SpreadTable:
     return SpreadTable.from_dict(json.loads(path.read_text(encoding="utf-8")))
 
 
+# Live under-charge against the default table: ratio of the mean bar spread of fill probe
+# runs 3 + 4 to the table value at the same times (results/fill_report_2026-11-09/fills.csv;
+# review B1, the user 2026-11-11). GBPUSD (median 1.0, mean 2.2 from the tail) and XAUUSD
+# (0.87, over-charged) keep the table.
+LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.40, "NAS100": 1.12, "US500": 1.07}
+
+
 @dataclass(frozen=True, slots=True)
 class CostConfig:
     spread_enabled: bool = True  # off: no spread; commission/slippage remain independent
@@ -372,6 +379,8 @@ class CostConfig:
     # spread by year and hour of day (ROADMAP 6.7); default the FTMO median table (rule set
     # by the user, 2026-10-26); None: the fixed `SymbolCosts.spread`
     spread_table: SpreadTable | None = field(default_factory=default_spread_table)
+    # multiplies the table's value per symbol (LIVE_TABLE_FACTOR); {} = the plain table
+    spread_table_factor: Mapping[str, float] = field(default_factory=lambda: dict(LIVE_TABLE_FACTOR))
     # fixed spread x (fill price / SymbolCosts.reference_price) (rule set by the user,
     # 2026-10-16); False: the plain fixed spread of every year (reproduces old results)
     spread_price_scaling: bool = True
@@ -421,7 +430,7 @@ class CostConfig:
         if self.spread_table is not None and at is not None:
             value = self.spread_table.spread_at(symbol, at)
             if value is not None:
-                return value
+                return value * self.spread_table_factor.get(symbol, 1.0)
         costs = self.for_symbol(symbol)
         if self.spread_price_scaling and costs.reference_price and price > 0:
             return costs.spread * price / costs.reference_price

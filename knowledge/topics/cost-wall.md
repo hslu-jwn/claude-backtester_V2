@@ -8,6 +8,8 @@ Per-trade values marked (d) are derived by dividing the source's totals; R = sto
 
 ## 1. Every tested strategy / family
 
+Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea or hypothesis); this table stays as the 2026-11-09 synthesis.
+
 | Strategy (instrument; hold; stop) | Trades | Gross R/tr | Cost R/tr | Net R/tr | Verdict | Source |
 |---|---|---|---|---|---|---|
 | 1 Session zones (XAU, GBPUSD, GBPJPY; intraday; tight) | 17,742 | -0.047 (d) | 0.12 (d) | -0.166 (d) | all years, all symbols negative | RM1 Ph.7 |
@@ -81,7 +83,7 @@ Per-trade values marked (d) are derived by dividing the source's totals; R = sto
 - GBPUSD table values 2020-21 NY hours 0-12 are ~5x other years (likely a median artefact, not corrected, CT).
 - Live spreads 2026-11-09 (7,019 fills, 23 symbols, ~4.6 days, RL): FX medians match the model, means 1.4-2x from Asia / rollover bars (NY hour 18 ~5x).
   Under-charged by mean: GBPJPY 2.25x, GBPUSD 1.97x, NAS100 1.95x, UK100 1.77x, XAUUSD 1.63x, GER40 1.52x; BTCUSD slippage 5x. EURUSD median 0,
-  slippage 0.81x: F1a not flattered. Index results (F2) are therefore if anything too kind. Proposal only (`data/spreads/proposal_live_2026-11-09.json`), not wired in.
+  slippage 0.81x: F1a not flattered. Index results (F2) are therefore if anything too kind. The proposal's raises were applied on 2026-11-09 (`d0bbcd8`, fixed spreads) and the table scaled on 2026-11-11 (review B1).
 - Short live sample (4.6 days, one week-regime); costs under stress (news, thin hours) can be much higher (p90 UK100 5.1 vs 1.45).
 - Histdata gaps: GER40 ends 2020-06-12, EU50 ends 2018-12-14, US30 only from 2019-02-10 (MT5), USOIL 205 MT5 days; US500 histdata omits quiet minutes
   (2017 worst, median 23 missing/day) and the strict integrity gate over-flags (808 of 1,669 trades in the baseline, 78 with a 5-min tolerance); 556 of 882 EU50 trades

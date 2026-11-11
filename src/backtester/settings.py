@@ -42,6 +42,7 @@ HIDDEN = frozenset(
         "engine.sessions",
         "strategy.strong_move.atr_mult",
         "engine.costs.spread_table",
+        "engine.costs.spread_table_factor",
         "engine.costs.funding",
     }
 )  # the spread table is built by tools/spread_table.py, the funding rates are read from files
