@@ -16,8 +16,8 @@ from zoneinfo import ZoneInfo
 
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
+from backtester.data.sources import PRICE_DIGITS
 from backtester.detectors.settings import DetectorSettings
-from backtester.engine.costs import TICK_SIZES
 from backtester.strategy.base import Order, Strategy, UnsupportedSymbolError
 from backtester.strategy.daily_reversal.config import DailyReversalConfig
 
@@ -91,7 +91,8 @@ class DailyReversal(Strategy):
             ("America/New_York", time(17), time(17)) if self._ts_fx else SESSIONS[symbol]
         )
         self._tz = ZoneInfo(zone)
-        self._tick = self.config.tick_size or TICK_SIZES[symbol]
+        # default before configure_costs supplies the engine's tick (same values, layer rule)
+        self._tick = self.config.tick_size or 10 ** -PRICE_DIGITS[symbol]
         self._history: deque[DailyBar] = deque(
             maxlen=max(
                 self.config.e8_lookback + 1,

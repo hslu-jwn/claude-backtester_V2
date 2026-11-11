@@ -7,16 +7,19 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta
 from math import isfinite
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 from backtester.core.models import Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.detectors.settings import DetectorSettings
-from backtester.engine.trade import TradeResult
 from backtester.strategy.base import Order, Strategy, UnsupportedSymbolError
 from backtester.strategy.energy_report.calendar import ReportCalendar
 from backtester.strategy.energy_report.config import EnergyReportConfig
 from backtester.strategy.session_stats import SessionStats, TimedExit
+
+if TYPE_CHECKING:
+    from backtester.engine.trade import TradeResult
 
 NY = ZoneInfo("America/New_York")
 ROLLOVER = time(17)
