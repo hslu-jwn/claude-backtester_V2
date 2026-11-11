@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-11: multi-symbol step 1b (Continue.Code; the user's go on Opus's picks)
+
+- Opus 5.5 (this session, no dispatch; small change): strategy-declared references, research pieces
+  cut at required-reference gaps, manifest with reference files, blocked-decision counts; test-first
+  (6 new tests). No research run.
+
 ## 2026-11-11: review follow-up (Fable review + framework; the user's go on Opus's picks)
 
 - Opus (this session): verified review A-C (verdicts in the review file), B2 / B3 / B5 / B9 / B1 / B8,

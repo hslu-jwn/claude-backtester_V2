@@ -62,3 +62,75 @@ def test_references_rejected_before_loading_for_legacy(monkeypatch):
         runner.run_backtests(["TEST"], DAY, DAY, workers=1,
                              references=(ReferenceInput("B", "b", (TF.M1,),
                                                         max_age=timedelta(minutes=1)),))
+
+
+# --- 1b: references declared by the strategy (design/multi-symbol.md > A, Delivery 1b) ---
+
+
+class Declared(Observer):
+    references = (ReferenceInput("B", "b", (TF.M1,), max_age=timedelta(minutes=1)),)
+
+    def on_market_candle(self, now, views, market):
+        super().on_market_candle(now, views, market)
+        return []  # observation only: no cost table needed for TEST
+
+
+def _cache(tmp_path, symbol, *days):
+    from backtester.data.cache import cache_path
+
+    for day in days:
+        path = cache_path(tmp_path, symbol, day)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        m1(*[(f"10:{i:02}", 100, 101, 99, 100, 1, 0) for i in range(10)],
+           day=day.isoformat()).to_parquet(path, index=False)
+
+
+def test_strategy_declared_references_load_in_run_and_research_paths(tmp_path, monkeypatch):
+    _cache(tmp_path, "TEST", DAY)
+    _cache(tmp_path, "B", DAY)
+    sources = SymbolSources.single(tmp_path, ["TEST", "B"])
+    made = []
+    monkeypatch.setattr(runner, "make_strategy", lambda *a: made.append(Declared()) or made[-1])
+    result = runner.run_backtests(["TEST"], DAY, DAY, sources=sources, workers=1)
+    assert next(s.seen for s in made if s.seen)[-1].views["B"][TF.M1] is not None
+    assert any("reference inputs: B" in n for n in result.runs["TEST"].notes)
+    made.clear()
+    # the research runner's path (iter_symbol_runs -> _chunk_symbol_run -> _load)
+    (_, many), = runner.run_backtests_many(["TEST"], DAY, DAY, [runner.RunSettings()],
+                                           sources, workers=1)
+    assert next(s.seen for s in made if s.seen)[-1].views["B"][TF.M1] is not None
+    assert any("reference inputs: B" in n for n in many.runs["TEST"].notes)
+
+
+def test_legacy_strategy_loads_no_reference(tmp_path, monkeypatch):
+    class Legacy(Strategy):
+        base_timeframe = TF.M1
+        timeframes = (TF.M1,)
+
+        def on_candle(self, now, views):
+            return []
+
+    _cache(tmp_path, "TEST", DAY)
+    sources = SymbolSources.single(tmp_path, ["TEST"])
+    monkeypatch.setattr(runner, "make_strategy", lambda *a: Legacy())
+    job = runner._load(sources, "TEST", DAY, DAY, runner.RunSettings())
+    assert job.references == () and job.reference_series == ()
+
+
+def test_reference_data_ends_with_the_primary_range(tmp_path, monkeypatch):
+    nxt = DAY + timedelta(days=1)
+    _cache(tmp_path, "TEST", DAY)
+    _cache(tmp_path, "B", DAY, nxt)
+    sources = SymbolSources.single(tmp_path, ["TEST", "B"])
+    monkeypatch.setattr(runner, "make_strategy", lambda *a: Declared())
+    job = runner._load(sources, "TEST", DAY, DAY, runner.RunSettings())
+    assert [s.symbol for s in job.reference_series] == ["B"]
+    assert max(c.ts for s in job.reference_series for c in s._candles).date() == DAY
+
+
+def test_blocked_decisions_are_counted_in_notes(tmp_path, monkeypatch):
+    _cache(tmp_path, "TEST", DAY)
+    sources = SymbolSources.single(tmp_path, ["TEST", "B"])  # B has no data: always blocked
+    monkeypatch.setattr(runner, "make_strategy", lambda *a: Declared())
+    result = runner.run_backtests(["TEST"], DAY, DAY, sources=sources, workers=1)
+    assert any(n.startswith("reference decisions blocked: 2 x ") for n in result.runs["TEST"].notes)

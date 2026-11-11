@@ -76,6 +76,8 @@ from backtester.runner import (
     run_backtests,
     write_results,
 )
+from backtester.strategy.base import MarketAwareStrategy, UnsupportedSymbolError
+from backtester.strategy.registry import make_strategy
 from backtester.tools import (
     news_diagnostics,
     research_bayes,
@@ -210,15 +212,50 @@ def _join(symbol: str, runs: list) -> SymbolRun:
     )
 
 
+def reference_symbols(
+    symbols: Sequence[str], settings_list: Sequence[RunSettings], *, required: bool = False
+) -> tuple[str, ...]:
+    """Reference symbols the settings' market-aware strategies declare (all variants).
+
+    Spec: design/multi-symbol.md > Delivery 1b. Legacy strategies declare none.
+    """
+    found: dict[str, None] = {}
+    for settings in settings_list:
+        for symbol in symbols:
+            try:
+                strategy = make_strategy(symbol, settings.strategy, settings.detectors)
+            except UnsupportedSymbolError:
+                continue
+            if isinstance(strategy, MarketAwareStrategy):
+                found.update((r.symbol, None) for r in strategy.references if r.required or not required)
+    return tuple(found)
+
+
 def _pieces(
-    symbols: Sequence[str], start: date, end: date, sources: SymbolSources
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    sources: SymbolSources,
+    references: Sequence[str] = (),
 ) -> dict[tuple[date, date], list[str]]:
+    """Each symbol's cached pieces, cut where a required reference has a genuine gap.
+
+    Spec: design/multi-symbol.md > Missing candles: a missing day block in a required
+    dependency splits the segment and restarts its state.
+    """
+    ref_pieces = [segments(r, start, end, sources) for r in references]
     groups: dict[tuple[date, date], list[str]] = {}
     for symbol in symbols:
-        for piece in segments(symbol, start, end, sources):
+        pieces = segments(symbol, start, end, sources)
+        for other in ref_pieces:
+            pieces = [(max(a, c), min(b, d)) for a, b in pieces for c, d in other
+                      if max(a, c) <= min(b, d)]  # fmt: skip
+        for piece in pieces:
             groups.setdefault(piece, []).append(symbol)
     if not groups:
-        raise ResearchError(f"no cached day between {start} and {end} for {', '.join(symbols)}")
+        raise ResearchError(
+            f"no cached day between {start} and {end} for {', '.join((*symbols, *references))}"
+        )
     return groups
 
 
@@ -253,7 +290,9 @@ def run_period(
     workers: int | None,
 ) -> RunResult:
     """`run_backtests` over each cached piece of each symbol, trades merged per symbol."""
-    groups = _pieces(symbols, start, end, sources)
+    groups = _pieces(
+        symbols, start, end, sources, reference_symbols(symbols, [settings], required=True)
+    )
     results = [
         run_backtests(names, a, b, settings, sources=sources, workers=workers)
         for (a, b), names in sorted(groups.items())
@@ -272,7 +311,8 @@ def run_period_many(
     """`run_period` for every settings, as `(index, result)` in completion order: the candles of
     each symbol piece are loaded once for all variants and the (piece x variant chunk) runs are
     spread over `workers` processes (`runner.iter_symbol_runs`). Same trades as `run_period`."""
-    groups = sorted(_pieces(symbols, start, end, sources).items())
+    refs = reference_symbols(symbols, settings_list, required=True)
+    groups = sorted(_pieces(symbols, start, end, sources, refs).items())
     tasks = [(name, a, b) for (a, b), names in groups for name in names]
     slots = {task: i for i, task in enumerate(tasks)}
     got: dict[int, dict[int, object]] = {}
@@ -481,7 +521,12 @@ def _daily_series(
             folder / "info.json",
             {
                 "submission": identity,
-                "dataset": dataset_version(spec.symbols, start, end, sources),
+                "dataset": dataset_version(
+                    (*spec.symbols, *reference_symbols(
+                        spec.symbols, [variant_settings(spec, Variant("", "", overrides))]
+                    )),
+                    start, end, sources,
+                ),
                 **_code_version(),
             },
         )
@@ -802,7 +847,8 @@ def _run_research_locked(
     info["flags"] = ["too_many_parameters"] if info["free_params"] > cfg.max_free_params else []
     if spec.submission is not None:
         info["submission"] = spec.submission
-        info["dataset"] = dataset_version(spec.symbols, first, last, sources)
+        refs = reference_symbols(spec.symbols, [variant_settings(spec, v) for v in variants])
+        info["dataset"] = dataset_version((*spec.symbols, *refs), first, last, sources)
     if spec.grids:
         info["grids"] = [{"name": f.name, "base": f.base, "grid": f.grid} for f in spec.grids]
         for entry, family in zip(info["grids"], spec.grids, strict=True):

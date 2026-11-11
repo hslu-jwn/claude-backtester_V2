@@ -16,6 +16,20 @@ including candles spanning UTC days. Genuine missing trading days still split se
 and restart indicators. All other symbols retain their existing explicit day-file
 coverage, including FX weekends cached as empty files. No trading or cost defaults change.
 
+## Reference symbols (multi-symbol Delivery 1b, the user 2026-11-11)
+
+A market-aware strategy (`design/multi-symbol.md` › A) declares its read-only inputs itself in
+`MarketAwareStrategy.references`, built from its config (e.g. `ref_symbol = "US500"`). There is no
+grid table or CLI flag: `symbols` keeps meaning the traded symbols, and the variant hash covers the
+reference through the strategy settings. `run.py`, `run_backtests` and the research runner's
+batch path all load the declared references. A genuine missing day block in a **required**
+reference cuts the traded symbol's research pieces there (state restarts); optional references
+never cut. The submission dataset manifest lists the reference symbols' day files next to the
+traded ones (primary and reference warm-up days are not fingerprinted, as before). Reference data
+ends with the piece, so the development cutoff applies to every input. Blocked decisions appear in
+the run notes as `reference decisions blocked: <count> x <reason>`; a per-decision journal file is
+deferred (the user 2026-11-11).
+
 ## Skill vs trend, and bounds (V2.4d 7 + 8)
 
 After selection, report the chosen development variant and each already executed test

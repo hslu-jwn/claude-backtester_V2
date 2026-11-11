@@ -41,6 +41,7 @@ import shutil
 import threading
 import time as clock_time
 from bisect import bisect_left
+from collections import Counter
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, as_completed, wait
 from dataclasses import dataclass, field, fields, is_dataclass
@@ -241,14 +242,10 @@ def _load(
     cache: SeriesCache | None = None,
     references: Sequence[ReferenceInput] = (),
 ) -> _Job:
-    if references:
-        strategy = make_strategy(symbol, settings.strategy, settings.detectors)
-        if not isinstance(strategy, MarketAwareStrategy):
-            raise ValueError("references require an explicit market-aware strategy")
-        if symbol in {r.symbol for r in references}:
-            raise ValueError("reference symbol cannot be the execution symbol")
-        if len({r.symbol for r in references}) != len(references):
-            raise ValueError("duplicate reference declarations")
+    if references and not isinstance(
+        make_strategy(symbol, settings.strategy, settings.detectors), MarketAwareStrategy
+    ):
+        raise ValueError("references require an explicit market-aware strategy")
     cached = sources.covered_days(symbol)
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     in_range = [d for d in days if d in cached]
@@ -262,6 +259,12 @@ def _load(
         notes.append(f"{symbol}: {last + timedelta(days=1)}..{end} not cached, left out")
     adapter = sources.adapter(symbol)
     strategy = make_strategy(symbol, settings.strategy, settings.detectors)
+    if not references and isinstance(strategy, MarketAwareStrategy):
+        references = strategy.references  # the strategy's own declaration (Delivery 1b)
+    if symbol in {r.symbol for r in references}:
+        raise ValueError("reference symbol cannot be the execution symbol")
+    if len({r.symbol for r in references}) != len(references):
+        raise ValueError("duplicate reference declarations")
     # the strategy's indicators may need more history than the setting (strategy 4)
     warm = warmup_start(cached, first, max(settings.warmup_days, strategy.min_warmup_days))
     h4 = strategy.h4_alignment
@@ -432,10 +435,10 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         blocked = backtest.market_blocked
     reference_notes = ()
     if job.references:
-        reasons = sorted({reason for _, reasons in blocked for reason in reasons})
+        counts = Counter(reason for _, reasons in blocked for reason in reasons)
         reference_notes = (
             "reference inputs: " + ", ".join(r.symbol for r in job.references),
-            *(f"reference decisions blocked: {reason}" for reason in reasons),
+            *(f"reference decisions blocked: {n} x {reason}" for reason, n in sorted(counts.items())),
         )
     sessions = [
         s

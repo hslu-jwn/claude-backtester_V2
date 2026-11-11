@@ -531,6 +531,10 @@ to one candle and contiguous windows; freshness is mandatory. UTC timestamps, un
 declarations and an exact match between declarations and supplied series are validated.
 Retained snapshots cannot advance or query a future time.
 
-This increment adds no production strategy, CLI/grid support, dependency manifest or
-decision-journal artifact. Those research/artifact changes belong to Delivery 1b;
+Delivery 1b (2026-11-11): a strategy declares its own inputs in
+`MarketAwareStrategy.references` (from its config); `_load` uses them when no explicit
+`references` are passed, so `run.py`, `run_backtests` and the research runner's
+`iter_symbol_runs` path load them alike. Research pieces, the dataset manifest and the
+blocked-decision counts are in `docs/research-runner.md` › Reference symbols. Still not
+built: a per-decision journal file and a UI dependency summary (run notes show the inputs);
 linked execution and portfolio allocation remain outside this observation API.

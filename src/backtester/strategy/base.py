@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from backtester.core.market import MarketView
+from backtester.core.market import MarketView, ReferenceInput
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
@@ -120,7 +120,11 @@ class MarketAwareStrategy(Strategy):
 
     Called at primary base closes even when references are unavailable, so incremental
     updates and protective exits continue. The engine blocks new entries in that case.
+    `references` is the strategy's own input declaration (built from its config); the
+    runner and the research runner load exactly these (Delivery 1b).
     """
+
+    references: tuple[ReferenceInput, ...] = ()
 
     def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
         raise RuntimeError("market-aware strategy requires on_market_candle")
