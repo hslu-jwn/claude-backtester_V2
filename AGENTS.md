@@ -37,14 +37,13 @@ Project rules for every model working in this repository (Claude, Codex, Gemini,
 
 A Python backtester and research platform for rule-based trading strategies. It replays
 historical M1 candles one at a time (no lookahead), runs the strategies in `strategy/`
-(9 so far: session zone sweep, NY index sweep, no-wick, Kaufman trend following, gap fade,
-opening-range breakout, gap momentum, London fix reversal, alternating M15 path), simulates trades in **R multiples** with real costs
+(list: `strategy/registry.py`), simulates trades in **R multiples** with real costs
 and swap, and turns them into account results (balance, drawdown, Monte Carlo, FTMO /
 prop-firm pass probability). A research runner sweeps variants with a fixed data split
 (develop before 2021-09-14, test once on MT5 data after) and a trial log. Results show in a
 Dash app with a TradingView Lightweight Charts chart.
 
-Data: MetaTrader 5 (FTMO) M1 history in `data/cache/mt5/` (26 symbols, preferred day by day),
+Data: MetaTrader 5 (FTMO) M1 history in `data/cache/mt5/` (symbols: `python -m backtester.tools.mt5_info`, preferred day by day),
 histdata.com M1 files for older years, Binance BTC / ETH futures. Live: a demo-only forward
 test bot on the FTMO demo (`live/`). Goal of V2: a library of research-based strategies and a
 portfolio of them that balances itself across market regimes.
@@ -56,14 +55,7 @@ All trading rules live in `docs/`. Code implements them; it does not reinterpret
 | File | Contents |
 |---|---|
 | `docs/confluences.md` | Swings, trend, BOS, strong-move filter, zone validation, FVG, OB, breaker, BPR, equilibrium, SMT |
-| `docs/strategy-session-zones.md` | Strategy 1: sessions, session zones, entry sequence, SL/TP, backtest options |
-| `docs/strategy-ny-indices.md` | Strategy 2: NY Open index sweep (NAS100/US500, AM/PM windows), entry funnel, SL/TP, backtest options |
-| `docs/strategy-no-wick.md` | Strategy 3: no-wick candle in the trend (timeframes, trend source, entry modes, SL at swing, 1R), backtest options |
-| `docs/strategy-trend-following.md` | Strategy 4: trend following after Kaufman (breakout / SMA + band / momentum / KAMA / Dunnigan, ATR stop, stop-and-reverse, no TP) |
-| `docs/strategy-gap-fade.md` | Strategy 5: fade the index cash-open gap (0.1-1 ATR) to the previous close, stop at the mirror level, exit 16:00 (ROADMAP 11.4) |
-| `docs/strategy-opening-range.md` | Strategy 6: opening-range breakout (range / ATR band, session-end exit, narrow-range and tick-volume filters) (ROADMAP 11.10) |
-| `docs/strategy-gap-momentum.md` | Strategy 7: gap momentum (opening gap beyond the prior range, day trade) |
-| `docs/strategy-alternating-path.md` | Strategy 9: alternating M15 close path, follow/fade last change, prior ATR stop, 30/60-minute exit |
+| `docs/strategy-*.md` | One spec per strategy or hypothesis family; the strategy list is `strategy/registry.py` |
 | `docs/research-runner.md` | Research runner: data split, grids, scorecard, flags, trial log |
 | `docs/live-trading.md` | Phase 7.2: demo forward test (automatic demo orders, risk 0.25 %, daily stop, Live page, Telegram) |
 | `docs/risk-management.md` | FTMO rules, risk guidelines, `risk/` components, risk UI page |
@@ -79,8 +71,11 @@ a researched idea, written into a `docs/` spec. The loop runs automatically (the
 2026-10-28): an unclear point is decided by Opus and recorded as an assumption in the spec;
 specs need no user approval; the one-time MT5 test still needs the user's go.
 
-- If a rule is **ambiguous or contradicts another rule, stop and ask** the user. Never guess
-  a trading rule. Quote the spec line you are unsure about.
+- **Per mode (review A4, the user 2026-11-11):** in `Continue.Research` an unclear point in a
+  spec Opus writes is decided by Opus and recorded as an assumption (above). Everywhere else
+  (`Continue.Code`, direct work, any existing spec or rule): if a rule is **ambiguous or
+  contradicts another rule, stop and ask** the user. Never guess a trading rule. Quote the spec
+  line you are unsure about.
 - If the user changes a rule, update the spec in `docs/` in the same commit as the code.
 - Reference the spec section in docstrings (e.g. `Spec: confluences.md › Order block`).
 
@@ -136,7 +131,7 @@ python -m backtester.data.histdata data/raw/histdata/  # import histdata files (
 python -m backtester.tools.check XAUUSD GBPUSD GBPJPY NAS100 US500  # data check report (gaps, broken candles, spot check)
 python -m backtester.run XAUUSD GBPUSD --start 2026-09-01 --end 2026-09-30  # backtest -> results/<run-id>/
 python -m backtester.run NAS100 US500 --start 2026-09-01 --end 2026-09-30 --strategy ny_index_sweep  # strategy 2
-python -m backtester.tools.research research/grids/orb.toml [--dev-only] [--retest]  # research runner (docs/research-runner.md)
+python -m backtester.tools.research research/grids/orb.toml [--test | --retest]  # research runner; development only unless --test (docs/research-runner.md)
 pip install -e ".[mt5]"           # MetaTrader5 + keyring (Windows only, optional)
 python -m backtester.tools.mt5_info      # FTMO symbol names + specs, server clock -> results/trading.json
 python -m backtester.tools.feed_compare  # FTMO vs histdata cache, FTMO spreads -> results/feed_compare/
@@ -164,7 +159,8 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
 
 - Work in small steps: one detector or component per change, tests green, then commit.
 - The user names steps by their ID in `docs/ROADMAP.md` (e.g. "do 1.2"). Do only that step,
-  then stop and tell the user how to check it (which command, what to look at on the chart).
+  then stop and tell the user how to check it (which command, what to look at on the chart) and
+  propose the next step (CLAUDE.md never-idle; `Continue.Research` runs on by itself).
   Mark the step ☑ in ROADMAP.md in the same commit once the user has confirmed it.
 - Visual steps (chart, overlays) are only done when the user has looked at them. Start the
   app for them and say what they should see.

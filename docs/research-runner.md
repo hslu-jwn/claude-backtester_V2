@@ -139,7 +139,10 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
 
 - **Development:** from the first cached day to **2021-09-13**. All variants run here.
 - **Test:** from **2021-09-14** to the last cached day (MT5 preferred day by day, `DEFAULT_SOURCES`).
-  Only the **single best development variant** runs here, **once**.
+  Only the **single best development variant** runs here, **once**, and only when the CLI gets
+  `--test` (or `--retest`): the test is opt-in, a bare call is development only and `--dev-only` is
+  still accepted (rule from review B2, accepted by the user 2026-11-11; `--test` and `--dev-only`
+  together are refused). Only the one-time test with the user's go uses `--test`.
 - A second test run of the same grid (same strategy, symbols, grid and base) is refused unless `--retest`
   is given; a retest is recorded in the trial log as such.
 - **Exception, costs only:** the median spread table fills years it has no measurement for from the
@@ -758,6 +761,9 @@ python -m backtester.tools.lanes check <name>
 python -m backtester.tools.lanes remove <name> [--force]
 ```
 
+**After a lane merge (review A10, the user 2026-11-11):** `lanes remove <name>` and
+`git branch -d lane/<name>` are the last step of the merge commit's session; no merged lane stays.
+
 - **create** runs `git worktree add <V2 parent>/bt-lane-<name> -b lane/<name>` from the
   current commit and registers the lane in `lanes.json` in the V2 root (git-ignored; entries
   `name`, `path`, `branch`, `base_commit`, `created`). Nothing from `data/` or `results/` is
@@ -781,3 +787,23 @@ python -m backtester.tools.lanes remove <name> [--force]
 
 Queue use: `queue add --cwd <name> -- backtester.tools.research_pipeline research/grids/<name>.toml`
 runs in the lane. None of these commands switches the branch checked out in the V2 root.
+
+## Ledger (`research/ledger.csv`; review A1, the user 2026-11-11)
+
+One committed file holds every idea and hypothesis from "harvested" to "confirmed": the single
+count behind the multiple-testing thresholds and the one place to answer "was X tested?". One row
+per idea or hypothesis (a parameter cell is not a row; a changed rule is a new row).
+
+- **Columns:** `id, stage, family, name, mechanism, source, symbols, cells, period, trades,
+  gross_r, cost_r, net_r` (R per trade, development unless the column says test), `test_spent`
+  (no / yes + date / "not clean"), `verdict`, `spec`, `kill_criterion` (written before any data is
+  looked at), `date`, `notes`.
+- **Stages:** harvested, verified, parked, rejected, carded, proposed, screened, specced,
+  dev_tested, tested, confirmed.
+- **Who writes it:** the session that moves an idea to a new stage, in the same commit as the
+  spec / result. Results stay in the spec's Results section too; HANDOFF and
+  `knowledge/topics/cost-wall.md` point here instead of copying numbers.
+- Backfilled 2026-11-11 from cost-wall §1, the specs and HANDOFF (strategies 1-13, hypotheses
+  1-15, C1-C3, the two calendar screens, the lead-lag and pair specs, review D1-D5). Values marked
+  n/a were not in the sources.
+

@@ -683,14 +683,26 @@ def test_trial_log_gets_every_variant_and_the_test(tmp_path, fakes):
 def test_main_exit_codes_and_messages(tmp_path, fakes, capsys):
     path = write_grid(tmp_path)
     out_dir = ["--results-dir", str(tmp_path / "results")]
-    assert research.main([str(path), *out_dir]) == 0
-    assert research.main([str(path), *out_dir]) == 2  # the test is spent
+    assert research.main([str(path), *out_dir, "--test"]) == 0
+    assert research.main([str(path), *out_dir, "--test"]) == 2  # the test is spent
     assert "--retest" in capsys.readouterr().err
     assert research.main([str(path), *out_dir, "--retest"]) == 0
     bad = write_grid(tmp_path, GRID.replace("range_minutes", "range_minute"), "bad.toml")
     assert research.main([str(bad), *out_dir]) == 2
     assert "range_minutes" in capsys.readouterr().err
     assert research.main([str(tmp_path / "missing.toml"), *out_dir]) == 2
+
+
+def test_main_without_test_flag_keeps_the_test_unspent(tmp_path, fakes):
+    """Review B2 (2026-11-11): the one-time test is opt-in; a bare call is development only."""
+    path = write_grid(tmp_path)
+    out_dir = ["--results-dir", str(tmp_path / "results")]
+    assert research.main([str(path), *out_dir]) == 0
+    info = json.loads(next((tmp_path / "results" / "research").glob("*/research.json")).read_text())
+    assert info["test"]["status"] == "not_run"
+    assert research.main([str(path), *out_dir, "--dev-only"]) == 0  # still accepted
+    with pytest.raises(SystemExit):
+        research.parse_args([str(path), "--test", "--dev-only"])
 
 
 def test_trial_log_follows_the_results_dir(tmp_path, fakes):

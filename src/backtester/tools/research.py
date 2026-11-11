@@ -1,9 +1,9 @@
 """Research runner: many variants of one strategy idea, one test run for the best.
 
-    python -m backtester.tools.research research/grids/orb_example.toml
-    python -m backtester.tools.research research/grids/orb_example.toml --workers 4
-    python -m backtester.tools.research research/grids/orb_example.toml --dev-only
-    python -m backtester.tools.research research/grids/orb_example.toml --retest
+    python -m backtester.tools.research research/grids/orb.toml              # development only
+    python -m backtester.tools.research research/grids/orb.toml --workers 4
+    python -m backtester.tools.research research/grids/orb.toml --test       # + the one-time test
+    python -m backtester.tools.research research/grids/orb.toml --retest
 
 Spec: research-runner.md (ROADMAP 6.1 + 6.2; rules set by the user, 2026-10-21). The grid file
 (`tools/research_grid.py`) names the strategy, the symbols and the settings to sweep.
@@ -12,9 +12,10 @@ Spec: research-runner.md (ROADMAP 6.1 + 6.2; rules set by the user, 2026-10-21).
    2021-09-13). Resumable: a finished variant (`variants/<id>/scorecard.json`) is not run again.
 2. Selection: ranked by net R of the development period; only variants with at least
    `min_trades` development trades are ranked. The top one is the chosen variant.
-3. Test: the chosen variant runs once on 2021-09-14 up to the last cached day. A second test of
-   the same grid (same strategy, symbols, base and variants) is refused without `--retest`;
-   `--dev-only` stops after the selection and keeps the test unspent.
+3. Test: only with `--test` (or `--retest`; review B2, 2026-11-11: opt-in, a bare call stops
+   after the selection and keeps the test unspent; `--dev-only` is still accepted). The chosen
+   variant runs once on 2021-09-14 up to the last cached day. A second test of the same grid
+   (same strategy, symbols, base and variants) is refused without `--retest`.
 
 Written to `results/research/<id>/` (id = grid file name + a hash of what is tested):
 - `research.json`  grid, periods, symbols, variant count, seed, chosen variant, test status;
@@ -1414,8 +1415,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="worker processes (default: all CPUs but one)")  # fmt: skip
     p.add_argument("--retest", action="store_true",
                    help="allow a second test run of this grid (recorded in the trial log)")  # fmt: skip
-    p.add_argument("--dev-only", action="store_true",
-                   help="development and selection only; the test stays unspent")  # fmt: skip
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--test", action="store_true",
+                      help="also run the one-time test of the chosen variant (opt-in)")  # fmt: skip
+    mode.add_argument("--dev-only", action="store_true",
+                      help="the default: development and selection only, the test stays unspent")  # fmt: skip
     p.add_argument("--cache-dir", type=Path, default=None,
                    help="read every grid symbol from this cache folder")  # fmt: skip
     p.add_argument(
@@ -1442,7 +1446,7 @@ def main(argv: list[str] | None = None) -> int:
             sources = SymbolSources.single(args.cache_dir, symbols)
         out = run_research(
             args.grid, results_dir=args.results_dir, workers=args.workers, retest=args.retest,
-            dev_only=args.dev_only, walk_forward=args.walk_forward, sources=sources,
+            dev_only=args.dev_only or not (args.test or args.retest), walk_forward=args.walk_forward, sources=sources,
         )  # fmt: skip
     except (GridError, ResearchError) as e:
         print(f"error: {e}", file=sys.stderr)
