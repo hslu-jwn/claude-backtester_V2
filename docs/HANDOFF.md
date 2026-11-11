@@ -49,9 +49,10 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    or folds them into swap. Web lookup 2026-11-11 (approved, one search + one fetch): no FTMO page
    states the rule. The search summary claimed "dividends folded into swap for rolling index
    contracts since 2026-01-30", but its only FTMO link (ftmo.oanda.com home page) does not say so:
-   UNVERIFIED. General CFD practice (Dukascopy): longs credited, shorts debited. Next: ask FTMO
-   support, fetch `ftmo.oanda.com/simulated-assets/`, or hold an index position across a known
-   ex-date on the demo.
+   UNVERIFIED. General CFD practice (Dukascopy): longs credited, shorts debited. Second fetch
+   (`ftmo.oanda.com/simulated-assets/`): no dividend or swap text (spec table not in the page text).
+   Next: ask FTMO support, read `trading-updates/` or the FAQ, or hold an index position across a
+   known ex-date on the demo.
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
 4. **Harvest web access:** a one-line probe of Codex web search (or Gemini) before any batch; then
