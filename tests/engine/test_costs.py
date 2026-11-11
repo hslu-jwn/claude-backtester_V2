@@ -148,3 +148,21 @@ def test_existing_five_symbols_are_unchanged():
     assert DEFAULT_SYMBOL_COSTS["GBPJPY"].quote_to_usd == pytest.approx(1 / 150.0)
     assert DEFAULT_SYMBOL_COSTS["NAS100"].spread == 1.9
 
+
+
+# --- review B9 (the user, 2026-11-11): USD-base pairs convert the fixed commission at the price --
+
+
+@pytest.mark.parametrize("symbol, price", [("USDCHF", 0.95), ("USDJPY", 110.0), ("USDCAD", 1.30)])
+def test_usd_base_commission_uses_one_over_the_price(symbol, price):
+    cfg = CostConfig()
+    per_lot = cfg.for_symbol(symbol).commission_per_lot
+    expected = per_lot * price / 100_000  # a lot is 100,000 USD: USD -> quote units at the price
+    assert cfg.commission_price(symbol, price) == pytest.approx(expected)
+    assert cfg.commission_r(symbol, 2 * expected, entry=price) == pytest.approx(0.5)
+
+
+def test_non_usd_base_commission_keeps_the_fixed_rate():
+    cfg = CostConfig()
+    k = cfg.for_symbol("GBPUSD")
+    assert cfg.commission_price("GBPUSD", 1.25) == pytest.approx(k.commission_per_lot / 100_000)

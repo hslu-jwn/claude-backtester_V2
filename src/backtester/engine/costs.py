@@ -451,8 +451,17 @@ class CostConfig:
         if not self.commission_enabled:
             return 0.0
         costs = self.for_symbol(symbol)
-        fixed = costs.commission_per_lot / costs.value_per_price_unit
+        fixed = self._fixed_commission_price(symbol, costs, price)
         return fixed + self._pct_price(costs, price, price)
+
+    @staticmethod
+    def _fixed_commission_price(symbol: str, costs: SymbolCosts, price: float) -> float:
+        """Per-lot commission in price units. A USD-base pair's lot is `contract_size` USD, so
+        USD converts to quote units at the trade's price, not at today's fixed rate (review B9,
+        the user 2026-11-11). Spec: risk-management.md > Costs."""
+        if price > 0 and len(symbol) == 6 and symbol.startswith("USD"):
+            return costs.commission_per_lot * price / costs.contract_size
+        return costs.commission_per_lot / costs.value_per_price_unit
 
     @staticmethod
     def _pct_price(costs: SymbolCosts, entry: float, exit_price: float) -> float:
@@ -485,7 +494,7 @@ class CostConfig:
         fixed, pct = 0.0, 0.0
         if self.commission_enabled:
             costs = self.for_symbol(symbol)
-            fixed = costs.commission_per_lot / costs.value_per_price_unit
+            fixed = self._fixed_commission_price(symbol, costs, price)
             pct = costs.commission_pct_per_side
             if pct and entry_fill <= 0:
                 raise ValueError("a percentage commission needs the entry price")
@@ -508,7 +517,7 @@ class CostConfig:
         if not self.commission_enabled:
             return 0.0
         costs = self.for_symbol(symbol)
-        fixed = costs.commission_per_lot / costs.value_per_price_unit
+        fixed = self._fixed_commission_price(symbol, costs, entry)
         exit_notional = entry if exits is None else sum(share * px for share, px in exits)
         return (fixed + self._pct_price(costs, entry, exit_notional)) / risk
 
