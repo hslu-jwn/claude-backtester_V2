@@ -61,12 +61,15 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-1. **Multi-symbol step 1b** (`docs/design/multi-symbol.md` › Delivery 1b; Codex sol), then build and run
-   the five pre-registered lead-lag strategies (14 `us_close_de_open` first), development only.
+1. **Strategy 14 development run** (paused by the user 2026-11-12, "run it once we continue"): 1b,
+   strategy 14 and its gates tool are built and pushed (042d1c0), nothing run yet. Run
+   `research/grids/us_close_de_open.toml` and `us_close_de_open_uk.toml` (development only), then
+   `python -m backtester.tools.us_close_de_open_gates <GER40 folder> --breadth-folder <UK100 folder>`;
+   Test=manual. Then the other four lead-lag strategies.
 2. Review items left (ROADMAP V2.10): A3 one gates tool from a `[gates]` table (Codex sol), A9 results
    out of the specs into the ledger (terra), shrink the three slowest tests (terra).
 
 ## First prompt for the next chat
 
-`Continue.Code` for multi-symbol step 1b (answer Open 2-4 when convenient), then `Continue.Research`
-(Test=manual) for the lead-lag strategies.
+`Continue.Research` (Test=manual): strategy 14 development run + gates first (answer Open 2-4 when
+convenient).
