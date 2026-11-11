@@ -1,5 +1,7 @@
 # Agent routing (rule set by the user, 2026-11-02; replaces the 2026-10-22 team rules)
 
+Model IDs live only in this file (CLAUDE.md, AGENTS.md and the skills point here).
+
 Goal: the cheapest method that reliably does the task. Escalate on a demonstrated failure, never
 by habit. One coordinator at a time; no review chains by default.
 
@@ -30,15 +32,14 @@ by habit. One coordinator at a time; no review chains by default.
 | Mechanical edits (renames, labels, doc sync, pinning tests) | Codex `--model gpt-reserve` low, or Claude subagent `haiku` | 2026-10-28 |
 | Routine code from an exact brief (tools, reports, UI glue) | Codex `gpt-6.1-terra` medium (dispatcher default) | 2026-11-02 |
 | Engine / no-lookahead / risk, a new strategy from a spec, hard bugs | Codex `--model gpt-6.1-sol` medium, high only when needed | 2026-10-29 |
-| Codex failed twice at sol | Claude subagent `sonnet` (no Astra: OpenAI flagship, no access) | in-session |
+| Codex failed twice at sol | small task: Claude subagent `sonnet`; heavy build: stop, report, wait for the Codex reset (2026-11-10) | in-session |
 | Quick bounded fixes, short text tasks | `ai_dispatch groq` (`openai/gpt-oss-120b`; also `--model qwen/qwen3.8-27b`), free tier | 2026-11-02 |
 | Long-text extraction, summaries | `ai_dispatch openrouter` (`nvidia/nemotron-3-ultra-550b-a55b:free`; also `cohere/north-mini-code:free`); only `:free` models accepted | 2026-11-02 |
 | Docs / look-ups when the agy quota is out | `ai_dispatch gemini-api` (`gemini-3.8-flash`; also `gemini-flash-lite-latest`), AI Studio free tier | 2026-11-02 |
-| Hard logic check, independent second analysis | `ai_dispatch groq` or `gemini-api` (free); DeepSeek direct needs `--allow-paid` and a balance | not enabled |
+| Hard logic check, independent second analysis | `ai_dispatch groq` or `gemini-api` (free) | 2026-11-02 |
 | Complex debugging that needs the chat context | Claude subagent `sonnet` medium | in-session |
 | Docs / method look-ups, short research summaries | `ai_dispatch gemini --effort low/medium` (Flash 3.8) | 2026-11-02 |
 | Large log / long text extraction | local tools first, then `ai_dispatch local` | 2026-11-02 |
-| Independent second opinion on a high-risk change | `ai_dispatch claude46 --effort medium` (small weekly quota) | 2026-10-29 |
 
 **Hosted APIs** (OpenAI chat format, text only: no tools, no file access). Keys live only in
 the Windows Credential Manager (generic credential `<provider>@backtester-ai`, user name
@@ -46,10 +47,8 @@ the Windows Credential Manager (generic credential `<provider>@backtester-ai`, u
 - groq, openrouter, gemini-api: working; defaults set in `ai_dispatch` (`Provider.model`).
 - openrouter free models are often rate-limited upstream (`google/gemma-4-31b-it:free` gave 429):
   exit 4, try another `:free` model, never a paid one. The free list has no DeepSeek model.
-- deepseek: key valid, account has no balance (HTTP 402); paid per token, so it also needs
-  `--allow-paid`.
-- GitHub Models: not enabled; `models.github.ai` answered a plain "OK" to every request, even
-  without a token, so no real API response reached this PC.
+- Not routed (review A7, the user 2026-11-11): DeepSeek (no balance, paid), GitHub Models (answered
+  "OK" to everything), `claude46` (agy weekly quota too small to plan on).
 - Not used: LiteLLM (one stdlib HTTP call covers every provider), Cerebras (no recurring free
   tier).
 Free tiers may log or train on prompts: send excerpts of our own code and logs only, never

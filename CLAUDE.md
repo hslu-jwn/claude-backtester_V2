@@ -64,19 +64,19 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   half-finished stays uncommitted.
 - **`End.`:** the user accepts everything done so far. Full tests + ruff (report failures
   honestly, record known issues), mark finished steps ☑ in the ROADMAP, write decisions into
-  `docs/`, rewrite `docs/HANDOFF.md` (state, accepted, open, next step), commit, push, clean
-  `git status`. Reply in max 10 lines: done, not done, decisions, next step, first prompt for
+  `docs/`, rewrite `docs/HANDOFF.md` (state, accepted, open, next step; about 60 lines, closed
+  items live in git), copy `results/trials.jsonl` to `research/trials.jsonl` (the trial count is
+  versioned, review B7), move finished briefs to `docs/archive/briefs/` (review A10; rules set by
+  the user 2026-11-11), commit, push, clean `git status`. Reply in max 10 lines: done, not done, decisions, next step, first prompt for
   the next chat.
 - **During any session:** when the user says ok / yes, it is final: write it into the repo in
   the same commit (rule -> `docs/` "(rule set by the user, <date>)"; accepted -> ROADMAP
   "accepted by the user <date>"). Never ask about it again.
-- **Telegram default (rule set by the user, 2026-11-10):** send a message when a promising strategy
-  is found (passed its pre-registered gates) or when the session has been waiting for the user for
-  more than 5 minutes; this replaces "no Telegram" from earlier runs.
-- **Telegram** (`live/telegram.py`, token from the Windows Credential Manager) only for: a
-  decision on rules / defaults / risk, a blocker Codex can't solve, a crash or long pause of
-  the loop / queue, a very promising strategy; plus one short evening summary while research
-  runs. Send with `python -m backtester.tools.notify "<text>"`. A very promising strategy
+- **Telegram (the one rule; rules set by the user 2026-11-10, merged 2026-11-11, review A4)**
+  (`live/telegram.py`, token from the Windows Credential Manager): send when a strategy passes
+  every pre-registered development gate, when the session has waited for the user for more than
+  5 minutes, for a decision on rules / defaults / risk, a blocker Codex can't solve, or a crash or
+  long pause of the loop / queue; plus one short evening summary while research runs. Send with `python -m backtester.tools.notify "<text>"`. A very promising strategy
   (passed every pre-registered development gate) is sent right away as one message: name,
   symbols, trades, win rate, avg R, net R (doubled costs), profit factor, max drawdown R,
   dev period. A session waiting for the user is announced by the user-level `Notification`

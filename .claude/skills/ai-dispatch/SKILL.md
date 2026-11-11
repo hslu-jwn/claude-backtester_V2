@@ -17,15 +17,13 @@ local tool (pytest, ruff, rg, a script) does it, do not dispatch.
 .venv/Scripts/python -m backtester.tools.ai_dispatch stats
 ```
 
-- **codex**: default `gpt-6.1-terra`; `--model gpt-6.1-sol` for engine / no-lookahead / risk /
-  new strategies / hard bugs; `gpt-reserve` for mechanical edits. No Astra (no access).
+- **codex**: model per task from `docs/agent-routing.md` (the only place for model IDs).
   Shell mode: edits files and runs pytest / ruff itself.
-- **groq / openrouter / gemini-api / deepseek**: hosted chat APIs, text only, key from the
-  Credential Manager; each has a verified default model. OpenRouter accepts only `:free` models; deepseek direct needs `--allow-paid`.
+- **groq / openrouter / gemini-api**: hosted chat APIs, text only, key from the Credential
+  Manager; each has a verified default model. OpenRouter accepts only `:free` models.
   Use only rows marked verified in the routing doc.
-- **gemini**: Flash 3.8 by effort; docs, look-ups, short summaries. **claude46**: Sonnet 4.6
-  (low / medium) or Opus 4.6 (high); only for a second opinion on a high-risk change.
-  Both share one small weekly agy quota.
+- **gemini**: docs, look-ups, short summaries (agy; one small weekly quota). `claude46` is not
+  routed (2026-11-11).
 - **local**: Ollama on this PC, zero paid tokens, text in / text out, no tools. Give it a
   filtered excerpt with `--brief`, never a whole log.
 - Write tasks need a clean tree or a lane worktree so the guard sees only the worker's changes.

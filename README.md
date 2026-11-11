@@ -32,6 +32,6 @@ Windows Credential Manager, never in a file. Orders are demo-only.
 ## Status
 
 Built: data import / check / update (histdata, MT5, Binance), chart with replay and
-overlays, detectors, 7 strategies, backtest engine with costs and swap, results page, risk
+overlays, detectors, the strategies in `strategy/registry.py`, backtest engine with costs and swap, results page, risk
 and FTMO simulation (sizer, account simulator, Monte Carlo, adaptive risk), research runner
 and Research page, portfolio tool, demo forward-test bot. Step status: `docs/ROADMAP.md`.
