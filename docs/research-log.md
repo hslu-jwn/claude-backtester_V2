@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-11: strategy 14 gates tool (Continue.Code; the user's go on U5-U6)
+
+- Codex `gpt-6.1-terra` medium, write, worktree `s14_gates` (brief `briefs/us-close-de-open-gates.md`):
+  `tools/us_close_de_open_gates.py` + 8 tests. Opus: review, BOM fix, runner saves reference cache dirs
+  in settings.json (the tool reads US500 through them). No run.
+
 ## 2026-11-11: strategy 14 `us_close_de_open` built (Continue.Code; the user's go on U1-U4)
 
 - Codex `gpt-6.1-sol` medium, write, lane `us_close_de_open` (brief `briefs/us-close-de-open-build.md`):

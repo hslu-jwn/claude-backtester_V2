@@ -6,7 +6,8 @@ First strategy that reads a **reference symbol** (US500) while trading another (
 `docs/design/multi-symbol.md` > A (opt-in `on_market_candle`, one execution symbol, reference data
 only through a snapshot bounded by the current engine time), using the reference-symbol API.
 Grids: `research/grids/us_close_de_open.toml` (GER40) and `us_close_de_open_uk.toml` (UK100).
-Development only, `--dev-only`; gates tool pending (U4), registry integration separate.
+Development only, `--dev-only`. Gates: `python -m backtester.tools.us_close_de_open_gates
+<GER40 research folder> --breadth-folder <UK100 research folder>` (writes `gates.json`).
 
 ## Source and prior
 
