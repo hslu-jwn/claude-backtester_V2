@@ -51,8 +51,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    contracts since 2026-01-30", but its only FTMO link (ftmo.oanda.com home page) does not say so:
    UNVERIFIED. General CFD practice (Dukascopy): longs credited, shorts debited. Second fetch
    (`ftmo.oanda.com/simulated-assets/`): no dividend or swap text (spec table not in the page text).
-   Next: ask FTMO support, read `trading-updates/` or the FAQ, or hold an index position across a
-   known ex-date on the demo.
+   Next: the user asks FTMO support (2026-11-11); Opus then adds the rule to the engine test-first.
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
 4. **Harvest web access:** a one-line probe of Codex web search (or Gemini) before any batch; then
