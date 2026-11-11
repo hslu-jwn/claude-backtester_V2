@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from backtester.core.market import MarketView
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import SeriesView
 from backtester.data.resample import H4Alignment
@@ -112,3 +113,20 @@ class Strategy(ABC):
         """What the strategy saw per session, JSON-ready, for the results file (ROADMAP
         3.4). Records still open end at `run_end`. Default: nothing."""
         return []
+
+
+class MarketAwareStrategy(Strategy):
+    """Explicit opt-in, single execution symbol. Spec: design/multi-symbol.md > A.
+
+    Called at primary base closes even when references are unavailable, so incremental
+    updates and protective exits continue. The engine blocks new entries in that case.
+    """
+
+    def on_candle(self, now: datetime, views: dict[Timeframe, SeriesView | None]) -> list[Order]:
+        raise RuntimeError("market-aware strategy requires on_market_candle")
+
+    @abstractmethod
+    def on_market_candle(
+        self, now: datetime, primary_views: dict[Timeframe, SeriesView | None], market: MarketView
+    ) -> list[Order]:
+        """Observe only closed reference candles; orders still belong to the primary."""

@@ -488,3 +488,49 @@ and risk sweeps. `python -m backtester.tools.gap_bucket_study --mode index` (or
 `--mode fx`) produces gap-bucket analytics independently of strategy backtests.
 Previous per-strategy sweep executables were removed after four identical
 old/new development results; migration evidence is in `results/gm3_*.log`.
+
+## Reference symbols (bounded observations)
+
+Spec: `design/multi-symbol.md` > A / Delivery 1a. A strategy opts in by extending
+`MarketAwareStrategy` and implementing `on_market_candle(now, primary_views, market)`.
+Its orders still execute only on the primary symbol, with the existing fills, costs,
+stops and R accounting. Existing strategies continue through `on_candle` unchanged.
+
+The Python runner accepts an explicit `references=tuple[ReferenceInput, ...]` in
+`run_backtests`. Each frozen declaration includes symbol/role, timeframes (including
+M1 for coverage), daily boundary, H4 alignment, warm-up/full-history requirements,
+calendar, freshness limit and readiness policy. Dependencies load through
+`SymbolSources`/`DataAdapter` in a job-local bundle separate from the legacy series
+cache. Missing day blocks remain gaps. Legacy daily loading remains UTC; reference
+daily bars can explicitly request `DayBoundary.NEW_YORK_17`.
+
+The engine alone advances `MarketReplay` at primary base-candle closes. It batches
+all intervening reference closes before publishing an immutable `MarketView`, which
+contains read-only `views[symbol][timeframe]`, `availability` and `newly_closed` mappings.
+Views are `None` before the first close; afterwards they remain bounded `SeriesView`
+snapshots. Higher-timeframe views use `HigherTimeframeClock.view_at(now)`. A strategy
+feeds each intervening candle to its own incremental detectors with
+`market.views[symbol][tf].at(i)` for each index in `market.newly_closed[symbol][tf]`.
+Reference-only closes cannot trigger primary callbacks or fills.
+
+Availability records status, readiness, cursor, last close time, age and reason.
+The explicit IANA calendar supports local sessions, overnight sessions, holidays,
+weekdays and scheduled breaks. No exchange holiday calendar is inferred. Missing
+history, exceeded freshness limits and incomplete declared observation windows block
+new entries when the input is required. Contiguous higher-timeframe windows also
+require their expected M1 observations; a partially resampled bucket is insufficient.
+Scheduled closures may retain a sufficiently warmed observation with status `closed`;
+the strategy must decide whether that status and its actual age permit its signal.
+Optional inputs report their status without blocking the bundle.
+
+Callbacks and protective exits continue when `market.ready` is false, allowing causal
+detector updates. The engine discards new orders and records timestamped reasons in
+`Backtest.market_blocked`; the runner includes distinct reasons in the symbol's notes.
+`max_age` and `min_candles` apply to all timeframes in one declaration. Readiness defaults
+to one candle and contiguous windows; freshness is mandatory. UTC timestamps, unique
+declarations and an exact match between declarations and supplied series are validated.
+Retained snapshots cannot advance or query a future time.
+
+This increment adds no production strategy, CLI/grid support, dependency manifest or
+decision-journal artifact. Those research/artifact changes belong to Delivery 1b;
+linked execution and portfolio allocation remain outside this observation API.

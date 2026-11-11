@@ -38,15 +38,17 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 
+from backtester.core.market import require_utc
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries, SeriesView
 from backtester.data.news import Calendar, NewsConfig, matching_events
 from backtester.engine.costs import CostConfig
+from backtester.engine.market_replay import MarketReplay
 from backtester.engine.replay import Replay
 from backtester.engine.ticks import TickRoundingStats, round_level
 from backtester.engine.trade import ExitReason, OpenTrade, TradeResult
 from backtester.sessions import DEFAULT_SESSIONS, SessionConfig, next_session_start
-from backtester.strategy.base import Order, Strategy
+from backtester.strategy.base import MarketAwareStrategy, Order, Strategy
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +97,7 @@ def run_backtest(
     tick_rounding: TickRoundingStats | None = None,
     diagnostics_start: datetime | None = None,
     calendar: Calendar | None = None,
+    market: MarketReplay | None = None,
 ) -> list[TradeResult]:
     """Run `strategy` over `series` (one per timeframe it declares, same symbol)."""
     return Backtest(
@@ -105,6 +108,7 @@ def run_backtest(
         tick_rounding=tick_rounding,
         diagnostics_start=diagnostics_start,
         calendar=calendar,
+        market=market,
     ).run(progress)
 
 
@@ -119,7 +123,12 @@ class Backtest:
         tick_rounding: TickRoundingStats | None = None,
         diagnostics_start: datetime | None = None,
         calendar: Calendar | None = None,
+        market: MarketReplay | None = None,
     ):
+        if isinstance(strategy, MarketAwareStrategy) != (market is not None):
+            raise ValueError("market capability and market provider must be supplied together")
+        self._market = market
+        self.market_blocked: list[tuple[datetime, tuple[str, ...]]] = []
         by_tf = {s.timeframe: s for s in series}
         if len(by_tf) != len(series):
             raise ValueError("two series with the same timeframe")
@@ -128,6 +137,12 @@ class Backtest:
             missing.add(strategy.base_timeframe)
         if missing:
             raise ValueError(f"no series for {sorted(tf.name for tf in missing)}")
+        if market is not None:
+            if any(item.symbol == series[0].symbol for item in market.inputs):
+                raise ValueError("reference cannot be the execution symbol")
+            for history in series:
+                for candle in history._candles:
+                    require_utc(candle.ts)
         self._strategy = strategy
         strategy.configure_costs(config.costs)
         self._config = config
@@ -180,7 +195,16 @@ class Backtest:
                     still_open.append(trade)
             open_trades = still_open
             views = self._views(now, view)
-            orders = self._strategy.on_candle(now, views)
+            if self._market is None:
+                orders = self._strategy.on_candle(now, views)
+            else:
+                snapshot = self._market.advance(now)
+                orders = self._strategy.on_market_candle(now, views, snapshot)
+                if not snapshot.ready:
+                    self.market_blocked.append((now, snapshot.reasons))
+                    for order in orders:
+                        self._strategy.on_order_skipped(order.ref, now)
+                    orders = []
             open_trades = self._signal_exits(open_trades, candle, now, closed)
             for order in orders:
                 filled = self._fill(order, candle, now, pending_limits)

@@ -51,12 +51,13 @@ from pathlib import Path
 from types import MappingProxyType
 
 from backtester.analytics.metrics import summarize
+from backtester.core.market import ReferenceInput
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
 from backtester.data.adapters.base import DataAdapter
 from backtester.data.adapters.cache_adapter import MissingCacheError, candles_from_frame
 from backtester.data.news import execution_calendar
-from backtester.data.resample import DayBoundary
+from backtester.data.resample import DayBoundary, H4Alignment
 from backtester.data.sources import (
     DEFAULT_SOURCES,
     SymbolSources,
@@ -65,13 +66,20 @@ from backtester.data.sources import (
     warmup_start,
 )
 from backtester.detectors.settings import DetectorSettings
-from backtester.engine.backtest import DEFAULT_ENGINE, EngineConfig, Progress, run_backtest
+from backtester.engine.backtest import (
+    DEFAULT_ENGINE,
+    Backtest,
+    EngineConfig,
+    Progress,
+    run_backtest,
+)
+from backtester.engine.market_replay import MarketReplay
 from backtester.engine.spread_table import SpreadTable
 from backtester.engine.ticks import TickRoundingStats
 from backtester.engine.trade import TradeResult
 from backtester.paths import RESULTS_DIR
 from backtester.strategy.alternating_path.config import AlternatingPathConfig
-from backtester.strategy.base import UnsupportedSymbolError
+from backtester.strategy.base import MarketAwareStrategy, UnsupportedSymbolError
 from backtester.strategy.daily_reversal.config import DailyReversalConfig
 from backtester.strategy.energy_report.config import EnergyReportConfig
 from backtester.strategy.gap_fade.config import GapFadeConfig
@@ -192,6 +200,8 @@ class _Job:
     settings: RunSettings
     notes: tuple[str, ...]
     sources: SymbolSources = DEFAULT_SOURCES
+    references: tuple[ReferenceInput, ...] = ()
+    reference_series: tuple[CandleSeries, ...] = ()
 
     @property
     def base_candles(self) -> int:
@@ -229,7 +239,16 @@ def _load(
     settings: RunSettings,
     step: StepProgress | None = None,
     cache: SeriesCache | None = None,
+    references: Sequence[ReferenceInput] = (),
 ) -> _Job:
+    if references:
+        strategy = make_strategy(symbol, settings.strategy, settings.detectors)
+        if not isinstance(strategy, MarketAwareStrategy):
+            raise ValueError("references require an explicit market-aware strategy")
+        if symbol in {r.symbol for r in references}:
+            raise ValueError("reference symbol cannot be the execution symbol")
+        if len({r.symbol for r in references}) != len(references):
+            raise ValueError("duplicate reference declarations")
     cached = sources.covered_days(symbol)
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     in_range = [d for d in days if d in cached]
@@ -257,7 +276,49 @@ def _load(
         )
         for k, tf in enumerate(timeframes)
     )  # fmt: skip
-    return _Job(symbol, first, last, warm, series, settings, tuple(notes), sources)
+    reference_series = _load_references(sources, references, first, last, warm, step)
+    return _Job(symbol, first, last, warm, series, settings, tuple(notes), sources,
+                tuple(references), reference_series)
+
+
+def _load_references(sources, references, first, last, warm, step):
+    """Job-local bounded bundle, separate from SeriesCache's one-symbol eviction.
+
+    Spec: design/multi-symbol.md > Declared dependencies. Missing days remain gaps;
+    source adapters preserve weekly-closure classification and spanning-bar checks.
+    Full history starts only at the current contiguous warm-up block.
+    """
+    bundle = {}
+    for item in references:
+        adapter = sources.adapter(item.symbol)
+        covered = sources.covered_days(item.symbol)
+        begin = warmup_start(covered, first, max((first - warm).days, item.warmup_days))
+        history = cached_block(covered, first)[0] if first in covered else begin
+        for tf in item.timeframes:
+            start = history if tf in item.full_history else begin
+            key = (item.symbol, tf, item.boundary, item.h4_alignment, start, last, sources)
+            if key in bundle:
+                continue
+            days = sorted(d for d in covered if start <= d <= last)
+            blocks = []
+            for day in days:
+                if blocks and blocks[-1][1] + timedelta(days=1) == day:
+                    blocks[-1] = (blocks[-1][0], day)
+                else:
+                    blocks.append((day, day))
+            candles = []
+            for lo, hi in blocks:
+                frame = adapter.fetch_frame(
+                    item.symbol, tf, _midnight(lo), _midnight(hi + timedelta(days=1)),
+                    boundary=DayBoundary[item.boundary], h4=H4Alignment[item.h4_alignment],
+                    on_read=lambda _done, _total: step(1.0) if step else None,
+                )
+                for i in range(0, len(frame), LOAD.chunk_rows):
+                    candles.extend(candles_from_frame(frame.iloc[i:i + LOAD.chunk_rows]))
+                    if step:
+                        step(1.0)
+            bundle[key] = CandleSeries(item.symbol, tf, candles)
+    return tuple(bundle.values())
 
 
 class SeriesCache:
@@ -353,18 +414,29 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
     strategy = make_strategy(job.symbol, job.settings.strategy, job.settings.detectors)
     start, end = _midnight(job.first_day), _midnight(job.last_day + timedelta(days=1))
     tick_rounding = TickRoundingStats()
-    trades = run_backtest(
-        strategy,
-        job.series,
-        job.settings.engine,
-        progress,
-        intrabar_source=IntrabarSource(job.sources.adapter(job.symbol))
+    market = MarketReplay(job.references, job.reference_series) if job.references else None
+    kwargs = {
+        "intrabar_source": IntrabarSource(job.sources.adapter(job.symbol))
         if job.settings.engine.intrabar == "m1" and strategy.base_timeframe is not Timeframe.M1
         else None,
-        tick_rounding=tick_rounding,
-        diagnostics_start=start,
-        calendar=execution_calendar(job.settings.engine.news),
-    )
+        "tick_rounding": tick_rounding,
+        "diagnostics_start": start,
+        "calendar": execution_calendar(job.settings.engine.news),
+    }
+    blocked = []
+    if market is None:
+        trades = run_backtest(strategy, job.series, job.settings.engine, progress, **kwargs)
+    else:
+        backtest = Backtest(strategy, job.series, job.settings.engine, market=market, **kwargs)
+        trades = backtest.run(progress)
+        blocked = backtest.market_blocked
+    reference_notes = ()
+    if job.references:
+        reasons = sorted({reason for _, reasons in blocked for reason in reasons})
+        reference_notes = (
+            "reference inputs: " + ", ".join(r.symbol for r in job.references),
+            *(f"reference decisions blocked: {reason}" for reason in reasons),
+        )
     sessions = [
         s
         for s in strategy.session_records(run_end=end)
@@ -377,7 +449,7 @@ def _run_job(job: _Job, progress: Progress | None = None) -> SymbolRun:
         job.warmup_from,
         tuple(t for t in trades if t.entry_candle >= start),
         tuple(sessions),
-        (*job.notes, *tick_rounding.notes()),
+        (*job.notes, *tick_rounding.notes(), *reference_notes),
         tick_rounding,
     )
 
@@ -407,6 +479,8 @@ def run_backtests(
     workers: int | None = None,
     cancel: threading.Event | None = None,
     load_progress: Progress | None = None,
+    *,
+    references: Sequence[ReferenceInput] = (),
 ) -> RunResult:
     """The settings' strategy over `symbols` and the UTC days [start, end].
 
@@ -434,7 +508,8 @@ def run_backtests(
         loaded(i, 0.0)
         try:
             jobs.append(
-                _load(sources, s, start, end, settings, lambda share, i=i: loaded(i, share))
+                _load(sources, s, start, end, settings, lambda share, i=i: loaded(i, share),
+                      **({"references": references} if references else {}))
             )
         except (UnsupportedSymbolError, NoDataError, UnmappedSymbolError) as e:
             skipped.append((s, e))
