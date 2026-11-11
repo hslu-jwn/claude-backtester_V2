@@ -3,6 +3,8 @@
 Unbuilt strategy specifications drafted by the former research department (2026-10-27 to
 2026-11-06), copied here when research moved back into this team (the user, 2026-11-09).
 `Continue.Research` takes the next one from this list (skill `continue-research`).
+The 17 M15 drafts (all triaged out 2026-11-09) moved to `docs/archive/candidates/` and their
+R007-R024 review packets to `docs/archive/research-packets/` (review C, the user 2026-11-11).
 
 They are **inputs, not rules**: a candidate becomes a strategy only through a `docs/strategy-<name>.md`
 spec (rules quoted from the JSON, assumptions listed) and a pre-registered grid in

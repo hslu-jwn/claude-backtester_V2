@@ -1,7 +1,7 @@
 # Speed 2 completion report (2026-10-23)
 
 Compared `git show a2fa2b2 --stat` and its changes with
-`briefs/phase4-speed-2.md`, steps 4-6. All requested production changes were already
+`docs/archive/briefs/phase4-speed-2.md`, steps 4-6. All requested production changes were already
 implemented in that commit. No partly implemented or missing production item was
 found; no further production changes were needed. The remaining work was verification,
 measurement and this report. Acceptance and cross-review remain with Opus/the user.

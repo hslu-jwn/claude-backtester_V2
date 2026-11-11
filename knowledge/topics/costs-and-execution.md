@@ -81,7 +81,7 @@ Sources: RC ch.12 (Tables 34-36), ch.2 (Table 2). Idea link: I-52.
 - Pardo (engine accuracy, RP ch.5-6):
   - **Limit orders do not fill on a touch:** price must trade through by X ticks (his S&P example: 8); citing Kaufman, up to 30 %
     of limits stay unfilled, and the missed fills tend to be the winners. Report the share touched but not filled. Same rule as
-    Davey above; our engine fills limit entries and every take profit on a touch (verified 2026-10-23, `docs/review/book-app-requirements.md` A2).
+    Davey above; our engine fills limit entries and every take profit on a touch (verified 2026-10-23, `docs/archive/review/book-app-requirements.md` A2).
   - **Gapped stops and targets fill at the open:** a stop gapped through becomes a market order at the open (worse), a limit target
     gapped through fills at the open (better); trailing stops likewise. Report gap slippage separately: many stops filled at the
     open = a design weakness, limits gapped in our favour = a hidden strength.

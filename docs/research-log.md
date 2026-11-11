@@ -53,7 +53,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   G2 falsified. Gap listing: a scratchpad script calling `integrity_failures` per trade.
 - **Index screen (the user's go "Yes, download indices"):** histdata SPXUSD, NSXUSD, GRXEUR, UKXGBP,
   JPXJPY 2010-2014 downloaded (25 files, `data/raw/histdata_presample/`); two-stage screen pre-registered
-  in `briefs/index-clock-screen.md` (660 cells), run by Codex.
+  in `docs/archive/briefs/index-clock-screen.md` (660 cells), run by Codex.
   **Result: 0 survivors of 660** on 2010-11..2014 (index files start November 2010; no clock year
   excluded); nothing confirmed. Report `knowledge/research/reports/2026-11-09_index_clock_screen.md`.
 - **Calendar x clock screen (Codex terra, pre-registered `d1334e1`, definitions fixed before the run):**
@@ -62,7 +62,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   Report `knowledge/research/reports/2026-11-09_calendar_clock_screen.md`.
 - **Idea scan 4 (Gemini low):** nothing buildable (Breedon-Ranaldo = F1; dividend repatriation needs a
   dividend calendar; Toshin / life-insurer / holiday-asymmetry / DST unsourced). Next: pre-registered
-  two-stage calendar x clock screen (`briefs/calendar-clock-screen.md`, 792 cells, discover 2008-2014,
+  two-stage calendar x clock screen (`docs/archive/briefs/calendar-clock-screen.md`, 792 cells, discover 2008-2014,
   confirm 2015-2021, test period unspent), run by Codex.
 - **Gotobi one-time test (the user's go):** frozen one-cell grid `timed_hold_gotobi_test.toml`
   (dev reproduced +32.0 R); test 2021-09-14..2026-11-08 USDJPY +6.6 R, criterion 2 (bootstrap) fails:
@@ -210,7 +210,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - Validated and claimed (sha256 `d09d44b9...`), status IMPLEMENTING; five `ASSUMPTION_MADE`
   points sent (M15 buckets, ATR seed, data-integrity handling, R-only sizing, gates after the
   run); spec `docs/strategy-alternating-path.md` › Assumptions. Brief
-  `briefs/r014-alternating-path.md`.
+  `docs/archive/briefs/r014-alternating-path.md`.
 - Codex gpt-6.1-sol medium, 1 call: config, strategy, 75 tests, spec, 4-cell grid. Opus: runner
   config union, panel (fixed fields hidden, widget limit), tool symbol tables, golden list
   (2,511 trades, 2023). Full suite 5,225 passed; golden 9/9 identical.
@@ -221,9 +221,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
 ## 2026-11-02: finalization audit and V2.8 R1
 
-Opus (Claude Code, high effort) did the read-only audit (`docs/review/finalization-audit-2026-11-02.md`)
+Opus (Claude Code, high effort) did the read-only audit (`docs/archive/review/finalization-audit-2026-11-02.md`)
 and R1 itself (`live/` is Opus-only; 3 tests, about 25 lines). T1 (a test fixture) by Opus.
-U1 by Codex gpt-6.1-terra medium (`briefs/v28-u1-trade-pager.md`): first call hit the usage
+U1 by Codex gpt-6.1-terra medium (`docs/archive/briefs/v28-u1-trade-pager.md`): first call hit the usage
 limit (reset 21:36, the user chose to wait), second call done in ~5 min, inside the brief's
 files, tests green on Opus's run; no fix round.
 
@@ -264,7 +264,7 @@ have done).
 
 From now on this log records only the backtester side (experiments, intake, model usage).
 Research findings, sources and hypotheses live in `../Research_Department/knowledge_base/`.
-Reviewed their contract 0.1.0 (`docs/review/research-interface-review-2026-10-27.md`, Opus
+Reviewed their contract 0.1.0 (`docs/archive/review/research-interface-review-2026-10-27.md`, Opus
 medium, no code changed); both pilot drafts are not runnable in V2 today (stopless /
 notional, adjusted ETF data). Intake = ROADMAP V2.6i.
 

@@ -224,7 +224,7 @@ open-to-close; the published effect is close to close: Etula, Rinne, Suominen & 
 paper's day indexing is not re-checked here, so the rule below is defined on its own terms); McConnell & Xu (2008) about 15 bp per day over the 4-day
 window. Counted as a new hypothesis (9 hypotheses so far).
 
-- **Rule (needs `hold_days` / `month_day`, brief `briefs/timed-hold-multiday.md`):** long at the close of
+- **Rule (needs `hold_days` / `month_day`, brief `docs/archive/briefs/timed-hold-multiday.md`):** long at the close of
   the M1 candle closing at the cash close of the 4th-to-last trading day of the month; exit at the cash
   close of the 3rd trading day of the next month: the hold earns the returns of the last 3 and the first
   3 trading days of the month turn (6 trading days, about 8 nights). Stop 2 x daily ATR (primary) or 3 x (second cell); no target.

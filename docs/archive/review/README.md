@@ -1,6 +1,6 @@
 # V2.4 code review (2026-10-22)
 
-Codex (gpt-6.1-sol, high effort, read-only, `briefs/phase4-review.md`) reviewed every module;
+Codex (gpt-6.1-sol, high effort, read-only, `docs/archive/briefs/phase4-review.md`) reviewed every module;
 the raw findings with evidence are in the files here (`<module>.md`, numbered per module, e.g.
 `engine #2`). Opus triaged them. 84 findings: core 3, detectors 5, engine 11, risk 12,
 analytics 13, strategy 8, ui 11, live 21.

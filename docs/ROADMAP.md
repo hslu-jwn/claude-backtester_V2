@@ -23,7 +23,7 @@ where (updated 2026-11-03).
 - ☐ **3.7 Cross-check with the manual backtest** (Phase 3) — moved (the user, 2026-11-03): checks the
   code against a strategy's written rules, so it is done for a strategy once it survives research,
   before its MT5 test or live run (a week of its trades against the user's manual picks). Data / chart
-  check instead now: `docs/review/tradingview-check-2026-11-03.md`
+  check instead now: `docs/archive/review/tradingview-check-2026-11-03.md`
 - ☑ **4.3 UI layout and look review** (Phase 4) — Opus list, the user picked, V2.6 step (5), accepted by the user 2026-10-27
 - ☐ **5.1 RiskConfig + PositionSizer** (Phase 5)
 - ☐ **5.2 AccountSimulator** (Phase 5)
@@ -81,7 +81,7 @@ where (updated 2026-11-03).
   done; spread table measured 2026-10-25 (`results/spread_table.md`, median table: costs per
   trade +25 to +90 % at the index open, no-wick nearly x2; **default: the median table, set by
   the user 2026-10-26; re-evaluated after a period of demo trading (V2.4b)**); news-day split
-  moved to V2.4e, 2026-10-26) (audit 2026-10-23, `docs/review/backtest-audit.md`;
+  moved to V2.4e, 2026-10-26) (audit 2026-10-23, `docs/archive/review/backtest-audit.md`;
   audit asked for by the user 2026-10-23): T-10 Bayesian report, T-09 CPCV + PBO, T-19
   effective N, T-14 matched monkeys for every strategy, T-03 / 12.2 intrabar order from M1 (**done: default `engine.intrabar = "m1"`, set by the
   user 2026-10-24; golden net R 2023: session zones -484.9 -> -479.9, no-wick -1036.2 -> -959.7**);
@@ -90,17 +90,17 @@ where (updated 2026-11-03).
   items: sensitivity around the chosen variant, filter twins, SE of expectancy, time in
   market, expectation haircut. **Re-check 2026-10-28:** all of these are built (grid merge 2,
   4d9be45; spread table default bd5a125; news split in V2.4e); what is left of the audit is
-  listed in `docs/review/backtest-audit.md` › Re-check 2026-10-28 (mostly T-16 / T-17 and
+  listed in `docs/archive/review/backtest-audit.md` › Re-check 2026-10-28 (mostly T-16 / T-17 and
   partial checks), each needs the user's pick. **Picked by the user 2026-10-28, built the same
   day (Codex medium, Opus review; accepted by the user 2026-11-03):** #2 swept-setting count (flag
   `too_many_parameters` above 4), #6 entry screen of the chosen development variant in the
   runner (`entry_screen.json`, flag `entry_screen_failed`), #13 monthly returns slope
   (`returns_slope.csv`, flag `declining_returns` at t <= -2) and top-10 trades
-  (`top_trades.csv`); brief `briefs/v24c-runner-checks.md`.
+  (`top_trades.csv`); brief `docs/archive/briefs/v24c-runner-checks.md`.
 - ☑ **V2.4d Book requirements** (accepted by the user 2026-10-26; the tick-rounding default
   stays off until the user decides) (2026-10-23 / 24: items 1-9 done; open: the user's choice of
   the tick-rounding default, measured in `results/ticks.md`, built off) (accepted by the user 2026-10-23; Pardo, Masters, Aronson,
-  `docs/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
+  `docs/archive/review/book-app-requirements.md` with the code check), in this order: (1) keep the daily
   net R series of every variant (trial log / runner); (2) daily returns marked to market (open
   trades valued each day, not booked at exit); (3) take profits and limit entries fill only on
   penetration by a per-symbol distance: built as a setting first, its effect measured on the
@@ -116,7 +116,7 @@ where (updated 2026-11-03).
   V2.7): MCPT of the whole optimisation on permuted data (job queue), nested walk-forward
   for the portfolio's member selection.
 - ◐ **V2.4e Economic calendar: news-day split + blackout filter** (2026-10-28, accepted by the user: calendar wired into every run, scope = FTMO restricted events by default (`events="impact"` = all High), filter off by default (`docs/news.md`); synthetic build plus CSV-format addendum: loader validation, per-variant research split and settings/trial SHA256 persistence built; real-calendar validation pending;
-  `docs/news.md`; not accepted; decisions by the user, 2026-10-26) — the news part of V2.4c and audit item "News" (`docs/review/backtest-audit.md`).
+  `docs/news.md`; not accepted; decisions by the user, 2026-10-26) — the news part of V2.4c and audit item "News" (`docs/archive/review/backtest-audit.md`).
   Data: `../backtester-news/` (`economic_events_2020_to_2026-10-25.csv`, 9,836 High / Medium
   events 2020-01-02 .. 2026-10-23, `implementation_instructions.md`, `coverage_report.md`,
   `source_manifest.csv`). **Blocked: the data needs fixing first** (Opus check 2026-10-26,
@@ -154,7 +154,7 @@ where (updated 2026-11-03).
   Not in scope: the live bot (needs a live calendar source), 2015-2019 (raw Forex Factory
   cache goes back to 2007 if wanted later). **Rule set by the user, 2026-10-26:** Opus may
   use `../backtester-news/` and implement V2.4e in the repo once it is due (no extra ask).
-- ◐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23; **decided by the user 2026-10-28** after `docs/review/fill-analysis-2026-10-28.md`: keep the current model slippage as the default (the measured median is at or below it), and once London fills are in use the measured p90 per symbol as the stressed cost level of the robustness report instead of the flat costs x 1.5; open: London fills, then build it): slippage is
+- ◐ **V2.4b Slippage from the demo fills** (rule set by the user, 2026-10-23; **decided by the user 2026-10-28** after `docs/archive/review/fill-analysis-2026-10-28.md`: keep the current model slippage as the default (the measured median is at or below it), and once London fills are in use the measured p90 per symbol as the stressed cost level of the robustness report instead of the flat costs x 1.5; open: London fills, then build it): slippage is
   always applied, no on/off switch (most realistic scenario); measure it per symbol from the
   demo bot's fills (fill price vs the order's signal / stop price, `results/live/`) and set the
   `SymbolCosts.slippage` defaults from it; until then the current presets (~half the spread)
@@ -177,9 +177,9 @@ where (updated 2026-11-03).
   on MT5 data only when the pipeline is ready, user 2026-10-26): strategy 4 trend following
   on GBPJPY; gap fade (5) and gap momentum (7) in quiet sideways markets.
   **Build order accepted by the user 2026-10-26:** (1) ☑ job queue + temperature guard +
-  trial-log lock (`briefs/v26a-job-queue.md`; built 2026-10-26: `python -m backtester.tools.queue`,
-  `docs/research-runner.md` › Job queue; accepted by the user 2026-10-26; open: LibreHardwareMonitor install); (2) ☑ data fixes 13.12-13.16, 13.18 (built 2026-10-26, cache rebuilt through the queue, 100 jobs; `briefs/v26b-report.md`, `results/clock_check_*.md`; histdata clock 2015-2018, MT5 server clock per date through 2021-09-13 (2010-2014 dropped: no reference), wrong instruments dropped (GER40 from 2020-06-15, DXY = Dow Jones until 2018-12-14, EU50 = IBEX from 2018-12-17), oil jumps 2020 documented, sparse days filled by histdata only up to 2021-09-13 (user 2026-10-26); golden lists identical; open: the user's check; `tools/check.py` still reports unexpected gaps (~450 / year 2015-2020) and MT5 bid-without-ask rows -> look at them in step 8); (3) ☑ research cards through the queue + lanes in worktrees (built 2026-10-26 by Sonnet subagents while Codex was at its limit: `tools/research_pipeline.py`, queue panel on the Research page, `tools/lanes.py`; `briefs/v26c-cards-lanes.md`; accepted by the user 2026-10-26); (4) ☑ V2.7 portfolio page (built 2026-10-26: Portfolio tab, 2-4 member search on development data, equal weights, top-10 Monte Carlo through the queue, `--test` once per set CLI only; `docs/portfolio.md`, `briefs/v27-portfolio.md`; accepted by the user 2026-10-26; a real search needs >= 2 research grids); (5) ☑ UI: 3.3d review mode (every strategy), 3.5 as trade inspection (every strategy), 12.4 heat map on the research card, 4.3 Opus list -> the user picks (decisions 2026-10-26, `briefs/v26e-ui-items.md`; built 2026-10-27, 4.3 items chosen by the user: Live stale status, empty card tiles folded, candles before trades; the chart strip keeps showing the newest saved run; accepted by the user 2026-10-27); (6) live: demo bot restart (the user's call), V2.4b, 12.5; (7) V2.4e news when the
-  data is regenerated; (8) ☑ full check of the whole app (night 2026-10-27: Codex review of all V2.6 / V2.7 code, `docs/review/v26-full-check.md`, findings 1-6 fixed with tests, 7 for the user; CLI smoke test, 4 crashing `--help` fixed; end-to-end pipeline run of `orb_example` through the queue; accepted by the user 2026-10-27; open decisions in `docs/review/night-2026-10-27.md`); (9) ☑ more symbols / pairs before research (eight added, full history, accepted by the user 2026-10-27), for more options (proposal list `docs/review/symbol-proposal-2026-10-27.md`; picked by the user 2026-10-27: AUDJPY, CADJPY, NZDJPY, CHFJPY, EURAUD, GBPAUD, AUS200, HK50, after `tools.mt5_info` confirms FTMO's names; decided by the user 2026-10-27 (Opus's picks): no opening-range sessions for AUS200 / HK50 yet (added by the user 2026-11-03: AUS200 10:00-15:55 Sydney, HK50 09:30-15:55 Hong Kong), HK50 quote_to_usd 1 / 7.80 and no news mapping, market class 'AU/HK indices', FX commission $5 (confirmed by FTMO's published rate), doji threshold fields in the settings panel only for the strategy symbols (like the cost fields); state in `docs/review/symbol-proposal-2026-10-27.md`; the user,
+  trial-log lock (`docs/archive/briefs/v26a-job-queue.md`; built 2026-10-26: `python -m backtester.tools.queue`,
+  `docs/research-runner.md` › Job queue; accepted by the user 2026-10-26; open: LibreHardwareMonitor install); (2) ☑ data fixes 13.12-13.16, 13.18 (built 2026-10-26, cache rebuilt through the queue, 100 jobs; `docs/archive/briefs/v26b-report.md`, `results/clock_check_*.md`; histdata clock 2015-2018, MT5 server clock per date through 2021-09-13 (2010-2014 dropped: no reference), wrong instruments dropped (GER40 from 2020-06-15, DXY = Dow Jones until 2018-12-14, EU50 = IBEX from 2018-12-17), oil jumps 2020 documented, sparse days filled by histdata only up to 2021-09-13 (user 2026-10-26); golden lists identical; open: the user's check; `tools/check.py` still reports unexpected gaps (~450 / year 2015-2020) and MT5 bid-without-ask rows -> look at them in step 8); (3) ☑ research cards through the queue + lanes in worktrees (built 2026-10-26 by Sonnet subagents while Codex was at its limit: `tools/research_pipeline.py`, queue panel on the Research page, `tools/lanes.py`; `docs/archive/briefs/v26c-cards-lanes.md`; accepted by the user 2026-10-26); (4) ☑ V2.7 portfolio page (built 2026-10-26: Portfolio tab, 2-4 member search on development data, equal weights, top-10 Monte Carlo through the queue, `--test` once per set CLI only; `docs/portfolio.md`, `docs/archive/briefs/v27-portfolio.md`; accepted by the user 2026-10-26; a real search needs >= 2 research grids); (5) ☑ UI: 3.3d review mode (every strategy), 3.5 as trade inspection (every strategy), 12.4 heat map on the research card, 4.3 Opus list -> the user picks (decisions 2026-10-26, `docs/archive/briefs/v26e-ui-items.md`; built 2026-10-27, 4.3 items chosen by the user: Live stale status, empty card tiles folded, candles before trades; the chart strip keeps showing the newest saved run; accepted by the user 2026-10-27); (6) live: demo bot restart (the user's call), V2.4b, 12.5; (7) V2.4e news when the
+  data is regenerated; (8) ☑ full check of the whole app (night 2026-10-27: Codex review of all V2.6 / V2.7 code, `docs/archive/review/v26-full-check.md`, findings 1-6 fixed with tests, 7 for the user; CLI smoke test, 4 crashing `--help` fixed; end-to-end pipeline run of `orb_example` through the queue; accepted by the user 2026-10-27; open decisions in `docs/archive/review/night-2026-10-27.md`); (9) ☑ more symbols / pairs before research (eight added, full history, accepted by the user 2026-10-27), for more options (proposal list `docs/review/symbol-proposal-2026-10-27.md`; picked by the user 2026-10-27: AUDJPY, CADJPY, NZDJPY, CHFJPY, EURAUD, GBPAUD, AUS200, HK50, after `tools.mt5_info` confirms FTMO's names; decided by the user 2026-10-27 (Opus's picks): no opening-range sessions for AUS200 / HK50 yet (added by the user 2026-11-03: AUS200 10:00-15:55 Sydney, HK50 09:30-15:55 Hong Kong), HK50 quote_to_usd 1 / 7.80 and no news mapping, market class 'AU/HK indices', FX commission $5 (confirmed by FTMO's published rate), doji threshold fields in the settings panel only for the strategy symbols (like the cost fields); state in `docs/review/symbol-proposal-2026-10-27.md`; the user,
   2026-10-26: which ones and from which source decided then; download + data check + costs
   per symbol); then intensive research. **Night 2026-10-26/27 (the user's decisions):** go through the steps without an ok in between (each built, reviewed, tested, committed on v2-6-research as 'built, not accepted'; the user reviews in the morning); step 6 skipped (the demo bot is the user's call); step 7 built on synthetic data only (the regenerated news file is plugged in later); step 8 fixes small bugs with tests and lists everything touching rules, defaults or the look; step 9 only a proposal list; no heavy building by Sonnet subagents; one Telegram summary in the morning. Dropped as covered by V2.4c / V2.4d (Opus proposal, user
   2026-10-26): 3.7, 12.11, 12.13.
@@ -203,7 +203,7 @@ where (updated 2026-11-03).
   A full suite of ~8 min is fine (the user, 2026-10-27; replaces the < 5 min target).
 - ☒ **V2.6i Research-department intake — retired 2026-11-09 (the user: research back in this team; `tools/intake.py`, its tests and `docs/research-intake.md` moved to `../archive/v2-intake-tool/`, `dataset_version` moved to `tools/research.py`; second submission R014 rejected by the user 2026-11-06). History: (the user, 2026-10-27; i1-i7 built 2026-10-28 night, accepted by the user 2026-10-28: `tools/intake.py` validate / claim / recover / reject / progress / result / finish, `[submission]` grids with dataset fingerprint, commit and test authorization gate, briefs `briefs/v26i-*.md`; i8 = first real pilot FX_LONDON_FIX_REV v1.0.0, run 2026-10-28, rejected by the user 2026-10-29):** strategy ideas now come from
   `../Research_Department/` through `../Shared_Interface/` (process: `docs/research-intake.md`;
-  review and decisions D1-D8: `docs/review/research-interface-review-2026-10-27.md`). Test-first
+  review and decisions D1-D8: `docs/archive/review/research-interface-review-2026-10-27.md`). Test-first
   steps, no engine change: (i1) contract frozen with the agreed edits + fixtures; (i2)
   `tools/intake.py validate`; (i3) atomic claim, lease, crash recovery (`backtester.filelock`,
   `results/intake/`); (i4) submission mapping section in each strategy spec; (i5) strategy /
@@ -242,7 +242,7 @@ where (updated 2026-11-03).
   (3) the submission's rejection criteria computed by the runner (today a script,
   `results/intake/<stem>/criteria.json`). Codex `gpt-6.1-terra`, test-first.
 - ◐ **V2.8 Finalization (plan accepted by the user 2026-11-02; audit
-  `docs/review/finalization-audit-2026-11-02.md`):** finish, speed up and stabilize the app, no
+  `docs/archive/review/finalization-audit-2026-11-02.md`):** finish, speed up and stabilize the app, no
   rebuild. In this order: (1) R1 bot `status.json` for every bot strategy, a failed status
   printed once instead of hidden (`live/`, written by Opus, go by the user 2026-11-02);
   (2) U1 chart Trades tab: the newest run's trades in pages of 100 (Time / Pair sort on the
@@ -270,11 +270,11 @@ where (updated 2026-11-03).
   object to counts as accepted once checked). 12.5 scope (the user): the fill-probe trades
   2026-10-27..31 trade by trade against the engine on the same M1 bars.
   **V2.4b built 2026-11-02 night** (Codex gpt-6.1-terra after gpt-6.1-sol was at capacity;
-  brief `briefs/v24b-p90-stress.md`): `analytics/slippage_p90.json` (23 symbols, 5,512 fills),
+  brief `docs/archive/briefs/v24b-p90-stress.md`): `analytics/slippage_p90.json` (23 symbols, 5,512 fills),
   `net_r_stressed` = measured p90 on market fills (`cost_stress_mode = "p90"`, the user's
   2026-10-28 decision), x1.5 only for unmeasured symbols or in `factor` mode; golden lists
   identical.
-  **12.5 built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v28-12-5-reconcile.md`;
+  **12.5 built 2026-11-03 night** (Codex gpt-6.1-terra, brief `docs/archive/briefs/v28-12-5-reconcile.md`;
   Opus added the direction check and a 1 % R stop tolerance): `python -m
   backtester.tools.reconcile`, run in `results/reconcile_2026-11-02/`. All 2,756 demo trades
   matched an engine trade; 598 engine-only, all explained (450 daily stop, the rest skips /
@@ -303,7 +303,7 @@ where (updated 2026-11-03).
   **JP225 exit (the user, 2026-11-03):** TSE moved its close from 15:00 to 15:30 on 2024-11-05
   (JPX); the opening-range exit is 14:55 until 2024-11-04 and 15:25 from then on
   (`SessionSpec.late_exit_from` / `late_exit_time`); development data unchanged.
-  **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `briefs/v26l-cell-manifest.md`):
+  **V2.6l built 2026-11-03 night** (Codex gpt-6.1-terra, brief `docs/archive/briefs/v26l-cell-manifest.md`):
   the result envelope carries `robustness.cell_manifest` (every declared cell: parameters,
   trades, gross / net mean and total R, stop rate, halves, cost stresses x1.5 / x2 / fill p90)
   and `robustness.trial_accounting`; `variants_tried` = declared cells (pilot: 9, not the 17
@@ -318,7 +318,7 @@ where (updated 2026-11-03).
   › Cleaning; 665 rows moved; anchors 5 / 6 pass, were 3 / 6); Research's reviewability proposal:
   review it only when the user says so.
   **V2.4e real-calendar validation built 2026-11-03 night** (Codex gpt-6.1-terra, brief
-  `briefs/v24e-real-calendar-validation.md`): `python -m backtester.tools.news_validate` ->
+  `docs/archive/briefs/v24e-real-calendar-validation.md`): `python -m backtester.tools.news_validate` ->
   `results/news_validation/`. Anchors: NFP 69/69, US CPI m/m 63/63, FOMC statement 47/47 at
   their published times; US CPI y/y 2 and Core CPI m/m 9 rows, BoE 1 row (11:02 UTC) off.
   **Finding for the user:** 386 High data releases (CPI, PMIs, claims, employment; 2023: 181,
