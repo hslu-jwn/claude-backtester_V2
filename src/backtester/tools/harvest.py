@@ -46,6 +46,13 @@ RULES = {"market", "timeframe", "entry", "exit", "stop", "filters"}
 FIELDS = {"name", "claim", "source_url", "source_type", "quote", "language", "mechanism",
           "rules", "not_stated", "claimed_result", "required_data", "we_have", "red_flags"}
 UA = "backtester-harvest/0.1"
+WORDS = {  # search words for the key codes (raw codes are poor queries)
+    "FX-MAJ": "major FX", "FX-CROSS": "FX crosses", "IDX-US": "US stock index",
+    "IDX-INTL": "DAX FTSE Nikkei index", "METAL": "gold silver", "ENERGY": "crude oil",
+    "CRYPTO": "bitcoin", "FLOW": "rebalancing flows", "EVENT": "scheduled release",
+    "CARRY": "carry term structure", "TREND": "trend following", "REVERSAL": "reversal",
+    "VOL": "volatility", "CROSS": "lead lag", "MICRO": "market microstructure",
+}
 
 
 def read_csv(path):
@@ -94,7 +101,7 @@ def plan(keys, path):
         active.add(key)
         next_id += 1
         templates = SOURCES[source.split("-")[-1]][1:]
-        words = " ".join(x for x in (market, mechanism) if x != "*")
+        words = " ".join(WORDS[x] for x in (market, mechanism) if x != "*")
         new.append({"task_id": f"T{next_id:04d}", "key": key,
                         "queries": " | ".join(f"{q} {words}".strip() for q in templates), "status": "open"})
     write_csv(path, TASK_COLUMNS, new, append=True)

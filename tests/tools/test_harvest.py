@@ -124,3 +124,10 @@ def test_fetcher_follows_redirects(monkeypatch):
     monkeypatch.setattr(harvest.time, "sleep", lambda _: None)
     harvest.Fetcher()("http://example.test/page")
     assert seen["http://example.test/page"] is True
+
+
+def test_plan_uses_search_words_not_codes(tmp_path):
+    tasks = tmp_path / "tasks.csv"
+    harvest.plan(["AGG.IDX-US.SWING.FLOW"], tasks)
+    queries = next(csv.DictReader(tasks.open(encoding="utf-8")))["queries"]
+    assert "US stock index rebalancing flows" in queries and "IDX-US" not in queries

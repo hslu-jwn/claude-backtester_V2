@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-11: review follow-up (Fable review + framework; the user's go on Opus's picks)
+
+- Opus (this session): verified review A-C (verdicts in the review file), B2 / B3 / B5 / B9 / B1 / B8,
+  ledger backfill, known families, docs. Codex `gpt-6.1-terra` medium: `tools/harvest.py` (290 s;
+  Opus fixed the fuzzy quote check, redirects, a BOM).
+- **Harvest pilot stopped after 3 attempts:** the known-answer canary T0001 (Breedon & Ranaldo, local
+  hours) came back empty at terra low (24 s), medium (27 s) and medium write mode (15 s); the nonsense
+  canary T0002 was correctly empty. Cause not proven: the canary's own family (`fx_hours`, closed) is
+  in the prompt's skip list, and 15-27 s is too short for any search, so this dispatch path likely
+  has no web access. T0003 / T0004 not run. Next: a one-line web-access probe, a canary outside the
+  skip list. No ideas recorded from the pilot.
+
 ## 2026-11-10: continuous Continue.Research Test=auto (the user)
 
 - Answers: continuous until `Stop.`; research generally (any source on the internet, ideas need not be

@@ -1,0 +1,5 @@
+task_id,key,queries,status,worker,run_date,n_raw,n_verified,n_kept
+T0001,ACAD.FX-MAJ.INTRA.FLOW,"Breedon Ranaldo ""intraday patterns in FX returns"" local trading hours | currency depreciates during local trading hours intraday | ""time-of-day"" FX returns home currency working hours",failed,codex gpt-6.1-terra,2026-11-11,0,0,0
+T0002,BROKER.CRYPTO.POS.TREND,crypto CFD long-term trend prop firm broker rule | bitcoin CFD broker position trend schedule | crypto CFD weekend rollover trend broker,done,codex gpt-6.1-terra,2026-11-11,0,0,0
+T0003,AGG.IDX-US.SWING.FLOW,quantpedia US stock index rebalancing flow strategy | quantocracy S&P 500 month-end rebalancing seasonality | alpha architect index rebalancing flows replication,open,,,,,
+T0004,CB.FX-MAJ.INTRA.FLOW,site:bis.org working paper FX fixing order flow intraday | central bank FX month-end fixing flows major currencies | WM Reuters fix flows intraday price pressure paper,open,,,,,
