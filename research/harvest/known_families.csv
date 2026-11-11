@@ -1,0 +1,32 @@
+family,keywords,verdict,ledger_ids,note
+session_zones,session sweep;liquidity sweep;session high low sweep;stop hunt;judas swing,falsified,S01,cost-wall §4 stop list
+ny_index_sweep,ny open sweep;am pm window;index open sweep,falsified,S02,
+no_wick,no wick candle;marubozu;wickless candle;no-wick retest,falsified,S03,I-62 retest also failed
+bar_patterns,m15 pattern;h1 pattern;candle geometry;engulfing;pin bar;inside bar;outside bar;wick rejection;round number;close streak;median cross;sma cross;ma cross;rsi extreme;oscillator filter,falsified,S09,"families A-E of the M15 triage; stops under ~1 daily ATR"
+alternating_path,alternating path;close path;follow fade last change,falsified,S09,rejected by the user 2026-11-06
+trend,trend following;breakout;donchian;turtle;moving average trend;kama;time series momentum;tsmom;ewmac,open,S04;I51,"single-symbol falsified; portfolio form open as I-51"
+gap_fade,gap fade;gap fill;fade the open gap,falsified,S05,test period spent (not clean)
+gap_momentum,gap momentum;gap and go;gap continuation,falsified,S07,
+orb,opening range breakout;orb;first range breakout,falsified,S06,"stop proposing ORB without a new mechanism"
+london_fix,london fix reversal;wm reuters fix;4pm fix fade;tokyo fix,falsified,S08;H12,"also month-end post-fix USD rise (H12)"
+fx_hours,local hours depreciation;breedon ranaldo;european hours short;usd hours long,closed,H01;H01b;H07,F1a lead expired 2026-11-11
+index_last30,last 30 minutes momentum;intraday momentum;end of day momentum;baltussen,falsified,H02;H06,
+fomc,fomc drift;pre-fomc;fomc morning;fomc cycle,falsified,H03,
+turn_of_month,turn of month;month end;tom effect;dash for cash;month-end rebalancing,open,H04;H09;I67,"unconditional falsified; conditional sign open as I-67 (same family)"
+rsi2,rsi(2);rsi 2;connors rsi;short-term mean reversion index,falsified,H10,
+gotobi,gotobi;five-ten day;nakane;tokyo fixing usdjpy,tested,H11,"one-time test not confirmed; no retest"
+daily_reversal,capitulation;connors e8;oversold reversal;daily reversal,open,H13;H13f,"E8 falsified; CAP inconclusive, follow-up proposed"
+turtle_soup,turtle soup;failed breakout;false breakout reversal,falsified,H15,
+h1_shock,large move continuation;shock response;h1 shock;momentum after large hourly move,falsified,S11,
+energy_report,eia report;oil inventory report;crude inventory,falsified,S12,
+crypto_trend,crypto trend;bitcoin momentum;btc breakout,tested,C1;C2,"C2 one-time test not confirmed"
+crypto_intraday,bitcoin intraday momentum;crypto intraday,screened_out,C3,
+calendar_clock,pre-holiday;day of week;monday effect;macro day long;pre-ecb;option expiry;triple witching,falsified,SC1;SC2,"792 + 660 cell screens, 0 survivors"
+gold_session,gold session pattern;gold london open;gold asia,falsified,,cost-wall §4 stop list
+fx_relative_strength,currency strength;relative strength basket;fx basket momentum,specced,P03,"needs multi-symbol steps B / C"
+lead_lag,lead lag;us close german open;oil cad;usd breadth;gold silver lead;btc eth lead,specced,L14;L15;L16;L17;L18,pre-registered; not built
+pairs,wti brent spread;gold silver ratio;pairs trading;cointegration,specced,P01;P02,drafts
+fx_carry,fx carry;carry trade;interest rate differential,open,,"I-29; swap credits are off by default (review B5)"
+oil_carry,oil term structure;backwardation;contango;roll yield,parked,I68,needs EIA curve data
+overnight_drift,overnight drift;overnight return;close to open,falsified,,cost-wall: net Sharpe -0.5
+execution,limit entry;passive execution;resting order,open,T20,cost side only
