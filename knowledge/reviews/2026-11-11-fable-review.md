@@ -256,3 +256,91 @@ cells where gross is already near cost. *Keywords:* "limit order adverse selecti
    failed independent check (F1a failed its pre-sample: close it, do not park it). Before more
    research, ask the Monte Carlo / prop tools what edge per trade the FTMO goal needs at a realistic
    trade count; an idea that cannot reach that size is not worth a build even if it is real.
+
+---
+
+## Verification by Opus (2026-11-11, HEAD `fba8e69`)
+
+Each finding was opened at its file:line and, where possible, reproduced with a scratch script
+(default `CostConfig()`, `_test_authorized`, tick-size comparison). CONFIRMED = reproduced or read
+in code; PLAUSIBLE = consistent with the code / records but not measured; REJECTED = wrong. Line
+numbers in B8, B10 moved after `0741e6a` / `fba8e69`; the findings did not.
+
+**A) Workflow**
+- A1 CONFIRMED: results live in spec, research log, HANDOFF, candidate / idea rows and cost-wall;
+  `cost-wall.md:84` still says the spread proposal is "not wired in" (applied in `d0bbcd8`).
+  `research/ledger.csv` does not exist yet.
+- A2 PLAUSIBLE: a process judgement; `tools/time_of_day_profile.py` exists and cost-wall §1 shows
+  most families died on gross < cost; the build-before-screen count was not measured.
+- A3 CONFIRMED: 252 / 317 / 528 lines; `timed_hold_gates.py` also carries the energy_report and
+  daily_reversal modes.
+- A4 CONFIRMED: AGENTS.md:78-80 vs :82-83; AGENTS.md:165-167 vs CLAUDE.md never-idle; skill :68-69
+  vs :70-78; skill :8 usage line lacks `Test=` (front matter has it); skill :18-19 vs never-idle;
+  two Telegram blocks in CLAUDE.md plus the skill's.
+- A5 CONFIRMED: HANDOFF is now 247 lines (after `fba8e69`), still with the 2026-11-03 state and
+  closed ☑ items.
+- A6 CONFIRMED: full suite at `fba8e69` 5,733 passed, 14 skipped, 4 xfailed in 571 s (green);
+  slowest `test_monkeys` 30.2 s, `test_filelock` 15.2 s, `test_ts_gates` 11.6 s.
+- A7 CONFIRMED with one correction: 12 worker rows; one row is "not enabled" (DeepSeek), GitHub
+  Models is off in the prose, not a row. Model IDs repeated in `ai-dispatch` SKILL.md:20.
+- A8 CONFIRMED: AGENTS.md "9 so far", "26 symbols"; 14 strategy folders (incl. `fill_probe`);
+  README.md:35 "7 strategies".
+- A9 CONFIRMED: 46 / 54 / 65 KB.
+- A10 CONFIRMED: both lane worktrees clean, branches merged, both still in `lanes.json`; `briefs/`
+  now 112 files.
+
+**B) Problems**
+- B1 CONFIRMED (mechanism), severity overstated: at 2026-10-06 14:00 UTC the default config uses
+  the table: GBPUSD 0.00002 (fixed 0.000059), GBPJPY 0.014 (0.023), NAS100 1.45 (1.9), US500 0.56
+  (0.61), XAUUSD 0.43 (0.41). But the fill report measured the under-charge against the *table*
+  as much smaller than against the old fixed spread (`fill_report_2026-11-09/spread_proposal.md:22-26`):
+  GBPJPY 1.4x, NAS100 1.2x (median), GBPUSD median 1.0x, US500 1.07x, XAUUSD 0.82x (over). The
+  2x figures belong to the fixed spread. The table is hourly: at 21:00 UTC it is far above the
+  fixed value (GBPUSD 0.00064, GBPJPY 0.2), so `max(table, fixed)` would double-count the tail.
+  Medium, not high.
+- B2 CONFIRMED: `_test_authorized(None, ...)` returns True; 2 of 48 grids have `[submission]`;
+  the CLI runs the test unless `--dev-only`; the once-guard is keyed by the grid hash in
+  git-ignored `results/research/`.
+- B3 CONFIRMED for gap fade: V1 11.4 developed it on 2020-01..2026 and 11.6 ran all 36 variants
+  on FTMO 2021-09..2026-09 (+13.9 R); the three tool defaults are as stated. The UNVERIFIED point
+  for gap momentum: REJECTED as stated: the "quiet sideways" cells come from the strategy profiles
+  on the development period (`research-log.md:294-317`) and strategy 7's rules were set on
+  development data (`strategy-gap-momentum.md:46`). PLAUSIBLE milder issue: the gap momentum idea
+  itself was chosen as "the opposite side of the failed gap fade" (V1 11.12), whose study saw 2021+.
+- B4 CONFIRMED (no dividend handling anywhere in `src/`). The 3-4 % per year size is PLAUSIBLE,
+  not checked; US500 / NAS100 / US30 pay smaller dividends too. FTMO's booking stays
+  **UNVERIFIED**: the saved deal exports (`results/fill_report/deals*.csv`, 2026-10-27 / 28) hold
+  only intraday buy / sell deals, no dividend or balance rows.
+- B5 CONFIRMED: USOIL long +4.966 = +19.6 % per year of notional at its reference price 92.50,
+  UKOIL +21.8 %; 20 positive per-lot swap entries in total (JPY-cross longs, USD-base longs,
+  index shorts NAS100 / US30 / UK100, ...); price scaling keeps the sign (`costs.py:586-591`).
+- B6 CONFIRMED and FIXED in `2a2122f`. First failing commit: the lane merge `47f5aff` (both imports
+  enter there on the first-parent line), 29 commits before the fix. The new tick default equals
+  `TICK_SIZES` for every symbol except the Binance pairs, which daily_reversal does not support.
+- B7 CONFIRMED: `results/` git-ignored (`.gitignore:21`), `results/trials.jsonl` 250 KB local only.
+- B8 CONFIRMED by code: spread looked up at entry (`backtest.py:477`), stored (`:526`), used for the
+  short's SL trigger (`trade.py:229`) and exit fill (`:345`). Size depends on the clock (default
+  table GBPUSD 14:00 0.00002 vs 21:00 0.00064); not measured on a result.
+- B9 CONFIRMED, size corrected: USDCHF traded about 0.88-1.03 in 2015-21, so its commission is
+  under-charged about 6-17 % (at 0.95: +15 % with `1 / price`). USDJPY at 110: -30 %, USDCAD at
+  1.30: -8 % (both conservative today). Non-USD quotes (EURGBP, GER40, UK100, JP225, ...) err both ways.
+- B10 CONFIRMED: HANDOFF:93-95 "not merged yet" vs :188 merged; :81-83 proposal "not wired in" vs
+  :196 done `d0bbcd8`; `cost-wall.md:84`.
+- Risk stubs CONFIRMED: 5 / 5 / 4 lines, only the `risk/__init__.py` docstring names them.
+
+**C) Delete or merge**
+- Risk stubs, intake remnants (`research.py:330-345`, `:1130-1136`, `pyproject.toml:18`, `[submission]`
+  in `alternating_path.toml`, `london_fix.toml`), lane worktrees: CONFIRMED. Removing the
+  `[submission]` handling before B2 is fixed would make those two grids test-authorized by default.
+- Branches: CONFIRMED merged: `docs/v2.4e-economic-calendar`, `lane/review_h1`, `v2-chart-trades`,
+  `v2-grid-merge`, `v2-live`, `v2-review`, `v2-setup` (and both lanes). `wip-a2a3-gemini` is not
+  merged: one commit `98d996c` "Gemini's unfinished A2+A3 ... unreviewed".
+- `orb_example.toml`, `check_gap_fade.toml`, `check_orb.toml`: CONFIRMED no test reads them (only
+  the `research.py` docstring and ROADMAP name `orb_example`).
+- Bootstrap spots CONFIRMED: `analytics/bootstrap.py`, `risk/bootstrap.py` (shim),
+  `alternating_path_gates.block_bootstrap`, `timed_hold_gates.difference_bootstrap` /
+  `date_cluster_bootstrap`.
+- Spec name mismatch, archive counts (briefs 112, `docs/review/` 28 files, ROADMAP 445 lines):
+  CONFIRMED.
+
+**D) Ideas**: not verified (not to be built or screened now); duplicate check in the triage.
