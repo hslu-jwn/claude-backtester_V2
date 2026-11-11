@@ -42,6 +42,8 @@ from backtester.strategy.timed_hold.config import TimedHoldConfig
 from backtester.strategy.timed_hold.strategy import TimedHold
 from backtester.strategy.trend_following.config import TrendFollowingConfig
 from backtester.strategy.trend_following.strategy import TrendFollowing
+from backtester.strategy.us_close_de_open.config import UsCloseDeOpenConfig
+from backtester.strategy.us_close_de_open.strategy import UsCloseDeOpen
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +83,7 @@ _SPECS = (
     StrategySpec("h1_shock", "Strategy 11 · H1 shock response", H1ShockConfig, H1Shock),
     StrategySpec("energy_report", "Strategy 12 · Energy report", EnergyReportConfig, EnergyReport),
     StrategySpec("daily_reversal", "Strategy 13 · Daily reversal (Connors)", DailyReversalConfig, DailyReversal),
+    StrategySpec("us_close_de_open", "Strategy 14 · US close -> German open", UsCloseDeOpenConfig, UsCloseDeOpen),
 )  # fmt: skip
 
 REGISTRY: Mapping[str, StrategySpec] = MappingProxyType({s.name: s for s in _SPECS})

@@ -94,6 +94,7 @@ from backtester.strategy.registry import make_strategy, strategy_name
 from backtester.strategy.session_zone_sweep.config import SessionZoneSweepConfig
 from backtester.strategy.timed_hold.config import TimedHoldConfig
 from backtester.strategy.trend_following.config import TrendFollowingConfig
+from backtester.strategy.us_close_de_open.config import UsCloseDeOpenConfig
 
 
 class RunCancelled(Exception):
@@ -124,6 +125,7 @@ StrategyConfig = (
     | H1ShockConfig
     | EnergyReportConfig
     | DailyReversalConfig
+    | UsCloseDeOpenConfig
 )
 
 

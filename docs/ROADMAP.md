@@ -348,7 +348,8 @@ where (updated 2026-11-03).
   integration (strategy-declared references, research pieces cut at reference gaps, manifest, blocked
   counts; Opus's picks accepted by the user 2026-11-11: references in the strategy config, not a grid
   table / CLI flag; per-decision journal deferred; Opus builds it, not Codex; `5b33a5f`, done per the
-  user 2026-11-11); ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
+  user 2026-11-11); strategy 14 `us_close_de_open` built on it (Codex sol, Opus review; gates tool and
+  development run next, U4); ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
 - ◐ **V2.10 Review follow-up** (Fable review + harvest framework, `knowledge/reviews/2026-11-11-*`; Opus's
   picks accepted by the user 2026-11-11): ☑ B2 test opt-in, ☑ B3 gap fade test struck, ☑ B5 / B9 / B1 / B8
   cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger

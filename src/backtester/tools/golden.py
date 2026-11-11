@@ -45,6 +45,9 @@ class GoldenConfig:
         ("energy_report", ("USOIL", "UKOIL")),
         ("daily_reversal", ("US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200")),
     )
+    # 2023 lies in the test period: a strategy whose one-time test is unspent gets no golden list
+    # (design/multi-symbol.md > Tests 8); its exactness is covered by hand-built / dev fixtures.
+    excluded: tuple[str, ...] = ("us_close_de_open",)
 
 
 def serialize_trade(trade: TradeResult) -> str:

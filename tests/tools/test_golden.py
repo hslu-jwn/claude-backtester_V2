@@ -96,7 +96,8 @@ def test_missing_and_extra_trades(old_count, new_count):
 
 def test_config_is_frozen_and_covers_registry():
     config = golden.GoldenConfig()
-    assert set(dict(config.strategies)) == set(REGISTRY)
+    assert set(dict(config.strategies)) | set(config.excluded) == set(REGISTRY)
+    assert not set(dict(config.strategies)) & set(config.excluded)
     assert config.start == date(2023, 1, 1) and config.end == date(2023, 12, 31)
     assert config.folder.as_posix() == "tests/golden"
     assert dict(config.strategies)["no_wick"] == ("XAUUSD", "GBPUSD", "NAS100", "US500")

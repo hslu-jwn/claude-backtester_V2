@@ -41,6 +41,7 @@ def test_registered_names_and_order():
         "h1_shock",
         "energy_report",
         "daily_reversal",
+        "us_close_de_open",
     ]
 
 

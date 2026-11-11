@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-11: strategy 14 `us_close_de_open` built (Continue.Code; the user's go on U1-U4)
+
+- Codex `gpt-6.1-sol` medium, write, lane `us_close_de_open` (brief `briefs/us-close-de-open-build.md`):
+  strategy, 67 tests, GER40 + UK100 grids. Opus: review (spec vs code, lookahead), registry entry,
+  merge. No backtest or research run; gates tool next (U4).
+
 ## 2026-11-11: multi-symbol step 1b (Continue.Code; the user's go on Opus's picks)
 
 - Opus 5.5 (this session, no dispatch; small change): strategy-declared references, research pieces

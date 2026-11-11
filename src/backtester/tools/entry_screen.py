@@ -61,6 +61,7 @@ STRATEGY_SYMBOLS = {  # each strategy's own symbols (its spec / grid tool)
     "timed_hold": ("US500", "NAS100"),  # default config = New York cash session
     "energy_report": ("USOIL", "UKOIL"),
     "daily_reversal": ("US500", "NAS100", "US30", "GER40", "UK100", "JP225", "AUS200"),
+    "us_close_de_open": ("GER40",),  # US500 is its reference, loaded by the runner
 }
 FAMILY_PREFIX = "screen_"
 SOURCE = "histdata"

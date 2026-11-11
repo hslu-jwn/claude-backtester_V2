@@ -37,9 +37,11 @@ from backtester.core.series import CandleSeries
 from backtester.data.resample import resample
 from backtester.engine.backtest import Backtest, EngineConfig, run_backtest
 from backtester.engine.costs import CostConfig
+from backtester.engine.market_replay import MarketReplay
 from backtester.engine.trade import TradeResult
 from backtester.runner import RunSettings, candles_from_frame, jsonable
 from backtester.settings import HIDDEN, from_json, to_json
+from backtester.strategy.base import MarketAwareStrategy
 from backtester.strategy.registry import REGISTRY, default_config, make_strategy
 from backtester.tools.research_grid import valid_names
 
@@ -84,7 +86,12 @@ FIXTURES: dict[str, Fixture] = {
     "trend_following": Fixture("XAUUSD", 2000.0, 0.0006, (0, 24), days=40, drift_sigma=2e-5),
     "gap_fade": Fixture("US500", 5000.0, 0.0006, (13, 22), days=24, drift_sigma=2e-5),
     "opening_range": Fixture("US500", 5000.0, 0.0006, (13, 22), days=24, drift_sigma=2e-5),
+    "us_close_de_open": Fixture("GER40", 16000.0, 0.0006, (0, 24), days=30),
 }  # fmt: skip
+
+# market-aware strategies (design/multi-symbol.md > A): every declared reference symbol gets its
+# own seeded walk, cut at the same time as the traded series in the lookahead test
+REFERENCE_FIXTURE = Fixture("", 5000.0, 0.0006, (0, 24), days=30, seed=2)
 
 # a registered strategy without an entry gets this generic one (its trades are then reported)
 GENERIC = Fixture("XAUUSD", 2000.0, 0.0006, (0, 24), days=10, drift_sigma=2e-5)
@@ -170,8 +177,24 @@ def _strategy(name: str, config):
     return make_strategy(fixture_for(name).symbol, config)
 
 
-def run(name: str, config, series=None) -> list[TradeResult]:
-    return run_backtest(_strategy(name, config), series or series_for(name))
+def _market(name: str, strategy, cut: datetime | None = None) -> MarketReplay | None:
+    """Reference series for a market-aware strategy (None for every other strategy)."""
+    if not isinstance(strategy, MarketAwareStrategy):
+        return None
+    days = fixture_for(name).days
+    series = []
+    for item in strategy.references:
+        m1 = m1_frame(dataclasses.replace(REFERENCE_FIXTURE, symbol=item.symbol, days=days))
+        for tf in item.timeframes:
+            frame = resample(m1, tf, h4=item.h4_alignment)
+            series.append(CandleSeries(item.symbol, tf, candles_from_frame(frame)))
+    series = tuple(series)
+    return MarketReplay(strategy.references, _prefix(series, cut) if cut else series)
+
+
+def run(name: str, config, series=None, cut: datetime | None = None) -> list[TradeResult]:
+    strategy = _strategy(name, config)
+    return run_backtest(strategy, series or series_for(name), market=_market(name, strategy, cut))
 
 
 @cache
@@ -274,7 +297,7 @@ def test_future_candles_change_no_earlier_result(name, label):
     cut = trades[len(trades) // 2].entry_time + base.duration
     if not first < cut < last:
         cut = first + (last - first) * 0.6
-    short = run(name, config, _prefix(series, cut))
+    short = run(name, config, _prefix(series, cut), cut)
     long_ = list(trades)
 
     short_entries = [_entry(t) for t in short]
@@ -307,29 +330,30 @@ def test_limit_orders_are_not_decided_from_the_candle_they_fill_in(name, label):
     strategy = _strategy(name, config)
     base = strategy.base_timeframe
     seen: list[tuple[datetime, object]] = []
-    real = strategy.on_candle
+    hook = "on_market_candle" if isinstance(strategy, MarketAwareStrategy) else "on_candle"
+    real = getattr(strategy, hook)
 
-    def recording(now, views):
-        orders = real(now, views)
+    def recording(now, *args):
+        orders = real(now, *args)
         seen.extend((now, o) for o in orders if o.limit_fill)
         return orders
 
-    strategy.on_candle = recording
+    setattr(strategy, hook, recording)
     # the flat-candle probe only touches the level: run with touch fills
     touch = EngineConfig(costs=CostConfig(tp_penetration=0.0, short_tp_on_ask=False))
-    Backtest(strategy, series, touch).run()
+    Backtest(strategy, series, touch, market=_market(name, strategy)).run()
     if not seen:
         return
     for now, order in seen[:2]:
         flat = _flatten_candle(series, base, now - base.duration, order.entry)
         again: list = []
         probe = _strategy(name, config)
-        real2 = probe.on_candle
-        probe.on_candle = lambda n, v, real2=real2, now=now, again=again: _grab(
-            real2, n, v, now, again
-        )
+        real2 = getattr(probe, hook)
+        setattr(probe, hook, lambda n, *a, real2=real2, now=now, again=again: _grab(
+            real2, n, a, now, again
+        ))
         cut = _prefix(flat, now)
-        Backtest(probe, cut, touch).run()
+        Backtest(probe, cut, touch, market=_market(name, probe, now)).run()
         same = [o for o in again if o.limit_fill and o.entry == order.entry]
         assert same, (
             f"{name}/{label}: the limit order at {now} (level {order.entry}) disappears when the "
@@ -338,8 +362,8 @@ def test_limit_orders_are_not_decided_from_the_candle_they_fill_in(name, label):
         )
 
 
-def _grab(real, now, views, at, out):
-    orders = real(now, views)
+def _grab(real, now, args, at, out):
+    orders = real(now, *args)
     if now == at:
         out.extend(orders)
     return orders
