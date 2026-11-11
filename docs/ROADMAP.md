@@ -346,6 +346,13 @@ where (updated 2026-11-03).
 - ◐ **V2.9 Multi-symbol strategies** (2026-11-10/11, design `docs/design/multi-symbol.md`, Codex sol): ☑ 1a
   reference-symbol snapshots / market-aware strategies (`0741e6a`, golden identical); ☐ 1b research
   integration; ☐ B two-leg trades; ☐ C baskets (B / C only on the user's go).
+- ◐ **V2.10 Review follow-up** (Fable review + harvest framework, `knowledge/reviews/2026-11-11-*`; Opus's
+  picks accepted by the user 2026-11-11): ☑ B2 test opt-in, ☑ B3 gap fade test struck, ☑ B5 / B9 / B1 / B8
+  cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger
+  `research/ledger.csv`, ☑ A4 / A7 / A8 / A10 / B7 rules, ☑ archive moves and stub removal, ☑ ideas D1-D5,
+  ☑ `tools/harvest.py` + skill `idea-harvest`; ☐ harvest pilot (stopped: no web access shown), ☐ B4
+  dividends (needs the MT5 deal export), ☐ A3 one gates tool, ☐ A9 results out of the specs, ☐ shrink
+  the three slowest tests, ☐ finished ROADMAP steps to the archive.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
   - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**
