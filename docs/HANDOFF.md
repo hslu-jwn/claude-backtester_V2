@@ -47,7 +47,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    closed on power, so no carded idea is left. **Decided by the user 2026-11-12: pause research,
    work on `Continue.Code` items** (research resumes with a new idea source or data).
 5. Low priority: gate 7's 21:00 UTC rollover window vs MT5's 20:55 start; stressed-cost p90 refresh;
-   your check of data fixes 13.12-13.18.
+   your check of data fixes 13.12-13.18 (prepared in `docs/data-fix-check.md`, 2026-11-12: all
+   accept; new finding MT5 GBPUSD Feb-Sep 2019 wrong on ~150 days, fix needs your go).
 
 ## Next step
 
