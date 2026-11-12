@@ -65,7 +65,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 Futures are allowed as well as FTMO CFDs (AGENTS.md › What this is). The one cost-bound lead, P01
 WTI / Brent (+194 bp per trade without swap, 18 trades, t 1.27), needs real futures prices to be judged:
 free EIA data has WTI futures (contracts 1-4, daily) but only Brent SPOT; Brent futures history and a
-futures cost model (broker commission per contract) are open (HANDOFF › Open).
+futures cost model (broker commission per contract) are open (HANDOFF › Open). Source decided by the
+user 2026-11-12: the user's futures broker (data and commission); details pending (which broker,
+export or API, contracts, commission).
 
 ## Next step
 
