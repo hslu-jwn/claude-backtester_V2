@@ -54,10 +54,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    Next: the user asks FTMO support (2026-11-11); Opus then adds the rule to the engine test-first.
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
-4. **Harvest (pilot 2 run 2026-11-12):** web access fixed (`ai_dispatch --search`). Open: add `pypdf`
-   to the data extras so `harvest check` reads PDF sources (3 of 4 sources were PDFs, all failed as
-   unverified)? The known-answer canary (Stivers & Sun) was missed at terra low: next batch at medium
-   and with "CFD-tradable with our data" in the prompt.
+4. **Harvest batch 3 (accepted by the user 2026-11-12, after the Codex reset):** web access
+   (`ai_dispatch --search`) and the PDF check (`pypdf`) are fixed; run the check with the CA bundle
+   (skill note). Next batch: terra medium, canaries again, queries limited to CFD-tradable ideas.
 5. Gate 7's 21:00 UTC rollover window vs MT5's 20:55 start (low priority); stressed-cost p90 refresh
    with fill runs 3 + 4; your check of data fixes 13.12-13.18.
 

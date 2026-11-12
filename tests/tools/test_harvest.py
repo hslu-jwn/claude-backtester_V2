@@ -1,6 +1,7 @@
 import csv
 import json
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -117,6 +118,8 @@ def test_fetcher_follows_redirects(monkeypatch):
     class Response:
         status_code = 200
         text = ""
+        headers: ClassVar[dict] = {}
+        content = b""
     def get(url, **kw):
         seen[url] = kw.get("allow_redirects")
         return Response()
@@ -124,6 +127,54 @@ def test_fetcher_follows_redirects(monkeypatch):
     monkeypatch.setattr(harvest.time, "sleep", lambda _: None)
     harvest.Fetcher()("http://example.test/page")
     assert seen["http://example.test/page"] is True
+
+
+def _pdf(text: str) -> bytes:
+    """A minimal one-page PDF whose page shows `text`, stream compressed as in real papers."""
+    import zlib
+
+    stream = zlib.compress(f"BT /F1 12 Tf 20 100 Td ({text}) Tj ET".encode())
+    objects = [b"<< /Type /Catalog /Pages 2 0 R >>",
+               b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+               (b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 200] /Contents 4 0 R"
+                b" /Resources << /Font << /F1 5 0 R >> >> >>"),
+               b"<< /Length %d /Filter /FlateDecode >>\nstream\n" % len(stream) + stream + b"\nendstream",
+               b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    out, offsets = b"%PDF-1.4\n", []
+    for i, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % i + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    out += b"".join(b"%010d 00000 n \n" % o for o in offsets)
+    return out + b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, xref)
+
+
+def test_fetcher_reads_pdf_text(monkeypatch):
+    """Pilot 2 (2026-11-12): 3 of 4 sources were PDFs and failed as unverified, because the
+    checker searched the raw bytes. A PDF response is read as text."""
+    body = _pdf("Strategy 1 front-runs the Goldman roll by 10 business days.")
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict] = {"Content-Type": "application/pdf"}
+        content = body
+        text = body.decode("latin-1")
+    monkeypatch.setattr(harvest.requests, "get", lambda url, **kw: Response())
+    monkeypatch.setattr(harvest.time, "sleep", lambda _: None)
+    status, text, allowed = harvest.Fetcher()("https://example.test/paper.pdf")
+    assert status == 200 and allowed
+    assert "front-runs the goldman roll by 10 business days" in harvest.normalized(text)
+
+
+def test_fetcher_unreadable_pdf_is_empty_not_bytes(monkeypatch):
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict] = {"Content-Type": "application/pdf"}
+        content = b"%PDF-1.4 broken"
+        text = "%PDF-1.4 broken"
+    monkeypatch.setattr(harvest.requests, "get", lambda url, **kw: Response())
+    monkeypatch.setattr(harvest.time, "sleep", lambda _: None)
+    assert harvest.Fetcher()("https://example.test/broken.pdf")[1] == ""
 
 
 def test_plan_uses_search_words_not_codes(tmp_path):

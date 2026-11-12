@@ -3,6 +3,7 @@ import argparse
 import csv
 import difflib
 import html
+import io
 import json
 import re
 import time
@@ -166,9 +167,21 @@ class Fetcher:
             if not self.robots[origin].can_fetch(UA, url):
                 return 0, "", False
             response = self.get(url)
-            return response.status_code, response.text, True
+            return response.status_code, page_text(response), True
         except (requests.RequestException, ValueError):
             return 0, "", False
+
+
+def page_text(response):
+    """HTML as text; a PDF's extracted text (its raw bytes would never match a quote)."""
+    if "pdf" not in response.headers.get("Content-Type", "").lower() and response.content[:5] != b"%PDF-":
+        return response.text
+    from pypdf import PdfReader  # data extra; only PDF sources need it
+
+    try:
+        return " ".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(response.content)).pages)
+    except Exception:  # noqa: BLE001 - any broken PDF counts as unreadable, never as bytes
+        return ""
 
 
 def normalized(text):

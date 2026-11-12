@@ -28,7 +28,10 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
    script fetched; they are never asked for sources.
 3. **Check:** `harvest check raw/<task_id>.jsonl --model <worker>` fetches every URL itself
    (robots.txt, one request per second per site, public pages only), finds the quote on the page,
-   and applies the schema / seller / testable / data / mechanism / hindsight filters. Ideas without
+   and applies the schema / seller / testable / data / mechanism / hindsight filters. PDFs are read
+   as text (`pypdf`, data extra). Inside a Claude Code sandbox every fetch fails with an SSL error
+   (its proxy CA is only in `NODE_EXTRA_CA_CERTS`): set `REQUESTS_CA_BUNDLE` to certifi's bundle plus
+   that file (scratchpad copy) for the check command; never disable certificate checks. Ideas without
    a stated mechanism are **parked**, not dropped (the user, 2026-11-11).
 4. **Dedup and score:** `harvest dedup`, `harvest score` (against `research/harvest/known_families.csv`
    and the ledger; the score ranks attention only, it says nothing about profit).

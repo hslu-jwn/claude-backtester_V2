@@ -18,6 +18,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   this batch (the 20 % rule would be applied to a tool bug). None of the four is runnable on our data
   anyway (options, futures spreads, no rule, options gamma). Ledger rows HV-T0005-1 .. HV-T0009-1.
 - Known families: trend and turn_of_month marked falsified (now in the prompt's skip list).
+- Follow-up (the user: "YES, but wait for codex reset"): `harvest check` reads PDFs (`pypdf` in the data
+  extra, test-first with a compressed test PDF). The other cause of the 4/4 unverified: in this sandbox
+  Python's `requests` failed every fetch with an SSL error (proxy CA only in `NODE_EXTRA_CA_CERTS`); with a
+  combined CA bundle (skill note) the recheck gives T0007 verified (not runnable: futures spread),
+  T0005 untestable (options), T0008 404, T0009 403. Unverified rate 2 / 4: one true bad citation (T0008).
+  Next batch (terra medium, CFD-tradable filter in the queries) waits for the Codex reset.
 
 ## 2026-11-12: I-51 diversified daily trend portfolio screen: KILLED (the user: "1")
 
