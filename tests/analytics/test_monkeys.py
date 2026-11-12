@@ -177,14 +177,15 @@ def test_planted_foresight_and_random_source():
             )
         )
     cfg = MonkeyConfig(runs=100)
-    result = matched_monkeys(original, {"X": m1}, FREE, cfg)
+    # Serial: spawning one process per CPU cost ~25 s; serial == parallel is pinned below.
+    result = matched_monkeys(original, {"X": m1}, FREE, cfg, workers=1)
     assert result["kinds"][0]["net_r"]["percentile"] >= 99
     random_source = draw_run(original, {"X": m1}, 1, np.random.default_rng(17), cfg)
     random_source = [
         replace(t, r_net=r.r_net, exit_time=r.exit_time)
         for t, r in zip(random_source, replay(random_source, {"X": m1}, FREE))
     ]
-    result = matched_monkeys(random_source, {"X": m1}, FREE, cfg)
+    result = matched_monkeys(random_source, {"X": m1}, FREE, cfg, workers=1)
     assert 10 < result["kinds"][0]["net_r"]["percentile"] < 90
 
 

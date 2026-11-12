@@ -14,16 +14,41 @@ def block_indices(n: int, block: int, starts: np.ndarray) -> np.ndarray:
     return ((starts[:, None] + np.arange(block)[None, :]) % n).ravel()[:n]
 
 
-def block_means(x: np.ndarray, block: int, resamples: int, rng) -> np.ndarray:
-    """One circular block mean per resample, preserving the legacy draw order.
+CHUNK_CELLS = 2_000_000  # index cells per vectorized step (~16 MB), bounds memory for long series
 
-    Interleaved multi-series callers request one mean at a time with the same RNG.
+
+def interleaved_block_means(arrays, block: int, resamples: int, rng) -> np.ndarray:
+    """Circular block means, shape (resamples, len(arrays)); an empty series gives 0 and no draw.
+
+    Draws one start vector per series per resample in that order (the legacy stream; pinned
+    outputs depend on it); only the means are vectorized.
     """
-    n, k = len(x), math.ceil(len(x) / block)
-    return np.array([
-        x[block_indices(n, block, rng.integers(0, n, size=k))].mean()
-        for _ in range(resamples)
-    ])
+    out = np.zeros((resamples, len(arrays)))
+    live = [j for j, x in enumerate(arrays) if len(x)]
+    if not live or not resamples:
+        return out
+    ks = [math.ceil(len(arrays[j]) / block) for j in live]
+    draws = [[] for _ in live]
+    for _ in range(resamples):
+        for d, j, k in zip(draws, live, ks, strict=True):
+            d.append(rng.integers(0, len(arrays[j]), size=k))
+    offsets = np.arange(block)
+    for d, j, k in zip(draws, live, ks, strict=True):
+        x, n = arrays[j], len(arrays[j])
+        starts = np.array(d).reshape(resamples, k)
+        step = max(1, CHUNK_CELLS // (k * block))
+        for a in range(0, resamples, step):
+            s = starts[a:a + step]
+            idx = ((s[:, :, None] + offsets) % n).reshape(len(s), -1)[:, :n]
+            out[a:a + step, j] = x[idx].mean(axis=1)
+    return out
+
+
+def block_means(x: np.ndarray, block: int, resamples: int, rng) -> np.ndarray:
+    """One circular block mean per resample, preserving the legacy draw order (empty x: NaN)."""
+    if not len(x):
+        return np.full(resamples, np.nan)
+    return interleaved_block_means([x], block, resamples, rng)[:, 0]
 
 
 def block_bootstrap(x: np.ndarray, block: int, resamples: int, seed: int) -> dict:

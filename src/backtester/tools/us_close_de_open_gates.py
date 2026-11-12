@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from backtester.analytics.bootstrap import block_indices as block_indices  # noqa: PLC0414 -- legacy re-export
-from backtester.analytics.bootstrap import block_means
+from backtester.analytics.bootstrap import interleaved_block_means
 from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.strategy.timed_hold.day_filter import DEFAULT_DIR
@@ -68,16 +68,8 @@ def control_difference(signal, longs, shorts):
     weights = np.array(counts) / len(signal)
     def difference(means):
         return float(means[0] - sum(w * m for w, m in zip(weights, means[1:])))
-    rng = np.random.default_rng(SEED)
-    samples = np.empty(RESAMPLES)
-    for i in range(RESAMPLES):
-        means = []
-        for x in arrays:
-            if not len(x):
-                means.append(0.)
-                continue
-            means.append(block_means(x, BLOCK, 1, rng)[0])
-        samples[i] = difference(means)
+    means = interleaved_block_means(arrays, BLOCK, RESAMPLES, np.random.default_rng(SEED))
+    samples = np.array([difference(row) for row in means])
     return {"difference": difference([x.mean() if len(x) else 0. for x in arrays]),
             "lower_2_5": float(np.quantile(samples, .025)),
             "lower_5": float(np.quantile(samples, .05)),

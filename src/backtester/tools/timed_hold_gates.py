@@ -24,7 +24,7 @@ import numpy as np
 
 from backtester.analytics.bootstrap import block_bootstrap as block_bootstrap  # noqa: PLC0414 -- legacy re-export
 from backtester.analytics.bootstrap import block_indices as block_indices  # noqa: PLC0414 -- legacy re-export
-from backtester.analytics.bootstrap import block_means
+from backtester.analytics.bootstrap import interleaved_block_means
 from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.tools.alternating_path_gates import (
@@ -141,13 +141,8 @@ def difference_bootstrap(filtered, baseline) -> dict | None:
     a, b = _nets(filtered), _nets(baseline)
     if not len(a) or not len(b):
         return None
-    rng = np.random.default_rng(SEED)
-    diffs = np.empty(RESAMPLES)
-    for i in range(RESAMPLES):
-        means = []
-        for x in (a, b):
-            means.append(block_means(x, BLOCK, 1, rng)[0])
-        diffs[i] = means[0] - means[1]
+    means = interleaved_block_means([a, b], BLOCK, RESAMPLES, np.random.default_rng(SEED))
+    diffs = means[:, 0] - means[:, 1]
     return {
         "difference": float(a.mean() - b.mean()),
         "lower_2_5": float(np.quantile(diffs, 0.025)),
