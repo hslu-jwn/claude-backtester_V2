@@ -68,7 +68,9 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   `research/grids/<name>.toml` with every cell counted, and the **rejection criteria fixed before
   the run** (gates: costs doubled, halves, symbol breadth, best-date removal, bootstrap lower bound,
   minimum trades, data integrity; see `docs/strategy-alternating-path.md` › Gates and
-  `tools/alternating_path_gates.py` as the pattern). Specs need no user approval in the loop.
+  `tools/alternating_path_gates.py` as the pattern). New strategies put their gates in a `[gates]` table of the grid
+  and run `python -m backtester.tools.gates <research folder> [--controls 200]` (`docs/research-runner.md` ›
+  Gates table); no new gates tool per strategy. Specs need no user approval in the loop.
 - **Power line in every spec (review tip 1):** the minimum detectable edge at the planned sample
   (trade sd from a pilot or a similar family). If the one-time test is underpowered, pre-register a
   combined estimate (pre-sample + development + test) or a forward demo instead of a pass / fail gate.
@@ -78,7 +80,7 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   parked).
 - **Pipeline controls (review tip 2):** after any change to a gates tool, run a planted drift
   (positive control, must pass about as often as the power says) and shuffled days (negative
-  control, at most 5 % passes) through it once (`data/random_walk.py`, `analytics/monkeys.py`).
+  control, at most 5 % passes) through it once (`tools/gates.py --controls N` does both on the control cells).
 - Implement: new strategy folder via Codex `gpt-6.1-sol` medium on a brief
   (`briefs/<name>.md`); registry, panel, golden lists and tool tables by Opus; full suite green.
 - Vary only the parameters the spec marks tunable, within its ranges; one parameter set pooled

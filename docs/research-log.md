@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: A3 one gates tool (auto mode, "your pick")
+
+- Codex `gpt-6.1-sol` medium, write, worktree `a3_gates` (brief `briefs/a3-gates-tool.md`; two worker
+  questions answered in the brief first: always-on gates, the controls' sd), 743 s:
+  `tools/gates.py` (`[gates]` table in the grid, `--controls N`), circular block bootstrap moved to
+  `analytics/bootstrap.py` (old names re-exported, outputs pinned), `[gates]` excluded from the research id.
+- Opus review: the generic tool on the real strategy 14 run gives the same verdicts, gates, net R, halves,
+  bootstrap and control numbers as `us_close_de_open_gates.py` (0 differences; only the missing-US500
+  diagnostic is tool-specific). Full suite 5,755 passed, golden 13 / 13 identical, ruff clean.
+
 ## 2026-11-12: harvest batch 5 (intraday events, >= 20 bp per event): nothing new (auto mode)
 
 - Codex `gpt-6.1-terra` medium `--search`, 6 calls (11-38 s). Both canaries pass again. CPI / NFP index

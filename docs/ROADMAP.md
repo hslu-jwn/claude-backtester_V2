@@ -355,7 +355,7 @@ where (updated 2026-11-03).
   cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger
   `research/ledger.csv`, ☑ A4 / A7 / A8 / A10 / B7 rules, ☑ archive moves and stub removal, ☑ ideas D1-D5,
   ☑ `tools/harvest.py` + skill `idea-harvest`; ◐ harvest pilot (2026-11-12: web access fixed with `--search`; 4 ideas, 0 verified: PDF check bug, none runnable on our data), ☐ B4
-  dividends (needs the MT5 deal export), ☐ A3 one gates tool, ☐ A9 results out of the specs, ☐ shrink
+  dividends (needs the MT5 deal export), ☑ A3 one gates tool (`tools/gates.py` + `[gates]` table, `--controls`; one block bootstrap; 2026-11-12, `7771f8e`), ☐ A9 results out of the specs, ☐ shrink
   the three slowest tests, ☐ finished ROADMAP steps to the archive.
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.

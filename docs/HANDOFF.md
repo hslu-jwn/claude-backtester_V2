@@ -68,7 +68,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    turn-of-month family is closed. I51 daily trend portfolio screened the same day: killed (net Sharpe
    -1.03, gross -0.13, swap the main cost); trend family closed. Carded ideas are used up: next is an idea
    harvest (Open 4 web probe first) or the code items below.
-2. Review items left (ROADMAP V2.10): A3 one gates tool from a `[gates]` table (Codex sol), A9 results
+2. Review items left (ROADMAP V2.10; A3 done 2026-11-12, `tools/gates.py`): A9 results
    out of the specs into the ledger (terra), shrink the three slowest tests (terra).
 
 ## First prompt for the next chat
