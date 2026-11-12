@@ -187,7 +187,8 @@ conversion v_i(0), initial price stops d_i > 0, and define
 Here q_i are scale-free weights, not account lots, and D is a normalization basis, not
 account money. When valuation is constant, this equals sum_i w_i * R_leg_i; for changing
 FX conversion, normalize each cashflow with the causally available conversion at its
-timestamp before dividing by the fixed D. All required FX conversion symbols are declared
+timestamp before dividing by the fixed D. For a CFD leg the cashflow is its price P/L, settled at exit
+(`q_i * (exit - entry) * v_i(exit)`), never a conversion gain on the notional (Opus 2026-11-12, 2a-1). All required FX conversion symbols are declared
 dependencies. Reject nonfinite quantities, zero/nonpositive risk and unavailable conversion.
 Do not add unweighted leg Rs or divide by the net notional of offsetting legs. For example,
 leg stop budgets 2 and 1 give weights 2/3 and 1/3; leg net returns +1R and -1R yield

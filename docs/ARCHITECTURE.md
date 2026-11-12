@@ -36,6 +36,13 @@ hint (`TYPE_CHECKING`).
 
 ## How a backtest steps through time
 
+Linked-trade contracts live alongside the single-leg path: `strategy/group.py` declares
+immutable ordered legs and synchronized execution policies; `engine/group_trade.py`
+calculates per-leg costs and group R using entry-frozen risk D and weights, with explicit
+entry/exit valuation and reconciled leg attribution (Spec: `design/multi-symbol.md` › B).
+This increment provides model and arithmetic only; the M1 group execution coordinator,
+residual exposure, and group account/risk integration are subsequent work.
+
 ```
 for each base-timeframe candle i (5m for strategy 1, 1m for strategy 2), oldest first:
     now   = close time of candle i
