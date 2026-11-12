@@ -45,7 +45,11 @@ Dash app with a TradingView Lightweight Charts chart.
 
 Data: MetaTrader 5 (FTMO) M1 history in `data/cache/mt5/` (symbols: `python -m backtester.tools.mt5_info`, preferred day by day),
 histdata.com M1 files for older years, Binance BTC / ETH futures. Live: a demo-only forward
-test bot on the FTMO demo (`live/`). Goal of V2: a library of research-based strategies and a
+test bot on the FTMO demo (`live/`). **Venues (rule set by the user, 2026-11-12):** research may
+target exchange futures as well as FTMO CFDs. Method (Opus, same day): a futures idea is judged on
+futures prices and a futures cost model (commission, tick spread, roll; no CFD swap), never on CFD prices
+with the swap simply removed (the CFD swap is mostly the futures carry, which futures prices contain).
+Goal of V2: a library of research-based strategies and a
 portfolio of them that balances itself across market regimes.
 
 ## Specs are the source of truth

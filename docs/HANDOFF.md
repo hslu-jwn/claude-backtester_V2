@@ -60,6 +60,13 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 5. Gate 7's 21:00 UTC rollover window vs MT5's 20:55 start (low priority); stressed-cost p90 refresh
    with fill runs 3 + 4; your check of data fixes 13.12-13.18.
 
+## Venue decision (the user, 2026-11-12)
+
+Futures are allowed as well as FTMO CFDs (AGENTS.md › What this is). The one cost-bound lead, P01
+WTI / Brent (+194 bp per trade without swap, 18 trades, t 1.27), needs real futures prices to be judged:
+free EIA data has WTI futures (contracts 1-4, daily) but only Brent SPOT; Brent futures history and a
+futures cost model (broker commission per contract) are open (HANDOFF › Open).
+
 ## Next step
 
 1. **Lead-lag done:** strategy 14 falsified (development run 2026-11-12); L15-L18 failed the pre-build
