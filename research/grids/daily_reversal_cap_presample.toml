@@ -1,0 +1,19 @@
+# H13f (review D1, 2026-11-11; run 2026-11-12, auto mode): the frozen CAP rule unchanged on the index
+# pre-sample. Run with --cache-dir data/cache/histdata_presample --dev-only.
+# Pooled afterwards with the development CAP / 2R cell of results/research/daily_reversal_2f40768b.
+# Assumptions (Opus, before the run): the frozen rule is CAP with its registered target 2R and hold 5;
+# AUS200 has no pre-sample data, so the pre-sample leg has 5 indices (development keeps all 6).
+# Kills (ledger H13f): pooled < 80 trades; doubled-cost net <= 0; bootstrap lower bound <= 0;
+# more than half the net profit from March 2020.
+strategy = "daily_reversal"
+symbols = ["US500", "NAS100", "GER40", "UK100", "JP225"]
+monkeys = false
+sensitivity = false
+entry_screen = false
+shocks = false
+min_trades = 1
+
+[base]
+hold_sessions = 5
+setup = "CAP"
+target_r = 2.0
