@@ -60,6 +60,20 @@ def test_codex_never_gets_full_access():
     assert "--dangerously-bypass-approvals-and-sandbox" not in cmd
 
 
+def test_codex_web_search_only_when_asked():
+    """Idea harvest (skill idea-harvest): `codex exec` has no web search unless `--search` is
+    given before `exec` (probe 2026-11-12); the default stays offline."""
+    assert "--search" not in build_codex_cmd("codex.cmd", task(), CFG, out_file="o.md")
+    cmd = build_codex_cmd("codex.cmd", task(search=True), CFG, out_file="o.md")
+    assert cmd[:3] == ["codex.cmd", "--search", "exec"]
+
+
+def test_codex_web_search_refused_for_write_tasks():
+    """Web pages are untrusted input: a task that reads the web never edits files."""
+    with pytest.raises(ValueError, match="search"):
+        build_codex_cmd("codex.cmd", task(search=True, write=True), CFG, out_file="o.md")
+
+
 def test_codex_model_override():
     cmd = build_codex_cmd("codex.cmd", task(model="gpt-6-astra"), CFG, out_file="o.md")
     assert cmd[cmd.index("-m") + 1] == "gpt-6-astra"

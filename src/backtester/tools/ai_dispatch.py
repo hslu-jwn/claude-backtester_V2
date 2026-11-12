@@ -120,6 +120,7 @@ class Task:
     cwd: str = "."
     model: str | None = None
     allow_paid: bool = False  # hosted APIs that bill per token
+    search: bool = False  # Codex live web search (idea harvest); read-only tasks only
 
 
 @dataclass(frozen=True)
@@ -153,11 +154,13 @@ def _effort(task: Task, allowed) -> str:
 
 def build_codex_cmd(exe: str, task: Task, cfg: DispatchConfig, out_file: str) -> list[str]:
     effort = _effort(task, cfg.codex_efforts)
+    if task.search and task.write:
+        raise ValueError("web search is for read-only tasks: web pages are untrusted input")
     # Shell mode (user, 2026-10-22): Windows blocks every command in Codex's plain sandboxes;
     # --approve-for-me runs them in workspace-write with an automatic reviewer. Read-only
     # tasks are enforced by guard_violations.
     return [
-        exe, "exec",
+        exe, *(["--search"] if task.search else []), "exec",
         "-C", task.cwd,
         "--approve-for-me",
         "-m", task.model or cfg.codex_model,
@@ -446,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--model", help="override the default model")
     p.add_argument("--write", action="store_true", help="allow file edits (never commits)")
     p.add_argument("--allow-paid", action="store_true", help="allow a per-token billed API")
+    p.add_argument("--search", action="store_true", help="Codex live web search (read-only tasks)")
     p.add_argument("--cwd", default=".", help="repo or worktree to work in")
     p.add_argument("--label", default="task", help="short name for the answer file and log")
     p.add_argument("--results", type=Path, default=RESULTS_DIR)
@@ -460,7 +464,7 @@ def main(argv: list[str] | None = None) -> int:
         p.error("give --prompt, --brief or both")
     parts = [a.brief.read_text(encoding="utf-8-sig") if a.brief else "", a.prompt or ""]
     prompt = "\n\n".join(x for x in parts if x)
-    task = Task(a.tool, prompt, a.effort, a.write, a.cwd, a.model, a.allow_paid)
+    task = Task(a.tool, prompt, a.effort, a.write, a.cwd, a.model, a.allow_paid, a.search)
     try:
         return run(task, DispatchConfig(), a.results, a.label)
     except ValueError as e:  # refused route (no model, not free, paid without --allow-paid)

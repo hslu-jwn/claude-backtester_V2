@@ -4,7 +4,7 @@ ny_index_sweep,ny open sweep;am pm window;index open sweep,falsified,S02,
 no_wick,no wick candle;marubozu;wickless candle;no-wick retest,falsified,S03,I-62 retest also failed
 bar_patterns,m15 pattern;h1 pattern;candle geometry;engulfing;pin bar;inside bar;outside bar;wick rejection;round number;close streak;median cross;sma cross;ma cross;rsi extreme;oscillator filter,falsified,S09,"families A-E of the M15 triage; stops under ~1 daily ATR"
 alternating_path,alternating path;close path;follow fade last change,falsified,S09,rejected by the user 2026-11-06
-trend,trend following;breakout;donchian;turtle;moving average trend;kama;time series momentum;tsmom;ewmac,open,S04;I51,"single-symbol falsified; portfolio form open as I-51"
+trend,trend following;breakout;donchian;turtle;moving average trend;kama;time series momentum;tsmom;ewmac,falsified,S04;I51,"single-symbol and portfolio form (I-51 screen 2026-11-12) falsified; family closed"
 gap_fade,gap fade;gap fill;fade the open gap,falsified,S05,test period spent (not clean)
 gap_momentum,gap momentum;gap and go;gap continuation,falsified,S07,
 orb,opening range breakout;orb;first range breakout,falsified,S06,"stop proposing ORB without a new mechanism"
@@ -12,7 +12,7 @@ london_fix,london fix reversal;wm reuters fix;4pm fix fade;tokyo fix,falsified,S
 fx_hours,local hours depreciation;breedon ranaldo;european hours short;usd hours long,closed,H01;H01b;H07,F1a lead expired 2026-11-11
 index_last30,last 30 minutes momentum;intraday momentum;end of day momentum;baltussen,falsified,H02;H06,
 fomc,fomc drift;pre-fomc;fomc morning;fomc cycle,falsified,H03,
-turn_of_month,turn of month;month end;tom effect;dash for cash;month-end rebalancing,open,H04;H09;I67,"unconditional falsified; conditional sign open as I-67 (same family)"
+turn_of_month,turn of month;month end;tom effect;dash for cash;month-end rebalancing,falsified,H04;H09;I67,"unconditional falsified; conditional sign I-67 killed 2026-11-12; family closed"
 rsi2,rsi(2);rsi 2;connors rsi;short-term mean reversion index,falsified,H10,
 gotobi,gotobi;five-ten day;nakane;tokyo fixing usdjpy,tested,H11,"one-time test not confirmed; no retest"
 daily_reversal,capitulation;connors e8;oversold reversal;daily reversal,open,H13;H13f,"E8 falsified; CAP inconclusive, follow-up proposed"

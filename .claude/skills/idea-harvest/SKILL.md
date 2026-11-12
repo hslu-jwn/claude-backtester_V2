@@ -20,7 +20,8 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
    one cell with a known answer (`ACAD.FX-MAJ.INTRA.FLOW` "local hours": Breedon & Ranaldo must
    appear) and one nonsense cell that must come back empty.
 2. **Search (worker):** one task per call, read-only:
-   `ai_dispatch codex --effort low --label harvest-<task_id> --prompt "<harvest prompt TASK_ID>"`
+   `ai_dispatch codex --search --effort low --label harvest-<task_id> --prompt "<harvest prompt TASK_ID>"`
+   (`--search` is required: without it `codex exec` has no web access, probe 2026-11-12)
    (model per `docs/agent-routing.md`; at most 2 in parallel; a limit means pause, never a paid
    fallback). Save the JSON answer as `research/harvest/raw/<task_id>.jsonl`. Text-only free models
    (Ollama, groq, openrouter, gemini-api) may only translate or fill the schema from page text the
