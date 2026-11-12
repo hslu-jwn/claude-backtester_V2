@@ -115,6 +115,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | killed 2026-11-12 (t 0.95 < 2; ledger I67); same family as F4 / F4M |
 | I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | parked: needs EIA front / second-month settlements |
 | I-69 | Bitcoin CME futures expiration week: long BTCUSD in the week of the last-Friday expiry | event | BTCUSD | pays swap (crypto -30 %/yr) | harvest HV-T0014-1 (econstor jrfm-15-00092, quote verified) | killed 2026-11-12 (net -100 bp / week, t -0.72; ledger I69) |
+| I-70 | Option-expiration week on US500: long from the Friday close before to the expiry Friday close | event | US500 | pays swap (multi-night) | Stivers & Sun (via Quantpedia, harvest HV-T0015-1; HV-T0018-2) | carded 2026-11-12, UNTESTED |
 | T-20 | Resting limit entries for clock-based holds (cost side, no new edge) | tooling | cheap FX / indices | – | review D5 | open, UNTESTED |
 
 Not carried forward from the 2026-11-09 literature pass (dead or no evidence): pre-holiday,
@@ -685,6 +686,19 @@ Kills it: net mean per week <= 0; t of the net < 3.0 (new family `crypto_event`,
 opposite signs in the two halves (by count). Caveat: the paper's sample IS our development period, so a
 pass only replicates it; independent evidence would come only from the one-time test.
 Diagnostic (not a gate): the same Monday-Friday window in all other weeks.
+
+### I-70 Option-expiration week on US500 (harvest batch 4, 2026-11-12; UNTESTED)
+Sources (quotes verified by `harvest check`): Quantpedia "Option Expiration Week Effect" (Stivers & Sun,
+J. Financial Markets, US large caps, sample ending well before 2010) and therobusttrader.com (practitioner
+replication). Claim: index returns are higher in the week ending on the monthly option expiration Friday.
+Mechanism (PUBLISHED, partly): dealer hedging and the unwind of option-linked short positions into expiry.
+Rule fixed before any data (2026-11-12): long US500 from the cash close (last M1 close <= 16:00 New York)
+of the Friday before the third Friday of each month to the cash close of that third Friday (Thursday if
+the Friday is a holiday: the last cash close of that week); pre-sample 2010-2014 (histdata_presample)
+pooled with development 2015-01 to 2021-08 (out of the paper's sample). Net = gross minus cost table round
+trip minus swap for the nights held.
+Kills it: net mean per week <= 0; t of the net < 3.0 (new family `opex_week`, threshold rule); opposite
+signs in the two halves (pre-sample vs development). Diagnostic (not a gate): all other Friday-to-Friday weeks.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

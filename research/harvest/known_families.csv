@@ -24,7 +24,7 @@ crypto_intraday,bitcoin intraday momentum;crypto intraday,screened_out,C3,
 calendar_clock,pre-holiday;day of week;monday effect;macro day long;pre-ecb;option expiry;triple witching,falsified,SC1;SC2,"792 + 660 cell screens, 0 survivors"
 gold_session,gold session pattern;gold london open;gold asia,falsified,,cost-wall §4 stop list
 fx_relative_strength,currency strength;relative strength basket;fx basket momentum,specced,P03,"needs multi-symbol steps B / C"
-lead_lag,lead lag;us close german open;oil cad;usd breadth;gold silver lead;btc eth lead,specced,L14;L15;L16;L17;L18,pre-registered; not built
+lead_lag,lead lag;us close german open;oil cad;usd breadth;gold silver lead;btc eth lead,falsified,L14;L15;L16;L17;L18,"L14 falsified 2026-11-12, L15-L18 failed the pre-build screen; family closed"
 pairs,wti brent spread;gold silver ratio;pairs trading;cointegration,specced,P01;P02,drafts
 fx_carry,fx carry;carry trade;interest rate differential,open,,"I-29; swap credits are off by default (review B5)"
 oil_carry,oil term structure;backwardation;contango;roll yield,parked,I68,needs EIA curve data
