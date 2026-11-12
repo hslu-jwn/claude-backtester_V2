@@ -55,8 +55,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
    rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
 4. **Harvest:** 4 batches run 2026-11-12 (web search + PDF check fixed; batch 4 both canaries pass).
-   Leads screened and killed the same day: I-69 bitcoin expiry week, I-70 opex week. Open leads: two
-   verified bitcoin funding-extreme fades (HV-T0020-1 / -3).
+   Leads screened and killed the same day: I-69 bitcoin expiry week, I-70 opex week; funding fades
+   rejected by cost; batch 5 (intraday events) found nothing new. No live leads (cost-wall page).
 5. Gate 7's 21:00 UTC rollover window vs MT5's 20:55 start (low priority); stressed-cost p90 refresh
    with fill runs 3 + 4; your check of data fixes 13.12-13.18.
 

@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: harvest batch 5 (intraday events, >= 20 bp per event): nothing new (auto mode)
+
+- Codex `gpt-6.1-terra` medium `--search`, 6 calls (11-38 s). Both canaries pass again. CPI / NFP index
+  drift, ECB EURUSD, gold after US data: 0 ideas each; BOJ / DAX: 1 (pre-ECB DAX drift, on the cost-wall
+  stop list, not re-tested). Ledger HV-T0021-1 (canary duplicate), HV-T0026-1.
+- Day total: 5 batches, 26 tasks, 13 ideas, 0 alive. Every looked-at idea of the day killed or rejected;
+  cost-wall page updated (no live leads).
+
 ## 2026-11-12: harvest batch 4 (practitioner sources) + I-70 opex week: KILLED (auto mode)
 
 - Codex `gpt-6.1-terra` medium `--search`, 6 calls (12-47 s), queries limited to CFD-tradable ideas.
