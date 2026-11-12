@@ -349,7 +349,7 @@ where (updated 2026-11-03).
   counts; Opus's picks accepted by the user 2026-11-11: references in the strategy config, not a grid
   table / CLI flag; per-decision journal deferred; Opus builds it, not Codex; `5b33a5f`, done per the
   user 2026-11-11); strategy 14 `us_close_de_open` built on it (Codex sol, Opus review) and its gates
-  tool (Codex terra); development run 2026-11-12: falsified (ledger L14); ◐ B two-leg trades (accepted by the user 2026-11-12, "Yes, build two-leg"; increments: ☑ 2a-1 group model + group R arithmetic (`056adda`), ◐ 2a-2 paired M1 engine, ☐ 2a-3 runner / artifacts, ☐ 2b research / risk, ☐ 2c account protection only on the user's go); ☐ C baskets (only on the user's go).
+  tool (Codex terra); development run 2026-11-12: falsified (ledger L14); ◐ B two-leg trades (accepted by the user 2026-11-12, "Yes, build two-leg"; increments: ☑ 2a-1 group model + group R arithmetic (`056adda`), ☑ 2a-2 paired M1 engine (`6aced59`), ◐ 2a-3 runner / artifacts, ☐ 2b research / risk, ☐ 2c account protection only on the user's go); ☐ C baskets (only on the user's go).
 - ◐ **V2.10 Review follow-up** (Fable review + harvest framework, `knowledge/reviews/2026-11-11-*`; Opus's
   picks accepted by the user 2026-11-11): ☑ B2 test opt-in, ☑ B3 gap fade test struck, ☑ B5 / B9 / B1 / B8
   cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger

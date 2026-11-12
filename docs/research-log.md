@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: two-leg trades, increment 2a-2 paired M1 engine
+
+- Codex `gpt-6.1-sol` medium, write, worktree `two_leg2` (brief `briefs/two-leg-2a2-paired-engine.md`),
+  568 s: `engine/group_backtest.py`, `GroupStrategy`, 24 engine tests (cross-symbol lookahead, future
+  append, atomic next-open entry, expiry, peer exit at next open, residual / stale marks, costed example).
+  Opus review: clock causality checked line by line (entry only at the next minute's open, peer exits at
+  the next candle's open). Full suite 5,837 passed, golden 13 / 13 identical, legacy files untouched.
+
 ## 2026-11-12: two-leg trades, increment 2a-1 (the user: "Yes, build two-leg")
 
 - Codex `gpt-6.1-sol` medium, write, worktree `two_leg` (brief `briefs/two-leg-2a1-group-model.md`), 400 s:
