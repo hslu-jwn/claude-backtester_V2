@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: I-51 diversified daily trend portfolio screen: KILLED (the user: "1")
+
+- Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_i51_trend_portfolio_screen.py`, one
+  volatility-scaled portfolio over 35 cached symbols (28-33 active), 12-month sign, monthly rebalance,
+  cost table spread + swap (credits off), development only: 67 months 2016-02 to 2021-08. Kills from the
+  card (review D3), fixed before the run.
+- Net -33.5 bp per month, Sharpe -1.03 (halves -1.01 / -1.03): **killed** (Sharpe < 0.4, net <= 0).
+  Diagnostic after the verdict (not a gate): gross Sharpe -0.13; totals gross -290 bp, swap -1924 bp,
+  spread -32 bp. Trend had no edge here before costs, and FTMO swaps alone would sink a real one.
+- Trend family: second falsification after strategy 4 (S04), family closed.
+
 ## 2026-11-12: I-67 month-end rebalancing screen: KILLED (the user: "your choice")
 
 - Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_i67_month_end_screen.py`, US500

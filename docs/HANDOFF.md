@@ -64,11 +64,13 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 1. **Lead-lag done:** strategy 14 falsified (development run 2026-11-12); L15-L18 failed the pre-build
    screen the same day (best L15 oil -> USDCAD, net -0.47 bp per trade). Nothing lead-lag left to build.
    I67 month-end rebalancing screened 2026-11-12: killed on t < 2 (+19.9 bp, t 0.95, 80 months); the
-   turn-of-month family is closed. Next research: screen I51 daily trend portfolio.
+   turn-of-month family is closed. I51 daily trend portfolio screened the same day: killed (net Sharpe
+   -1.03, gross -0.13, swap the main cost); trend family closed. Carded ideas are used up: next is an idea
+   harvest (Open 4 web probe first) or the code items below.
 2. Review items left (ROADMAP V2.10): A3 one gates tool from a `[gates]` table (Codex sol), A9 results
    out of the specs into the ledger (terra), shrink the three slowest tests (terra).
 
 ## First prompt for the next chat
 
-`Continue.Research` (Test=manual): screen I51 daily trend portfolio (answer Open 2-4 when
+`Continue.Research` (Test=manual): web probe, then an idea harvest (answer Open 2-4 when
 convenient).

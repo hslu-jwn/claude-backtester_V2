@@ -96,7 +96,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-48 | Euro-day exhaustion fade: new 3-5 bar extreme against 70-80 bar momentum, limit beyond the extreme | signal | FX, gold, indices; 60m | none | KD ch.18 | open |
 | I-49 ★ | Volatility-percentile regime filter: decile rank of realised vol vs own history, strategies run per bucket | filter | all | – | JK p.64-72; EC p.184-186 | open |
 | I-50 | Meta-labelling of an existing primary signal: rule-based features, purged time blocks, trade / skip | filter | strategies 1-6 | – | LP 3.6-3.8, 8, 9.4 | open |
-| I-51 | EWMAC multi-speed (16:64, 32:128, 64:256) with swap as the carry forecast | signal | all; D1 | yes (carry) | RC ch.7-8, App.B; EC ch.6 | open |
+| I-51 | EWMAC multi-speed (16:64, 32:128, 64:256) with swap as the carry forecast | signal | all; D1 | yes (carry) | RC ch.7-8, App.B; EC ch.6 | killed 2026-11-12 (D3 screen, ledger I51) |
 | I-52 | Cost-limit screen: turnover x standardised cost <= 1/3 of the plausible pre-cost Sharpe | filter | all | – | RC ch.12 | open |
 | I-53 | CPPI sub-account and Kelly per strategy for the FTMO limit | risk | R lists | – | EC ch.8 | open |
 | I-54 | Cool-down after a win / loss (re-entry timing) on a breakout entry | entry mgmt | any | – | KD p.24-28 | open |
@@ -597,7 +597,7 @@ Daily forecasts as in T-12 for three speeds and a carry forecast from the FTMO s
 Carver SR ~0.5 on 6 instruments after costs, honest haircut 65-75 %; Chan Sharpe ~1.0 on three futures, momentum crash after 2008. Fit: moderate; D1, holds weeks, so swap is the whole cost question;
 gold carry is funding only (rule shorts gold), FX carry has negative skew (CHF peg); five symbols give a small IDM. Differs from strategy 4: continuous blend, slow speeds, carry earned by swap
 instead of paid. Related: I-29.
-Review 2026-11-11 (D3, UNTESTED): judge it as **one** volatility-scaled portfolio over all cached D1
+Review 2026-11-11 (D3; screened 2026-11-12: KILLED, net Sharpe -1.03, gross -0.13, ledger I51): judge it as **one** volatility-scaled portfolio over all cached D1
 symbols (12-month sign, monthly rebalance, spread and swap charged), not symbol by symbol as strategy 4
 was. Kills it: net portfolio Sharpe < 0.4 on development; more than half the profit from 3 symbols; the
 result needs positive swap credits (off by default since 2026-11-11, review B5). Same family as strategy 4.
