@@ -1,5 +1,29 @@
 # Research runner and Research page (ROADMAP 6.1 + 6.2)
 
+## Group runs
+
+`backtester.group_runner.run_group(strategy, start, end, sources, cfg, values)` is an
+explicit Python entry point for one shared-state `GroupStrategy` job; it does not
+change legacy CLI, grids or symbol jobs. Dates include their whole UTC day; datetime
+bounds require UTC and exclude candles closing after `end`. All legs and declared
+reference timeframes use the saved sources. Warm-up callbacks update indicators,
+but their order intents are discarded, so no pre-period position is carried in.
+
+`write_group_results(result, out_dir, run_id, settings)` writes `trades.csv` (one
+observation per fully closed group), `group_legs.csv` (closed-group attribution in
+group R), `rejected.csv`, `unresolved.json` (remaining exposure and stale mark times),
+and `settings.json` (all input cache directories, reference policies, costs, constant
+values, period and fixed-D convention). Reference `max_age` is stored in seconds.
+Trade prices are explicitly synthetic unit-risk coordinates; first-leg direction
+and joined symbols identify a statistical group, never an executable instrument.
+Spread/commission use legacy positive-charge signs; swap/funding remain signed and
+conversion surcharge is zero, matching the group engine. `read_trades`, cost stress
+and `timed_hold_gates.variant_report` consume these group observations unchanged.
+Price-integrity gates, group MTM/risk, research integration, causal FX conversion,
+intermediate closed-peer attribution for residual groups, and UI remain work for
+2b; this compatibility export does not certify those diagnostics or authorize tests
+on holdout data. See `group_runner.py` for the complete increment assumptions.
+
 ## Weekly market closures
 
 Decision by Opus, 2026-11-10: a regular weekly instrument closure is a market closure,

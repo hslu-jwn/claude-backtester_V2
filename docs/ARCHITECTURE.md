@@ -44,8 +44,11 @@ entry/exit valuation and reconciled leg attribution (Spec: `design/multi-symbol.
 steps the union of declared M1 closes, accepts pending groups atomically at common
 next opens, and manages each leg's stops before scheduling peer exits at actual next
 opens. End-of-data exposure stays unresolved with timestamped last-close marks;
-closed groups retain ordered fills and reconciled attribution. Runner/artifact support
-(2a-3) and group research/account/risk integration (2b) remain subsequent work.
+closed groups retain ordered fills and reconciled attribution. `group_runner.py` loads
+bounded leg/reference bundles and runs one shared job, discarding warm-up intents.
+It writes one statistical trade row per closed group, reconciled leg attribution,
+rejections, residual marks and source/settings provenance (see research-runner.md,
+Group runs). Group research/account/risk integration (2b) remains subsequent work.
 
 ```
 for each base-timeframe candle i (5m for strategy 1, 1m for strategy 2), oldest first:
