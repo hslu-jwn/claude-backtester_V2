@@ -4,6 +4,24 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: strategy 14 `us_close_de_open` development run: FALSIFIED (Continue.; the user's go)
+
+- Opus 5.5 (this session, no dispatch): both grids `--dev-only --workers 4` (GER40 16 cells,
+  `results/research/us_close_de_open_f2c04bdb`; UK100 16 cells, `us_close_de_open_uk_a79a37c4`), 2015-01-02
+  to 2021-09-13, then `tools/us_close_de_open_gates.py` (integrity on). Test not spent.
+- **Primary (0.10 %, 0.5 ATR, exit 09:30):** 598 trades, gross +8.8 R, net -4.6 R (doubled -16.6), mean
+  -0.008 R, bootstrap lower 2.5 % -0.041, p 0.66; halves -8.1 / +3.5; vs the date-filtered control +0.019 R
+  (lower -0.020); long -8.5 R / short +3.9 R; DST-mismatch weeks 47 trades -4.7 R. UK100 primary 768 trades,
+  net -39.1 R (gross +9.8). Verdict falsified; all 8 S cells falsified (best: 0.20 / 0.5 / 10:00, 308 trades,
+  net +12.2, bootstrap lower -0.027, effect lower -0.009, first half -3.2). Controls C: all negative net.
+  One GER40 integrity failure (2020-04-14), 46 days with a missing US500 signal candle.
+- Cost wall again: gross +0.015 R per trade against about 0.022 R cost per trade.
+- **Pipeline controls** (review tip 2, first run for this tool; scratch script on the primary's control
+  trades, 200 draws each): negative (fake signal cells from control days) 0 % pass of all falsification
+  checks; positive (planted +0.049 R = MDE at 80 % power) effect gate 69.5 %, mean gate 94.5 %, bootstrap
+  vs zero 30 % (controls are net negative after costs). Tool behaves as designed.
+- Family `lead_lag`: falsification 1 of 2 (closed after two).
+
 ## 2026-11-11: strategy 14 gates tool (Continue.Code; the user's go on U5-U6)
 
 - Codex `gpt-6.1-terra` medium, write, worktree `s14_gates` (brief `briefs/us-close-de-open-gates.md`):

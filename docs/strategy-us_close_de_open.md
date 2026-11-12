@@ -1,6 +1,7 @@
 # Strategy 14: US close -> German open (cross-market overnight momentum)
 
-Spec drafted 2026-11-10; strategy built 2026-11-11, no research run. Folder
+Spec drafted 2026-11-10; strategy built 2026-11-11; development run 2026-11-12: **falsified** (all 8
+cells; numbers in `research/ledger.csv` L14 and `docs/research-log.md`; test not spent). Folder
 `strategy/us_close_de_open/`, config `UsCloseDeOpenConfig`, registry name `us_close_de_open`.
 First strategy that reads a **reference symbol** (US500) while trading another (GER40):
 `docs/design/multi-symbol.md` > A (opt-in `on_market_candle`, one execution symbol, reference data
