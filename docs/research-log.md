@@ -4,6 +4,21 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: web-access probe + harvest pilot 2 (the user: "Web probe + harvest")
+
+- Probe (Opus, direct one-line `codex --search exec`, terra low, 12 s): found and quoted the Breedon &
+  Ranaldo canary. Cause of the empty pilot 1: `ai_dispatch` never passed `--search`. Fixed test-first:
+  `ai_dispatch --search` (Codex only, refused for write tasks: web pages are untrusted input), 35aea66.
+- Pilot 2 (Codex `gpt-6.1-terra` low `--search`, 5 calls, 21-31 s each): T0005 known-answer canary
+  (option-expiration week, Stivers & Sun) MISSED, it returned another option-expiry paper; T0006 nonsense
+  canary correctly empty; T0007 Goldman roll WTI spread, T0008 crypto funding-time spreads, T0009 dealer
+  gamma: one idea each. T0003 / T0004 skipped (families now closed: turn_of_month, london_fix).
+- `harvest check`: 4 of 4 `unverified_source`. Three sources are PDFs, which the checker reads as raw
+  bytes (tool bug, not bad citations); ResearchGate refuses bots. Terra NOT taken off academic sources on
+  this batch (the 20 % rule would be applied to a tool bug). None of the four is runnable on our data
+  anyway (options, futures spreads, no rule, options gamma). Ledger rows HV-T0005-1 .. HV-T0009-1.
+- Known families: trend and turn_of_month marked falsified (now in the prompt's skip list).
+
 ## 2026-11-12: I-51 diversified daily trend portfolio screen: KILLED (the user: "1")
 
 - Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_i51_trend_portfolio_screen.py`, one
