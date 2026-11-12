@@ -45,8 +45,13 @@ CLI: `python -m backtester.tools.gates <research folder> [--breadth-folder <fold
 Reuse by import: `timed_hold_gates.variant_report`, `_name`, `BEST_DATES`, `BLOCK`, `RESAMPLES`, `SEED`;
 `alternating_path_gates.STRESSES`, `net`, `integrity_failures`; `entry_screen.load_m1`.
 
-`[gates]` keys (all optional except `min_trades`; a missing key = that gate is not part of the verdict and
-is reported as `null`):
+`[gates]` keys. **Always applied, no key (answer to the worker's question, 2026-11-12):**
+`positive_normal_and_doubled` (net R > 0 at normal costs and every `STRESSES` doubling),
+`best_date_removal_positive` (normal and all-doubled), `min_trades` (key required), and the cell's own
+bootstrap lower 2.5 % in the falsification rule. **Optional, a missing key = that gate is not part of the
+verdict and is reported as `null`:** `halves`, `[gates.control]` (effect_not_drift), `[gates.breadth]`,
+`integrity_max_gap` (no_data_integrity_failure), `primary` (without it no cell can advance). `symbol`
+only selects trades:
 
 ```toml
 [gates]
