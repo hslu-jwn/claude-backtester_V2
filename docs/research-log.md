@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: Continue.Research Test=auto (the user): no candidate eligible; I-68 closed on power
+
+- Start: no runnable candidate (README: all M15 drafts triaged out), no open carded idea with a mechanism
+  except I-68 (parked, needs an EIA download) and T-20 (cost tooling; no cell near cost is still open,
+  and using it on a closed cell would be a rescue). Test=auto had nothing to act on: no candidate has
+  passed every development gate.
+- I-68 power check (Opus, no dispatch; `research/screens/2026-11-12_i68_power_check.py`, volatility only,
+  no edge look, no download): USOIL monthly sd 12.5 % (130 months, 2010-11..2021-09). Halved published
+  carry ~0.7 % per month needs ~2,700 months for t 3; EIA 1986-2021 gives expected t ~1.2. **Closed on
+  power** (ledger I68); the download is not needed.
+- Consequence: HANDOFF Open 4 (direction) is the only way forward for research; the loop stops here.
+
 ## 2026-11-12: cost-frame diagnostic (the user: "Rethink the cost frame"; not a gate look)
 
 - Same pairs screen, three cost frames (diagnostic only, verdicts unchanged):

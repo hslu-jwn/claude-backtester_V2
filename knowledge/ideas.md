@@ -113,7 +113,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-65 | FOMC-morning long (Lucca & Moench 2015 pre-FOMC drift, decayed after 2015) | event | US500, NAS100 | none | PUBLISHED, decayed; falsification only; `2026-11-09_macro_announcement_equity.md` | tested 2026-11-09 (strategy 10 F3): falsified, FOMC mornings -0.27 R / trade vs other days |
 | I-66 | Turn-of-month open-to-close long (T-1..T+3), day-trade form of I-18 | calendar | US500, NAS100, US30 | none | ADAPTATION (published close-to-close only); `2026-11-09_calendar_effects.md` | tested 2026-11-09 (strategy 10 F4): no effect open to close |
 | I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | killed 2026-11-12 (t 0.95 < 2; ledger I67); same family as F4 / F4M |
-| I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | parked: needs EIA front / second-month settlements |
+| I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | closed 2026-11-12 on power (ledger I68) |
 | I-69 | Bitcoin CME futures expiration week: long BTCUSD in the week of the last-Friday expiry | event | BTCUSD | pays swap (crypto -30 %/yr) | harvest HV-T0014-1 (econstor jrfm-15-00092, quote verified) | killed 2026-11-12 (net -100 bp / week, t -0.72; ledger I69) |
 | I-70 | Option-expiration week on US500: long from the Friday close before to the expiry Friday close | event | US500 | pays swap (multi-night) | Stivers & Sun (via Quantpedia, harvest HV-T0015-1; HV-T0018-2) | killed 2026-11-12 (net -3.8 bp / week; ledger I70) |
 | T-20 | Resting limit entries for clock-based holds (cost side, no new edge) | tooling | cheap FX / indices | – | review D5 | open, UNTESTED |
@@ -673,6 +673,10 @@ Theory of storage: backwardation (scarce inventory) has paid longs, contango the
 front and second-month WTI settlements (EIA, free; download needs the user's go). Financing must come
 from the curve, not today's swap. Kills it before any build: fewer than 10 regime changes in development,
 or net <= 0 after a 3 % per year broker markup.
+**Closed 2026-11-12 on power (no download, no edge look):** WTI monthly sd 12.5 % (USOIL 2010-2021); a halved
+published single-commodity carry of ~0.7 % per month needs ~2,700 months for t 3, and all of EIA's 1986-2021 (420
+months) gives an expected t of ~1.2. Monthly trades (12 a year) cannot reach the FTMO goal either. A forward demo
+cannot settle it in any useful time. Revisit only inside a diversified commodity-carry portfolio with futures data.
 
 ### I-69 Bitcoin CME futures expiration week (harvest batch 3, 2026-11-12; screened the same day: KILLED, ledger I69)
 Source (quote verified by `harvest check`): econstor `jrfm-15-00092` (J. Risk Financial Manag. 15, 2022):
