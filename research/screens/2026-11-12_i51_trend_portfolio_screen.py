@@ -15,6 +15,7 @@ preferred, histdata otherwise, as DEFAULT_SOURCES reads them):
 import math
 import sys
 from datetime import UTC, date, datetime
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
@@ -51,7 +52,7 @@ months = [m for m in months if m <= last_full]
 port, contrib, prev_w = [], {s: 0.0 for s in monthly}, {s: 0.0 for s in monthly}
 parts = {"gross": 0.0, "swap": 0.0, "spread": 0.0}
 gross_m = []
-for m, nxt in zip(months, months[1:]):
+for m, nxt in pairwise(months):
     active = {}
     for s, f in monthly.items():
         if m in f.index and nxt in f.index and (m - 12) in f.index and f.loc[m, "vol"] > 0:
@@ -61,9 +62,8 @@ for m, nxt in zip(months, months[1:]):
         continue
     total = 0.0
     g_month = 0.0
-    for s in monthly:
+    for s, f in monthly.items():
         w = active.get(s, 0.0) / len(active)
-        f = monthly[s]
         pnl = 0.0
         if w:
             p0, p1 = f.loc[m, "close"], f.loc[nxt, "close"]

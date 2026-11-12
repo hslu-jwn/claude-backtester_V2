@@ -44,7 +44,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 4. **Direction of research:** cheap ideas are used up under FTMO costs. Options: intraday events with
    >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
    research and work on app / portfolio items. 2026-11-12 (Continue.Research Test=auto): I-68 oil carry
-   closed on power, so no carded idea is left; the loop waits on this decision.
+   closed on power, so no carded idea is left. **Decided by the user 2026-11-12: pause research,
+   work on `Continue.Code` items** (research resumes with a new idea source or data).
 5. Low priority: gate 7's 21:00 UTC rollover window vs MT5's 20:55 start; stressed-cost p90 refresh;
    your check of data fixes 13.12-13.18.
 
