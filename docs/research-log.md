@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: harvest batch 4 (practitioner sources) + I-70 opex week: KILLED (auto mode)
+
+- Codex `gpt-6.1-terra` medium `--search`, 6 calls (12-47 s), queries limited to CFD-tradable ideas.
+  Both canaries pass for the first time: T0015 Quantpedia option-expiration week found, T0016 nonsense
+  words empty. T0017 gold flows 0; T0018 expiration weeks 2 (1 verified); T0019 Nikkei ex-dividend 1
+  (untestable); T0020 bitcoin funding extremes 3 (2 verified, 1 merged). Scores 3-4 (< 6).
+- Opus picked I-70 (opex week on US500; funding fades deferred: funding data only from 2020, crypto
+  swaps heavy). Rule + kills committed in d3c8161 before data; pre-sample 2010-2014 + development
+  2015-2021-08. Result: 129 weeks, gross +8.7 bp, net -3.8 bp (t -0.19); pre-sample +4.8 / development
+  -9.1 bp; all other weeks gross +31.1 bp. **Killed** on all three criteria: the published effect is gone
+  out of its sample.
+
 ## 2026-11-12: H13f frozen CAP on pre-sample + development: KILLED (auto mode, the user)
 
 - Opus 5.5 (no dispatch): grid `research/grids/daily_reversal_cap_presample.toml` (committed a3471b8 before
