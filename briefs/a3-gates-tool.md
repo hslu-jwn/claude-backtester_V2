@@ -84,6 +84,15 @@ counts, random distinct entry dates present in both controls, seed 20261112); ne
 mean > 0, bootstrap lower > 0, effect_not_drift, and all three, under `controls` in `gates.json`. The
 reference is this description (the 2026-11-12 strategy 14 control run: negative 0 % / 200, positive effect gate 69.5 %).
 
+**Controls, exact definitions (answers 2026-11-12):** `sd` = sample standard deviation (`ddof=1`) of
+`r_net` over ALL trades of the two matched control cells together (long + short, no date removal),
+computed once; `n` = the primary cell's trade count. One `numpy.random.default_rng(20261112)` drives the
+date draws for all N fake cells (negative run first, then positive). Each fake cell is scored with the
+normal functions (`variant_report` with its own fixed `SEED`, the control difference with the controls
+minus the fake cell's dates). A primary without matched controls -> `controls: null` with a note.
+Anything else unclear: choose the reading closest to `us_close_de_open_gates.py`, write it in the module
+docstring as an assumption, and list it in your report (do not stop for it).
+
 ## Equivalence (the acceptance test)
 
 `tests/tools/test_gates.py` builds hand-made trade lists for an S/C grid (reuse the fixtures style of
