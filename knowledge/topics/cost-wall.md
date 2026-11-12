@@ -36,6 +36,11 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 | Study 11.11 / T-11 stationarity (21 symbols) | study | next-hour reversal 0.2-0.5 spread | 1 spread | negative | 0 of 105 ADF; reversal real but tiny, not tradeable | RM1 11.11 |
 | Study 11.13 / I-61 H1 shock (21 symbols) | study | NAS100 H1 k4 h2 +0.20 sd trimmed (t 1.74), halves +0.65 / +0.23 | n/a | n/a | 2 findings, both reversals, not tradeable; rest = top 1 % crash / news hours | RM1 11.13 |
 | 18 M15 drafts (R007-R024, 6 FX, 1-2 ATR) | not run | none supported (R014: +0.025) | 0.2 at 1 ATR, 0.1 at 2 ATR | n/a | 0 built: 12 duplicate failed families, rest COST_INFEASIBLE | TR |
+| 14 US close -> German open (GER40, US500 signal; 2026-11-12) | 598 | +0.015 | ~0.022 | -0.008 | falsified; UK100 breadth -39 R | L14 |
+| L15-L18 lead-lag screens (oil->CAD, USD breadth, gold->silver, BTC->ETH) | 387-656 | bp: +1.2 / -0.9 / +3.7 / -19.6 | bp: 1.7 / 1.6 / 15.5 / 13.1 | all negative | screens, not built | ledger L15-L18 |
+| I-51 trend portfolio, 35 symbols, monthly (2016-2021) | 67 months | gross Sharpe -0.13 | swap -1,924 bp, spread -32 bp total | Sharpe -1.03 | killed; swap alone sinks a real trend edge | ledger I51 |
+| I-67 / I-69 / I-70 calendar (month-end sign, BTC expiry week, opex week) | 80 / 41 / 129 | bp: +19.9 / -60 / +8.7 | bp: ~6 / ~40 / ~12 | +14 / -100 / -4 | killed (t < 2 / none / none) | ledger |
+| H13f CAP reversal, pre-sample + development | 50 | n/a | n/a | +0.136 R mean | killed: < 80 trades, bootstrap <= 0 | ledger H13f |
 
 ## 2. The pattern
 
@@ -70,7 +75,11 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 - Stop proposing: any M15 / H1 bar-pattern, path, oscillator, MA-cross or candle-geometry rule at stops under ~1 daily ATR (families A-E in TR, no-wick,
   session sweep, R014 variants, round numbers, wick rejection, indicator filters); gap fade and gap momentum (no OOS edge); ORB without a new mechanism;
   H1 shock continuation or reversal (I-61); FX relative-strength / basket rules (highest turnover, 0.2 R per leg); pre-holiday, day-of-week, pre-FOMC
-  drift post-2015, macro-day long, pre-ECB, gold session rules, Tokyo / London fix reversals, generic option-expiry.
+  drift post-2015, macro-day long, pre-ECB, gold session rules, Tokyo / London fix reversals, generic option-expiry
+  (I-70 re-tested it anyway on 2026-11-12 despite this line: killed again); daily lead-lag across markets
+  (L14-L18); diversified or single-symbol trend at any speed (I-51, strategy 4); month-end / turn-of-month in
+  any form (F4, F4M, I-67); daily reversal E8 / CAP / TS; multi-day holds on crypto CFDs (-30 %/yr swap,
+  ~8 bp a night) and multi-week holds anywhere unless the published edge is several times the swap.
 - Tuning stop, hold, signal frequency until the screen passes creates a new family and adds multiplicity (I52). Reversing a failed signal does not rescue it
   (strategy 3 and 1 reversed are no better).
 - Kept as the only live leads: EURUSD European-hours short (F1a, needs an independent check, GBPUSD disagreed), last-30-minute momentum only if gross rises
