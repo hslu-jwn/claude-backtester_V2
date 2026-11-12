@@ -3,85 +3,57 @@
 Read first in every session; rewritten at every `End.` (about 60 lines, current state only; history
 in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
-## Where things are (2026-11-11, `End.` of the review follow-up session)
+## Where things are (2026-11-12, `End.` of the multi-symbol / research / two-leg session)
 
 - **Repo:** branch `v2-6-research` (pushed); `main` is behind, merge only on the user's word. No lane
-  worktrees; local branches `main`, `v2-6-research`; tag `archive/wip-a2a3-gemini` keeps Gemini's
-  unreviewed WIP. Remote branches on GitHub were not touched.
-- **Review 2026-11-11** (`knowledge/reviews/2026-11-11-fable-review.md`, verdicts appended; framework
-  `...-fable-research-framework.md`) done per ROADMAP V2.10: research runner test is opt-in (`--test`);
-  gap fade's one-time test struck (test period already used in V1); cost fixes B5 (no positive swap
-  credit), B9 (USD-base commission at the trade's price), B1 (spread table x live ratio: GBPJPY 1.40,
-  NAS100 1.12, US500 1.07), B8 (a short's spread follows the managing candle); golden lists regenerated
-  per fix; dev reruns: no verdict changed (`knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`).
-- **One ledger:** `research/ledger.csv` (42 rows: every strategy, hypothesis, screen, spec and new card;
-  rules in `docs/research-runner.md` › Ledger). Trial log copied to `research/trials.jsonl` at `End.`.
-- **Ideas recorded, UNTESTED:** I-67 conditional month-end sign (F4 family), I-68 oil carry (parked,
-  needs EIA data), T-20 resting limit entries, I-51 judged as one portfolio, CAP follow-up on pre-sample.
-  F1a is closed (lead expired after its failed pre-sample check).
-- **Harvest tooling:** `tools/harvest.py` + skill `idea-harvest` + `research/harvest/known_families.csv`.
-  Pilot stopped: the known-answer canary came back empty in 15-27 s at Codex terra low / medium / write
-  (likely no web access in this dispatch path; its family was also in the skip list).
-- **Rules set by the user today:** per-mode rule (Continue.Research decides and records, elsewhere stop
-  and ask); one Telegram rule; model IDs only in `docs/agent-routing.md`; screen first, power line, stop
-  rules, controls, count every look (`continue-research`); lane merge ends with `lanes remove`.
-- **Tests:** full suite 5,643 passed, 14 skipped, 4 xfailed (9 min 47 s); ruff clean.
+  worktrees. Full suite 5,852 passed, 14 skipped, 4 xfailed (`-n 8`, about 2.5 min); ruff clean; golden
+  13 / 13 identical (strategy 14 excluded: its 2023 golden year is in its unspent test period).
+- **Built today:** multi-symbol 1b (strategy-declared references); strategy 14 `us_close_de_open` and
+  its gates; pytest-xdist (`-n 8` is the standard); `ai_dispatch --search` (Codex web search, read-only
+  tasks only); `harvest check` reads PDFs (`pypdf`); A3: one gates tool `tools/gates.py` from a `[gates]`
+  table in the grid, with `--controls N` (pipeline controls), one block bootstrap in
+  `analytics/bootstrap.py`; two-leg trades 2a-1 to 2a-3 (`strategy/group.py`, `engine/group_trade.py`,
+  `engine/group_backtest.py`, `group_runner.py`; one `trades.csv` row per group).
+- **Research today: 13 looks, all killed or rejected, no live lead.** Strategy 14 (development run),
+  lead-lag L15-L18, I-67 month-end, I-51 trend portfolio, H13f CAP, I-69 bitcoin expiry week, I-70 opex
+  week, pairs P01 / P02 (pre-build screens), funding fades (by cost). Families closed: lead_lag,
+  turn_of_month, trend, daily_reversal. Why: `knowledge/topics/cost-wall.md` (multi-day holds lose to
+  FTMO swap, intraday to the spread). 5 harvest batches (26 tasks, 13 ideas); since batch 4 both
+  canaries pass. Ledger: 60 rows; trial log copied to `research/trials.jsonl`.
+- **Futures venue:** allowed by the user (AGENTS.md). Cost model and choice in `docs/futures-venue.md`
+  (IBKR Pro Ireland: CL / BZ USD 2.35, MCL USD 0.85 per side, verified on IBKR's pages). History: Norgate
+  trial only covers 2024-2026; the user decided not to buy, so the P01 WTI / Brent futures check is parked.
 - **Uncommitted, not Opus's:** `src/backtester/tools/notify.py` (hook trace log lines); the user decides.
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
-- 2026-11-11: Opus's picks on the review list ("Go with your picks"): B1 / B5 / B8 / B9 with the stated
-  numbers (NAS100 applied at the measured 1.12), B3 strike, deletions (lanes, merged branches, wip
-  tagged), ideas D1-D5 recorded, process tips folded in, F1a closed, harvest skill built + pilot.
-- 2026-11-11: harvested ideas without a mechanism are parked, not dropped; one ledger for everything.
-- 2026-11-09 / 10: see git history of this file (swap scaling, gate 7 tolerance, multi-day holds in
-  scope, Sonnet only for small work, never idle, Telegram on > 5 min waiting).
+- 2026-11-12: pytest-xdist `-n 8` standard; one research loop at a time; always propose next steps;
+  auto mode (pick and start the next step; still ask for the one-time test, defaults, dependencies,
+  downloads); strategy 14 run; harvest web probe + batches and `pypdf`; two-leg trades B (2a built,
+  2b deferred, 2c only on the user's go); futures venues allowed; broker / data source chosen by Opus;
+  no Norgate subscription.
+- 2026-11-11: review picks B1 / B5 / B8 / B9, one ledger, parked (not dropped) ideas without mechanism.
 
 ## Open (needs the user)
 
 1. One-time MT5 tests still pre-registered: strategy 4 on GBPJPY; gap momentum in quiet sideways
    markets. Only on your go.
-2. **B4 dividends:** no dividend handling in the engine; FTMO's booking is still unverified. Read-only
-   export 2026-11-11 of all deal types on the demo account (7,035 deals, 2026-11-02..11-09): only one
-   non-trade deal (the initial balance), no dividend or adjustment deal, no position held > 2 h; only
-   4 index shorts crossed one rollover (2026-11-03, swap US500 +0.06, US100 +0.04, US30 +0.10, GER40
-   -0.23 USD). Settles nothing: the export can't show whether FTMO books dividends as balance deals
-   or folds them into swap. Web lookup 2026-11-11 (approved, one search + one fetch): no FTMO page
-   states the rule. The search summary claimed "dividends folded into swap for rolling index
-   contracts since 2026-01-30", but its only FTMO link (ftmo.oanda.com home page) does not say so:
-   UNVERIFIED. General CFD practice (Dukascopy): longs credited, shorts debited. Second fetch
-   (`ftmo.oanda.com/simulated-assets/`): no dividend or swap text (spec table not in the page text).
-   Next: the user asks FTMO support (2026-11-11); Opus then adds the rule to the engine test-first.
-3. **GBPUSD spread:** the table fits the median (1.0) but the live mean is 2.18x the table (Asia /
-   rollover tail). Raise the table x2.18 (14:00 UTC 0.00002 -> 0.000044)? Not applied.
-4. **Harvest:** 4 batches run 2026-11-12 (web search + PDF check fixed; batch 4 both canaries pass).
-   Leads screened and killed the same day: I-69 bitcoin expiry week, I-70 opex week; funding fades
-   rejected by cost; batch 5 (intraday events) found nothing new. No live leads (cost-wall page).
-5. Gate 7's 21:00 UTC rollover window vs MT5's 20:55 start (low priority); stressed-cost p90 refresh
-   with fill runs 3 + 4; your check of data fixes 13.12-13.18.
-
-## Venue decision (the user, 2026-11-12)
-
-Futures are allowed as well as FTMO CFDs (AGENTS.md › What this is). The one cost-bound lead, P01
-WTI / Brent (+194 bp per trade without swap, 18 trades, t 1.27), needs real futures prices to be judged:
-free EIA data has WTI futures (contracts 1-4, daily) but only Brent SPOT; Brent futures history and a
-futures cost model (broker commission per contract) are open (HANDOFF › Open). Chosen by Opus on the user's
-instruction 2026-11-12 (`docs/futures-venue.md`): IBKR Pro (Ireland) for costs / execution, Norgate Data for
-history (IBKR keeps expired futures only 2 years). Trial checked (2-year history only); the user decided 2026-11-12 not to buy: P01 futures check parked.
+2. **B4 dividends:** FTMO's dividend booking on index CFDs is unverified (the demo export and web
+   lookups settle nothing); the user asks FTMO support, then Opus adds the rule test-first.
+3. **GBPUSD spread:** live mean 2.18x the table (Asia / rollover tail). Raise the table? Not applied.
+4. **Direction of research:** cheap ideas are used up under FTMO costs. Options: intraday events with
+   >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
+   research and work on app / portfolio items.
+5. Low priority: gate 7's 21:00 UTC rollover window vs MT5's 20:55 start; stressed-cost p90 refresh;
+   your check of data fixes 13.12-13.18.
 
 ## Next step
 
-1. **Lead-lag done:** strategy 14 falsified (development run 2026-11-12); L15-L18 failed the pre-build
-   screen the same day (best L15 oil -> USDCAD, net -0.47 bp per trade). Nothing lead-lag left to build.
-   I67 month-end rebalancing screened 2026-11-12: killed on t < 2 (+19.9 bp, t 0.95, 80 months); the
-   turn-of-month family is closed. I51 daily trend portfolio screened the same day: killed (net Sharpe
-   -1.03, gross -0.13, swap the main cost); trend family closed. Carded ideas are used up: next is an idea
-   harvest (Open 4 web probe first) or the code items below.
-2. Two-leg trades (accepted 2026-11-12): engine done (2a-1 to 2a-3, `group_runner.py`); 2b deferred,
-   P01 / P02 failed the pre-build screen. Review items left (ROADMAP V2.10; A3 done 2026-11-12): A9 results
-   out of the specs into the ledger (terra), shrink the three slowest tests (terra).
+1. Research only with a new idea source or a decision on Open 4; the harvest pipeline works
+   (`idea-harvest` skill, `ai_dispatch --search`, CA-bundle note for `harvest check` in the skill).
+2. Code items left (ROADMAP V2.10): A9 results out of the specs (deferred: rules interleave results),
+   shrink the slowest tests; two-leg 2b when a pair idea survives a screen.
 
 ## First prompt for the next chat
 
-`Continue.Research` (Test=manual): web probe, then an idea harvest (answer Open 2-4 when
-convenient).
+`Continue.Code` or `Continue.Research` after deciding Open 4 (answer Open 2-3 when convenient).
