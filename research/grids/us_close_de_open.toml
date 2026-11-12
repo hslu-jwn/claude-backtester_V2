@@ -51,3 +51,18 @@ exit_time = ["09:30", "10:00"]
 #   zone = "Europe/London", entry_time = "08:00", exit_time = "08:30" / "09:00",
 #   atr_zone = "Europe/London", atr_open = "08:00", atr_close = "16:30"
 # Only the primary cell (0.10 %, 0.5 ATR, +30 min) is a breadth gate; the other UK100 cells are reported.
+
+[gates]
+symbol = "GER40"
+min_trades = 200
+halves = "2017-10-08"
+primary = { family = "S", min_ref_return_pct = 0.10, stop_atr = 0.5, exit_time = "09:30" }
+integrity_max_gap = 5
+
+[gates.control]
+family = "C"
+match = ["stop_atr", "exit_time"]
+
+[gates.breadth]
+primary = { family = "S", min_ref_return_pct = 0.10, stop_atr = 0.5, exit_time = "08:30" }
+symbol = "UK100"

@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -19,6 +18,8 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from backtester.analytics.bootstrap import block_bootstrap as block_bootstrap  # noqa: PLC0414 -- legacy re-export
+from backtester.analytics.bootstrap import block_indices as block_indices  # noqa: PLC0414 -- legacy re-export
 from backtester.analytics.daily import weekdays
 from backtester.analytics.entry_screen import M1Data
 from backtester.analytics.records import read_trades
@@ -87,24 +88,6 @@ def daily_series(trades, start: date, end: date) -> np.ndarray:
         if (i := index.get(london_date(t))) is not None:
             out[i] += t.r_net
     return out
-
-
-def block_indices(n: int, block: int, starts: np.ndarray) -> np.ndarray:
-    return ((starts[:, None] + np.arange(block)[None, :]) % n).ravel()[:n]
-
-
-def block_bootstrap(x: np.ndarray, block: int, resamples: int, seed: int) -> dict:
-    """Circular block bootstrap of the mean daily R: lower 2.5 % / 5 % quantiles."""
-    rng = np.random.default_rng(seed)
-    n, k = len(x), math.ceil(len(x) / block)
-    means = np.array(
-        [x[block_indices(n, block, rng.integers(0, n, size=k))].mean() for _ in range(resamples)]
-    )
-    return {
-        "lower_2_5": float(np.quantile(means, 0.025)),
-        "lower_5": float(np.quantile(means, 0.05)),
-        "mean": float(x.mean()),
-    }
 
 
 def _valid(data: M1Data, i: np.ndarray) -> np.ndarray:

@@ -40,6 +40,7 @@ from backtester.settings import Leaf, SettingsError, leaves, settings_from_value
 from backtester.strategy.registry import REGISTRY, default_config
 
 TOP_LEVEL = (
+    "gates",
     "submission",
     "idea",
     "strategy",

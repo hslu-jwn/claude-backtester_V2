@@ -8,17 +8,18 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from backtester.analytics.bootstrap import block_indices as block_indices  # noqa: PLC0414 -- legacy re-export
+from backtester.analytics.bootstrap import block_means
 from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.strategy.timed_hold.day_filter import DEFAULT_DIR
-from backtester.tools.alternating_path_gates import STRESSES, block_indices, integrity_failures, net
+from backtester.tools.alternating_path_gates import STRESSES, integrity_failures, net
 from backtester.tools.entry_screen import load_m1
 from backtester.tools.timed_hold_gates import (
     BEST_DATES,
@@ -75,8 +76,7 @@ def control_difference(signal, longs, shorts):
             if not len(x):
                 means.append(0.)
                 continue
-            starts = rng.integers(0, len(x), size=math.ceil(len(x) / BLOCK))
-            means.append(x[block_indices(len(x), BLOCK, starts)].mean())
+            means.append(block_means(x, BLOCK, 1, rng)[0])
         samples[i] = difference(means)
     return {"difference": difference([x.mean() if len(x) else 0. for x in arrays]),
             "lower_2_5": float(np.quantile(samples, .025)),

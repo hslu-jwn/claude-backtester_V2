@@ -22,13 +22,14 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from backtester.analytics.bootstrap import block_bootstrap as block_bootstrap  # noqa: PLC0414 -- legacy re-export
+from backtester.analytics.bootstrap import block_indices as block_indices  # noqa: PLC0414 -- legacy re-export
+from backtester.analytics.bootstrap import block_means
 from backtester.analytics.records import read_trades
 from backtester.data.sources import SymbolSources
 from backtester.tools.alternating_path_gates import (
     STRESSES,
     _valid,
-    block_bootstrap,
-    block_indices,
     halves,
     integrity_failures,
     net,
@@ -145,8 +146,7 @@ def difference_bootstrap(filtered, baseline) -> dict | None:
     for i in range(RESAMPLES):
         means = []
         for x in (a, b):
-            starts = rng.integers(0, len(x), size=math.ceil(len(x) / BLOCK))
-            means.append(x[block_indices(len(x), BLOCK, starts)].mean())
+            means.append(block_means(x, BLOCK, 1, rng)[0])
         diffs[i] = means[0] - means[1]
     return {
         "difference": float(a.mean() - b.mean()),

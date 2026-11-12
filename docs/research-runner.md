@@ -802,6 +802,71 @@ python -m backtester.tools.lanes remove <name> [--force]
 Queue use: `queue add --cwd <name> -- backtester.tools.research_pipeline research/grids/<name>.toml`
 runs in the lane. None of these commands switches the branch checked out in the V2 root.
 
+## Gates table (one gates tool)
+
+Score an existing research folder without running a backtest:
+
+```bash
+python -m backtester.tools.gates <research-folder> --breadth-folder <breadth-folder> [--skip-integrity] [--controls N]
+```
+
+The tool follows `research.json` → `grid_file` → `[gates]`, reads `variants.csv` and
+the saved trades, writes `gates.json`, and prints one verdict per cell. The research
+grid loader accepts this metadata without validating its contents; it is excluded
+from the research identity/hash and does not change variants or the version.
+The old strategy-specific gates tools remain available for historical results.
+
+```toml
+[gates]
+symbol = "GER40" # optional; otherwise pool all run symbols
+min_trades = 200 # required
+halves = "2017-10-08" # optional fixed UTC entry-date split, or "midpoint"
+primary = { family = "S", min_ref_return_pct = 0.10, stop_atr = 0.5, exit_time = "09:30" }
+integrity_max_gap = 5 # optional missing M1 minutes tolerated
+[gates.control]
+family = "C"
+match = ["stop_atr", "exit_time"]
+[gates.breadth]
+primary = { family = "S", min_ref_return_pct = 0.10, stop_atr = 0.5, exit_time = "08:30" }
+symbol = "UK100"
+```
+
+Always require positive net R under normal costs and each doubled-cost stress,
+positive normal/all-doubled net R after removing the five best entry dates, and
+`min_trades`. The own-cell circular block bootstrap lower 2.5 % bound also enters
+falsification (5-trade blocks, 10,000 resamples, seed 2026110). Shared circular helpers
+live in `analytics/bootstrap.py`; the date-cluster and stationary algorithms are separate.
+
+Missing `halves`, `control`, `breadth`, or `integrity_max_gap` means the respective
+gate is `null` and excluded from the verdict. `halves` requires positive net R in
+each half; the midpoint is halfway through the inclusive run period in UTC, using
+entry times, with equality in the second half. Controls match the listed settings
+and direction, excluding signal entry dates in Europe/Berlin, then compare the signal
+mean with the direction-weighted controls using independently resampled blocks.
+Settings compare numerically when both parse as numbers, otherwise as strings.
+Folder breadth requires positive net R in the uniquely matched breadth primary;
+its report uses the main run period. Alternatively `[gates.breadth] min_positive = 4`
+requires four positive symbols in the same cell's unfiltered run trades (no second
+folder). Integrity checks each selected trade's M1 data with the configured gap;
+`--skip-integrity` makes a configured integrity gate false and records the skip.
+
+Below `min_trades`, verdict is `not_enough_evidence`. Otherwise a nonpositive mean,
+nonpositive own-cell lower bound, or false configured effect gate gives `falsified`.
+Only a cell matching `primary` with every configured gate true `advances`; others
+are `rejected`. Without `primary` none advances. Control-family cells report `control`.
+
+`--controls N` audits the primary with N negative fake signals followed by N positive
+fake signals, using one date-draw RNG with seed 20261112. Draw distinct Berlin entry
+dates shared by both matched controls, keeping the primary's long/short counts;
+the first draws select longs and the remainder shorts. Positive cells add
+`2.8 * sd / sqrt(n)` to each fake trade's `r_net`, where `sd` is the sample standard
+deviation (`ddof=1`) over all trades of both matched controls before excluding dates,
+and `n` is the primary count. Each fake cell uses the normal report's fixed bootstrap
+seed and the control difference after excluding its own dates. Report fractions
+passing mean > 0, own lower bound > 0, effect gate, and all three under `controls`.
+Missing matched controls, insufficient shared dates, or duplicate trades on a control
+date leave `controls: null` with a note; duplicate-date choice is not inferred.
+
 ## Ledger (`research/ledger.csv`; review A1, the user 2026-11-11)
 
 One committed file holds every idea and hypothesis from "harvested" to "confirmed": the single

@@ -1,10 +1,39 @@
-"""Shared stationary indices. Spec: risk-management.md > Monte Carlo report;
-research-runner.md > Significance of the best variant. Risk re-exports this API.
+"""Shared stationary indices and circular block means.
+
+Spec: research-runner.md › Gates table; risk-management.md > Monte Carlo report;
+research-runner.md > Significance of the best variant. Risk re-exports stationary indices.
+CLI consumer: python -m backtester.tools.gates <research folder>.
 """
 
 import math
 
 import numpy as np
+
+
+def block_indices(n: int, block: int, starts: np.ndarray) -> np.ndarray:
+    return ((starts[:, None] + np.arange(block)[None, :]) % n).ravel()[:n]
+
+
+def block_means(x: np.ndarray, block: int, resamples: int, rng) -> np.ndarray:
+    """One circular block mean per resample, preserving the legacy draw order.
+
+    Interleaved multi-series callers request one mean at a time with the same RNG.
+    """
+    n, k = len(x), math.ceil(len(x) / block)
+    return np.array([
+        x[block_indices(n, block, rng.integers(0, n, size=k))].mean()
+        for _ in range(resamples)
+    ])
+
+
+def block_bootstrap(x: np.ndarray, block: int, resamples: int, seed: int) -> dict:
+    """Circular block bootstrap of the mean: lower 2.5 % / 5 % quantiles."""
+    means = block_means(x, block, resamples, np.random.default_rng(seed))
+    return {
+        "lower_2_5": float(np.quantile(means, 0.025)),
+        "lower_5": float(np.quantile(means, 0.05)),
+        "mean": float(x.mean()),
+    }
 
 
 def validate_block_days(block_days: float) -> None:
