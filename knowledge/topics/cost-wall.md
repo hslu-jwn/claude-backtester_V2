@@ -82,8 +82,9 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
   ~8 bp a night) and multi-week holds anywhere unless the published edge is several times the swap.
 - Tuning stop, hold, signal frequency until the screen passes creates a new family and adds multiplicity (I52). Reversing a failed signal does not rescue it
   (strategy 3 and 1 reversed are no better).
-- Kept as the only live leads: EURUSD European-hours short (F1a, needs an independent check, GBPUSD disagreed), last-30-minute momentum only if gross rises
-  above 0.05 R (it did not on large-move days), NAS100 H1 shock (decaying, blocked by missing CFD session calendar).
+- Live leads (2026-11-12): none. F1a EURUSD European-hours short failed its 2008-2014 pre-sample check
+  (closed 2026-11-11); last-30-minute momentum did not rise above 0.05 R gross; NAS100 H1 shock decayed.
+  Every look on 2026-11-12 (strategy 14, L15-L18, I-51, I-67, I-69, I-70, H13f) was killed.
 
 ## 5. Open data issues that bias costs or results
 
