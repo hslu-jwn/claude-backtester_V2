@@ -6,6 +6,7 @@ outside the active cache layout; reruns always start from originals, never shift
 """
 
 import json
+import os
 import shutil
 import statistics
 from dataclasses import asdict, dataclass
@@ -224,6 +225,90 @@ def proven_shift(
     return shift
 
 
+# FX pair = numerator / denominator, both quoted in JPY (all in the MT5 cache).
+CROSSES = {
+    "EURUSD": ("EURJPY", "USDJPY"),
+    "GBPUSD": ("GBPJPY", "USDJPY"),
+    "AUDUSD": ("AUDJPY", "USDJPY"),
+    "NZDUSD": ("NZDJPY", "USDJPY"),
+    "USDCAD": ("USDJPY", "CADJPY"),
+    "USDCHF": ("USDJPY", "CHFJPY"),
+}
+PIP = 1e-4  # all CROSSES targets quote to 4 decimals
+QUARANTINE = "_quarantine"
+QUARANTINE_DECISION = "drop: quarantined (price differs from own cross and histdata)"
+
+
+def _closes(root: Path, symbol: str, day: date) -> pd.Series | None:
+    path = cache_path(root, symbol, day)
+    if not path.exists():
+        return None
+    frame = read_cached_days([path])
+    return frame.set_index("ts")["bid_close"] if not frame.empty else None
+
+
+def _median_pips(a: pd.Series, b: pd.Series, min_minutes: int) -> float | None:
+    joined = pd.concat([a, b], axis=1, join="inner").dropna()
+    if len(joined) < min_minutes:
+        return None
+    return float((joined.iloc[:, 0] - joined.iloc[:, 1]).abs().median() / PIP)
+
+
+def cross_mismatch_days(
+    mt5_dir: Path, histdata_dir: Path, symbol: str, *, max_pips: float = 2.0, min_minutes: int = 300
+) -> dict[str, dict]:
+    """Development MT5 days of `symbol` off by more than `max_pips` (median per minute) from BOTH
+    its own MT5 JPY cross and the histdata price; disagreeing with both pins the fault on the MT5
+    day, not on the cross or histdata. Days with fewer matched minutes get no verdict.
+    Spec: ARCHITECTURE.md > Data sources; docs/data-fix-check.md (MT5 GBPUSD 2019).
+    """
+    numerator, denominator = CROSSES[symbol]
+    mt5_dir, histdata_dir = Path(mt5_dir), Path(histdata_dir)
+    flagged = {}
+    for path in sorted((mt5_dir / symbol).glob("*/*.parquet")):
+        day = date.fromisoformat(path.stem)
+        if day > DEVELOPMENT_END:
+            continue
+        series = [_closes(mt5_dir, s, day) for s in (symbol, numerator, denominator)]
+        hist = _closes(histdata_dir, symbol, day)
+        if hist is None or any(s is None for s in series):
+            continue
+        own, num, den = series
+        cross = _median_pips(own, num / den, min_minutes)
+        versus_hist = _median_pips(own, hist, min_minutes)
+        if cross is not None and versus_hist is not None and min(cross, versus_hist) > max_pips:
+            flagged[str(day)] = {"cross_pips": round(cross, 2), "histdata_pips": round(versus_hist, 2)}
+    return flagged
+
+
+def quarantined_days(mt5_dir: Path, symbol: str) -> dict[str, dict]:
+    path = Path(mt5_dir) / QUARANTINE / symbol / "days.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def quarantine_days(mt5_dir: Path, symbol: str, days: dict[str, dict]) -> int:
+    """Move the listed active day files to `_quarantine/` (kept, reversible) and record why.
+
+    The record is what repair_mt5 honours, so a re-download cannot bring a day back. Returns the
+    number of files moved; an already quarantined day is not moved twice.
+    """
+    mt5_dir = Path(mt5_dir)
+    with file_lock(symbol_mutation_lock(mt5_dir, symbol)):
+        record = {**quarantined_days(mt5_dir, symbol), **days}
+        record_path = mt5_dir / QUARANTINE / symbol / "days.json"
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json(record_path, dict(sorted(record.items())))
+        moved = 0
+        for day in days:
+            source = cache_path(mt5_dir, symbol, date.fromisoformat(day))
+            if source.exists():
+                target = cache_path(mt5_dir / QUARANTINE, symbol, date.fromisoformat(day))
+                target.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(source, target)
+                moved += 1
+        return moved
+
+
 def repair_mt5(
     symbol: str,
     cache_dir: Path,
@@ -286,6 +371,7 @@ def repair_mt5(
         sparse = bad_density_days(counts, config)
         fill = histdata_fill_days(histdata_dir, symbol, config)
         excluded = {d for d in sparse & fill if d <= DEVELOPMENT_END}
+        quarantined = quarantined_days(cache_dir, symbol)
         decisions, affected = [], set()
         staged_days = set()
         # A completed older staging run is overwritten from the retained original data.
@@ -305,7 +391,9 @@ def repair_mt5(
             for day in sorted(work):
                 affected.add(day)
                 part = by_day.get(day, raw.iloc[:0])
-                if day in excluded:
+                if str(day) in quarantined:
+                    decision, shift = QUARANTINE_DECISION, None
+                elif day in excluded:
                     decision, shift = "drop: sparse/empty weekday, histdata fill", None
                 elif day > DEVELOPMENT_END:
                     decision = (

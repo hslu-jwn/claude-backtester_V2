@@ -31,7 +31,16 @@ what was wrong, what the evidence says, and the proposed verdict.
   have a cross) with the existing quarantine in `data/cache_repair.py`, so histdata fills them; rerun
   the golden lists and report every change.
 
-## What you decide
+## Decided by the user 2026-11-12: accept all six, fix GBPUSD
 
-1. Accept 13.12, 13.13, 13.15, 13.16, 13.18 (and 13.14 with the finding above handled separately).
-2. Go / no go for the GBPUSD 2019 quarantine fix.
+- 13.12-13.16 and 13.18 accepted (ROADMAP items moved to `docs/archive/ROADMAP-v2-done.md`).
+- GBPUSD fixed: `tools.cache_repair GBPUSD --cross-check` (rule in `docs/ARCHITECTURE.md` › Data sources,
+  tests `tests/data/test_cross_quarantine.py`) moved **149 MT5 GBPUSD days (2019-02-11 to 2019-09)** to
+  `data/cache/mt5/_quarantine/GBPUSD/`; backtests read histdata on those days now; a recheck finds 0.
+  Requiring both disagreements (cross AND histdata) drops the scattered thin holiday days of the first scan.
+- Same check on the other five pairs (dry run): EURUSD, AUDUSD, NZDUSD, USDCAD 0 days; USDCHF 51 days
+  2015-01-27..04-14 with histdata only 2.2-2.7 pips off (cross 5.6-7.7), the weeks of wide spreads after the
+  SNB unpeg: borderline, not the GBPUSD kind of fault, left unchanged (the user approved GBPUSD only).
+- The 2023 golden lists are test-period data and cannot be moved by a 2019 fix (check result in the
+  research log). Development results that read GBPUSD 2019 (strategy 1, London fix, R014, F1a / F1b,
+  spread-table work) were computed on the bad days; their families are closed, nothing is re-run.

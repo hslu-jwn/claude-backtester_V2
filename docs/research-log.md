@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: data fixes accepted; MT5 GBPUSD 2019 quarantined (Continue.Code; the user: "Accept, fix GBPUSD")
+
+- Opus (no dispatch): read-only check `scripts/data_fix_check.py` -> `docs/data-fix-check.md`; 13.12-13.18
+  accepted by the user. New finding: MT5 GBPUSD 2019-02..09 5-10 pips off its own GBPJPY / USDJPY cross
+  and histdata (normal days 0.1-0.4 pips). Fix test-first (`tests/data/test_cross_quarantine.py`, 6 tests):
+  `cache_repair --cross-check`, 149 days moved to `data/cache/mt5/_quarantine/GBPUSD/`, histdata fills them.
+- Not a gate look; no closed family is re-run. Every earlier development result that read GBPUSD 2019
+  (strategy 1, London fix, R014, F1a / F1b) used the bad days; F1a's joint-rule failure on GBPUSD
+  (-25.8 R) is among them, but F1a is closed by its pre-sample check (2026-11-11).
+
 ## 2026-11-12: Continue.Research Test=auto (the user): no candidate eligible; I-68 closed on power
 
 - Start: no runnable candidate (README: all M15 drafts triaged out), no open carded idea with a mechanism

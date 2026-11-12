@@ -394,6 +394,15 @@ comparison (ROADMAP 0.4) and for order execution (Phase 7, `live/`).
   it corrects the proven old histdata DST-gap conversion in memory only. Its evidence
   table is separate from the post-histdata-rebuild table used by the repair jobs.
   The 2023 golden check is run by Opus after rebuild, never regenerated to accept a change.
+- **Cross-price quarantine (accepted by the user 2026-11-12, `docs/data-fix-check.md`):** the clock
+  proof tests time shifts, not prices. `tools.cache_repair [SYMBOL] --cross-check [--dry-run]` flags a
+  development MT5 day of EURUSD / GBPUSD / AUDUSD / NZDUSD / USDCAD / USDCHF whose per-minute median
+  differs by more than 2 pips from BOTH its MT5 JPY cross (e.g. GBPJPY / USDJPY) and histdata (300
+  matched minutes minimum); disagreeing with both pins the fault on the MT5 day. Flagged files move to
+  `_quarantine/SYMBOL/` (kept, reversible) with the reasons in `_quarantine/SYMBOL/days.json`, so
+  histdata fills those days; `repair_mt5` drops recorded days, so a re-download cannot bring them back.
+  Applied 2026-11-12 to GBPUSD only: 149 days, 2019-02..09. USDCHF 2015-01-27..04-14 (51 days, histdata
+  only 2.2-2.7 pips off, the SNB-unpeg spread regime) is borderline and left as it is.
 - **Downloader errors:** only `Mt5NoHistory` (`RES_E_NOT_FOUND` after symbol validation)
   may be skipped before the first dense history day. Other first-chunk errors fail the
   command. `--end` must be before today UTC. Binance daily 404 holes are retried once;

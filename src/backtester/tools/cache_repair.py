@@ -1,6 +1,7 @@
 """Offline V2.6b MT5 repair; run only AFTER the corrected histdata rebuild completes.
 
     python -m backtester.tools.cache_repair GBPUSD
+    python -m backtester.tools.cache_repair --cross-check [--dry-run]   # all CROSSES pairs
 
 No terminal, credentials, downloads or raw file changes. Original cached days are
 retained under _v26b_original; per-day exclusions are listed under _v26b_reports.
@@ -14,9 +15,12 @@ from dataclasses import asdict
 
 from backtester.data.cache import DEFAULT_CACHE_DIR, MT5_CACHE_DIR
 from backtester.data.cache_repair import (
+    CROSSES,
     QUALITY,
     QualityConfig,
     build_server_clock_table,
+    cross_mismatch_days,
+    quarantine_days,
     repair_mt5,
 )
 
@@ -31,7 +35,17 @@ def main(argv=None):
     p.add_argument("--cache-dir", type=Path, default=MT5_CACHE_DIR)
     p.add_argument("--histdata-dir", type=Path, default=DEFAULT_CACHE_DIR)
     p.add_argument("--min-weekday-share", type=float, default=QUALITY.min_weekday_share)
+    p.add_argument("--cross-check", action="store_true",
+                   help="quarantine MT5 FX days off from their JPY cross and histdata")
+    p.add_argument("--dry-run", action="store_true", help="with --cross-check: report only")
     args = p.parse_args(argv)
+    if args.cross_check:
+        for symbol in [args.symbol] if args.symbol else sorted(CROSSES):
+            days = cross_mismatch_days(args.cache_dir, args.histdata_dir, symbol)
+            moved = 0 if args.dry_run else quarantine_days(args.cache_dir, symbol, days)
+            months = sorted({d[:7] for d in days})
+            print(f"{symbol}: {len(days)} days off, {moved} moved to _quarantine; months {months}")
+        return 0
     if not args.prove_clock and not args.symbol:
         p.error("symbol required unless --prove-clock is used")
     if args.prove_clock and not args.clock_table:

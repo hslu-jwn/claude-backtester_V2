@@ -26,6 +26,12 @@ follow-up). IDs are unchanged; open and in-progress steps stay in `docs/ROADMAP.
 - ☑ **13.21 Parallel runner progress race** (Phase 13) — fixed in V2.4 (A5), 2026-10-23
 - ☑ **13.22 `tests/tools/test_s2_volume_ab.py`** (Phase 13) — file removed in `8310d47` (strategy contract tests)
 - ☑ **13.23 Monte Carlo FTMO pass rate** (Phase 13) — fixed in V2.4 (B2), 2026-10-23
+- ☑ **13.12 histdata clock 2015-2018** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
+- ☑ **13.13 GER40 histdata changes instrument on 2020-06-15** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
+- ☑ **13.14 MT5 cache before 2020** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
+- ☑ **13.15 One-day holes on 1 January** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
+- ☑ **13.16 MT5 downloader swallows errors** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
+- ☑ **13.18 Output folders** (Phase 13) — V2.6 step (2), built 2026-10-26; accepted by the user 2026-11-12 (`docs/data-fix-check.md`)
 
 ## V2 phases (user, 2026-10-22)
 
