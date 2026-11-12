@@ -7,12 +7,18 @@ it neither executes orders nor changes the legacy Order/TradeResult contracts.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from math import isfinite
+from typing import TYPE_CHECKING
 
+from backtester.core.market import MarketView, ReferenceInput
 from backtester.core.models import Direction
+
+if TYPE_CHECKING:
+    from backtester.engine.group_trade import GroupResult
 
 
 class EntryPolicy(Enum):
@@ -81,3 +87,29 @@ class GroupOrder:
         if not isfinite(self.expiry_minutes) or self.expiry_minutes <= 0:
             raise ValueError("expiry_minutes must be finite and positive")
         object.__setattr__(self, "tags", frozenset(self.tags))
+
+
+class GroupStrategy(ABC):
+    """Bounded group decisions. Spec: design/multi-symbol.md › B.
+
+    Declare leg timeframe/freshness overrides in references, alongside extra read-only
+    symbols. The engine always makes traded legs required M1 inputs. open_groups is
+    an immutable tuple of accepted GroupOrders with remaining exposure, never engine
+    position objects or unbounded histories.
+    """
+
+    legs: tuple[str, ...]
+    references: tuple[ReferenceInput, ...] = ()
+
+    @abstractmethod
+    def on_group_candle(self, now: datetime, market: MarketView) -> list[GroupOrder]:
+        """Decide at the union M1 close, using only the supplied bounded snapshot."""
+
+    def group_exits(
+        self, now: datetime, market: MarketView, open_groups: tuple[GroupOrder, ...],
+    ) -> list[str]:
+        """Request next-open exits for group IDs. Default: none."""
+        return []
+
+    def on_group_closed(self, result: GroupResult) -> None:
+        """Receive each fully closed group once. Default: nothing."""

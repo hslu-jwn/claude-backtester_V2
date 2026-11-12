@@ -82,3 +82,21 @@ def test_importing_group_modules_preserves_legacy_fields():
         "tp_levels_touched_not_filled", "intrabar", "intrabar_ambiguous", "intrabar_tp_first",
         "intrabar_sl_first", "intrabar_fallbacks",
     )
+
+
+def test_group_strategy_requires_callback_and_has_optional_noops():
+    from backtester.strategy.group import GroupStrategy
+
+    with pytest.raises(TypeError, match="abstract"):
+        GroupStrategy()
+
+    class Minimal(GroupStrategy):
+        legs = ("A", "B")
+
+        def on_group_candle(self, now, market):
+            return []
+
+    strategy = Minimal()
+    assert strategy.references == ()
+    assert strategy.group_exits(NOW, None, ()) == []
+    assert strategy.on_group_closed(None) is None

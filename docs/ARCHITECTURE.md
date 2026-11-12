@@ -40,8 +40,12 @@ Linked-trade contracts live alongside the single-leg path: `strategy/group.py` d
 immutable ordered legs and synchronized execution policies; `engine/group_trade.py`
 calculates per-leg costs and group R using entry-frozen risk D and weights, with explicit
 entry/exit valuation and reconciled leg attribution (Spec: `design/multi-symbol.md` › B).
-This increment provides model and arithmetic only; the M1 group execution coordinator,
-residual exposure, and group account/risk integration are subsequent work.
+`GroupStrategy` observes bounded `MarketView` snapshots. `engine/group_backtest.py`
+steps the union of declared M1 closes, accepts pending groups atomically at common
+next opens, and manages each leg's stops before scheduling peer exits at actual next
+opens. End-of-data exposure stays unresolved with timestamped last-close marks;
+closed groups retain ordered fills and reconciled attribution. Runner/artifact support
+(2a-3) and group research/account/risk integration (2b) remain subsequent work.
 
 ```
 for each base-timeframe candle i (5m for strategy 1, 1m for strategy 2), oldest first:
