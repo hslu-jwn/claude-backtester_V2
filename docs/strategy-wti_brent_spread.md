@@ -1,5 +1,7 @@
 # Strategy: WTI–Brent relative-value spread reversion
 
+
+**Status: pre-build screen 2026-11-12: KILLED (net -124 bp per trade; ledger P01). Not built.**
 **DRAFT: needs multi-symbol step B (pairs); do not run before integration**
 
 Spec drafted 2026-11-10 (docs only, nothing built, nothing run). Planned folder

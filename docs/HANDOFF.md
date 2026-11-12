@@ -68,7 +68,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    turn-of-month family is closed. I51 daily trend portfolio screened the same day: killed (net Sharpe
    -1.03, gross -0.13, swap the main cost); trend family closed. Carded ideas are used up: next is an idea
    harvest (Open 4 web probe first) or the code items below.
-2. Review items left (ROADMAP V2.10; A3 done 2026-11-12, `tools/gates.py`): A9 results
+2. Two-leg trades (accepted 2026-11-12): engine done (2a-1 to 2a-3, `group_runner.py`); 2b deferred,
+   P01 / P02 failed the pre-build screen. Review items left (ROADMAP V2.10; A3 done 2026-11-12): A9 results
    out of the specs into the ledger (terra), shrink the three slowest tests (terra).
 
 ## First prompt for the next chat

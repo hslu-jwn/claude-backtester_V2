@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: pre-build screen of pair drafts P01 / P02: both KILLED (auto mode)
+
+- Opus (no dispatch): `research/screens/2026-11-12_pairs_screen.py`, committed before the run (22b792f).
+  Primary cells, development only, stops not simulated, equal notional, both legs' round trip + swap.
+- P01 USOIL / UKOIL: 18 trades, hold 17.5 d, gross +209.3 bp, net -124.2 bp (t -0.78), halves -279.5 /
+  +31.2. P02 XAUUSD / XAGUSD: 22 trades, gross +20.4 bp, net -14.1 bp (t -0.26). **Both killed.** Oil
+  shows a gross edge that two legs' swap over weeks eats (~333 bp per trade); both are underpowered anyway.
+- Consequence: two-leg 2b (research / risk integration) deferred until a pair idea clears a screen.
+
 ## 2026-11-12: two-leg trades, increment 2a-3 group runner and result files
 
 - Codex `gpt-6.1-sol` medium, write, worktree `two_leg3` (brief `briefs/two-leg-2a3-runner.md`), 578 s:

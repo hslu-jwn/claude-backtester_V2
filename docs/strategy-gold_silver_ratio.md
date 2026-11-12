@@ -1,5 +1,7 @@
 # Strategy: Gold–silver relative-value ratio reversion
 
+
+**Status: pre-build screen 2026-11-12: KILLED (net -14 bp per trade; ledger P02). Not built.**
 **DRAFT: needs multi-symbol step B (pairs); do not run before integration**
 
 Spec drafted 2026-11-10 (docs only, nothing built, nothing run). Planned folder
