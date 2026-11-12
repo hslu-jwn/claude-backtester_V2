@@ -175,6 +175,9 @@ holding-candle gap each; GER40 has 326 missing weekday cache days, not audited).
 2010/11-2014 index pre-sample (`--cache-dir data/cache/histdata_presample`) plus development, pooled.
 Kills it: still < 80 trades; doubled-cost net <= 0; bootstrap lower bound <= 0; more than half the
 profit from March 2020. A new look in this family (counted), not a new idea; not scheduled.
+**Run 2026-11-12 (auto mode): KILLED.** Pre-sample 2010-2014 (5 indices, AUS200 has none) 18 trades
++1.72 R; pooled with development 50 trades, net +6.82 R (doubled costs +6.22), mean +0.136 R, bootstrap
+lower -0.087; March 2020 -1.02 R. Fails `< 80 trades` and the bootstrap bound. Family closed.
 
 ## Setup TS (hypothesis 15, pre-registered 2026-11-10)
 

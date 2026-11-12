@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: H13f frozen CAP on pre-sample + development: KILLED (auto mode, the user)
+
+- Opus 5.5 (no dispatch): grid `research/grids/daily_reversal_cap_presample.toml` (committed a3471b8 before
+  the run; CAP, 2R, hold 5), `--cache-dir data/cache/histdata_presample --dev-only`: 2010-2014, 5 indices,
+  18 trades +1.72 R. Pooled with development CAP / 2R (32 trades +5.1 R): 50 trades, net +6.82 R,
+  doubled +6.22, mean +0.136 R, bootstrap lower -0.087, March 2020 -1.02 R.
+- **Killed** (< 80 trades, bootstrap bound <= 0). Third look in daily_reversal (E8, TS falsified, now
+  CAP killed): family closed, also in `research/harvest/known_families.csv`.
+
 ## 2026-11-12: harvest batch 3 + I-69 screen: KILLED (the user: "Codex is reset")
 
 - Codex `gpt-6.1-terra` medium `--search`, 5 calls (17-36 s), queries limited to CFD-tradable ideas:

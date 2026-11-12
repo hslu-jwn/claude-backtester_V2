@@ -15,7 +15,7 @@ fomc,fomc drift;pre-fomc;fomc morning;fomc cycle,falsified,H03,
 turn_of_month,turn of month;month end;tom effect;dash for cash;month-end rebalancing,falsified,H04;H09;I67,"unconditional falsified; conditional sign I-67 killed 2026-11-12; family closed"
 rsi2,rsi(2);rsi 2;connors rsi;short-term mean reversion index,falsified,H10,
 gotobi,gotobi;five-ten day;nakane;tokyo fixing usdjpy,tested,H11,"one-time test not confirmed; no retest"
-daily_reversal,capitulation;connors e8;oversold reversal;daily reversal,open,H13;H13f,"E8 falsified; CAP inconclusive, follow-up proposed"
+daily_reversal,capitulation;connors e8;oversold reversal;daily reversal,falsified,H13;H13f;H15,"E8 and TS falsified; CAP killed on pre-sample + development 2026-11-12; family closed"
 turtle_soup,turtle soup;failed breakout;false breakout reversal,falsified,H15,
 h1_shock,large move continuation;shock response;h1 shock;momentum after large hourly move,falsified,S11,
 energy_report,eia report;oil inventory report;crude inventory,falsified,S12,
