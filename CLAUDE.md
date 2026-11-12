@@ -65,6 +65,11 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   session step with 2-3 concrete next steps and a pick, across both modes. When the `Continue.Code`
   work is done, propose research (`Continue.Research`: next candidate, screen, idea), and when research
   stalls, propose the code or tooling it needs, so the user can always stay productive.
+- **Auto mode (rule set by the user, 2026-11-12: "Mode = auto from now on"):** pick the next step
+  yourself (code or research) and start it without asking; report each finished step with what comes
+  next. Still ask for: the one-time MT5 test (stays `Test=manual` unless the user says `Test=auto`),
+  defaults (costs, spread table, risk), new dependencies or downloads, and anything the rules above
+  reserve for the user.
 - **`Pause.`:** finish the current step cleanly (commit, push, log) and wait until `Continue.`.
 - **`Continue.`:** resume where the run paused.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
