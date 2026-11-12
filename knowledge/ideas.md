@@ -112,7 +112,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-64 | Index last-30-minute momentum (Baltussen et al. 2021): sign of previous close -> 15:30 return, hold to 16:00 | intraday momentum | US500, NAS100, US30 | none | PUBLISHED (60+ futures to 2020; one blog: flat 2022-26); `2026-11-09_index_intraday_momentum.md` | tested 2026-11-09 (strategy 10 F2): gross positive in 5 indices, net negative (cost > edge); no edge after costs |
 | I-65 | FOMC-morning long (Lucca & Moench 2015 pre-FOMC drift, decayed after 2015) | event | US500, NAS100 | none | PUBLISHED, decayed; falsification only; `2026-11-09_macro_announcement_equity.md` | tested 2026-11-09 (strategy 10 F3): falsified, FOMC mornings -0.27 R / trade vs other days |
 | I-66 | Turn-of-month open-to-close long (T-1..T+3), day-trade form of I-18 | calendar | US500, NAS100, US30 | none | ADAPTATION (published close-to-close only); `2026-11-09_calendar_effects.md` | tested 2026-11-09 (strategy 10 F4): no effect open to close |
-| I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | open, UNTESTED; same family as F4 / F4M |
+| I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | killed 2026-11-12 (t 0.95 < 2; ledger I67); same family as F4 / F4M |
 | I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | parked: needs EIA front / second-month settlements |
 | T-20 | Resting limit entries for clock-based holds (cost side, no new edge) | tooling | cheap FX / indices | – | review D5 | open, UNTESTED |
 
@@ -659,7 +659,7 @@ edge on any symbol class. Lesson: the limit fills mostly when price returns thro
 selection); tight stops make costs and the cost model dominate, and a gold "edge" came only from unpriced overnight
 holds and the default spread at the daily reopen.
 
-### I-67 Month-end rebalancing with a conditional sign (review D2, 2026-11-11; UNTESTED)
+### I-67 Month-end rebalancing with a conditional sign (review D2, 2026-11-11; screened 2026-11-12: KILLED on t < 2, ledger I67)
 Funds with fixed weights sell equities after a strong month and buy after a weak one, so the sign of the
 last days is known before the trade. F4 (open to close) and F4M (unconditional close to close) were
 falsified; the conditional sign was not tested. Cheap test (pandas, development D1 closes, US500 only):

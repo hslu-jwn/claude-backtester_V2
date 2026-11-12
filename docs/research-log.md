@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: I-67 month-end rebalancing screen: KILLED (the user: "your choice")
+
+- Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_i67_month_end_screen.py`, US500
+  development D1 closes (last M1 close <= 16:00 NY), 2015-01 to 2021-08. Signed T-3..T-1 return opposite
+  to the sign of T-8..T-4; kill criteria from the card, fixed before the run.
+- 80 months (37 long, 43 short): signed gross +19.9 bp (t 0.95); halves split at the 2017-09-05 T+2 shift
+  +38.1 / +7.8 bp; net +14.2 bp. **Killed on t < 2** (mean and halves pass). Underpowered at 80 months.
+- Assumption (Opus): the F4 turn-of-month family already had two falsifications (F4, F4M); this third look
+  was taken because review D2 (accepted by the user 2026-11-11) asked for exactly this cheap test. The
+  family is now closed: no further turn-of-month variants, no rescue on more data without the user's go.
+
 ## 2026-11-12: pre-build screen of lead-lag L15-L18: all four stay cards (the user: "your pick")
 
 - Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_leadlag_screen.py`, development data
