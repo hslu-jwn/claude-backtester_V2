@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: two-leg trades, increment 2a-1 (the user: "Yes, build two-leg")
+
+- Codex `gpt-6.1-sol` medium, write, worktree `two_leg` (brief `briefs/two-leg-2a1-group-model.md`), 400 s:
+  `strategy/group.py`, `engine/group_trade.py`, 47 tests. Opus review found one real error, caused by the
+  brief: P/L valued as `q*(exit*v_exit - entry*v_entry)` books a conversion gain on the whole notional;
+  fixed to `q*(exit - entry)*v_exit` (CFD cashflow = price P/L at exit), test corrected, decision in
+  `docs/design/multi-symbol.md` › B. Full suite 5,804 passed, golden 13 / 13 identical.
+
 ## 2026-11-12: A3 one gates tool (auto mode, "your pick")
 
 - Codex `gpt-6.1-sol` medium, write, worktree `a3_gates` (brief `briefs/a3-gates-tool.md`; two worker
