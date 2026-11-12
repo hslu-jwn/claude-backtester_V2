@@ -45,9 +45,19 @@ Alternatives kept: FirstRate Data (1-minute, CL / BZ / ICE B from 2008, about US
 Databento (best API; CL only from 2010-06, ICE Brent only from 2018-12); EIA (free WTI contracts 1-4 to
 2024-04, no Brent futures).
 
+## Trial check (2026-11-12)
+
+The user started the Norgate futures trial (Updater signed in, manual updates; Python access via the
+`norgatedata` package, which talks to the running Updater at `localhost:38889`). Found: databases Futures
+(individual contracts) and Continuous Futures; CL 147 and ICE Brent BRN 171 contract months; continuous
+`&CL`, `&BRN` and back-adjusted `&CL_CCB`, `&BRN_CCB` with Delivery Month and Open Interest. **The trial holds
+only 2024-11-12 to 2026-11-11** (Norgate's trial history limit), so 2010-2021 coverage and expired 2010s
+contracts can only be confirmed with a subscription. BZ and MCL are not in Norgate. The trial window lies
+after the development cutoff (one-time test territory): it is used for format checks only, never for a look.
+
 ## Next
 
-1. The user starts the Norgate free trial (account and install are the user's steps).
+1. Done: trial running. Open: the user's decision to buy a subscription (USD 148.50 / 6 months) for 2010-2021.
 2. Opus / Codex: a read-only loader for Norgate futures (daily settlements, individual contracts, roll) and
    a futures cost model from the table above; then P01 WTI / Brent on futures prices, pre-sample 2010-2014
    plus development, pre-registered.
