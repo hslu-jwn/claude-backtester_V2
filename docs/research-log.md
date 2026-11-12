@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: two-leg trades, increment 2a-3 group runner and result files
+
+- Codex `gpt-6.1-sol` medium, write, worktree `two_leg3` (brief `briefs/two-leg-2a3-runner.md`), 578 s:
+  `group_runner.py` (bounded loading, warm-up discarded, one `trades.csv` row per group in the legacy
+  schema and cost signs, `group_legs.csv`, `rejected.csv`, `unresolved.json`, `settings.json`), 14 tests.
+  Opus: checked the row mapping against `components()`; classified `group_runner` as app level in
+  `tests/test_layers.py`. Full suite 5,852 passed, golden 13 / 13 identical.
+- Next (2b): a first pair strategy needs a spec (P01 WTI / Brent or P02 gold / silver drafts) with its
+  rules for entry eligibility, exits after a stop, missing marks, then research integration and risk.
+
 ## 2026-11-12: two-leg trades, increment 2a-2 paired M1 engine
 
 - Codex `gpt-6.1-sol` medium, write, worktree `two_leg2` (brief `briefs/two-leg-2a2-paired-engine.md`),

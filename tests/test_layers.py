@@ -1,7 +1,7 @@
 """Layer rules (docs/ARCHITECTURE.md › Layers, CLAUDE.md › Layout), checked on the imports.
 
 A layered package may import only itself and the layers before it in `LAYERS` (plus the
-two util modules). The app level (runner, run, presets, settings, tools, ui) may import
+two util modules). The app level (runner, group_runner, run, presets, settings, tools, ui) may import
 anything; no layered package may import it. Imports under `if TYPE_CHECKING:` are only
 names for type hints and are not counted.
 """
@@ -18,7 +18,7 @@ LAYERS = [
     "core", "data", "detectors", "sessions", "strategy", "engine", "analytics", "risk", "live",
 ]  # fmt: skip
 UTIL = {"paths", "cli", "filelock"}  # import nothing from backtester
-APP = {"runner", "run", "presets", "settings", "tools", "ui", "jobs"}
+APP = {"runner", "group_runner", "run", "presets", "settings", "tools", "ui", "jobs"}
 
 
 def runtime_imports(path: Path) -> set[str]:
