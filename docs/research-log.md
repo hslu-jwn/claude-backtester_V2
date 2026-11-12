@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: pre-build screen of lead-lag L15-L18: all four stay cards (the user: "your pick")
+
+- Opus 5.5 (this session, no dispatch): `research/screens/2026-11-12_leadlag_screen.py`, development data
+  only (2015-01-02 / ETH 2018-01-10 to 2021-09-13), the primary cell of each spec, timed hold without the
+  stop, one position at a time, cost table round trip + swap. Rule fixed before the run: survive only if
+  mean net bp > 0 and the signal beats its direction-weighted all-days control (signal dates removed).
+- L15 oil -> USDCAD: 387 trades, gross +1.20 bp vs cost 1.67 bp, net -0.47 bp (t -0.18), vs control +1.21.
+  L16 USD breadth -> USDCAD: 656, gross -0.94, net -2.58 (t -1.40), vs control -0.93.
+  L17 gold -> silver: 515, gross +3.68 vs cost 15.46, net -11.77 (t -2.68), vs control +3.69.
+  L18 BTC -> ETH: 624, gross -19.59 vs cost 13.10, net -32.68 (t -2.28), vs control -18.49.
+- None built (4 looks counted in the ledger). With strategy 14 falsified, nothing in the lead-lag family
+  is left to build; the family stays at 1 falsification (screens are not builds).
+
 ## 2026-11-12: strategy 14 `us_close_de_open` development run: FALSIFIED (Continue.; the user's go)
 
 - Opus 5.5 (this session, no dispatch): both grids `--dev-only --workers 4` (GER40 16 cells,

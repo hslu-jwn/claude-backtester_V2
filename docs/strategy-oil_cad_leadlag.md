@@ -1,6 +1,6 @@
 # Strategy 17: Oil shock -> CAD next day (oil-to-CAD lead-lag)
 
-Spec drafted 2026-11-10 (docs only, nothing built, nothing run). Planned folder
+Spec drafted 2026-11-10; pre-build screen 2026-11-12 failed (ledger, research log): not built, stays a card. Planned folder
 `strategy/oil_cad_leadlag/`, config `OilCadLeadlagConfig`, registry name `oil_cad_leadlag`.
 Reads a **reference symbol** (USOIL) while trading another (USDCAD): `docs/design/multi-symbol.md` > A
 (opt-in `on_market_candle`, one execution symbol, reference data only through a snapshot bounded by the

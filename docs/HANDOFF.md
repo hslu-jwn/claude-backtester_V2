@@ -61,13 +61,14 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-1. **Strategy 14 falsified** (development run 2026-11-12, all 8 cells; ledger L14, research log). The
-   `lead_lag` family is at 1 of 2 falsifications: the next lead-lag strategy is its last look. Pick
-   the strongest of the four remaining lead-lag specs, or another candidate.
+1. **Lead-lag done:** strategy 14 falsified (development run 2026-11-12); L15-L18 failed the pre-build
+   screen the same day (best L15 oil -> USDCAD, net -0.47 bp per trade). Nothing lead-lag left to build.
+   Next research: screen a mechanism with a forced counterparty (I67 month-end rebalancing) or I51
+   daily trend portfolio.
 2. Review items left (ROADMAP V2.10): A3 one gates tool from a `[gates]` table (Codex sol), A9 results
    out of the specs into the ledger (terra), shrink the three slowest tests (terra).
 
 ## First prompt for the next chat
 
-`Continue.Research` (Test=manual): next lead-lag strategy or candidate (answer Open 2-4 when
+`Continue.Research` (Test=manual): screen I67 month-end rebalancing (answer Open 2-4 when
 convenient).

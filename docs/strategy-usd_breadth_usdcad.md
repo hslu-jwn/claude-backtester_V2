@@ -1,6 +1,6 @@
 # Strategy 18: Dollar breadth -> USDCAD (cross-market USD breadth)
 
-Spec drafted 2026-11-10 (docs only, nothing built, nothing run). Planned folder
+Spec drafted 2026-11-10; pre-build screen 2026-11-12 failed (ledger, research log): not built, stays a card. Planned folder
 `strategy/usd_breadth_usdcad/`, config `UsdBreadthUsdcadConfig`, registry name `usd_breadth_usdcad`.
 Reads **reference symbols** (EURUSD, GBPUSD, USDJPY, AUDUSD, NZDUSD, USDCHF) while trading another
 (USDCAD): `docs/design/multi-symbol.md` > A (opt-in `on_market_candle`, one execution symbol, reference
