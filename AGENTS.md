@@ -154,6 +154,11 @@ python -m backtester.live.test_orders XAUUSD  # scripted test orders, DEMO accou
   never changes events already emitted.
 - Never "fix" a failing test by changing its expected value without checking the spec and,
   if unclear, asking the user.
+- **Full suite in parallel (pytest-xdist; accepted by the user 2026-11-12):**
+  `python -m pytest -q -p no:cacheprovider -n 8` (about 2 min instead of about 10). Use `-n 8`, not
+  `auto`: some tests start their own worker processes. Serial `-n 0` is the fallback when a
+  failure looks order- or process-related. Tests write only to `tmp_path`, never to the real
+  `results/` or `data/cache/`. The golden check is unchanged.
 
 ## Workflow
 

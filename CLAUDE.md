@@ -53,6 +53,10 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   tooling the research needs); commit and push after every step; keep the session alive across
   waits (self-paced `/loop`); routing as in `docs/agent-routing.md` › Continuous research run.
   Items that need the user's decision go to HANDOFF › Open, and the run continues with the rest.
+- **One research loop at a time (rule set by the user, 2026-11-12):** never run two
+  `Continue.Research` loops in parallel. `ai_dispatch` snapshots all git refs, so one loop's commit
+  or push flags another loop's running Codex dispatch as a violation; the loops would also share
+  the registry, ledger and log files and the Codex quota.
 - **Never idle (rule set by the user, 2026-11-10):** in any run, keep working; never just wait or hold
   quietly. When the work runs out or the ideas look weak, propose concrete next steps (with a pick) or ask
   the user for direction in the same turn, start the best real option meanwhile, and send a Telegram if

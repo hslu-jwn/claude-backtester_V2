@@ -38,4 +38,6 @@ Test with views bounded at each simulated close. Never make a test pass by givin
 
 - Keep tests under `tests/`, mirroring `src/backtester/`.
 - Prefer existing fixtures and pytest patterns; do not add testing dependencies without need.
+- Full suite: `python -m pytest -q -p no:cacheprovider -n 8` (pytest-xdist, not `-n auto`); `-n 0`
+  (serial) is the fallback. Tests write only to `tmp_path` (AGENTS.md › Testing).
 - Follow `CLAUDE.md` and the relevant `docs/` specification even if a generic testing recommendation conflicts.
