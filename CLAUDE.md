@@ -61,6 +61,10 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   quietly. When the work runs out or the ideas look weak, propose concrete next steps (with a pick) or ask
   the user for direction in the same turn, start the best real option meanwhile, and send a Telegram if
   the question waits more than 5 minutes.
+- **Always propose next steps (rule set by the user, 2026-11-12):** end every finished task or
+  session step with 2-3 concrete next steps and a pick, across both modes. When the `Continue.Code`
+  work is done, propose research (`Continue.Research`: next candidate, screen, idea), and when research
+  stalls, propose the code or tooling it needs, so the user can always stay productive.
 - **`Pause.`:** finish the current step cleanly (commit, push, log) and wait until `Continue.`.
 - **`Continue.`:** resume where the run paused.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
