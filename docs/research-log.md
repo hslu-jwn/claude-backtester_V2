@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: harvest batch 3 + I-69 screen: KILLED (the user: "Codex is reset")
+
+- Codex `gpt-6.1-terra` medium `--search`, 5 calls (17-36 s), queries limited to CFD-tradable ideas:
+  T0010 known-answer canary now finds the option-expiration-week effect (Scribd copy, 403 for the
+  checker); T0011 nonsense canary returned an IG Bollinger page (canary too plausible: needs a better
+  nonsense cell); T0012 BOJ ETF / JP225 dividend flows 0 ideas; T0013 single-leg oil roll 0;
+  T0014 bitcoin futures expiration week 1 (quote verified, filtered as untestable: no explicit entry).
+  Unverified rate terra medium 1 / 3.
+- Opus carded I-69 (rule + kills committed in c487e2b before any data): long BTCUSD Monday 00:00 to
+  Friday 15:00 UTC in CME expiry weeks, 2018-01 to 2021-08. Result: 41 weeks, gross -60 bp, net -100 bp
+  per week (t -0.72), 46 % positive; other weeks +95 bp gross. **Killed.** The paper's sample is our
+  development period, so this is a failed replication of its in-sample claim.
+
 ## 2026-11-12: web-access probe + harvest pilot 2 (the user: "Web probe + harvest")
 
 - Probe (Opus, direct one-line `codex --search exec`, terra low, 12 s): found and quoted the Breedon &
