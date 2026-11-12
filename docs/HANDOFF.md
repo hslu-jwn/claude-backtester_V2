@@ -67,7 +67,7 @@ WTI / Brent (+194 bp per trade without swap, 18 trades, t 1.27), needs real futu
 free EIA data has WTI futures (contracts 1-4, daily) but only Brent SPOT; Brent futures history and a
 futures cost model (broker commission per contract) are open (HANDOFF › Open). Chosen by Opus on the user's
 instruction 2026-11-12 (`docs/futures-venue.md`): IBKR Pro (Ireland) for costs / execution, Norgate Data for
-history (IBKR keeps expired futures only 2 years). Waiting: the user starts the Norgate free trial.
+history (IBKR keeps expired futures only 2 years). Trial checked (2-year history only); the user decided 2026-11-12 not to buy: P01 futures check parked.
 
 ## Next step
 

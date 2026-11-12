@@ -57,7 +57,8 @@ after the development cutoff (one-time test territory): it is used for format ch
 
 ## Next
 
-1. Done: trial running. Open: the user's decision to buy a subscription (USD 148.50 / 6 months) for 2010-2021.
+1. **Decided by the user 2026-11-12: no subscription ("No, stop here").** The futures check of P01 is parked;
+   the trial lapses by itself after 3 weeks. `norgatedata` removed from the environment again.
 2. Opus / Codex: a read-only loader for Norgate futures (daily settlements, individual contracts, roll) and
    a futures cost model from the table above; then P01 WTI / Brent on futures prices, pre-sample 2010-2014
    plus development, pre-registered.
