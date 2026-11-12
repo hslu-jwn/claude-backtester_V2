@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-12: cost-frame diagnostic (the user: "Rethink the cost frame"; not a gate look)
+
+- Same pairs screen, three cost frames (diagnostic only, verdicts unchanged):
+  FTMO as modelled (credits off): P01 net -124.2 bp, P02 -14.1; FTMO with swap credits: P01 -53.1, P02
+  -14.1; no swap (futures-like): P01 **+194.0 bp per trade (t 1.27, 18 trades, halves +63 / +324)**, P02
+  +12.0 (t 0.22). P01's round trip is only ~15 bp; ~318 bp per trade is swap on two oil legs over ~17 days.
+- Other ideas of the day are not cost-bound: I-51 gross Sharpe already negative, I-67 / I-70 killed on t,
+  L15 / L17 spread-bound intraday. So a cost-frame change alone unlocks nothing that passes t >= 3; the
+  only lead it would create is P01 under futures costs, which still needs more sample (pre-sample
+  2010-2014 USOIL / UKOIL exists) and a venue decision (FTMO CFDs pay swap; futures do not).
+
 ## 2026-11-12: pre-build screen of pair drafts P01 / P02: both KILLED (auto mode)
 
 - Opus (no dispatch): `research/screens/2026-11-12_pairs_screen.py`, committed before the run (22b792f).
