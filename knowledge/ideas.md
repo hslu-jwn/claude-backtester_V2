@@ -114,6 +114,7 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-66 | Turn-of-month open-to-close long (T-1..T+3), day-trade form of I-18 | calendar | US500, NAS100, US30 | none | ADAPTATION (published close-to-close only); `2026-11-09_calendar_effects.md` | tested 2026-11-09 (strategy 10 F4): no effect open to close |
 | I-67 | Month-end rebalancing with a conditional sign: sign of T-3..T-1 given the sign of T-8..T-4 | calendar | US500 | earns / pays (multi-day) | Etula et al. 2020 "Dash for cash" (`2026-11-09_calendar_effects.md:23`); review D2 | killed 2026-11-12 (t 0.95 < 2; ledger I67); same family as F4 / F4M |
 | I-68 | Oil carry from the futures curve: long when backwardated, flat or short in contango | carry | USOIL | modelled from the curve | Gorton & Rouwenhorst 2006; Koijen et al. 2018 (UNVERIFIED); review D4 | parked: needs EIA front / second-month settlements |
+| I-69 | Bitcoin CME futures expiration week: long BTCUSD in the week of the last-Friday expiry | event | BTCUSD | pays swap (crypto -30 %/yr) | harvest HV-T0014-1 (econstor jrfm-15-00092, quote verified) | carded 2026-11-12, UNTESTED |
 | T-20 | Resting limit entries for clock-based holds (cost side, no new edge) | tooling | cheap FX / indices | – | review D5 | open, UNTESTED |
 
 Not carried forward from the 2026-11-09 literature pass (dead or no evidence): pre-holiday,
@@ -671,6 +672,19 @@ Theory of storage: backwardation (scarce inventory) has paid longs, contango the
 front and second-month WTI settlements (EIA, free; download needs the user's go). Financing must come
 from the curve, not today's swap. Kills it before any build: fewer than 10 regime changes in development,
 or net <= 0 after a 3 % per year broker markup.
+
+### I-69 Bitcoin CME futures expiration week (harvest batch 3, 2026-11-12; UNTESTED)
+Source (quote verified by `harvest check`): econstor `jrfm-15-00092` (J. Risk Financial Manag. 15, 2022):
+of the calendar anomalies tested on bitcoin, only the week of a futures expiration showed abnormal
+returns, positive in 65 % of cases and on average about 5x a usual week (2018-2021, costs ignored).
+Mechanism (weak, SPECULATIVE): hedging / basis unwinds of CME futures before the last-Friday expiry.
+Rule fixed before any data (2026-11-12): long BTCUSD from Monday 00:00 UTC to Friday 15:00 UTC (CME
+expiry 16:00 London) in each week whose Friday is the month's last Friday; CME expiries 2018-01 to
+2021-08 (development only). Net = gross minus cost table round trip minus swap (4 nights).
+Kills it: net mean per week <= 0; t of the net < 3.0 (new family `crypto_event`, threshold rule);
+opposite signs in the two halves (by count). Caveat: the paper's sample IS our development period, so a
+pass only replicates it; independent evidence would come only from the one-time test.
+Diagnostic (not a gate): the same Monday-Friday window in all other weeks.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
