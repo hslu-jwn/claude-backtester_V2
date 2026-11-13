@@ -8,7 +8,7 @@ trend,trend following;breakout;donchian;turtle;moving average trend;kama;time se
 gap_fade,gap fade;gap fill;fade the open gap,falsified,S05,test period spent (not clean)
 gap_momentum,gap momentum;gap and go;gap continuation,falsified,S07,
 orb,opening range breakout;orb;first range breakout,falsified,S06,"stop proposing ORB without a new mechanism"
-london_fix,london fix reversal;wm reuters fix;4pm fix fade;tokyo fix,falsified,S08;H12,"also month-end post-fix USD rise (H12)"
+london_fix,london fix reversal;wm reuters fix;4pm fix fade;tokyo fix;ecb fix;ecb reference rate;currency fixings,falsified,S08;H12,"also month-end post-fix USD rise (H12)"
 fx_hours,local hours depreciation;breedon ranaldo;european hours short;usd hours long,closed,H01;H01b;H07,F1a lead expired 2026-11-11
 index_last30,last 30 minutes momentum;intraday momentum;end of day momentum;baltussen,falsified,H02;H06,
 fomc,fomc drift;pre-fomc;fomc morning;fomc cycle,falsified,H03,

@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: harvest batch 8 (central bank / exchange sources): nothing to screen (the user: "Run batch 8")
+
+- Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0043-T0050: DAX expiry settlement, US closing auction /
+  settlement, ECB 14:15 fix, LBMA gold auction, oil index roll, BOJ ETF buying; two canaries), 17-41 s each,
+  no guard alarms (answers saved after all calls). 3 ideas, 0 verified. Canaries: nonsense empty (pass);
+  carry known answer found a carry paper citing Koijen et al. and Lustig et al. (pass).
+- HV-T0045-1 ECB-fix dollar reversal (Bank of Canada SWP 2021-48): parked unfetchable (robots; a manual fetch
+  got only the archive interstitial). Same USD-demand-around-fixings mechanism as the falsified `london_fix`
+  family (cost wall stop list); recorded there, not screened. HV-T0048-1 BOJ ETF afternoon effect: the forced
+  buyer is gone (purchases scaled down 2021, stopped 2024), untradeable now. HV-T0049-1: the canary.
+
 ## 2026-11-13: harvest pipeline fixed (the user: "Yes, fix pipeline")
 
 - Opus, test-first (`tests/tools/test_harvest.py`, 8 new cases). On a closer look the quote matcher was right:
