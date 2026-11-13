@@ -754,6 +754,36 @@ with the same signal; net at 12 bp.
 Per-event sd ~120 bp. No-settlement hours 04 / 12 / 20 UTC: PRE +4.4, POST -1.4 bp, so nothing specific to the
 settlement. The few negative-funding events (s = -1) show +3 / +13 bp, too few to matter. Family closed.
 
+### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read)
+Source (opened by Opus, full text via pdftotext): Schmeling, Schrimpf & Todorov, "Crypto carry", BIS WP 1087
+(2023, rev. 2025). Dated-futures basis on BTC / ETH, March 2019 - January 2022 (Deribit, OKEx, CME, ...): carry
+averages above 10 % a year, up to 60 %; it is driven by convenience yields from trend-chasing small investors
+using leverage and scarce arbitrage capital; "a positive carry predicts both a decline in the spot as well as in
+the futures price" (Fig. 3: Deribit, same period, 1-month: a 1 % higher basis predicts a 6 % lower spot by
+expiry, Newey-West); high carry predicts sell liquidations and more negative skew (crashes). No cross-section
+across coins, no perpetual funding, no net-of-cost trade. Label: ADAPTATION (cross-section, funding as the
+carry measure); the paper's sample overlaps our development period, so a pass only replicates it in-sample.
+Mechanism: perps whose longs pay the most funding are the most crowded leveraged longs; a short collects the
+funding and is on the side the paper says the price moves; a long in the lowest-funding perps pays least.
+Venue: Binance USD-M prices (`binance`, last-trade M1) and costs: 10 bp round trip per leg per rebalance (taker),
+funding of every settlement held from `binance_funding` (shorts receive a positive rate), no swap.
+Universe: BTC, ETH + the 15 perps downloaded 2026-11-13 (BCH, XRP, EOS, LTC, TRX, ETC, LINK, XLM, ADA, BNB, XTZ,
+XMR, NEO, DASH, ATOM); a symbol is eligible once it has 30 days of funding history.
+Rule: every Monday at 00:00 UTC rank the eligible symbols by the mean of their last 21 settled funding rates
+(7 days, the 00:00 print included: known at the settlement). Short the top 4, long the bottom 4, equal
+notional; enter at the close of the M1 bar ending 00:01, exit at the close of the bar ending Sunday 23:59
+(before the next Monday settlement); full rebalance every week (ASSUMPTION: no turnover saving, conservative).
+Weekly return per 1 unit on each side = mean long return - mean short return + funding received - funding paid
+- 20 bp. A symbol missing either bar is dropped from that week's leg (the leg keeps its other members).
+Data: development only, first Monday with >= 8 eligible symbols up to the last full week before 2021-09-14.
+One cell, family `crypto_carry_xs`.
+Power line (before the screen, signal-free): weekly sd of a randomly picked 4-vs-4 portfolio, computed from the
+new data before the ranked portfolio is formed; recorded here.
+Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
+<= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
+only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
+ETH excluded; worst week; net at 30 bp a week.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
