@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: spread table extended, option A (the user: "A: full table")
+
+- Opus, test-first (`tests/engine/test_spread_table.py`, `test_spread_table_factor.py`; step-9 test updated to
+  the new rule). 27 symbols merged into `engine/ftmo_spread_median.json` and `data/spreads/` (median + p90),
+  without AUS200 2019-21, DXY 2024, BTCUSD / ETHUSD; factors GER40 1.07, UK100 1.09, UKOIL 1.09, US30 1.10,
+  USDCAD 1.09, USOIL 1.08. Spec `risk-management.md` › Costs.
+- Golden (2023 net R): london_fix -273.4 -> -373.7; alternating_path -491.1 -> -483.4 (2,516 -> 2,512 trades);
+  opening_range -36.6 -> -27.8; daily_reversal 3.9 unchanged (to 0.1 R). No verdict changes. Full suite
+  5,926 passed; golden 13 / 13; ruff clean.
+
 ## 2026-11-13: hourly spread table for the other symbols, proposal (the user: "Hourly fixed spreads")
 
 - Opus, local scripts (`scripts/cache_spread_table.py`, cache ask - bid; GBPUSD / XAUUSD rebuilt from the

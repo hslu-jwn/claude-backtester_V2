@@ -17,7 +17,13 @@ ROLLOVER = datetime(2026, 10, 6, 21, tzinfo=UTC)
 
 
 @pytest.mark.parametrize(
-    "symbol, factor", [("GBPJPY", 1.09), ("GBPUSD", 1.38), ("NAS100", 1.12), ("US500", 1.07)]
+    "symbol, factor",
+    [
+        ("GBPJPY", 1.09), ("GBPUSD", 1.38), ("NAS100", 1.12), ("US500", 1.07),
+        # extended table (the user, 2026-11-13, "A: full table"): live / table >= 1.05
+        ("GER40", 1.07), ("UK100", 1.09), ("UKOIL", 1.09), ("US30", 1.10), ("USDCAD", 1.09),
+        ("USOIL", 1.08),
+    ],
 )
 def test_table_value_is_scaled_by_the_measured_live_ratio(symbol, factor):
     cfg = CostConfig()
@@ -26,7 +32,7 @@ def test_table_value_is_scaled_by_the_measured_live_ratio(symbol, factor):
     assert cfg.spread(symbol, AT) == pytest.approx(raw * factor)
 
 
-@pytest.mark.parametrize("symbol", ["XAUUSD"])
+@pytest.mark.parametrize("symbol", ["XAUUSD", "EURUSD", "XAGUSD", "AUS200"])
 def test_symbols_without_a_raise_keep_the_table_value(symbol):
     cfg = CostConfig()
     assert cfg.spread(symbol, AT) == cfg.spread_table.spread_at(symbol, AT)

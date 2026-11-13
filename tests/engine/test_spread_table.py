@@ -216,8 +216,32 @@ def test_a_symbol_outside_the_default_table_keeps_the_fixed_spread():
     costs = CostConfig()
     fixed = CostConfig(spread_table=None)
     at = SUMMER_0930
-    price = costs.for_symbol("GER40").reference_price
-    assert costs.spread("GER40", at, price) == pytest.approx(fixed.spread("GER40", at, price))
+    for symbol in ("BTCUSD", "ETHUSD"):  # spread history jumps, no rollover break (2026-11-13)
+        price = costs.for_symbol(symbol).reference_price
+        assert costs.spread(symbol, at, price) == pytest.approx(fixed.spread(symbol, at, price))
+
+
+EXTENDED = ["AUDJPY", "AUDUSD", "AUS200", "CADJPY", "CHFJPY", "DXY", "EU50", "EURAUD", "EURGBP", "EURJPY", "EURUSD", "GBPAUD", "GER40", "HK50", "JP225", "NATGAS", "NZDJPY", "NZDUSD", "UK100", "UKOIL", "US2000", "US30", "USDCAD", "USDCHF", "USDJPY", "USOIL", "XAGUSD"]
+
+
+def test_the_default_table_covers_the_cached_symbols_from_the_mt5_cache():
+    """The user's go 2026-11-13 ("A: full table", docs/spread-table-extension.md): median bar spread
+    by New York year and hour from the MT5 cache for 27 more symbols; feed artifacts left out."""
+    table = CostConfig().spread_table
+    assert set(EXTENDED) <= set(table.values)
+    assert not {"BTCUSD", "ETHUSD"} & set(table.values)
+    assert min(table.values["AUS200"]) == 2022  # 2019-2021: 12-18 points, a feed change
+    assert min(table.values["DXY"]) == 2025  # 2024: few bars, 6x later years
+    assert min(table.values["EURUSD"]) == 2015
+
+
+def test_eurusd_pays_the_rollover_hour_and_its_measured_day_spread():
+    costs = CostConfig(spread_table_factor={})
+    fixed = CostConfig(spread_table=None).for_symbol("EURUSD").spread
+    rollover = datetime(2023, 7, 5, 21, 30, tzinfo=UTC)  # 17:30 New York
+    london = datetime(2023, 7, 5, 9, 30, tzinfo=UTC)  # 05:30 New York
+    assert costs.spread("EURUSD", rollover) > 5 * fixed
+    assert costs.spread("EURUSD", london) == pytest.approx(costs.spread_table.values["EURUSD"][2023][5])
 
 
 def test_the_packaged_table_equals_the_measured_file():

@@ -100,16 +100,16 @@ def test_reference_price_and_tick_size(symbol, reference, tick):
     assert c.reference_price == pytest.approx(reference) and c.tick_size == pytest.approx(tick)
 
 
-def test_the_new_symbols_have_no_spread_table_rows():
-    # the default median table is not re-measured (that would change the 26 others' costs):
-    # the new symbols use the fixed spread, scaled with the price
+def test_the_new_symbols_have_spread_table_rows():
+    # 2026-10-27 they used the fixed spread; since 2026-11-13 (the user, "A: full table") the default
+    # median table covers them, measured from the MT5 cache (docs/spread-table-extension.md)
+    from datetime import UTC, datetime
+
     from backtester.engine.costs import CostConfig
 
     table = CostConfig().spread_table
-    from datetime import UTC, datetime
-
     at = datetime(2026, 10, 1, 15, tzinfo=UTC)
-    assert all(table.spread_at(s, at) is None for s in NEW)
+    assert all(table.spread_at(s, at) is not None for s in NEW)
 
 
 # --- classes, sessions, news ----------------------------------------------------------------

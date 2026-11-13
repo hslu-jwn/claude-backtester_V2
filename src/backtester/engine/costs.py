@@ -349,8 +349,9 @@ DEFAULT_SYMBOL_COSTS: Mapping[str, SymbolCosts] = MappingProxyType(
 
 @cache
 def default_spread_table() -> SpreadTable:
-    """FTMO's median spread by year and New York hour, measured 2026-10-15 (copy of
-    data/spreads/ftmo_spread_median.json); the default (rule set by the user, 2026-10-26)."""
+    """FTMO's median spread by year and New York hour, measured 2026-10-15, extended 2026-11-13 from
+    the MT5 cache (copy of data/spreads/ftmo_spread_median.json); the default (rule set by the user,
+    2026-10-26; extension: the user, 2026-11-13)."""
     path = Path(__file__).with_name("ftmo_spread_median.json")
     return SpreadTable.from_dict(json.loads(path.read_text(encoding="utf-8")))
 
@@ -359,8 +360,12 @@ def default_spread_table() -> SpreadTable:
 # runs 3 + 4 to the table value at the fill_spread_time of each fill (results/fill_report_2026-11-09/
 # fills.csv; review B1, the user 2026-11-11). XAUUSD (0.87, over-charged) keeps the table. GBPJPY 1.09 /
 # GBPUSD 1.38 (the user's go 2026-11-13): at the old lookup 1.40 / 2.18, as the 18:00 New York fills
-# were compared with hour 18 instead of the hour-17 rollover spread they paid.
-LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.09, "GBPUSD": 1.38, "NAS100": 1.12, "US500": 1.07}
+# were compared with hour 18 instead of the hour-17 rollover spread they paid. Table extended to the
+# cached symbols (the user's go 2026-11-13, docs/spread-table-extension.md): factors >= 1.05 only.
+LIVE_TABLE_FACTOR: dict[str, float] = {
+    "GBPJPY": 1.09, "GBPUSD": 1.38, "NAS100": 1.12, "US500": 1.07,
+    "GER40": 1.07, "UK100": 1.09, "UKOIL": 1.09, "US30": 1.10, "USDCAD": 1.09, "USOIL": 1.08,
+}
 
 _JUST_BEFORE = timedelta(microseconds=1)
 

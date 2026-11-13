@@ -111,7 +111,11 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   table (per year and hour, ROADMAP 6.7) is a measurement and is **not** scaled; where it has no value the scaled fixed spread
   is used. **Default: the FTMO median table** (rule set by the user, 2026-10-26; re-evaluated after a period of demo
   trading), shipped as `engine/ftmo_spread_median.json` (copy of `data/spreads/ftmo_spread_median.json`, measured
-  2026-10-15; XAUUSD, GBPUSD, GBPJPY 2015-2026, NAS100 / US500 2021-2026; other symbols keep the fixed spread).
+  2026-10-15; XAUUSD, GBPUSD, GBPJPY 2015-2026, NAS100 / US500 2021-2026). **Extended 2026-11-13** (the user's go,
+  "A: full table", `docs/spread-table-extension.md`): 27 more symbols from the MT5 cache (ask - bid = MT5's bar
+  spread, `scripts/cache_spread_table.py`; from 2015 or the symbol's first MT5 year), without the feed artifacts
+  AUS200 2019-2021 and DXY 2024 (the nearest year is used); BTCUSD / ETHUSD and the Binance symbols keep the
+  fixed spread. The p90 stress table (`data/spreads/ftmo_spread_p90.json`) is extended the same way.
   `CostConfig(spread_table=None)` gives the fixed spread. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
   (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage follows the same entry-price
   scaling (rule set by the user, 2026-10-22; B4), independently of the spread switch/table. FX is scaled the same way (no special case).
@@ -162,8 +166,9 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   wins over the fixed spread, so the live under-charge is measured against the table (ratio of the
   mean bar spread of fill probe runs 3 + 4 to the table value at each fill's bar-close lookup below,
   `results/fill_report_2026-11-09/fills.csv`): `CostConfig.spread_table_factor` multiplies the
-  table's value by GBPJPY 1.09, GBPUSD 1.38, NAS100 1.12, US500 1.07 (`LIVE_TABLE_FACTOR`); XAUUSD
-  (0.87, over-charged) keeps the table. GBPJPY / GBPUSD (the user's go 2026-11-13, "1.09 / 1.38"): at
+  table's value by GBPJPY 1.09, GBPUSD 1.38, NAS100 1.12, US500 1.07, and since the extension of
+  2026-11-13 GER40 1.07, UK100 1.09, UKOIL 1.09, US30 1.10, USDCAD 1.09, USOIL 1.08 (`LIVE_TABLE_FACTOR`;
+  only ratios >= 1.05); XAUUSD (0.87, over-charged) and the other symbols below 1.05 keep the table. GBPJPY / GBPUSD (the user's go 2026-11-13, "1.09 / 1.38"): at
   the old lookup (the fill instant) the ratios were 1.40 / 2.18, because the 18:00 New York fills,
   which pay the hour-17 rollover spread, were compared with hour 18 (GBPUSD there 10.25x); for a few
   hours on 2026-11-13 the factors were the ratios without hour 18 (1.06 / 1.33). `{}` reproduces the

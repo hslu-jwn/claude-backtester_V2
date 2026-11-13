@@ -1,6 +1,6 @@
 # Proposal: hourly spread table for the symbols without one (2026-11-13)
 
-**Proposal only; no default changed.** For the user's decision (HANDOFF › Open 3). Opus, local scripts.
+**Accepted by the user 2026-11-13: option A** ("A: full table"), applied the same day. Opus, local scripts.
 
 ## Why
 

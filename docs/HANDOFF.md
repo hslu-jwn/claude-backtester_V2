@@ -43,8 +43,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 3. ~~GBPUSD spread~~ done 2026-11-13 (the user: "do all"): factor 1.33 (without the NY-hour-18 reopen,
    10.25x alone). Rollover fixes a + b + c done 2026-11-13 (the user's go): fill spread = the bar that
    just closed, gate 7 window 16:55-18:00 NY; factors GBPJPY 1.09 / GBPUSD 1.38 (the user's go).
-   **Open:** symbols without a table pay one fixed spread at every hour, the rollover hour included;
-   proposal A / B / C for the user in `docs/spread-table-extension.md` (2026-11-13).
+   Spread table extended to 27 more symbols (option A, the user's go 2026-11-13,
+   `docs/spread-table-extension.md`); BTCUSD / ETHUSD keep the fixed spread.
 4. **Direction of research:** cheap ideas are used up under FTMO costs. Options: intraday events with
    >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
    research and work on app / portfolio items. 2026-11-12 (Continue.Research Test=auto): I-68 oil carry
