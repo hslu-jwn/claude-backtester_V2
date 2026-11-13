@@ -15,6 +15,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - I-72 funding-settlement drift (card and kills committed before data, 1559dbf; Opus, local pandas screen):
   1,758 symbol-events, PRE gross -0.3 bp, POST +2.3 bp vs 10 bp cost; no-settlement hours look the same.
   KILLED, family `funding_settlement` closed. Model: Opus only (no dispatch).
+- Power check, funding-extreme fade (parked HV-T0020-3): 46 BTC / 55 ETH 72 h episodes in development vs
+  ~1,300 needed at the halved claim. Binance on two symbols: intraday effects are below 10 bp (crypto intraday
+  report: 3-10 bp), multi-day effects are underpowered in 20 months. Asked the user for more symbols (breadth).
 
 ## 2026-11-13: research paused (the user: "first pause, I'll restructure the folder location")
 
