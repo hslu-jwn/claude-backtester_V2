@@ -30,3 +30,4 @@ fx_carry,fx carry;carry trade;interest rate differential,open,,"I-29; swap credi
 oil_carry,oil term structure;backwardation;contango;roll yield,parked,I68,needs EIA curve data
 overnight_drift,overnight drift;overnight return;close to open,falsified,,cost-wall: net Sharpe -0.5
 execution,limit entry;passive execution;resting order,open,T20,cost side only
+index_review_auction,index review closing auction;rebalancing auction short;ftse review auction;msci rebalance close,falsified

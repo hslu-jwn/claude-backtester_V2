@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: harvest batch 6 (index flows) + I-71 UK100 review-auction short: KILLED (the user: "Yes, run batch 6")
+
+- Codex `gpt-6.1-terra` low `--search`, 8 tasks (T0027-T0034, 2 parallel, 17-44 s each): 5 ideas, 1 verified.
+  Canaries: nonsense cell empty (pass); known-answer cell "local hours" FAILED (Breedon & Ranaldo not found).
+  Unverified rate 40 % (2 of 5) on ACAD sources -> terra low taken off academic searches (rule: > 20 %);
+  batches 3-5 used terra medium. Exit 3 on five calls was Opus's driver writing answer files while the
+  other call ran (guard: read-only task changed); the answers are valid. `harvest check` overwrites
+  `checked.jsonl`: restored from git and batch 6 appended.
+- HV-T0031-1 (score 5 -> 6: the worker's "costs_ignored" flag was wrong, the source states net of costs).
+  Opus read the source (KruegerAlgorithms, sells an MQL5 tool): card I-71, rule and kills committed before
+  data (2365c6d). Screen (Opus, local): 83 event days, gross +11.7 bp, net +9.0 bp, **t 2.16 < 3.0: KILLED**;
+  pre-sample +12.5 (n 34) / dev +6.5 (n 49), other weekdays +0.0 bp. Sign replicates out of sample, power
+  too low (~160 events needed). Family `index_review_auction` closed.
+
 ## 2026-11-13: Continue.Research (Test=manual, no limit): cost wall refresh; placeholder spreads fixed
 
 - No runnable candidate, no carded idea (HANDOFF › Open 4); a harvest batch needs the user's OK (asked).

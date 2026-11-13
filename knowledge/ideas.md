@@ -704,7 +704,7 @@ trip minus swap for the nights held.
 Kills it: net mean per week <= 0; t of the net < 3.0 (new family `opex_week`, threshold rule); opposite
 signs in the two halves (pre-sample vs development). Diagnostic (not a gate): all other Friday-to-Friday weeks.
 
-### I-71 Index-review closing-auction short on UK100 (harvest batch 6, 2026-11-13; rule fixed before any data)
+### I-71 Index-review closing-auction short on UK100 (harvest batch 6, 2026-11-13; rule fixed before any data; screened the same day: KILLED, ledger I71)
 Source (quote verified by `harvest check`; read by Opus via a fetch the same day): KruegerAlgorithms,
 "index rebalancing closing auction" (practitioner, Konstanz; **sells a tool**, "ForcedFlow" on MQL5). Claim:
 on the closing-auction day before FTSE 100 / STOXX / MSCI review effective dates, the FTSE 100 falls into the
@@ -722,6 +722,11 @@ development 2015-01 to 2021-09-13. Net = gross bp minus the cost model's round t
 via `fill_spread_time` + 2 x slippage, no commission, no swap) in bp of the entry price.
 Kills it: net mean <= 0; t of the net < 3.0 (new family `index_review_auction`, threshold rule); opposite
 signs in pre-sample vs development. Diagnostic (not a gate): the same window on all other weekdays.
+**Result (`research/screens/2026-11-13_i71_review_auction_screen.py`): KILLED on t < 3.0.** 83 event days (10
+without both bars): gross +11.7 bp, net +9.0 bp, t 2.16, 67 % positive; pre-sample +12.5 bp (n 34), development
++6.5 bp (n 49); third Fridays +6.7, MSCI month ends +11.4; other weekdays gross +0.0 bp (n 2,630). 2020 -21.9,
+2021 -9.9. The sign replicates out of the source's sample, but at ~8 events a year t 3 needs ~160 events
+(per-event sd ~38 bp), more than our data holds; and at a 0.5 daily-ATR stop +9 bp is ~0.2 R x 8 a year.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

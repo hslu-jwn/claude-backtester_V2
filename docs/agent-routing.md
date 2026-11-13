@@ -40,7 +40,7 @@ by habit. One coordinator at a time; no review chains by default.
 | Complex debugging that needs the chat context | Claude subagent `sonnet` medium | in-session |
 | Docs / method look-ups, short research summaries | `ai_dispatch gemini --effort low/medium` (Flash 3.8) | 2026-11-02 |
 | Large log / long text extraction | local tools first, then `ai_dispatch local` | 2026-11-02 |
-| Idea-harvest search task (skill `idea-harvest`; one task per call, read-only, max 2 parallel, `--search`) | Codex `gpt-6.1-terra` low; text-only free models only on fetched page text | web probe ok 2026-11-12 |
+| Idea-harvest search task (skill `idea-harvest`; one task per call, read-only, max 2 parallel, `--search`) | Codex `gpt-6.1-terra` low (not on ACAD sources since 2026-11-13: 40 % unverified, canary failed; use medium there); text-only free models only on fetched page text | web probe ok 2026-11-12 |
 
 **Hosted APIs** (OpenAI chat format, text only: no tools, no file access). Keys live only in
 the Windows Credential Manager (generic credential `<provider>@backtester-ai`, user name
