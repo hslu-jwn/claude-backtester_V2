@@ -359,7 +359,17 @@ def default_spread_table() -> SpreadTable:
 # runs 3 + 4 to the table value at the same times (results/fill_report_2026-11-09/fills.csv;
 # review B1, the user 2026-11-11). XAUUSD (0.87, over-charged) keeps the table. GBPUSD (the user's go
 # 2026-11-13): 1.33 = the ratio without NY hour 18 (that reopen hour alone is 10.25x; with it 2.18x).
-LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.40, "GBPUSD": 1.33, "NAS100": 1.12, "US500": 1.07}
+# GBPJPY (the user's go 2026-11-13): 1.06 = the ratio without NY hour 18, now charged by fill_spread_time.
+LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.06, "GBPUSD": 1.33, "NAS100": 1.12, "US500": 1.07}
+
+_JUST_BEFORE = timedelta(microseconds=1)
+
+
+def fill_spread_time(at: datetime | None) -> datetime | None:
+    """Time to look the spread up for a fill or signal at instant `at`: an order sent at a bar
+    close pays the spread of the bar that just closed (live: 18:00:0x New York still pays the
+    hour-17 rollover spread). Spec: risk-management.md > Costs > Spread at a bar close."""
+    return None if at is None else at - _JUST_BEFORE
 
 
 @dataclass(frozen=True, slots=True)

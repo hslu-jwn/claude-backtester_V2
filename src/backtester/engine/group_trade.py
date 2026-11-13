@@ -27,7 +27,7 @@ from datetime import datetime, timedelta
 from math import isclose, isfinite
 
 from backtester.core.models import Direction
-from backtester.engine.costs import CostConfig, rollover_nights
+from backtester.engine.costs import CostConfig, fill_spread_time, rollover_nights
 from backtester.engine.trade import ExitReason
 from backtester.strategy.group import GroupLeg, GroupOrder
 
@@ -104,7 +104,7 @@ def leg_costs(cfg: CostConfig, leg: GroupLeg, fill: LegFill) -> dict[str, float]
                                   entry_time=fill.entry_time, exits=((1.0, fill.exit_time),),
                                   entry=fill.entry_fill)
                     if cfg.funding_series(leg.symbol) is not None else 0.0),
-        "spread_diagnostic": -cfg.spread(leg.symbol, fill.entry_time, fill.chart_entry),
+        "spread_diagnostic": -cfg.spread(leg.symbol, fill_spread_time(fill.entry_time), fill.chart_entry),
     }
     if any(not isfinite(value) for value in result.values()):
         raise ValueError("leg costs must be finite")

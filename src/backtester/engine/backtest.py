@@ -42,7 +42,7 @@ from backtester.core.market import require_utc
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries, SeriesView
 from backtester.data.news import Calendar, NewsConfig, matching_events
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import CostConfig, fill_spread_time
 from backtester.engine.market_replay import MarketReplay
 from backtester.engine.replay import Replay
 from backtester.engine.ticks import TickRoundingStats, round_level
@@ -220,7 +220,7 @@ class Backtest:
                         self._strategy.on_order_skipped(order.ref, now)
                         continue
                 if self._config.costs.too_expensive(
-                    trade.symbol, trade.risk, trade.entry_time, trade.entry, trade.entry_fill
+                    trade.symbol, trade.risk, fill_spread_time(trade.entry_time), trade.entry, trade.entry_fill
                 ):
                     self._strategy.on_order_skipped(order.ref, now)
                     continue
@@ -389,7 +389,7 @@ class Backtest:
         if not candle.low <= entry <= candle.high:
             entry = candle.open
         distance = self._config.costs.tp_penetration * self._config.costs.spread(
-            self._replay.symbol, now, entry
+            self._replay.symbol, fill_spread_time(now), entry
         )
         return sign * (extreme - (level - sign * distance)) <= 0
 
@@ -482,7 +482,7 @@ class Backtest:
                 self._strategy.on_order_skipped(order.ref, now)
                 return None
         symbol = self._replay.symbol
-        spread = self._config.costs.spread(symbol, now, entry)
+        spread = self._config.costs.spread(symbol, fill_spread_time(now), entry)
         if (
             self._config.costs.refuse_stop_in_spread
             and sign < 0
@@ -499,7 +499,7 @@ class Backtest:
         if self._config.break_even_at_next_session and self._strategy.uses_session_break_even:
             check = next_session_start(now, self._config.sessions).start
         break_even = entry + sign * self._config.costs.break_even_offset(
-            symbol, now, entry, order.direction, entry_fill
+            symbol, fill_spread_time(now), entry, order.direction, entry_fill
         )
         if tick is not None:
             # a short's broker SL sits a spread above its trigger bid (short_sl_on_ask)

@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: rollover fixes a + b + c applied (the user: "Yes, a + b + c")
+
+- Opus, test-first (`tests/engine/test_fill_spread_time.py`, factor and gate 7 cases). (a) `fill_spread_time`
+  (1 µs before the fill instant) at every fill / signal spread lookup: engine entry, cost filter,
+  break-even offset, limit penetration, two-leg entries, entry screens, a strategy's signal cost, fill
+  report. (b) GBPJPY `LIVE_TABLE_FACTOR` 1.40 -> 1.06. (c) gate 7 window 16:55-18:00 New York (zoneinfo).
+  Specs: `risk-management.md` › Costs, `strategy-timed-hold.md` › Gate 7 decision.
+- Open question for the user: with the new lookup, the live-ratio method gives GBPJPY 1.09 (not 1.06)
+  and GBPUSD 1.38 (not 1.33); 1.06 / 1.33 kept as approved.
+- Golden lists rewritten (2023 net R old -> new): session_zone_sweep -513.5 -> -478.3 (2,961 -> 2,962
+  trades; GBPJPY factor); no_wick -1277.7 -> -1276.8 (4,166 -> 4,164); h1_shock 0.5 -> 0.7; ny_index_sweep
+  -32.1, trend_following 14.4, opening_range -36.6 change below 0.1 R. No verdict changes (all falsified
+  or closed). Full suite 5,916 passed; golden 13 / 13 identical after the write; ruff clean.
+
 ## 2026-11-13: rollover-hour spread measured (Continue.Code; the user picked "1")
 
 - Opus, local scripts only. The under-charge of "NY hour 18" is one instant, not an hour: live probe

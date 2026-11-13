@@ -38,7 +38,7 @@ from types import MappingProxyType
 from backtester.core.market import ReferenceInput
 from backtester.core.models import Candle, Direction, Timeframe
 from backtester.core.series import CandleSeries
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import CostConfig, fill_spread_time
 from backtester.engine.group_trade import GroupResult, LegFill, group_basis, group_result
 from backtester.engine.market_replay import MarketReplay
 from backtester.engine.ticks import round_level
@@ -127,14 +127,14 @@ def _fill_group(order, candles, cfg, values):
             raise ValueError(f"{leg.symbol}: stop distance <= 0 after tick rounding")
         if target is not None and sign * (target - entry) <= 0:
             raise ValueError(f"{leg.symbol}: target distance <= 0 after tick rounding")
-        spread = cfg.spread(leg.symbol, candle.ts, entry)
+        spread = cfg.spread(leg.symbol, fill_spread_time(candle.ts), entry)
         slippage = cfg.slippage(leg.symbol, entry)
         fill = entry + (spread if sign > 0 else 0) + sign * slippage
         if not all(isfinite(v) for v in (spread, slippage, fill)):
             raise ValueError(f"{leg.symbol}: nonfinite fill")
         if cfg.refuse_stop_in_spread and sign < 0 and stop - (entry + spread) <= 1e-9 * abs(entry):
             raise ValueError(f"{leg.symbol}: stop inside spread")
-        if cfg.too_expensive(leg.symbol, risk, candle.ts, entry, fill):
+        if cfg.too_expensive(leg.symbol, risk, fill_spread_time(candle.ts), entry, fill):
             raise ValueError(f"{leg.symbol}: cost limit exceeded")
         value = values[leg.symbol] if values is not None else settings.value_per_price_unit
         basis_values.append(value)

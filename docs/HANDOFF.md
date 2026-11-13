@@ -41,16 +41,16 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 2. **B4 dividends:** message ready to send in `docs/ftmo-dividend-question.md` (2026-11-13). FTMO's dividend booking on index CFDs is unverified (the demo export and web
    lookups settle nothing); the user asks FTMO support, then Opus adds the rule test-first.
 3. ~~GBPUSD spread~~ done 2026-11-13 (the user: "do all"): factor 1.33 (without the NY-hour-18 reopen,
-   10.25x alone). **Rollover hour measured 2026-11-13** (research log): only the 18:00:00 NY fill is
-   under-charged (it still pays the hour-17 spread); proposals waiting for the user: (a) entry spread =
-   the value of the bar that just closed, (b) then GBPJPY factor 1.40 -> 1.06, (c) item 5's window.
+   10.25x alone). Rollover fixes a + b + c done 2026-11-13 (the user's go): fill spread = the bar that
+   just closed, GBPJPY 1.06, gate 7 window 16:55-18:00 NY. **Open:** the same live-ratio method under
+   the new lookup gives GBPJPY 1.09 / GBPUSD 1.38 (kept 1.06 / 1.33 as approved); symbols without a
+   table pay one fixed spread at every hour, the rollover hour included.
 4. **Direction of research:** cheap ideas are used up under FTMO costs. Options: intraday events with
    >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
    research and work on app / portfolio items. 2026-11-12 (Continue.Research Test=auto): I-68 oil carry
    closed on power, so no carded idea is left. **Decided by the user 2026-11-12: pause research,
    work on `Continue.Code` items** (research resumes with a new idea source or data).
-5. Low priority: gate 7's 21:00 UTC rollover window vs MT5's 20:55 start (proposal: 16:55-18:00 NY via
-   zoneinfo); stressed-cost p90 refresh;
+5. Low priority: stressed-cost p90 refresh (gate 7 window done 2026-11-13);
    (data fixes 13.12-13.18 accepted by the user 2026-11-12; MT5 GBPUSD 2019 quarantined, 149 days,
    `docs/data-fix-check.md`; USDCHF early 2015 borderline, left as it is).
 

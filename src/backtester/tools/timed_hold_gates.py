@@ -39,6 +39,7 @@ from backtester.tools.entry_screen import load_m1
 BEST_DATES = 5
 BLOCK, RESAMPLES, SEED = 5, 10_000, 2026110
 NEW_YORK = ZoneInfo("America/New_York")
+ROLLOVER_GAP_START = time(16, 55)  # FTMO daily break 16:55-17:05 New York
 
 
 def rollover_integrity_failures(trades, data, *, max_gap_minutes: int = 5) -> list:
@@ -65,9 +66,10 @@ def rollover_integrity_failures(trades, data, *, max_gap_minutes: int = 5) -> li
             missing = (right - left) // 60 - 1
             if missing <= 6:
                 continue
-            start = datetime.fromtimestamp(int(left + 60), UTC)
-            end = datetime.fromtimestamp(int(right - 60), UTC)
-            if start.date() != end.date() or start.hour < 21 or end.hour >= 23:
+            # first and last missing minute inside 16:55-18:00 New York (the user, 2026-11-13)
+            start = datetime.fromtimestamp(int(left + 60), UTC).astimezone(NEW_YORK)
+            end = datetime.fromtimestamp(int(right - 60), UTC).astimezone(NEW_YORK)
+            if start.date() != end.date() or start.time() < ROLLOVER_GAP_START or end.hour >= 18:
                 bad.append(t)
                 break
     return bad

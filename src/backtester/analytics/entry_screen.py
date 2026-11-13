@@ -50,7 +50,7 @@ import pandas as pd
 from backtester.analytics import _worker_data
 from backtester.analytics.verdict import middle_date
 from backtester.core.models import Direction
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import CostConfig, fill_spread_time
 from backtester.sessions import ROLLOVER_TIME, ROLLOVER_ZONE
 
 SECONDS_PER_MINUTE = 60
@@ -234,7 +234,7 @@ def _costed(
 ) -> ExitResult:  # fmt: skip
     """Gross and net R of a leg that exits at chart price `price` (engine formulas)."""
     risk, entry, symbol = trade.risk, trade.entry, trade.symbol
-    spread = costs.spread(symbol, trade.entry_time, entry)
+    spread = costs.spread(symbol, fill_spread_time(trade.entry_time), entry)
     slip = costs.slippage(symbol, entry)
     fill = price if sign > 0 else price + spread
     if reason != "target":
@@ -334,7 +334,7 @@ def random_exit_runs(
     if stop_idx is not None:
         price = np.where(stopped, _stop_fill(m1, stop_idx, sign, stop), price)
         exit_s = np.where(stopped, float(m1.close_s[stop_idx]), exit_s)
-    spread = costs.spread(symbol, trade.entry_time, entry)
+    spread = costs.spread(symbol, fill_spread_time(trade.entry_time), entry)
     slip = costs.slippage(symbol, entry)
     fill = price + (spread if sign < 0 else 0.0) - sign * slip
     entry_fill = entry + (spread if sign > 0 else 0.0) + sign * slip

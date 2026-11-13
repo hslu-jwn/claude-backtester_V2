@@ -243,6 +243,38 @@ def _m1_for_trade(t, missing=(), invalid=False):
             6,
             True,
         ),
+        # window 16:55-18:00 New York (the user, 2026-11-13): summer break from 20:55 UTC passes
+        (
+            datetime(2020, 7, 1, 20, tzinfo=UTC),
+            150,
+            datetime(2020, 7, 1, 20, 55, tzinfo=UTC),
+            15,
+            False,
+        ),
+        # summer 22:10 UTC = 18:10 New York: after the window
+        (
+            datetime(2020, 7, 1, 20, tzinfo=UTC),
+            180,
+            datetime(2020, 7, 1, 22, 10, tzinfo=UTC),
+            20,
+            True,
+        ),
+        # winter 21:10 UTC = 16:10 New York: before the window
+        (
+            datetime(2020, 1, 6, 21, tzinfo=UTC),
+            150,
+            datetime(2020, 1, 6, 21, 10, tzinfo=UTC),
+            20,
+            True,
+        ),
+        # winter 21:55-22:59 UTC = 16:55-17:59 New York: the whole window passes
+        (
+            datetime(2020, 1, 6, 21, 30, tzinfo=UTC),
+            120,
+            datetime(2020, 1, 6, 21, 55, tzinfo=UTC),
+            65,
+            False,
+        ),
     ],
 )
 def test_rollover_gap_tolerance(entry, minutes, gap_start, gap_length, fails):

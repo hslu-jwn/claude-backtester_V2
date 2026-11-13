@@ -41,7 +41,7 @@ import pandas as pd
 
 from backtester.cli import utf8_output
 from backtester.data.mt5_download import DEFAULT_NAMES
-from backtester.engine.costs import CostConfig
+from backtester.engine.costs import CostConfig, fill_spread_time
 from backtester.paths import RESULTS_DIR
 
 DEFAULT_SINCE = "2026-10-27T16:00"
@@ -170,7 +170,7 @@ def _models(
     if symbol not in costs.symbols:
         return float("nan"), float("nan"), float("nan")
     fixed = CostConfig(spread_table=None, symbols=costs.symbols).spread(symbol, None, price)
-    return costs.slippage(symbol, price), costs.spread(symbol, at, price), fixed
+    return costs.slippage(symbol, price), costs.spread(symbol, fill_spread_time(at), price), fixed
 
 
 def _row(

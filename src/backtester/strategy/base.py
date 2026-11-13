@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 from backtester.core.market import MarketView, ReferenceInput
@@ -61,8 +61,9 @@ class Strategy(ABC):
 
     def configure_costs(self, costs: CostConfig) -> None:
         """Resolve causal one-way signal costs. Spec: strategy-h1-shock.md › Definitions."""
+        # the bar that just closed, as engine.costs.fill_spread_time (no engine import here)
         self.signal_price_cost = lambda symbol, at, price: (
-            costs.spread(symbol, at, price) + costs.commission_price(symbol, price) / 2
+            costs.spread(symbol, at - timedelta(microseconds=1), price) + costs.commission_price(symbol, price) / 2
             + costs.slippage(symbol, price)
         )
 

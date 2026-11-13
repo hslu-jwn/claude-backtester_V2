@@ -338,8 +338,11 @@ gates `tools/timed_hold_gates.py --primary-symbol USDJPY --min-trades 200 --min-
   as registered**, parked for the user (HANDOFF › Open 10). Without the 23 trades: USDJPY +17.1 R
   (404 trades), EURJPY +16.4 R (399).
 - **Gate 7 decision (rule set by the user, 2026-11-09, option a):** for holds that cross the FTMO
-  daily rollover, M1 gaps inside the rollover hour (21:00-23:00 UTC) and gaps of up to 6 minutes
-  elsewhere do not fail gate 7; a missing exit candle or an invalid candle still does. Under this
+  daily rollover, M1 gaps inside the rollover window and gaps of up to 6 minutes
+  elsewhere do not fail gate 7; a missing exit candle or an invalid candle still does. The window is
+  16:55-18:00 New York (zoneinfo; the FTMO break 16:55-17:05 and the wide hour after it; rule set by the
+  user, 2026-11-13; before: 21:00-23:00 UTC, which missed summer gaps from 20:55 UTC). Verdicts recorded
+  before 2026-11-13 stand. Under this
   rule G1 has 0 integrity failures and **passes all seven gates: ready for the one-time test**
   (Test=manual; criteria below).
 - The timed-hold gate report applies this tolerance and also reports the strict integrity count.
