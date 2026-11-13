@@ -645,6 +645,50 @@ Why: combine weak, uncorrelated edges into one account without fooling ourselves
   - Monte Carlo fan of equity curves and drawdown distribution
   - sweep heatmap (e.g. risk % × daily stop)
 
+## Challenge path simulator and FTMO rule sets (ROADMAP V2.7; the user's go 2026-11-13: "do all")
+
+Replays a run's trades **in their real order** (no resampling) through an FTMO account from many start
+dates, so a strategy's actual path is visible next to the Monte Carlo estimate. `risk/challenge_path.py`,
+CLI `tools/challenge_path.py`, Results page card (balance, daily-loss and max-loss lines, pass / breach
+marker, start-date picker, risk % input, rule-set choice).
+
+**FTMO rule sets, verified on ftmo.com 2026-11-13** (pages `en/trading-objectives/` dated 2026-11-02,
+`en/instant-account/` 2026-10-30, FAQ `is-the-entry-fee-refunded`, `can-i-trade-news`,
+`can-i-hold-positions-overnight-or-over-the-weekend`). Limits are fractions of the initial balance; the
+day resets at 00:00 Europe/Prague; daily loss = day-start balance minus equity (floating P/L counts).
+
+| Rule set | Profit target(s) | Daily loss | Max loss | Min trading days | Consistency |
+|---|---|---|---|---|---|
+| `ftmo_2step` | 10 % then 5 % (Verification) | 5 % | 10 % static (floor 90 % of initial) | 4 per phase | none |
+| `ftmo_1step` | 10 % | 3 % | 10 % end-of-day trailing: floor = max(initial, highest 00:00 balance) - 10 % of initial, never falls | none | best day <= 50 % of the total profit |
+| `ftmo_instant` | none (funded on purchase) | 3 % | 10 % intraday trailing: floor = max(initial, highest closed balance) - 10 % of initial, raised the moment a trade closes at a new high | none | best day <= 30 % of the total profit (payout condition) |
+
+Not on the pages read (inputs, never guessed): the fee of each account size, the 1-Step / 2-Step profit
+split (Instant: 90 %). News (2 min before / after) and holding through market breaks > 2 h are
+restricted on funded and Instant accounts, not in Challenge / Verification; the simulator does not
+model them (the strategy's own rules decide) and says so in its report.
+
+Rules of the simulator (assumptions by Opus, recorded per AGENTS.md › Specs):
+- **Days and trades:** `monte_carlo.build_days` (weekdays, exit day in Prague time); a trading day is a
+  day with at least one trade, as in the Monte Carlo. Equity inside a day: the Monte Carlo's worst-point
+  approximation (`_play_day`): closed balance minus, per open trade, risk$ x max(weight, -r_net). Daily
+  loss is checked before max loss; reaching a limit is a breach.
+- **Risk:** risk per trade = a fraction of the current closed balance in evaluation phases (as the
+  Monte Carlo), of the initial balance on Instant (as the Monte Carlo's funded account). Default 1 %.
+- **Pass:** at a day end, balance >= the phase target and the phase's trading days >= its minimum and,
+  where the rule set has one, best day P/L <= share x total phase profit (1-Step; a day that misses the
+  share is not a breach, the attempt continues). 2-Step: Verification starts the next day at the initial
+  balance. The simulator stops at funding ("time to funding" = weekdays from the start to the pass day).
+- **Instant:** no pass; the attempt is watched for `watch_days` (default 126 weekdays, as the Monte
+  Carlo's funded watch); results: breached (day, limit) or survived, and the first day the account is
+  payout-eligible (balance above initial and best day <= 30 % of the total profit).
+- **Start dates:** the first weekday of every month in the run's period; each start is an independent
+  attempt that runs until pass, breach or the end of the data ("open", reported separately, never counted
+  as pass or fail).
+- **Summary per rule set:** attempts, pass %, breach % (daily / max), open, median and p90 weekdays to
+  funding; with a fee given (`--fee ftmo_1step=<price>`), cost per funded account = fee / pass rate
+  (2-Step: refunded with the first reward, reported both ways).
+
 ## Prop-firm field (later)
 An extra field in the backtest, added later (rule set by the user): simulates FTMO challenge phases and funded accounts on the same trades and estimates the probability of passing.
 - **Phases:** Phase 1 → Phase 2 → funded, result per phase, pass/fail with reason and day.
