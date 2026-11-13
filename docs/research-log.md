@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: hourly spread table for the other symbols, proposal (the user: "Hourly fixed spreads")
+
+- Opus, local scripts (`scripts/cache_spread_table.py`, cache ask - bid; GBPUSD / XAUUSD rebuilt from the
+  cache match the packaged table within one tick). 29 symbols, median by New York year and hour.
+  Hour 17 is 9-20x the fixed spread for FX; London / New York hours of the FX majors 0.5-0.7x (the
+  2026-11-09 raises used the all-hours live mean); FX 2015 2-8x. Feed artifacts excluded (AUS200
+  2019-21, BTCUSD / ETHUSD, DXY 2024).
+- Impact (net R, today -> table): london_fix 2023 -273.4 -> -368.5 (its time exit at 17:05 New York pays the
+  rollover spread on shorts), 2016 -191.7 -> -326.7; alternating_path 2016 -514.4 -> -746.6, 2023 -491.1 ->
+  -482.9; opening_range 2023 -36.6 -> -27.5. Variants B (never below fixed) and C (hour 17 only) in
+  `docs/spread-table-extension.md`. No default changed; waiting for the user.
+
 ## 2026-11-13: GBPJPY 1.09 / GBPUSD 1.38 (the user: "Yes, 1.09 / 1.38")
 
 - Opus, test-first: `LIVE_TABLE_FACTOR` = ratio of means over all fill probe entries at the bar-close
