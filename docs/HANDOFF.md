@@ -60,8 +60,12 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-1. Research only with a new idea source or a decision on Open 4; the harvest pipeline works
-   (`idea-harvest` skill, `ai_dispatch --search`, CA-bundle note for `harvest check` in the skill).
+1. **Paused by the user 2026-11-13** while the user restructures the folder location (paths may change:
+   check `AGENTS.md` / `.claude/` paths, the venv and the data cache location first).
+   Decided by the user 2026-11-13: no paid futures data for now; **next research direction: Binance futures**
+   with the data already cached (`data/cache/binance*`, venue rule of 2026-11-12; about 10 bp round trip,
+   shorts receive funding; parked leads HV-T0020-1 / -3 are underpowered). Harvest batches 6-9 found one
+   idea (I-71, killed); the harvest pipeline works (`idea-harvest` skill).
 2. Code items left (ROADMAP V2.10): A9 results out of the specs (deferred: rules interleave results),
    shrink the slowest tests; two-leg 2b when a pair idea survives a screen.
 

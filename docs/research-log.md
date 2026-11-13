@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: research paused (the user: "first pause, I'll restructure the folder location")
+
+- Decisions by the user: no paid futures data for now; Binance futures (cached data) is the viable next
+  direction. Paused at a clean point (no lane, queue or dispatch running).
+
 ## 2026-11-13: harvest batch 9 (forums, Reddit, GitHub, podcasts, books): nothing to screen (the user: "search for more ideas")
 
 - Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0051-T0058; first use of FORUM, REDDIT, GIT, AV, BOOK sources;
