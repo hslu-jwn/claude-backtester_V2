@@ -38,7 +38,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 1. One-time MT5 tests still pre-registered: strategy 4 on GBPJPY; gap momentum in quiet sideways
    markets. Only on your go.
-2. **B4 dividends:** FTMO's dividend booking on index CFDs is unverified (the demo export and web
+2. **B4 dividends:** message ready to send in `docs/ftmo-dividend-question.md` (2026-11-13). FTMO's dividend booking on index CFDs is unverified (the demo export and web
    lookups settle nothing); the user asks FTMO support, then Opus adds the rule test-first.
 3. ~~GBPUSD spread~~ done 2026-11-13 (the user: "do all"): factor 1.33 (without the NY-hour-18 reopen,
    10.25x alone); hour 18 stays under-charged for every symbol (open, with the rollover window of item 5).
