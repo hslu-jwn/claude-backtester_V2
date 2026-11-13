@@ -728,7 +728,7 @@ without both bars): gross +11.7 bp, net +9.0 bp, t 2.16, 67 % positive; pre-samp
 2021 -9.9. The sign replicates out of the source's sample, but at ~8 events a year t 3 needs ~160 events
 (per-event sd ~38 bp), more than our data holds; and at a 0.5 daily-ATR stop +9 bp is ~0.2 R x 8 a year.
 
-### I-72 Funding-settlement drift on Binance perpetuals (Continue.Research on Binance futures, 2026-11-13; rule fixed before any data)
+### I-72 Funding-settlement drift on Binance perpetuals (Continue.Research on Binance futures, 2026-11-13; rule fixed before any data; screened the same day: KILLED, ledger I72)
 Source: `knowledge/research/reports/2026-11-09_crypto_intraday.md` §2 (no published signed effect; S4 documents
 volatility / volume spikes at 00 / 08 / 16 UTC and ties them to funding as a conjecture). Label: ORIGINAL / SPECULATIVE.
 Mechanism (a counterparty with a reason to trade at a clock time): when funding is above the 0.01 % default, longs
@@ -748,6 +748,11 @@ Power: hourly sd ~80-100 bp, ~1,000 effective events per cell -> standard error 
 Kills it (each cell): net mean <= 0 at 10 bp; t of the net < 3.0; BTC vs ETH opposite gross signs; 2020 vs
 2021 opposite gross signs. Diagnostic (not a gate): the same windows around 04 / 12 / 20 UTC (no settlement)
 with the same signal; net at 12 bp.
+**Result (`research/screens/2026-11-13_i72_funding_settlement_screen.py`): KILLED on net <= 0 in both cells.**
+1,758 symbol-events (83 % with s = +1, i.e. funding above the default). PRE: gross -0.3 bp, net -10.3, t -3.1
+(BTC +0.8 / ETH -1.2; 2020 +3.0 / 2021 -3.4). POST: gross +2.3 bp, net -7.7, t -1.7 (BTC -0.4 / ETH +4.9).
+Per-event sd ~120 bp. No-settlement hours 04 / 12 / 20 UTC: PRE +4.4, POST -1.4 bp, so nothing specific to the
+settlement. The few negative-funding events (s = -1) show +3 / +13 bp, too few to matter. Family closed.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

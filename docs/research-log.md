@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: Continue.Research on Binance futures (Test=manual, no limit): cost check; I-72 KILLED
+
+- Project moved; memory notes copied to the new project key (7 files), no old paths in the settings.
+- Cost model check (HANDOFF › Next step 2): `engine/costs.py` charges BTCUSDT / ETHUSDT taker 0.05 % per side
+  (10 bp round trip) plus funding every 8 h from `binance_funding`, longs pay a positive rate: matches Binance's
+  published regular-user USD-M fees (maker 0.02 %, taker 0.05 %). No spread or slippage is modelled (Binance
+  data is last-trade M1, bid = ask); screens report net at 12 bp as a stress diagnostic. 2020-21 taker was
+  0.04 %, so 0.05 % is conservative for the development period.
+- I-72 funding-settlement drift (card and kills committed before data, 1559dbf; Opus, local pandas screen):
+  1,758 symbol-events, PRE gross -0.3 bp, POST +2.3 bp vs 10 bp cost; no-settlement hours look the same.
+  KILLED, family `funding_settlement` closed. Model: Opus only (no dispatch).
+
 ## 2026-11-13: research paused (the user: "first pause, I'll restructure the folder location")
 
 - Decisions by the user: no paid futures data for now; Binance futures (cached data) is the viable next
