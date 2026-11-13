@@ -49,7 +49,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
    research and work on app / portfolio items. 2026-11-12 (Continue.Research Test=auto): I-68 oil carry
    closed on power, so no carded idea is left. **Decided by the user 2026-11-12: pause research,
-   work on `Continue.Code` items** (research resumes with a new idea source or data).
+   work on `Continue.Code` items** (research resumes with a new idea source or data). 2026-11-13 (Continue.Research):
+   harvest batch 6 (index flows) gave one idea, I-71 UK100 review-auction short: killed on t 2.16 (net +9 bp,
+   sign replicates out of sample, too few events). Terra low missed the known-answer canary on academic sources.
 5. Low priority: stressed-cost p90 refresh (gate 7 window done 2026-11-13);
    (data fixes 13.12-13.18 accepted by the user 2026-11-12; MT5 GBPUSD 2019 quarantined, 149 days,
    `docs/data-fix-check.md`; USDCHF early 2015 borderline, left as it is).
