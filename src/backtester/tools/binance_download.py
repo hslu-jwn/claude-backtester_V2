@@ -3,6 +3,7 @@ Logic and format: `data/binance.py`.
 
     python -m backtester.tools.binance_download                       # BTCUSDT ETHUSDT, 2020-01 .. latest
     python -m backtester.tools.binance_download BTCUSDT --start 2024-01 --end 2024-01
+    python -m backtester.tools.binance_download SOLUSDT XRPUSDT --klines  # 1m klines (about 1/50 the size)
 """
 
 from __future__ import annotations
@@ -36,11 +37,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--start", type=_month, default=FIRST_MONTH, help="YYYY-MM (default 2020-01)")
     p.add_argument("--end", type=_month, default=None, help="YYYY-MM (default: this month)")
     p.add_argument("--tmp", type=Path, default=TMP_DIR)
+    p.add_argument("--klines", action="store_true", help="1m klines instead of aggTrades")
     args = p.parse_args(argv)
     end = args.end or datetime.now(UTC).date()
     cfg = BinanceConfig(tmp_dir=args.tmp)
     for symbol in (s.upper() for s in args.symbols):
-        results = download_symbol(symbol, args.start, end, cfg, log=_log)
+        results = download_symbol(
+            symbol, args.start, end, cfg, log=_log, kind="klines" if args.klines else "aggTrades"
+        )
         _log(
             f"{symbol} done: {sum(r.bars for r in results):,} bars, "
             f"{sum(not r.skipped for r in results)} months written, "

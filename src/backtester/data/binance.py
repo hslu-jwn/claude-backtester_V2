@@ -23,6 +23,11 @@ without trades is an empty file):
 - `data/cache/binance_funding/<SYM>.csv`: `calc_time` (UTC), `funding_interval_hours`,
   `last_funding_rate`, from the monthly fundingRate files (for the cost model later).
 
+Klines path (`kind="klines"`, `--klines`; user's go 2026-11-13 for 15 more perps): the 1m kline
+files `.../klines/<SYM>/1m/<SYM>-1m-<period>.zip` (about 1/50 of the aggTrades size) give the same
+two cache files: OHLC from the kline, buy = taker_buy_volume, sell = volume - buy, trades = count;
+minutes with count 0 are dropped (as in the aggTrades path).
+
 Resumable: a month (or day) whose day files all exist is skipped. The daily fallback only
 covers days before today (UTC); a daily file that is not published yet is skipped and picked
 up by the next run.
@@ -98,8 +103,10 @@ def http_fetch(url: str, dest: Path) -> None:
 
 
 def archive_url(kind: str, symbol: str, period: str, daily: bool) -> str:
-    """`kind` aggTrades / fundingRate, `period` YYYY-MM or YYYY-MM-DD."""
+    """`kind` aggTrades / fundingRate / klines (1m), `period` YYYY-MM or YYYY-MM-DD."""
     freq = "daily" if daily else "monthly"
+    if kind == "klines":
+        return f"{BASE_URL}/{freq}/klines/{symbol}/1m/{symbol}-1m-{period}.zip"
     return f"{BASE_URL}/{freq}/{kind}/{symbol}/{symbol}-{kind}-{period}.zip"
 
 
@@ -203,6 +210,35 @@ def parse_trades_zip(zip_path: Path, chunk_rows: int = CHUNK_ROWS) -> pd.DataFra
     return out.sort_index()
 
 
+KLINE_COLUMNS = (
+    "open_time", "open", "high", "low", "close", "volume", "close_time", "quote_volume",
+    "count", "taker_buy_volume", "taker_buy_quote_volume", "ignore",
+)  # fmt: skip
+
+
+def parse_klines_zip(zip_path: Path) -> pd.DataFrame:
+    """1m klines zip -> bars in the `parse_trades_zip` format (minutes without trades dropped)."""
+    with zipfile.ZipFile(zip_path) as zf:
+        member = _csv_member(zf)
+        skip = 1 if _has_header(zf, member) else 0
+        with zf.open(member) as f:
+            k = pd.read_csv(f, header=None, names=list(KLINE_COLUMNS), skiprows=skip)
+    k = k[k["count"] > 0]
+    t = k["open_time"].to_numpy("int64")
+    if len(t) and t.max() >= MICROSECOND_LIMIT:
+        t = t // 1000
+    vol, buy = k["volume"].astype(float).to_numpy(), k["taker_buy_volume"].astype(float).to_numpy()
+    out = pd.DataFrame(
+        {
+            "open": k["open"].astype(float).to_numpy(), "high": k["high"].astype(float).to_numpy(),
+            "low": k["low"].astype(float).to_numpy(), "close": k["close"].astype(float).to_numpy(),
+            "buy": buy, "sell": vol - buy, "trades": k["count"].to_numpy("int64"),
+        },
+        index=pd.Index(t // MS_PER_MINUTE),
+    )  # fmt: skip
+    return out[~out.index.duplicated(keep="last")].sort_index()
+
+
 def _utc(minutes: pd.Index) -> pd.DatetimeIndex:
     return pd.to_datetime(minutes.to_numpy("int64") * MS_PER_MINUTE, unit="ms", utc=True)
 
@@ -268,11 +304,12 @@ def month_days(month: date) -> list[date]:
     return [month + timedelta(days=i) for i in range((nxt - month).days)]
 
 
-def _process_zip(cfg, symbol, url, days, fetch, log) -> int:
+def _process_zip(cfg, symbol, url, days, fetch, log, kind="aggTrades") -> int:
     zip_path = download_verified(url, cfg.tmp_dir, fetch)
+    parse = parse_klines_zip if kind == "klines" else parse_trades_zip
     try:
         size = zip_path.stat().st_size
-        n = write_days(cfg, symbol, parse_trades_zip(zip_path), days)
+        n = write_days(cfg, symbol, parse(zip_path), days)
     finally:
         zip_path.unlink(missing_ok=True)
     log(f"{symbol} {days[0]}..{days[-1]}: {size / 1e6:,.1f} MB zip, {n:,} bars")
@@ -290,18 +327,24 @@ class MonthResult:
 
 
 def download_month(
-    symbol: str, month: date, cfg: BinanceConfig, fetch: Fetch, today: date, log=lambda t: None
+    symbol: str,
+    month: date,
+    cfg: BinanceConfig,
+    fetch: Fetch,
+    today: date,
+    log=lambda t: None,
+    kind: str = "aggTrades",
 ) -> MonthResult:
-    """aggTrades of one month -> day files. The monthly zip if the month is over and it
+    """aggTrades (or 1m klines) of one month -> day files. The monthly zip if the month is over and it
     exists, else the daily zips of the days before `today` (UTC; today's is still growing)."""
     all_days = month_days(month)
     days = [d for d in all_days if d < today]
     if not days or _days_done(cfg, symbol, days):
         return MonthResult(symbol, month, 0, True, False, 0)
     if len(days) == len(all_days):  # month over: monthly file may exist
-        url = archive_url("aggTrades", symbol, f"{month.year:04d}-{month.month:02d}", False)
+        url = archive_url(kind, symbol, f"{month.year:04d}-{month.month:02d}", False)
         try:
-            n = _process_zip(cfg, symbol, url, all_days, fetch, log)
+            n = _process_zip(cfg, symbol, url, all_days, fetch, log, kind)
             return MonthResult(symbol, month, n, False, False, 0)
         except NotFoundError:
             pass
@@ -309,13 +352,13 @@ def download_month(
     for d in days:
         if _days_done(cfg, symbol, [d]):
             continue
-        url = archive_url("aggTrades", symbol, d.isoformat(), True)
+        url = archive_url(kind, symbol, d.isoformat(), True)
         try:
-            bars_n += _process_zip(cfg, symbol, url, [d], fetch, log)
+            bars_n += _process_zip(cfg, symbol, url, [d], fetch, log, kind)
         except NotFoundError:
             # Retry each day hole once; only a second 404 remains missing.
             try:
-                bars_n += _process_zip(cfg, symbol, url, [d], fetch, log)
+                bars_n += _process_zip(cfg, symbol, url, [d], fetch, log, kind)
             except NotFoundError:
                 missing += 1
     return MonthResult(symbol, month, bars_n, False, True, missing)
@@ -377,10 +420,11 @@ def months_between(start: date, end: date) -> list[date]:
 def download_symbol(
     symbol: str, start: date, end: date, cfg: BinanceConfig | None = None,
     fetch: Fetch = http_fetch, today: date | None = None, log=lambda t: None,
+    kind: str = "aggTrades",
 ) -> list[MonthResult]:  # fmt: skip
     cfg = cfg or BinanceConfig()
     today = today or datetime.now(UTC).date()
     months = months_between(start, end)
-    results = [download_month(symbol, m, cfg, fetch, today, log) for m in months]
+    results = [download_month(symbol, m, cfg, fetch, today, log, kind) for m in months]
     download_funding(symbol, months, cfg, fetch, log)
     return results

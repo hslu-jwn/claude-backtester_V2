@@ -207,3 +207,79 @@ def test_download_symbol_end_to_end(cfg):
     fetch = FakeArchive({URL: make_zip(jan_csv(False))})
     results = download_symbol("BTCUSDT", JAN, date(2024, 1, 20), cfg, fetch, today=TODAY)
     assert len(results) == 1 and results[0].bars == 4
+
+
+# --- klines path (user's go 2026-11-13: 15 more perps, M1 klines + funding) ---
+from backtester.data.binance import parse_klines_zip
+
+KL_HEADER = (
+    "open_time,open,high,low,close,volume,close_time,quote_volume,count,"
+    "taker_buy_volume,taker_buy_quote_volume,ignore\n"
+)
+
+
+def kline(t, o, h, lo, c, vol, count, buy) -> str:
+    return f"{t},{o},{h},{lo},{c},{vol},{t + 59_999},0,{count},{buy},0,0\n"
+
+
+@pytest.mark.parametrize("header", [True, False])
+def test_klines_parse_buy_sell_and_drop_empty_minutes(tmp_path, header):
+    text = (KL_HEADER if header else "") + "".join(
+        [
+            kline(ms(2024, 1, 1, 0, 0), "100", "103", "99", "101", "5.0", 7, "2.0"),
+            kline(ms(2024, 1, 1, 0, 1), "101", "101", "101", "101", "0", 0, "0"),  # no trades
+            kline(ms(2024, 1, 1, 0, 2), "101", "102", "100", "100.5", "4.0", 3, "4.0"),
+        ]
+    )
+    p = tmp_path / "k.zip"
+    p.write_bytes(make_zip(text))
+    bars = parse_klines_zip(p)
+    assert list(bars.index) == [ms(2024, 1, 1, 0, 0) // 60_000, ms(2024, 1, 1, 0, 2) // 60_000]
+    first = bars.iloc[0]
+    assert (first.open, first.high, first.low, first.close) == (100, 103, 99, 101)
+    assert (first.buy, first.sell, first.trades) == (2.0, 3.0, 7)
+    assert (bars.iloc[1].buy, bars.iloc[1].sell) == (4.0, 0.0)
+
+
+def test_klines_microsecond_open_times(tmp_path):
+    t_us = ms(2025, 2, 1, 0, 5) * 1000
+    p = tmp_path / "k.zip"
+    p.write_bytes(make_zip(kline(t_us, "1", "1", "1", "1", "1", 1, "1")))
+    assert list(parse_klines_zip(p).index) == [ms(2025, 2, 1, 0, 5) // 60_000]
+
+
+def test_klines_url_and_download_month_writes_cache_and_flow(cfg):
+    url = archive_url("klines", "SOLUSDT", "2024-01", False)
+    assert url.endswith("/monthly/klines/SOLUSDT/1m/SOLUSDT-1m-2024-01.zip")
+    assert archive_url("klines", "SOLUSDT", "2024-01-05", True).endswith(
+        "/daily/klines/SOLUSDT/1m/SOLUSDT-1m-2024-01-05.zip"
+    )
+    fake = FakeArchive(
+        {
+            url: make_zip(
+                KL_HEADER + kline(ms(2024, 1, 3, 12, 0), "10", "11", "9", "10.5", "6", 4, "1.5")
+            )
+        }
+    )
+    r = download_month("SOLUSDT", JAN, cfg, fake, TODAY, kind="klines")
+    assert (r.bars, r.skipped, r.daily) == (1, False, False)
+    day = read_cached_day(cache_path(cfg.cache_dir, "SOLUSDT", date(2024, 1, 3)))
+    assert day.bid_close.tolist() == [10.5] and day.ask_close.tolist() == [10.5]
+    flow = pd.read_parquet(cache_path(cfg.flow_dir, "SOLUSDT", date(2024, 1, 3)))
+    assert flow[["buy_volume", "sell_volume", "delta", "trades"]].iloc[0].tolist() == [
+        1.5,
+        4.5,
+        -3.0,
+        4,
+    ]
+    assert cache_path(cfg.cache_dir, "SOLUSDT", date(2024, 1, 31)).exists()  # empty days written
+    assert not any(cfg.tmp_dir.iterdir())
+
+
+def test_klines_outside_the_month_are_an_error(cfg):
+    url = archive_url("klines", "SOLUSDT", "2024-01", False)
+    fake = FakeArchive(
+        {url: make_zip(kline(ms(2024, 2, 1, 0, 0), "1", "1", "1", "1", "1", 1, "1"))}
+    )
+    with pytest.raises(ValueError, match="outside"):
+        download_month("SOLUSDT", JAN, cfg, fake, TODAY, kind="klines")

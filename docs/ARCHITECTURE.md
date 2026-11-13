@@ -481,6 +481,8 @@ tool executes; a failing symbol is reported and does not stop the others):
   `download_symbol` skips the first day with real bars of its range as partial. Weekend days
   are cached as empty files, so a Monday after a cached Sunday has nothing to do.
 - **Binance cache**: BTCUSDT / ETHUSDT (monthly zip, else daily zips; days before today only).
+  15 more USD-M perps from 1m klines (`binance_download --klines`, the user's go 2026-11-13): BCH, XRP,
+  EOS, LTC, TRX, ETC, LINK, XLM, ADA, BNB, XTZ, XMR, NEO, DASH, ATOM (USDT), 2020-01/02 to now, same cache format.
 - **histdata cache**: whole months after the last cached month, only months that are over;
   download page form + import. Symbols whose histdata cache is more than 93 days behind (a
   closed archive, e.g. EURUSD to 2021-12) are skipped.
