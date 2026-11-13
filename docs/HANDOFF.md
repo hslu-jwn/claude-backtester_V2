@@ -60,8 +60,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-1. **Paused by the user 2026-11-13** while the user restructures the folder location (paths may change:
-   check `AGENTS.md` / `.claude/` paths, the venv and the data cache location first).
+1. **Moved by the user 2026-11-13** to `X:\Daten_Projekte_Laufendacktester-claude` (umbrella; V2 in
+   `backtester-claude_V2`). Editable install re-pointed (`pip install -e . --no-deps`); tests 5,936 passed,
+   golden 13 / 13, ruff clean there. Research still paused until `Continue.`.
    Decided by the user 2026-11-13: no paid futures data for now; **next research direction: Binance futures**
    with the data already cached (`data/cache/binance*`, venue rule of 2026-11-12; about 10 bp round trip,
    shorts receive funding; parked leads HV-T0020-1 / -3 are underpowered). Harvest batches 6-9 found one
