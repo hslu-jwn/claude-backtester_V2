@@ -60,7 +60,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-1. **Moved by the user 2026-11-13** to `X:\Daten_Projekte_Laufendacktester-claude` (umbrella; V2 in
+1. **Moved by the user 2026-11-13** to `X:/Daten/02_Projekte/01_Laufend/backtester-claude` (umbrella; V2 in
    `backtester-claude_V2`). Editable install re-pointed (`pip install -e . --no-deps`); tests 5,936 passed,
    golden 13 / 13, ruff clean there. Research still paused until `Continue.`.
    Decided by the user 2026-11-13: no paid futures data for now; **next research direction: Binance futures**
