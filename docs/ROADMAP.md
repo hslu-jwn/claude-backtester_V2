@@ -234,7 +234,9 @@ where (updated 2026-11-03).
   values; planted monkeys 39 -> 4 s serial; the 8-process file-lock race stays), ☑ finished ROADMAP steps to the archive (`docs/archive/ROADMAP-v2-done.md`, 2026-11-12).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
   correlation of daily R, Monte Carlo prop-firm pass probability, leave-one-out; the user picks.
-  - ☐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; V2.7 stage, not now):**
+  - ◐ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; built 2026-11-13 on the user's "do all":
+    core + CLI `tools/challenge_path.py` (`cd6b79a`), Results tab; rules verified on ftmo.com 2026-11-13,
+    spec `risk-management.md` › Challenge path simulator; open: the user's look at the tab):**
     (a) replay a run's trades in time order at a fixed risk % on e.g. a $100k account through
     the existing `risk/prop_rules.py` (same rules as Monte Carlo and the live guard); on the
     Results page plot balance, daily-loss and max-loss lines and a pass / breach marker, with a

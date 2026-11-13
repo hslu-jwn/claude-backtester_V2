@@ -169,7 +169,7 @@ def play_attempt(
         )
         trading_days += bool(len(day.r))
         if breach:
-            phases.append({"status": breach, "days": trading_days})
+            phases.append({"status": breach, "days": trading_days, "day": index})
             return result(breach)
         best = max(best, balance - day_start)
         profit = balance - initial
@@ -178,14 +178,14 @@ def play_attempt(
             if payout is None and profit > 0 and consistent:
                 payout = index
             if len(path) == watch_days:
-                phases.append({"status": "survived", "days": trading_days})
+                phases.append({"status": "survived", "days": trading_days, "day": index})
                 return result("survived")
         elif (
             balance >= initial * (1 + rules.targets[phase]) - EPS
             and trading_days >= rules.min_trading_days
             and consistent
         ):
-            phases.append({"status": "pass", "days": trading_days})
+            phases.append({"status": "pass", "days": trading_days, "day": index})
             phase += 1
             if phase == len(rules.targets):
                 return result("pass")
@@ -195,7 +195,7 @@ def play_attempt(
             continue
         if rules.max_loss_mode == "eod_trailing":
             peak = max(peak, balance)
-    phases.append({"status": "open", "days": trading_days})
+    phases.append({"status": "open", "days": trading_days, "day": path[-1]["day"] if path else None})
     return result("open")
 
 

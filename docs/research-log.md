@@ -4,6 +4,22 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: challenge path simulator (Continue.Code; the user: "do all")
+
+- FTMO rules verified on ftmo.com (web-fetch subagent, pages dated 2026-10/11): 2-Step 10 % / 5 %, 5 % daily,
+  10 % static, 4 days; 1-Step 10 %, 3 % daily, 10 % end-of-day trailing, best day <= 50 %; Instant no target,
+  3 % daily, 10 % intraday trailing, best day <= 30 %, 90 % split. Fees and the 1- / 2-Step split are not on
+  the pages: inputs. Spec `risk-management.md` › Challenge path simulator (assumptions listed there).
+- Core + CLI: Codex `gpt-6.1-sol` medium, write, lane `challenge_path` (brief
+  `briefs/challenge-path-1-core.md`). Opus review found one rule error: attempts inherited trades entered
+  before their start; fixed (entry date >= start) with a test. Smoke run on the F1a EURUSD development run
+  (1 % risk, 80 monthly starts): 2-Step pass 36 %, 1-Step 34 %, Instant max-loss breach 55 % (closed lead;
+  numbers only show the tool works).
+- Results tab "Challenge path": Codex `gpt-6.1-terra` medium, lane `challenge_ui` (brief
+  `briefs/challenge-path-2-ui.md`). Opus browser check (dev port 8052, F1a EURUSD run): added a "Phase 1 passed"
+  marker (the Verification reset looked like a crash; phase results now carry their day) and 1-decimal
+  numbers; 1-Step floor trails 90,000 -> 99,072, never falls. Full suite 5,905 passed, golden 13 / 13.
+
 ## 2026-11-13: GBPUSD live spread factor 1.33 (Continue.Code; the user: "do all")
 
 - Opus: the 2.18x live mean / table ratio (fill probe runs 3 + 4, 309 fills) is one hour: NY 18 (reopen

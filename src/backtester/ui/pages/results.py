@@ -45,7 +45,7 @@ from backtester.analytics.metrics import (
 from backtester.analytics.records import TradeRecord, read_trades
 from backtester.runner import RESULTS_DIR
 from backtester.strategy.registry import REGISTRY
-from backtester.ui import prop_firm_card, trade_focus
+from backtester.ui import challenge_path_tab, prop_firm_card, trade_focus
 from backtester.ui.chart_config import price_digits
 from backtester.ui.layout import details, info, key_strip, page, tabs_below
 from backtester.ui.run_paths import run_folder
@@ -58,6 +58,7 @@ TABS = (
     ("trades", "Trades"),
     ("performance", "Performance"),
     ("overview", "Overview details"),
+    ("challenge", "Challenge path"),
 )
 HISTOGRAM_BIN_R = 0.25
 UP, DOWN, MUTED, ACCENT = "#089981", "#f23645", "#787b86", "#2962ff"  # TradingView colors
@@ -861,6 +862,7 @@ def layout(run_id: str, results_dir: Path = RESULTS_DIR) -> html.Div:
 
 def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
     prop_firm_card.register_callbacks(app, results_dir)
+    challenge_path_tab.register_callbacks(app, results_dir)
 
     @app.callback(
         Output("rs-content", "children"),
@@ -871,6 +873,8 @@ def register_callbacks(app: Dash, results_dir: Path = RESULTS_DIR) -> None:
     def _content(tab, symbol, run_id):
         folder = run_folder(run_id, results_dir)
         trades = filtered(read_trades(folder), symbol) if folder else []
+        if tab == "challenge":
+            return challenge_path_tab.layout(folder)
         if tab == "performance":
             return performance(trades, folder)
         if tab == "overview":

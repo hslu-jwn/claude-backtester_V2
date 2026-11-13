@@ -61,7 +61,7 @@ def test_presets_and_frozen_validation():
 def test_two_step_compounds_and_resets_next_day():
     attempt = path([2] * 9)
     assert attempt.status == "pass"
-    assert attempt.phase_results == [{"status": "pass", "days": 5}, {"status": "pass", "days": 4}]
+    assert attempt.phase_results == [{"status": "pass", "days": 5, "day": 4}, {"status": "pass", "days": 4, "day": 8}]
     assert attempt.path[4]["balance"] == pytest.approx(100_000 * 1.02**5)
     assert attempt.path[5]["balance"] == pytest.approx(102_000)
     assert attempt.weekdays_to_end == 9 and attempt.end_index == 8
@@ -71,7 +71,7 @@ def test_two_step_compounds_and_resets_next_day():
 
 def test_target_reached_early_still_needs_four_trading_days():
     attempt = path([11, None, 0, 0, 0, 6, 0, 0, 0])
-    assert attempt.phase_results == [{"status": "pass", "days": 4}, {"status": "pass", "days": 4}]
+    assert attempt.phase_results == [{"status": "pass", "days": 4, "day": 4}, {"status": "pass", "days": 4, "day": 8}]
     assert attempt.weekdays_to_end == 9
 
 
