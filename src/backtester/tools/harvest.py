@@ -189,18 +189,22 @@ def normalized(text):
 
 
 def fuzzy_found(quote, text, ratio=0.9):
-    """A same-length window with SequenceMatcher ratio >= `ratio`. Windows step by 5 % of the
-    quote and only those passing the cheap upper bounds get the full ratio (pages are long)."""
+    return fuzzy_find(quote, text, ratio) >= 0
+
+
+def fuzzy_find(quote, text, ratio=0.9):
+    """Start of a same-length window with SequenceMatcher ratio >= `ratio`, else -1. Windows step by
+    5 % of the quote and only those passing the cheap upper bounds get the full ratio (pages are long)."""
     size = len(quote)
     if not size:
-        return False
+        return -1
     matcher = difflib.SequenceMatcher(None, autojunk=False)
     matcher.set_seq2(quote)
     for i in range(0, max(1, len(text) - size + 1), max(1, size // 20)):
         matcher.set_seq1(text[i:i + size])
         if matcher.real_quick_ratio() >= ratio and matcher.quick_ratio() >= ratio and matcher.ratio() >= ratio:
-            return True
-    return False
+            return i
+    return -1
 
 
 def schema(item):
@@ -260,12 +264,16 @@ def check_idea(item, task_id, model, fetcher):
         # robots.txt, 401 / 403 / 429, login wall, no answer: says nothing about the quote (batch 7)
         result.update(status="parked", reason="unfetchable")
         return result
-    if quote not in text and not fuzzy_found(quote, text):
-            result["reason"] = "unverified_source"
-            return result
     pos = text.find(quote)
-    nearby = text[max(0, pos - 300):pos + len(quote) + 300] if pos >= 0 else text
-    if re.search(r"\b(course|enroll|signals group|discount code|affiliate|coupon)\b", nearby):
+    if pos < 0:
+        pos = fuzzy_find(quote, text)
+    if pos < 0:
+        result["reason"] = "unverified_source"
+        return result
+    # seller words only around the quote, and not on papers (bond "coupon", "of course"; batch 9)
+    nearby = text[max(0, pos - 300):pos + len(quote) + 300]
+    if item["source_type"] not in {"paper", "central_bank"} and re.search(
+            r"\b(course|enroll|signals group|discount code|affiliate|coupon)\b", nearby):
         result["reason"] = "sells_course"
     elif (not all(stated(item["rules"][k]) for k in ("entry", "exit")) or re.search(
             r"\b(discretion|feel|context|experience)\b", " ".join(item["rules"].values()), re.IGNORECASE)):

@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: harvest batch 9 (forums, Reddit, GitHub, podcasts, books): nothing to screen (the user: "search for more ideas")
+
+- Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0051-T0058; first use of FORUM, REDDIT, GIT, AV, BOOK sources;
+  two canaries), no guard alarms. 6 ideas, 0 verified, 12.5 % unverified. Canaries: nonsense empty (pass);
+  carry known answer = Koijen et al. "Carry" itself (pass). Nothing to screen: two ES order-flow setups need
+  order-book / delta data (authors: unprofitable / little left after fees), post-opex reversal (opex family
+  killed, I-70), Binance funding capture (not on FTMO CFDs), a discretionary NFP read. GitHub and books: none.
+- Checker bug fixed test-first: a quote matched only fuzzily made the seller check scan the whole page (the
+  canary paper was rejected as `sells_course` on bond "coupon"); now only the text around the matched window,
+  and never on papers / central-bank sources. No earlier rejection was affected.
+- Opus checked the own backlog meanwhile: the open I-xx ideas are bar-pattern / indicator rules (cost-wall stop
+  list) or closed families (month-end, local hours, carry under swap).
+
 ## 2026-11-13: harvest batch 8 (central bank / exchange sources): nothing to screen (the user: "Run batch 8")
 
 - Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0043-T0050: DAX expiry settlement, US closing auction /

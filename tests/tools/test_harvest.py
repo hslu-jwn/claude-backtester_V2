@@ -55,6 +55,18 @@ def test_a_page_the_script_may_not_or_cannot_read_is_parked_not_rejected(kwargs)
     assert (row["status"], row["reason"]) == ("parked", "unfetchable")
 
 
+def test_seller_words_only_count_near_the_quote_and_not_on_papers():
+    """Batch 9 (2026-11-13): the Koijen et al. "Carry" paper (the canary) was rejected as sells_course:
+    its quote matched only fuzzily, so the seller check scanned the whole paper and found bond "coupon"."""
+    filler = " ".join(["lorem ipsum dolor sit amet"] * 200)
+    page = f"<p>Bond coupon payments are made twice a year. {filler} The month-end rebalancing lifts the S&P market. {filler}</p>"
+    fuzzy = idea(quote="The month end rebalancing lifts the S&P market!")  # punctuation differs: fuzzy match only
+    assert checked(fuzzy, page)["status"] == "verified"
+    near = "<p>Buy our course now. The month end rebalancing lifts the S&P market.</p>"
+    assert checked(idea(source_type="blog"), near)["reason"] == "sells_course"
+    assert checked(idea(source_type="paper"), near)["status"] == "verified"
+
+
 def test_check_appends_to_the_accumulated_file(tmp_path):
     """Batch 6 (2026-11-13): `check` overwrote checked.jsonl and lost batches 1-5."""
     raw, out = tmp_path / "raw.jsonl", tmp_path / "checked.jsonl"

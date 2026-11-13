@@ -52,7 +52,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    work on `Continue.Code` items** (research resumes with a new idea source or data). 2026-11-13 (Continue.Research):
    harvest batch 6 (index flows) gave one idea, I-71 UK100 review-auction short: killed on t 2.16 (net +9 bp,
    sign replicates out of sample, too few events). Batch 7 (terra medium): 7 ideas, 0 verified. Harvest pipeline fixed the same day (blocked pages parked
-   `unfetchable`, `check` appends, canary from an open family). Batch 8 (central bank / exchange): nothing to screen.
+   `unfetchable`, `check` appends, canary from an open family). Batches 8 (central bank / exchange) and 9 (forums, Reddit, GitHub,
+   podcasts, books): nothing to screen.
 5. Low priority: stressed-cost p90 refresh (gate 7 window done 2026-11-13);
    (data fixes 13.12-13.18 accepted by the user 2026-11-12; MT5 GBPUSD 2019 quarantined, 149 days,
    `docs/data-fix-check.md`; USDCHF early 2015 borderline, left as it is).
