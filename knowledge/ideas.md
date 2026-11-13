@@ -704,6 +704,25 @@ trip minus swap for the nights held.
 Kills it: net mean per week <= 0; t of the net < 3.0 (new family `opex_week`, threshold rule); opposite
 signs in the two halves (pre-sample vs development). Diagnostic (not a gate): all other Friday-to-Friday weeks.
 
+### I-71 Index-review closing-auction short on UK100 (harvest batch 6, 2026-11-13; rule fixed before any data)
+Source (quote verified by `harvest check`; read by Opus via a fetch the same day): KruegerAlgorithms,
+"index rebalancing closing auction" (practitioner, Konstanz; **sells a tool**, "ForcedFlow" on MQL5). Claim:
+on the closing-auction day before FTSE 100 / STOXX / MSCI review effective dates, the FTSE 100 falls into the
+auction print; reported net (1.5 points round trip) +8.3 bp, n 63, t 2.3 (2015-2022 search) and +11.5 bp, n 27,
+t 3.9 (holdout 2023-06/2026); placebo days +0.05 bp. Exact entry minute and stop not published.
+Mechanism (PRACTITIONER, plausible forced flow): index funds trade composition changes in the closing auction.
+Label: PRACTITIONER / seller source. Expected gross after halving the published effect: ~5 bp per event
+against ~2 bp round-trip cost on UK100.
+Rule fixed before any data (2026-11-13): short UK100 at the close of the 15:29 London M1 bar (15:30), cover
+at the close of the 16:35 bar (after the 16:30-16:35 auction); event days = third Friday of Mar / Jun / Sep /
+Dec (FTSE 100 and STOXX quarterly reviews) and the last weekday of Feb / May / Aug / Nov (MSCI reviews;
+ASSUMPTION: the press-release dates are not fetched; a day without UK100 bars in the window is skipped).
+Data: pre-sample 2010-2014 (`histdata_presample`, outside the source's search period) pooled with
+development 2015-01 to 2021-09-13. Net = gross bp minus the cost model's round trip (spread at the entry
+via `fill_spread_time` + 2 x slippage, no commission, no swap) in bp of the entry price.
+Kills it: net mean <= 0; t of the net < 3.0 (new family `index_review_auction`, threshold rule); opposite
+signs in pre-sample vs development. Diagnostic (not a gate): the same window on all other weekdays.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
