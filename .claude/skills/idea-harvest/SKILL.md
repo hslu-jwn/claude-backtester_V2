@@ -17,13 +17,19 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
 
 1. **Plan:** `python -m backtester.tools.harvest plan <KEY> ...` (key `SOURCE.MARKET.HORIZON.MECHANISM`,
    framework §2) writes task rows to `research/harvest/tasks.csv`. Every batch carries two canaries:
-   one cell with a known answer (`ACAD.FX-MAJ.INTRA.FLOW` "local hours": Breedon & Ranaldo must
-   appear) and one nonsense cell that must come back empty.
+   one cell with a known answer and one nonsense cell that must come back empty. The known answer
+   must come from a family that is **open** in `known_families.csv` (the prompt tells the worker to skip
+   every closed family): since 2026-11-13 `ACAD.FX-MAJ.SWING.CARRY` "currency carry trade returns":
+   Koijen, Moskowitz, Pedersen & Vrugt "Carry" or Lustig, Roussanov & Verdelhan must appear. ("local
+   hours" / Breedon & Ranaldo can no longer pass: `fx_hours` is closed.) Replace the canary when its
+   family closes.
 2. **Search (worker):** one task per call, read-only:
    `ai_dispatch codex --search --effort low --label harvest-<task_id> --prompt "<harvest prompt TASK_ID>"`
    (`--search` is required: without it `codex exec` has no web access, probe 2026-11-12)
    (model per `docs/agent-routing.md`; at most 2 in parallel; a limit means pause, never a paid
-   fallback). Save the JSON answer as `research/harvest/raw/<task_id>.jsonl`. Text-only free models
+   fallback). Save the JSON answer as `research/harvest/raw/<task_id>.jsonl` **only after every running
+   call has ended**: the dispatcher's guard flags any repo change during a read-only call (2026-11-13,
+   batches 6-7: false exit 3); commit the planned tasks before dispatching. Text-only free models
    (Ollama, groq, openrouter, gemini-api) may only translate or fill the schema from page text the
    script fetched; they are never asked for sources.
 3. **Check:** `harvest check raw/<task_id>.jsonl --model <worker>` fetches every URL itself
@@ -32,7 +38,10 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
    as text (`pypdf`, data extra). Inside a Claude Code sandbox every fetch fails with an SSL error
    (its proxy CA is only in `NODE_EXTRA_CA_CERTS`): set `REQUESTS_CA_BUNDLE` to certifi's bundle plus
    that file (scratchpad copy) for the check command; never disable certificate checks. Ideas without
-   a stated mechanism are **parked**, not dropped (the user, 2026-11-11).
+   a stated mechanism are **parked**, not dropped (the user, 2026-11-11). A page the script may not or
+   cannot read (robots.txt, 401 / 403 / 429, login wall, no answer) is parked as `unfetchable`, not
+   counted against the worker (a 404 still is); Opus may read it only if it is public without a login.
+   `check` appends to `checked.jsonl` (it accumulates every batch).
 4. **Dedup and score:** `harvest dedup`, `harvest score` (against `research/harvest/known_families.csv`
    and the ledger; the score ranks attention only, it says nothing about profit).
 5. **Report and record:** `harvest report --write-ledger`; the counts per stage go at the top of the

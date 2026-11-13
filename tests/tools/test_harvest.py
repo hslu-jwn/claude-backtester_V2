@@ -25,9 +25,9 @@ def idea(**changes):
 PAGE = Path(__file__).parent / "harvest_fixtures" / "page.html"
 
 
-def checked(item, page=None, allowed=True):
+def checked(item, page=None, allowed=True, status=200):
     return harvest.check_idea(item, "T0001", "model", lambda url: (
-        200, PAGE.read_text() if page is None else page, allowed))
+        status, PAGE.read_text() if page is None else page, allowed))
 
 
 def test_source_checks():
@@ -35,13 +35,35 @@ def test_source_checks():
     assert checked(idea(quote="THE month end rebalancing lifts the S&P market."),
                    "<p>the MONTH end <b>rebalancing</b> lifts   the S&amp;P market.</p>")["status"] == "verified"
     assert checked(idea(quote="Completely unrelated paraphrase."))["reason"] == "unverified_source"
-    assert checked(idea(), "sign in to continue")["reason"] == "unverified_source"
-    assert checked(idea(), allowed=False)["reason"] == "unverified_source"
+    assert checked(idea(), status=404)["reason"] == "unverified_source"  # a dead link is the worker's
     assert checked(idea(quote="x" * 301))["reason"] == "schema"
     assert checked(idea(source_type="invalid"))["reason"] == "schema"
     bad = idea()
     bad["rules"]["entry"] = "use discretion"
     assert checked(bad)["reason"] == "untestable"
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"allowed": False}, {"status": 0}, {"status": 403}, {"status": 401}, {"status": 429}, {"status": 503},
+    {"page": "sign in to continue"},
+])
+def test_a_page_the_script_may_not_or_cannot_read_is_parked_not_rejected(kwargs):
+    """Batch 7 (2026-11-13): robots.txt (academia.edu) and 403 (ResearchGate) counted as the worker's
+    unverified source. A page the script cannot read says nothing about the quote: park it for Opus
+    (public pages only) and keep it out of the worker's unverified rate."""
+    row = checked(idea(), **kwargs)
+    assert (row["status"], row["reason"]) == ("parked", "unfetchable")
+
+
+def test_check_appends_to_the_accumulated_file(tmp_path):
+    """Batch 6 (2026-11-13): `check` overwrote checked.jsonl and lost batches 1-5."""
+    raw, out = tmp_path / "raw.jsonl", tmp_path / "checked.jsonl"
+    raw.write_text(json.dumps({"task_id": "T0001", "ideas": [idea(source_url="file:x")]}) + "\n")
+    out.write_text(json.dumps({"task_id": "T0000", "status": "verified"}) + "\n")
+    harvest.main(["check", str(raw), "--out", str(out)])
+    harvest.main(["check", str(raw), "--out", str(out)])
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert [r["task_id"] for r in rows] == ["T0000", "T0001", "T0001"]
 
 
 def test_robots_disallows_before_page_request(monkeypatch):

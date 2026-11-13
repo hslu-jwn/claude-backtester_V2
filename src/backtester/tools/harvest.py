@@ -252,9 +252,13 @@ def check_idea(item, task_id, model, fetcher):
         return result
     status, page, allowed = fetcher(item["source_url"])
     text, quote = normalized(page), normalized(item["quote"])
+    if status in (404, 410):  # a dead link is the worker's error
+        result["reason"] = "unverified_source"
+        return result
     if not allowed or status != 200 or any(x in text for x in (
             "sign in to continue", "subscribe to read", "log in to view")):
-        result["reason"] = "unverified_source"
+        # robots.txt, 401 / 403 / 429, login wall, no answer: says nothing about the quote (batch 7)
+        result.update(status="parked", reason="unfetchable")
         return result
     if quote not in text and not fuzzy_found(quote, text):
             result["reason"] = "unverified_source"
@@ -357,10 +361,10 @@ def read_jsonl(path):
         return [json.loads(line) for line in f if line.strip()]
 
 
-def write_jsonl(path, rows):
+def write_jsonl(path, rows, mode="w"):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
+    with path.open(mode, encoding="utf-8") as f:
         for row in rows:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
@@ -433,7 +437,7 @@ def main(argv=None):
         elif args.command == "prompt":
             prompt(args.task_id, args.tasks, args.families)
         elif args.command == "check":
-            write_jsonl(args.out, check_file(args.raw, args.model, Fetcher()))
+            write_jsonl(args.out, check_file(args.raw, args.model, Fetcher()), mode="a")  # accumulates batches
         elif args.command == "dedup":
             write_jsonl(args.checked, deduplicate(read_jsonl(args.checked), args.families, args.ledger))
         elif args.command == "score":

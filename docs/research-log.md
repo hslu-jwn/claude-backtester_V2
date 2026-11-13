@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: harvest pipeline fixed (the user: "Yes, fix pipeline")
+
+- Opus, test-first (`tests/tools/test_harvest.py`, 8 new cases). On a closer look the quote matcher was right:
+  the two fetched misses of batch 7 (arXiv abstract, Whaley OCR PDF) are paraphrases, not on the page. Real
+  defects fixed: (1) a page the script may not or cannot read (robots.txt, 401 / 403 / 429, login wall, no
+  answer) is now parked `unfetchable`, not the worker's `unverified_source` (a 404 still is); (2) `check`
+  appends to `checked.jsonl` instead of overwriting it; (3) skill: known-answer canary from an open family
+  (`ACAD.FX-MAJ.SWING.CARRY`, Koijen et al. / Lustig et al.), answers saved only after parallel calls end.
+- Batches 6-7 rechecked: HV-T0033-1, HV-T0036-1, HV-T0038-1 -> parked unfetchable (academia.edu, ResearchGate);
+  none worth a manual read (day-of-week family closed; single-stock auctions; needs option positioning
+  data). Real unverified rate: terra low 1 of 5 (20 %), terra medium 2 of 7 (29 %) on ACAD; the routing
+  note stands (medium for ACAD, watch the rate).
+
 ## 2026-11-13: harvest batch 7 (index flows, terra medium): nothing verified (the user: "Yes, run batch 7")
 
 - Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0035-T0042: the four ACAD tasks of batch 6 again, DAX
