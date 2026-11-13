@@ -235,6 +235,20 @@ def test_the_default_table_covers_the_cached_symbols_from_the_mt5_cache():
     assert min(table.values["EURUSD"]) == 2015
 
 
+PLACEHOLDER = ("EURUSD", "AUDUSD", "USDCAD", "USDCHF", "USDJPY", "EURJPY", "EURGBP")
+
+
+def test_the_2020_21_placeholder_spread_years_are_left_out():
+    """MT5 history 2020-21: 23-88 % of the bars of these symbols carry a constant 50-point spread (a
+    feed placeholder, not a cost; found 2026-11-13 after the extension). Those years are dropped, so
+    2020 takes 2019 and 2021 takes 2022 by the nearest-year rule."""
+    table = CostConfig().spread_table
+    for symbol in PLACEHOLDER:
+        assert not {2020, 2021} & set(table.values[symbol]), symbol
+    at = datetime(2020, 7, 15, 14, 30, tzinfo=UTC)
+    assert table.spread_at("EURUSD", at) == table.values["EURUSD"][2019][10]
+
+
 def test_eurusd_pays_the_rollover_hour_and_its_measured_day_spread():
     costs = CostConfig(spread_table_factor={})
     fixed = CostConfig(spread_table=None).for_symbol("EURUSD").spread

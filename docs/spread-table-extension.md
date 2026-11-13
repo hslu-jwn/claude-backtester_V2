@@ -64,6 +64,11 @@ closed; no verdict changes.
 - BTCUSD / ETHUSD: spread history jumps (BTCUSD 3.6-44 against 1.0 in 2026; ETHUSD 1.7-4.3 against
   0.6), no rollover break (24/7). Not added; they keep the fixed spread.
 - DXY 2024: 29 k bars, 6x the later years. Dropped (nearest year 2025).
+- **Found after the go, same day:** 2020-2021 of EURUSD, AUDUSD, USDCAD, USDCHF, USDJPY, EURJPY, EURGBP
+  carry a constant 50-point spread on 23-88 % of the bars (a feed placeholder; EURUSD 2020 median 5 pips
+  in every hour against 0.2-0.4 around it). Dropped; 2020 takes 2019, 2021 takes 2022. GBPUSD has the same
+  placeholder in the original table (known since 2026-11-09, not corrected; for the user). XAUUSD has
+  18-23 % placeholder bars, but its hourly medians are unaffected.
 - US2000 moves between 0.2 and 1.13 from year to year (2023-24: 0.2): kept, as measured.
 
 ## Options

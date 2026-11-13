@@ -114,7 +114,8 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   2026-10-15; XAUUSD, GBPUSD, GBPJPY 2015-2026, NAS100 / US500 2021-2026). **Extended 2026-11-13** (the user's go,
   "A: full table", `docs/spread-table-extension.md`): 27 more symbols from the MT5 cache (ask - bid = MT5's bar
   spread, `scripts/cache_spread_table.py`; from 2015 or the symbol's first MT5 year), without the feed artifacts
-  AUS200 2019-2021 and DXY 2024 (the nearest year is used); BTCUSD / ETHUSD and the Binance symbols keep the
+  AUS200 2019-2021, DXY 2024 and the 50-point placeholder years 2020-2021 of EURUSD, AUDUSD, USDCAD, USDCHF,
+  USDJPY, EURJPY, EURGBP (the nearest year is used; GBPUSD's placeholder cells of the original table stay); BTCUSD / ETHUSD and the Binance symbols keep the
   fixed spread. The p90 stress table (`data/spreads/ftmo_spread_p90.json`) is extended the same way.
   `CostConfig(spread_table=None)` gives the fixed spread. The cost filter (`max_cost_r`) and the break-even offset use the scaled spread. A symbol without a reference price
   (`reference_price = None`; the Binance symbols, which have no spread) is never scaled. Slippage follows the same entry-price

@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: Continue.Research (Test=manual, no limit): cost wall refresh; placeholder spreads fixed
+
+- No runnable candidate, no carded idea (HANDOFF › Open 4); a harvest batch needs the user's OK (asked).
+  Meanwhile (Opus, local): dev-period cost at a 0.5 daily-ATR stop with today's costs (cost-wall §3).
+- Found while doing it: the MT5 history 2020-21 of EURUSD, AUDUSD, USDCAD, USDCHF, USDJPY, EURJPY, EURGBP has
+  a constant 50-point spread on 23-88 % of the bars; the table extended today carried it (EURUSD 2020: 5 pips
+  every hour). Dropped those years (test-first); 2020 -> 2019, 2021 -> 2022 values. GBPUSD's same cells in the
+  original table: question for the user. Golden lists (2023) unaffected.
+
 ## 2026-11-13: spread table extended, option A (the user: "A: full table")
 
 - Opus, test-first (`tests/engine/test_spread_table.py`, `test_spread_table_factor.py`; step-9 test updated to

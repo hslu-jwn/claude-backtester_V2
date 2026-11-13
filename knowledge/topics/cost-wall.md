@@ -65,6 +65,11 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 - Turnover: 2,000 trades/yr x 0.2 R = ~400 R/yr drag (TR). Fewer trades cost less in total, not per trade; no feasibility without gross edge.
 - Cost table at a 0.5 daily-ATR stop (CT, last column): US30 0.013, EURUSD 0.022, NAS100 0.022, GER40 0.016, USDJPY 0.032, US500 0.038, XAUUSD 0.038, UK100 0.044,
   GBPJPY 0.065, USOIL 0.103, XAGUSD 0.143. At 1-ATR M15: NAS100 0.128, US30 0.072, GER40 0.074, EURUSD 0.108, others 0.17-0.69.
+- **Since 2026-11-13** (hourly table for 32 symbols, live factors, bar-close lookup): the 0.5-ATR column scaled by the dev-period
+  cost ratio (London / NY hours, each year's own price; `research-log.md` 2026-11-13): US30 0.010, GER40 0.012, NAS100 0.023,
+  EURUSD 0.027, UK100 0.030, XAUUSD 0.038, US500 0.040, USDJPY 0.042, GBPJPY 0.069, USOIL 0.072, XAGUSD 0.279. Cheapest now:
+  US30, GER40, NAS100; EURUSD / USDJPY dearer (2015-19 spreads 2-4x today's), XAGUSD about double. Hour 17 New York (rollover)
+  is 9-20x on FX: any exit or entry there pays it.
 
 ## 4. Implications for idea selection
 
@@ -88,8 +93,9 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 
 ## 5. Open data issues that bias costs or results
 
-- Spread model is a lower bound for 2015-2019: today's FTMO spreads (Aug-Oct 2026), scaled by price level, applied to 2015-2021; real early retail spreads were mostly
-  wider (CT). Only GBPJPY, GBPUSD, NAS100, US500, XAUUSD have an hour / year table (NAS100, US500 from 2021). Dev-period spread is a model, histdata is bid-only.
+- ~~Spread model is a lower bound for 2015-2019~~ fixed 2026-11-13: the hour / year table covers 32 symbols (MT5 history, from 2015 or
+  the symbol's first MT5 year; BTCUSD / ETHUSD keep the fixed spread). 2020-21 of seven FX symbols are a 50-point placeholder in the feed
+  and take 2019 / 2022 values; GBPUSD's placeholder cells (below) remain.
 - GBPUSD table values 2020-21 NY hours 0-12 are ~5x other years (likely a median artefact, not corrected, CT).
 - Live spreads 2026-11-09 (7,019 fills, 23 symbols, ~4.6 days, RL): FX medians match the model, means 1.4-2x from Asia / rollover bars (NY hour 18 ~5x).
   Under-charged by mean: GBPJPY 2.25x, GBPUSD 1.97x, NAS100 1.95x, UK100 1.77x, XAUUSD 1.63x, GER40 1.52x; BTCUSD slippage 5x. EURUSD median 0,
