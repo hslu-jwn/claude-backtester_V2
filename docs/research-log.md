@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: GBPJPY 1.09 / GBPUSD 1.38 (the user: "Yes, 1.09 / 1.38")
+
+- Opus, test-first: `LIVE_TABLE_FACTOR` = ratio of means over all fill probe entries at the bar-close
+  lookup (`fill_spread_time`), one factor for every hour. Spec `risk-management.md` › Costs.
+- Golden (2023 net R): no_wick -1276.8 -> -1293.9; session_zone_sweep -478.3 -> -494.6; alternating_path
+  -490.7 -> -491.1; london_fix -273.3 -> -273.4; h1_shock / trend_following below 0.1 R. No verdict
+  changes. Full suite 5,915 passed; golden 13 / 13; ruff clean.
+
 ## 2026-11-13: rollover fixes a + b + c applied (the user: "Yes, a + b + c")
 
 - Opus, test-first (`tests/engine/test_fill_spread_time.py`, factor and gate 7 cases). (a) `fill_spread_time`

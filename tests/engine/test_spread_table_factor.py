@@ -17,7 +17,7 @@ ROLLOVER = datetime(2026, 10, 6, 21, tzinfo=UTC)
 
 
 @pytest.mark.parametrize(
-    "symbol, factor", [("GBPJPY", 1.06), ("GBPUSD", 1.33), ("NAS100", 1.12), ("US500", 1.07)]
+    "symbol, factor", [("GBPJPY", 1.09), ("GBPUSD", 1.38), ("NAS100", 1.12), ("US500", 1.07)]
 )
 def test_table_value_is_scaled_by_the_measured_live_ratio(symbol, factor):
     cfg = CostConfig()
@@ -35,7 +35,7 @@ def test_symbols_without_a_raise_keep_the_table_value(symbol):
 def test_factor_applies_at_every_hour_and_not_to_the_fixed_fallback():
     cfg = CostConfig()
     assert cfg.spread("GBPJPY", ROLLOVER) == pytest.approx(
-        cfg.spread_table.spread_at("GBPJPY", ROLLOVER) * 1.06
+        cfg.spread_table.spread_at("GBPJPY", ROLLOVER) * 1.09
     )
     assert cfg.spread_table.spread_at("NAS100", ROLLOVER) is None
     assert cfg.spread("NAS100", ROLLOVER) == cfg.for_symbol("NAS100").spread  # fixed, unscaled
@@ -46,19 +46,11 @@ def test_empty_factor_reproduces_the_plain_table():
     assert cfg.spread("GBPJPY", AT) == cfg.spread_table.spread_at("GBPJPY", AT)
 
 
-def test_gbpusd_factor_excludes_the_rollover_reopen_hour():
-    """The user's go 2026-11-13 (HANDOFF Open 3): GBPUSD's live mean is 2.18x the table, but NY hour 18
-    alone is 10.25x; outside it 1.33x (London + NY hours 1.12x). One factor of 2.18 would double
-    every other hour, so the factor is the ratio without NY hour 18."""
+def test_gb_factors_are_the_live_ratio_at_the_bar_close_lookup():
+    """The user's go 2026-11-13 ("Yes, 1.09 / 1.38"): with a fill looked up at the bar that just closed
+    (fill_spread_time), the 18:00 New York fills are compared with the hour-17 value, so the ratio of
+    means over all fill probe entries is one factor for every hour: GBPJPY 1.09 (1.40 at the old
+    lookup), GBPUSD 1.38 (2.18 at the old lookup; 1.33 without hour 18)."""
     from backtester.engine.costs import LIVE_TABLE_FACTOR
 
-    assert LIVE_TABLE_FACTOR["GBPUSD"] == 1.33
-
-
-def test_gbpjpy_factor_drops_its_hour_18_share():
-    """The user's go 2026-11-13 ("a + b + c"): with a fill at 18:00:00 New York charged the hour-17
-    spread (proposal a), GBPJPY's excess at hour 18 is charged by the table itself; its ratio without
-    hour 18 is 1.06 (1.40 with it)."""
-    from backtester.engine.costs import LIVE_TABLE_FACTOR
-
-    assert LIVE_TABLE_FACTOR["GBPJPY"] == 1.06
+    assert (LIVE_TABLE_FACTOR["GBPJPY"], LIVE_TABLE_FACTOR["GBPUSD"]) == (1.09, 1.38)

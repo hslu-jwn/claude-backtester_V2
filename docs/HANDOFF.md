@@ -42,9 +42,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    lookups settle nothing); the user asks FTMO support, then Opus adds the rule test-first.
 3. ~~GBPUSD spread~~ done 2026-11-13 (the user: "do all"): factor 1.33 (without the NY-hour-18 reopen,
    10.25x alone). Rollover fixes a + b + c done 2026-11-13 (the user's go): fill spread = the bar that
-   just closed, GBPJPY 1.06, gate 7 window 16:55-18:00 NY. **Open:** the same live-ratio method under
-   the new lookup gives GBPJPY 1.09 / GBPUSD 1.38 (kept 1.06 / 1.33 as approved); symbols without a
-   table pay one fixed spread at every hour, the rollover hour included.
+   just closed, gate 7 window 16:55-18:00 NY; factors GBPJPY 1.09 / GBPUSD 1.38 (the user's go).
+   **Open:** symbols without a table pay one fixed spread at every hour, the rollover hour included.
 4. **Direction of research:** cheap ideas are used up under FTMO costs. Options: intraday events with
    >= 20 bp per event (batch 5 found none), futures data (needs a paid history source), or pause
    research and work on app / portfolio items. 2026-11-12 (Continue.Research Test=auto): I-68 oil carry

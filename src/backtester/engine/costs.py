@@ -356,11 +356,11 @@ def default_spread_table() -> SpreadTable:
 
 
 # Live under-charge against the default table: ratio of the mean bar spread of fill probe
-# runs 3 + 4 to the table value at the same times (results/fill_report_2026-11-09/fills.csv;
-# review B1, the user 2026-11-11). XAUUSD (0.87, over-charged) keeps the table. GBPUSD (the user's go
-# 2026-11-13): 1.33 = the ratio without NY hour 18 (that reopen hour alone is 10.25x; with it 2.18x).
-# GBPJPY (the user's go 2026-11-13): 1.06 = the ratio without NY hour 18, now charged by fill_spread_time.
-LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.06, "GBPUSD": 1.33, "NAS100": 1.12, "US500": 1.07}
+# runs 3 + 4 to the table value at the fill_spread_time of each fill (results/fill_report_2026-11-09/
+# fills.csv; review B1, the user 2026-11-11). XAUUSD (0.87, over-charged) keeps the table. GBPJPY 1.09 /
+# GBPUSD 1.38 (the user's go 2026-11-13): at the old lookup 1.40 / 2.18, as the 18:00 New York fills
+# were compared with hour 18 instead of the hour-17 rollover spread they paid.
+LIVE_TABLE_FACTOR: dict[str, float] = {"GBPJPY": 1.09, "GBPUSD": 1.38, "NAS100": 1.12, "US500": 1.07}
 
 _JUST_BEFORE = timedelta(microseconds=1)
 
