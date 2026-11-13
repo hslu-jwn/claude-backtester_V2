@@ -754,7 +754,7 @@ with the same signal; net at 12 bp.
 Per-event sd ~120 bp. No-settlement hours 04 / 12 / 20 UTC: PRE +4.4, POST -1.4 bp, so nothing specific to the
 settlement. The few negative-funding events (s = -1) show +3 / +13 bp, too few to matter. Family closed.
 
-### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read; screened the same day: KILLED on t, ledger I73)
+### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read; screened the same day: KILLED on t; one-time test 2026-11-14: PASSED, ledger I73)
 Source (opened by Opus, full text via pdftotext): Schmeling, Schrimpf & Todorov, "Crypto carry", BIS WP 1087
 (2023, rev. 2025). Dated-futures basis on BTC / ETH, March 2019 - January 2022 (Deribit, OKEx, CME, ...): carry
 averages above 10 % a year, up to 60 %; it is driven by convenience yields from trend-chasing small investors
@@ -797,6 +797,18 @@ which settles every 4 h / 1 h from 2025-07-20. Test weeks: Monday >= 2021-09-20 
 (3) development + test pooled t >= 3.0; (4) both test halves (by weeks) > 0; (5) test net > 0 without its 2 best
 weeks. Diagnostics: price / funding parts, years, without BTC / ETH, net at 30 bp, worst week, longest losing
 run. Exactly once; no retest, no variant after it.
+**Test result 2026-11-14 (`--test`, script frozen in fc59ab7; development re-run identical): PASSED all five gates.**
+266 weeks (2021-09-20 .. 2026-10-19): net +112.0 bp a week (price +102.8, funding +29.3, cost 20), t 2.93, 55 %
+positive weeks, sd 624, PF 1.72; halves +105 / +119; without the 2 best weeks +95; net at doubled costs +92;
+without BTC / ETH +102; pooled development + test t 3.08 (348 weeks); worst week -3,159 bp, max drawdown -3,967 bp
+(1 unit each side), longest losing run 7 weeks; annual Sharpe ~1.3. Years: 2021 +139, 2022 +144, 2023 -18,
+2024 +167, 2025 +199, 2026 +46. Most shorted: EOS, DASH, XMR, NEO, LINK, XTZ.
+Data check (diagnostic, after the gates): 77 weeks dropped a leg member for missing bars, 73 of them EOS (prices
+end 2025-05-21, its funding file continues as a constant 0.01 % placeholder). Ranking only symbols with an entry
+bar (known at entry): net +110.2, t 2.98, halves +102 / +119: the pass does not depend on it.
+Skeptic notes: the development gate failed (t 1.30) and the test was spent by the user's decision; two looks at one
+cell. Last-trade prices, taker fees only, no slippage (doubled costs still +92). Not stop-defined: no R yet, and
+the worst week (-32 % on each unit) is the crash risk the paper predicts. Venue: Binance only (not FTMO).
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /

@@ -42,7 +42,7 @@ def events(sym, shift_h):
         if not s or not START <= t < END:
             continue
         # close of the bar ending at x = bar opening at x - 1 min
-        get = lambda x: px.get(x - M)  # noqa: E731
+        get = lambda x: px.get(x - M)
         a, b, c, d = get(t - 60 * M), get(t - M), get(t + M), get(t + 60 * M)
         pre = -s * (b / a - 1) * 1e4 if a and b else np.nan
         post = s * (d / c - 1) * 1e4 if c and d else np.nan

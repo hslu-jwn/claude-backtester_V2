@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-73 one-time test PASSED (the user: "Yes, run I-73 test")
+
+- Gates pre-registered before any test data (30c10b1), script frozen (fc59ab7), development re-run identical
+  (+138.0 bp, t 1.30). One assumption fixed before the test: signal = funding accrued in the last 7 days (XTZUSDT
+  settles every 4 h / 1 h from 2025-07-20; identical ranking for 8 h symbols).
+- Test 2021-09-20 .. 2026-10-19, 266 weeks: net +112 bp/week, t 2.93, pooled t 3.08, halves +105 / +119, without
+  2 best +95, doubled costs +92, PF 1.72, max drawdown -3,967 bp, worst week -3,159 bp. All five gates pass.
+- Data check: EOS prices end 2025-05-21 while its funding file continues (constant placeholder); ranking only
+  symbols with an entry bar gives +110 bp, t 2.98. Model: Opus only. Telegram sent.
+
 ## 2026-11-13: Continue.Research on Binance futures (Test=manual, no limit): cost check; I-72 KILLED
 
 - Project moved; memory notes copied to the new project key (7 files), no old paths in the settings.

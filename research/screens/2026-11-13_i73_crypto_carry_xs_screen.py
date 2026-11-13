@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 CACHE = Path("data/cache")
-SYMBOLS = "BTC ETH BCH XRP EOS LTC TRX ETC LINK XLM ADA BNB XTZ XMR NEO DASH ATOM".split()
+SYMBOLS = ["BTC", "ETH", "BCH", "XRP", "EOS", "LTC", "TRX", "ETC", "LINK", "XLM", "ADA", "BNB", "XTZ", "XMR", "NEO", "DASH", "ATOM"]
 SYMBOLS = [s + "USDT" for s in SYMBOLS]
 END = pd.Timestamp("2021-09-14", tz="UTC")
 TEST_START, TEST_END = pd.Timestamp("2021-09-20", tz="UTC"), pd.Timestamp("2026-10-26", tz="UTC")
