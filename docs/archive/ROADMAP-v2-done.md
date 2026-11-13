@@ -135,3 +135,21 @@ follow-up). IDs are unchanged; open and in-progress steps stay in `docs/ROADMAP.
   (like `run_backtests`), a cheaper pre-screen, the spec's 1,000 runs for a real candidate;
   (3) the submission's rejection criteria computed by the runner (today a script,
   `results/intake/<stem>/criteria.json`). Codex `gpt-6.1-terra`, test-first.
+
+## V2.7 Portfolio (sub-steps; the step itself is open)
+
+- ☑ **Challenge path simulator + FTMO rule sets (the user, 2026-11-02; built 2026-11-13 on the user's "do all":
+  core + CLI `tools/challenge_path.py` (`cd6b79a`), Results tab; rules verified on ftmo.com 2026-11-13,
+  spec `risk-management.md` › Challenge path simulator; accepted by the user 2026-11-13):**
+  (a) replay a run's trades in time order at a fixed risk % on e.g. a $100k account through
+  the existing `risk/prop_rules.py` (same rules as Monte Carlo and the live guard); on the
+  Results page plot balance, daily-loss and max-loss lines and a pass / breach marker, with a
+  start-date picker and a risk % input; run from many start dates (e.g. monthly) to show the
+  spread. A new, smaller item, not a reopening of 5.2 (`risk/account_sim.py` stays a stub;
+  5.1-5.7 stay as they are, the user 2026-10-22). (b) FTMO 1-Step and Instant rule sets next
+  to the existing 2-Step config, built from FTMO's current published rules (verified online
+  at build time, not from memory); compare a candidate's trades across all three: pass
+  probability, time to funding, breach risk, cost per funded account (a slow, low-drawdown
+  strategy may suit a no-target account, but trailing drawdown / consistency rules can hurt
+  it). Build when a strategy survives research (none has an edge yet, so paths would only
+  show breaches).
