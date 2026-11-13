@@ -162,9 +162,12 @@ The seven-strategy 2023 measurement informs a later user decision on the default
   wins over the fixed spread, so the live under-charge is measured against the table (ratio of the
   mean bar spread of fill probe runs 3 + 4 to the table value at the same times,
   `results/fill_report_2026-11-09/fills.csv`): `CostConfig.spread_table_factor` multiplies the
-  table's value by GBPJPY 1.40, NAS100 1.12, US500 1.07 (`LIVE_TABLE_FACTOR`). GBPUSD (median 1.0,
-  mean 2.2 from the Asia / rollover tail) and XAUUSD (0.87, over-charged) keep the table; a GBPUSD
-  raise is open for the user. `{}` reproduces the plain table. Hidden from the settings menu like
+  table's value by GBPJPY 1.40, GBPUSD 1.33, NAS100 1.12, US500 1.07 (`LIVE_TABLE_FACTOR`); XAUUSD
+  (0.87, over-charged) keeps the table. GBPUSD (the user's go 2026-11-13): the mean ratio is 2.18, but
+  New York hour 18 (the reopen after the rollover) alone is 10.25x; without that hour 1.33 (London and
+  New York hours 1.12), so 1.33 and not 2.18, which would double every other hour. Hour 18 stays
+  under-charged for every symbol (GBPJPY: 1.40 with it, 1.06 without; not lowered). `{}` reproduces
+  the plain table. Hidden from the settings menu like
   the table itself. Sample: 4.6 demo days, about 300 fills per symbol.
 - **USD-base commission at the trade's price** (review B9, rule set by the user 2026-11-11): a lot of
   USDJPY / USDCAD / USDCHF is 100,000 USD, so the fixed USD commission converts to quote units at

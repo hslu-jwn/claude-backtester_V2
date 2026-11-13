@@ -17,7 +17,7 @@ ROLLOVER = datetime(2026, 10, 6, 21, tzinfo=UTC)
 
 
 @pytest.mark.parametrize(
-    "symbol, factor", [("GBPJPY", 1.40), ("NAS100", 1.12), ("US500", 1.07)]
+    "symbol, factor", [("GBPJPY", 1.40), ("GBPUSD", 1.33), ("NAS100", 1.12), ("US500", 1.07)]
 )
 def test_table_value_is_scaled_by_the_measured_live_ratio(symbol, factor):
     cfg = CostConfig()
@@ -26,7 +26,7 @@ def test_table_value_is_scaled_by_the_measured_live_ratio(symbol, factor):
     assert cfg.spread(symbol, AT) == pytest.approx(raw * factor)
 
 
-@pytest.mark.parametrize("symbol", ["GBPUSD", "XAUUSD"])
+@pytest.mark.parametrize("symbol", ["XAUUSD"])
 def test_symbols_without_a_raise_keep_the_table_value(symbol):
     cfg = CostConfig()
     assert cfg.spread(symbol, AT) == cfg.spread_table.spread_at(symbol, AT)
@@ -44,3 +44,13 @@ def test_factor_applies_at_every_hour_and_not_to_the_fixed_fallback():
 def test_empty_factor_reproduces_the_plain_table():
     cfg = replace(CostConfig(), spread_table_factor={})
     assert cfg.spread("GBPJPY", AT) == cfg.spread_table.spread_at("GBPJPY", AT)
+
+
+def test_gbpusd_factor_excludes_the_rollover_reopen_hour():
+    """The user's go 2026-11-13 (HANDOFF Open 3): GBPUSD's live mean is 2.18x the table, but NY hour 18
+    alone is 10.25x; outside it 1.33x (London + NY hours 1.12x). One factor of 2.18 would double
+    every other hour, so the factor is the ratio without NY hour 18."""
+    from backtester.engine.costs import LIVE_TABLE_FACTOR
+
+    assert LIVE_TABLE_FACTOR["GBPUSD"] == 1.33
+    assert LIVE_TABLE_FACTOR["GBPJPY"] == 1.40  # not lowered (1.06 without hour 18)

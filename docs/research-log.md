@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: GBPUSD live spread factor 1.33 (Continue.Code; the user: "do all")
+
+- Opus: the 2.18x live mean / table ratio (fill probe runs 3 + 4, 309 fills) is one hour: NY 18 (reopen
+  after the rollover) 10.25x; all other hours 1.33x, London + NY hours 1.12x. `LIVE_TABLE_FACTOR` GBPUSD
+  1.33 (test-first, `tests/engine/test_spread_table_factor.py`); GBPJPY 1.40 kept (1.06 without hour 18;
+  costs are never lowered without the user's go). Spec `risk-management.md` › Costs.
+- Golden lists rewritten for the six GBPUSD strategies (2023 net R old -> new): session_zone_sweep -503.9 ->
+  -513.5; no_wick -1224.7 -> -1277.7 (4,170 -> 4,166 trades: the stop-in-spread refusal); london_fix
+  -272.0 -> -273.3; alternating_path -488.3 -> -490.7; h1_shock 0.6 -> 0.5; trend_following 14.4 unchanged.
+  All falsified families; no verdict changes. Check: 13 / 13 identical after the write.
+
 ## 2026-11-12: data fixes accepted; MT5 GBPUSD 2019 quarantined (Continue.Code; the user: "Accept, fix GBPUSD")
 
 - Opus (no dispatch): read-only check `scripts/data_fix_check.py` -> `docs/data-fix-check.md`; 13.12-13.18
