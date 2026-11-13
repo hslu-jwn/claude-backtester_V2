@@ -4,6 +4,26 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: rollover-hour spread measured (Continue.Code; the user picked "1")
+
+- Opus, local scripts only. The under-charge of "NY hour 18" is one instant, not an hour: live probe
+  entries at 18:00 NY were 12.8x the table (44 fills), at 18:30 1.5x, at 19:00 1.5x. The MT5 cache
+  shows why: the wide rollover spread runs 17:05-17:59 NY (GBPUSD ~20x the day median, the table's
+  hour 17 already charges ~16x) and drops back within the 18:00 minute. An order sent at 18:00:0x
+  still pays the hour-17 spread (buys at 18:00 paid 16.6x the table; GBPUSD 0.00119 vs table h18
+  0.00005, h17 0.00064).
+- The engine looks the entry spread up at the signal bar's close (`now` = 18:00:00 -> hour 18). For the
+  8 table-symbol buys at 18:00, the previous hour's value fits (paid / model median 1.09 vs 10.3); at
+  every other :00 both lookups fit equally (|log| 0.62 vs 0.66, n = 271). `scripts/rollover_spread_check.py`.
+- Reach: golden lists 20 of ~14,000 trades enter at 18:00 NY sharp (no_wick 17, session_zone_sweep 3;
+  both falsified). The 18 symbols without a table pay a flat fixed spread at every hour, hour 17
+  included (EURUSD buys at 18:00 paid ~5 pips vs 0.2 fixed).
+- Gate 7: `rollover_integrity_failures` tolerates gaps 21:00-22:59 UTC (fixed hours); the FTMO break is
+  16:55-17:05 NY (20:55 UTC in US summer, 21:55 in winter), so summer gaps from 20:55 fail.
+- Proposals for the user (no default changed): (a) entry spread = value of the bar that just closed;
+  (b) then GBPJPY's live factor 1.40 -> 1.06 (its hour-18 share is gone); (c) gate 7 window 16:55-18:00
+  NY via zoneinfo. HANDOFF › Open 3 / 5.
+
 ## 2026-11-13: challenge path simulator (Continue.Code; the user: "do all")
 
 - FTMO rules verified on ftmo.com (web-fetch subagent, pages dated 2026-10/11): 2-Step 10 % / 5 %, 5 % daily,
