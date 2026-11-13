@@ -18,6 +18,14 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - Power check, funding-extreme fade (parked HV-T0020-3): 46 BTC / 55 ETH 72 h episodes in development vs
   ~1,300 needed at the halved claim. Binance on two symbols: intraday effects are below 10 bp (crypto intraday
   report: 3-10 bp), multi-day effects are underpowered in 20 months. Asked the user for more symbols (breadth).
+- The user: "Yes, 15 perps". Opus built `binance_download --klines` test-first (4 tests; 1m klines + taker-buy
+  volume, same cache format) and downloaded BCH, XRP, EOS, LTC, TRX, ETC, LINK, XLM, ADA, BNB, XTZ, XMR, NEO, DASH,
+  ATOM 2020-01/02 .. 2026-11 (5.4 GB, ~70 min; EOS delisted: 530 days missing after it).
+- I-73 cross-sectional funding carry (source: BIS WP 1087 "Crypto carry", read in full; card and kills 
+  committed before the new data was read, b586776; power line before the screen, 5c04fec): 82 weeks, net
+  +138 bp/week, t 1.30 -> KILLED on t < 3.0 (t 3 needed ~300 bp/week). Price part +106 bp has the paper's
+  sign; all of it in 2021 (halves +2 / +274). Model: Opus only; web-fetch subagent for the paper (failed to
+  read the PDF; Opus used pdftotext locally).
 
 ## 2026-11-13: research paused (the user: "first pause, I'll restructure the folder location")
 

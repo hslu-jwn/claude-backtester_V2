@@ -40,7 +40,10 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 2. **B4 dividends:** send `docs/ftmo-dividend-question.md` to FTMO support; Opus adds the rule test-first.
 3. **GBPUSD 2020-21 placeholder spreads** (50 points on 50-74 % of the bars) are still in the original
    table; drop them like the seven FX symbols (2020 -> 2019, 2021 -> 2022 values)? Changes a default.
-4. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data (left as it is).
+4. **I-73 crypto funding carry (killed on t 1.30, net +138 bp/week, 82 weeks):** the development window
+   (2020-02..2021-09) cannot reach t 3 for any weekly crypto rule. Spend the test period (2021-09..2026-10,
+   ~265 weeks) on a pre-registered combined estimate of the frozen rule? One look, your go only.
+5. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data (left as it is).
 
 ## Next step
 

@@ -754,7 +754,7 @@ with the same signal; net at 12 bp.
 Per-event sd ~120 bp. No-settlement hours 04 / 12 / 20 UTC: PRE +4.4, POST -1.4 bp, so nothing specific to the
 settlement. The few negative-funding events (s = -1) show +3 / +13 bp, too few to matter. Family closed.
 
-### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read)
+### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read; screened the same day: KILLED on t, ledger I73)
 Source (opened by Opus, full text via pdftotext): Schmeling, Schrimpf & Todorov, "Crypto carry", BIS WP 1087
 (2023, rev. 2025). Dated-futures basis on BTC / ETH, March 2019 - January 2022 (Deribit, OKEx, CME, ...): carry
 averages above 10 % a year, up to 60 %; it is driven by convenience yields from trend-chasing small investors
@@ -782,6 +782,12 @@ new data before the ranked portfolio is formed; recorded here.
 **Power (2026-11-13, before the screen):** 82 weeks, 9-17 symbols a week; random 4-vs-4 weekly sd 909 bp ->
 standard error 100 bp; t 3 needs a net mean of ~300 bp a week (~150 % a year). Underpowered for any plausible
 carry (the paper: 10 % a year on average); the screen runs as registered and counts as one look.
+**Result (`research/screens/2026-11-13_i73_crypto_carry_xs_screen.py`): KILLED on t < 3.0 (t +1.30).** 82 weeks
+(2020-02-17 .. 2021-09-06): net +138 bp a week (price part +106, funding +52; cost 20), 56 % positive weeks, sd 960;
+halves +2 / +274; without the 2 best weeks +61; net at 30 bp +128; without BTC / ETH +231; worst week -2,626 bp.
+2020 -26 bp (46 weeks), 2021 +347 bp (36 weeks). Every other kill passes and the price part has the paper's sign,
+but the effect sits in the 2021 alt boom and the design could not reach t 3 below ~300 bp a week. No rescue variant;
+whether to spend test data on a pre-registered combined estimate is the user's decision (HANDOFF › Open).
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
