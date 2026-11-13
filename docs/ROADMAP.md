@@ -228,8 +228,8 @@ where (updated 2026-11-03).
   picks accepted by the user 2026-11-11): ☑ B2 test opt-in, ☑ B3 gap fade test struck, ☑ B5 / B9 / B1 / B8
   cost fixes (numbers `knowledge/research/reports/2026-11-11_cost_fixes_old_vs_new.md`), ☑ A1 ledger
   `research/ledger.csv`, ☑ A4 / A7 / A8 / A10 / B7 rules, ☑ archive moves and stub removal, ☑ ideas D1-D5,
-  ☑ `tools/harvest.py` + skill `idea-harvest`; ◐ harvest pilot (2026-11-12: web access fixed with `--search`; 4 ideas, 0 verified: PDF check bug, none runnable on our data), ☐ B4
-  dividends (needs the MT5 deal export), ☑ A3 one gates tool (`tools/gates.py` + `[gates]` table, `--controls`; one block bootstrap; 2026-11-12, `7771f8e`), ☐ A9 results out of the specs (deferred 2026-11-12: result blocks in `strategy-timed-hold.md` interleave user rules and pre-registered criteria, so no mechanical move; low value while its families are closed), ☑ shrink
+  ☑ `tools/harvest.py` + skill `idea-harvest`; ☑ harvest pilot (2026-11-12: web access fixed with `--search`; batches 3-9 run 2026-11-12/13, pipeline fixes 2026-11-13: blocked pages parked `unfetchable`, `check` appends, seller check near the quote, canary from an open family; accepted by the user 2026-11-13 at End), ☐ B4
+  dividends (question to FTMO in `docs/ftmo-dividend-question.md`), ☑ A3 one gates tool (`tools/gates.py` + `[gates]` table, `--controls`; one block bootstrap; 2026-11-12, `7771f8e`), ☐ A9 results out of the specs (deferred 2026-11-12: result blocks in `strategy-timed-hold.md` interleave user rules and pre-registered criteria, so no mechanical move; low value while its families are closed), ☑ shrink
   the slowest tests (2026-11-12: gates controls 50 -> ~23 s by vectorized bootstrap means, same draws and pinned
   values; planted monkeys 39 -> 4 s serial; the 8-process file-lock race stays), ☑ finished ROADMAP steps to the archive (`docs/archive/ROADMAP-v2-done.md`, 2026-11-12).
 - ☐ **V2.7 Portfolio:** combine strategies that balance each other by regime; combined equity,
