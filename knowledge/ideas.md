@@ -779,6 +779,9 @@ Data: development only, first Monday with >= 8 eligible symbols up to the last f
 One cell, family `crypto_carry_xs`.
 Power line (before the screen, signal-free): weekly sd of a randomly picked 4-vs-4 portfolio, computed from the
 new data before the ranked portfolio is formed; recorded here.
+**Power (2026-11-13, before the screen):** 82 weeks, 9-17 symbols a week; random 4-vs-4 weekly sd 909 bp ->
+standard error 100 bp; t 3 needs a net mean of ~300 bp a week (~150 % a year). Underpowered for any plausible
+carry (the paper: 10 % a year on average); the screen runs as registered and counts as one look.
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
