@@ -25,6 +25,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-14: one-time test of the frozen I-73 rule on 2021-09..2026-10 ("Yes, run I-73 test").
 - 2026-11-13 (later): download of 15 more Binance USD-M perps as 1m klines + funding ("Yes, 15 perps").
 - 2026-11-13: challenge path simulator accepted; GBPUSD 2019 quarantine and data fixes 13.12-13.18;
   rollover fixes a + b + c; factors GBPJPY 1.09 / GBPUSD 1.38; spread table option A (full table);

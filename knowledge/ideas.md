@@ -788,6 +788,15 @@ halves +2 / +274; without the 2 best weeks +61; net at 30 bp +128; without BTC /
 2020 -26 bp (46 weeks), 2021 +347 bp (36 weeks). Every other kill passes and the price part has the paper's sign,
 but the effect sits in the 2021 alt boom and the design could not reach t 3 below ~300 bp a week. No rescue variant;
 whether to spend test data on a pre-registered combined estimate is the user's decision (HANDOFF › Open).
+**One-time test, pre-registered 2026-11-14 before any test-period data was read (the user: "Yes, run I-73 test"):**
+frozen rule as above, one assumption: the signal is the funding accrued in the 7 days before the Monday print
+(rates settled in (Monday - 7 d, Monday]); for 8 h symbols this ranks exactly like the mean of 21 rates (every
+symbol is 8 h in development; the re-run must reproduce +138.0 bp, t 1.30), and it keeps "7 days" for XTZUSDT,
+which settles every 4 h / 1 h from 2025-07-20. Test weeks: Monday >= 2021-09-20 to the last Sunday exit <=
+2026-10-25 (funding data ends 2026-10-31). Passes only if all hold: (1) test net mean > 0; (2) test t >= 2.0;
+(3) development + test pooled t >= 3.0; (4) both test halves (by weeks) > 0; (5) test net > 0 without its 2 best
+weeks. Diagnostics: price / funding parts, years, without BTC / ETH, net at 30 bp, worst week, longest losing
+run. Exactly once; no retest, no variant after it.
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
