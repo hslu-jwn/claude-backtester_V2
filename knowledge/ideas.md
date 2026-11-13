@@ -728,6 +728,27 @@ without both bars): gross +11.7 bp, net +9.0 bp, t 2.16, 67 % positive; pre-samp
 2021 -9.9. The sign replicates out of the source's sample, but at ~8 events a year t 3 needs ~160 events
 (per-event sd ~38 bp), more than our data holds; and at a 0.5 daily-ATR stop +9 bp is ~0.2 R x 8 a year.
 
+### I-72 Funding-settlement drift on Binance perpetuals (Continue.Research on Binance futures, 2026-11-13; rule fixed before any data)
+Source: `knowledge/research/reports/2026-11-09_crypto_intraday.md` §2 (no published signed effect; S4 documents
+volatility / volume spikes at 00 / 08 / 16 UTC and ties them to funding as a conjecture). Label: ORIGINAL / SPECULATIVE.
+Mechanism (a counterparty with a reason to trade at a clock time): when funding is above the 0.01 % default, longs
+who would pay it close before the settlement and reopen after (shorts do the opposite when it is negative), so
+price leans against the paying side into the settlement and reverts after it.
+Venue (AGENTS.md › Venues): Binance USD-M futures prices (`data/cache/binance`, last-trade M1), futures costs:
+taker 0.05 % per side = 10 bp round trip (`engine/costs.py`, Binance's published regular-user rate, checked
+2026-11-13), no spread or slippage in the model; no funding is paid because no position spans a settlement.
+Signal (known in real time): the rate settled at t - 8 h (`binance_funding`; ASSUMPTION: the rate settled at t
+is not used, it is fixed only at t). s = +1 if that rate > 0.0001 (longs pay more than the default), s = -1 if
+< 0 (shorts pay), event skipped if 0 <= rate <= 0.0001. Settlements t = 00 / 08 / 16 UTC, BTCUSDT and ETHUSDT pooled.
+Cells (2, family `funding_settlement`): PRE: position -s from the close of the M1 bar ending t - 60 min to the
+close of the bar ending t - 1 min. POST: position +s from the close of the bar ending t + 1 min to the close
+of the bar ending t + 60 min. A missing bar skips the event. Data: development 2020-01-01 .. 2021-09-13 only.
+Power: hourly sd ~80-100 bp, ~1,000 effective events per cell -> standard error ~3 bp, so a gross effect of
+10 bp (the cost) gives t ~3.
+Kills it (each cell): net mean <= 0 at 10 bp; t of the net < 3.0; BTC vs ETH opposite gross signs; 2020 vs
+2021 opposite gross signs. Diagnostic (not a gate): the same windows around 04 / 12 / 20 UTC (no settlement)
+with the same signal; net at 12 bp.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
