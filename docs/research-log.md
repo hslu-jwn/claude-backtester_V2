@@ -4,6 +4,21 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-13: harvest batch 7 (index flows, terra medium): nothing verified (the user: "Yes, run batch 7")
+
+- Codex `gpt-6.1-terra` medium `--search`, 8 tasks (T0035-T0042: the four ACAD tasks of batch 6 again, DAX
+  expiry auction, US expiry opening; two canaries), 10-82 s each: 7 ideas, 0 verified (4 unverified_source,
+  3 untestable). Nothing to card: quarterly-expiry opening reversal (Whaley; 4 events a year, closed family
+  `calendar_clock` "triple witching", pre-2000 evidence); DAX expiry opening reversal (1996, settlement has
+  moved to the 13:00 intraday auction); the rest need option / order-book data or state no price rule.
+- **Pipeline defects found (for Continue.Code):** (1) the known-answer canary "local hours" can never pass:
+  the prompt tells the worker to skip closed families and `fx_hours` (Breedon & Ranaldo) is closed since
+  2026-11-11; batch 6's "canary failed" is this, not the worker's recall. (2) `harvest check` marks blocked
+  hosts as unverified_source (ResearchGate 403, academia.edu robots) and misses quotes on fetched pages
+  (arXiv abstract, a PDF); 4 of 7 here. The 40 % rule on batch 6's terra low stands on its own numbers but
+  is confounded by (2). (3) Opus's driver still wrote answer files mid-run (guard exit 3 on 5 calls, answers
+  valid); fixed in the scratch driver.
+
 ## 2026-11-13: harvest batch 6 (index flows) + I-71 UK100 review-auction short: KILLED (the user: "Yes, run batch 6")
 
 - Codex `gpt-6.1-terra` low `--search`, 8 tasks (T0027-T0034, 2 parallel, 17-44 s each): 5 ideas, 1 verified.
