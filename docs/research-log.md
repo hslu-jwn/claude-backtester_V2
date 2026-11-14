@@ -4,6 +4,23 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: crypto split adopted (the user: "Yes, adopt split"); I-78 flow passes development gates (auto)
+
+- Rule in `docs/research-runner.md` › Periods (0ba1c42). Wide universe: 923 USDT perps listed, 265 with data before
+  2024 (`research/screens/2026-11-14_binance_wide_download.py`, daily klines + funding, delisted included).
+- Cards + kills before data (709a87c), script frozen (d73dfed), power line (d6ccfa4: 186 weeks, |t| 3 needs ~106 bp).
+- Result: **I-78 weekly taker-flow imbalance PASSED all five development gates** (+145.0 bp/week, t 3.24; halves
+  +327 / +1.7; 40 bp +125; without 2 best +117; correlation 0.56 with a 1-week past-return sort). I-79 MAX and
+  I-80 volume shock KILLED. Model: Opus.
+- **Auto decision 9:** run the I-78 one-time test (Mode=auto: passed every pre-registered development gate); gates
+  pre-registered before any test data (eba2631), test mode added (2941156), dev re-run identical. Alternative:
+  park it for the user. Why: auto rule. Expectation: weak (2022-23 half ~0).
+- **State at the usage limit:** test-month download (2024-01..2026-10 -> `data/cache/binance_wide_test`) was started
+  in the background; if incomplete, rerun the same command (cached symbols are skipped, files are atomic). Then:
+  `.venv/Scripts/python.exe -W ignore research/screens/2026-11-14_i78_crypto_wide_factors_screen.py --test`, record
+  pass / fail in the card, ledger, this log and HANDOFF, Telegram the result. Downloader needs
+  `REQUESTS_CA_BUNDLE` = certifi + Avast CA and `PYTHONIOENCODING=utf-8`.
+
 ## 2026-11-14: harvest batch 14 (share CFDs, crypto intraday flows, closing auctions) (auto)
 
 - **Auto decision 8:** harvest batch 14, 8 tasks T0097-T0104 (6 content cells aimed at the new required size:

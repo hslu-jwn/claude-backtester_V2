@@ -56,6 +56,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
+0. **Resume first:** finish the I-78 one-time test (research log 2026-11-14, last entry: download test months, then
+   `--test`; gates pre-registered in eba2631; record and Telegram the result).
+
 1. From about **2026-12-02**: `python -m backtester.tools.crypto_carry --update --forward`, commit
    `research/forward/crypto_carry.csv`, report the first forward week (2026-11-16..22).
 2. **Auto run 2026-11-14 (research log, auto decisions 1-8):** Fable directions list (43 rows), FTMO pass map and
