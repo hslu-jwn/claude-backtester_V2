@@ -37,7 +37,9 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
    and applies the schema / seller / testable / data / mechanism / hindsight filters. PDFs are read
    as text (`pypdf`, data extra). Inside a Claude Code sandbox every fetch fails with an SSL error
    (its proxy CA is only in `NODE_EXTRA_CA_CERTS`): set `REQUESTS_CA_BUNDLE` to certifi's bundle plus
-   that file (scratchpad copy) for the check command; never disable certificate checks. Ideas without
+   that file (scratchpad copy) for the check command; never disable certificate checks. On this PC Avast's
+   web shield does the same (its CA is the `NODE_EXTRA_CA_CERTS` file, 2026-11-14): same fix; if every
+   source comes back `unfetchable`, suspect this first and revert the appended `checked.jsonl` rows. Ideas without
    a stated mechanism are **parked**, not dropped (the user, 2026-11-11). A page the script may not or
    cannot read (robots.txt, 401 / 403 / 429, login wall, no answer) is parked as `unfetchable`, not
    counted against the worker (a 404 still is); Opus may read it only if it is public without a login.
