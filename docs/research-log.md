@@ -16,6 +16,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   other perp (ETH, BNB, LTC, DOGE, ZRX checked) only 2021-12-01, after the development cut (2021-09-14). A
   cross-sectional positioning idea would have no development data; BTC alone has ~54 weeks. Alternative: download
   all 37 and pre-register a test-only run. Why not: no development screen possible, one look at test data burns it.
+- **Auto decision 3:** the two one-time MT5 tests in HANDOFF › Open 1 are **not run**. Neither passed pre-registered
+  development gates (both are post-hoc best cells of the 2026-10-25 profiles), and both test periods look spent like
+  gap fade's (review B3): V1 ran strategy 4 on GBPJPY M15 2023-26 (`docs/archive/ROADMAP-v1.md` line 1061); gap
+  momentum ran on MT5 2021-26 (I-46, ROADMAP 11.12). Alternative: run them as the user pre-registered on 2026-10-26.
+  Why not: a test on seen data proves nothing; striking them is the user's call (HANDOFF › Open).
 
 ## 2026-11-14: I-75 weekly crypto cross-sectional reversal KILLED (the user: "Yes, screen it")
 
