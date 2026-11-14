@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: harvest batch 13 (crypto reversal / order flow, policy days, OPEC, gold macro days): nothing verified (the user: "New cells, terra high")
+
+- Codex `gpt-6.1-terra` `--search` (high for ACAD, low for AGG / nonsense), 8 tasks T0089-T0096, 2 parallel, no guard
+  alarms. 7 ideas, 0 verified: DeFi liquidation recovery and order-flow imbalance (untestable), FTSE after rate
+  cuts and gold news lag (unverified: quote not on the page; terra high 2 of 7 here, 2 of 19 over batches 12-13),
+  OPEC unchanged production (no rule, no size; parked), weekly crypto cross-sectional reversal (PDF 403 for the
+  script and web-fetch; abstract read: 8.69 %/week loser-minus-winner, t 9.60, 200 coins 2015-2019, strongest in
+  small / illiquid coins). Canaries: known answer PASSED, nonsense empty.
+- Lead for the user: the crypto reversal is testable on the 37 cached perps (large / liquid only, so expect far
+  less); it overlaps I-73's price part. Not carded: only the abstract was readable.
+
 ## 2026-11-14: harvest batch 12: batch 10-11 academic cells rerun on terra high: nothing new (the user: "Yes, rerun them")
 
 - Codex `gpt-6.1-terra` high `--search`, 11 tasks T0078-T0088 (the 9 ACAD / CB cells of batches 10-11 with the same
