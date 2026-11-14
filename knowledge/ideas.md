@@ -809,6 +809,7 @@ bar (known at entry): net +110.2, t 2.98, halves +102 / +119: the pass does not 
 Skeptic notes: the development gate failed (t 1.30) and the test was spent by the user's decision; two looks at one
 cell. Last-trade prices, taker fees only, no slippage (doubled costs still +92). Not stop-defined: no R yet, and
 the worst week (-32 % on each unit) is the crash risk the paper predicts. Venue: Binance only (not FTMO).
+Spec (2026-11-14, the user's go): `docs/strategy-crypto_carry.md` (Strategy 19; not built).
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
