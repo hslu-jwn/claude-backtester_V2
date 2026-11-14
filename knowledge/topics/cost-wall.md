@@ -62,6 +62,9 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
   (timed_hold: cost 0.2 R at 1-ATR M15 -> 0.02-0.04 R at 0.5 daily ATR), and (b) grows with holding time while cost stays fixed per round trip
   (F1a 6 h +0.066 R gross vs F2 30 min +0.010 R). Longer holds are limited by swap (any hold past 17:00 New York) and by decay of the effect.
 - Break-even win rate with stop S, target T, cost C: (S + C) / (S + T) (I52). At S = T and C/T = 0.10, 50 % becomes 55 %.
+- FTMO pass map (2026-11-14, `knowledge/research/reports/2026-11-14_challenge_pass_map.md`): zero net edge passes
+  ~30 % by luck; +0.05 R net needs ~340 trades at 0.5 % risk for 64 % (+0.10 R: 89 % in ~260); below +0.02 R net
+  the pass chance is within ~10 points of luck. Required size for a goal-1 build: ~+0.05 R net, ~300+ trades a year.
 - Turnover: 2,000 trades/yr x 0.2 R = ~400 R/yr drag (TR). Fewer trades cost less in total, not per trade; no feasibility without gross edge.
 - Cost table at a 0.5 daily-ATR stop (CT, last column): US30 0.013, EURUSD 0.022, NAS100 0.022, GER40 0.016, USDJPY 0.032, US500 0.038, XAUUSD 0.038, UK100 0.044,
   GBPJPY 0.065, USOIL 0.103, XAGUSD 0.143. At 1-ATR M15: NAS100 0.128, US30 0.072, GER40 0.074, EURUSD 0.108, others 0.17-0.69.

@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: FTMO challenge pass map (Fable row 1); I-76 carded
+
+- Fable 5.2 list in (`knowledge/reviews/2026-11-14-fable-research-directions.md`, 43 rows, ~10 min, Opus checked
+  the top rows). **Auto decision 4:** take row 1 (pass map) first, then row 10 (I-76) as the next screen.
+  Alternative: row 9 taker-flow imbalance. Why: row 1 sets the required size for every goal-1 idea; row 10 has a
+  forced counterparty (liquidations), row 9 has neither a mechanism nor a published size.
+- Pass map (`knowledge/research/reports/2026-11-14_challenge_pass_map.md`, house simulator, synthetic iid trades):
+  zero edge passes ~30 %; +0.05 R net 64 % in ~340 trades at 0.5 % risk; 2 % risk with 4 trades a day fails 97 %
+  on the daily loss. FTMO rules re-read (web-fetch subagent): no time limit, targets 10 / 5 %, 5 % daily, 10 %
+  static, 4 days; 1-Step 3 % daily, EOD trailing, consistency 50 % for orders from 2026-10-12. Model: Opus.
+- I-76 card and kills committed before data (1e5953e), script frozen (95abf49).
+
 ## 2026-11-14: Continue.Research Mode=auto (no limit), start
 
 - Start 18:00. HANDOFF: free-data idea space looks exhausted; no runnable candidate (all M15 drafts triaged out).
