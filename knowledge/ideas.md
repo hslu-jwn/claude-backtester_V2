@@ -910,6 +910,14 @@ long vs short side; holds of 15 / 30 minutes; trades per symbol.
 **Power (2026-11-14, before the screen, signal-free):** 21,654 event trades in 5,132 clusters on all 37 perps
 (far more than Fable's guess of ~300: 4 sd of the trailing day is common in crypto); 38,777 control trades, 60-min
 return sd after move-only events 253 bp -> standard error ~3.5 bp per cluster; t 3 needs ~11 bp net (well powered).
+**Result (`research/screens/2026-11-14_i76_liquidation_reversal_screen.py`): KILLED (t 2.50 < 3.0; net <= 0 at
+20 bp).** 21,654 trades, 5,132 clusters: net +5.3 bp per cluster (gross price +7.0, funding -0.2), 56 % positive;
+2020 +0.0 / 2021 +14.8; at 20 bp -4.7; without the 2 best +4.8. Control (move only, no flow condition): -1.9 bp
+(t -1.0), so the flow condition adds ~7 bp. Long after bearish +14.4 bp gross per trade, short after bullish -6.9
+(the 2020-21 bull drift is in both); BTC + ETH -14.7 bp (t -3.19): the effect, if any, sits in the alts. Holds
+15 min -1.8, 30 min +2.5 (t 1.5). Family `crypto_liquidation_reversal`: one falsification. No rescue: a long-only
+or alt-only rule would be a new, post-hoc hypothesis; with maker fees (~4 bp, Fable row 11, unmodelled) the
+primary would be ~+11 bp, so the cost model is the binding question, not the signal.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

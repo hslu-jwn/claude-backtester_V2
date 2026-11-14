@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-76 liquidation-cascade reversal KILLED (auto)
+
+- Power line before the run (086072b): 5,132 clusters, t 3 needs ~11 bp. Result: net +5.3 bp per cluster, t 2.50,
+  2020 +0.0 / 2021 +14.8, doubled costs -4.7: KILLED on t and doubled costs. Control without the flow condition
+  -1.9 bp; long side +14.4 bp gross, short -6.9; BTC + ETH -14.7 (t -3.19). Model: Opus only (local screen).
+- **Auto decision 5:** no rescue (long-only / alt-only would be post-hoc). Alternative: pre-register a long-only
+  variant for the test period. Why not: chosen after seeing the split, and it has passed no development gate.
+- Added HANDOFF › Open 7-9 (strike the spent MT5 tests; crypto split, Fable row 7; signal-research stop rule, row 20).
+
 ## 2026-11-14: FTMO challenge pass map (Fable row 1); I-76 carded
 
 - Fable 5.2 list in (`knowledge/reviews/2026-11-14-fable-research-directions.md`, 43 rows, ~10 min, Opus checked
