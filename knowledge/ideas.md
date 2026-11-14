@@ -819,6 +819,11 @@ same eligibility, weeks 2021-09-20 .. 2026-10-25 (no development screen of these
 net mean > 0; t >= 2.0; both halves (by weeks) > 0; net > 0 without the 2 best weeks. Power line (random 4-vs-4
 weekly sd) recorded after the download and before the run. Diagnostics: the 37-symbol union, price / funding
 parts, years. Exactly once, no variants. Caveat: perps delisted before 2021-06 are not in the listing probe.
+**I-73R power (2026-11-14, before the run, signal-free):** 266 weeks, 20 symbols; random 4-vs-4 weekly sd 690 bp
+(weeks where a random leg holds only delisted coins left out: OMG ends 2025-06, SXP 2025-12), standard error 42 bp;
+t 2 needs 85 bp a week; at the original test effect (+112) the expected t is ~2.6 (pass chance ~70 % if real).
+Data repair before the run: SXP 2023-04-05..30 (52 files, price + flow) had broken parquet footers after the
+session's hard restart (no fsync in `write_atomic`); deleted, re-downloaded, full cache scan clean.
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
