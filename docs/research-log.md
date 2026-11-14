@@ -4,6 +4,21 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: fsync fix; harvest batch 10 (forced flows): nothing to screen (the user: "1")
+
+- `data/cache.write_atomic` now fsyncs before the rename (test-first; full suite 5,963 passed; ~8 ms per day file):
+  the hard restart had left 52 Binance files with broken footers.
+- Harvest batch 10, Codex `gpt-6.1-terra` `--search` (medium for ACAD / CB, low for BLOG), 8 tasks T0059-T0066
+  (oil settlement window, gold delivery / roll / ETF flows, Japanese investor flows in yen crosses, reserve and
+  intervention FX flows, vol-targeting rebalancing; two canaries), 2 parallel, no guard alarms. 4 ideas, 0 kept:
+  crude order-imbalance impact (untestable: tick order flow, no rule), Swiss intervention (untestable), gold
+  delivery-month premium (+0.36 %/month front vs second contract, 1979-2019: a futures term-structure effect, not
+  tradeable on the gold CFD; no paid futures data; parked unfetchable), canary paper unverified.
+- Canaries: nonsense empty (pass); known answer FAILED (a different G10 carry paper, quote not on the page;
+  Koijen / Lustig not found). Unverified rate terra medium --search 15 % (stays below 20 %).
+- `harvest check` needs the Avast web-shield CA here (`NODE_EXTRA_CA_CERTS`): certifi + that file as
+  `REQUESTS_CA_BUNDLE` (scratchpad copy); the first run without it parked everything as unfetchable (reverted).
+
 ## 2026-11-14: I-73R replication on 20 unseen perps FAILED (the user: "Yes, replicate I-73")
 
 - Universe and gates pre-registered before the download (ba253bc), script frozen (0a5a1f3), power line before the
