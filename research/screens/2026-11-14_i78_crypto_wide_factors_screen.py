@@ -10,6 +10,7 @@ the next Sunday bar (or the last close in the week). Gross = top - bottom price 
 funding of the bottom leg (settlements strictly inside the hold); net in direction d = d x gross - 20 bp, d = sign
 of the development mean. Kills: |t| < 3.0; net <= 0; halves not both > 0; net <= 0 at 40 bp; net <= 0 without the
 2 best weeks.
+`--test`: the one-time test pre-registered in the card (eba2631): flow only, long top, weeks from 2024-01-01.
 `--power`: signal-free line (eligible per week, weekly sd of random quintile legs).
 Run: .venv/Scripts/python.exe research/screens/2026-11-14_i78_crypto_wide_factors_screen.py [--power]
 """
@@ -20,23 +21,39 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path("data/cache/binance_wide")
+TEST_ROOT = Path("data/cache/binance_wide_test")
+TEST_START = pd.Timestamp("2024-01-01")
 END = pd.Timestamp("2023-12-31")  # last development day (crypto split)
 COST_BP, MIN_ELIG, MIN_BARS, MIN_QVOL = 20.0, 20, 60, 5e6
 FACTORS = ("flow", "max", "vshock")
 
 
-def load():
+def read_klines(name, roots):
+    parts = [pd.read_csv(r / "klines_1d" / name, usecols=["open_time", "open", "close", "volume", "quote_volume",
+                                                         "taker_buy_volume"])
+             for r in roots if (r / "klines_1d" / name).exists()]
+    return pd.concat(parts, ignore_index=True)
+
+
+def read_funding(name, roots):
+    parts = [pd.read_csv(r / "funding" / name, usecols=["calc_time", "last_funding_rate"])
+             for r in roots if (r / "funding" / name).exists()]
+    return pd.concat(parts, ignore_index=True) if parts else None
+
+
+def load(roots=(ROOT,)):
     k, fund = {}, {}
-    for p in sorted((ROOT / "klines_1d").glob("*.csv")):
-        d = pd.read_csv(p, usecols=["open_time", "open", "close", "volume", "quote_volume", "taker_buy_volume"])
+    names = sorted({p.name for r in roots for p in (r / "klines_1d").glob("*.csv")})
+    for name in names:
+        p = Path(name)
+        d = read_klines(name, roots)
         d.index = pd.to_datetime(d.open_time, unit="ms").dt.normalize()
         d = d[~d.index.duplicated()].sort_index()
         d = d[d.index <= END]
         if len(d):
             k[p.stem] = d
-        f = ROOT / "funding" / p.name
-        if f.exists():
-            g = pd.read_csv(f, usecols=["calc_time", "last_funding_rate"])
+        g = read_funding(name, roots)
+        if g is not None:
             fund[p.stem] = pd.Series(g.last_funding_rate.to_numpy(),
                                      index=pd.to_datetime(g.calc_time, unit="ms").dt.floor("min")).sort_index()
     return k, fund
@@ -93,7 +110,34 @@ def tstat(x):
     return x.mean() / (x.std(ddof=1) / np.sqrt(len(x)))
 
 
+def test(argv):
+    """One-time test (card I-78, pre-registered in eba2631): flow only, long top, weeks from 2024-01-01."""
+    global END
+    END = pd.Timestamp("2026-10-31")
+    k, fund = load((ROOT, TEST_ROOT))
+    weeks = {m: week_rows(k, fund, m) for m in mondays(k)}
+    weeks = {m: w for m, w in weeks.items() if len(w) >= MIN_ELIG}
+    dev = pd.Series({m: spread(w, "flow")[0] for m, w in weeks.items() if m < TEST_START}) - COST_BP
+    net = pd.Series({m: spread(w, "flow")[0] for m, w in weeks.items() if m >= TEST_START}) - COST_BP
+    g2 = net - COST_BP
+    h = len(net) // 2
+    both = pd.concat([dev, net])
+    print(f"dev re-run: {len(dev)} weeks, net {dev.mean():+.1f}, t {tstat(dev):.2f} (must be +145.0, 3.24)")
+    print(f"TEST: {len(net)} weeks ({net.index[0].date()} .. {net.index[-1].date()}), eligible median "
+          f"{int(np.median([len(weeks[m]) for m in net.index]))}; net {net.mean():+.1f} bp/week, t {tstat(net):.2f}, "
+          f"positive {100 * (net > 0).mean():.0f} %, worst {net.min():+.0f}")
+    gates = {"(1) net > 0": net.mean() > 0, "(2) t >= 2": tstat(net) >= 2.0, "(3) pooled t >= 3": tstat(both) >= 3.0,
+             "(4) halves > 0": net.iloc[:h].mean() > 0 and net.iloc[h:].mean() > 0,
+             "(5) without 2 best > 0": net.drop(net.nlargest(2).index).mean() > 0, "(6) 40 bp > 0": g2.mean() > 0}
+    print(f"  halves {net.iloc[:h].mean():+.1f} / {net.iloc[h:].mean():+.1f}; pooled t {tstat(both):.2f}; "
+          f"without 2 best {net.drop(net.nlargest(2).index).mean():+.1f}; at 40 bp {g2.mean():+.1f}")
+    print("  gates:", {a: bool(b) for a, b in gates.items()}, "->", "PASSED" if all(gates.values()) else "FAILED")
+    return 0
+
+
 def main(argv):
+    if "--test" in argv:
+        return test(argv)
     k, fund = load()
     weeks = {m: week_rows(k, fund, m) for m in mondays(k)}
     weeks = {m: w for m, w in weeks.items() if len(w) >= MIN_ELIG}
