@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: power budget map (Fable row 5); row 12 skipped (auto)
+
+- **Auto decision 6:** Fable row 12 (index-review auction pooled over six indices) not screened: ~48 events a year
+  at ~6 bp halved is far below the pass map's ~300 trades a year at +0.05 R, and it would be the family's last
+  look. Alternative: power line, then screen. Why not: it cannot become a goal-1 stream even if it passed.
+- Power budget map (`knowledge/research/reports/2026-11-14_power_budget_map.md`, 33 symbols, signal-free): daily
+  events at 1-6 h holds can show 1-6 bp at t 3; weekly 8-40 bp, monthly 17-80 bp. With the pass map: a goal-1
+  stream needs ~2.5-5 bp gross per daily event on the cheapest symbols. Model: Opus.
+- Note: Fable row 9 (taker-flow imbalance) overlaps V1 ROADMAP 11.16 (BTC / ETH order-flow study, 2026-10-16:
+  effects real but 2-5 bp, below fees; not in the ledger), so it is not a fresh lead.
+
 ## 2026-11-14: I-76 liquidation-cascade reversal KILLED (auto)
 
 - Power line before the run (086072b): 5,132 clusters, t 3 needs ~11 bp. Result: net +5.3 bp per cluster, t 2.50,

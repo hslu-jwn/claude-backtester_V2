@@ -65,6 +65,9 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 - FTMO pass map (2026-11-14, `knowledge/research/reports/2026-11-14_challenge_pass_map.md`): zero net edge passes
   ~30 % by luck; +0.05 R net needs ~340 trades at 0.5 % risk for 64 % (+0.10 R: 89 % in ~260); below +0.02 R net
   the pass chance is within ~10 points of luck. Required size for a goal-1 build: ~+0.05 R net, ~300+ trades a year.
+- Power budget (2026-11-14, `.../2026-11-14_power_budget_map.md`): daily events at 1-6 h holds can show 1-6 bp at
+  t 3 (not power-limited); weekly events need ~8-40 bp, monthly ~17-80 bp. A goal-1 stream therefore needs ~2.5-5 bp
+  gross per daily event on EURUSD / USDJPY / US30 / GER40 / NAS100: about 2x the intraday effects measured so far.
 - Turnover: 2,000 trades/yr x 0.2 R = ~400 R/yr drag (TR). Fewer trades cost less in total, not per trade; no feasibility without gross edge.
 - Cost table at a 0.5 daily-ATR stop (CT, last column): US30 0.013, EURUSD 0.022, NAS100 0.022, GER40 0.016, USDJPY 0.032, US500 0.038, XAUUSD 0.038, UK100 0.044,
   GBPJPY 0.065, USOIL 0.103, XAGUSD 0.143. At 1-ATR M15: NAS100 0.128, US30 0.072, GER40 0.074, EURUSD 0.108, others 0.17-0.69.
