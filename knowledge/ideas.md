@@ -1007,6 +1007,10 @@ Kills: net (mean of month means) <= 0; t < 3.0; halves (2020-21 entries, 2022-23
 events per year, the share of events that stop trading inside the hold.
 Power line (signal-free, before the screen): event and month counts, and the sd of 28-day BTC-hedged returns of
 established perps (listed >= 180 days) at random dates, scaled to monthly cluster means.
+**Power (2026-11-15, before the screen, signal-free):** 234 events in 41 months (2020: 57, 2021: 58, 2022: 27,
+2023: 92); 28-day hedged sd 2,735 bp -> month-mean se ~179 bp; t 3 needs ~536 bp net per event (optimistic,
+within-month correlation ignored). Weakly powered: only an effect at the top of Fable's "several hundred bp" guess
+can pass. Auto decision 10: screen anyway (no published size to compare; one counted look in a new family).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
