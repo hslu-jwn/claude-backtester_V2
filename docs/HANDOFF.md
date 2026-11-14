@@ -25,6 +25,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-14: download ~20 more perps to replicate frozen I-73 on unseen coins ("Yes, replicate I-73").
 - 2026-11-14: Strategy 19 spec accepted ("Yes, all three": R = 1,000 bp risk unit, build the research tool,
   forward paper log from 2026-11-16); spec for I-73 written ("Yes, write the spec"); one-time test of the frozen I-73 rule on 2021-09..2026-10 ("Yes, run I-73 test").
 - 2026-11-13 (later): download of 15 more Binance USD-M perps as 1m klines + funding ("Yes, 15 perps").

@@ -810,6 +810,15 @@ Skeptic notes: the development gate failed (t 1.30) and the test was spent by th
 cell. Last-trade prices, taker fees only, no slippage (doubled costs still +92). Not stop-defined: no R yet, and
 the worst week (-32 % on each unit) is the crash risk the paper predicts. Venue: Binance only (not FTMO).
 Spec (2026-11-14, the user's go): `docs/strategy-crypto_carry.md` (Strategy 19; not built).
+**Replication on unseen coins (I-73R), pre-registered 2026-11-14 before the data was downloaded (the user: "Yes,
+replicate I-73"):** universe R20 = the first 20 Binance USDT perps by listing month that are not in the original 17
+(archive listing of 2026-11-14, perps trading in 2021-06; index contracts DEFIUSDT / BTCDOMUSDT excluded; ties in a
+month alphabetical): BAT, IOST, IOTA, ONT, QTUM, VET, ZEC, THETA, ALGO, COMP, KNC, ZIL, ZRX, BAND, DOGE, KAVA, OMG,
+RLC, SXP, DOT (all USDT). Frozen rule unchanged (`CryptoCarryConfig(symbols=R20)`, universe order = that list),
+same eligibility, weeks 2021-09-20 .. 2026-10-25 (no development screen of these coins). Passes only if all hold:
+net mean > 0; t >= 2.0; both halves (by weeks) > 0; net > 0 without the 2 best weeks. Power line (random 4-vs-4
+weekly sd) recorded after the download and before the run. Diagnostics: the 37-symbol union, price / funding
+parts, years. Exactly once, no variants. Caveat: perps delisted before 2021-06 are not in the listing probe.
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
