@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: prop mechanics, sizing policy and concurrent streams (the user: "Prop mechanics")
+
+- `knowledge/research/reports/2026-11-15_prop_mechanics.md` (house simulator, synthetic trades, open attempts count
+  as not passed): the house adaptive risk gains only ~0-3 points over fixed risk at equal time (below the 5-point
+  keep threshold); K uncorrelated streams divide the time to pass by ~K at the same pass chance (+0.03 R at 0.5 %:
+  16.7 -> 5.8 months with 3 streams, ~45 %); correlation 0.3 costs a few points; K x risk must stay <= ~3 %
+  (5 streams at 1 % fail 100 % on the daily loss). Fable's closed form was too optimistic (64 % vs ~47 %). Model: Opus.
+
 ## 2026-11-15: Strategies 19 + 20 combined (Fable row 13; diagnostic)
 
 - Same 147 test weeks (2024-01-01 .. 2026-10-19; each tool's own output, aligned by Monday): correlation of weekly

@@ -68,6 +68,9 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
 - Power budget (2026-11-14, `.../2026-11-14_power_budget_map.md`): daily events at 1-6 h holds can show 1-6 bp at
   t 3 (not power-limited); weekly events need ~8-40 bp, monthly ~17-80 bp. A goal-1 stream therefore needs ~2.5-5 bp
   gross per daily event on EURUSD / USDJPY / US30 / GER40 / NAS100: about 2x the intraday effects measured so far.
+- Prop mechanics (2026-11-15, `.../2026-11-15_prop_mechanics.md`): adaptive sizing adds ~0-3 points at equal time;
+  K uncorrelated net-positive streams cut the time to pass by ~K (K x risk <= ~3 % for the daily-loss rule); no
+  policy lifts a zero-edge stream above the ~30 % luck baseline.
 - Turnover: 2,000 trades/yr x 0.2 R = ~400 R/yr drag (TR). Fewer trades cost less in total, not per trade; no feasibility without gross edge.
 - Cost table at a 0.5 daily-ATR stop (CT, last column): US30 0.013, EURUSD 0.022, NAS100 0.022, GER40 0.016, USDJPY 0.032, US500 0.038, XAUUSD 0.038, UK100 0.044,
   GBPJPY 0.065, USOIL 0.103, XAGUSD 0.143. At 1-ATR M15: NAS100 0.128, US30 0.072, GER40 0.074, EURUSD 0.108, others 0.17-0.69.
