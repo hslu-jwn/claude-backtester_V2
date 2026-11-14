@@ -932,7 +932,7 @@ points to ~0; cost per event ~8-10 bp (share CFD spread plus two nights of swap,
 Verdict: not screened (expected net <= 0; the US premium is reported gone). Reopen only if the 2020 paper's
 numbers show a large-cap premium after 2010 above ~20 bp per event.
 
-### I-78 / I-79 / I-80 Crypto wide factor set: taker-flow imbalance, MAX, volume shock (Fable rows 9 and 21, 2026-11-14; rules fixed before any data)
+### I-78 / I-79 / I-80 Crypto wide factor set: taker-flow imbalance, MAX, volume shock (Fable rows 9 and 21, 2026-11-14; rules fixed before any data; I-78 one-time test PASSED, I-79 / I-80 KILLED)
 First families on the crypto split (rule set by the user 2026-11-14: develop 2020-01-01 .. 2023-12-31, test once from
 2024-01-01; `docs/research-runner.md` › Periods). Universe: every Binance USDT-margined perpetual, delisted ones
 included (`research/screens/2026-11-14_binance_wide_download.py`, daily klines with taker buy volume, funding).
@@ -978,6 +978,16 @@ needs ~80 bp (the development effect would give t ~3.6, half of it t ~1.8). Pass
 mean > 0; (2) test t >= 2.0; (3) development + test pooled t >= 3.0; (4) both test halves (by weeks) > 0; (5) test
 net > 0 without its 2 best weeks; (6) test net > 0 at 40 bp. No momentum or other sort is computed on test data
 (Open 5 stays unspent). Pass or fail is recorded; no retest.
+**One-time test result (2026-11-14, `--test`, commits 2941156 / d1f79cd; dev re-run identical): PASSED all six
+gates.** 147 weeks 2024-01-01 .. 2026-10-19, eligible median 240, legs 34-63: net +147.2 bp a week, t 3.76, 59 %
+positive, PF 2.30, worst week -868, max drawdown -1,455 bp; halves +119.9 / +174.2; development + test pooled t
+4.81; without the 2 best +126.8; at 40 bp +127.2. Price legs: long +35.3, short -91.6 bp a week.
+**Diagnostics after the test (no effect on the verdict): tail-driven.** The long leg catches weekly pumps (ALPACA
++570 % in its delisting week, PIPPIN +444 %, 1000FLOKI +299 %, ...). Member returns clipped at +-50 % a week: test
++77.6 (t 2.38), development +96.5 (t 2.64); clipped at +-30 %: test +56.3 (t 1.90), development +57.8 (t 1.83). So
+about half the edge is pump capture in small perps (position limits, slippage and delisting risk not modelled),
+the rest ~+56 bp a week, the same in both periods. Not on FTMO: the effect sits in small alts, FTMO lists ~30
+large coins at 10-40 bp. Goal 2 only; anything live touches money (the user's decision).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

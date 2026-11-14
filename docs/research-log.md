@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-78 one-time test PASSED (auto decision 9)
+
+- Test months downloaded (911 perps with 2024+ data; AWE / MBOX refetched after connection resets). First `--test`
+  call crashed before any result (a perp without a funding file: empty fallback series had no datetime index);
+  fixed and committed (d1f79cd) before the run. Dev re-run identical (+145.0, t 3.24).
+- Result: 147 weeks, net +147.2 bp a week, t 3.76, pooled t 4.81, halves +120 / +174, without 2 best +127, 40 bp
+  +127, PF 2.30, max drawdown -1,455 bp: all six gates PASS. Diagnostics: tail-driven (pump capture in small perps);
+  clipped at +-30 % a week both periods keep ~+56-58 bp (t ~1.9 each). Model: Opus. Telegram sent.
+
 ## 2026-11-14: crypto split adopted (the user: "Yes, adopt split"); I-78 flow passes development gates (auto)
 
 - Rule in `docs/research-runner.md` › Periods (0ba1c42). Wide universe: 923 USDT perps listed, 265 with data before

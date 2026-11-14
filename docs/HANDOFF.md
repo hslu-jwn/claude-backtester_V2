@@ -56,8 +56,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Next step
 
-0. **Resume first:** finish the I-78 one-time test (research log 2026-11-14, last entry: download test months, then
-   `--test`; gates pre-registered in eba2631; record and Telegram the result).
+0. **I-78 weekly taker-flow sort on all Binance USDT perps: one-time test PASSED** (2026-11-14; +147 bp a week, t 3.76;
+   about half is pump capture in small perps, ~+56 bp a week without the tails). Goal 2 only (not on FTMO). Next:
+   a strategy spec + research tool and a forward paper log (like Strategy 19), and a slippage / position-limit check.
 
 1. From about **2026-12-02**: `python -m backtester.tools.crypto_carry --update --forward`, commit
    `research/forward/crypto_carry.csv`, report the first forward week (2026-11-16..22).
