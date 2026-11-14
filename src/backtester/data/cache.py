@@ -126,6 +126,8 @@ def write_atomic(frame: pd.DataFrame, path: Path) -> None:
     os.close(fd)
     try:
         frame.to_parquet(name, index=False)
+        with open(name, "rb+") as f:  # contents on disk before the rename makes the file "cached"
+            os.fsync(f.fileno())
         _retry_permission(lambda: os.replace(name, path))
     finally:
         Path(name).unlink(missing_ok=True)

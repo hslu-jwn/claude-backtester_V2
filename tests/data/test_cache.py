@@ -78,6 +78,25 @@ def test_write_atomic_replaces_an_existing_file(tmp_path):
     assert len(read_cached_day(path)) == 2
 
 
+def test_write_atomic_syncs_the_data_before_the_rename(tmp_path, monkeypatch):
+    """A hard crash after the rename must not leave a file whose contents never reached the disk
+    (2026-11-14: 52 Binance day files with broken parquet footers after a forced restart)."""
+    import os
+
+    from backtester.data import cache
+
+    events = []
+    real_fsync, real_replace = os.fsync, os.replace
+    monkeypatch.setattr(cache.os, "fsync", lambda fd: (events.append("fsync"), real_fsync(fd))[1])
+    monkeypatch.setattr(
+        cache.os, "replace", lambda a, b: (events.append("replace"), real_replace(a, b))[1]
+    )
+    path = tmp_path / "d.parquet"
+    write_atomic(day_frame(date(2026, 9, 3), 3), path)
+    assert events == ["fsync", "replace"]
+    assert len(read_cached_day(path)) == 3
+
+
 def test_read_cached_days_no_files_gives_the_empty_frame():
     frame = read_cached_days([])
     assert list(frame.columns) == COLUMNS and frame.empty
