@@ -74,7 +74,7 @@ def week_rows(k, fund, monday):
         before = past[(past.index <= sunday_prev - pd.Timedelta(days=7))].iloc[-60:]
         rets = past.close.pct_change().loc[last7.index]
         held = d[(d.index >= monday) & (d.index <= sunday_next)]
-        fr = fund.get(s, pd.Series(dtype=float))
+        fr = fund.get(s, pd.Series(dtype=float, index=pd.DatetimeIndex([])))  # a perp without a funding file
         f = fr[(fr.index > monday) & (fr.index < sunday_next + pd.Timedelta(days=1))].sum() * 1e4
         rows.append({
             "sym": s,
