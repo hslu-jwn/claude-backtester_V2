@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: FTMO venue facts (Fable row 8, partial)
+
+- `knowledge/research/reports/2026-11-14_ftmo_venue_facts.md`: rules re-read (no time limit; 1-Step consistency
+  50 % from 2026-10-12; 80 % reward after 2-Step); the MT5 server lists 166 symbols incl. 59 share CFDs and 30
+  crypto CFDs (swap -30 %/yr); weekend spreads 0.2-35 bp on the alts we cache, so Binance ideas could run on FTMO
+  only for the ~6 cheapest coins at ~7-11 bp. Read-only MT5 calls; an aborted first read left the 30 crypto CFDs
+  visible in Market Watch (harmless). Model: Opus + web-fetch subagent.
+
 ## 2026-11-14: ideas triage (Fable row 24); free futures data (row 33): Stooq gated; books asked
 
 - `knowledge/ideas.md` overview: 48 "open" rows re-labelled: 29 closed by the cost-wall §4 stop list (family named),
