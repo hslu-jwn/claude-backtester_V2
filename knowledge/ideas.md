@@ -871,6 +871,8 @@ Power line (signal-free): weekly sd of random legs of the same sizes, recorded b
 Kills it: net mean <= 0; t of the net < 3.0; halves (by weeks) opposite signs; net <= 0 without the 2 best weeks.
 Diagnostics: price / funding parts; the 17-symbol universe alone; correlation with I-73's development weeks;
 members per leg.
+**Power (2026-11-14, before the screen, signal-free):** 81 weeks, 11-37 eligible; random-leg weekly sd 869 bp ->
+standard error 97 bp; t 3 needs ~290 bp a week (the paper's 869 bp is small-coin driven).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
