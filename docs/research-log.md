@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: canary check: worker effort, not the query (the user: "Canary check first")
+
+- Same sharp known-answer query (T0073's) on stronger settings: terra high (T0075) and sol medium (T0077) both found
+  Lustig, Roussanov & Verdelhan "Common Risk Factors in Currency Markets" (quote verified by `harvest check`);
+  terra medium had missed it in batches 10 and 11. Nonsense cell on sol medium (T0076): empty (pass).
+- Routing (`docs/agent-routing.md`): ACAD / CB harvest tasks now on terra high; one run per setting, so watch the
+  canary every batch. Batches 10-11's ACAD cells may have missed sources (rerun only on the user's go).
+
 ## 2026-11-14: harvest batch 11 (volatility state, open auctions, gold reversal): nothing to screen (the user: "1")
 
 - Codex `gpt-6.1-terra` `--search`, 8 tasks T0067-T0074 (medium for ACAD, low for AGG / BROKER / BLOG), 2 parallel,
