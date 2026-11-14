@@ -907,6 +907,9 @@ Kills it: cluster net mean <= 0 at 10 bp; t < 3.0; either calendar half (2020, 2
 (doubled costs); net <= 0 without the 2 best clusters.
 Diagnostics (no rescue): control = the same move rule without the flow and volume conditions; BTC + ETH alone;
 long vs short side; holds of 15 / 30 minutes; trades per symbol.
+**Power (2026-11-14, before the screen, signal-free):** 21,654 event trades in 5,132 clusters on all 37 perps
+(far more than Fable's guess of ~300: 4 sd of the trailing day is common in crypto); 38,777 control trades, 60-min
+return sd after move-only events 253 bp -> standard error ~3.5 bp per cluster; t 3 needs ~11 bp net (well powered).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
