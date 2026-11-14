@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-75 weekly crypto cross-sectional reversal KILLED (the user: "Yes, screen it")
+
+- Card and kills committed before data (68f9726), script frozen (5267451), power line before the run (59b3cd5: t 3
+  needed ~290 bp/week). Opus, local screen reusing I-73's helpers.
+- Result: 81 weeks, net -146.8 bp/week, t -1.05, both halves negative (-177 / -117): KILLED on net <= 0. Large
+  liquid perps show no reversal (the paper's effect is small-coin driven); the sign is momentum. Correlation with
+  I-73's weeks +0.25. Model: Opus only.
+
 ## 2026-11-14: harvest batch 13 (crypto reversal / order flow, policy days, OPEC, gold macro days): nothing verified (the user: "New cells, terra high")
 
 - Codex `gpt-6.1-terra` `--search` (high for ACAD, low for AGG / nonsense), 8 tasks T0089-T0096, 2 parallel, no guard

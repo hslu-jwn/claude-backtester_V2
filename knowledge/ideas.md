@@ -848,7 +848,7 @@ and 20-day CFD holds pay swap on both legs plus two spreads; the venue method as
 futures data, the user 2026-11-13) and it needs CFTC COT data (free, a new download). Far below cost: card only,
 not screened. Ledger HV-T0072-1.
 
-### I-75 Weekly cross-sectional reversal on 37 Binance perpetuals (harvest batch 13, 2026-11-14; rule fixed before any data)
+### I-75 Weekly cross-sectional reversal on 37 Binance perpetuals (harvest batch 13, 2026-11-14; rule fixed before any data; screened the same day: KILLED, ledger I75)
 Source (abstract only; the PDF answers 403 to the script and web-fetch): Kozlowski, Puleo & Zhou, "Cryptocurrency
 return reversals", Applied Economics Letters 28(11), 2021: 200 coins 2015-2019, weekly loser-minus-winner 8.69 %
 (t 9.60), present in both halves, "most pronounced among smaller capitalization and less liquid" coins. Label:
@@ -873,6 +873,12 @@ Diagnostics: price / funding parts; the 17-symbol universe alone; correlation wi
 members per leg.
 **Power (2026-11-14, before the screen, signal-free):** 81 weeks, 11-37 eligible; random-leg weekly sd 869 bp ->
 standard error 97 bp; t 3 needs ~290 bp a week (the paper's 869 bp is small-coin driven).
+**Result (`research/screens/2026-11-14_i75_crypto_reversal_screen.py`): KILLED (net <= 0).** 81 weeks, 2-7 per leg:
+net -146.8 bp a week (price -116.4, funding -10.4), t -1.05, 47 % positive, sd 1,258, worst -3,745; halves -177 /
+-117 (same sign); without the 2 best weeks -241. 2020 -263, 2021 -1. 17-symbol universe -67.7 (t -0.54);
+correlation with I-73's development weeks +0.25. On large, liquid perps last week's losers kept losing: the
+paper's small-coin reversal is absent (the sign is momentum, not tested as a rule). Family `crypto_xs_reversal`
+closed after one falsification would be early, but no rescue variant: a momentum rule would be a new hypothesis.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
