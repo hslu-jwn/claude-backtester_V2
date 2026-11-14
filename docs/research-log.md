@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategy 20 realism check (the user: "Yes, realism check")
+
+- Diagnostics on spent data, no gate: break-even extra slippage ~37 bp per side per member (test); with tiered
+  slippage (< 20 M USDT 25 bp, 20-100 M 10 bp, > 100 M 3 bp a side; assumptions) net +77 bp a week (t 1.98) in the
+  test, +93 in development; 56 % of test members trade < 20 M USDT a day. The most liquid half alone earns +163 bp
+  (t 3.15; a post-hoc variant, not adopted). Capacity irrelevant at retail size. Model: Opus.
+
 ## 2026-11-15: Strategy 20 crypto taker-flow sort: research tool built (the user: "Yes, build it")
 
 - Spec `docs/strategy-crypto_flow.md` (R = 600 bp, the development weekly sd; forward log from 2026-11-16; kill

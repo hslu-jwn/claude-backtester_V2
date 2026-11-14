@@ -79,6 +79,24 @@ conflicts, fixed in 6ae5af9; second call ~13 min, guard ok): `data/binance_wide.
 development 186 weeks +145.0 bp, t 3.24; test 147 weeks +147.2 bp, t 3.76, max drawdown -2.4 R (identical to the
 screen). Full suite 5,986 passed.
 
+## Realism check (2026-11-15, diagnostics on spent data; `research/screens/2026-11-15_i78_realism_check.py`)
+
+| | Development | Test |
+|---|---|---|
+| Net at 20 bp | +145.0 (t 3.24) | +147.2 (t 3.76) |
+| Break-even extra slippage per side per member | 36 bp | 37 bp |
+| Tiered slippage (< 20 M USDT a day 25 bp, 20-100 M 10 bp, > 100 M 3 bp a side) | +92.8 (t 2.07) | +77.2 (t 1.98) |
+| Members below 20 M USDT a day / median member volume | 31 % / 30 M | 56 % / 15 M |
+| Most liquid half of the eligible only (a variant) | +232.5 (t 3.65) | +163.0 (t 3.15) |
+| ... with tiered slippage | +203.9 (t 3.20) | +124.8 (t 2.42) |
+
+Reading: the edge survives up to ~37 bp of extra slippage per fill; with an assumed tiered slippage it halves to
+~+80-90 bp a week (t ~2). It is **not** confined to the illiquid tail: the most liquid half earns as much or more
+(a new variant, chosen after seeing the data: forward evidence only, not adopted). Capacity is no issue at retail
+size: 100,000 equity at 1 % risk per R is ~350 USDT per member, 0.007 % of the 5 M volume floor. Not checked: real
+order books (the tier slippage values are assumptions), Binance position limits on leverage tiers (irrelevant at
+1x and this size), delisting settlement prices.
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean
