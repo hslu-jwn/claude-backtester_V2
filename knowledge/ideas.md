@@ -962,6 +962,22 @@ Power line (signal-free, before the screen): eligible count per week and the wee
 **Power (2026-11-14, before the screen, signal-free):** 265 perps with development data, 186 weeks with >= 20
 eligible (2020-05-25 .. 2023-12-25), eligible per week 20-205 (median 132, legs ~26); random-leg weekly sd 481 bp ->
 standard error 35 bp; |t| 3 needs ~106 bp a week net (old split, I-75: ~290).
+**Development result (`research/screens/2026-11-14_i78_crypto_wide_factors_screen.py`, 186 weeks):**
+- **I-78 flow: PASSED all five development gates.** Long the top flow quintile (net taker buying), short the bottom:
+  net +145.0 bp a week, t 3.24, price +141.6, funding part +23.4, 58 % positive, worst week -1,438; halves +326.8 /
+  +1.7 (2022-23 barely positive); at 40 bp +125.0; without the 2 best +116.8. Correlation with a 1-week past-return
+  sort 0.56: partly a short-term momentum proxy (momentum itself is HANDOFF Open 5, not tested).
+- I-79 MAX: KILLED (net +34.3, t 0.70; halves +97.7 / -15.8). I-80 volume shock: KILLED (net +5.6, t 0.10; halves
+  +51.2 / -30.3; -14.4 at 40 bp).
+**I-78 one-time test, pre-registered 2026-11-14 before any test-period data was downloaded (Mode=auto, auto decision
+9):** frozen rule exactly as above (flow, long top / short bottom quintile, weekly, 20 bp, same eligibility), test
+universe = every USDT perp incl. those listed from 2024 and the delisted ones; test weeks: Monday >= 2024-01-01 to
+the last Monday whose Sunday exit is <= the last downloaded day (months to 2026-10); signals may use development
+bars before 2024. The development re-run must reproduce +145.0 bp, t 3.24. Power: ~147 test weeks, se ~40 bp: t 2
+needs ~80 bp (the development effect would give t ~3.6, half of it t ~1.8). Passes only if all hold: (1) test net
+mean > 0; (2) test t >= 2.0; (3) development + test pooled t >= 3.0; (4) both test halves (by weeks) > 0; (5) test
+net > 0 without its 2 best weeks; (6) test net > 0 at 40 bp. No momentum or other sort is computed on test data
+(Open 5 stays unspent). Pass or fail is recorded; no retest.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
