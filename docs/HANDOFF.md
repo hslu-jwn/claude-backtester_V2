@@ -23,9 +23,9 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
   `strategy/crypto_carry/book.py`, golden identical to the screen); kept as **forward paper log only**.
 - **Harvest routing:** ACAD / CB tasks on Codex terra **high** (canary check 2026-11-14: medium missed the
   known-answer paper twice, high and sol found it); `harvest check` needs the Avast CA bundle (skill note).
-- **Uncommitted, not Opus's (the user decides):** `src/backtester/tools/notify.py` (hook trace log lines);
-  `CLAUDE.md`, `.claude/skills/continue-research/SKILL.md`, `.claude/skills/idea-harvest/SKILL.md` (new
-  `Mode=manual|auto` rules, appeared during the 2026-11-14 session).
+- **Rules changed 2026-11-14 (side session, `aeffc3c`):** `Mode=manual|auto` replaces `Test=` (CLAUDE.md, skills
+  `continue-research`, `idea-harvest`); re-read them on resume.
+- **Uncommitted, not Opus's:** `src/backtester/tools/notify.py` (hook trace log lines); the user decides.
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
