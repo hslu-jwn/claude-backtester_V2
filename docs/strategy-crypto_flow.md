@@ -28,10 +28,11 @@ same in development and test. Correlation 0.56 with a 1-week past-return sort: p
 ## Rule (frozen; crypto split: development 2020-01-01 .. 2023-12-31, test from 2024-01-01)
 
 1. Every Monday 00:00 UTC, **eligible** = USDT perps (no dated quarterlies) with at least 60 daily bars before the
-   Monday, a Monday bar, and a median daily quote volume of at least 5 million USDT over the last 30 bars before the
-   Monday. A week needs at least 20 eligible symbols (else no book).
-2. **Signal** from the 7 daily bars before the Monday (Monday .. Sunday of the previous week; all 7 required):
-   flow = sum(2 x taker buy volume - volume) / sum(volume). A symbol whose 7-bar volume sum is 0 has no signal.
+   Monday, a Monday bar, a median daily quote volume of at least 5 million USDT over the last 30 bars before the
+   Monday, and all 7 daily bars of the previous week (Monday .. Sunday). A week needs at least 20 eligible symbols
+   (else no book); a symbol with no signal (rule 2) still counts toward the 20, as tested.
+2. **Signal** from those 7 bars: flow = sum(2 x taker buy volume - volume) / sum(volume). A symbol whose 7-bar
+   volume sum is 0 has no signal (left out of the sort).
 3. Sort ascending by (flow, symbol name); n = floor(symbols with a signal / 5). **Long the n highest, short the n
    lowest**, equal weight; each side = 1 unit.
 4. Entry at the **open of the Monday daily bar**; exit at the **close of the next Sunday bar**, or the last close in
@@ -66,7 +67,8 @@ and +56.3 (t 1.90). Test legs 34-63 symbols, eligible median 240. Screen:
 `python -m backtester.tools.crypto_flow [--start] [--end] [--out] [--update] [--forward]`: rule in
 `strategy/crypto_flow/book.py` (pure, no file access, no engine import), CLI `tools/crypto_flow.py`; `trades.csv`
 one row per week, `legs.csv` members. Golden: the screen's development and test numbers exactly. `--update` fetches
-the newest months (monthly archive files, and daily files for the running month) into `data/cache/binance_wide_test`;
+the newest complete months (monthly archive files only) into `data/cache/binance_wide_test`, so a forward week is
+complete only after its month's files are published (early next month), as for Strategy 19;
 `--forward` appends complete weeks from **Monday 2026-11-16** to `research/forward/crypto_flow.csv` (append-only).
 
 ## Forward check
@@ -82,6 +84,7 @@ From 2026-11-16, log the book every week without orders. Pre-registered forward 
   Binance position limits and leverage cuts before delisting bite; doubled costs stay +127 in the test, but a
   pump that cannot be bought at size is not measured. A realism check is the next research step.
 - A3: R = 600 bp of one side's notional (above); a risk unit, not a stop.
-- A4: a member that stops trading exits at its last close in the week (delisting); funding after that is not
-  counted.
+- A4: a member that stops trading exits at its last close in the week (delisting); funding is counted for every
+  settlement in (Monday 00:00, next Monday 00:00) as tested (corrected 2026-11-14 on Codex's question: the first
+  draft said "not counted after the last bar", which the screen never did).
 - A5: ties broken by symbol name (stable sort on (flow, symbol)), exactly as tested.

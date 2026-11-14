@@ -30,10 +30,12 @@ entry, no UI.
    - `eligible_signals(klines: Mapping[str, DataFrame], monday, config) -> dict[str, float]`: the spec's
      eligibility and flow signal (rule 1-2), exactly as `week_rows` in the screen.
    - `pick_legs(signals, config) -> (longs, shorts) | None`: sort by (flow, symbol), n = floor(len / 5);
-     long the n highest, short the n lowest; fewer than `min_eligible` eligible symbols (counted before the
-     signal NaN drop, as the screen does) -> None.
+     long the n highest, short the n lowest; fewer than `min_eligible` eligible symbols -> None. Eligible = rule 1
+     incl. all 7 signal bars present (the screen's `week_rows` rows); a symbol with a NaN flow (zero volume) still
+     counts toward the 20 but is left out of the sort and of n (the screen's `len(w) >= MIN_ELIG`, then `dropna`).
    - `week_result(monday, longs, shorts, klines, funding, config)`: entry = open of the Monday bar, exit = close of
-     the next Sunday bar or the last close in the week; funding in (Monday 00:00, next Monday 00:00) exclusive;
+     the next Sunday bar or the last close in the week; funding = every settlement in (Monday 00:00, next Monday
+     00:00) exclusive, also after a member's last bar (as the screen; spec A4);
      price_bp, funding_bp, cost_bp, net_bp, r_gross = (price_bp + funding_bp) / r_bp, r_net = net_bp / r_bp; plus
      per-member leg rows. Docstrings cite `Spec: strategy-crypto_flow.md › Rule (frozen)`.
 3. `src/backtester/tools/crypto_flow.py` CLI:
@@ -81,3 +83,10 @@ Hand-built fixtures (tiny DataFrames / tmp CSV roots); answers written in the te
 - Unclear rule: stop and report it with the spec line; do not guess.
 - Done = the new tests pass, `python -m pytest -q -p no:cacheprovider -n 8 tests/strategy tests/tools/test_crypto_flow.py tests/data`
   green, `ruff check src tests` clean. Report: files changed, test results, the golden numbers you got.
+
+## Answers to Codex's questions (2026-11-14, Opus): the screen is the frozen rule
+
+1. Funding after a delisting: counted for the whole week, as the screen does (spec A4 corrected).
+2. Eligibility count: the 20-minimum counts symbols with all 7 signal bars (spec rule 1 corrected); a NaN flow
+   still counts, as the screen.
+3. Updates: complete monthly files only (spec Build corrected).
