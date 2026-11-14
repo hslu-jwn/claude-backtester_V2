@@ -97,6 +97,12 @@ size: 100,000 equity at 1 % risk per R is ~350 USDT per member, 0.007 % of the 5
 order books (the tier slippage values are assumptions), Binance position limits on leverage tiers (irrelevant at
 1x and this size), delisting settlement prices.
 
+## Combination with Strategy 19 (2026-11-15, diagnostic)
+
+Over the 147 shared test weeks the weekly nets of Strategies 19 and 20 correlate at 0.06; an equal-risk mix gives
++151 bp a week, t 4.30, Sharpe ~2.6 a year, max drawdown -2,330 bp (S19 alone -3,967). S19 failed its replication,
+so this only argues for logging both forward.
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean

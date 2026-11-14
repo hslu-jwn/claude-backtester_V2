@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategies 19 + 20 combined (Fable row 13; diagnostic)
+
+- Same 147 test weeks (2024-01-01 .. 2026-10-19; each tool's own output, aligned by Monday): correlation of weekly
+  net **0.06**. S19 +143.9 bp a week (t 2.51, Sharpe 1.49 a year, max DD -3,967), S20 +147.2 (t 3.76, Sharpe 2.24,
+  max DD -1,455); equal-risk mix +151.3 (t 4.30, Sharpe 2.56, max DD -2,330). Caveats: S19 failed its replication
+  on unseen perps (forward log only), both are Binance weekly books, the period is spent. Supports logging both
+  forward side by side. Model: Opus.
+
 ## 2026-11-15: I-81 new-listing drift KILLED (auto; the user: "Keep researching")
 
 - Fable row 19 on the crypto split. Card + kills before data (6886954), script frozen (84a5482), power line
