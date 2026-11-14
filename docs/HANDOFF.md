@@ -59,7 +59,11 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 1. From about **2026-12-02**: `python -m backtester.tools.crypto_carry --update --forward`, commit
    `research/forward/crypto_carry.csv`, report the first forward week (2026-11-16..22).
-2. Research: the free-data idea space looks exhausted for now (four harvest batches, one screen). Best options:
+2. **Auto run 2026-11-14 (research log, auto decisions 1-8):** Fable directions list (43 rows), FTMO pass map and
+   power budget map (goal 1 needs ~+0.05 R net at ~300+ trades a year = ~2.5-5 bp gross per daily event), I-76
+   killed, I-77 carded below cost, ideas triage, FTMO venue facts (59 share + 30 crypto CFDs), harvest batch 14
+   empty. The biggest unlock is Open 8 (crypto split); then Fable rows 9 / 21 on a powered crypto design.
+3. Research (before the auto run): the free-data idea space looked exhausted (four harvest batches, one screen). Options were:
    a new free data source (e.g. CFTC COT for positioning ideas, a download needing the user's go), or
    `Continue.Code` on V2.10 (A9 deferred; two-leg 2b when a pair idea survives a screen).
 
