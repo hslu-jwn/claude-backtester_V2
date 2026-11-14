@@ -57,8 +57,10 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 ## Next step
 
 0. **I-78 weekly taker-flow sort on all Binance USDT perps: one-time test PASSED** (2026-11-14; +147 bp a week, t 3.76;
-   about half is pump capture in small perps, ~+56 bp a week without the tails). Goal 2 only (not on FTMO). Next:
-   a strategy spec + research tool and a forward paper log (like Strategy 19), and a slippage / position-limit check.
+   about half is pump capture in small perps, ~+56 bp a week without the tails). Goal 2 only (not on FTMO).
+   **Strategy 20 built 2026-11-15** (`docs/strategy-crypto_flow.md`, `tools/crypto_flow.py`); forward log from
+   about 2026-12-02 with Strategy 19: `python -m backtester.tools.crypto_flow --update --forward`. Next research:
+   a slippage / position-limit realism check.
 
 1. From about **2026-12-02**: `python -m backtester.tools.crypto_carry --update --forward`, commit
    `research/forward/crypto_carry.csv`, report the first forward week (2026-11-16..22).

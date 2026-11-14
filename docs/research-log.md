@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategy 20 crypto taker-flow sort: research tool built (the user: "Yes, build it")
+
+- Spec `docs/strategy-crypto_flow.md` (R = 600 bp, the development weekly sd; forward log from 2026-11-16; kill
+  after 52 weeks at net <= 0 or drawdown worse than -2,200 bp). Codex `gpt-6.1-sol` medium, brief
+  `briefs/crypto_flow.md`: call 1 (36 s) stopped on three conflicts between the spec and the tested screen
+  (delisting funding, eligibility count, update files): spec aligned with the screen; call 2 (~13 min, guard ok)
+  built the data layer, rule module, CLI and 18 tests. Opus verified: golden identical (186 weeks +145.0 / t 3.24;
+  147 weeks +147.2 / t 3.76), CLI reproduces the test, full suite 5,986 passed, ruff clean.
+
 ## 2026-11-14: I-78 one-time test PASSED (auto decision 9)
 
 - Test months downloaded (911 perps with 2024+ data; AWE / MBOX refetched after connection resets). First `--test`

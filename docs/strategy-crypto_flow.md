@@ -71,6 +71,14 @@ the newest complete months (monthly archive files only) into `data/cache/binance
 complete only after its month's files are published (early next month), as for Strategy 19;
 `--forward` appends complete weeks from **Monday 2026-11-16** to `research/forward/crypto_flow.csv` (append-only).
 
+## Built 2026-11-15 (research tool)
+
+Codex `gpt-6.1-sol` medium (brief `briefs/crypto_flow.md`; first call stopped correctly on three spec / screen
+conflicts, fixed in 6ae5af9; second call ~13 min, guard ok): `data/binance_wide.py` (readers, monthly updater),
+`strategy/crypto_flow/book.py` (pure rule), `tools/crypto_flow.py` (CLI, append-only forward log), 18 tests. Golden:
+development 186 weeks +145.0 bp, t 3.24; test 147 weeks +147.2 bp, t 3.76, max drawdown -2.4 R (identical to the
+screen). Full suite 5,986 passed.
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean

@@ -1,0 +1,156 @@
+"""Local CSV roots and injected monthly S3 downloads; no network."""
+
+import io
+import zipfile
+from datetime import UTC, datetime
+from pathlib import Path
+from urllib.parse import urlparse
+
+import pandas as pd
+import pytest
+
+from backtester.data import binance_wide as data
+
+KLINE = "1704067200000,100,110,90,105,10,1704153599999,6000000,1,6,3600000,0\n"
+HEADER = (
+    "open_time,open,high,low,close,volume,close_time,quote_volume,count,"
+    "taker_buy_volume,taker_buy_quote_volume,ignore\n"
+)
+FHEADER = "calc_time,funding_interval_hours,last_funding_rate\n"
+
+
+def write(root, kind, text, sym="BTCUSDT"):
+    path = root / kind / f"{sym}.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_read_roots_header_and_no_header(tmp_path):
+    a, b = tmp_path / "a", tmp_path / "b"
+    write(a, "klines_1d", HEADER + KLINE)
+    write(
+        b,
+        "klines_1d",
+        KLINE.replace(",105,", ",999,") + KLINE.replace("1704067200000", "1704153600000"),
+    )
+    write(b, "funding", "1704096000123,8,0.0001\n")
+    write(a, "funding", FHEADER + "1704067200000,8,0.0002\n")
+    write(b, "klines_1d", HEADER + KLINE, "ETHUSDT")
+    d = data.read_klines("BTCUSDT", (a, b))
+    assert list(d.columns) == ["open", "close", "volume", "quote_volume", "taker_buy_volume"]
+    assert list(d.index) == list(pd.date_range("2024-01-01", periods=2, tz="UTC"))
+    assert d.close.tolist() == [105, 105]
+    f = data.read_funding("BTCUSDT", (a, b))
+    assert f.index.tolist() == [
+        pd.Timestamp("2024-01-01", tz="UTC"),
+        pd.Timestamp("2024-01-01 08:00", tz="UTC"),
+    ]
+    assert f.tolist() == [0.0002, 0.0001]
+    empty = data.read_funding("NONE", (a, b))
+    assert empty.empty and isinstance(empty.index, pd.DatetimeIndex)
+    assert str(empty.index.tz) == "UTC"
+    assert data.symbols((a, b)) == ["BTCUSDT", "ETHUSDT"]
+
+
+def zipped(text):
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w") as archive:
+        archive.writestr("data.csv", text)
+    return stream.getvalue()
+
+
+@pytest.mark.parametrize("end_month", ["2024-02", "2099-12"])
+@pytest.mark.parametrize("cached_funding", [True, False])
+def test_update_missing_months_pagination_and_atomic(
+    tmp_path,
+    monkeypatch,
+    end_month,
+    cached_funding,
+):
+    class March2024(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2024, 3, 15, tzinfo=UTC)
+
+    monkeypatch.setattr(data, "datetime", March2024)
+    write(tmp_path, "klines_1d", HEADER + KLINE)
+    if cached_funding:
+        write(tmp_path, "funding", FHEADER + "1704067200000,8,0.0001\n")
+    base = "data/futures/um/monthly/"
+    calls, replaces = [], []
+
+    def fetch(url, params=None):
+        calls.append((url, params))
+        if params is not None:
+            prefix = params["prefix"]
+            if prefix == base + "klines/":
+                if not params.get("marker"):
+                    return (
+                        f'<ListBucketResult xmlns="{data.NS[1:-1]}"><IsTruncated>true</IsTruncated>'
+                        f"<NextMarker>page2</NextMarker><CommonPrefixes><Prefix>{prefix}BTCUSDT/</Prefix>"
+                        "</CommonPrefixes></ListBucketResult>"
+                    ).encode()
+                assert params["marker"] == "page2"
+                names = ["ETHUSDT", "BTCUSDT_240329", "ETHBTC"]
+                contents = "".join(
+                    f"<CommonPrefixes><Prefix>{prefix}{s}/</Prefix></CommonPrefixes>" for s in names
+                )
+            else:
+                # January already cached for BTC; March is outside requested complete range.
+                contents = "".join(
+                    f"<Contents><Key>{prefix}X-2024-{m}.zip</Key></Contents>"
+                    for m in ["01", "02", "03"]
+                )
+            return (
+                f'<ListBucketResult xmlns="{data.NS[1:-1]}"><IsTruncated>false</IsTruncated>'
+                f"{contents}</ListBucketResult>"
+            ).encode()
+        key = urlparse(url).path
+        timestamp = "1706745600000" if "2024-02" in key else "1704067200000"
+        if "/fundingRate/" in key:
+            return zipped(FHEADER + f"{timestamp},8,0.0001\n")
+        return zipped(
+            (HEADER if "2024-02" in key else "") + KLINE.replace("1704067200000", timestamp)
+        )
+
+    original_replace = Path.replace
+
+    def replace(path, target):
+        assert path.suffix == ".tmp" and target.suffix == ".csv"
+        replaces.append(target)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", replace)
+    data.update(tmp_path, end_month, fetch=fetch)
+    downloads = [url for url, params in calls if params is None]
+    # BTC February x2; new ETH January + February x2; missing BTC funding adds January.
+    assert len(downloads) == (6 if cached_funding else 7)
+    assert not any("/klines/BTCUSDT/" in url and "2024-01" in url for url in downloads)
+    assert not any("2024-03" in url or "ETHBTC" in url or "_240329" in url for url in downloads)
+    assert len(replaces) == 4 and not list(tmp_path.rglob("*.tmp"))
+    assert len(data.read_klines("BTCUSDT", (tmp_path,))) == 2
+    assert len(data.read_klines("ETHUSDT", (tmp_path,))) == 2
+    calls.clear()
+    data.update(tmp_path, end_month, fetch=fetch)
+    assert not [url for url, params in calls if params is None]
+
+
+def test_failed_download_preserves_existing_file(tmp_path):
+    path = write(tmp_path, "klines_1d", HEADER + KLINE)
+    original = path.read_bytes()
+
+    def fetch(url, params=None):
+        if params is None:
+            raise OSError("download failed")
+        prefix = params["prefix"]
+        contents = (
+            f"<CommonPrefixes><Prefix>{prefix}BTCUSDT/</Prefix></CommonPrefixes>"
+            if prefix.endswith("klines/")
+            else f"<Contents><Key>{prefix}BTCUSDT-2024-02.zip</Key></Contents>"
+        )
+        return f"<ListBucketResult>{contents}</ListBucketResult>".encode()
+
+    with pytest.raises(OSError, match="download failed"):
+        data.update(tmp_path, "2024-02", fetch=fetch)
+    assert path.read_bytes() == original
