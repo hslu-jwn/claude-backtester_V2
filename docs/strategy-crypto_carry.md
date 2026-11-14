@@ -1,6 +1,7 @@
 # Strategy 19: Crypto funding carry (cross-sectional, Binance USD-M perpetuals)
 
-Status (2026-11-14): **one-time test PASSED** (idea I-73, `knowledge/ideas.md`; ledger `I73`). Spec written on
+Status (2026-11-14): spec **accepted by the user 2026-11-14** ("Yes, all three": R = 1,000 bp risk unit without a
+stop, build the research tool, forward paper log). **One-time test PASSED** (idea I-73, `knowledge/ideas.md`; ledger `I73`). Spec written on
 the user's go ("Yes, write the spec") for review; nothing is built yet. The rule below is the **frozen tested
 rule**; any change to it is a new, counted hypothesis with no clean test data left (forward data only).
 
@@ -109,9 +110,8 @@ can only catch a break.
 - A5: ties in the ranking are broken by symbol name (whether ties occurred is not checked yet; the build's
   golden check against the screen will show it).
 
-## Open for the user
+## Decisions by the user (2026-11-14, "Yes, all three")
 
-1. Accept R = 1,000 bp of one side's notional as a risk unit without a stop (A3), or ask for a stop-based
-   variant (a new hypothesis, forward data only)?
-2. Go for the build (C baskets, research tool only, about one Codex window)?
-3. Start the forward paper log (no orders) from the next Monday?
+1. R = 1,000 bp of one side's notional, a risk unit without a stop (A3).
+2. Build the research tool (C baskets, research tool only).
+3. Forward paper log (no orders) from Monday 2026-11-16, the first Monday after the go.

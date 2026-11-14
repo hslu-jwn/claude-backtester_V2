@@ -25,7 +25,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
-- 2026-11-14: spec for I-73 written ("Yes, write the spec"); one-time test of the frozen I-73 rule on 2021-09..2026-10 ("Yes, run I-73 test").
+- 2026-11-14: Strategy 19 spec accepted ("Yes, all three": R = 1,000 bp risk unit, build the research tool,
+  forward paper log from 2026-11-16); spec for I-73 written ("Yes, write the spec"); one-time test of the frozen I-73 rule on 2021-09..2026-10 ("Yes, run I-73 test").
 - 2026-11-13 (later): download of 15 more Binance USD-M perps as 1m klines + funding ("Yes, 15 perps").
 - 2026-11-13: challenge path simulator accepted; GBPUSD 2019 quarantine and data fixes 13.12-13.18;
   rollover fixes a + b + c; factors GBPJPY 1.09 / GBPUSD 1.38; spread table option A (full table);
@@ -43,9 +44,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    table; drop them like the seven FX symbols (2020 -> 2019, 2021 -> 2022 values)? Changes a default.
 4. **I-73 crypto funding carry PASSED its one-time test (2026-11-14):** 266 weeks, net +112 bp/week, t 2.93,
    pooled t 3.08, max drawdown -3,967 bp (`knowledge/ideas.md` › I-73). Not stop-defined (no R), Binance only.
-   Spec for review: `docs/strategy-crypto_carry.md` (Strategy 19); its "Open for the user": (1) R = 1,000 bp of one
-   side's notional as a risk unit without a stop, (2) go for the build (C baskets, research tool), (3) forward
-   paper log from the next Monday.
+   Spec accepted 2026-11-14 (`docs/strategy-crypto_carry.md`, Strategy 19); build and forward log in progress.
 5. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data (left as it is).
 
 ## Next step
