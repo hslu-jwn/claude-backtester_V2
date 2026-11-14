@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: Continue.Research Mode=auto (no limit), start
+
+- Start 18:00. HANDOFF: free-data idea space looks exhausted; no runnable candidate (all M15 drafts triaged out).
+- **Auto decision 1:** ask Fable 5.2 (subagent, model `fable`) now for the one long list of research directions
+  (CLAUDE.md › Mode=auto, Advisor, allowed until 2026-11-16) -> `knowledge/reviews/2026-11-14-fable-research-directions.md`.
+  Alternative: a harvest batch first. Why: the advisor window closes in two days and the list should steer the
+  next harvests and screens.
+- **Auto decision 2:** Binance positioning data (data.binance.vision `futures/um/daily/metrics`: 5-min open interest,
+  top-trader and account long/short ratios, taker ratio) probed, **not downloaded**: BTCUSDT starts 2020-09-01, every
+  other perp (ETH, BNB, LTC, DOGE, ZRX checked) only 2021-12-01, after the development cut (2021-09-14). A
+  cross-sectional positioning idea would have no development data; BTC alone has ~54 weeks. Alternative: download
+  all 37 and pre-register a test-only run. Why not: no development screen possible, one look at test data burns it.
+
 ## 2026-11-14: I-75 weekly crypto cross-sectional reversal KILLED (the user: "Yes, screen it")
 
 - Card and kills committed before data (68f9726), script frozen (5267451), power line before the run (59b3cd5: t 3
