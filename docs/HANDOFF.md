@@ -61,7 +61,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 2. **Auto run 2026-11-14 (research log, auto decisions 1-8):** Fable directions list (43 rows), FTMO pass map and
    power budget map (goal 1 needs ~+0.05 R net at ~300+ trades a year = ~2.5-5 bp gross per daily event), I-76
    killed, I-77 carded below cost, ideas triage, FTMO venue facts (59 share + 30 crypto CFDs), harvest batch 14
-   empty. The biggest unlock is Open 8 (crypto split); then Fable rows 9 / 21 on a powered crypto design.
+   empty. Crypto split adopted by the user (2026-11-14); next: Fable rows 9 / 21 on the wide universe (I-78..I-80).
 3. Research (before the auto run): the free-data idea space looked exhausted (four harvest batches, one screen). Options were:
    a new free data source (e.g. CFTC COT for positioning ideas, a download needing the user's go), or
    `Continue.Code` on V2.10 (A9 deferred; two-leg 2b when a pair idea survives a screen).

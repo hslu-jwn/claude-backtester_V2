@@ -932,6 +932,34 @@ points to ~0; cost per event ~8-10 bp (share CFD spread plus two nights of swap,
 Verdict: not screened (expected net <= 0; the US premium is reported gone). Reopen only if the 2020 paper's
 numbers show a large-cap premium after 2010 above ~20 bp per event.
 
+### I-78 / I-79 / I-80 Crypto wide factor set: taker-flow imbalance, MAX, volume shock (Fable rows 9 and 21, 2026-11-14; rules fixed before any data)
+First families on the crypto split (rule set by the user 2026-11-14: develop 2020-01-01 .. 2023-12-31, test once from
+2024-01-01; `docs/research-runner.md` › Periods). Universe: every Binance USDT-margined perpetual, delisted ones
+included (`research/screens/2026-11-14_binance_wide_download.py`, daily klines with taker buy volume, funding).
+Sources and labels: I-78 taker-flow imbalance, Fable row 9 (ORIGINAL; related: V1 ROADMAP 11.16 found BTC / ETH
+intraday flow effects of 2-5 bp, below fees); I-79 MAX, Bali, Cakici & Whitelaw 2011 "Maxing out" (equities,
+UNVERIFIED, not opened; crypto evidence unknown: sign not assumed); I-80 volume shock (no source known, attention
+buying; SPECULATIVE). Mechanism: I-78 one-sided aggressive flow (liquidations, worked orders) leaves either
+continuation or exhaustion; I-79 lottery demand overprices coins with extreme up-days; I-80 attention buying
+overprices coins after volume spikes. None is a forced counterparty: low priors (Fable 10 % each).
+Common rule (one cell per factor): every Monday 00:00 UTC, eligible = perps with >= 60 daily bars before the
+Monday and a median daily quote volume >= 5 million USDT over the last 30 days; a week needs >= 20 eligible. Signal
+from the 7 daily bars before the Monday: I-78 = (taker buy - taker sell) / volume summed over the 7 days; I-79 =
+the largest daily close-to-close return; I-80 = 7-day quote volume / (7 x mean daily quote volume of the 60 days
+before those 7). Sort ascending (ties by symbol name); n = floor(eligible / 5) per leg; spread = mean return of the
+top quintile - bottom quintile, equal weight, from the Monday open to the next Monday open (a member without that
+bar exits at its last close in the week: no survivorship). Weekly net of the spread = price spread - funding of
+the top leg + funding of the bottom leg - 20 bp (taker 5 bp a side, both legs, full turnover). The sign is not
+assumed: the tested direction is the sign of the development mean.
+Assumption (Opus): weekly rebalancing for all three (Fable row 9 said daily: at 20 bp a day the effect would need
+> 20 bp a day; weekly keeps the cost at 20 bp a week and matches I-73 / I-75).
+Kills per factor (two-sided, new family `crypto_xs_factors`, 3 hypotheses -> |t| >= 3.0): |t| of the weekly net
+in its own direction < 3.0, or net in that direction <= 0; halves (2020-21, 2022-23) not both > 0 in that direction;
+net <= 0 at 40 bp (doubled costs); net <= 0 without the 2 best weeks. Diagnostics: price / funding parts, members
+per leg, correlation of each factor's weekly spread with a 1-week past-return sort (I-75's closed signal) and with
+the other two factors.
+Power line (signal-free, before the screen): eligible count per week and the weekly sd of random quintile legs.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
