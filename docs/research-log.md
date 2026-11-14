@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: harvest batch 12: batch 10-11 academic cells rerun on terra high: nothing new (the user: "Yes, rerun them")
+
+- Codex `gpt-6.1-terra` high `--search`, 11 tasks T0078-T0088 (the 9 ACAD / CB cells of batches 10-11 with the same
+  queries; vol targeting filed under IDX-US.SWING.FLOW; two canaries), 2 parallel, no guard alarms, 0 % unverified.
+  12 ideas: the same ones terra medium found plus two new, both unusable (yen intervention aftereffect: untestable;
+  gold ETP flows: needs ETP flow data, source unfetchable); I-74 found again (dedup: ledger URL).
+- Canaries: known answer PASSED (Lustig et al., verified), nonsense empty. Reading: terra medium's misses were the
+  named-paper canary, not the content cells; these cells are exhausted for our data. Model: Opus + Codex terra high.
+
 ## 2026-11-14: canary check: worker effort, not the query (the user: "Canary check first")
 
 - Same sharp known-answer query (T0073's) on stronger settings: terra high (T0075) and sol medium (T0077) both found
