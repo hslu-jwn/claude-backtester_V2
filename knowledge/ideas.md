@@ -50,62 +50,62 @@ Already tested and failed (do not re-propose unchanged): session-zone sweep (1),
 | I-01 ★ | Noise / regime study: ER per symbol, timeframe, half | study | all, 15m-1d | – | K ch.1, 17, 20, 23 | done 2026-10-14 (ROADMAP 11.1): all markets near random-walk noise, indices not noisier; ER explains the sign of strategy 4's gross R, not enough to pay costs |
 | I-02 | Trend-quality gate (ER, regression r, strength osc.) on strategies 2 and 4 | filter | all | – | K p.10-14, 275, 408 | dropped by the user 2026-10-15 (ROADMAP 11.1: noise only picks the better part of a signal without net edge) |
 | I-09 ★ | Open / gap / trend-day statistics on indices | study | NAS100, US500 | none | K ch.15-16, H; EC p.93-96, 155-157 | done 2026-10-15 (ROADMAP 11.2): gap fill mostly random-walk touch, no first-30 continuation, 7 % trend days; only candidate = I-39 |
-| I-17 | Time-of-day drift by session | study | XAUUSD, FX | none | K p.689-699; EC p.63, 96 | open |
+| I-17 | Time-of-day drift by session | study | XAUUSD, FX | none | K p.689-699; EC p.63, 96 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: clock windows (SC1 / SC2, 1,452 cells)) |
 | I-07 ★ | Volatility-scaled opening range breakout | signal | indices, gold; 5-15m | none | K p.759-764; A ORB | development 2026-10-16 (ROADMAP 11.10): price-only no edge (0/23 variants net positive, costs ~0.1 R/trade); candidate only with the volume filter on US indices; test period 2021-09..2026 (ROADMAP 11.10): band 0.25 ATR + volume +30 R net / 301 trades (+0.10 R/trade) but 2024-26 only +2.7 R: positive, fading, not significant |
 | I-08 ★ | ORB only after inside / NR4 day or low vol | filter+signal | all; 5-15m | none | K p.759-764 | development 2026-10-16: inside-day filter best gross (+0.08 R/trade) but net -0.02 R/trade; NR4 net -0.07 |
-| I-16 ★ | Intraday volatility-shock fade | signal | gold, indices; 5-30m | none | K p.775-777, 626-634 | open |
-| I-03 ★ | RSI(2) mean reversion | signal | indices (1h-1d) | 0-1 night | K p.389-390; KD App.A | open |
-| I-05 ★ | Pullback entry inside a slow trend | signal | all; 15m-1d | some | K p.950, 418, 835; JK p.101 | open |
-| I-11 | Midday support/resistance + afternoon breakout | signal | indices; 15-30m | none | K p.754 | open |
-| I-10 | Opening inside-bar break with double top | signal | indices; 10m | none | H | open |
-| I-12 | Fade outside bar / key reversal with range filter | signal | all; 1h-1d | short | K p.111, 157-158 | open |
-| I-13 | Nofri congestion third-bar reversal | signal | FX, gold; 15m-1h | none | K p.155-157 | open |
-| I-14 | ATR swing-filter (event) trend | signal | all; 1h-1d | yes | K p.182-191, 218 | open |
-| I-15 | 3-ATR momentum continuation bar | signal | indices, gold | short | K p.333, 380 | open |
-| I-18 | Month-end index flow | signal | NAS100, US500 | ~5 nights | K p.726-729, 480 | open |
-| I-19 | Gustafson 4-down-closes long | signal | indices; 1h-1d | 1-8 nights | K p.1010; KD App.A | open |
-| I-20 | NAS100/US500 ratio stress (pairs) | signal | NAS100+US500 | both legs | K p.583-612 | open |
-| I-23 | Coded chart patterns (rectangle, double top, H&S) | signal | all; 1h-1d | yes | K p.176-178 | open |
-| I-30 | Round numbers and daily pivots (also as target/skip layer) | signal+filter | all; 1-15m | none | K p.81, 143, 167; V ch.7-15; A | open |
-| I-31 | Value area (Market Profile from M1) | filter+signal | all | none | K p.822-830 | open |
-| I-32 | Squeeze breakout (Bollinger-in-Keltner, or low short / long volatility ratio) | signal | all; 15m-4h | some | K p.330; JK p.103-105 | open |
-| I-04 | Low-vol entry filter, high-vol / shock exit with re-entry | filter+exit | trend systems | – | K p.861-866, 992 | open |
-| I-06 | Wait-for-pullback window, scale in over bars | entry mgmt | any signal | – | K p.1076-1079 | open |
-| I-24 | Scale out in thirds; minimum 3:1 target gate | exit mgmt | any signal | – | D ch.11; JK p.187, 199 | open |
-| I-25 | Press winners: ATR pyramiding / add on new highs | exit mgmt | any signal | – | H; K p.1080-1084, 229 | open |
-| I-26 | Drawdown-scaled risk; 20-loser check; daily give-back stop | risk | R lists | – | K p.231; D ch.11; A ch.7 | open |
-| I-27 | Volatility-targeted sizing | risk | R lists | – | K p.1046-1054, 1142; RC ch.9; EC ch.8 (see I-53) | open |
-| I-21 | Hourly / seasonal volatility sizing, skip low-range hours | risk | all | – | K p.453-454, 561; LP 19.3 | open |
-| I-28 | Streak dependence test; equity-curve filter | risk/study | R lists | – | D ch.5; K p.1086 | open |
-| I-29 | Carry: hold the positive-swap side with a trend/stop guard | signal | GBPJPY etc. | earns | K p.596-599; RC App.B (see I-51) | open |
-| I-33 ★ | Compression block/range break with EMA squeeze and tension | signal | all; M1-M5 (15m for zones) | none | V ch.10-13; C ch.7 | open |
-| I-34 | Zone duration vs breakout move size (cause and effect) | study/filter | all | – | C ch.4, 7 | open |
-| I-35 | Second break (W/M) at the 20 EMA, micro pullback | signal | FX, gold; M1-M3 | none | V ch.7-9 | open |
-| I-36 ★ | Tipping-point exit module; breakeven vs no breakeven A/B | exit mgmt | any entry | – | V ch.14; A; C ch.8; RC ch.13 | open |
-| I-37 ★ | Free-path-to-target skip filter | filter | any entry | – | V ch.15; A rule 5 | open |
-| I-38 | Session-mean (VWAP proxy) hold / rejection | signal | indices; 5m | none | A VWAP | open |
+| I-16 ★ | Intraday volatility-shock fade | signal | gold, indices; 5-30m | none | K p.775-777, 626-634 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: H1 shock / bar pattern) |
+| I-03 ★ | RSI(2) mean reversion | signal | indices (1h-1d) | 0-1 night | K p.389-390; KD App.A | tested (ledger H10, I-03 RSI(2) index mean reversion) |
+| I-05 ★ | Pullback entry inside a slow trend | signal | all; 15m-1d | some | K p.950, 418, 835; JK p.101 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: trend + bar pattern) |
+| I-11 | Midday support/resistance + afternoon breakout | signal | indices; 15-30m | none | K p.754 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar / level pattern) |
+| I-10 | Opening inside-bar break with double top | signal | indices; 10m | none | H | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-12 | Fade outside bar / key reversal with range filter | signal | all; 1h-1d | short | K p.111, 157-158 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-13 | Nofri congestion third-bar reversal | signal | FX, gold; 15m-1h | none | K p.155-157 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-14 | ATR swing-filter (event) trend | signal | all; 1h-1d | yes | K p.182-191, 218 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: trend at any speed) |
+| I-15 | 3-ATR momentum continuation bar | signal | indices, gold | short | K p.333, 380 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern / H1 shock) |
+| I-18 | Month-end index flow | signal | NAS100, US500 | ~5 nights | K p.726-729, 480 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: month-end in any form) |
+| I-19 | Gustafson 4-down-closes long | signal | indices; 1h-1d | 1-8 nights | K p.1010; KD App.A | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: daily reversal) |
+| I-20 | NAS100/US500 ratio stress (pairs) | signal | NAS100+US500 | both legs | K p.583-612 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: pairs (P01 / P02) and two-leg costs) |
+| I-23 | Coded chart patterns (rectangle, double top, H&S) | signal | all; 1h-1d | yes | K p.176-178 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-30 | Round numbers and daily pivots (also as target/skip layer) | signal+filter | all; 1-15m | none | K p.81, 143, 167; V ch.7-15; A | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: round numbers) |
+| I-31 | Value area (Market Profile from M1) | filter+signal | all | none | K p.822-830 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: level rule at tight stops) |
+| I-32 | Squeeze breakout (Bollinger-in-Keltner, or low short / long volatility ratio) | signal | all; 15m-4h | some | K p.330; JK p.103-105 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: compression family) |
+| I-04 | Low-vol entry filter, high-vol / shock exit with re-entry | filter+exit | trend systems | – | K p.861-866, 992 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-06 | Wait-for-pullback window, scale in over bars | entry mgmt | any signal | – | K p.1076-1079 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-24 | Scale out in thirds; minimum 3:1 target gate | exit mgmt | any signal | – | D ch.11; JK p.187, 199 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-25 | Press winners: ATR pyramiding / add on new highs | exit mgmt | any signal | – | H; K p.1080-1084, 229 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-26 | Drawdown-scaled risk; 20-loser check; daily give-back stop | risk | R lists | – | K p.231; D ch.11; A ch.7 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-27 | Volatility-targeted sizing | risk | R lists | – | K p.1046-1054, 1142; RC ch.9; EC ch.8 (see I-53) | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-21 | Hourly / seasonal volatility sizing, skip low-range hours | risk | all | – | K p.453-454, 561; LP 19.3 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-28 | Streak dependence test; equity-curve filter | risk/study | R lists | – | D ch.5; K p.1086 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-29 | Carry: hold the positive-swap side with a trend/stop guard | signal | GBPJPY etc. | earns | K p.596-599; RC App.B (see I-51) | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: carry / trend with swap (I-51)) |
+| I-33 ★ | Compression block/range break with EMA squeeze and tension | signal | all; M1-M5 (15m for zones) | none | V ch.10-13; C ch.7 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: compression family (M15 drafts triaged)) |
+| I-34 | Zone duration vs breakout move size (cause and effect) | study/filter | all | – | C ch.4, 7 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: study for a dead family) |
+| I-35 | Second break (W/M) at the 20 EMA, micro pullback | signal | FX, gold; M1-M3 | none | V ch.7-9 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-36 ★ | Tipping-point exit module; breakeven vs no breakeven A/B | exit mgmt | any entry | – | V ch.14; A; C ch.8; RC ch.13 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-37 ★ | Free-path-to-target skip filter | filter | any entry | – | V ch.15; A rule 5 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-38 | Session-mean (VWAP proxy) hold / rejection | signal | indices; 5m | none | A VWAP | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar / level pattern) |
 | I-39 | Previous-close magnet on gap days (red-to-green) | signal | indices; 5m | none | A ch.7; EC p.93-96, 155-157 (opposite side: I-46) | no edge 2026-10-16 (ROADMAP 11.4-11.7: weak positive 2020-26, negative 2018-19, walk-forward +0.6 R / 1423 trades, Monte Carlo verdict NO EDGE for walk-forward and default; random fills and costs x1.5 kill it) |
-| I-40 | Exhaustion reversal: 5+ candles, RSI extreme, at a level | signal | indices, gold; 5m | none | A reversal | open |
-| I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | open |
-| I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | open |
-| I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | open |
+| I-40 | Exhaustion reversal: 5+ candles, RSI extreme, at a level | signal | indices, gold; 5m | none | A reversal | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: oscillator / exhaustion) |
+| I-41 | Wick rejection at a zone, spring / upthrust (price-only) | signal | all; 15m-1h | some | C ch.5-6 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: wick rejection) |
+| I-42 | Breakout retest / role-reversal second entry | signal | all; M1-1h | none | V ch.13; C ch.7 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: bar pattern) |
+| I-43 | M1 path-length activity proxy (absorption study) | study | all | – | C ch.4 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: study for a dead family) |
 | I-44 | Volume rules (relative tick volume, climaxes, true VWAP) | signal+filter | needs MT5 tick volume | – | C; A | unblocked 2026-10-15 (MT5 tick volume, ROADMAP 11.5); user 2026-10-15: test it as an A/B activity filter, first on the opening-range breakout; result 2026-10-16: relative tick volume >= 1.5 improves 17 of 18 ORB variants (+0.013 R/trade) |
 | I-45 ★ | Cost-to-target filter: skip when spread/target > 0.10-0.15 | filter | any entry | – | V ch.1, 14; RC ch.12 (see I-52) | built as cost / stop (`CostConfig.max_cost_r`, 2026-10-14); strategy 2 at 0.10 R: net +57 R better, still negative (ROADMAP 10.5) |
 | I-46 ★ | Gap momentum: open beyond the previous high / low by 0.1 sd of daily returns, exit at the close; FX version from the London open | signal | NAS100, US500, XAUUSD; GBPUSD (05:00-17:00 ET); 5m-1h | none | EC p.155-157 | tested 2026-10-20 (ROADMAP 11.12): indices and GBPUSD / EURUSD no edge (decayed after 2018); XAUUSD London-open version positive on MT5 2021-26 (+17.8 R, 347 trades) but NO EDGE verdict (t 1.0) |
-| I-47 | Euro-night style fade: ATR-stretched average high / low limit entry, session exit | signal | GBPUSD, XAUUSD; 60-105m | none | KD ch.18 | open |
-| I-48 | Euro-day exhaustion fade: new 3-5 bar extreme against 70-80 bar momentum, limit beyond the extreme | signal | FX, gold, indices; 60m | none | KD ch.18 | open |
-| I-49 ★ | Volatility-percentile regime filter: decile rank of realised vol vs own history, strategies run per bucket | filter | all | – | JK p.64-72; EC p.184-186 | open |
-| I-50 | Meta-labelling of an existing primary signal: rule-based features, purged time blocks, trade / skip | filter | strategies 1-6 | – | LP 3.6-3.8, 8, 9.4 | open |
+| I-47 | Euro-night style fade: ATR-stretched average high / low limit entry, session exit | signal | GBPUSD, XAUUSD; 60-105m | none | KD ch.18 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: session fade (London fix family)) |
+| I-48 | Euro-day exhaustion fade: new 3-5 bar extreme against 70-80 bar momentum, limit beyond the extreme | signal | FX, gold, indices; 60m | none | KD ch.18 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: session fade / exhaustion) |
+| I-49 ★ | Volatility-percentile regime filter: decile rank of realised vol vs own history, strategies run per bucket | filter | all | – | JK p.64-72; EC p.184-186 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-50 | Meta-labelling of an existing primary signal: rule-based features, purged time blocks, trade / skip | filter | strategies 1-6 | – | LP 3.6-3.8, 8, 9.4 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
 | I-51 | EWMAC multi-speed (16:64, 32:128, 64:256) with swap as the carry forecast | signal | all; D1 | yes (carry) | RC ch.7-8, App.B; EC ch.6 | killed 2026-11-12 (D3 screen, ledger I51) |
-| I-52 | Cost-limit screen: turnover x standardised cost <= 1/3 of the plausible pre-cost Sharpe | filter | all | – | RC ch.12 | open |
-| I-53 | CPPI sub-account and Kelly per strategy for the FTMO limit | risk | R lists | – | EC ch.8 | open |
-| I-54 | Cool-down after a win / loss (re-entry timing) on a breakout entry | entry mgmt | any | – | KD p.24-28 | open |
-| I-55 | CUSUM event triggers (volatility-scaled filter rule), continuation or fade | signal | all; 5m-1h | none | LP 2.5.2.1 | open |
-| I-56 | Structural-break (CUSUM, SADF) and entropy regime flags | filter | all; H1-D1 | – | LP 17, 18 | open |
-| I-57 | Probability-to-size mapping and concurrency sizing | risk | R lists | – | LP 10, 4.3 | open |
-| I-58 | Half-life z-score mean reversion (linear or Bollinger), gated by T-11 | signal | all; M15-H4 | none intraday | EC p.48-50, 70-72 | open |
+| I-52 | Cost-limit screen: turnover x standardised cost <= 1/3 of the plausible pre-cost Sharpe | filter | all | – | RC ch.12 | done in effect 2026-11-14 (cost wall §3-4, power budget map, pass map) |
+| I-53 | CPPI sub-account and Kelly per strategy for the FTMO limit | risk | R lists | – | EC ch.8 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-54 | Cool-down after a win / loss (re-entry timing) on a breakout entry | entry mgmt | any | – | KD p.24-28 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-55 | CUSUM event triggers (volatility-scaled filter rule), continuation or fade | signal | all; 5m-1h | none | LP 2.5.2.1 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: H1 shock family) |
+| I-56 | Structural-break (CUSUM, SADF) and entropy regime flags | filter | all; H1-D1 | – | LP 17, 18 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-57 | Probability-to-size mapping and concurrency sizing | risk | R lists | – | LP 10, 4.3 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
+| I-58 | Half-life z-score mean reversion (linear or Bollinger), gated by T-11 | signal | all; M15-H4 | none intraday | EC p.48-50, 70-72 | closed 2026-11-14 (Fable row 24 triage: stop list, cost-wall §4: no stationarity (T-11)) |
 | I-59 | FX cointegration pair (AUDUSD vs CADUSD style) | signal | needs AUDUSD, USDCAD from histdata | rollover | EC p.108-112 | blocked (symbols not in the data) |
-| I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | open |
+| I-60 | Sigma-band stops and targets scaled with sqrt(holding time) | exit mgmt | any entry | – | JK p.161, 91-95 | parked 2026-11-14 (Fable row 24 triage: management layer, cannot create an edge; only on a stream with a net edge) |
 | I-61 | Momentum after a large hourly move: after an H1 bar beyond k robust sd, trade its direction for h bars (11.11: small moves revert, big ones continue) | momentum | FX, metals, indices / H1 | none if flat by the session end | 11.11 study | tested 2026-10-20 (ROADMAP 11.13): no robust edge; continuation carried by the top 1 % events; NAS100 H1 k4 h2 closest (+0.20 sd trimmed, t 1.7, decaying) |
 | I-62 | No-wick retest: limit at the no-wick end of a trend candle (Bard FX video), many stops / targets / filters | signal | all; 5m-1h | none (16:55 exit) | user 2026-10-21 | **no edge** 2026-10-21 (ROADMAP 11.17): 0.4 % of 4,608 variants positive; gold H1 cluster failed out of sample (-0.02 R/trade) |
 | I-63 | FX local-hours depreciation (Breedon & Ranaldo 2013): short EURUSD in European hours, long XXXUSD in US hours; extends I-17 | time of day | EURUSD, GBPUSD, AUDUSD, NZDUSD; session hold | none (exit 20:30 London) | PUBLISHED (sample to 2007, unreplicated); `knowledge/research/reports/2026-11-09_fx_gold_time_of_day.md` | tested 2026-11-09 (strategy 10 F1a / F1b): F1 not supported (joint rule); F1a EURUSD alone +0.042 R / trade net, p 0.008, but GBPUSD and F1b fail; lead for the user |

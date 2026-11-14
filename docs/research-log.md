@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: ideas triage (Fable row 24); free futures data (row 33): Stooq gated; books asked
+
+- `knowledge/ideas.md` overview: 48 "open" rows re-labelled: 29 closed by the cost-wall §4 stop list (family named),
+  17 parked as management layers (only on a stream with a net edge), I-03 tested (ledger H10), I-52 done in effect.
+  Tooling rows T-xx stay open (T-16 partly answered by the pass map). No data, Opus.
+- Row 33: Stooq's free futures CSV sits behind a JavaScript proof-of-work bot check (not bypassed); EIA has energy
+  contracts 1-4 only. No free contract-level diversified futures source found: goal-2 futures stay blocked on data.
+- Telegram "Optional: New books needed" (Fable row 43): Carver *Advanced Futures Trading Strategies*, Pedersen
+  *Efficiently Inefficient*, Harris *Trading and Exchanges*, Ilmanen *Expected Returns*, Bouchaud et al. *Trades,
+  Quotes and Prices* (none in `knowledge/books/`).
+
 ## 2026-11-14: power budget map (Fable row 5); row 12 skipped (auto)
 
 - **Auto decision 6:** Fable row 12 (index-review auction pooled over six indices) not screened: ~48 events a year
