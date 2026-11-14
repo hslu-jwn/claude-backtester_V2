@@ -35,17 +35,10 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   `docs/HANDOFF.md` and the ROADMAP step, run tests + ruff as a baseline, say in max 10 lines
   what you will do (plan, test cases, files, models), ask all open questions at once, then work
   test-first, step by step with the user's ok.
-- **`Continue.Research [Limit=<time>] [Test=manual|auto] [<CANDIDATE or idea ID>]`:** the autonomous research loop
+- **`Continue.Research [Limit=<time>] [Mode=manual|auto] [<CANDIDATE or idea ID>]`:** the autonomous research loop
   (research is back in this team since 2026-11-09, the user): pick a candidate or research a new
   idea, spec with pre-registered gates, implement, development run, gates, record. Full procedure
-  in the `continue-research` skill (load it first). **One-time MT5 test mode (rule set by the user, 2026-11-09):** default `Test=manual`: a
-  candidate that passes all pre-registered development gates is parked in HANDOFF › Open as
-  "ready for the one-time test" and the loop moves on. `Test=auto`, given with the command (e.g.
-  `Continue.Research Test=auto`): the loop runs the one-time test itself, only for a candidate that
-  passed every pre-registered development gate. Both modes: exactly once per candidate, no retest
-  after a fail, the variant is frozen before the test, pass or fail recorded in the research log
-  and HANDOFF. Auto lasts for that run only; the next session is manual unless the user says
-  `Test=auto` again. Never change defaults (costs, sweep options, spread table) without the
+  in the `continue-research` skill (load it first). One-time MT5 test: exactly once per candidate, no retest after a fail, the variant frozen before the test, pass or fail recorded in the research log and HANDOFF; who decides to run it: `Mode` below. Never change defaults (costs, sweep options, spread table) without the
   user's go. `Continue.Knowledge` and `Begin.` are retired; if the user says one, offer
   `Continue.Research`.
 - **Continuous `Continue.Research` (the user, 2026-11-09):** runs with no time limit until
@@ -65,11 +58,24 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   session step with 2-3 concrete next steps and a pick, across both modes. When the `Continue.Code`
   work is done, propose research (`Continue.Research`: next candidate, screen, idea), and when research
   stalls, propose the code or tooling it needs, so the user can always stay productive.
-- **Auto mode (rule set by the user, 2026-11-12: "Mode = auto from now on"):** pick the next step
-  yourself (code or research) and start it without asking; report each finished step with what comes
-  next. Still ask for: the one-time MT5 test (stays `Test=manual` unless the user says `Test=auto`),
-  defaults (costs, spread table, risk), new dependencies or downloads, and anything the rules above
-  reserve for the user.
+- **`Mode=manual|auto` (rule set by the user, 2026-11-14; replaces `Test=` and the 2026-11-12 auto
+  rule):** given with `Continue.Code` or `Continue.Research` (e.g. `Continue.Research Mode=auto`); default
+  `manual`; lasts for that session only.
+  - `manual`: ask as before (one-time MT5 test parked in HANDOFF › Open, downloads, harvest batches, picks).
+  - `auto`: Opus decides every pick itself and always takes its own first pick (reruns, downloads, harvest
+    batches, sessions / subagents, the one-time MT5 test for a candidate that passed every pre-registered
+    development gate). Only two things still wait for the user: changing defaults (costs, spread table,
+    risk) and anything touching live orders or money; those go to HANDOFF › Open with a Telegram and the
+    run continues with the rest.
+  - `auto` never runs out of work: when no carded idea or candidate is left, Opus finds new sources (web
+    research through subagents, harvest batches, new data it can get, books). Goal 1: strategies that pass
+    prop-firm (FTMO) rules; goal 2: futures, swing and other strategies. It may ask for books or data the
+    user must get himself (Telegram "Optional: ...").
+  - Advisor: until 2026-11-16 Opus may ask Fable 5.2 (subagent, model `fable`) when it cannot find an answer
+    itself, and gets from it one long list of possible research directions for the future (saved in
+    `knowledge/`). After 2026-11-16 no Fable calls.
+  - Every auto decision goes into `docs/research-log.md` (decision, the alternative, why) and is listed at
+    `End.`.
 - **`Pause.`:** finish the current step cleanly (commit, push, log) and wait until `Continue.`.
 - **`Continue.`:** resume where the run paused.
 - **`Stop.`:** end the current run within 1-2 minutes at a clean point: finish or roll back
@@ -81,7 +87,8 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   items live in git), copy `results/trials.jsonl` to `research/trials.jsonl` (the trial count is
   versioned, review B7), move finished briefs to `docs/archive/briefs/` (review A10; rules set by
   the user 2026-11-11), commit, push, clean `git status`. Reply in max 10 lines: done, not done, decisions, next step, first prompt for
-  the next chat.
+  the next chat; after a `Mode=auto` run also the list of decisions Opus made on its own (from the
+  research log), however long.
 - **During any session:** when the user says ok / yes, it is final: write it into the repo in
   the same commit (rule -> `docs/` "(rule set by the user, <date>)"; accepted -> ROADMAP
   "accepted by the user <date>"). Never ask about it again.
@@ -94,3 +101,8 @@ Current state, accepted work and next step: `docs/HANDOFF.md`; plan: `docs/ROADM
   symbols, trades, win rate, avg R, net R (doubled costs), profit factor, max drawdown R,
   dev period. A session waiting for the user is announced by the user-level `Notification`
   hook (same tool, `--hook`).
+  **Format and auto (rule set by the user, 2026-11-14):** short, one line each, e.g. `Action needed: ...`,
+  `Strategy XX: Passed, +4 R per month, ...` / `Strategy XX: Failed, ...`, `Optional: New books needed:
+  ..., ...`. In `Mode=auto` send only what matters for the project's main structure: an action needed
+  (defaults, live orders, money), a strategy passing or failing its one-time test, a change to shared
+  engine / risk code, and optional requests (books, data). Downloads are not reported.

@@ -1,11 +1,11 @@
 ---
 name: continue-research
-description: Procedure for the user's Continue.Research command - the autonomous research loop (pick or research a strategy idea, spec with pre-registered gates, implement, development run, gates, record; one-time MT5 test per Test=manual (default) / Test=auto). Load when the user says Continue.Research.
+description: Procedure for the user's Continue.Research command - the autonomous research loop (pick or research a strategy idea, spec with pre-registered gates, implement, development run, gates, record; Mode=manual (default) / Mode=auto: CLAUDE.md). Load when the user says Continue.Research.
 ---
 
 # Continue.Research (research back in this team since 2026-11-09, the user)
 
-`Continue.Research [Limit=<time>] [Test=manual|auto] [<CANDIDATE or idea ID>]` runs the whole research loop in this
+`Continue.Research [Limit=<time>] [Mode=manual|auto] [<CANDIDATE or idea ID>]` runs the whole research loop in this
 repo. The former research department (2026-10-27 to 2026-11-06) is archived; its records are in
 `knowledge/research/`, its unbuilt drafts in `research/candidates/`. There is no queue, no JSON
 envelope and no feedback file any more: decisions go into the spec and `docs/research-log.md`.
@@ -88,18 +88,16 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   `python -m backtester.tools.research research/grids/<name>.toml` (development only, before
   2021-09-14; the one-time test needs `--test`, review B2, 2026-11-11).
 - Compute the gates on the development run and report every cell with all metrics. Pass / fail is
-  read mechanically from the pre-registered gates (that is what `Test=auto` acts on); anything beyond
-  them (a retest, a rule change, a rescue) is the user's decision. Failed and rejected strategies stay
+  read mechanically from the pre-registered gates (that is what `Mode=auto` acts on); anything beyond
+  them (a retest, a rule change, a rescue) is the user's decision in `manual`, Opus's first pick in `auto`
+  (recorded as an auto decision). Failed and rejected strategies stay
   recorded.
-- **One-time MT5 test mode (rule set by the user, 2026-11-09):** default `Test=manual`: a
-  candidate that passes all pre-registered development gates is parked in HANDOFF › Open as
-  "ready for the one-time test" and the loop moves on. `Test=auto`, given with the command (e.g.
-  `Continue.Research Test=auto`): the loop runs the one-time test itself, only for a candidate that
-  passed every pre-registered development gate (runner `--test`). Both modes: exactly once per candidate, no retest
-  after a fail, the variant is frozen before the test, pass or fail recorded in the research log
-  and HANDOFF. Auto lasts for that run only; the next session is manual unless the user says
-  `Test=auto` again. Never change defaults (costs, sweep options, spread table) without the
-  user's go.
+- **One-time MT5 test:** exactly once per candidate, no retest after a fail, the variant frozen before the
+  test (runner `--test`), pass or fail recorded in the research log and HANDOFF. `Mode=manual` (default):
+  a candidate that passes all pre-registered development gates is parked in HANDOFF › Open as "ready for
+  the one-time test". `Mode=auto`: the loop runs it itself. Both: never change defaults (costs, sweep
+  options, spread table) without the user's go. `Mode=auto` in full (never out of work, Fable advisor until
+  2026-11-16, Telegram format, auto-decision log): CLAUDE.md › `Mode=manual|auto`.
 
 ## Record
 

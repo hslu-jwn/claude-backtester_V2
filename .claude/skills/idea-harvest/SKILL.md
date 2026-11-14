@@ -11,7 +11,9 @@ Every idea, kept or not, ends as a row in the one ledger `research/ledger.csv`.
 ## Needs the user's OK first
 
 A batch (its size and the Codex share), any new data download or purchase, a new source type with
-terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own initiative.
+terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own initiative in
+`Mode=manual`. In `Mode=auto` (CLAUDE.md) Opus decides all of these itself and logs each as an auto
+decision; purchases still need the user (money).
 
 ## Steps
 
