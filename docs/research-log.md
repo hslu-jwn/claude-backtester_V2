@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: paused (the user: "Pause.", "finish everything first")
+
+- Clean point: strategy 19 tool built and committed (2bfc8b1), full suite 5,962 passed, ruff clean. Resume with:
+  forward log from about 2026-12-02 (HANDOFF › Open 4), then the next Binance idea or HANDOFF › Open.
+
 ## 2026-11-14: Strategy 19 research tool built (the user: "Yes, all three")
 
 - Codex `gpt-6.1-sol` medium (brief `briefs/crypto_carry.md`, ~25 min, guard ok): `strategy/crypto_carry/book.py`,
