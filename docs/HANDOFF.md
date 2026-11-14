@@ -29,6 +29,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-14: crypto split (develop 2020-2023, test once 2024+, wider perp universe incl. delisted) for crypto families
+  with no look yet (`docs/research-runner.md` › Periods).
 - 2026-11-14: everything of this session accepted at `End.`; Strategy 19 forward paper log only after the failed
   replication; replication download of 20 perps; Strategy 19 spec (R = 1,000 bp risk unit without a stop, research
   tool, forward log from 2026-11-16); I-73 one-time test; fsync fix; harvest batches 10-13 and the canary check.
@@ -49,9 +51,6 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 6. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data.
 7. **(auto run 2026-11-14) Strike Open 1?** Both parked MT5 tests look spent (V1 ran strategy 4 on GBPJPY 2023-26;
    gap momentum ran on MT5 2021-26), like gap fade in review B3. Opus did not run them (research log, auto decision 3).
-8. **(auto run 2026-11-14, Fable row 7) Crypto split:** for crypto families with no look yet, develop on 2020-01..2023-12
-   and test once from 2024-01, plus a wider perp universe (incl. delisted). Fable's arithmetic: detectable weekly
-   effect ~290 -> ~85 bp. Also unlocks Binance open-interest files (alts start 2021-12). Changes a research rule.
 9. **(auto run 2026-11-14, Fable row 20) Stop rule for signal research:** after K = 10 more falsified screens with no
    pass, goal-1 signal research pauses and effort goes to prop mechanics, forward logs, combining streams and code.
 

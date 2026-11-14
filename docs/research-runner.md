@@ -187,6 +187,13 @@ Top-level `shocks` is boolean, default true; it controls diagnostics, not the re
   nearest measured year, so the development period may use spreads measured later (NAS100 / US500 in
   2015-2020 use the 2021 values, and 2021 is measured over the whole year, across the cutoff). Accepted
   because costs are no trading signal (rule set by the user, 2026-10-27; full check finding 7).
+- **Crypto split (rule set by the user, 2026-11-14; Fable directions row 7):** a crypto family with no look yet
+  (Binance perps, any universe) develops on **2020-01-01 .. 2023-12-31** and is tested once from **2024-01-01** to
+  the last cached day; the universe may be widened to every Binance USD-M perp, delisted ones included (no
+  survivorship). Families already looked at on the old split keep it (closed or tested: `crypto_carry_xs`,
+  `crypto_xs_reversal`, `crypto_liquidation_reversal`, `funding_settlement`, `crypto_trend`, `crypto_intraday`,
+  `lead_lag` BTC-ETH, `crypto_event`); crypto momentum (HANDOFF Open 5) still needs the user's go. Reason: on the
+  old split a weekly cross-sectional rule had ~82 development weeks on 4-vs-4 legs (t 3 needs ~290 bp a week).
 
 Use `--cache-dir PATH` to read every grid symbol from a separate cache; PATH and each symbol's
 subfolder must exist. The selected folders are saved in run settings as `cache_dirs` for downstream
