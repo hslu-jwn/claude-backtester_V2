@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: resumed (the user: "Continue."); HV-T0020-3 closed as untestable
+
+- Funding-extreme fade on single coins, power check on 17 perps (signal-free, development): 920 episodes but only
+  122 separate 72 h clusters; 72 h sd 1,132 bp -> t 3 needs ~300 bp per episode vs 59 bp halved claim. Closed,
+  not screened; the cross-sectional version (I-73) covers the mechanism. Model: Opus only.
+
 ## 2026-11-14: paused (the user: "Pause.", "finish everything first")
 
 - Clean point: strategy 19 tool built and committed (2bfc8b1), full suite 5,962 passed, ruff clean. Resume with:
