@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: I-81 new-listing drift KILLED (auto; the user: "Keep researching")
+
+- Fable row 19 on the crypto split. Card + kills before data (6886954), script frozen (84a5482), power line
+  (1c18c02: t 3 needs ~536 bp per event; **auto decision 10:** screen anyway, one counted look in a new family;
+  alternative: close as underpowered like HV-T0020-3).
+- Result: 234 events, net +611.5 bp per event, t 1.16 (median +1,948: most listings fall against BTC; squeezes in
+  the tail); halves +538 / +682; doubled costs +592. KILLED on t. Model: Opus.
+
 ## 2026-11-15: Strategy 20 realism check (the user: "Yes, realism check")
 
 - Diagnostics on spent data, no gate: break-even extra slippage ~37 bp per side per member (test); with tiered

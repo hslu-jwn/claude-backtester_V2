@@ -989,7 +989,7 @@ about half the edge is pump capture in small perps (position limits, slippage an
 the rest ~+56 bp a week, the same in both periods. Not on FTMO: the effect sits in small alts, FTMO lists ~30
 large coins at 10-40 bp. Goal 2 only; anything live touches money (the user's decision).
 
-### I-81 New-listing drift on Binance USDT perps (Fable directions row 19, 2026-11-15; rule fixed before any data)
+### I-81 New-listing drift on Binance USDT perps (Fable directions row 19, 2026-11-15; rule fixed before any data; KILLED)
 Source: Fable 5.2 row 19 (no published source known; label ORIGINAL / SPECULATIVE; IPO long-run underperformance in
 equities is the analogy, not checked). Mechanism: early holders, unlocks and market-maker allocations sell into the
 first liquid derivatives venue while retail buys the listing; supply arrives over the first weeks. Not strictly
@@ -1011,6 +1011,12 @@ established perps (listed >= 180 days) at random dates, scaled to monthly cluste
 2023: 92); 28-day hedged sd 2,735 bp -> month-mean se ~179 bp; t 3 needs ~536 bp net per event (optimistic,
 within-month correlation ignored). Weakly powered: only an effect at the top of Fable's "several hundred bp" guess
 can pass. Auto decision 10: screen anyway (no published size to compare; one counted look in a new family).
+**Result (`research/screens/2026-11-15_i81_listing_drift_screen.py`): KILLED (t 1.16 < 3.0).** 234 events, 41
+months: net +611.5 bp per event (mean of month means), event mean +444.7, **median +1,947.8** (most new listings
+fall against BTC), coin +287, BTC +824, funding -72 (shorts pay on average); halves +538 / +682; at 40 bp +592;
+without the 2 best months +359. The sign is right and large, but the right tail (squeezes of the shorted coin) makes
+it too noisy for our sample. No rescue: a capped or median rule would be post-hoc. Family `crypto_listing`: one
+falsification.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
