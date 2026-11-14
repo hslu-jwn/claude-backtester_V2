@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: Strategy 19 research tool built (the user: "Yes, all three")
+
+- Codex `gpt-6.1-sol` medium (brief `briefs/crypto_carry.md`, ~25 min, guard ok): `strategy/crypto_carry/book.py`,
+  `tools/crypto_carry.py`, 15 tests. It stopped correctly on a spec conflict: ties are common (default 0.01 %
+  rate) and A5 "ties by symbol name" was not what the screen did (universe order, stable sort); name order gives
+  development +124 / test +110 bp, t 2.92. Opus fixed A5 to the frozen tested behaviour (the spec's own rule).
+- Opus fixes: `--update` only the last 3 months (was from 2019-09: hundreds of failing requests per run); a
+  delisted symbol no longer stalls the forward log, measured against the newest funding print (a first fix
+  against the Monday would have let a lagging feed write zero-signal weeks into the log; caught by its test);
+  layer rule (strategy must not import engine: cost as config, pinned by a test); an old test fake broken by
+  the klines commit 2303ecf (`test_v26b_data`, signature only).
+- Golden: development and test identical to the screen. Monte Carlo of the test weeks at 1 % risk per R: median
+  +34 % over 5.1 years, max drawdown median 4.6 % / p95 8.1 % (optimistic: resamples the observed edge).
+
 ## 2026-11-14: I-73 one-time test PASSED (the user: "Yes, run I-73 test")
 
 - Gates pre-registered before any test data (30c10b1), script frozen (fc59ab7), development re-run identical

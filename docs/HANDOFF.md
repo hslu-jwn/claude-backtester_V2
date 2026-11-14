@@ -44,7 +44,10 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    table; drop them like the seven FX symbols (2020 -> 2019, 2021 -> 2022 values)? Changes a default.
 4. **I-73 crypto funding carry PASSED its one-time test (2026-11-14):** 266 weeks, net +112 bp/week, t 2.93,
    pooled t 3.08, max drawdown -3,967 bp (`knowledge/ideas.md` › I-73). Not stop-defined (no R), Binance only.
-   Spec accepted 2026-11-14 (`docs/strategy-crypto_carry.md`, Strategy 19); build and forward log in progress.
+   Spec accepted 2026-11-14 (`docs/strategy-crypto_carry.md`, Strategy 19); research tool built (golden identical).
+   **Forward paper log:** from early each month (first: about 2026-12-02, when November's funding file is out) run
+   `python -m backtester.tools.crypto_carry --update --forward` and commit `research/forward/crypto_carry.csv`.
+   Kill after 52 weeks: net <= 0 or drawdown worse than -6 R. A scheduled task for it needs your go.
 5. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data (left as it is).
 
 ## Next step

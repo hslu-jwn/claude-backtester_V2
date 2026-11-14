@@ -77,6 +77,29 @@ on the user's decision with five pre-registered gates, all passed. Data check: E
 its funding continues as a constant placeholder; ranking only symbols with an entry bar gives +110, t 2.98.
 Script: `research/screens/2026-11-13_i73_crypto_carry_xs_screen.py` (`--test`).
 
+## Built 2026-11-14 (research tool)
+
+`python -m backtester.tools.crypto_carry [--start] [--end] [--out] [--update] [--forward]`; rule in
+`strategy/crypto_carry/book.py` (pure, no engine import), CLI `tools/crypto_carry.py`; one row per week in
+`trades.csv`, members in `legs.csv`. Golden check: development 82 weeks +138.0 bp, test 266 weeks +112.0 bp,
+t 2.93 (identical to the screen). `--update` fetches only the last 3 months of klines + funding (the history is
+cached); `--forward` appends complete weeks from 2026-11-16 to `research/forward/crypto_carry.csv` (append-only;
+a changed past week stops it). A symbol whose funding stopped 7+ days before the newest print of any symbol
+(delisted) stays ranked, as frozen, but does not hold a week back; a feed that lags for all symbols does.
+Funding comes from the monthly archive files, so a forward week is complete only after its month's funding
+file is published (early next month).
+
+**Monte Carlo, test weeks (risk/monte_carlo.py, block bootstrap 20 days, 1,000 runs, 100,000 start; it resamples
+the observed test edge, so it is optimistic):**
+
+| Risk per R | Notional per side | Median gain (5.1 years) | p5 / p95 gain | Max drawdown median / p95 | Worst week |
+|---|---|---|---|---|---|
+| 0.5 % | 5 % | +16 % | +7 / +26 % | 2.3 / 4.1 % | -1.6 % |
+| 1 % | 10 % | +34 % | +14 / +57 % | 4.6 / 8.1 % | -3.2 % |
+| 2 % | 20 % | +78 % | +28 / +144 % | 9.2 / 15.7 % | -6.3 % |
+
+Profitable months 67 %; longest losing streak median 6 weeks (max 14); longest drawdown median ~230 days.
+
 ## Build plan (needs the user's go: ROADMAP V2.10 › C baskets "only on the user's go")
 
 Smallest version: a research tool, not an engine strategy.
@@ -107,8 +130,11 @@ can only catch a break.
   minute's volatility spike (crypto intraday report S4); slippage there is not measured. Doubled costs stay +92.
 - A3: R = 1,000 bp of one side's notional (above); a risk unit, not a stop.
 - A4: delisted symbols stay in the universe; a symbol without bars is dropped from the leg, not replaced.
-- A5: ties in the ranking are broken by symbol name (whether ties occurred is not checked yet; the build's
-  golden check against the screen will show it).
+- A5 (corrected 2026-11-14 by the build's golden check): ties are common (many symbols sit at the 0.01 % default
+  rate, so equal 7-day sums). The tested screen sorts by the signal only (stable sort) in the universe order above:
+  among tied symbols the longs take the earliest in that order, the shorts the latest. That is the frozen rule.
+  The first draft's "ties by symbol name" would change 10 development weeks (development +124 bp, t 1.17; test
+  +110 bp, t 2.92): an untested variant, not used; it shows the test result does not hinge on the tie order.
 
 ## Decisions by the user (2026-11-14, "Yes, all three")
 

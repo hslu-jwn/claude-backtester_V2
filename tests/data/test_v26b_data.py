@@ -266,7 +266,7 @@ def test_binance_daily_holes_retried_once(tmp_path, monkeypatch, recover):
     )
     calls = []
 
-    def process(cfg, symbol, url, days, fetch, log):
+    def process(cfg, symbol, url, days, fetch, log, kind="aggTrades"):
         calls.append(days[0])
         if len(calls) == 1 or not recover:
             raise b.NotFoundError(url)
