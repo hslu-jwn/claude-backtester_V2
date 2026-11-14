@@ -5,6 +5,10 @@ stop, build the research tool, forward paper log). **One-time test PASSED** (ide
 the user's go ("Yes, write the spec") for review; nothing is built yet. The rule below is the **frozen tested
 rule**; any change to it is a new, counted hypothesis with no clean test data left (forward data only).
 
+**Replication 2026-11-14: FAILED.** The frozen rule on 20 unseen perps (pre-registered, power ~70 %): +63 bp a
+week, t 1.05, first half -19 bp; the price part falls from +103 to +35 bp, the funding carry stays (+48 bp).
+The test pass on the original 17 did not generalise; Strategy 19's future is the user's decision (HANDOFF › Open 4).
+
 ## Source and mechanism
 
 Schmeling, Schrimpf & Todorov, "Crypto carry", BIS Working Paper 1087 (2023, rev. 2025), read in full: on BTC / ETH

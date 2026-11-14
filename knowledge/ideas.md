@@ -754,7 +754,7 @@ with the same signal; net at 12 bp.
 Per-event sd ~120 bp. No-settlement hours 04 / 12 / 20 UTC: PRE +4.4, POST -1.4 bp, so nothing specific to the
 settlement. The few negative-funding events (s = -1) show +3 / +13 bp, too few to matter. Family closed.
 
-### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read; screened the same day: KILLED on t; one-time test 2026-11-14: PASSED, ledger I73)
+### I-73 Cross-sectional funding carry on 17 Binance perpetuals (2026-11-13; rule fixed before the new data was read; screened the same day: KILLED on t; one-time test 2026-11-14: PASSED; replication on 20 unseen perps: FAILED, ledger I73 / I73R)
 Source (opened by Opus, full text via pdftotext): Schmeling, Schrimpf & Todorov, "Crypto carry", BIS WP 1087
 (2023, rev. 2025). Dated-futures basis on BTC / ETH, March 2019 - January 2022 (Deribit, OKEx, CME, ...): carry
 averages above 10 % a year, up to 60 %; it is driven by convenience yields from trend-chasing small investors
@@ -824,6 +824,13 @@ parts, years. Exactly once, no variants. Caveat: perps delisted before 2021-06 a
 t 2 needs 85 bp a week; at the original test effect (+112) the expected t is ~2.6 (pass chance ~70 % if real).
 Data repair before the run: SXP 2023-04-05..30 (52 files, price + flow) had broken parquet footers after the
 session's hard restart (no fsync in `write_atomic`); deleted, re-downloaded, full cache scan clean.
+**I-73R result (2026-11-14, `research/screens/2026-11-14_i73r_replication.py`): FAILED (t, halves).** 266 weeks:
+net +63.4 bp a week (price +35.0, funding +48.5), t 1.05, 53 % positive weeks, sd 987, worst week -4,917 bp; halves
+-18.9 / +145.7; without the 2 best weeks +14.8. Years 2021 +18, 2022 +30, 2023 -112, 2024 +154, 2025 +27, 2026 +269.
+37-symbol union (diagnostic): +59.6, t 1.11. Reading: the funding carry is collected on unseen coins too, but the
+price part (the paper's prediction) is about a third of the original 17's (+35 vs +103): the original pass did not
+replicate on new coins. Per the stop rules this independent check counts against the strategy; what to do with
+Strategy 19 is the user's decision (HANDOFF › Open).
 Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by weeks) opposite signs; net mean
 <= 0 after removing the 2 best weeks; price part (without funding) below -20 bp a week (a carry that pays
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /

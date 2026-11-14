@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-73R replication on 20 unseen perps FAILED (the user: "Yes, replicate I-73")
+
+- Universe and gates pre-registered before the download (ba253bc), script frozen (0a5a1f3), power line before the
+  run (b9f3fa9: t 2 needed 85 bp/week, expected t ~2.6). Download 20 perps (~7 GB); the session's hard restart
+  left 52 damaged parquet files (SXP 2023-04, price + flow; `write_atomic` has no fsync): deleted, re-downloaded,
+  full scan of all 37 perps clean.
+- Result: net +63.4 bp/week, t 1.05, halves -18.9 / +145.7, without 2 best +14.8: FAILED on t and halves. Funding
+  part +48.5 holds, price part +35 vs +103 on the original 17. 37-symbol union +59.6, t 1.11. Model: Opus only.
+
 ## 2026-11-14: resumed (the user: "Continue."); HV-T0020-3 closed as untestable
 
 - Funding-extreme fade on single coins, power check on 17 perps (signal-free, development): 920 episodes but only
