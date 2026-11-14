@@ -989,6 +989,25 @@ about half the edge is pump capture in small perps (position limits, slippage an
 the rest ~+56 bp a week, the same in both periods. Not on FTMO: the effect sits in small alts, FTMO lists ~30
 large coins at 10-40 bp. Goal 2 only; anything live touches money (the user's decision).
 
+### I-81 New-listing drift on Binance USDT perps (Fable directions row 19, 2026-11-15; rule fixed before any data)
+Source: Fable 5.2 row 19 (no published source known; label ORIGINAL / SPECULATIVE; IPO long-run underperformance in
+equities is the analogy, not checked). Mechanism: early holders, unlocks and market-maker allocations sell into the
+first liquid derivatives venue while retail buys the listing; supply arrives over the first weeks. Not strictly
+forced (Fable prior 15 %). Crypto split (development 2020-01-01 .. 2023-12-31; test from 2024-01-01).
+Events: every USDT perp (no dated quarterlies) whose first daily bar in `data/cache/binance_wide` falls in
+2020-03-01 .. 2023-11-30 (the 30-day hold ends inside development); listing day = the first daily bar.
+Rule (one cell): short the perp at the close of listing day 2 (its second daily bar), cover at the close of day 30
+(its 30th bar, or the last close if it stops trading earlier); hedge with a long BTCUSDT of equal notional over the
+same two closes. Net per event = -(coin return) + BTC return + coin funding received (a short receives a positive
+rate) - BTC funding paid, settlements strictly between the two closes, - 20 bp (4 taker fills of 5 bp).
+Statistics: events clustered by the calendar month of entry; the t-stat is over monthly cluster means (equal-
+weighted months). New family `crypto_listing` (1 hypothesis, threshold t 3.0); the sign is predicted (short).
+Kills: net (mean of month means) <= 0; t < 3.0; halves (2020-21 entries, 2022-23 entries) not both > 0; net <= 0 at
+40 bp; net <= 0 without the 2 best months. Diagnostics: event-level mean and median, coin vs BTC parts, funding part,
+events per year, the share of events that stop trading inside the hold.
+Power line (signal-free, before the screen): event and month counts, and the sd of 28-day BTC-hedged returns of
+established perps (listed >= 180 days) at random dates, scaled to monthly cluster means.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
