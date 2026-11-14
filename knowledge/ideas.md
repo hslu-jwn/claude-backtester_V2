@@ -880,6 +880,34 @@ correlation with I-73's development weeks +0.25. On large, liquid perps last wee
 paper's small-coin reversal is absent (the sign is momentum, not tested as a rule). Family `crypto_xs_reversal`
 closed after one falsification would be early, but no rescue variant: a momentum rule would be a new hypothesis.
 
+### I-76 Liquidation-cascade reversal on 37 Binance perpetuals (Fable directions row 10, 2026-11-14; rule fixed before any data)
+Source: Fable 5.2 advisory list `knowledge/reviews/2026-11-14-fable-research-directions.md` row 10 (prior 15 %, no
+published bp known). Label: SPECULATIVE / ORIGINAL. Related lead, not read: Bank of Canada 2026 DeFi liquidation
+recovery (harvest HV-T0089-1, on-chain, untestable). Mechanism (a counterparty that must trade): exchanges close
+under-margined positions at market; a burst of one-sided aggressive flow pushes the price past fair value and
+liquidity providers are paid for absorbing it. Bearish cascade described (long after it), short squeeze mirrored.
+Not covered: S11 / I-61 were CFD H1 bars with no flow condition; C3 / L18 were BTC-ETH momentum and lead-lag.
+Venue and costs: Binance USD-M last-trade M1 (`data/cache/binance`, flow from `binance_flow`), taker 5 bp a side =
+10 bp a round trip; funding of any settlement inside the hold (a long pays a positive rate). Goal 2 only unless
+FTMO's BTCUSD / ETHUSD (about 13 bp, L18) also clears it.
+Universe: the 37 cached perps, development only, 2020-01-01 to 2021-09-13 (exit before 2021-09-14).
+Rule (one cell, fixed): per symbol, at the close of each M1 bar t: r5 = log(close_t / close_{t-5});
+sd5 = sd of the M1 log returns of the 1,440 bars before the window (bars t-1444..t-5, at least 1,000 present) x
+sqrt(5); v5 = volume of bars t-4..t; vmed = median M1 volume of the same 1,440 bars; sell share = sell_volume /
+volume over bars t-4..t. **Bearish event:** r5 <= -4 sd5, sell share >= 0.65, v5 >= 25 x vmed (5 x the median
+5-min volume). **Bullish event:** r5 >= +4 sd5, buy share >= 0.65, same volume rule. Enter at the close of bar
+t+1 (one bar later), long after a bearish event, short after a bullish one; exit at the close of bar t+61. A
+symbol takes no new event until its exit. A trade without its entry or exit bar is dropped.
+Clustering: events of all symbols whose entry lies within 60 minutes of a cluster's first entry form one cluster;
+a cluster's value = mean net of its trades. Statistics on clusters. New family `crypto_liquidation_reversal`
+(threshold t 3.0).
+Power line (signal-free, recorded before the screen): number of event clusters, and the sd of the 60-minute
+forward return after the move-only control events (direction-free, sd only).
+Kills it: cluster net mean <= 0 at 10 bp; t < 3.0; either calendar half (2020, 2021) net <= 0; net <= 0 at 20 bp
+(doubled costs); net <= 0 without the 2 best clusters.
+Diagnostics (no rescue): control = the same move rule without the flow and volume conditions; BTC + ETH alone;
+long vs short side; holds of 15 / 30 minutes; trades per symbol.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
