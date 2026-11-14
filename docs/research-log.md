@@ -12,6 +12,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   pause signal research until the user answers HANDOFF Open 7-9. Why: auto mode never idles; the venue facts
   (share and crypto CFDs) opened cells no earlier batch searched.
 - Telegram sent: "Action needed" for HANDOFF Open 7-9.
+- Result: 8 calls ok (12-68 s each), no guard alarms. 10 ideas, 0 kept: 6 parked needs_data (cross-sectional
+  end-of-day reversal in US stocks, Da et al. EOD paper, 3.6-6.2 bp a day long-short across all stocks: on ~59 share
+  CFDs with a spread per leg it is far below cost; overnight-return sorting, monthly; LTW 3-week crypto momentum =
+  HANDOFF Open 5; two funding-settlement ideas = I-72, closed), 3 unfetchable (bitcoin turn-of-candle 0.58 bp a
+  minute: below cost anyway; large-coin momentum; Euro Stoxx auction flow), 1 rejected untestable. Canaries: known
+  answer PASSED (Lustig et al.), nonsense empty. Unverified rate 0 %. Model: Codex terra high / low + Opus.
 
 ## 2026-11-14: I-77 earnings-announcement premium on share CFDs: carded, not screened (auto)
 
