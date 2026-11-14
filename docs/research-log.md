@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: I-77 earnings-announcement premium on share CFDs: carded, not screened (auto)
+
+- **Auto decision 7:** check the literature before any share-CFD data work. Sonnet web subagent: ~21 bp in the 3-day
+  window to 2004, large firms smaller, a 2020 paper reports the US premium gone (not opened, 403). Halved ~10 bp vs
+  ~8-10 bp cost (spread + two nights of swap): not screened. FTMO MT5 share history: MSFT M1 from 2010, NVDA from
+  2020-11. Alternative: download share CFD history and screen. Why not: expected net <= 0 before any data.
+
 ## 2026-11-14: FTMO venue facts (Fable row 8, partial)
 
 - `knowledge/research/reports/2026-11-14_ftmo_venue_facts.md`: rules re-read (no time limit; 1-Step consistency

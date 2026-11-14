@@ -919,6 +919,19 @@ return sd after move-only events 253 bp -> standard error ~3.5 bp per cluster; t
 or alt-only rule would be a new, post-hoc hypothesis; with maker fees (~4 bp, Fable row 11, unmodelled) the
 primary would be ~+11 bp, so the cost model is the binding question, not the signal.
 
+### I-77 Earnings-announcement premium on FTMO share CFDs (venue facts, 2026-11-14; not screened: below cost)
+Idea: pool the ~59 FTMO share CFDs (MSFT M1 history from 2010, NVDA only from 2020-11) and hold over scheduled
+earnings announcements (~240 events a year, the frequency the pass map needs). Sources opened by a Sonnet web
+subagent (2026-11-14; Opus did not re-open them): Frazzini & Lamont, NBER WP 13090 (2007), CRSP 1972-2004: ~60 bp
+per announcement month, of which ~21 bp in the 3 days around it and ~25 bp before; Savor & Wilson (JF 2016, 2011
+draft), 1974-2009: value-weighted 23 bp a week (t 5.67); Barber, De George, Lehavy & Trueman (JFE 2013): largest
+firms ~41 bp a month vs 114 for the smallest. Not opened (403): Heitz, Narayanamoorthy & Zekhnini 2020 "The
+Disappearing Earnings Announcement Premium" (snippet: disappeared from US markets in recent years).
+Label: PUBLISHED, likely decayed. Size: 3-day window ~21 bp (to 2004) -> ~10 bp halved, and the post-2010 evidence
+points to ~0; cost per event ~8-10 bp (share CFD spread plus two nights of swap, MSFT ~2.5-3 bp a night long).
+Verdict: not screened (expected net <= 0; the US premium is reported gone). Reopen only if the 2020 paper's
+numbers show a large-cap premium after 2010 above ~20 bp per event.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
