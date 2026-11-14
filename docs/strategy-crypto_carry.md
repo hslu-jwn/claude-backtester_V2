@@ -7,7 +7,8 @@ rule**; any change to it is a new, counted hypothesis with no clean test data le
 
 **Replication 2026-11-14: FAILED.** The frozen rule on 20 unseen perps (pre-registered, power ~70 %): +63 bp a
 week, t 1.05, first half -19 bp; the price part falls from +103 to +35 bp, the funding carry stays (+48 bp).
-The test pass on the original 17 did not generalise; Strategy 19's future is the user's decision (HANDOFF › Open 4).
+The test pass on the original 17 did not generalise. Decided by the user 2026-11-14: forward paper log only, no
+further build; the 52-week forward kill rule settles it.
 
 ## Source and mechanism
 

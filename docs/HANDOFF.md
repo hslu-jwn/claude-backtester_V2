@@ -25,6 +25,7 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-14: Strategy 19 after the failed replication: keep only the forward paper log ("ok that works").
 - 2026-11-14: download ~20 more perps to replicate frozen I-73 on unseen coins ("Yes, replicate I-73").
 - 2026-11-14: Strategy 19 spec accepted ("Yes, all three": R = 1,000 bp risk unit, build the research tool,
   forward paper log from 2026-11-16); spec for I-73 written ("Yes, write the spec"); one-time test of the frozen I-73 rule on 2021-09..2026-10 ("Yes, run I-73 test").
@@ -44,8 +45,8 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 3. **GBPUSD 2020-21 placeholder spreads** (50 points on 50-74 % of the bars) are still in the original
    table; drop them like the seven FX symbols (2020 -> 2019, 2021 -> 2022 values)? Changes a default.
 4. **I-73 replication on 20 unseen perps FAILED (2026-11-14):** +63 bp/week, t 1.05, first half negative; the price
-   part did not generalise (+35 vs +103), the funding carry did (+48). Decide Strategy 19: keep only the cheap
-   forward paper log, or close it. Earlier:
+   part did not generalise (+35 vs +103), the funding carry did (+48). Decided by the user: forward paper log
+   only (52-week kill rule settles it). Earlier:
    **I-73 crypto funding carry PASSED its one-time test (2026-11-14):** 266 weeks, net +112 bp/week, t 2.93,
    pooled t 3.08, max drawdown -3,967 bp (`knowledge/ideas.md` › I-73). Not stop-defined (no R), Binance only.
    Spec accepted 2026-11-14 (`docs/strategy-crypto_carry.md`, Strategy 19); research tool built (golden identical).
