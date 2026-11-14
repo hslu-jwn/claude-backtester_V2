@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: harvest batch 14 (share CFDs, crypto intraday flows, closing auctions) (auto)
+
+- **Auto decision 8:** harvest batch 14, 8 tasks T0097-T0104 (6 content cells aimed at the new required size:
+  daily-or-faster effects >= ~3 bp gross on cheap CFDs, FTMO share CFDs or crypto majors; canaries T0103 known
+  answer, T0104 nonsense), Codex `gpt-6.1-terra` `--search`, high for ACAD, low for BLOG, 2 parallel. Alternative:
+  pause signal research until the user answers HANDOFF Open 7-9. Why: auto mode never idles; the venue facts
+  (share and crypto CFDs) opened cells no earlier batch searched.
+- Telegram sent: "Action needed" for HANDOFF Open 7-9.
+
 ## 2026-11-14: I-77 earnings-announcement premium on share CFDs: carded, not screened (auto)
 
 - **Auto decision 7:** check the literature before any share-CFD data work. Sonnet web subagent: ~21 bp in the 3-day
