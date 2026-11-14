@@ -848,6 +848,30 @@ and 20-day CFD holds pay swap on both legs plus two spreads; the venue method as
 futures data, the user 2026-11-13) and it needs CFTC COT data (free, a new download). Far below cost: card only,
 not screened. Ledger HV-T0072-1.
 
+### I-75 Weekly cross-sectional reversal on 37 Binance perpetuals (harvest batch 13, 2026-11-14; rule fixed before any data)
+Source (abstract only; the PDF answers 403 to the script and web-fetch): Kozlowski, Puleo & Zhou, "Cryptocurrency
+return reversals", Applied Economics Letters 28(11), 2021: 200 coins 2015-2019, weekly loser-minus-winner 8.69 %
+(t 9.60), present in both halves, "most pronounced among smaller capitalization and less liquid" coins. Label:
+PUBLISHED (abstract) / ADAPTATION (large, liquid perps). Mechanism: liquidity provision, paid for absorbing last
+week's one-sided flow. Expected: far below the paper on our large coins; halved claim ~4 %/week as the upper end.
+Overlap: I-73's price part (high funding ~ recent winners); the weekly correlation is reported.
+Venue and costs as Strategy 19: Binance USD-M last-trade M1, 20 bp a week per unit each side, funding of every
+settlement held (shorts receive a positive rate).
+Universe: the 37 cached perps (I-73's 17 + I-73R's 20), universe order = I-73's list then R20's. Eligible on a
+Monday: 30 days of funding history and both signal prices present.
+Rule: every Monday, signal = return from the close of the M1 bar opening at the previous Monday 00:00 to the close
+of the bar opening this Monday 00:00 (the entry price itself, known at entry). Sort ascending (stable, universe
+order); n = floor(eligible / 5) per leg; long the n lowest (losers), short the n highest (winners), equal weight;
+no week below 10 eligible. Entry at the close of the bar opening Monday 00:00, exit at the close of the bar opening
+Sunday 23:58; a member without its exit bar is dropped from its leg. Weekly net = mean long - mean short return +
+funding received - paid - 20 bp.
+Data: development only, 2020-02 to the last week with its Sunday exit before 2021-09-14. One cell, new family
+`crypto_xs_reversal` (threshold t 3.0).
+Power line (signal-free): weekly sd of random legs of the same sizes, recorded before the screen.
+Kills it: net mean <= 0; t of the net < 3.0; halves (by weeks) opposite signs; net <= 0 without the 2 best weeks.
+Diagnostics: price / funding parts; the 17-symbol universe alone; correlation with I-73's development weeks;
+members per leg.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
