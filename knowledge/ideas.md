@@ -959,6 +959,9 @@ net <= 0 at 40 bp (doubled costs); net <= 0 without the 2 best weeks. Diagnostic
 per leg, correlation of each factor's weekly spread with a 1-week past-return sort (I-75's closed signal) and with
 the other two factors.
 Power line (signal-free, before the screen): eligible count per week and the weekly sd of random quintile legs.
+**Power (2026-11-14, before the screen, signal-free):** 265 perps with development data, 186 weeks with >= 20
+eligible (2020-05-25 .. 2023-12-25), eligible per week 20-205 (median 132, legs ~26); random-leg weekly sd 481 bp ->
+standard error 35 bp; |t| 3 needs ~106 bp a week net (old split, I-75: ~290).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
