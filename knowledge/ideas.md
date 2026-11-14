@@ -836,6 +836,18 @@ Kills it: net weekly mean <= 0; t of the net < 3.0; first vs second half (by wee
 only by running into the paper's crashes). Diagnostics (not gates): price and funding parts separately; BTC /
 ETH excluded; worst week; net at 30 bp a week.
 
+### I-74 Hedger position-change reversal in commodity futures (harvest batch 11, 2026-11-14; not screened: below cost, data missing)
+Source (opened by Opus, full text via pdftotext): Kang, Rouwenhorst & Tang, "A tale of two premiums" (NBER
+commodities conference 2013), CFTC COT positions, 26 US commodity futures, 1994-01 to 2012-06. Ranking each Tuesday
+by the prior week's change in hedgers' net long position, top minus bottom half earns "0.431% (t-statistic = 4.16)"
+over the next 20 days (quintiles 0.667 %); about half accrues in days 1-4, before the report is public on Friday.
+Mechanism (PUBLISHED, forced counterparty): hedgers demand immediacy, speculators are paid for absorbing it.
+Verdict before any data: the tradeable part (after the Friday release) is ~21 bp per 20 days, ~11 bp after halving
+for decay, per unit long-short; our venue has 5 commodity CFDs (XAU, XAG, USOIL, UKOIL, NATGAS), not 26 futures,
+and 20-day CFD holds pay swap on both legs plus two spreads; the venue method asks for futures prices (no paid
+futures data, the user 2026-11-13) and it needs CFTC COT data (free, a new download). Far below cost: card only,
+not screened. Ledger HV-T0072-1.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a

@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-14: harvest batch 11 (volatility state, open auctions, gold reversal): nothing to screen (the user: "1")
+
+- Codex `gpt-6.1-terra` `--search`, 8 tasks T0067-T0074 (medium for ACAD, low for AGG / BROKER / BLOG), 2 parallel,
+  no guard alarms. 10 ideas, 1 verified: Kang-Rouwenhorst-Tang hedger position-change reversal (score 6; Opus read
+  the paper: +43 bp / 20 days, t 4.16, 1994-2012, half before the report is public) -> card I-74, below cost on our
+  venue and needs COT data: not screened. The rest: implied-vol / variance-premium ideas (needs VIX / OVX / option
+  data or unfetchable), two untestable; the open-auction cell found nothing.
+- Canaries: nonsense empty (pass); known answer FAILED again (an ECB paper with the Lustig et al. portfolio design,
+  but neither Koijen nor Lustig named): second failure in a row, worker recall on named papers is weak.
+  Unverified rate terra medium --search 10.7 %, low 16.7 %.
+
 ## 2026-11-14: fsync fix; harvest batch 10 (forced flows): nothing to screen (the user: "1")
 
 - `data/cache.write_atomic` now fsyncs before the rename (test-first; full suite 5,963 passed; ~8 ms per day file):
