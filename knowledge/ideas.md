@@ -1155,6 +1155,8 @@ Kills per cell (statistics per day, t over days with a trade): net <= 0; t < 3.0
 net <= 0 at doubled costs; net <= 0 without the 2 best days. The signs are predicted (follow / fade), not chosen.
 Diagnostics: the same rules on NAS100 vs US30 (2019-21), gross vs cost, long-NAS vs short-NAS days.
 Power line (signal-free, before the screen): sd of the 10:30 -> 15:55 spread and days with |z| > 2.
+**Power (2026-11-15, before the screen):** 1,569 days; 10:30 -> 15:55 spread sd 30 bp -> t 3 needs ~2.2 bp a day
+(I-89); 91 days with |z| > 2, 11:00 -> 15:55 spread sd 27 bp -> t 3 needs ~8.4 bp (I-90). Two-leg cost ~3-4 bp a day.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
