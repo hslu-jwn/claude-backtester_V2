@@ -22,6 +22,8 @@ class CryptoFlowConfig:
     quantile: int = 5
     cost_bp: float = 20.0
     r_bp: float = 600.0
+    # FB-017 liquid variant: keep only the N highest median quote volumes (ideas.md › FB-017)
+    top_volume: int | None = None
 
 
 DEFAULT = CryptoFlowConfig()
@@ -47,14 +49,15 @@ def eligible_signals(
     Spec: strategy-crypto_flow.md › Rule (frozen), rules 1–2.
     """
     monday = _monday(monday)
-    signals = {}
+    signals, volumes = {}, {}
     for symbol, data in klines.items():
         if monday not in data.index:
             continue
         past = data.loc[data.index < monday]
         if len(past) < config.min_bars:
             continue
-        if past.quote_volume.iloc[-config.volume_window :].median() < config.min_quote_volume:
+        volume_median = past.quote_volume.iloc[-config.volume_window :].median()
+        if volume_median < config.min_quote_volume:
             continue
         last = past.loc[past.index >= monday - pd.Timedelta(days=config.signal_days)]
         if len(last) < config.signal_days:
@@ -65,6 +68,10 @@ def eligible_signals(
             if volume != 0
             else float("nan")
         )
+        volumes[symbol] = volume_median
+    if config.top_volume is not None:  # ideas.md › FB-017: cut before the sort, ties by name
+        keep = sorted(volumes, key=lambda s: (-volumes[s], s))[: config.top_volume]
+        signals = {s: signals[s] for s in sorted(keep)}
     return signals
 
 

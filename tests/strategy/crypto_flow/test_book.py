@@ -133,3 +133,25 @@ def test_invalid_monday_and_price():
     k["A"].loc[MONDAY, "open"] = 0
     with pytest.raises(ValueError, match="positive"):
         week_result(MONDAY, ["A"], ["B"], k, {})
+
+
+def test_top_volume_cut_keeps_highest_median_volume_ties_by_name():
+    """FB-017 liquid variant: eligible set cut to the top N by 30-bar median quote volume (ideas.md › FB-017)."""
+    data = {}
+    for name, vol in (("A", 6e6), ("B", 9e6), ("C", 9e6), ("D", 7e6)):
+        d = frame()
+        d.loc[d.index < MONDAY, "quote_volume"] = vol
+        data[name] = d
+    nan = frame()
+    nan.loc[nan.index < MONDAY, ["volume", "taker_buy_volume"]] = 0  # no signal, still eligible
+    nan.loc[nan.index < MONDAY, "quote_volume"] = 8e6
+    data["E"] = nan
+    assert set(eligible_signals(data, MONDAY)) == set("ABCDE")
+    cut = eligible_signals(data, MONDAY, CryptoFlowConfig(top_volume=3))
+    assert set(cut) == {"B", "C", "E"}  # 9e6, 9e6, 8e6; the NaN-signal symbol counts toward the cut
+    # B and C tie on volume: the name decides.
+    assert set(eligible_signals(data, MONDAY, CryptoFlowConfig(top_volume=1))) == {"B"}
+    # Future bars never change the cut: only bars before the Monday count.
+    data["A"].loc[data["A"].index >= MONDAY, "quote_volume"] = 1e12
+    assert set(eligible_signals(data, MONDAY, CryptoFlowConfig(top_volume=3))) == {"B", "C", "E"}
+    assert CryptoFlowConfig().top_volume is None

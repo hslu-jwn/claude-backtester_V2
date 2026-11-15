@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: I-95 closed by arithmetic; FB-017 liquid Strategy 20 frozen and wired into the forward log (auto)
+
+- I-95 (Strategy 20 on FTMO's 30 crypto CFDs, a goal-1 bridge): swap -30 %/yr on both sides = ~115 bp a week for the
+  long-short book vs a ~50-60 bp liquid edge: closed, no data look.
+- **Auto decision 4:** freeze FB-017 (top 100 by 30-bar median quote volume, HyroTrader's low-cap cap) and run it as a
+  diagnostic on the spent periods, then add it to the forward log. Alternative: forward only, no diagnostic. Why: the
+  user's prop-firm decision needs to know whether the edge survives without small caps; no N other than 100 was run.
+- Diagnostic: development +171.0 bp a week, t 3.64 (full +145.0); test (spent) +166.3, t 3.06 (full +147.2). The edge
+  does not depend on the small perps. `CryptoFlowConfig.top_volume`, `crypto_flow --liquid [--forward]` (own log),
+  test-first (cut, ties, NaN-signal symbols, future invariance, CLI path) + goldens for both periods. Model: Opus.
+
 ## 2026-11-15: Strategy 20 on the Bybit universe (auto, diagnostic)
 
 - **Auto decision 3:** check whether Strategy 20's book exists on Bybit (venue of both candidate crypto prop firms, HANDOFF

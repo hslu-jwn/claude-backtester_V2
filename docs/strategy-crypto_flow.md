@@ -103,6 +103,16 @@ Over the 147 shared test weeks the weekly nets of Strategies 19 and 20 correlate
 +151 bp a week, t 4.30, Sharpe ~2.6 a year, max drawdown -2,330 bp (S19 alone -3,967). S19 failed its replication,
 so this only argues for logging both forward.
 
+## Liquid variant FB-017 (frozen 2026-11-15; diagnostic on spent data, forward log only)
+
+Why: HyroTrader caps coins under 100 M USD market cap at 5 % of balance, and capacity. Rule (`knowledge/ideas.md` ›
+FB-017): the frozen rule above, except that each Monday the eligible set (rule 1, NaN-signal symbols included) is cut
+to the 100 symbols with the highest 30-bar median daily quote volume before the Monday (ties by name) before the sort.
+`CryptoFlowConfig(top_volume=100)`; `crypto_flow --liquid [--forward]` (own log `research/forward/crypto_flow_top100.csv`).
+Diagnostic (`research/screens/2026-11-15_fb017_liquid_s20.py`): development +171.0 bp a week, t 3.64 (halves +336 /
++41; full +145.0, halves +327 / +2); test (spent) +166.3, t 3.06 (full +147.2, t 3.76), worst week -1,412. Both periods
+were seen before, so this is no test; the forward kill below applies to it too.
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean

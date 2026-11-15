@@ -131,3 +131,39 @@ def test_golden(start, end, count, mean, t):
         assert trades[0]["entry_time"] == pd.Timestamp("2020-05-25", tz="UTC")
     assert abs(net.mean() - mean) < 0.05
     assert abs(actual_t - t) < 0.005
+
+
+def test_liquid_forward_uses_own_log(tmp_path, monkeypatch):
+    monkeypatch.setattr(tool, "load", fixture_book)
+    seen = {}
+    real = tool.compute_weeks
+
+    def spy(*args, **kwargs):
+        seen["config"] = args[4] if len(args) > 4 else kwargs.get("config")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(tool, "compute_weeks", spy)
+    monkeypatch.setattr(tool, "FORWARD_PATH", tmp_path / "full.csv")
+    monkeypatch.setattr(tool, "LIQUID_FORWARD_PATH", tmp_path / "top100.csv")
+    monkeypatch.setattr(tool, "append_forward", lambda path, rows: seen.setdefault("path", path))
+    tool.main(["--forward", "--liquid", "--out", str(tmp_path)])
+    assert seen["config"].top_volume == 100
+    assert seen["path"] == tmp_path / "top100.csv"
+
+
+@pytest.mark.parametrize(
+    "start,end,count,mean,t",
+    [
+        (date(2020, 1, 1), date(2023, 12, 31), 186, 171.0, 3.64),
+        (date(2024, 1, 1), date(2026, 10, 31), 147, 166.3, 3.06),
+    ],
+)
+def test_golden_liquid(start, end, count, mean, t):
+    """FB-017 diagnostic numbers (research/screens/2026-11-15_fb017_liquid_s20.py)."""
+    if not all(root.is_dir() for root in binance_wide.ROOTS):
+        pytest.skip("crypto flow golden requires data/cache/binance_wide and binance_wide_test")
+    trades, _ = tool.compute_weeks(*tool.load(), start, end, tool.LIQUID)
+    net = np.array([row["net_bp"] for row in trades])
+    assert len(net) == count
+    assert abs(net.mean() - mean) < 0.05
+    assert abs(net.mean() / net.std(ddof=1) * np.sqrt(len(net)) - t) < 0.005

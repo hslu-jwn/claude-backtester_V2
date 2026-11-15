@@ -1,7 +1,9 @@
 """Weekly crypto taker-flow research CSVs. Spec: strategy-crypto_flow.md › Build.
 
 python -m backtester.tools.crypto_flow [--start YYYY-MM-DD] [--end YYYY-MM-DD]
-    [--out DIR] [--update] [--forward]
+    [--out DIR] [--update] [--forward] [--liquid]
+
+--liquid: the frozen FB-017 variant (top 100 by median quote volume), own forward log.
 """
 
 from __future__ import annotations
@@ -29,6 +31,8 @@ from backtester.tools.crypto_carry import _serialized, write_csv
 
 FORWARD_START = date(2026, 11, 16)
 FORWARD_PATH = Path("research/forward/crypto_flow.csv")
+LIQUID_FORWARD_PATH = Path("research/forward/crypto_flow_top100.csv")
+LIQUID = CryptoFlowConfig(top_volume=100)  # ideas.md › FB-017, frozen 2026-11-15
 TRADE_COLUMNS = (
     "entry_time",
     "exit_time",
@@ -170,6 +174,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--out", type=Path)
     parser.add_argument("--update", action="store_true")
     parser.add_argument("--forward", action="store_true")
+    parser.add_argument("--liquid", action="store_true")
     args = parser.parse_args(argv)
     if args.forward and args.start is not None and args.start != FORWARD_START:
         parser.error("--forward starts at 2026-11-16; --start cannot override it")
@@ -180,9 +185,10 @@ def main(argv: list[str] | None = None) -> None:
         if args.update:
             last_month = datetime.now(UTC).date().replace(day=1) - timedelta(days=1)
             binance_wide.update(binance_wide.ROOTS[-1], last_month.strftime("%Y-%m"))
-        trades, legs = compute_weeks(*load(), start, args.end, complete_only=args.forward)
+        config = LIQUID if args.liquid else DEFAULT
+        trades, legs = compute_weeks(*load(), start, args.end, config, complete_only=args.forward)
         if args.forward:
-            append_forward(FORWARD_PATH, trades)
+            append_forward(LIQUID_FORWARD_PATH if args.liquid else FORWARD_PATH, trades)
         out = args.out or RESULTS_DIR / "crypto_flow" / datetime.now(UTC).strftime(
             "%Y%m%dT%H%M%S%fZ"
         )
