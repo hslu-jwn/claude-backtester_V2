@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: FB-022 Strategy 20 rebalance-day check: robust, Monday the luckiest anchor (auto, diagnostic)
+
+- **Auto decision 7:** FB-022 (prior 80, cheap) before new signals. Criteria committed before the run.
+- All 7 weekday anchors positive in both periods (development +85..+153, test +46..+147 bp a week); other-six mean +123
+  / +85 vs Monday +145 / +147: robust. Fair forward expectation = all-anchor mean (~+94 test, ~+126 development).
+  Spec section added. Model: Opus.
+
 ## 2026-11-15: Wave 3: I-96 overnight -> intraday reversal on share CFDs KILLED; Wave 3 closed (auto)
 
 - **Auto decision 5:** unblock Wave 3 with free daily data (Yahoo chart API, development range only) and today's FTMO

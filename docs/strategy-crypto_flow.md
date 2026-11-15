@@ -113,6 +113,15 @@ Diagnostic (`research/screens/2026-11-15_fb017_liquid_s20.py`): development +171
 +41; full +145.0, halves +327 / +2); test (spent) +166.3, t 3.06 (full +147.2, t 3.76), worst week -1,412. Both periods
 were seen before, so this is no test; the forward kill below applies to it too.
 
+## Rebalance-day check FB-022 (2026-11-15, diagnostic on spent data; criteria committed before the run)
+
+The frozen book anchored on each weekday (`research/screens/2026-11-15_fb022_s20_rebalance_day.py`), net bp a week
+(t): development Mon +145 (3.24), Tue +114 (2.59), Wed +124 (2.71), Thu +85 (1.75), Fri +114 (2.55), Sat +145 (2.93),
+Sun +153 (2.93); test Mon +147 (3.76), Tue +104 (2.49), Wed +46 (1.06), Thu +52 (0.93), Fri +137 (3.27), Sat +96
+(2.27), Sun +73 (1.82). No anchor <= 0; other-six mean +123 (dev) / +85 (test) >= half of Monday: **robust** by the
+pre-set rule. Monday is the luckiest anchor in the test, so the fair expectation for the forward log is the all-anchor
+mean, ~+94 bp a week (test) / ~+126 (development), not +147.
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean
