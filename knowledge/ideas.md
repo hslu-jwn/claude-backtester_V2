@@ -1068,6 +1068,37 @@ months); 186 weeks with >= 20 symbols with spot data; |t| 3 needs ~105 bp a week
 week, 51 % positive; halves +149.7 / +8.0; at 40 bp +50.5; placebo gross mean t +0.01; correlation with Strategy 20
 +0.58 (the perp-flow part). The spot-flow difference adds nothing beyond perp flow.
 
+### I-85 / I-86 Noise-band intraday momentum on US indices, unconditional and on negative-gamma days (Fable FB-199 / FB-201, Wave 2, 2026-11-15; rules fixed before any data)
+Sources (UNVERIFIED, not opened): Zarattini, Aziz & Barbon 2024, "Beat the market: an effective intraday momentum
+strategy for S&P500 ETF (SPY)" (noise area from the average absolute move by time of day); dealer-gamma conditioning:
+Baltussen, Da, Lammers & Martens 2021 (hedging demand and intraday momentum), Squeezemetrics GEX. Label: PUBLISHED
+(adaptation) / SPECULATIVE for the gamma split. Mechanism: when dealers are short gamma they hedge with the move, so
+intraday moves beyond the normal noise continue; with long gamma they dampen it.
+Family `orb` (second look after S06; threshold t 3.0; this is the last look of opening-momentum rules, Fable).
+Data: CFD development period (before 2021-09-14), US500, NAS100, US30 M1 via `DEFAULT_SOURCES` (US30 from 2019-02);
+GEX from `data/cache/squeezemetrics/DIX.csv` (daily, known after the close: day d uses the GEX of the previous date).
+Rule (both cells): New York time. open = the 09:30 bar's open; prev close = the 15:59 bar's close of the previous
+trading day; sigma(t) = mean over the previous 14 trading days of |close(t) / open - 1| at checkpoint t; upper =
+max(open, prev close) x (1 + sigma(t)), lower = min(open, prev close) x (1 - sigma(t)). Checkpoints every 30 minutes
+10:00 .. 15:30 (bar closes at those times). Flat: close above upper -> long at that close; below lower -> short. Long:
+exit at a checkpoint whose close is back below upper (short mirrored), else at the 15:55 close. Re-entry allowed at
+later checkpoints. Cost per round trip from the engine (spread at the entry time via `fill_spread_time` + 2 x
+slippage), in bp of the entry price. No swap (intraday).
+- I-85 (FB-199): every trading day.  - I-86 (FB-201): only days whose previous GEX < 0 (192 of 2,610 development
+  days in the file).
+Statistics: per date, the mean net bp over symbols traded that day (days without a trade count 0 for I-85 only on
+eligible days); t over dates. Kills per cell: net <= 0; t < 3.0; halves (by date) not both > 0; net <= 0 at doubled
+costs; net <= 0 without the 2 best days. Diagnostics: per symbol, trades per day, gross vs cost, the positive-GEX
+days (FB-200 mirror: momentum should be weaker), long vs short.
+Power line (signal-free, before the screen): sd of the 10:00 -> 15:55 return per symbol-day and the count of days.
+
+### I-87 Overnight index premium on CFDs (Fable FB-107 / FB-108, 2026-11-15; not screened: below cost by arithmetic)
+Published idea: most of the equity premium accrues overnight (Cliff, Cooper & Gulen 2008; Lou, Polk & Skouras 2019;
+UNVERIFIED). Size: a 7 %-a-year premium is ~2.8 bp a night. FTMO cost of one night long: swap ~2.4-2.9 bp (census
+2026-11-15: US30 -2.46, US100 -2.43, UK100 -2.52, AUS200 -2.86 bp a night) + spread / slippage 1-2 bp -> ~3.5-5 bp.
+Expected net <= 0 before any data; FB-108's "after a down day" variant would need > 5 bp a night on a third of the
+nights. Not screened (counted as a card, not a look).
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
