@@ -1339,3 +1339,8 @@ vs low-funding coins and failed replication); here the price exposure is hedged,
   worst week (a perp squeeze is a basis loss).
 - Expected: top-funding coins pay ~20-60 bp a week in 2020-21, less in 2022-23; prior 30 %. Returns are per unit of
   notional with spot fully paid (capital-heavy: an annual figure needs no leverage assumption).
+**Result 2026-11-15 (one look, `research/screens/2026-11-15_i98_basis_carry_screen.py`): KILLED.** 186 weeks, 10 names
+each: gross +45.2 bp a week (funding +46.5, basis -1.3), turnover cost 33.3, net +12.0, t 1.84, worst -206, sd 89;
+halves +55.1 / -22.0 (2020 +38, 2021 +65, 2022 -29, 2023 -15); doubled costs -21.3. The funding is real but the
+top-funding set rotates too fast; a hysteresis / lower-turnover rule would be a new hypothesis shaped by this
+result (not run: rescue rule). Family `crypto_basis` one falsification.

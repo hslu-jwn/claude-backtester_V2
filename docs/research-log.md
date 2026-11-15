@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: I-98 spot-hedged funding carry KILLED (auto)
+
+- **Auto decision 13:** FB-035 next (highest prior of the untested crypto rows, data on disk), as a new family
+  `crypto_basis` (hedged; not I-73's price bet). Alternative: prop-mechanics rows (FB-258 / FB-265). Why: a new edge
+  for goal 2 is worth more than refining a prop decision the user has not made.
+- Gross +45.2 bp a week (funding +46.5), turnover cost 33.3, net +12.0, t 1.84; 2022-23 negative. KILLED; no
+  low-turnover rescue. Model: Opus.
+
 ## 2026-11-15: crypto prop firms' published rules applied to Strategy 20 (auto)
 
 - **Auto decision 12:** read HyroTrader / CFT public rule pages (web-fetch subagent, Sonnet-class) and rerun the
