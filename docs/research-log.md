@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategy 20 prop simulation with intraday bound and weekday tranches (auto)
+
+- Fable items 2-3. Top-100 book at +92, HyroTrader Two-Step: close marks 74 % (Monday) / 85 % (7 tranches) at 25 % per
+  side; worst-case intraday bound 4 % / 2 %. The daily 5 % equity rule is the binding risk; the bound is too harsh
+  (all extremes at once). Addendum 3 in the prop-fit report; HANDOFF Open 1 now says: no challenge before an hourly check.
+- **Auto decision 18:** download 1 h klines for the book's members (data.binance.vision, public) to settle it.
+  Alternative: report the bound and stop. Why: it decides the user's money question. Model: Opus.
+
 ## 2026-11-15: Fable advisor call 3; Strategy 20 turnover ~55 % -> fair expectation ~+92 bp a week (auto)
 
 - **Auto decision 16:** last Fable call (window ends 2026-11-16) after three empty harvests. Alternative: harvest
