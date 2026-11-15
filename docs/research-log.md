@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategy 20 on the Bybit universe (auto, diagnostic)
+
+- **Auto decision 3:** check whether Strategy 20's book exists on Bybit (venue of both candidate crypto prop firms, HANDOFF
+  Open 1) before the maker-fill model. Alternative: FB-273 maker fills first. Why: it bears directly on the open money
+  decision and costs minutes.
+- Public Bybit instrument list (821 USDT perps; 678 of Binance's 923 perps are listed, each counted from its Bybit launch
+  day): frozen book on the spent test period +132.8 bp a week, t 3.37 (full +147.2, t 3.76); 191 vs 238 eligible a week;
+  79 % of the full book's legs are Bybit coins. Diagnostic only (Bybit-delisted coins missing, Binance prices / funding).
+  Addendum in `knowledge/research/reports/2026-11-15_s20_prop_fit.md`. Model: Opus.
+
 ## 2026-11-15: Continue.Research Mode=auto (no limit), start; Wave 5 closed on power (auto)
 
 - Baseline: 5,986 passed, 14 skipped, 4 xfailed (`-n 8`), ruff clean. Family budget: 64 looks, 4.5 expected false passes

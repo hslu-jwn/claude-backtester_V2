@@ -36,7 +36,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 1. **Crypto prop firm for Strategy 20 (money):** HyroTrader / Crypto Fund Trader (Bybit, 550-700+ perps, weekend holds,
    no stop, own bots) could host it; simulated 2-Step pass 90-100 % at 25 % notional per side in ~10-16 months
-   (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). Before any fee: confirm the low-cap 5 % cap,
+   (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). On the perps Bybit lists the frozen book
+   still made +133 bp a week, t 3.37, in the test period (diagnostic, addendum). Before any fee: confirm the low-cap 5 % cap,
    drawdown type and basket fills with the firm.
 2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
    or Opus runs them by hand from about 2026-12-02.
