@@ -1,89 +1,62 @@
 # Handoff
 
-Read first in every session; rewritten at every `End.` (about 60 lines, current state only; history
-in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
+Read first in every session; rewritten at every `End.` (about 60 lines, current state only; history in git, results in
+`research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
-## Where things are (2026-11-14, `End.` of the Binance futures research session)
+## Where things are (2026-11-15, `End.` of the Mode=auto research session 2026-11-14/15)
 
-- **Location:** `X:/Daten/02_Projekte/01_Laufend/backtester-claude/backtester-claude_V2`; Claude's memory notes moved
-  to the new project key (7 files), no settings point to the old path.
-- **Repo:** branch `v2-6-research` (pushed); `main` is behind, merge only on the user's word. No lane worktrees.
-  Full suite 5,963 passed, 14 skipped, 4 xfailed (`-n 8`); ruff clean.
-- **Data:** Binance USD-M cache now 37 perps (BTC, ETH + 15 listed by 2020-02 + 20 listed by 2020-08), M1 + taker flow
-  + funding, 2020 to 2026-10/11 (`binance_download --klines`, 11 GB). EOS prices end 2025-05-21 (its funding file
-  continues as a constant placeholder); OMG and SXP delisted 2025. Cache day files are now fsynced before the rename
-  (a hard restart had left 52 damaged SXP files; repaired, full scan clean).
-- **Research 2026-11-13/14 (Binance; every look in the ledger, 120 rows):** I-72 funding-settlement drift killed
-  (+2 bp vs 10 bp cost); I-73 cross-sectional funding carry: development killed on t (1.30), one-time test on
-  2021-09..2026-10 **passed** (+112 bp/week, t 2.93) but the pre-registered **replication on 20 unseen perps failed**
-  (+63 bp/week, t 1.05; price part +35 vs +103, funding carry held); HV-T0020-3 funding-extreme fade untestable
-  (122 independent clusters); I-75 weekly crypto reversal killed (-147 bp/week; large perps show momentum).
-  Harvest batches 10-13 + canary check (38 tasks): nothing screenable except I-75; I-74 hedger reversal carded, below cost.
-- **Strategy 19 crypto carry** (`docs/strategy-crypto_carry.md`): research tool built (`tools/crypto_carry.py`,
-  `strategy/crypto_carry/book.py`, golden identical to the screen); kept as **forward paper log only**.
-- **Harvest routing:** ACAD / CB tasks on Codex terra **high** (canary check 2026-11-14: medium missed the
-  known-answer paper twice, high and sol found it); `harvest check` needs the Avast CA bundle (skill note).
-- **Rules changed 2026-11-14 (side session, `aeffc3c`):** `Mode=manual|auto` replaces `Test=` (CLAUDE.md, skills
-  `continue-research`, `idea-harvest`); re-read them on resume.
-- **Uncommitted, not Opus's:** `src/backtester/tools/notify.py` (hook trace log lines); the user decides.
+- **Repo:** branch `v2-6-research` (pushed); `main` is behind, merge only on the user's word. Full suite and ruff: see
+  the research log's End entry. `src/backtester/tools/notify.py` has uncommitted hook-trace lines: the user's, untouched.
+- **Data (not committed):** Binance wide universe `data/cache/binance_wide` (daily klines + taker volume + funding, all
+  USDT perps incl. delisted, to 2023-12), `binance_wide_test` (2024-01..2026-10), `binance_wide_spot` (spot klines,
+  243 symbols, to 2023-12); Squeezemetrics DIX / GEX `data/cache/squeezemetrics/DIX.csv` (daily from 2011, use next day).
+- **Strategies alive (goal 2, Binance, research tools, no orders):**
+  - **Strategy 20 crypto taker-flow sort** (`docs/strategy-crypto_flow.md`, `tools/crypto_flow.py`): weekly long the
+    top / short the bottom quintile of 7-day net taker buying, all USDT perps. One-time test 2024-01..2026-10 PASSED
+    (+147 bp a week, t 3.76; development +145). About half is pump capture in small perps (+56 bp a week with returns
+    capped at 30 %); break-even extra slippage ~37 bp a fill; twin I-83 (flow residual on the 7-day return) also passed
+    (+102, t 2.85, correlation 0.83): the edge is not just momentum. Forward log from 2026-11-16.
+  - **Strategy 19 crypto carry**: forward log only (replication failed). Correlation with Strategy 20 0.06.
+- **Goal 1 (FTMO CFDs): no stream.** This session killed noise-band momentum (incl. the gamma split), SMT divergence,
+  NAS100 / US500 rotation, the ICT raid / power of three / CRT rules and the FVG / equal-highs null model; overnight
+  premium is below cost (swap). Pass map: zero edge passes ~30 % by luck; a stream needs ~+0.05 R net at ~300 trades a
+  year. Prop mechanics: adaptive sizing adds ~0-3 points; K uncorrelated streams cut the time to pass by ~K.
+- **Idea backlog:** `research/idea_backlog/2026-11-15-fable-ideas.csv` (335 ideas, Fable), framework and waves in
+  `knowledge/reviews/2026-11-15-fable-idea-universe.md`; Waves 0, 1, 2 (partly) and 4 done; family budget via
+  `research/screens/family_budget.py` (run at the top of every batch). Reports in `knowledge/research/reports/2026-11-1*`.
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
-- 2026-11-14: crypto split (develop 2020-2023, test once 2024+, wider perp universe incl. delisted) for crypto families
-  with no look yet (`docs/research-runner.md` › Periods).
-- 2026-11-14: everything of this session accepted at `End.`; Strategy 19 forward paper log only after the failed
-  replication; replication download of 20 perps; Strategy 19 spec (R = 1,000 bp risk unit without a stop, research
-  tool, forward log from 2026-11-16); I-73 one-time test; fsync fix; harvest batches 10-13 and the canary check.
-- 2026-11-13: 15 more Binance perps (klines + funding); challenge path simulator; data fixes 13.12-13.18; rollover
-  fixes; factors GBPJPY 1.09 / GBPUSD 1.38; spread table option A; no paid futures data; Binance futures direction.
-- 2026-11-12: pytest-xdist `-n 8`; one research loop at a time; always propose next steps; auto mode; futures venues
-  allowed (futures prices + futures cost model, never CFD prices minus swap).
+- 2026-11-15: everything of this session accepted at `End.`; crypto split (develop 2020-2023, test once 2024+, wider
+  universe incl. delisted; `docs/research-runner.md` › Periods); build Strategy 20 (research tool + forward log); its
+  realism check; Fable idea-universe call; Waves 0, 1, 2, 4 and the ICT null model; Mode=auto for the session.
+- 2026-11-14: Binance session accepted; Strategy 19 forward log only; Mode=manual|auto rules.
 
 ## Open (needs the user)
 
-1. One-time MT5 tests still pre-registered: strategy 4 on GBPJPY; gap momentum in quiet sideways markets.
-2. **B4 dividends:** send `docs/ftmo-dividend-question.md` to FTMO support; Opus adds the rule test-first.
-3. **GBPUSD 2020-21 placeholder spreads** still in the table; drop them like the seven FX symbols? Changes a default.
-4. **Strategy 19 forward log:** a monthly scheduled task (`crypto_carry --update --forward`) needs your go;
-   otherwise Opus runs it by hand from about 2026-12-02. Kill after 52 weeks: net <= 0 or drawdown worse than -6 R.
-5. **Crypto cross-sectional momentum** (Liu, Tsyvinski & Wu 2022): seen mirrored in I-75's development data, so only
-   a pre-registered one-time run on 2021-09..2026-10 would be fair. Only on your go.
-6. Low priority: stressed-cost p90 refresh; USDCHF early 2015 borderline data.
-7. **(auto run 2026-11-14) Strike Open 1?** Both parked MT5 tests look spent (V1 ran strategy 4 on GBPJPY 2023-26;
-   gap momentum ran on MT5 2021-26), like gap fade in review B3. Opus did not run them (research log, auto decision 3).
-9. **(auto run 2026-11-14, Fable row 20) Stop rule for signal research:** after K = 10 more falsified screens with no
-   pass, goal-1 signal research pauses and effort goes to prop mechanics, forward logs, combining streams and code.
-10. **(Fable idea universe 2026-11-15) Count test-period uses:** from the 5th one-time test on the same test period,
-    require t >= 3.0 instead of 2.0 (`knowledge/reviews/2026-11-15-fable-idea-universe.md`). Changes a rule.
-11. **(Fable 2026-11-15) Free-tier account** for US share minute bars (creating an account is yours), and a go for a
-    scheduled daily collector of retail positioning data (FB-284; a standing scheduled task).
-12. **Crypto prop firm for Strategy 20 (money):** HyroTrader / Crypto Fund Trader (Bybit perps, weekend holds, no stop,
-    own bots) could host it; simulation: 25 % notional per side passes 90-100 % in ~10-16 months, 50 % per side
-    60-90 % in ~4-6 months (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). Before any fee:
-    confirm the low-cap 5 % cap, drawdown type and basket fills with the firm. Your decision.
+1. **Crypto prop firm for Strategy 20 (money):** HyroTrader / Crypto Fund Trader (Bybit, 550-700+ perps, weekend holds,
+   no stop, own bots) could host it; simulated 2-Step pass 90-100 % at 25 % notional per side in ~10-16 months
+   (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). Before any fee: confirm the low-cap 5 % cap,
+   drawdown type and basket fills with the firm.
+2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
+   or Opus runs them by hand from about 2026-12-02.
+3. **Crypto momentum:** a pre-registered screen on the crypto split; FB-009 / 011 / 220 depend on it.
+4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum); signal-research stop rule (K = 10
+   falsified screens -> pause goal-1 signals); count test-period uses (t >= 3.0 from the 5th one-time test on a period).
+5. **Data / accounts:** free-tier account for US share minute bars (FTMO share history mostly starts 2019-20); a
+   scheduled collector of retail positioning (FB-284). Optional books (Telegram 2026-11-14).
+6. Older: B4 dividends question to FTMO; GBPUSD 2020-21 placeholder spreads (a default); stressed-cost p90 refresh;
+   USDCHF early 2015.
 
 ## Next step
 
-- **Idea backlog (2026-11-15):** `research/idea_backlog/2026-11-15-fable-ideas.csv` (335 ideas, 22 families; 93 at
-  priority 1-2) with the framework and work order in `knowledge/reviews/2026-11-15-fable-idea-universe.md`.
-
-0. **I-78 weekly taker-flow sort on all Binance USDT perps: one-time test PASSED** (2026-11-14; +147 bp a week, t 3.76;
-   about half is pump capture in small perps, ~+56 bp a week without the tails). Goal 2 only (not on FTMO).
-   **Strategy 20 built 2026-11-15** (`docs/strategy-crypto_flow.md`, `tools/crypto_flow.py`); forward log from
-   about 2026-12-02 with Strategy 19: `python -m backtester.tools.crypto_flow --update --forward`. Next research:
-   a slippage / position-limit realism check.
-
-1. From about **2026-12-02**: `python -m backtester.tools.crypto_carry --update --forward`, commit
-   `research/forward/crypto_carry.csv`, report the first forward week (2026-11-16..22).
-2. **Auto run 2026-11-14 (research log, auto decisions 1-8):** Fable directions list (43 rows), FTMO pass map and
-   power budget map (goal 1 needs ~+0.05 R net at ~300+ trades a year = ~2.5-5 bp gross per daily event), I-76
-   killed, I-77 carded below cost, ideas triage, FTMO venue facts (59 share + 30 crypto CFDs), harvest batch 14
-   empty. Crypto split adopted by the user (2026-11-14); next: Fable rows 9 / 21 on the wide universe (I-78..I-80).
-3. Research (before the auto run): the free-data idea space looked exhausted (four harvest batches, one screen). Options were:
-   a new free data source (e.g. CFTC COT for positioning ideas, a download needing the user's go), or
-   `Continue.Code` on V2.10 (A9 deferred; two-leg 2b when a pair idea survives a screen).
+1. From about **2026-12-02**: both forward logs (`python -m backtester.tools.crypto_flow --update --forward`, same for
+   `crypto_carry`), commit `research/forward/*.csv`, report the first weeks.
+2. Research (`Continue.Research`): remaining backlog waves: Wave 5 (rare events pooled, power line first), the deferred
+   Binance items (maker-fill model from aggTrades, liquid-only Strategy 20 as a frozen forward variant), Wave 3 (shares)
+   once outside share data exists; signal stacking (FB-244).
 
 ## First prompt for the next chat
 
-> Read `docs/HANDOFF.md`. Then propose, in max 10 lines, the next research or code step (Strategy 19 forward log
-> from about 2026-12-02; new free data source vs `Continue.Code`), with your pick, and start it after my ok.
+> Read `docs/HANDOFF.md`. Then propose, in max 10 lines, the next step (forward logs from ~2026-12-02, crypto prop firm
+> for Strategy 20, Wave 5 or the deferred Binance items), with your pick, and start it after my ok.

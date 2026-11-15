@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: End. (the user: "Yes, End.")
+
+- Full suite 5,986 passed, 14 skipped, 4 xfailed (`-n 8`); ruff clean (src, tests, research/screens). HANDOFF rewritten,
+  ROADMAP line added (V2.10, accepted 2026-11-15), brief `crypto_flow.md` archived, `research/trials.jsonl` unchanged
+  (no runner trials this session). Uncommitted, not Opus's: `src/backtester/tools/notify.py`.
+- Auto decisions of the session (details in the entries above): (1) Fable directions call; (2) Binance metrics not
+  downloaded; (3) parked MT5 tests not run; (4) pass map first, then I-76; (5) no I-76 rescue; (6) Fable row 12 skipped
+  (required size); (7) I-77 literature first, not screened; (8) harvest batch 14; (9) I-78 one-time test; (10) I-81
+  screened despite weak power; (11) Wave 1 order and deferrals (FB-005 / 007 / 273); (12) I-83 one-time test, no
+  separate build; (13) Wave 2 start (noise band + gamma; overnight closed by arithmetic); (14) SMT before rotation;
+  (15) FB-055 / 095 not run, FB-059 parked, FB-244 later; (16) ICT event rules before the null model.
+
 ## 2026-11-15: Wave 4: ICT level-touch null model (the user: "Null model")
 
 - I-94 (descriptive, one look for `ict_levels`): FVG first touches return +0.38 bp in 60 minutes vs -0.26 bp for a
