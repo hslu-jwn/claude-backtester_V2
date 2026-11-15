@@ -1057,6 +1057,11 @@ development + test pooled t >= 3.0; (4) both test halves > 0; (5) test net > 0 w
 net > 0 at 40 bp. Note: the period was already used once by I-78 (same family, correlated signal); a pass adds
 evidence mainly on whether the flow edge survives without its momentum part. Reported with its correlation to
 Strategy 20 on the test weeks.
+**I-83 one-time test result (2026-11-15, `--test-i83`, tool 6d8e072; dev re-run identical): PASSED all six gates.**
+147 weeks: net +101.6 bp a week, t 2.85, 61 % positive, worst -965; halves +64.1 / +138.5; pooled t 4.56; without the
+2 best +81.0; at 40 bp +81.6. Test-week correlation with Strategy 20 +0.83: the taker-flow edge survives with the
+linear 7-day-return part removed, so Strategy 20 is not just short-term momentum. Not a second independent stream:
+kept as evidence for Strategy 20, no separate build.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

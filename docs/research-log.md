@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 1: I-82 killed, I-83 absorption PASSED its one-time test; crypto prop firms (auto)
+
+- Shared tool (0ba5965) reproduces I-78 (canary). I-82 daily flow KILLED (-4.2 bp a day, t -0.74). I-83 absorption
+  (flow residual on the 7-day return) passed all development gates (+145.4, t 3.57) -> **auto decision 12:** one-time
+  test (gates pre-registered fc7d57c, test mode 6d8e072): PASSED (+101.6 bp a week, t 2.85, pooled 4.56). Correlation
+  with Strategy 20 0.83: evidence that the flow edge is not just momentum; no separate build (alternative: build it
+  as Strategy 21; why not: nearly the same book). Placebo diagnostic corrected to gross. Telegram sent.
+- Prop-firm rule table (`knowledge/research/reports/2026-11-15_prop_firm_rules.md`, Sonnet web subagent): HyroTrader and
+  Crypto Fund Trader (Bybit, 550-700+ perps, weekend holds, no stop required, own bots allowed) could host Strategy 20;
+  Bitfunded cannot (no bots, 5 positions). Signing up / fees: the user's decision.
+
 ## 2026-11-15: Wave 1 started (the user: "Yes, Wave 1", then "Mode = auto")
 
 - Mode=auto for the rest of this session (the user). **Auto decision 11:** Wave 1 order: crypto prop-firm rule table
