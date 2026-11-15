@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 1 done: I-84 spot-minus-perp flow KILLED (auto)
+
+- Spot daily klines for 243 perps (development months, `data/cache/binance_wide_spot`). I-84: net +70.5 bp a week,
+  t 1.76 -> KILLED; adds nothing beyond perp flow (corr 0.58 with Strategy 20). Wave 1 tally: I-82 killed, I-83 passed
+  (twin of Strategy 20), I-84 killed; prop-firm table and Strategy 20 prop simulation done; FB-005 / 007 / 273 deferred.
+  Family `crypto_xs_factors` now 6 looks (threshold stays 3.0 to 10). Model: Opus.
+
 ## 2026-11-15: Strategy 20 against crypto prop-firm rules (auto)
 
 - `knowledge/research/reports/2026-11-15_s20_prop_fit.md`: daily-marked weekly book (paths reproduce the screen's

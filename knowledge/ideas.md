@@ -1064,6 +1064,9 @@ linear 7-day-return part removed, so Strategy 20 is not just short-term momentum
 kept as evidence for Strategy 20, no separate build.
 **I-84 power (2026-11-15, before its screen):** spot daily klines downloaded for 243 of the 265 perps (development
 months); 186 weeks with >= 20 symbols with spot data; |t| 3 needs ~105 bp a week net (as I-83).
+**I-84 result: KILLED (t 1.76 < 3.0).** Direction long the bottom (perp buying above spot buying): net +70.5 bp a
+week, 51 % positive; halves +149.7 / +8.0; at 40 bp +50.5; placebo gross mean t +0.01; correlation with Strategy 20
++0.58 (the perp-flow part). The spot-flow difference adds nothing beyond perp flow.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
