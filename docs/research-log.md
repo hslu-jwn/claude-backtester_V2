@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 2 part 1: I-85 / I-86 noise-band momentum KILLED; I-87 overnight below cost (auto)
+
+- **Auto decision 13:** Wave 2 starts with FB-199 / FB-201 (published setup + gamma split, one screen) and closes
+  FB-107 / FB-108 by arithmetic (swap 2.4-2.9 bp a night ~ the 2.8 bp published premium). Alternative: the two-leg
+  rotation tool first. Why: one script, the gamma file was just unlocked, and it is the last look of the `orb` family.
+- I-85: net +0.3 bp a day, t 0.37 (gross +3.0 vs cost 1.7 a trade); I-86 negative-gamma days: -10.8 bp a day, t -1.97,
+  opposite sign. Both KILLED; family `orb` closed. DIX / GEX cached in `data/cache/squeezemetrics/`. Model: Opus.
+
 ## 2026-11-15: Wave 1 done: I-84 spot-minus-perp flow KILLED (auto)
 
 - Spot daily klines for 243 perps (development months, `data/cache/binance_wide_spot`). I-84: net +70.5 bp a week,

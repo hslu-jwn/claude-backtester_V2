@@ -1094,6 +1094,12 @@ Power line (signal-free, before the screen): sd of the 10:00 -> 15:55 return per
 **Power (2026-11-15, before the screen; script frozen aa48dde):** US500 1,621 days (sd 72 bp), NAS100 1,658 (88 bp),
 US30 480 (78 bp) of 10:00 -> 15:55 return. I-85: ~1,650 days, se ~1.5-2 bp -> t 3 needs ~5 bp a day net; I-86: 192
 negative-GEX days with higher volatility, se ~10 bp -> t 3 needs ~30 bp a day net (weak power).
+**Result (`research/screens/2026-11-15_i85_noise_band_screen.py`): both KILLED.**
+- I-85 all days: 1,712 days, 1,328 trades; net +0.31 bp a day, t 0.37; per trade gross +2.95, cost 1.70; halves
+  +0.89 / -0.26; doubled costs -0.68. NAS100 net +2.9 a trade, US500 -0.1, US30 -3.9; longs +2.5, shorts -0.3.
+- I-86 negative-GEX days: 144 days, 121 trades; net -10.8 bp a day, t -1.97: the **opposite** sign (shorts -55.7 bp a
+  trade: sharp rebounds on short-gamma days). Positive-GEX days: +3.1 a trade (the FB-200 mirror is not supported
+  either). No rescue. Family `orb`: second falsification (S06 not confirmed, I-85 killed): closed.
 
 ### I-87 Overnight index premium on CFDs (Fable FB-107 / FB-108, 2026-11-15; not screened: below cost by arithmetic)
 Published idea: most of the equity premium accrues overnight (Cliff, Cooper & Gulen 2008; Lou, Polk & Skouras 2019;
