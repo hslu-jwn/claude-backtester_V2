@@ -53,8 +53,15 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
    gap momentum ran on MT5 2021-26), like gap fade in review B3. Opus did not run them (research log, auto decision 3).
 9. **(auto run 2026-11-14, Fable row 20) Stop rule for signal research:** after K = 10 more falsified screens with no
    pass, goal-1 signal research pauses and effort goes to prop mechanics, forward logs, combining streams and code.
+10. **(Fable idea universe 2026-11-15) Count test-period uses:** from the 5th one-time test on the same test period,
+    require t >= 3.0 instead of 2.0 (`knowledge/reviews/2026-11-15-fable-idea-universe.md`). Changes a rule.
+11. **(Fable 2026-11-15) Free-tier account** for US share minute bars (creating an account is yours), and a go for a
+    scheduled daily collector of retail positioning data (FB-284; a standing scheduled task).
 
 ## Next step
+
+- **Idea backlog (2026-11-15):** `research/idea_backlog/2026-11-15-fable-ideas.csv` (335 ideas, 22 families; 93 at
+  priority 1-2) with the framework and work order in `knowledge/reviews/2026-11-15-fable-idea-universe.md`.
 
 0. **I-78 weekly taker-flow sort on all Binance USDT perps: one-time test PASSED** (2026-11-14; +147 bp a week, t 3.76;
    about half is pump capture in small perps, ~+56 bp a week without the tails). Goal 2 only (not on FTMO).

@@ -13,6 +13,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   (300+ rows with mechanism, data, expected size, cost cell, prop fit, ledger overlap, first screen, prior) and
   `knowledge/reviews/2026-11-15-fable-idea-universe.md` (framework, work order, hedge-fund map, pair / SMT and ICT
   sections, data / books lists, top 30). Allowed until 2026-11-16 (CLAUDE.md › Advisor).
+- Result (~23 min): 335 ideas (FB-001..335) in 22 families (210 strategy, 20 filter, 34 method, 26 data, 14 prop,
+  31 reading); priority 1: 42, 2: 51, 5: 99 (listed for the record, overlap falsified families or fail cost / power);
+  ~100 worth a look in ~40 screens; six waves, nine shared screen scripts, a look budget per family. No web page
+  opened: every source is UNVERIFIED. Owner decisions added to HANDOFF › Open 10-11 (test-use counting rule,
+  account / scheduled collector). Committed fe0f831.
 
 ## 2026-11-15: prop mechanics, sizing policy and concurrent streams (the user: "Prop mechanics")
 
