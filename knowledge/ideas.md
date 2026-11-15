@@ -1201,6 +1201,25 @@ I-92 1,761 events on 1,000 days, ~4.9 bp; I-93 4,256 events on 1,593 days, ~2.8 
 With timed exits and breadth, the three most concrete ICT setups show no edge: gross within +-2.5 bp of zero, below
 costs, and no better than their controls. No rescue (a US-index-only raid rule would be post-hoc).
 
+### I-94 Level-touch null model for ICT levels: fair value gaps and equal highs / lows (Fable FB-126 / 137 / 138 / 149, Wave 4, 2026-11-15; descriptive, rules fixed before any data)
+Purpose: answer the ICT level concepts in one descriptive pass against matched nulls (Fable: closes ~40 backlog rows).
+Counts as one look for family `ict_levels`; never a pass. Symbols, period, ATR, trading day and New York time as I-91;
+M15 bars from M1 inside the trading day; no costs (descriptive).
+- **FVG (FB-126 / 137 / 138):** bullish FVG at M15 bar i: low[i] > high[i-2] with gap >= 0.05 ATR; zone = [high[i-2],
+  low[i]]; first touch = the first later bar of the same trading day (up to 32 bars) whose low reaches low[i]; entry
+  = low[i]. Outcomes: "held" = no bar in the next 4 trades below the zone bottom; forward return = close 4 bars after
+  the touch bar vs entry, in the reversal direction (up for bullish), bp. Mirrored for bearish. **Null:** the same
+  zone shifted by u x gap (u uniform 1..3, random sign, seeded), formed at the same bar, same touch and outcome rules.
+  Also reported: share of FVGs touched within 32 bars (fill rate) vs the null.
+- **Equal highs / lows (FB-149):** M15 swing high at j = high[j] above the 2 bars on each side (confirmed at j+2);
+  "equal" = within 0.05 ATR of a swing high of the previous 32 bars with no bar between above both. Event at j+2:
+  exceeded = a later bar of the same trading day within 16 bars trades above max of the two. **Null:** single swing
+  highs (no equal partner), compared within buckets of distance from the event close to the level (0-0.1, 0.1-0.2,
+  0.2-0.4 ATR). Mirrored for lows.
+Flag (not a pass): a concept is "above its null" when the pooled difference is > 2 bp in forward return (FVG) or > 5
+points in exceed rate (equal levels) with t >= 3 (date-clustered); a flagged concept could only become a new,
+pre-registered hypothesis with its own one-time test.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
