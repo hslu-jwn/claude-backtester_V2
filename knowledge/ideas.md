@@ -1037,6 +1037,9 @@ Diagnostics (no gate): signal deciles (dose-response), weekly correlation with S
 placebo of the signal. Tool canary before any of these looks: the shared tool must reproduce I-78's development
 numbers (+145.0 bp, t 3.24) to the digit.
 Power lines (signal-free, before each screen): random-leg sd of the series at its horizon.
+**Canary and power (2026-11-15, before the screens; tool frozen in 0ba5965):** the shared tool reproduces I-78 (186
+weeks, +145.0, t 3.24). I-83 / I-84 weekly: random-leg sd 479 bp -> |t| 3 needs ~105 bp a week net; I-82 daily: 1,314
+days, sd 170 bp -> |t| 3 needs ~14 bp a day net (vs 20 bp a day of cost). I-84 waits for the spot download.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
