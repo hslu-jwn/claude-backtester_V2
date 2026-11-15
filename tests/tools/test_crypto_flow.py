@@ -104,8 +104,8 @@ def test_cli_csv_and_forward(tmp_path, monkeypatch, capsys):
     assert rows[0]["entry_time"] == "2026-01-05T00:00:00+00:00"
     assert rows[0]["exit_time"] == "2026-01-11T23:59:00+00:00"
     assert "mean net 1980.0000 bp" in capsys.readouterr().out
-    forward = tmp_path / "forward.csv"
-    monkeypatch.setattr(tool, "FORWARD_PATH", forward)
+    forward = tmp_path / "crypto_flow.csv"
+    monkeypatch.setattr(tool, "FORWARD_DIR", tmp_path)
     tool.main(["--forward", "--out", str(tmp_path)])
     assert not forward.exists()  # no complete forward weeks on 2026-11-14
     with pytest.raises(SystemExit):
@@ -143,12 +143,11 @@ def test_liquid_forward_uses_own_log(tmp_path, monkeypatch):
         return real(*args, **kwargs)
 
     monkeypatch.setattr(tool, "compute_weeks", spy)
-    monkeypatch.setattr(tool, "FORWARD_PATH", tmp_path / "full.csv")
-    monkeypatch.setattr(tool, "LIQUID_FORWARD_PATH", tmp_path / "top100.csv")
+    monkeypatch.setattr(tool, "FORWARD_DIR", tmp_path)
     monkeypatch.setattr(tool, "append_forward", lambda path, rows: seen.setdefault("path", path))
     tool.main(["--forward", "--liquid", "--out", str(tmp_path)])
     assert seen["config"].top_volume == 100
-    assert seen["path"] == tmp_path / "top100.csv"
+    assert seen["path"] == tmp_path / "crypto_flow_top100.csv"
 
 
 @pytest.mark.parametrize(
@@ -167,3 +166,53 @@ def test_golden_liquid(start, end, count, mean, t):
     assert len(net) == count
     assert abs(net.mean() - mean) < 0.05
     assert abs(net.mean() / net.std(ddof=1) * np.sqrt(len(net)) - t) < 0.005
+
+
+def test_anchor_monday_is_the_plain_book():
+    k, f = fixture_book()
+    plain, plain_legs = tool.compute_weeks(k, f, date(2026, 1, 1), date(2026, 1, 11))
+    mon, mon_legs = tool.anchored_weeks(k, f, "mon", date(2026, 1, 1), date(2026, 1, 11))
+    assert mon == plain and mon_legs == plain_legs
+
+
+def test_anchor_tuesday_runs_the_frozen_book_one_day_later():
+    """FB-022 / tranches: the same rule on Tuesday 00:00 UTC books (decision package 2026-11-15)."""
+    k, f = fixture_book()
+    trades, legs = tool.anchored_weeks(k, f, "tue", date(2026, 1, 1), date(2026, 1, 12))
+    assert trades, "one complete Tuesday book expected"
+    assert all(t["entry_time"].weekday() == 1 for t in trades)
+    assert all(
+        t["exit_time"].weekday() == 0 for t in trades
+    )  # Monday 23:59, the day before the next Tuesday
+    assert all(leg["week"].weekday() == 1 for leg in legs)
+    # identical to shifting the data by hand and the times back
+    dt = pd.Timedelta(days=1)
+    ks = {s: d.set_axis(d.index - dt) for s, d in k.items()}
+    fs = {s: v.set_axis(v.index - dt) for s, v in f.items()}
+    ref, _ = tool.compute_weeks(ks, fs, date(2025, 12, 31), date(2026, 1, 11))
+    assert [t["net_bp"] for t in trades] == [t["net_bp"] for t in ref]
+    assert [t["entry_time"] for t in trades] == [t["entry_time"] + dt for t in ref]
+
+
+def test_anchor_forward_paths(tmp_path, monkeypatch):
+    monkeypatch.setattr(tool, "load", fixture_book)
+    monkeypatch.setattr(tool, "FORWARD_DIR", tmp_path)
+    seen = {}
+    monkeypatch.setattr(tool, "append_forward", lambda path, rows: seen.setdefault("path", path))
+    tool.main(["--forward", "--liquid", "--anchor", "wed", "--out", str(tmp_path)])
+    assert seen["path"] == tmp_path / "crypto_flow_top100_wed.csv"
+    assert tool.forward_path(False, "mon") == tool.FORWARD_DIR / "crypto_flow.csv"
+    with pytest.raises(SystemExit):
+        tool.main(["--anchor", "xyz"])
+
+
+def test_golden_anchor_tuesday():
+    """FB-022 diagnostic: Tuesday anchor, development, full universe +113.8 bp a week, t 2.59 (FB-022 ran the shifted
+    window 2020-01-01..2023-12-31, i.e. calendar books up to 2024-01-01)."""
+    if not all(root.is_dir() for root in binance_wide.ROOTS):
+        pytest.skip("crypto flow golden requires data/cache/binance_wide and binance_wide_test")
+    trades, _ = tool.anchored_weeks(*tool.load(), "tue", date(2020, 1, 2), date(2024, 1, 1))
+    net = np.array([row["net_bp"] for row in trades])
+    assert len(net) == 188
+    assert abs(net.mean() - 113.8) < 0.05
+    assert abs(net.mean() / net.std(ddof=1) * np.sqrt(len(net)) - 2.59) < 0.005

@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: weekday-tranche forward logs for Strategy 20 (auto)
+
+- **Auto decision 20:** skip Fable item 9 (short-leg tail cap: a weighting shaped by spent data; the 15 % sizing does
+  not need it) and wire the recommended execution into the forward log instead. Alternative: run item 9 as a
+  diagnostic. Why: forward evidence should match what a prop account would trade.
+- `crypto_flow --anchor mon..sun` (`anchored_weeks`: relabel k days, shift times back; calendar end respected), own
+  forward file per anchor; test-first (Monday = plain book, Tuesday = hand-shifted book, forward paths, bad anchor) +
+  golden reproducing FB-022's Tuesday anchor (+113.8, t 2.59). Model: Opus.
+
 ## 2026-11-15: hourly prop check and Strategy 20 decision package (auto)
 
 - 1 h klines for all book members (12,248 monthly files). Hourly-close marks = daily close marks (86 % pass at 25 % per

@@ -1,9 +1,10 @@
 """Weekly crypto taker-flow research CSVs. Spec: strategy-crypto_flow.md › Build.
 
 python -m backtester.tools.crypto_flow [--start YYYY-MM-DD] [--end YYYY-MM-DD]
-    [--out DIR] [--update] [--forward] [--liquid]
+    [--out DIR] [--update] [--forward] [--liquid] [--anchor mon|tue|...|sun]
 
 --liquid: the frozen FB-017 variant (top 100 by median quote volume), own forward log.
+--anchor: rebalance on another weekday (00:00 UTC); each anchor has its own forward log (tranches).
 """
 
 from __future__ import annotations
@@ -30,8 +31,8 @@ from backtester.strategy.crypto_flow.book import (
 from backtester.tools.crypto_carry import _serialized, write_csv
 
 FORWARD_START = date(2026, 11, 16)
-FORWARD_PATH = Path("research/forward/crypto_flow.csv")
-LIQUID_FORWARD_PATH = Path("research/forward/crypto_flow_top100.csv")
+FORWARD_DIR = Path("research/forward")
+ANCHORS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 LIQUID = CryptoFlowConfig(top_volume=100)  # ideas.md › FB-017, frozen 2026-11-15
 TRADE_COLUMNS = (
     "entry_time",
@@ -101,6 +102,51 @@ def compute_weeks(
             legs.extend(result.legs)
         monday += pd.Timedelta(days=7)
     return trades, legs
+
+
+def anchored_weeks(
+    klines: Mapping[str, pd.DataFrame],
+    funding: Mapping[str, pd.Series],
+    anchor: str = "mon",
+    start: date | None = None,
+    end: date | None = None,
+    config: CryptoFlowConfig = DEFAULT,
+    *,
+    complete_only: bool = False,
+) -> tuple[list[dict], list[dict]]:
+    """The frozen weekly book rebalanced on another weekday (FB-022; tranches, prop decision 2026-11-15).
+
+    Data are relabelled k days earlier so that weekday k becomes the book's Monday, then the times are shifted back.
+    Dates stay calendar dates: a book is emitted only if its exit is on or before `end`. The future-week guard in
+    compute_weeks runs on the relabelled clock, k days lenient, but bars after the newest cached day do not exist.
+    """
+    k = ANCHORS.index(anchor)
+    if k == 0:
+        return compute_weeks(klines, funding, start, end, config, complete_only=complete_only)
+    dt = pd.Timedelta(days=k)
+    ks = {s: d.set_axis(d.index - dt) for s, d in klines.items()}
+    fs = {s: (f.set_axis(f.index - dt) if f is not None else None) for s, f in funding.items()}
+    day = timedelta(days=k)
+    trades, legs = compute_weeks(
+        ks,
+        fs,
+        start - day if start else None,
+        end - day if end else None,
+        config,
+        complete_only=complete_only,
+    )
+    for t in trades:
+        t["entry_time"] += dt
+        t["exit_time"] += dt
+    for leg in legs:
+        leg["week"] += dt
+        leg["exit_day"] += dt
+    return trades, legs
+
+
+def forward_path(liquid: bool, anchor: str) -> Path:
+    name = "crypto_flow_top100" if liquid else "crypto_flow"
+    return FORWARD_DIR / (f"{name}.csv" if anchor == "mon" else f"{name}_{anchor}.csv")
 
 
 def append_forward(path: Path, rows: list[dict]) -> None:
@@ -175,10 +221,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--update", action="store_true")
     parser.add_argument("--forward", action="store_true")
     parser.add_argument("--liquid", action="store_true")
+    parser.add_argument("--anchor", choices=ANCHORS, default="mon")
     args = parser.parse_args(argv)
     if args.forward and args.start is not None and args.start != FORWARD_START:
         parser.error("--forward starts at 2026-11-16; --start cannot override it")
-    start = FORWARD_START if args.forward else args.start
+    shift = timedelta(days=ANCHORS.index(args.anchor))
+    start = FORWARD_START + shift if args.forward else args.start
     if start and args.end and args.end < start:
         parser.error("--end must be on or after --start")
     try:
@@ -186,9 +234,11 @@ def main(argv: list[str] | None = None) -> None:
             last_month = datetime.now(UTC).date().replace(day=1) - timedelta(days=1)
             binance_wide.update(binance_wide.ROOTS[-1], last_month.strftime("%Y-%m"))
         config = LIQUID if args.liquid else DEFAULT
-        trades, legs = compute_weeks(*load(), start, args.end, config, complete_only=args.forward)
+        trades, legs = anchored_weeks(
+            *load(), args.anchor, start, args.end, config, complete_only=args.forward
+        )
         if args.forward:
-            append_forward(LIQUID_FORWARD_PATH if args.liquid else FORWARD_PATH, trades)
+            append_forward(forward_path(args.liquid, args.anchor), trades)
         out = args.out or RESULTS_DIR / "crypto_flow" / datetime.now(UTC).strftime(
             "%Y%m%dT%H%M%S%fZ"
         )

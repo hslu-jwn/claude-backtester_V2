@@ -56,7 +56,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 ## Next step
 
 1. From about **2026-12-02**: the forward logs (`python -m backtester.tools.crypto_flow --update --forward`, the same
-   with `--liquid` (FB-017 top-100 variant), and `crypto_carry`), commit `research/forward/*.csv`, report the first weeks.
+   with `--liquid` (FB-017 top-100 variant) and `--liquid --anchor tue` .. `sun` (weekday tranches), and `crypto_carry`), commit `research/forward/*.csv`, report the first weeks.
 2. Research (`Continue.Research`): remaining backlog waves: Wave 5 (rare events pooled, power line first), the deferred
    Binance items (maker-fill model from aggTrades, liquid-only Strategy 20 as a frozen forward variant), Wave 3 (shares)
    once outside share data exists; signal stacking (FB-244).

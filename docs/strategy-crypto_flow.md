@@ -148,6 +148,11 @@ From 2026-11-16, log the book every week without orders. Pre-registered forward 
 (standard error ~66 bp a week at the test sd 474); they can only catch a break.
 
 
+**Weekday tranches (2026-11-15, prop decision package):** `crypto_flow --liquid --anchor <mon..sun> --forward` logs the
+same frozen book rebalanced at 00:00 UTC on each weekday into `research/forward/crypto_flow_top100_<day>.csv` (Monday
+keeps `crypto_flow_top100.csv`); the tranched account is the mean of the seven. The FB-254 boundary applies to the
+Monday book (pre-registered); the tranches are reported beside it, not tested separately.
+
 **Sequential boundary (FB-254, pre-registered 2026-11-15 before any forward week):** a look every 13 weeks up to 104
 (8 looks); z = net mean / (sd / sqrt(n)) over the completed looks. Confirmed when z >= 2.071 / sqrt(k / 8)
 (O'Brien-Fleming, one-sided 2.5 %: 5.86, 4.14, 3.38, 2.93, 2.62, 2.39, 2.21, 2.07); killed early when z <= -2 at any
