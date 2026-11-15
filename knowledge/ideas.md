@@ -1138,6 +1138,24 @@ both legs make the new extreme together (confirmed breakout), continuation to th
 both halves positive; that is intraday momentum (family `orb`, closed after I-85) and FB-059 (four-index agreement)
 is its pre-listed form: any test of it must state that this diagnostic was seen.
 
+### I-89 / I-90 Intraday index rotation NAS100 vs US500: follow the morning relative move, or fade an extreme one (Fable FB-053 / FB-054, Wave 2, 2026-11-15; rules fixed before any data)
+Source: Fable 5.2 (ORIGINAL; growth-vs-broad rotation within the day; related: intraday momentum and its reversal
+after extreme moves). Label: SPECULATIVE. New family `index_rotation` (2 cells, threshold t 3.0). Not covered: P01 / P02
+were multi-day pairs with swap, L14-L18 daily lead-lag.
+Data: CFD development period (before 2021-09-14), NAS100 and US500 M1 (`DEFAULT_SOURCES`), New York time; US30
+(2019-02 ..) as a diagnostic pair only.
+Spread: s = r(NAS100) - beta x r(US500), beta = OLS slope of the two indices' 09:30 -> 15:55 returns over the previous
+60 trading days (at least 40). Position size: 1 unit NAS100 against beta units US500. Cost per day traded = NAS100
+round trip + beta x US500 round trip (engine spread at the entry time + 2 x slippage, each in bp of its entry price).
+- **I-89 (FB-053):** morning spread m = s from the 09:30 open to the 10:30 close; hold sign(m) x spread from the 10:30
+  close to the 15:55 close, every day.
+- **I-90 (FB-054):** morning spread m from 09:30 to the 11:00 close; z = m / sd of m over the previous 60 days; days
+  with |z| > 2 only: hold -sign(m) x spread from the 11:00 close to the 15:55 close.
+Kills per cell (statistics per day, t over days with a trade): net <= 0; t < 3.0; halves (by date) not both > 0;
+net <= 0 at doubled costs; net <= 0 without the 2 best days. The signs are predicted (follow / fade), not chosen.
+Diagnostics: the same rules on NAS100 vs US30 (2019-21), gross vs cost, long-NAS vs short-NAS days.
+Power line (signal-free, before the screen): sd of the 10:30 -> 15:55 spread and days with |z| > 2.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
