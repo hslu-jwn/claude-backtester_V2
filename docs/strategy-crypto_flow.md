@@ -137,6 +137,9 @@ XEM 16.6, CRV 13.4, BEL 5.1, SOL 4.7); maker-first at P0 (60 min, then taker) 12
 ~151 bp each (price ran away). Saving -2.1 bp, t -0.44: **keep taker**. The backtest's 20 bp a week assumes 5 bp a
 fill; the measured ~10 bp a fill means ~40 bp a week, i.e. a fair forward expectation of ~+74 bp a week (not +94).
 The cost default stays 20 bp (a default; the user's call).
+**Turnover correction (2026-11-15, Fable call 3 item 1):** the book changes only 53 % (development) / 58 % (test) of
+each side a week (one-way, equal weights). Netting the rebalance, ~10 bp a fill costs ~22 bp a week, about the
+backtest's 20: the fair forward expectation is **~+92 bp a week** (all-anchor +94 minus ~2), not +74.
 
 ## Forward check
 

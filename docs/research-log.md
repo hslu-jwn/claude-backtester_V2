@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Fable advisor call 3; Strategy 20 turnover ~55 % -> fair expectation ~+92 bp a week (auto)
+
+- **Auto decision 16:** last Fable call (window ends 2026-11-16) after three empty harvests. Alternative: harvest
+  batch 16. Why: the harvest yield is zero; a ranked view of what is left is worth more.
+  `knowledge/reviews/2026-11-15-fable-call3.md`: pause FTMO goal-1 signal research (K = 10), stop harvests; value is
+  in making Strategy 20 cheaper, safer, verified. Model: Fable 5.2 subagent (read-only, ~2.8 min).
+- Item 1 done: one-way turnover 53 % / 58 % a side a week; netted cost ~22 bp a week at ~10 bp a fill -> fair
+  expectation ~+92 (the earlier +74 assumed full turnover). Spec and HANDOFF corrected.
+- **Auto decision 17:** follow Fable's pick (items 2-3: intraday-mark prop simulation and weekday tranches), then the
+  prop decision package; no more FTMO signal screens or harvests this run unless a new venue fact appears.
+  Alternative: keep screening priority 4-5 rows. Why: every remaining row sits below the MDE or the cost.
+
 ## 2026-11-15: harvest batch 15 (forced flows: crypto index / fund / reward selling, oil index roll, delistings): nothing kept (auto)
 
 - **Auto decision 15:** harvest batch 15, 6 tasks T0105-T0110 (4 mechanism-first cells + canaries T0109 known answer,
