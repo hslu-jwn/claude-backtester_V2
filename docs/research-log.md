@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: swap-free CFD prop census; I-87 stays closed on power (auto)
+
+- Fable item 6 (web-fetch subagent): only FundedNext publishes swap-free accounts for all challenges (+10 % price);
+  FTMO publishes nothing on it. I-87 overnight premium on a swap-free account: MDE ~4.4 bp a night vs halved premium
+  ~1.4-2 -> closed on power (ledger I87b). `knowledge/research/reports/2026-11-15_swap_free_census.md`. Model: Opus.
+
 ## 2026-11-15: Strategy 20 prop simulation with intraday bound and weekday tranches (auto)
 
 - Fable items 2-3. Top-100 book at +92, HyroTrader Two-Step: close marks 74 % (Monday) / 85 % (7 tranches) at 25 % per

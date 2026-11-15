@@ -8,9 +8,12 @@ Accounts: "monolithic" = Monday anchor only; "tranches" = 1/7 of the notional on
 Monte Carlo: 7-day calendar blocks of (daily increment, intraday worst) bootstrapped from the test period, weekly mean
 shifted to the fair +92 bp (spec › Execution). HyroTrader Two-Step: +10 % then +5 %, 5 % daily loss vs start-of-day
 equity (on the intraday worst when marked so), 10 % static max loss, 40 % best-day rule. 2,000 attempts per cell.
-Run: .venv/Scripts/python.exe research/screens/2026-11-15_s20_prop_intraday_tranches.py
+Marks: argv daily_hl (bound, default) | hourly_close (book marked each hour on 1 h closes, data/cache/binance_1h) |
+hourly_hl (1 h lows for longs / highs for shorts). Run: .venv/Scripts/python.exe research/screens/2026-11-15_s20_prop_intraday_tranches.py [mark]
 """
+import sys
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -19,6 +22,24 @@ from backtester.data import binance_wide
 from backtester.tools import crypto_flow as cf
 
 FAIR, START, END = 92.0, date(2024, 1, 1), date(2026, 10, 31)
+H1 = Path("data/cache/binance_1h")
+MARK = "daily_hl"  # "daily_hl" (bound) | "hourly_close" | "hourly_hl"; set by argv
+
+
+def hourly(sym):
+    files = sorted(H1.glob(f"{sym}-1h-*.zip"))
+    if not files:
+        return None
+    cols = ["open_time", "open", "high", "low", "close", "volume", "close_time", "qv", "n", "tb", "tbq", "ignore"]
+    parts = []
+    for f in files:
+        d = pd.read_csv(f, header=None, names=cols)
+        if not str(d.iloc[0, 0]).isdigit():  # newer archives carry a header row
+            d = d.iloc[1:]
+        parts.append(d[["open_time", "high", "low", "close"]].astype(float))
+    d = pd.concat(parts)
+    d.index = pd.to_datetime(d.open_time.astype("int64"), unit="ms", utc=True)
+    return d[~d.index.duplicated()].sort_index()
 
 
 def hl(sym):
@@ -36,7 +57,7 @@ def anchor_series(k0, f0, shift):
     _, legs = cf.compute_weeks(kk, ff, START - pd.Timedelta(days=7).to_pytimedelta(), END, cf.LIQUID)
     lg = pd.DataFrame(legs)
     close_inc, worst = {}, {}
-    cache = {}
+    cache, hcache = {}, {}
     for wk, g in lg.groupby("week"):
         days = pd.date_range(wk, periods=7, freq="D")
         cum_c, cum_w = [], []
@@ -55,12 +76,28 @@ def anchor_series(k0, f0, shift):
                 fd = (pd.Series([fr[(fr.index > dd if dd == days[0] else fr.index >= dd) & (fr.index < dd + pd.Timedelta(days=1))].sum()
                                  for dd in days], index=days).cumsum() if fr is not None else pd.Series(0.0, index=days))
                 cc.append(sign * (c / entry - 1) - sign * fd)
-                bad = (h.low if sign > 0 else h.high).fillna(c)
-                ww.append(sign * (bad / entry - 1) - sign * fd)
+                if MARK == "daily_hl":
+                    bad = (h.low if sign > 0 else h.high).fillna(c)
+                    ww.append(sign * (bad / entry - 1) - sign * fd)
+                else:
+                    if s not in hcache:
+                        h1 = hourly(s)
+                        hcache[s] = None if h1 is None else h1.set_axis(h1.index - dt)
+                    h1 = hcache[s]
+                    hrs = pd.date_range(days[0], periods=7 * 24, freq="h")
+                    if h1 is None:
+                        hv = pd.Series(np.repeat(c.to_numpy(), 24), index=hrs)
+                    else:
+                        col = "close" if MARK == "hourly_close" else ("low" if sign > 0 else "high")
+                        hv = h1[col].reindex(hrs).ffill().fillna(entry)
+                    fh = pd.Series(np.repeat(fd.to_numpy(), 24), index=hrs)
+                    ww.append(sign * (hv / entry - 1) - sign * fh)
             cum_c.append(pd.concat(cc, axis=1).mean(axis=1))
             cum_w.append(pd.concat(ww, axis=1).mean(axis=1))
         bc = (cum_c[0] + cum_c[1]) * 1e4
         bw = (cum_w[0] + cum_w[1]) * 1e4
+        if MARK != "daily_hl":  # worst hourly mark of the whole book within each day
+            bw = bw.groupby(bw.index.floor("D")).min().reindex(days).fillna(bc)
         bc.iloc[:] -= 10.0
         bw.iloc[:] -= 10.0
         bc.iloc[-1] -= 10.0
@@ -96,6 +133,9 @@ def attempt(inc, worst, rng, f, use_worst, targets=(0.10, 0.05), daily_lim=0.05,
 
 
 def main():
+    global MARK
+    MARK = sys.argv[1] if len(sys.argv) > 1 else "daily_hl"
+    print("marks:", MARK)
     k0, f0 = cf.load()
     series = {sh: anchor_series(k0, f0, sh) for sh in range(7)}
     idx = series[0].index
