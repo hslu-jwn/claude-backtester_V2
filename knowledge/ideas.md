@@ -1277,3 +1277,9 @@ Prediction: names with the highest overnight return underperform those with the 
   2020-2021 names before any spec).
 - Power (before data): ~2,900 days, guessed sd of the daily L/S ~150 bp -> MDE at t 3 ~8 bp; halved guess 5-12.5 bp vs
   cost ~9 bp: arithmetic borderline, run because it is the share family's best prop fit (daily, breadth). Prior 10 %.
+**Result 2026-11-15 (one look, `research/screens/2026-11-15_i96_overnight_reversal_screen.py`): KILLED.** 2,944 days:
+gross +10.1 bp a day (gross t 4.44: the reversal is real), cost 16.1 (the extreme names carry the wide spreads), net
+-6.0, t -2.64; halves +1.2 / -13.6; gross by year falls from +15-25 (2010-15) to -7 / +3 / -11 (2019-21). Deciles:
+the low-overnight decile earns +8.2 bp intraday, the high one -1.8 (mostly a rebound of the losers). Wave 3 closed
+with it: FB-113 / FB-114 (same gap-reversal mechanism), FB-115 (power without outside M1), FB-123 / FB-124 (cost +
+financing above the guess) are closed without a look (ledger).

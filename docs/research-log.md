@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 3: I-96 overnight -> intraday reversal on share CFDs KILLED; Wave 3 closed (auto)
+
+- **Auto decision 5:** unblock Wave 3 with free daily data (Yahoo chart API, development range only) and today's FTMO
+  share spreads read from MT5 M1 (`research/screens/2026-11-15_share_spreads.py`; 33 names at <= 10 bp, the cheapest
+  ~2.3-5 bp at the open / close). Alternative: wait for the user's free-tier minute account (HANDOFF Open 5). Why: the
+  priority-1 share row only needs daily bars for its screen.
+- I-96 (FB-112): 2,944 days, gross +10.1 bp a day (gross t 4.44), cost 16.1, net -6.0, t -2.64; halves +1.2 / -13.6;
+  fading to negative 2019-21. KILLED; family `shares` one falsification.
+- **Auto decision 6:** close FB-113 / FB-114 (same mechanism; the extreme decile earns about one leg's cost), FB-115
+  (power without outside M1), FB-123 / FB-124 (cost + financing) without a look. Alternative: screen FB-113 as a second
+  look. Why: a changed rule on a mechanism whose gross is below cost would be a rescue. Model: Opus.
+
 ## 2026-11-15: I-95 closed by arithmetic; FB-017 liquid Strategy 20 frozen and wired into the forward log (auto)
 
 - I-95 (Strategy 20 on FTMO's 30 crypto CFDs, a goal-1 bridge): swap -30 %/yr on both sides = ~115 bp a week for the
