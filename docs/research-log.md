@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: harvest batch 15 (forced flows: crypto index / fund / reward selling, oil index roll, delistings): nothing kept (auto)
+
+- **Auto decision 15:** harvest batch 15, 6 tasks T0105-T0110 (4 mechanism-first cells + canaries T0109 known answer,
+  T0110 nonsense), Codex `gpt-6.1-terra` `--search`, high for ACAD, low for BLOG, 2 parallel. Alternative: a last
+  Fable advisor call first. Why: the carded backlog was spent; mechanism-first cells no batch had searched.
+- 6 calls ok (~40 s each), no guard alarms. 5 ideas, 0 kept: airdrop / fork parent-coin drift (unfetchable page),
+  heating-oil index-roll spread and Binance delisting reaction (untestable), delisting short grid (needs announcement
+  dates; FB-041), carry canary (passed, parked needs_data). Nonsense canary empty. Top score already rejected
+  (HV-T0072-1). Batches 13-15: 0 kept. Model: Codex terra (search), Opus checks.
+
 ## 2026-11-15: crypto backlog sweep: 9 rows closed on power / arithmetic (auto)
 
 - **Auto decision 14:** close the remaining priority <= 3 crypto rows without a look where the halved guess sits below
