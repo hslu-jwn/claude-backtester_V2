@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: checkpoint suite (auto)
+
+- Full suite `-n 8`: 5,993 passed, 14 skipped, 4 xfailed, 1 failed (`tests/jobs/test_review_fixes.py::
+  test_cancel_real_child_and_grandchild`, real child processes; passes 3 of 3 serially, one run 12 s instead of 0.6 s:
+  timing-sensitive under parallel load, untouched code). ruff clean. Known flaky, not fixed (job-queue code, outside
+  this research run).
+
 ## 2026-11-15: weekday-tranche forward logs for Strategy 20 (auto)
 
 - **Auto decision 20:** skip Fable item 9 (short-leg tail cap: a weighting shaped by spent data; the 15 % sizing does
