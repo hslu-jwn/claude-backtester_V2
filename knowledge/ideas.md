@@ -1190,6 +1190,8 @@ Controls (diagnostics, no gate): I-91 breaches by >= 0.1 ATR without a reclaim w
 the 30-minute mark; I-92 days that dip >= 0.3 ATR but do not reclaim by 10:00 (long at the 10:00 close); I-93 candles
 that close back inside without having traded beyond the prior extreme (long / short by close position). Per symbol.
 Power line (signal-free, before the screen): event counts and the sd of the event-to-exit return.
+**Power (2026-11-15, before the screen; script frozen):** I-91 2,196 events on 1,175 days, t 3 needs ~5.1 bp net;
+I-92 1,761 events on 1,000 days, ~4.9 bp; I-93 4,256 events on 1,593 days, ~2.8 bp (costs ~1-3 bp a trade).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

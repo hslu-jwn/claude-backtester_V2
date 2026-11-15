@@ -14,7 +14,7 @@ Kills each: net <= 0; t < 3.0; halves not both > 0; doubled costs <= 0; without 
 Run: .venv/Scripts/python.exe research/screens/2026-11-15_i91_ict_events_screen.py [--power]
 """
 import sys
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
