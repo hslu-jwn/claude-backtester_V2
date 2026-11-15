@@ -7,6 +7,7 @@ Tool features (Fable FB-287 / 246 / 252): a canary that must reproduce I-78's de
 before any look, signal deciles (dose-response), a shuffled-signal placebo (signal permuted across symbols within
 each period, 20 draws) and the weekly correlation with Strategy 20 (I-78).
 Run: .venv/Scripts/python.exe research/screens/2026-11-15_wave1_xs_crypto_screen.py [--power] [i82] [i83] [i84]
+`--test-i83`: the one-time test pre-registered in the card (fc7d57c).
 """
 import importlib.util
 import sys
@@ -68,8 +69,9 @@ def report(name, periods, col, s20=None, unit="week"):
     pt = []
     for _ in range(20):
         pg = pd.Series([legs_gross(periods[m], col, rng) for m in idx], index=idx).dropna()
-        pt.append(tstat(d * pg - COST))
-    print(f"  DIAG placebo (signal shuffled, 20 draws): mean t {np.mean(pt):+.2f}, |t| >= 3 in {sum(abs(x) >= 3 for x in pt)}")
+        pt.append(tstat(d * pg))  # gross: a shuffled signal should give ~0 before costs
+    print(f"  DIAG placebo gross (signal shuffled, 20 draws): mean t {np.mean(pt):+.2f}, |t| >= 3 in "
+          f"{sum(abs(x) >= 3 for x in pt)}")
     print(f"  DIAG deciles (mean member return bp, low -> high signal): {deciles(periods, col)}")
     if s20 is not None:
         wk = (d * g).groupby(g.index - pd.to_timedelta(g.index.weekday, unit="D")).sum() if unit == "day" else d * g
@@ -132,7 +134,34 @@ def daily(k, fund):
     return out
 
 
+def test_i83():
+    """One-time test pre-registered in the card (commit fc7d57c): absorption, long top, weeks from 2024-01-01."""
+    i78.END = pd.Timestamp("2026-10-31")
+    k, fund = i78.load((i78.ROOT, i78.TEST_ROOT))
+    wk = weekly(k, fund, {})
+    g = pd.Series({m: legs_gross(w, "absorb") for m, w in wk.items()}).dropna()
+    s20 = pd.Series({m: legs_gross(w, "flow") for m, w in wk.items()})
+    dev, net = g[g.index < i78.TEST_START] - COST, g[g.index >= i78.TEST_START] - COST
+    h = len(net) // 2
+    both = pd.concat([dev, net])
+    print(f"dev re-run: {len(dev)} weeks, net {dev.mean():+.1f}, t {tstat(dev):.2f} (must be +145.4, 3.57)")
+    print(f"TEST: {len(net)} weeks ({net.index[0].date()} .. {net.index[-1].date()}); net {net.mean():+.1f} bp/week, "
+          f"t {tstat(net):.2f}, positive {100 * (net > 0).mean():.0f} %, worst {net.min():+.0f}")
+    gates = {"(1) net > 0": net.mean() > 0, "(2) t >= 2": tstat(net) >= 2.0, "(3) pooled t >= 3": tstat(both) >= 3.0,
+             "(4) halves > 0": net.iloc[:h].mean() > 0 and net.iloc[h:].mean() > 0,
+             "(5) without 2 best > 0": net.drop(net.nlargest(2).index).mean() > 0,
+             "(6) 40 bp > 0": (net - COST).mean() > 0}
+    print(f"  halves {net.iloc[:h].mean():+.1f} / {net.iloc[h:].mean():+.1f}; pooled t {tstat(both):.2f}; without 2 best "
+          f"{net.drop(net.nlargest(2).index).mean():+.1f}; at 40 bp {(net - COST).mean():+.1f}")
+    print("  gates:", {a: bool(b) for a, b in gates.items()}, "->", "PASSED" if all(gates.values()) else "FAILED")
+    j = pd.concat({"i83": net, "s20": s20[s20.index >= i78.TEST_START]}, axis=1, sort=True).dropna()
+    print(f"  DIAG test-week correlation with Strategy 20: {j.corr().iloc[0, 1]:+.2f}")
+    return 0
+
+
 def main(argv):
+    if "--test-i83" in argv:
+        return test_i83()
     k, fund = i78.load()
     spot = {}
     if SPOT_ROOT.exists():
