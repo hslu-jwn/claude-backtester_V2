@@ -1163,6 +1163,34 @@ mornings **continue**, they do not revert. NAS100 vs US30 (2019-21) the same (gr
 `index_rotation`: closed after two falsifications. Fable FB-055 (residual z-score fade) is the same fade mechanism and
 is not run; FB-095 (continuous SMT) follows I-88 and is not run.
 
+### I-91 / I-92 / I-93 ICT event rules with timed exits, pooled over 8 cheap FTMO symbols: PDH / PDL raid, power of three, candle range theory (Fable FB-128 / FB-131 / FB-146, Wave 4, 2026-11-15; rules fixed before any data)
+Source: ICT / smart-money concepts (practitioner, social media; the user asked for a fair test). Label: PRACTITIONER /
+SPECULATIVE. Claimed mechanism: stops resting beyond obvious levels are taken ("liquidity raid") and price reverses.
+New vs the falsified S01-S03 / H15: timed exits instead of tight stops and targets, breadth (8 symbols pooled),
+cost from the engine. Family `ict_levels` (with S01, S02, S03, H15: 7 looks -> threshold t 3.0; Fable proposed 4.0,
+the house rule is 3.0 up to 10).
+Data: CFD development period (before 2021-09-14); US30, GER40, NAS100, US500, UK100, EURUSD, USDJPY, XAUUSD M1 via
+`DEFAULT_SOURCES`; New York time; trading day = 17:00 -> 17:00 New York. ATR = mean daily range (high - low) of the
+previous 14 trading days. Cost per round trip = engine spread at the entry time (`fill_spread_time`) + 2 x slippage,
+bp of the entry price. No position crosses 17:00 New York (no swap).
+- **I-91 PDH / PDL raid (FB-128):** window 03:00 -> 15:55 New York. Event: price trades above the previous trading
+  day's high by >= 0.1 ATR, and an M5 close back below that high comes within 30 minutes of the first trade-through:
+  short at that M5 close, exit at the 15:55 close. Mirrored at the low. First event per symbol, day and side.
+- **I-92 power of three (FB-131):** the 00:00 New York open (open of the bar at 00:00). If price trades >= 0.3 ATR
+  below it before 08:30 and an M5 close above it comes between 08:30 and 10:00: long at that close, exit 15:55.
+  Mirrored. At most one trade per symbol and day (the first).
+- **I-93 candle range theory (FB-146):** H4 candles aligned to 01:00, 05:00, 09:00, 13:00 New York (inside the
+  trading day, the 17:00-01:00 block skipped). Candle n trades below candle n-1's low and closes back above it (inside
+  n-1's range): long at n's close; mirrored at the high; exit at the close two H4 candles later, or at 16:55 if that
+  comes first (no hold over 17:00).
+Statistics per rule: per date, the mean net of that date's trades; t over dates. Kills each: net <= 0; t < 3.0;
+halves (by date) not both > 0; net <= 0 at doubled costs; net <= 0 without the 2 best days. The direction is the ICT
+one (predicted, not chosen).
+Controls (diagnostics, no gate): I-91 breaches by >= 0.1 ATR without a reclaim within 30 minutes, the same short from
+the 30-minute mark; I-92 days that dip >= 0.3 ATR but do not reclaim by 10:00 (long at the 10:00 close); I-93 candles
+that close back inside without having traded beyond the prior extreme (long / short by close position). Per symbol.
+Power line (signal-free, before the screen): event counts and the sd of the event-to-exit return.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
