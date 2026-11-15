@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Strategy 20 against crypto prop-firm rules (auto)
+
+- `knowledge/research/reports/2026-11-15_s20_prop_fit.md`: daily-marked weekly book (paths reproduce the screen's
+  weekly net), 2-Step 10 + 5 %, 5 % / 4 % daily, 10 % static: 25 % notional per side passes 90-100 % in every scenario
+  (test, development, test with 70 bp a week slippage) in ~10-16 months; 50 % per side 60-90 % in ~4-6 months.
+  Optimistic (resampled weeks, end-of-day marks, low-cap cap not applied). HANDOFF Open 12 (the firm and fee are the
+  user's money decision); Telegram sent. Model: Opus.
+
 ## 2026-11-15: Wave 1: I-82 killed, I-83 absorption PASSED its one-time test; crypto prop firms (auto)
 
 - Shared tool (0ba5965) reproduces I-78 (canary). I-82 daily flow KILLED (-4.2 bp a day, t -0.74). I-83 absorption

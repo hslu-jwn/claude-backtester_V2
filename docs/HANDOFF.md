@@ -57,6 +57,10 @@ in git, results in `research/ledger.csv`, plan in `docs/ROADMAP.md`).
     require t >= 3.0 instead of 2.0 (`knowledge/reviews/2026-11-15-fable-idea-universe.md`). Changes a rule.
 11. **(Fable 2026-11-15) Free-tier account** for US share minute bars (creating an account is yours), and a go for a
     scheduled daily collector of retail positioning data (FB-284; a standing scheduled task).
+12. **Crypto prop firm for Strategy 20 (money):** HyroTrader / Crypto Fund Trader (Bybit perps, weekend holds, no stop,
+    own bots) could host it; simulation: 25 % notional per side passes 90-100 % in ~10-16 months, 50 % per side
+    60-90 % in ~4-6 months (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). Before any fee:
+    confirm the low-cap 5 % cap, drawdown type and basket fills with the firm. Your decision.
 
 ## Next step
 
