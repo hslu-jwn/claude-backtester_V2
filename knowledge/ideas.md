@@ -1319,3 +1319,23 @@ maker 2 bp a fill on Binance USDT-M at the base tier) once missed fills and adve
   changed either way (a default; the user's call).
 **Result 2026-11-15: keep taker.** Taker 9.9 bp a fill, maker-first 12.0 (93 % filled; misses ~151 bp); saving -2.1 bp,
 t -0.44 over 13 Mondays. Taker cost is ~2x the 5 bp a fill in the backtest (spec › Execution).
+
+### I-98 Spot-hedged funding carry on Binance (Fable FB-035, 2026-11-15; rule fixed before any data)
+Mechanism: leveraged perp longs pay funding to shorts; a long-spot / short-perp position collects it with no price
+bet (cash-and-carry). Hypothesis: trailing funding persists enough week to week that the highest-funding coins pay
+more than the turnover cost and basis noise. Label: PUBLISHED mechanism (basis / funding carry, e.g. Schmeling,
+Schrimpf, Todorov BIS WP 1087), ADAPTATION. **Not the I-73 / Strategy 19 hypothesis** (those bet on prices of high-
+vs low-funding coins and failed replication); here the price exposure is hedged, so it is a new family `crypto_basis`.
+- **Universe:** each Monday, Strategy 20's eligibility (rule 1) and a spot kline file with the Monday bar and the
+  previous 7 bars (`data/cache/binance_wide_spot`, 243 symbols, development only 2020-01..2023-12).
+- **Rule:** rank by the sum of funding rates settled in the 7 days before the Monday (ties by name); hold the 10
+  highest **with a positive sum**, equal weight (fewer if fewer qualify; none = flat week). Per name: long spot at the
+  Monday open, short perp at the Monday open, both closed at the Sunday close; result = spot return - perp return +
+  funding settled inside the hold (Monday 00:00 excluded, as Strategy 20).
+- **Cost:** only names that enter or leave pay: 25 bp per name per entry and 25 per exit (spot taker 10 + spread ~5,
+  perp ~10 as measured in FB-273), per unit of notional; a name kept from last week pays nothing.
+- **Kills (new family, first look, t >= 3.0):** net <= 0; t < 3.0; halves 2020-21 / 2022-23 not both > 0; net <= 0 at
+  doubled costs; net <= 0 without the 2 best weeks. Reported: funding vs basis split, turnover, share of flat weeks,
+  worst week (a perp squeeze is a basis loss).
+- Expected: top-funding coins pay ~20-60 bp a week in 2020-21, less in 2022-23; prior 30 %. Returns are per unit of
+  notional with spot fully paid (capital-heavy: an annual figure needs no leverage assumption).
