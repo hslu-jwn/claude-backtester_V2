@@ -1108,6 +1108,27 @@ UNVERIFIED). Size: a 7 %-a-year premium is ~2.8 bp a night. FTMO cost of one nig
 Expected net <= 0 before any data; FB-108's "after a down day" variant would need > 5 bp a night on a third of the
 nights. Not screened (counted as a card, not a look).
 
+### I-88 SMT divergence at the session extreme, NAS100 vs US500 (Fable FB-079 / FB-080 / FB-078, Wave 2, 2026-11-15; rules fixed before any data)
+Source: ICT "smart money technique" (SMT) divergence, practitioner (social media; `docs/confluences.md` › SMT stub);
+Fable FB-079 (fade the leg that made the high) / FB-080 (follow the stronger leg). Label: PRACTITIONER / SPECULATIVE.
+Mechanism claimed: when correlated indices disagree at an extreme, the new extreme in one is a liquidity grab (stops
+taken) that the other market does not confirm, so the move fails. New family `smt` (threshold t 3.0).
+Data: CFD development period (before 2021-09-14), NAS100 and US500 M1 via `DEFAULT_SOURCES`, New York time.
+Rule (one cell, two-sided): for each symbol, session high so far = max of M1 highs from 09:30 up to the previous
+15-minute checkpoint (same for lows). Checkpoints: bar closes at 10:00, 10:15, ..., 15:00. **Bearish event** at t:
+leg A closes above its session high so far while leg B's highs in the last 15 minutes stay below B's session high
+so far (B does not confirm). **Bullish** mirrored with lows. ICT direction: short A after a bearish event, long A after
+a bullish one (A = the leg that made the new extreme), entry at A's close at t, exit at A's 15:55 close. At most one
+event per day per direction (the first); both legs can be A on different days. Cost per round trip from the engine
+(spread at entry via `fill_spread_time` + 2 x slippage), bp. The tested direction is the sign of the development mean
+(two-sided: a significant opposite sign means continuation, FB-080).
+Statistics: per date, the mean net of that day's trades; t over dates with a trade. Kills: |t| < 3.0 in its own
+direction; net <= 0; halves (by date) not both > 0; net <= 0 at doubled costs; net <= 0 without the 2 best days.
+Diagnostics: control = new session extremes where B does confirm (same entry and exit), trading the non-confirming
+leg B instead, bearish vs bullish, the US triad version with US30 (2019-02 .. 2021-09) where A breaks and both others
+fail, time of day.
+Power line (signal-free, before the screen): event count and the sd of A's return from a checkpoint to 15:55.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a
