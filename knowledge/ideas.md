@@ -1091,6 +1091,9 @@ eligible days); t over dates. Kills per cell: net <= 0; t < 3.0; halves (by date
 costs; net <= 0 without the 2 best days. Diagnostics: per symbol, trades per day, gross vs cost, the positive-GEX
 days (FB-200 mirror: momentum should be weaker), long vs short.
 Power line (signal-free, before the screen): sd of the 10:00 -> 15:55 return per symbol-day and the count of days.
+**Power (2026-11-15, before the screen; script frozen aa48dde):** US500 1,621 days (sd 72 bp), NAS100 1,658 (88 bp),
+US30 480 (78 bp) of 10:00 -> 15:55 return. I-85: ~1,650 days, se ~1.5-2 bp -> t 3 needs ~5 bp a day net; I-86: 192
+negative-GEX days with higher volatility, se ~10 bp -> t 3 needs ~30 bp a day net (weak power).
 
 ### I-87 Overnight index premium on CFDs (Fable FB-107 / FB-108, 2026-11-15; not screened: below cost by arithmetic)
 Published idea: most of the equity premium accrues overnight (Cliff, Cooper & Gulen 2008; Lou, Polk & Skouras 2019;
