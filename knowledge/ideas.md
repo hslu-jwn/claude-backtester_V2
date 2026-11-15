@@ -1018,6 +1018,26 @@ without the 2 best months +359. The sign is right and large, but the right tail 
 it too noisy for our sample. No rescue: a capped or median rule would be post-hoc. Family `crypto_listing`: one
 falsification.
 
+### I-82 / I-83 / I-84 Wave 1 crypto breadth sorts: daily taker flow, absorption, spot-minus-perp flow (Fable backlog FB-001 / FB-003 / FB-004, 2026-11-15; rules fixed before any data)
+Crypto split (development 2020-01-01 .. 2023-12-31; test once from 2024-01-01 for a passer, Mode=auto). Universe,
+eligibility, costs, funding convention, quintile legs, tie rule and the two-sided direction rule exactly as I-78
+(card above; `research/screens/2026-11-14_i78_crypto_wide_factors_screen.py`), family `crypto_xs_factors` (looks
+4-6 of <= 10 -> |t| >= 3.0). Labels: ORIGINAL (Fable 2026-11-15); low priors (Fable 8-12 %).
+- **I-82 daily taker flow (FB-001):** every day 00:00 UTC; eligible as I-78 with the day's bar instead of the Monday
+  bar and yesterday's bar present; signal = (2 x taker buy - volume) / volume of yesterday's bar; entry at the day's
+  open, exit at the day's close; funding of settlements strictly inside the day; 20 bp a day. New vs I-78: horizon
+  (1 day, ~7x the observations; the sign may flip at this speed). Kills on the daily series: |t| < 3.0; net <= 0;
+  halves (2020-21, 2022-23) not both > 0; net <= 0 at 40 bp; net <= 0 without the 2 best days.
+- **I-83 absorption (FB-003):** weekly as I-78; each Monday regress the eligible symbols' 7-day flow on their 7-day
+  close-to-close return (OLS across symbols, intercept); signal = the residual (buying the price did not follow).
+  Kills as I-78.
+- **I-84 spot-minus-perp flow (FB-004):** weekly as I-78; eligible additionally needs the 7 spot daily bars (Binance
+  spot `<SYM>` klines, same symbol name); signal = spot 7-day flow - perp 7-day flow (flow as in I-78). Kills as I-78.
+Diagnostics (no gate): signal deciles (dose-response), weekly correlation with Strategy 20 (I-78), a shuffled-date
+placebo of the signal. Tool canary before any of these looks: the shared tool must reproduce I-78's development
+numbers (+145.0 bp, t 3.24) to the digit.
+Power lines (signal-free, before each screen): random-leg sd of the series at its horizon.
+
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
 `Order.limit_fill`, `tp_penetration`, `fill_probe` / `fill_report`. Kills it: the 5-minute move after a

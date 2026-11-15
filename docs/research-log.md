@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 1 started (the user: "Yes, Wave 1", then "Mode = auto")
+
+- Mode=auto for the rest of this session (the user). **Auto decision 11:** Wave 1 order: crypto prop-firm rule table
+  (Sonnet web subagent, background), then I-82 / I-83 / I-84 (FB-001 / 003 / 004) through one shared screen tool with
+  the I-78 canary; FB-005 / FB-007 deferred (metrics only from 2021-12: ~104 development weeks, t 3 needs ~200 bp a
+  week), FB-273 deferred (aggTrades, GBs), FB-274 done in the realism check, FB-017 (liquid-only Strategy 20) noted
+  as a forward-log variant for the user. Cards + kills before data.
+
 ## 2026-11-15: Wave 0 of the idea universe (the user: "1")
 
 - `knowledge/research/reports/2026-11-15_wave0.md`: MT5 census of 166 symbols (shares: FTMO history before 2021-09
