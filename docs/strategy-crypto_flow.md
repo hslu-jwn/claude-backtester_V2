@@ -122,6 +122,13 @@ Sun +153 (2.93); test Mon +147 (3.76), Tue +104 (2.49), Wed +46 (1.06), Thu +52 
 pre-set rule. Monday is the luckiest anchor in the test, so the fair expectation for the forward log is the all-anchor
 mean, ~+94 bp a week (test) / ~+126 (development), not +147.
 
+## Legs against BTC FB-020 (2026-11-15, diagnostic on spent data)
+
+Each leg hedged with BTCUSDT (beta 1, 12 bp a week; `research/screens/2026-11-15_fb020_s20_long_leg.py`): development
+long leg - BTC +141.6 bp a week (t 2.27), BTC - short leg -0.6; test long leg - BTC +5.6 (t 0.10), BTC - short leg
++137.7 (t 2.21). The edge sat in the long leg in 2020-23 and in the short leg in 2024-26: no single-leg version is
+reliable; only the long-short book is logged (FB-020 closed).
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean

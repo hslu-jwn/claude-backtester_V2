@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: FB-020 Strategy 20 legs against BTC (auto, diagnostic)
+
+- Long leg - BTC: development +141.6 bp a week (t 2.27), test +5.6; BTC - short leg: development -0.6, test +137.7
+  (t 2.21). The edge switched legs between periods; a long-only book (prop-firm friendlier) is not supported. FB-020
+  closed (ledger). Model: Opus.
+
 ## 2026-11-15: I-97 crypto 3-week momentum KILLED; crypto momentum rows closed (auto)
 
 - **Auto decision 8:** run FB-010 as a normal pre-registered development screen (HANDOFF Open 3 proposes exactly that),
