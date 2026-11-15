@@ -1317,3 +1317,5 @@ maker 2 bp a fill on Binance USDT-M at the base tier) once missed fills and adve
 - **Decision rule:** maker-first is adopted for any live / prop implementation of Strategy 20 if the mean saving is
   >= 1 bp a fill with t >= 2 (clustered by Monday); otherwise taker stays. The backtest cost (20 bp a week) is not
   changed either way (a default; the user's call).
+**Result 2026-11-15: keep taker.** Taker 9.9 bp a fill, maker-first 12.0 (93 % filled; misses ~151 bp); saving -2.1 bp,
+t -0.44 over 13 Mondays. Taker cost is ~2x the 5 bp a fill in the backtest (spec › Execution).

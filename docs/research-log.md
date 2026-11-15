@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: FB-273 maker-fill model: keep taker; measured taker cost ~10 bp a fill (auto)
+
+- **Auto decision 10:** FB-273 on Monday-only aggTrades (104 daily files, 361 MB, ignored cache) instead of 3 full
+  months. Alternative: full months. Why: Strategy 20 trades only at Monday 00:00.
+- Maker-first 12.0 bp vs taker 9.9 bp a fill (saving -2.1, t -0.44; fills 93 %, misses ~151 bp): keep taker. Taker
+  ~2x the backtest's 5 bp a fill -> fair forward expectation ~+74 bp a week. HANDOFF Open 1 note. Model: Opus.
+
 ## 2026-11-15: FB-263 futures re-cost closed by arithmetic (auto)
 
 - Would CME futures costs (~0.5-1.7 bp a round trip; FTMO US500 ~2.4, NAS100 ~1.7, US30 ~0.55) rescue the killed

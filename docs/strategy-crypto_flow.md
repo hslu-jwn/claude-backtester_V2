@@ -129,6 +129,15 @@ long leg - BTC +141.6 bp a week (t 2.27), BTC - short leg -0.6; test long leg - 
 +137.7 (t 2.21). The edge sat in the long leg in 2020-23 and in the short leg in 2024-26: no single-leg version is
 reliable; only the long-short book is logged (FB-020 closed).
 
+## Execution FB-273 (2026-11-15, Q4-2023 Mondays, development; card committed before data)
+
+Binance aggTrades at the Monday 00:00 rebalance, 13 Mondays x 4 perps (XEM, BEL, CRV, SOL) x buy and sell
+(`research/screens/2026-11-15_fb273_maker_fill.py`): taker now costs 9.9 bp a fill vs P0 (fee 5 + half-spread / tick;
+XEM 16.6, CRV 13.4, BEL 5.1, SOL 4.7); maker-first at P0 (60 min, then taker) 12.0 bp: fills 93 %, but the misses cost
+~151 bp each (price ran away). Saving -2.1 bp, t -0.44: **keep taker**. The backtest's 20 bp a week assumes 5 bp a
+fill; the measured ~10 bp a fill means ~40 bp a week, i.e. a fair forward expectation of ~+74 bp a week (not +94).
+The cost default stays 20 bp (a default; the user's call).
+
 ## Forward check
 
 From 2026-11-16, log the book every week without orders. Pre-registered forward kill: after 52 weeks, a net mean
