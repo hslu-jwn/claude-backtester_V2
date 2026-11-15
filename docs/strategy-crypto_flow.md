@@ -144,6 +144,13 @@ From 2026-11-16, log the book every week without orders. Pre-registered forward 
 <= 0 or a drawdown worse than -2,200 bp (1.5 x the test's -1,455) closes the strategy. 52 weeks cannot confirm it
 (standard error ~66 bp a week at the test sd 474); they can only catch a break.
 
+
+**Sequential boundary (FB-254, pre-registered 2026-11-15 before any forward week):** a look every 13 weeks up to 104
+(8 looks); z = net mean / (sd / sqrt(n)) over the completed looks. Confirmed when z >= 2.071 / sqrt(k / 8)
+(O'Brien-Fleming, one-sided 2.5 %: 5.86, 4.14, 3.38, 2.93, 2.62, 2.39, 2.21, 2.07); killed early when z <= -2 at any
+look; the 52-week kill above stays. `research/screens/2026-11-15_fb254_forward_boundaries.py --check`. Power at the fair +74 bp (sd 474): 34 % confirmed by week 104 (top-100 variant, sd 658: 20 %); a
+confirmation needs ~+96 bp a week over 104 weeks.
+
 ## Assumptions (decided by Opus)
 
 - A1: weekly rebalancing (Fable row 9 said daily; at 20 bp a day the effect would need more than 20 bp a day).

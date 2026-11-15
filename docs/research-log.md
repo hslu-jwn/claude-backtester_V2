@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: FB-254 sequential forward boundaries pre-registered (auto)
+
+- **Auto decision 11:** O'Brien-Fleming group-sequential boundary (8 looks every 13 weeks, one-sided 2.5 %, c 2.071)
+  plus an early kill at z <= -2, for Strategy 20, its top-100 variant and Strategy 19; the specs' 52-week kills stay.
+  Alternative: an SPRT. Why: the backlog row names O'Brien-Fleming; fixed look dates suit a monthly-updated log.
+- Power by week 104 at the fair expectations: Strategy 20 34 %, top 100 20 %, Strategy 19 17 %. Forward logs mainly
+  catch breaks; a fast confirmation can only come from live / prop results. Model: Opus.
+
 ## 2026-11-15: FB-273 maker-fill model: keep taker; measured taker cost ~10 bp a fill (auto)
 
 - **Auto decision 10:** FB-273 on Monday-only aggTrades (104 daily files, 361 MB, ignored cache) instead of 3 full

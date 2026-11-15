@@ -127,6 +127,12 @@ weekly evening summary. Pre-registered forward kill: after 52 weeks, a net mean 
 -6 R (1.5 × the test's) closes the strategy. 52 weeks cannot confirm it (standard error ~87 bp a week); they
 can only catch a break.
 
+
+**Sequential boundary (FB-254, pre-registered 2026-11-15 before any forward week):** a look every 13 weeks up to 104
+(8 looks); z = net mean / (sd / sqrt(n)) over the completed looks. Confirmed when z >= 2.071 / sqrt(k / 8)
+(O'Brien-Fleming, one-sided 2.5 %: 5.86, 4.14, 3.38, 2.93, 2.62, 2.39, 2.21, 2.07); killed early when z <= -2 at any
+look; the 52-week kill above stays. `research/screens/2026-11-15_fb254_forward_boundaries.py --check`. Power at the replication's +63 bp (sd 624): 17 % confirmed by week 104.
+
 ## Assumptions (decided by Opus)
 
 - A1 (2026-11-14, before the test): signal = funding accrued over 7 days, not the mean of the last 21 rates, so
