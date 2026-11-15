@@ -1128,6 +1128,8 @@ Diagnostics: control = new session extremes where B does confirm (same entry and
 leg B instead, bearish vs bullish, the US triad version with US30 (2019-02 .. 2021-09) where A breaks and both others
 fail, time of day.
 Power line (signal-free, before the screen): event count and the sd of A's return from a checkpoint to 15:55.
+**Power (2026-11-15, before the screen):** 1,542 events on 1,243 days; sd of A's checkpoint -> 15:55 return 65 bp -> se
+~1.9 bp; t 3 needs ~5.6 bp net per day (cost ~1.7-2.1 bp a trade).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
