@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Continue.Research Mode=auto (no limit), start; Wave 5 closed on power (auto)
+
+- Baseline: 5,986 passed, 14 skipped, 4 xfailed (`-n 8`), ruff clean. Family budget: 64 looks, 4.5 expected false passes
+  (calendar clocks 3.9 of them).
+- **Auto decision 1:** Wave 5 first (HANDOFF next step 2), power lines before any look. Alternative: the deferred Binance
+  items (maker-fill model, liquid-only Strategy 20). Why: Wave 5 rows are cheap to close or open, signal-free.
+- `research/screens/2026-11-15_wave5_power_lines.py` (counts and rms only, no direction applied): FB-186 macro releases
+  (calendar only from 2020: 72 release times) MDE 10.1 bp vs halved guess 2.5-7.5; FB-190 central banks MDE 30.3; FB-215
+  auction pooled MDE 6.8 vs 3; FB-040 unlocks MDE 283 vs 100-200; FB-028 / FB-029 funding extremes date-clustered MDE
+  123 / 81 vs 25-60 / 25-75. All closed before any look (ledger FB186 ... FB029, stage rejected, not looks).
+- **Auto decision 2:** FB-066 AUDNZD closed although its optimistic line (67.6 bp) sits inside the halved guess (40-75):
+  only 36 entries in 11 years (~3 a year), so it fails the required size (FTMO ~300 trades a year) and adds nothing as
+  one of K streams. Alternative: screen it (one look). Model: Opus.
+
 ## 2026-11-15: End. (the user: "Yes, End.")
 
 - Full suite 5,986 passed, 14 skipped, 4 xfailed (`-n 8`); ruff clean (src, tests, research/screens). HANDOFF rewritten,
