@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Fable advisor call 2: idea universe (the user's request)
+
+- The user: call Fable once more for a few hundred out-of-the-box ideas and a framework to work through them one
+  after the other (hedge-fund strategy classes, two-instrument / SMT ideas, ICT and social-media concepts, order
+  flow, books, data sources, venues; focus prop firms, other strategies welcome; ~22 % of the weekly limit available).
+- Fable 5.2 subagent started in the background; writes only `research/idea_backlog/2026-11-15-fable-ideas.csv`
+  (300+ rows with mechanism, data, expected size, cost cell, prop fit, ledger overlap, first screen, prior) and
+  `knowledge/reviews/2026-11-15-fable-idea-universe.md` (framework, work order, hedge-fund map, pair / SMT and ICT
+  sections, data / books lists, top 30). Allowed until 2026-11-16 (CLAUDE.md › Advisor).
+
 ## 2026-11-15: prop mechanics, sizing policy and concurrent streams (the user: "Prop mechanics")
 
 - `knowledge/research/reports/2026-11-15_prop_mechanics.md` (house simulator, synthetic trades, open attempts count
