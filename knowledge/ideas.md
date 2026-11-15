@@ -1302,3 +1302,18 @@ Label: PUBLISHED finding, ADAPTATION (Binance perps, funding, our costs). Mechan
 +60.1, net +40.1 bp a week, t 0.68, 49 % positive, worst -4,565; halves +200.8 / -86.7; deciles flat (107-211 bp);
 placebo mean t +0.13; correlation 0.47 with Strategy 20. The published 4.1 % a week does not appear on Binance perps
 2020-23. With C2 (failed test) this is the second falsification of crypto momentum: FB-009 / FB-011 / FB-220 closed.
+
+### FB-273 maker-fill model for Strategy 20's Monday rebalance (method, 2026-11-15; rule fixed before any data)
+Question: does posting a limit order at the touch instead of crossing the spread cut Strategy 20's cost (taker 5 bp,
+maker 2 bp a fill on Binance USDT-M at the base tier) once missed fills and adverse selection are counted?
+- **Sample (fixed before data):** the 13 Mondays 2023-10-02 .. 2023-12-25 (development), Binance daily aggTrades of the
+  Monday for XEMUSDT, BELUSDT (small, ~15 M USD a day), CRVUSDT (mid, ~87 M), SOLUSDT (large); the four picked as
+  frequent Q4-2023 book members across the volume range. Each Monday and symbol: one buy and one sell order.
+- **Reference P0:** the last trade price before Monday 00:00:00 UTC (from the Monday file's first trade if none).
+- **Taker now:** the first trade after 00:00 whose aggressor matches the order (buy: buyer is taker), price + 5 bp.
+- **Maker first:** limit at P0, filled at P0 when a later trade prints strictly through it (buy: a trade < P0; sell:
+  > P0) within 60 minutes; fee 2 bp. Unfilled after 60 minutes: taker at the first matching trade after 00:60, + 5 bp.
+- **Cost per order (bp):** side x (fill price - P0) / P0 x 1e4 + fee. Saving = taker-now cost - maker-first cost.
+- **Decision rule:** maker-first is adopted for any live / prop implementation of Strategy 20 if the mean saving is
+  >= 1 bp a fill with t >= 2 (clustered by Monday); otherwise taker stays. The backtest cost (20 bp a week) is not
+  changed either way (a default; the user's call).
