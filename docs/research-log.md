@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 4: ICT event rules I-91 / I-92 / I-93 KILLED (the user: "Wave 4 (ICT test)", auto)
+
+- **Auto decision 16:** run the three concrete ICT rules (PDH / PDL raid, power of three, CRT) with timed exits on 8
+  cheap symbols pooled before the level-touch null model (FVG, equal highs). Edge case fixed before data: a CRT candle
+  that takes both prior extremes is skipped.
+- I-91 net -1.5 bp (t -0.87), I-92 -2.6 (t -1.59), I-93 -0.8 (t -0.87); controls no worse. All KILLED; family
+  `ict_levels` now 7 looks. Observation only: the raid fade is positive on the three US indices (post-hoc). Model: Opus.
+
 ## 2026-11-15: Wave 2 part 3: I-89 / I-90 intraday index rotation KILLED; Wave 2 paused (auto)
 
 - I-89 follow the morning NAS100-vs-US500 move: net -3.1 bp a day, t -4.19 (gross +1.3 vs two-leg cost 4.4). I-90 fade an

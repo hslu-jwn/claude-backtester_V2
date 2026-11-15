@@ -1192,6 +1192,14 @@ that close back inside without having traded beyond the prior extreme (long / sh
 Power line (signal-free, before the screen): event counts and the sd of the event-to-exit return.
 **Power (2026-11-15, before the screen; script frozen):** I-91 2,196 events on 1,175 days, t 3 needs ~5.1 bp net;
 I-92 1,761 events on 1,000 days, ~4.9 bp; I-93 4,256 events on 1,593 days, ~2.8 bp (costs ~1-3 bp a trade).
+**Result (`research/screens/2026-11-15_i91_ict_events_screen.py`): all three KILLED.**
+- I-91 PDH / PDL raid: 2,196 trades, net -1.5 bp, t -0.87 (gross +2.5 vs cost 1.6); the no-reclaim control -0.5.
+  Per symbol (post-hoc, 8 looks, not a finding): US indices positive (NAS100 +11.5, US30 +10.2, US500 +7.0 net a trade),
+  UK100 -5.0, XAUUSD -3.3, EURUSD -2.8.
+- I-92 power of three: 1,761 trades, net -2.6 bp, t -1.59 (gross -0.8); control -3.0.
+- I-93 candle range theory H4: 4,256 trades, net -0.8 bp, t -0.87 (gross +0.8); control (no sweep) +0.1.
+With timed exits and breadth, the three most concrete ICT setups show no edge: gross within +-2.5 bp of zero, below
+costs, and no better than their controls. No rescue (a US-index-only raid rule would be post-hoc).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
