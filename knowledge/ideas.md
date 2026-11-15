@@ -1253,3 +1253,27 @@ the Monday (ties by symbol name) before the sort; the 20-symbol minimum and quin
 historical periods are spent (development seen in I-78, test used by I-78 / I-83), so the run on them is a
 **diagnostic** (capacity and prop fit), never a test; the variant goes into the forward log as frozen here. No
 rescue: no other N is run.
+
+### I-96 Overnight -> intraday reversal sort on FTMO's US share CFDs (Fable FB-112, Wave 3, 2026-11-15; rule fixed before any data)
+Mechanism: attention / retail buying lifts the open of stocks with large overnight moves; liquidity providers and
+institutions lean against it during the day (Berkman, Koch, Tuttle, Zhang 2012, "Paying attention"; Lou, Polk, Skouras
+2019, both UNVERIFIED here). Label: PUBLISHED finding (direction), ADAPTATION (FTMO large caps, daily L/S).
+Prediction: names with the highest overnight return underperform those with the lowest from open to close.
+- **Universe (fixed by cost, not by returns):** the 33 US share CFDs with a median FTMO M1 spread <= 10 bp over the last
+  20 trading days (`results/share_spreads.csv`, `research/screens/2026-11-15_share_spreads.py`): AAPL AMZN GOOG MSFT
+  NVDA TSLA V WMT META GE BA RTX LMT PLTR AMD QCOM AVGO CSCO JNJ MCD SBUX KO MSTR CVX FDX JPM DIS IBM SNOW ASML AZN
+  BRK.B XOM; a name joins once it has 20 daily bars.
+- **Data:** Yahoo daily OHLC (split-adjusted), dividends added back on ex-days, development only 2010-01-01 ..
+  2021-09-13 (download stops there). Overnight r_on = (open_t + dividend_t) / close_{t-1} - 1; intraday r_id =
+  close_t / open_t - 1.
+- **Rule:** every day with >= 15 names: rank by r_on (ties by name); long the 5 lowest, short the 5 highest, equal
+  weight, entry at the open, exit at the close (no swap). Day result per unit side: mean(long r_id) - mean(short r_id).
+- **Cost:** per name and fill today's FTMO median spread / 2 at the open (09:35-09:40) and at the close (15:50-15:55)
+  + 1 bp slippage per fill; summed over both sides (2-way, ~8-10 bp a day). Today's spreads applied to 2010-2021
+  (assumption A1); FTMO share commission UNVERIFIED (assumed 0, A2; the doubled-cost gate covers ~8 bp more).
+- **Kills (family SHARES, first look, |t| threshold 3.0):** net <= 0; t(net) < 3.0; halves (2010-2015 / 2016-2021) not
+  both > 0; net <= 0 at doubled costs; net <= 0 without the 2 best days. Reported, not gates: signal deciles
+  (dose-response), the open-auction caveat (daily open = auction print; a pass needs a 09:35 check on FTMO M1 for the
+  2020-2021 names before any spec).
+- Power (before data): ~2,900 days, guessed sd of the daily L/S ~150 bp -> MDE at t 3 ~8 bp; halved guess 5-12.5 bp vs
+  cost ~9 bp: arithmetic borderline, run because it is the share family's best prop fit (daily, breadth). Prior 10 %.
