@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 2 part 2: I-88 SMT divergence KILLED (auto)
+
+- **Auto decision 14:** SMT next (the user's explicit interest; FB-078..080 in one screen) before the two-leg rotation
+  tool. I-88 NAS100 / US500: 1,490 trades, net -0.26 bp, t -0.17; every split within +-2 bp gross; US triad the same.
+  KILLED; family `smt` one falsification. Diagnostic seen: confirmed breakouts (both legs) continue (+4.1 bp, t 2.33),
+  noted on FB-059. Model: Opus.
+
 ## 2026-11-15: Wave 2 part 1: I-85 / I-86 noise-band momentum KILLED; I-87 overnight below cost (auto)
 
 - **Auto decision 13:** Wave 2 starts with FB-199 / FB-201 (published setup + gamma split, one screen) and closes

@@ -1130,6 +1130,13 @@ fail, time of day.
 Power line (signal-free, before the screen): event count and the sd of A's return from a checkpoint to 15:55.
 **Power (2026-11-15, before the screen):** 1,542 events on 1,243 days; sd of A's checkpoint -> 15:55 return 65 bp -> se
 ~1.9 bp; t 3 needs ~5.6 bp net per day (cost ~1.7-2.1 bp a trade).
+**Result (`research/screens/2026-11-15_i88_smt_screen.py`): KILLED.** 1,490 trades on 1,202 days: net -0.26 bp, t
+-0.17 (gross +1.7 bp in the continuation direction vs cost 2.0); halves -0.8 / +0.3. Bearish and bullish events
+alone, every time-of-day band, trading the non-confirming leg instead, and the US triad (2019-21) are all within
++-2 bp gross: SMT divergence carries no edge here in either direction. Diagnostic only (not a test, post-hoc): when
+both legs make the new extreme together (confirmed breakout), continuation to the close gives +4.1 bp net, t 2.33,
+both halves positive; that is intraday momentum (family `orb`, closed after I-85) and FB-059 (four-index agreement)
+is its pre-listed form: any test of it must state that this diagnostic was seen.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
