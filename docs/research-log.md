@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 0 of the idea universe (the user: "1")
+
+- `knowledge/research/reports/2026-11-15_wave0.md`: MT5 census of 166 symbols (shares: FTMO history before 2021-09
+  for AAPL / MSFT only, so a share screen needs outside data; carry on FTMO negligible, max +0.45 bp a night on FX /
+  indices); family budget (52 looks, ~0.5 expected false passes outside the calendar cells vs 2 passes); Binance
+  coverage (spot klines from 2017-18, premium index 2020-01, metrics alts 2021-12); DIX / GEX daily from 2011
+  (use next day). No signal look. Model: Opus.
+
 ## 2026-11-15: Fable advisor call 2: idea universe (the user's request)
 
 - The user: call Fable once more for a few hundred out-of-the-box ideas and a framework to work through them one
