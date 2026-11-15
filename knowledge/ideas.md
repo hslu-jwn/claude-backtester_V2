@@ -1283,3 +1283,18 @@ gross +10.1 bp a day (gross t 4.44: the reversal is real), cost 16.1 (the extrem
 the low-overnight decile earns +8.2 bp intraday, the high one -1.8 (mostly a rebound of the losers). Wave 3 closed
 with it: FB-113 / FB-114 (same gap-reversal mechanism), FB-115 (power without outside M1), FB-123 / FB-124 (cost +
 financing above the guess) are closed without a look (ledger).
+
+### I-97 Cross-sectional 3-week momentum on all Binance USDT perps (Fable FB-010, HANDOFF Open 3, 2026-11-15; rule fixed before any data)
+Source read (summary pages + abstract): Liu, Tsyvinski, Wu 2022 (JF 77(2); NBER w25882): weekly quintile sorts, 3-week
+momentum long-short ~4.1 % a week (1 / 2 / 4 weeks: 2.7 / 3.3 / 2.5 %), sample 2014-2018 incl. very small coins.
+Label: PUBLISHED finding, ADAPTATION (Binance perps, funding, our costs). Mechanism: under-reaction / attention.
+- **Rule:** each Monday, eligibility exactly as I-78 / Strategy 20 rule 1 (`research/screens/2026-11-14_i78_crypto_wide_factors_screen.py`
+  `week_rows`); signal mom3 = last close before the Monday / the close 21 bars earlier - 1 (>= 22 bars). Sort ascending
+  (mom3, symbol); **long the top quintile (winners), short the bottom** (direction pre-registered: momentum), equal
+  weight, Monday open -> Sunday close, funding inside the hold, 20 bp a week. Development 2020-01..2023-12 only.
+- **Power (before data):** random-leg sd ~479 bp -> |t| 3 needs ~105 bp a week net; halved published 205 - 20 = 185.
+- **Kills (family crypto_xs_factors, 7th look, |t| >= 3.0):** momentum-direction net <= 0; t < 3.0; halves 2020-21 /
+  2022-23 not both > 0; net <= 0 at 40 bp; net <= 0 without the 2 best weeks. Reported: placebo (gross, shuffled),
+  deciles, weekly correlation with Strategy 20.
+- Contamination noted: 1-week momentum was seen (I-75 on 17 perps; Strategy 20 realism check, corr 0.56 with a 1-week
+  return sort); 3-week momentum on this universe was not. A pass gets a one-time test on 2024+ (4th use of that period).
