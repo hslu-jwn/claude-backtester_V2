@@ -3,7 +3,9 @@ top-100 Strategy 20 book on any weekday anchor in the test period, 2023-12..2026
 (ignored). Used by the hourly prop check. Run: .venv/Scripts/python.exe research/screens/2026-11-15_s20_hourly_download.py
 """
 import urllib.error
+import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
@@ -31,19 +33,24 @@ def main():
     months = pd.period_range("2023-12", "2026-10", freq="M")
     syms = members()
     print(len(syms), "symbols")
-    got = miss = 0
-    for s in syms:
-        for m in months:
-            name = f"{s}-1h-{m}.zip"
-            p = OUT / name
-            if p.exists():
-                continue
-            url = f"https://data.binance.vision/data/futures/um/monthly/klines/{s}/1h/{name}"
-            try:
-                urllib.request.urlretrieve(url, p)
-                got += 1
-            except urllib.error.HTTPError:
-                miss += 1  # not listed that month
+    jobs = [(s, m) for s in syms for m in months if not (OUT / f"{s}-1h-{m}.zip").exists()]
+
+    def fetch(job):
+        s, m = job
+        name = f"{s}-1h-{m}.zip"
+        part = OUT / (name + ".part")
+        try:
+            q = urllib.parse.quote
+            urllib.request.urlretrieve(f"https://data.binance.vision/data/futures/um/monthly/klines/{q(s)}/1h/{q(name)}", part)
+            part.replace(OUT / name)  # never leave a half file under the final name
+            return 1
+        except urllib.error.HTTPError:
+            part.unlink(missing_ok=True)
+            return 0  # not listed that month
+
+    with ThreadPoolExecutor(8) as pool:
+        res = list(pool.map(fetch, jobs))
+    got, miss = sum(res), len(res) - sum(res)
     print(f"downloaded {got}, missing {miss}")
 
 

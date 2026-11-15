@@ -39,9 +39,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). On the perps Bybit lists the frozen book
    still made +133 bp a week, t 3.37, in the test period (diagnostic, addendum). Fair forward expectation after the
    rebalance-day, execution and turnover checks: ~+92 bp a week (taker ~10 bp a fill, but only ~55 % turnover).
-   With Hyro's published rules (5 % low-cap cap aggregate; 40 % best day) the top-100 book at the fair +92 passes 85 %
-   at 25 % per side with weekday tranches on close marks, but only 2-4 % on a worst-case intraday bound: the daily
-   5 % equity rule is the binding risk; hourly check pending (addendum 3). **Do not buy a challenge before it.** CFT's reverse-trading rule needs a check before a long-short basket. Before any fee: confirm the low-cap 5 % cap,
+   **Decision package:** `knowledge/research/reports/2026-11-15_s20_prop_decision.md` (hourly check done): tranched
+   top-100 book at 15 % notional per side passes ~96 % on realistic marks (44 % on a strict wick bound) in ~1.6 years;
+   10 % per side ~99 % even on the wick bound but ~2.9 years. Questions to ask the firm are listed there. CFT's reverse-trading rule needs a check before a long-short basket. Before any fee: confirm the low-cap 5 % cap,
    drawdown type and basket fills with the firm.
 2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
    or Opus runs them by hand from about 2026-12-02.

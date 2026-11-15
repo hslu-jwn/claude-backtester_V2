@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: hourly prop check and Strategy 20 decision package (auto)
+
+- 1 h klines for all book members (12,248 monthly files). Hourly-close marks = daily close marks (86 % pass at 25 % per
+  side with tranches); hourly wick bound 28 % at 25 %, 44 % at 15 %, 99 % at 10 % (~2.9 years). Addendum 4.
+- **Auto decision 19:** recommend 15 % notional per side, tranched, HyroTrader Two-Step, first 13 weeks as the live
+  fill test (`knowledge/research/reports/2026-11-15_s20_prop_decision.md`). Alternative: 25 % (faster, wick-exposed).
+  Why: Bybit's multi-exchange mark price should smooth wicks, but that is unverified. The purchase stays the user's.
+
 ## 2026-11-15: swap-free CFD prop census; I-87 stays closed on power (auto)
 
 - Fable item 6 (web-fetch subagent): only FundedNext publishes swap-free accounts for all challenges (+10 % price);

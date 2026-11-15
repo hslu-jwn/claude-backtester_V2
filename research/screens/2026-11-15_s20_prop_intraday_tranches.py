@@ -149,7 +149,7 @@ def main():
         wk = s.inc.groupby(np.arange(len(s)) // 7).sum()
         adj = (wk.mean() - FAIR) / 7
         inc, worst = (s.inc - adj).to_numpy(), (s.worst - adj).to_numpy()
-        for f in (0.25, 0.5):
+        for f in (0.10, 0.15, 0.25, 0.5):
             a = [attempt(inc, worst, rng, f, False) for _ in range(2000)]
             b = [attempt(inc, worst, rng, f, True) for _ in range(2000)]
             ok = [d for p, d in b if p]
