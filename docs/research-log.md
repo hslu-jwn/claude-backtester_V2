@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: I-97 crypto 3-week momentum KILLED; crypto momentum rows closed (auto)
+
+- **Auto decision 8:** run FB-010 as a normal pre-registered development screen (HANDOFF Open 3 proposes exactly that),
+  not as a test-only run. Alternative: leave it for the user. Why: Mode=auto; not a default or money; 3-week momentum
+  on this universe was not seen. Published size checked first (LTW 2022: 4.1 % a week): passes the power line.
+- I-97: net +40.1 bp a week, t 0.68, halves +201 / -87, deciles flat, corr 0.47 with Strategy 20. KILLED.
+- **Auto decision 9:** FB-009 / FB-011 / FB-220 closed without a look (second falsification of crypto momentum after C2).
+  Alternative: screen FB-009 (time-series form). Why: two-falsification rule. Model: Opus.
+
 ## 2026-11-15: FB-022 Strategy 20 rebalance-day check: robust, Monday the luckiest anchor (auto, diagnostic)
 
 - **Auto decision 7:** FB-022 (prior 80, cheap) before new signals. Criteria committed before the run.

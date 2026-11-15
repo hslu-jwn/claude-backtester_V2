@@ -41,7 +41,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    drawdown type and basket fills with the firm.
 2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
    or Opus runs them by hand from about 2026-12-02.
-3. **Crypto momentum:** a pre-registered screen on the crypto split; FB-009 / 011 / 220 depend on it.
+3. ~~Crypto momentum~~: done 2026-11-15 in Mode=auto (I-97 killed, t 0.68; FB-009 / 011 / 220 closed).
 4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum); signal-research stop rule (K = 10
    falsified screens -> pause goal-1 signals); count test-period uses (t >= 3.0 from the 5th one-time test on a period).
 5. **Data / accounts:** free-tier account for US share minute bars (FTMO share history mostly starts 2019-20); a

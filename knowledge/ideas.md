@@ -1298,3 +1298,7 @@ Label: PUBLISHED finding, ADAPTATION (Binance perps, funding, our costs). Mechan
   deciles, weekly correlation with Strategy 20.
 - Contamination noted: 1-week momentum was seen (I-75 on 17 perps; Strategy 20 realism check, corr 0.56 with a 1-week
   return sort); 3-week momentum on this universe was not. A pass gets a one-time test on 2024+ (4th use of that period).
+**Result 2026-11-15 (one look, `research/screens/2026-11-15_i97_crypto_momentum_screen.py`): KILLED.** 186 weeks: gross
++60.1, net +40.1 bp a week, t 0.68, 49 % positive, worst -4,565; halves +200.8 / -86.7; deciles flat (107-211 bp);
+placebo mean t +0.13; correlation 0.47 with Strategy 20. The published 4.1 % a week does not appear on Binance perps
+2020-23. With C2 (failed test) this is the second falsification of crypto momentum: FB-009 / FB-011 / FB-220 closed.
