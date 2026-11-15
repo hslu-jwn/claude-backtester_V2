@@ -1237,3 +1237,19 @@ Cost side only: rest a limit at the bid N minutes before the clock entry, market
 fill goes against the order by at least the half-spread saved, or fill rate < 60 %. Only for cells whose
 gross is already near cost.
 
+
+### I-95 Strategy 20's flow sort on FTMO crypto CFDs (ORIGINAL, goal-1 bridge, 2026-11-15; closed by arithmetic, no data look)
+Idea: trade the weekly taker-flow sort (Strategy 20 signal from Binance) on FTMO's 30 crypto CFDs, so goal 1 could use
+it at FTMO. Arithmetic (census 2026-11-15, `results/mt5_census.csv`): every FTMO crypto CFD charges -30 % a year swap on
+both sides (-8.2 bp a night, 7 nights a week incl. the Friday triple) = ~58 bp a week per side, ~115 bp a week for the
+long-short book, plus weekend spreads 1-70 bp per side. The liquid-coin edge is guessed at 50-60 bp a week (FB-017,
+I-78 clipped +56): far below the swap alone. **Closed**, not screened; an intraday version is I-82 (daily flow, killed).
+
+### FB-017 liquid-only Strategy 20 (capacity / prop-firm variant; frozen 2026-11-15 before any run)
+Why: HyroTrader limits coins under 100 M USD market cap to 5 % of balance; the Bybit check showed the book mostly
+trades coins outside the top tier. **Frozen rule:** Strategy 20 exactly (`docs/strategy-crypto_flow.md` › Rule), except
+that each Monday the eligible set is cut to the 100 symbols with the highest 30-bar median daily quote volume before
+the Monday (ties by symbol name) before the sort; the 20-symbol minimum and quintiles apply to the cut set. Both
+historical periods are spent (development seen in I-78, test used by I-78 / I-83), so the run on them is a
+**diagnostic** (capacity and prop fit), never a test; the variant goes into the forward log as frozen here. No
+rescue: no other N is run.
