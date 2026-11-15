@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: crypto prop firms' published rules applied to Strategy 20 (auto)
+
+- **Auto decision 12:** read HyroTrader / CFT public rule pages (web-fetch subagent, Sonnet-class) and rerun the
+  prop simulation with them. Alternative: leave the questions for the user to ask the firms. Why: public pages answer
+  most of them; contacting a firm stays the user's step.
+- Hyro: the 5 % low-cap cap is aggregate (low cap = < 100 M USD cap or 0.5-5 M volume or new); 40 % best-day rule;
+  static daily 5 %. CFT: static 10 % / daily 5 %, reverse-trading rule to confirm, $10k daily profit cap.
+- Top-100 book (low-cap proxy) at the fair +74 bp a week: 67 % pass at 25 % per side (median 357 days), 38 % at 50 %.
+  Addendum 2 in `knowledge/research/reports/2026-11-15_s20_prop_fit.md`. Model: Opus + web-fetch subagent.
+
 ## 2026-11-15: FB-254 sequential forward boundaries pre-registered (auto)
 
 - **Auto decision 11:** O'Brien-Fleming group-sequential boundary (8 looks every 13 weeks, one-sided 2.5 %, c 2.071)

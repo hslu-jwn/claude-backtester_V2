@@ -38,7 +38,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    no stop, own bots) could host it; simulated 2-Step pass 90-100 % at 25 % notional per side in ~10-16 months
    (`knowledge/research/reports/2026-11-15_s20_prop_fit.md`, optimistic). On the perps Bybit lists the frozen book
    still made +133 bp a week, t 3.37, in the test period (diagnostic, addendum). Fair forward expectation after the
-   rebalance-day and execution checks: ~+74 bp a week (measured taker ~10 bp a fill, 2x the backtest). Before any fee: confirm the low-cap 5 % cap,
+   rebalance-day and execution checks: ~+74 bp a week (measured taker ~10 bp a fill, 2x the backtest).
+   With Hyro's published rules (5 % low-cap cap is aggregate; 40 % best day) the top-100 book at +74 passes ~67 % at
+   25 % per side in ~1 year (addendum 2). CFT's reverse-trading rule needs a check before a long-short basket. Before any fee: confirm the low-cap 5 % cap,
    drawdown type and basket fills with the firm.
 2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
    or Opus runs them by hand from about 2026-12-02.
