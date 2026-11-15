@@ -1062,6 +1062,8 @@ Strategy 20 on the test weeks.
 2 best +81.0; at 40 bp +81.6. Test-week correlation with Strategy 20 +0.83: the taker-flow edge survives with the
 linear 7-day-return part removed, so Strategy 20 is not just short-term momentum. Not a second independent stream:
 kept as evidence for Strategy 20, no separate build.
+**I-84 power (2026-11-15, before its screen):** spot daily klines downloaded for 243 of the 265 perps (development
+months); 186 weeks with >= 20 symbols with spot data; |t| 3 needs ~105 bp a week net (as I-83).
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
