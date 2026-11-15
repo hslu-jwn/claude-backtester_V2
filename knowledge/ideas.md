@@ -1221,6 +1221,15 @@ M15 bars from M1 inside the trading day; no costs (descriptive).
 Flag (not a pass): a concept is "above its null" when the pooled difference is > 2 bp in forward return (FVG) or > 5
 points in exceed rate (equal levels) with t >= 3 (date-clustered); a flagged concept could only become a new,
 pre-registered hypothesis with its own one-time test.
+**Result (`research/screens/2026-11-15_i94_level_null_model.py`, 2026-11-15): no concept above its null.**
+- FVG (54,113 zones, 8 symbols): real zones are touched far more often (81 % vs 47 %: they sit closer to price), held
+  4 bars 49 % vs 41 %, but the 60-minute forward return after the touch is +0.38 bp vs -0.26 bp for the shifted
+  null: difference +0.2 bp a day, t 0.86. Economically nothing (costs ~1.5 bp); every symbol within +-1.3 bp.
+- Equal highs / lows: exceeded within 4 hours **less** often than single swing levels at the same distance (69 vs
+  72 %, 50 vs 51 %, 32 vs 35 %; difference -1.4 points, t -4.78): the "equal highs get taken" claim has the wrong sign
+  here.
+Together with I-91..I-93 and I-88: the ICT level concepts behave like random levels on our data. The ICT backlog rows
+(FB-128..161 except those run) are closed by this pass unless a new mechanism is named.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

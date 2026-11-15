@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 4: ICT level-touch null model (the user: "Null model")
+
+- I-94 (descriptive, one look for `ict_levels`): FVG first touches return +0.38 bp in 60 minutes vs -0.26 bp for a
+  shifted null zone (difference +0.2, t 0.86); equal highs / lows are exceeded less often than single levels at the same
+  distance (-1.4 points, t -4.78). No concept above its null; the remaining ICT backlog rows are closed by this pass.
+  Fixed before data: the null zone stays on the real zone's side of price. Model: Opus.
+
 ## 2026-11-15: Wave 4: ICT event rules I-91 / I-92 / I-93 KILLED (the user: "Wave 4 (ICT test)", auto)
 
 - **Auto decision 16:** run the three concrete ICT rules (PDH / PDL raid, power of three, CRT) with timed exits on 8
