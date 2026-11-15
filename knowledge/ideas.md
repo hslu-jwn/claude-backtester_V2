@@ -1157,6 +1157,11 @@ Diagnostics: the same rules on NAS100 vs US30 (2019-21), gross vs cost, long-NAS
 Power line (signal-free, before the screen): sd of the 10:30 -> 15:55 spread and days with |z| > 2.
 **Power (2026-11-15, before the screen):** 1,569 days; 10:30 -> 15:55 spread sd 30 bp -> t 3 needs ~2.2 bp a day
 (I-89); 91 days with |z| > 2, 11:00 -> 15:55 spread sd 27 bp -> t 3 needs ~8.4 bp (I-90). Two-leg cost ~3-4 bp a day.
+**Result (`research/screens/2026-11-15_i89_rotation_screen.py`): both KILLED.** I-89 follow: 1,569 days, net -3.1 bp,
+t -4.19 (gross +1.3 vs two-leg cost 4.4). I-90 fade: 91 days, net -13.3 bp, t -3.02, gross -8.9: extreme relative
+mornings **continue**, they do not revert. NAS100 vs US30 (2019-21) the same (gross +1.4 / -6.9). Family
+`index_rotation`: closed after two falsifications. Fable FB-055 (residual z-score fade) is the same fade mechanism and
+is not run; FB-095 (continuous SMT) follows I-88 and is not run.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse

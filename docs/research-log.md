@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: Wave 2 part 3: I-89 / I-90 intraday index rotation KILLED; Wave 2 paused (auto)
+
+- I-89 follow the morning NAS100-vs-US500 move: net -3.1 bp a day, t -4.19 (gross +1.3 vs two-leg cost 4.4). I-90 fade an
+  extreme morning: net -13.3, t -3.02 (gross -8.9: extremes continue). Both KILLED; family closed. **Auto decision 15:**
+  FB-055 (same fade mechanism) and FB-095 (continuous SMT, after I-88) not run; FB-059 (four-index agreement) parked
+  because the I-88 diagnostic already showed its result shape (a test would not be blind); FB-244 signal stacking
+  left for later (its components are all below cost; prior 8 %). Wave 2 tally: 6 looks (I-85, I-86, I-88, I-89, I-90)
+  + I-87 by arithmetic: no FTMO stream. Model: Opus.
+
 ## 2026-11-15: Wave 2 part 2: I-88 SMT divergence KILLED (auto)
 
 - **Auto decision 14:** SMT next (the user's explicit interest; FB-078..080 in one screen) before the two-leg rotation
