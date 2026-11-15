@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: crypto backlog sweep: 9 rows closed on power / arithmetic (auto)
+
+- **Auto decision 14:** close the remaining priority <= 3 crypto rows without a look where the halved guess sits below
+  the MDE (~105 bp a week for a weekly sort on 186 weeks; ~141 on the metrics years) or the cost: FB-012, 013, 006,
+  008, 021, 025, 032, 043, 023 (reasons in the ledger). Alternative: screen FB-012 / FB-013 in one batch. Why: a look
+  that cannot reach t 3 at the published / guessed size only spends family budget.
+- The Fable crypto backlog is now done apart from priority 4-5 rows and FB-002 (composite, forward-only by its card).
+  Next source: a mechanism-first idea harvest (counterparties that must trade). Model: Opus.
+
 ## 2026-11-15: I-98 spot-hedged funding carry KILLED (auto)
 
 - **Auto decision 13:** FB-035 next (highest prior of the untested crypto rows, data on disk), as a new family
