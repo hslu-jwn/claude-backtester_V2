@@ -6,6 +6,7 @@ pairs skipped): monthly 1d klines (incl. taker buy volume) and monthly funding f
 Writes data/cache/binance_wide/klines_1d/<SYM>.csv and data/cache/binance_wide/funding/<SYM>.csv (not committed).
 Run: .venv/Scripts/python.exe research/screens/2026-11-14_binance_wide_download.py [--end 2023-12] [--workers 8]
 Test months: ... --start 2024-01 --end 2026-10 --out data/cache/binance_wide_test
+Spot klines: ... --spot --end 2023-12 --out data/cache/binance_wide_spot
 """
 import argparse
 import io
@@ -61,10 +62,15 @@ def month_of(key):
     return re.search(r"(\d{4}-\d{2})\.zip$", key).group(1)
 
 
+SPOT = False  # --spot: Binance spot daily klines for the perp symbols (no funding), 2026-11-15
+
+
 def symbol(sym, end, start="0000-00"):
     out = {}
-    for kind, prefix, names in (("klines_1d", f"data/futures/um/monthly/klines/{sym}/1d/", KCOLS),
-                                ("funding", f"data/futures/um/monthly/fundingRate/{sym}/", None)):
+    kinds = ((("klines_1d", f"data/spot/monthly/klines/{sym}/1d/", KCOLS),) if SPOT else
+             (("klines_1d", f"data/futures/um/monthly/klines/{sym}/1d/", KCOLS),
+              ("funding", f"data/futures/um/monthly/fundingRate/{sym}/", None)))
+    for kind, prefix, names in kinds:
         path = OUT / kind / f"{sym}.csv"
         if path.exists():
             out[kind] = "cached"
@@ -95,11 +101,16 @@ def main(argv):
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--start", default="0000-00", help="first month (test download: 2024-01)")
     ap.add_argument("--out", type=Path, default=OUT, help="e.g. data/cache/binance_wide_test")
+    ap.add_argument("--spot", action="store_true", help="spot klines of the perp symbols in data/cache/binance_wide")
     a = ap.parse_args(argv)
     OUT = a.out
     _, prefixes = listing("data/futures/um/monthly/klines/", "/")
     syms = sorted(p.rstrip("/").rsplit("/", 1)[-1] for p in prefixes)
     syms = [s for s in syms if s.endswith("USDT") and "_" not in s]
+    global SPOT
+    SPOT = a.spot
+    if SPOT:  # the perp universe with development data; spot names are the same
+        syms = sorted(p.stem for p in (Path("data/cache/binance_wide") / "klines_1d").glob("*.csv"))
     print(f"{len(syms)} USDT perps listed", flush=True)
     with ThreadPoolExecutor(a.workers) as ex:
         for sym, out in ex.map(lambda s: safe(s, a.end, a.start), syms):
