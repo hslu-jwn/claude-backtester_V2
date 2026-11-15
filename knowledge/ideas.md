@@ -1210,6 +1210,8 @@ M15 bars from M1 inside the trading day; no costs (descriptive).
   = low[i]. Outcomes: "held" = no bar in the next 4 trades below the zone bottom; forward return = close 4 bars after
   the touch bar vs entry, in the reversal direction (up for bullish), bp. Mirrored for bearish. **Null:** the same
   zone shifted by u x gap (u uniform 1..3, random sign, seeded), formed at the same bar, same touch and outcome rules.
+  (Fixed before data, 2026-11-15: if the shifted zone's near edge is not beyond the formation close on the real zone's
+  side, the shift sign is flipped, so the null zone is never "touched" instantly at a price already passed.)
   Also reported: share of FVGs touched within 32 bars (fill rate) vs the null.
 - **Equal highs / lows (FB-149):** M15 swing high at j = high[j] above the 2 bars on each side (confirmed at j+2);
   "equal" = within 0.05 ATR of a swing high of the previous 32 bars with no bar between above both. Event at j+2:
