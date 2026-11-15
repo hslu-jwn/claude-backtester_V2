@@ -1040,6 +1040,23 @@ Power lines (signal-free, before each screen): random-leg sd of the series at it
 **Canary and power (2026-11-15, before the screens; tool frozen in 0ba5965):** the shared tool reproduces I-78 (186
 weeks, +145.0, t 3.24). I-83 / I-84 weekly: random-leg sd 479 bp -> |t| 3 needs ~105 bp a week net; I-82 daily: 1,314
 days, sd 170 bp -> |t| 3 needs ~14 bp a day net (vs 20 bp a day of cost). I-84 waits for the spot download.
+**Development results (2026-11-15, `research/screens/2026-11-15_wave1_xs_crypto_screen.py i82 i83`):**
+- **I-82 daily taker flow: KILLED** (net -4.2 bp a day, t -0.74; halves +17 / -21; deciles flat; weekly correlation
+  with Strategy 20 +0.51). The flow edge does not exist at a 1-day hold after 20 bp a day.
+- **I-83 absorption: PASSED all five development gates**: long the top residual quintile, net +145.4 bp a week, t 3.57,
+  61 % positive, worst -1,271; halves +294.1 / +28.2; at 40 bp +125.4; without the 2 best +119.1; placebo mean t -0.84
+  (0 of 20 |t| >= 3); deciles rising from 85 to 276 bp. **Weekly correlation with Strategy 20 +0.76**: mostly the same
+  edge with the linear 7-day-return part removed.
+- Tool note: the placebo was computed net of 20 bp, so it is negative by construction (I-82 daily: -20 bp / se gives
+  t ~-4.2); from here on it is reported gross (expect ~0). Gates unaffected.
+**I-83 one-time test, pre-registered 2026-11-15 before any test-period data was read by this rule (Mode=auto, auto
+decision 12):** frozen rule as above (absorption residual, long top / short bottom quintile, weekly, 20 bp, I-78's
+eligibility), test universe and weeks as I-78's test (Monday >= 2024-01-01 to the last Monday whose Sunday exit is <=
+2026-10-31; signals may use development bars). Passes only if all hold: (1) test net > 0; (2) test t >= 2.0; (3)
+development + test pooled t >= 3.0; (4) both test halves > 0; (5) test net > 0 without its 2 best weeks; (6) test
+net > 0 at 40 bp. Note: the period was already used once by I-78 (same family, correlated signal); a pass adds
+evidence mainly on whether the flow edge survives without its momentum part. Reported with its correlation to
+Strategy 20 on the test weeks.
 
 ### T-20 Resting limit entries for clock-based holds (review D5, 2026-11-11; UNTESTED)
 Cost side only: rest a limit at the bid N minutes before the clock entry, market at the deadline. Reuse
