@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-15: FB-263 futures re-cost closed by arithmetic (auto)
+
+- Would CME futures costs (~0.5-1.7 bp a round trip; FTMO US500 ~2.4, NAS100 ~1.7, US30 ~0.55) rescue the killed
+  intraday index rows? No: even at zero cost the best (I-85) has gross t ~1.9; none reaches 3.
+  `knowledge/research/reports/2026-11-15_fb263_futures_recost.md`. Model: Opus.
+- Goal-1 tally (HANDOFF Open 4 proposal, not adopted): falsified FTMO signal screens since Wave 2: I-85, I-86, I-88,
+  I-89, I-90, I-91, I-92, I-93, I-94 (descriptive), I-96 = 10, no pass.
+
 ## 2026-11-15: FB-020 Strategy 20 legs against BTC (auto, diagnostic)
 
 - Long leg - BTC: development +141.6 bp a week (t 2.27), test +5.6; BTC - short leg: development -0.6, test +137.7
