@@ -1344,3 +1344,28 @@ each: gross +45.2 bp a week (funding +46.5, basis -1.3), turnover cost 33.3, net
 halves +55.1 / -22.0 (2020 +38, 2021 +65, 2022 -29, 2023 -15); doubled costs -21.3. The funding is real but the
 top-funding set rotates too fast; a hysteresis / lower-turnover rule would be a new hypothesis shaped by this
 result (not run: rescue rule). Family `crypto_basis` one falsification.
+
+### I-99 Single-name shock reversal vs a flat index on Alpaca M1 (Fable FB-121, SHARES, 2026-11-16; rule fixed before any data)
+Mechanism: a sharp single-name drop while the index is flat is forced or panicked selling (no market news); liquidity
+providers who absorb it are paid by a partial rebound into the close (Nagel 2012 "Evaporating liquidity", UNVERIFIED
+here; practitioner "flush and reclaim"). Label: PUBLISHED finding (short-term reversal pays liquidity provision),
+ADAPTATION (intraday trigger, FTMO large caps). Prediction: after the trigger the stock outperforms from entry to 15:55.
+Reopened data question: FB-121 waited for M1 before 2019; Alpaca SIP minute bars 2016+ (the user's account, 2026-11-16).
+- **Universe (by cost, fixed before data):** the 33 names of I-96 (FTMO median M1 spread <= 10 bp, `research/share_spreads_2026-11-15.csv`).
+  Index = QQQ (Alpaca; NAS100 CFD tracks it). Development only 2016-01-04 .. 2021-09-13.
+- **Data:** Alpaca 1Min SIP, split-adjusted, regular session only (09:30-16:00 America/New_York), closes forward-filled
+  on the minute grid. r30(t) = close_t / close_(t-30 min) - 1. sigma30 = sd of the 13 non-overlapping 30-min returns
+  per session (09:30-16:00) over the previous 20 sessions (needs >= 15 sessions; no same-day data).
+- **Rule:** evaluated at every M1 close from 10:00 to 15:00 NY: trigger when stock r30 <= -3 sigma30(stock) and
+  |QQQ r30| <= 0.5 sigma30(QQQ). First trigger per stock and day only. Skip the day if the stock's overnight gap
+  |open 09:30 / previous 16:00 close - 1| > 2 x the sd of its previous 20 close-to-close returns (earnings proxy; no
+  date file). Long at the next M1 bar's open, exit at the close of the last bar with time <= 15:55. No stop.
+- **Cost:** FTMO median spread / 2 (`all_bp` at entry, `close_bp` at exit) + 1 bp slippage per fill (today's spreads on
+  2016-2021: assumption A1 of I-96; commission assumed 0, A2).
+- **Kills (family SHARES, 2nd look; |t| >= 3.0):** net <= 0; t(net, per-date means) < 3.0; halves 2016-2018 / 2019-2021
+  not both > 0; net <= 0 at doubled costs; net <= 0 without the 2 best dates. Fewer than 300 events = underpowered: no
+  verdict, the card stays a card (still counted). Reported, not gates: the mirror (short after a +3 sigma spike), the
+  same trigger on the excluded gap days (earnings control), dose 2.5 / 4 sigma, by year.
+- **Power (before data):** guess ~700 events, sd entry -> 15:55 ~200 bp -> SE ~7.6, MDE at t 3 ~23 bp; halved guess
+  10-25 bp gross vs ~8 bp cost: underpowered unless the event count is higher; run as the share family's best M1 row
+  (intraday, no swap, breadth). Prior 5 %. A pass would need the one-time test on 2021-09-14+ Alpaca bars of the same names.
