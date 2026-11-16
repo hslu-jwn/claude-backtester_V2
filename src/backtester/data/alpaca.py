@@ -21,7 +21,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -85,13 +85,19 @@ def months(start: date, end: date) -> list[date]:
     return out
 
 
-def download_month(symbol: str, month: date, fetch: Fetch, root: Path = CACHE_DIR) -> int:
+def download_month(
+    symbol: str, month: date, fetch: Fetch, root: Path = CACHE_DIR, now: datetime | None = None
+) -> int:
     nxt = date(month.year + month.month // 12, month.month % 12 + 1, 1)
+    end = datetime(nxt.year, nxt.month, 1, tzinfo=UTC)
+    end = min(
+        end, (now or datetime.now(UTC)) - timedelta(minutes=16)
+    )  # free plan refuses the latest 15 min
     params = {
         "symbols": symbol,
         "timeframe": "1Min",
         "start": f"{month:%Y-%m-%d}T00:00:00Z",
-        "end": f"{nxt:%Y-%m-%d}T00:00:00Z",
+        "end": f"{end:%Y-%m-%dT%H:%M:00Z}",
         "limit": 10000,
         "adjustment": "split",
         "feed": "sip",

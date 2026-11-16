@@ -71,3 +71,14 @@ def test_missing_key_raises_with_how_to(monkeypatch):
     monkeypatch.setattr(alpaca, "_secret", lambda name: None)
     with pytest.raises(RuntimeError, match="python -m keyring set backtester-alpaca key_id"):
         alpaca.keys()
+
+
+def test_current_month_ends_16_minutes_before_now(tmp_path):
+    from datetime import UTC, datetime
+
+    fetch, calls = fake_fetch([{"bars": {}, "next_page_token": None}])
+    now = datetime(2026, 11, 16, 22, 30, tzinfo=UTC)
+    alpaca.download_month("SPY", date(2026, 11, 1), fetch, tmp_path, now=now)
+    assert (
+        calls[0]["end"] == "2026-11-16T22:14:00Z"
+    )  # free plan: the latest 15 minutes are refused (HTTP 403)
