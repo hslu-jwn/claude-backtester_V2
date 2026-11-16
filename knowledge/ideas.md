@@ -1373,3 +1373,8 @@ Reopened data question: FB-121 waited for M1 before 2019; Alpaca SIP minute bars
   start once 15 sessions exist (~2016-01-25). Alpaca keeps a reused ticker's old company: SNOW 2016-17 is Intrawest, so
   SNOW counts from its 2020-09-16 listing (PLTR from 2020-09-30). RTX carries a level jump at the 2020 merger (a gap
   day, skipped by the gap rule; same-day returns unaffected). META is mapped to FB's history (checked by price).
+**Result 2026-11-16 (one look, `research/screens/2026-11-16_i99_shock_reversal_screen.py`): KILLED.** 2,662 events on
+1,016 dates (well powered: SE ~3 bp): gross -2.0 bp, cost 7.5, net -9.5, t -2.47; halves -7.6 / -11.8; every year
+negative. Reported: the mirror (short after +3 sigma) gross -3.2 (t -2.72 net), dose 2.5 / 4 sigma gross -2.5 / -7.8,
+gap days -18.2: after an idiosyncratic 30-min shock large caps drift slightly further, not back (a few bp, far below
+cost). Second falsification in the SHARES family (after I-96): the family is closed (stop rules).

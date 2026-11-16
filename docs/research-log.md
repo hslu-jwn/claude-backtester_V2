@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: I-99 shock reversal killed; SHARES family closed (auto)
+
+- One look on Alpaca M1, 2,662 events: gross -2.0 bp, net -9.5, t -2.47, halves both negative, mirror negative too.
+  Second SHARES falsification after I-96: family closed (no rescue variants). Opus inline (screen), no dispatch.
+- Downloader fix: requests end 16 min before now (free plan returned HTTP 403 for the current month); 6 tests.
+
 ## 2026-11-16: loop restarted by the user on the share family (Alpaca M1); I-99 pre-registered (auto)
 
 - **Auto decision 24:** first M1 share look = I-99 (FB-121 single-name shock reversal vs flat QQQ, 33 cheap FTMO names,
