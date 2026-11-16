@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: Strategy 20 funded-phase sizing (FB-265) (auto; the user: "Versuch es noch einmal")
+
+- Loop resumed after an interrupted tick (nothing lost: e57b998 was the last commit).
+- One funded year, payouts every 4 weeks: 15 % per side 1 % breach / 8.5 % of balance paid (hourly close), 32 % /
+  7.0 % on the wick bound; 20 % 7 % / 11.4 %; 25 % 16 % / 14.3 %; 10 % safe on both marks (5.7 %).
+- **Auto decision 21:** keep 15 % per side for the funded phase in the decision package; 20 % only after the first 13
+  live weeks. Alternative: 20-25 % (more payout, wick-exposed). Model: Opus.
+
 ## 2026-11-15: checkpoint suite (auto)
 
 - Full suite `-n 8`: 5,993 passed, 14 skipped, 4 xfailed, 1 failed (`tests/jobs/test_review_fixes.py::
