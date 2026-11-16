@@ -6,6 +6,9 @@ on HyroTrader's Two-Step (Bybit demo). Fair forward expectation **~+92 bp a week
 measured taker ~10 bp a fill, ~55 % turnover). Evidence: one-time test passed (full universe +147, t 3.76; top 100 +166,
 t 3.06, diagnostic); robust to the rebalance day; edge switched legs between periods (long-short only).
 
+**Venue check (2026-11-16):** rebuilt on Bybit's own prices and funding (Binance signal), the top-100 book made
++145.5 bp a week, t 2.93, in the test period vs +137.9 on Binance prices for the same coins: the edge transfers.
+
 **Pass chance (Two-Step +10 % then +5 %, 5 % daily loss on start-of-day equity, 10 % static max, 40 % best day; test
 weeks bootstrapped at +92 a week; `research/screens/2026-11-15_s20_prop_intraday_tranches.py`):**
 

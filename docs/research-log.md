@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: Strategy 20 on Bybit prices and funding: the edge transfers (auto; the user: "continue researching")
+
+- **Auto decision 22:** with the signal backlog below power / cost, validate the one edge on its trading venue (the
+  gap named in the Bybit-universe diagnostic). Alternative: the code audit. Why: the user asked to keep researching;
+  this bears on the prop decision.
+- Bybit public v5 daily klines + funding history for every Binance perp listed on Bybit (cache data/cache/bybit;
+  two script fixes: pandas floor, pagination stop). Top-100 book: Bybit +145.5 bp a week, t 2.93 vs Binance prices
+  on the same coins +137.9, t 2.80. Spec and decision package updated. Model: Opus.
+
 ## 2026-11-16: Strategy 20 funded-phase sizing (FB-265) (auto; the user: "Versuch es noch einmal")
 
 - Loop resumed after an interrupted tick (nothing lost: e57b998 was the last commit).

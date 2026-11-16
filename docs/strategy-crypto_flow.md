@@ -148,6 +148,13 @@ From 2026-11-16, log the book every week without orders. Pre-registered forward 
 (standard error ~66 bp a week at the test sd 474); they can only catch a break.
 
 
+**Bybit prices and funding (2026-11-16, diagnostic on the spent test period;
+`research/screens/2026-11-16_s20_bybit_prices.py`):** signal, eligibility and the top-100 cut on Binance volume and
+taker flow; each Binance perp listed on Bybit gets Bybit's daily open / close and Bybit's funding from its first Bybit
+bar (window from 2023-09); perps not on Bybit dropped. Top-100 book 2024-01..2026-10: **Bybit prices + funding +145.5
+bp a week, t 2.93, worst -1,253**; the same coins and days on Binance prices +137.9, t 2.80, worst -1,226. The edge
+transfers to the venue a prop account would trade (Bybit-delisted coins still missing).
+
 **Weekday tranches (2026-11-15, prop decision package):** `crypto_flow --liquid --anchor <mon..sun> --forward` logs the
 same frozen book rebalanced at 00:00 UTC on each weekday into `research/forward/crypto_flow_top100_<day>.csv` (Monday
 keeps `crypto_flow_top100.csv`); the tranched account is the mean of the seven. The FB-254 boundary applies to the
