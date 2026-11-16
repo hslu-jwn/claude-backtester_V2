@@ -3,7 +3,7 @@
 Development only 2016-01-04 .. 2021-09-13, Alpaca 1Min SIP (data/cache/alpaca, ignored), 33 FTMO names of I-96, QQQ
 as the index. Price grid per session: P[0] = 09:30 open, P[m] = close of the bar opening 09:30 + m - 1 (m = 1..390),
 forward-filled. r30 at m = P[m] / P[m-30] - 1, evaluated m = 30 (10:00) .. 330 (15:00); entry = open of the bar
-opening at 09:30 + m; exit P[325] (15:55). sigma30 and the gap sd use only the previous 20 sessions.
+opening at 09:30 + m; exit P[385] (15:55). sigma30 and the gap sd use only the previous 20 sessions.
 Run: .venv/Scripts/python.exe research/screens/2026-11-16_i99_shock_reversal_screen.py
 """
 
@@ -123,7 +123,7 @@ def events(s, q, sign, k, gap_days=False):
     rows = []
     for i in np.flatnonzero(valid & hit.any(axis=1)):
         m = 30 + int(hit[i].argmax())  # first trigger of the session
-        rows.append((i, sign * (s["G"][i, 325] / s["O"][i, m] - 1) * 1e4))
+        rows.append((i, sign * (s["G"][i, 385] / s["O"][i, m] - 1) * 1e4))
     return rows
 
 
