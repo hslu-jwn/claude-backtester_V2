@@ -5,10 +5,11 @@ Signal, eligibility and the top-100 cut use Binance volume / taker volume (uncha
 Bybit today (cached instrument list) gets Bybit's daily open / close (public v5 kline) and Bybit's funding history
 (v5 funding/history) from its first Bybit bar; perps not on Bybit are dropped (cannot be traded there). Downloads
 are cached in data/cache/bybit (ignored). Compared with the same book on Binance prices for the same coins.
-Run: .venv/Scripts/python.exe research/screens/2026-11-16_s20_bybit_prices.py
+Run: .venv/Scripts/python.exe research/screens/2026-11-16_s20_bybit_prices.py [--dev]  (--dev: 2020-2023, cache data/cache/bybit/dev)
 """
 import json
 import re
+import sys
 import time
 import urllib.request
 from datetime import date
@@ -20,8 +21,11 @@ import pandas as pd
 from backtester.tools import crypto_flow as cf
 
 ROOT = Path("data/cache/bybit")
-START, END = date(2024, 1, 1), date(2026, 10, 31)
-T0, T1 = int(pd.Timestamp("2023-09-01", tz="UTC").timestamp() * 1000), int(pd.Timestamp("2026-11-02", tz="UTC").timestamp() * 1000)
+DEV = "--dev" in sys.argv  # development period 2020-2023 instead of the test period
+START, END = (date(2020, 1, 1), date(2023, 12, 31)) if DEV else (date(2024, 1, 1), date(2026, 10, 31))
+T0 = int(pd.Timestamp("2019-09-01" if DEV else "2023-09-01", tz="UTC").timestamp() * 1000)
+T1 = int(pd.Timestamp("2024-01-02" if DEV else "2026-11-02", tz="UTC").timestamp() * 1000)
+SUB = "dev" if DEV else ""
 
 
 def base(s):
@@ -41,7 +45,7 @@ def get(url):
 
 
 def klines(sym):
-    p = ROOT / "klines_1d" / f"{sym}.csv"
+    p = ROOT / SUB / "klines_1d" / f"{sym}.csv"
     if not p.exists():
         rows, end = [], T1
         while True:
@@ -61,7 +65,7 @@ def klines(sym):
 
 
 def funding(sym):
-    p = ROOT / "funding" / f"{sym}.csv"
+    p = ROOT / SUB / "funding" / f"{sym}.csv"
     if not p.exists():
         rows, end = [], T1
         while True:

@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: Bybit venue check on the development period; cross-venue flow not feasible (auto)
+
+- `--dev`: 111 weeks (~2021-11..2023, Bybit-listed coins only): Bybit prices + funding +40.6 bp a week (t 1.12) vs
+  Binance prices on the same coins +44.8 (t 1.23). Venue transfer holds in both periods; this window is the weak
+  2022-23 stretch already seen in the development halves.
+- Independent signal replication (another venue's taker flow) is out of reach on free data: OKX keeps ~100 days of
+  taker volume; Bybit public trade files are 15-110 MB a coin a day (hundreds of GB). Recorded, not pursued.
+
 ## 2026-11-16: Strategy 20 on Bybit prices and funding: the edge transfers (auto; the user: "continue researching")
 
 - **Auto decision 22:** with the signal backlog below power / cost, validate the one edge on its trading venue (the
