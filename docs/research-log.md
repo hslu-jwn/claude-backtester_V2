@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: Alpaca share minute-bar downloader (the user: "Get Alpaca data")
+
+- `data/alpaca.py` + 5 tests (paging, month cache, resume, missing key): free Basic plan, SIP history with the
+  latest 15 minutes withheld, 1Min, split-adjusted, per symbol-month CSV in `data/cache/alpaca` (ignored). Waits for
+  the user's account and key (HANDOFF Open 5). Opus inline, no dispatch (small tool).
+
 ## 2026-11-16: research loop paused: free-data frontier reached (auto)
 
 - **Auto decision 23:** stop the self-paced loop and ask the user for direction instead of running priority 4-5 rows

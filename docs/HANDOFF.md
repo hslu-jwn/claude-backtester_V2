@@ -48,7 +48,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 3. ~~Crypto momentum~~: done 2026-11-15 in Mode=auto (I-97 killed, t 0.68; FB-009 / 011 / 220 closed).
 4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum); signal-research stop rule (K = 10
    falsified screens -> pause goal-1 signals; **K = 10 reached 2026-11-15**, research log); count test-period uses (t >= 3.0 from the 5th one-time test on a period).
-5. **Data / accounts:** free-tier account for US share minute bars (FTMO share history mostly starts 2019-20); a
+5. **Data / accounts:** US share minute bars: the user chose Alpaca (2026-11-16); downloader ready
+   (`python -m backtester.data.alpaca SPY QQQ --start 2016-01`), waits for the user's free account and its key in the
+   Credential Manager (`python -m keyring set backtester-alpaca key_id`, then `secret`). Also a
    scheduled collector of retail positioning (FB-284). Optional books (Telegram 2026-11-14).
 6. Older: B4 dividends question to FTMO; GBPUSD 2020-21 placeholder spreads (a default); stressed-cost p90 refresh;
    USDCHF early 2015.
