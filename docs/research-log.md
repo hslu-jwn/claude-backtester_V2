@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: research loop paused: free-data frontier reached (auto)
+
+- **Auto decision 23:** stop the self-paced loop and ask the user for direction instead of running priority 4-5 rows
+  (all below power or cost by their own guesses). Alternative: keep screening them. Why: no row can reach t 3; the
+  remaining value needs the user's money decisions (HyroTrader challenge, Bybit pilot), rules (K = 10 pause,
+  test-period uses), or new data (free Alpaca minute bars for shares, paid futures data). Telegram "Optional" sent.
+
 ## 2026-11-16: Bybit venue check on the development period; cross-venue flow not feasible (auto)
 
 - `--dev`: 111 weeks (~2021-11..2023, Bybit-listed coins only): Bybit prices + funding +40.6 bp a week (t 1.12) vs
