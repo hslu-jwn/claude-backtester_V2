@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: loop restarted by the user on the share family (Alpaca M1); I-99 pre-registered (auto)
+
+- **Auto decision 24:** first M1 share look = I-99 (FB-121 single-name shock reversal vs flat QQQ, 33 cheap FTMO names,
+  dev 2016-01..2021-09-13; card commit aff8c2c, script e028b6e, both before any data). Alternatives: FB-115 earnings
+  momentum (needs earnings dates: EDGAR asks automated clients for a contact e-mail, not sent; and ~750 dev events,
+  MDE ~33 bp vs a halved 10-20 bp), FB-118 / FB-119 / FB-122 (halved guess below the ~10 bp L/S cost), FB-120 (meme
+  names, wide spreads, few events). Why: the only row with a halved gross above cost and a power line near reach.
+- **Auto decision 25:** download reordered: development months (2015-12..2021-09) of QQQ + the 33 names first, the
+  rest (ETFs, test period, other names) afterwards. Why: halves the wait for the screen; nothing else needs them yet.
+
 ## 2026-11-16: Alpaca share minute-bar downloader (the user: "Get Alpaca data")
 
 - `data/alpaca.py` + 5 tests (paging, month cache, resume, missing key): free Basic plan, SIP history with the
