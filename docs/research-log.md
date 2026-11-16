@@ -9,6 +9,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - `data/alpaca.py` + 5 tests (paging, month cache, resume, missing key): free Basic plan, SIP history with the
   latest 15 minutes withheld, 1Min, split-adjusted, per symbol-month CSV in `data/cache/alpaca` (ignored). Waits for
   the user's account and key (HANDOFF Open 5). Opus inline, no dispatch (small tool).
+- Keys stored by the user; smoke test SPY 2016-01: 16,336 bars, 20 days, close ~194 (matches). Full download
+  started: 15 ETFs + 46 FTMO shares, 2016-01 to now, two background processes.
 
 ## 2026-11-16: research loop paused: free-data frontier reached (auto)
 
