@@ -51,6 +51,10 @@ NAMES = [
 ]
 SPREADS = pd.read_csv("research/share_spreads_2026-11-15.csv").set_index("symbol")
 SLIP, LOOKBACK, MIN_DAYS = 1.0, 20, 15
+LISTED = {
+    "SNOW": "2020-09-16",
+    "PLTR": "2020-09-30",
+}  # Alpaca keeps the reused ticker's old history (SNOW = Intrawest 2016-17)
 
 
 def grid(sym):
@@ -60,6 +64,7 @@ def grid(sym):
     t = pd.to_datetime(d.ts, utc=True).dt.tz_convert("America/New_York")
     m = (t.dt.hour * 60 + t.dt.minute - 570).to_numpy()
     keep = (m >= 0) & (m < 390)
+    keep &= (t >= pd.Timestamp(LISTED.get(sym, "2000-01-01"), tz="America/New_York")).to_numpy()
     day = t.dt.tz_localize(None).dt.normalize().to_numpy()[keep]
     days = pd.DatetimeIndex(np.unique(day))
     row = days.get_indexer(day)

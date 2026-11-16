@@ -1369,3 +1369,7 @@ Reopened data question: FB-121 waited for M1 before 2019; Alpaca SIP minute bars
 - **Power (before data):** guess ~700 events, sd entry -> 15:55 ~200 bp -> SE ~7.6, MDE at t 3 ~23 bp; halved guess
   10-25 bp gross vs ~8 bp cost: underpowered unless the event count is higher; run as the share family's best M1 row
   (intraday, no swap, breadth). Prior 5 %. A pass would need the one-time test on 2021-09-14+ Alpaca bars of the same names.
+- **Data fixes before the run (A3, A4; no outcome seen):** Alpaca history starts 2016-01-01 (2015-12 empty), so events
+  start once 15 sessions exist (~2016-01-25). Alpaca keeps a reused ticker's old company: SNOW 2016-17 is Intrawest, so
+  SNOW counts from its 2020-09-16 listing (PLTR from 2020-09-30). RTX carries a level jump at the 2020 merger (a gap
+  day, skipped by the gap rule; same-day returns unaffected). META is mapped to FB's history (checked by price).
