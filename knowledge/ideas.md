@@ -1471,3 +1471,5 @@ shares their own family labels; the fade is the main reason for the low prior. L
   entry -> close per decile), the same sort with the open as entry (09:30 open -> close, I-96's original timing).
 - **Power (card, before data):** long-short daily sd guessed 40-60 bp, ~1,430 days: MDE at t 3 = 3-5 bp net, i.e.
   10-12 bp gross needed; pass chance ~8 %. Signal-free line recorded below before the run.
+**I-101 data check (2026-11-17, before any signal):** FINRA development files complete: 716 trading days before
+2018-08-01 with both `FNSQ` and `FNYX` (no day with only one), `CNMS` from 2018-08-01 to 2021-09-13; 499 MB.
