@@ -1421,3 +1421,32 @@ kill passes. Reported: capped +-50 % +81 (0.75 of the mean, t 2.14); median week
 holds on 194 unseen names with about twice I-73R's price part, close to the I-73 test effect, but 153 weeks cannot
 reach t 3 and 2022 is flat. Family `crypto_carry_xs` closed after this third look (as pre-registered). Not a
 candidate for card 5's book unless the user accepts M1 (then it is a shelf row with a forward log, M3).
+
+### I-101 FINRA short-volume ratio, weekly cross-sectional sort on the wide US share universe (Fable card 3, 2026-11-16 sweep; new family `share_flow`, venue M13; rule fixed before any data)
+Mechanism, two readings with opposite signs: (a) short sellers are informed (Diether, Lee, Werner 2009, UNVERIFIED
+here: high short volume -> lower returns); (b) off-exchange short volume is mostly wholesalers shorting to fill
+retail buy orders, so a high ratio marks retail buying. Label PUBLISHED finding (a) / PRACTITIONER (b), ADAPTATION
+(weekly, top-1,000, 2016-2021). The sign is the test: two cells, |t| >= 3.3 (M9 wording, adopted by Opus as the
+stricter bar).
+- **Universe:** `docs/share-universe.md` (month of the entry day).
+- **Data:** FINRA daily short-sale volume files for every trading day 2015-10-01 .. 2021-09-13 (development only):
+  `FNSQ` + `FNYX` summed per symbol before 2018-08-01 (A1: the facilities served throughout; `FNQC` / `FNRA` are not
+  served for 2016), `CNMS` from 2018-08-01. Symbols mapped `/` -> `.`. Prices: Alpaca daily closes (split-adjusted).
+- **Signal:** SVR = sum ShortVolume / sum TotalVolume over the 5 trading days up to the last trading day before the
+  entry day, minus the stock's mean daily SVR over the 60 trading days before that window (needs >= 4 window days and
+  >= 40 baseline days with TotalVolume > 0). A week is skipped when the window or the baseline spans 2018-08-01
+  (the facility break).
+- **Trade:** entry at the close of the first trading day of each week (Monday, or Tuesday after a holiday), exit at
+  the close of the first trading day of the next week; n = floor(names with a signal / 10); cell A long the lowest
+  n SVR, short the highest n (reading a); cell B the mirror (reading b); equal weight; ties by symbol. A name with no
+  exit bar exits at its last close (A2).
+- **Cost (A3):** per leg 2 fills x (2 bp fee / auction + 1 bp slippage) = 6 bp, short leg + 0.6 bp borrow: 13 bp a
+  week on the long-short unit (the card's "~7 bp per unit side", both sides); doubled 26. Dividends not in the prices.
+- **Period:** development weeks 2016-01 .. the last week whose exit is before 2021-09-14; test 2021-09-14 .. once,
+  only after a development pass.
+- **Kills (each cell):** net t < 3.3; net <= 0; halves 2016-2018 / 2019-2021 not both > 0; net <= 0 at doubled cost;
+  net <= 0 without the 2 best weeks. Reported, not gates: smallest half / mean (M7 proposal), member returns capped
+  at +-50 %, years, decile spread monotonicity (deciles 1..10 mean next-week return).
+- **Power (card, before data):** decile long-short weekly sd 100-150 bp (guess) on ~290 weeks: MDE at t 3.3 =
+  19-29 bp a week; halved published ~16 bp: expected t 1.8-2.8, pass chance ~8 %. The signal-free line (random
+  deciles on the same names and weeks) is recorded below before the run.
