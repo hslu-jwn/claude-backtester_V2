@@ -214,3 +214,36 @@ def test_fetch_percent_encodes_non_ascii_symbols(monkeypatch):
         and "%E5%B8%81" in seen[0]
         and "prefix=data%2Fspot%2F%E5%B8%81" in seen[1]
     )
+
+
+def test_fetch_retries_a_dropped_connection_but_not_a_missing_file(monkeypatch):
+    import urllib.error
+
+    calls = []
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def flaky(url, timeout, context):
+        calls.append(url)
+        if len(calls) == 1:
+            raise urllib.error.URLError(ConnectionResetError(10054, "reset"))
+        return Response(b"ok")
+
+    monkeypatch.setattr(data.time, "sleep", lambda s: None)
+    monkeypatch.setattr(data.urllib.request, "urlopen", flaky)
+    assert data._fetch(data.CDN + "x.zip") == b"ok" and len(calls) == 2
+
+    def missing(url, timeout, context):
+        calls.append(url)
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+
+    calls.clear()
+    monkeypatch.setattr(data.urllib.request, "urlopen", missing)
+    with pytest.raises(urllib.error.HTTPError):
+        data._fetch(data.CDN + "x.zip")
+    assert len(calls) == 1

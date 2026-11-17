@@ -9,6 +9,8 @@ from __future__ import annotations
 import io
 import re
 import ssl
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -87,8 +89,19 @@ def _fetch(url: str, params: dict | None = None) -> bytes:
     url = urllib.parse.quote(url, safe=":/%")  # non-ASCII symbol names (requests did this itself)
     if params:
         url = f"{url}?{urllib.parse.urlencode(params)}"
-    with urllib.request.urlopen(url, timeout=60, context=ssl.create_default_context()) as response:
-        return response.read()
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(
+                url, timeout=60, context=ssl.create_default_context()
+            ) as response:
+                return response.read()
+        except urllib.error.HTTPError:
+            raise  # a missing file or a refusal is not transient
+        except OSError:  # dropped connection, timeout: hundreds of requests per update
+            if attempt == 3:
+                raise
+            time.sleep(5 * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 def _listing(prefix: str, fetch: Callable, delimiter: str | None = None):
