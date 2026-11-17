@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-106 insider purchases FALSIFIED (the user: "Continue with the new share cards")
+
+- SEC insider datasets 2016Q1-2021Q3 (user's contact string); 2,812 officer / director purchase events >= USD 25 k in
+  the top 1,000; power before the run (NW se 29.8 bp). Result: gross -38.2 bp per event over 20 days vs SPY, NW t
+  -1.46, second half -120 -> KILLED, M1 FALSIFIED. Mirror (sales) also negative. Ledger I106. Opus inline.
+- Auto decision 42: insider card first among the new share cards (strongest literature, free point-in-time data).
+  Alternative: short interest or fails-to-deliver first. Why: a published sign (one-sided, t 3.0) and no data gaps.
+
 ## 2026-11-17: monthly forward-log task scheduled (the user: "Yes, schedule it")
 
 - Claude scheduled task `monthly-forward-logs`, 3rd of each month 09:00 local, first run 2026-12-03 (prompt in

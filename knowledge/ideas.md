@@ -1623,3 +1623,9 @@ information leaks into the price over the following weeks (Lakonishok & Lee 2001
 entry weeks; event sd 1,075 bp over 20 days; weekly-mean Newey-West se 29.8 bp: t 3 needs 89 bp net per event (97
 gross). Above the halved large-cap literature (~30-60 bp a month): expected t ~1-2, pass chance ~10 %; run as
 registered (one look).
+**I-106 result 2026-11-17 (one look, `research/screens/2026-11-17_i106_insider_buys_screen.py run`): KILLED, M1
+FALSIFIED (net <= 0).** 2,812 events: gross -38.2 bp per event over 20 days vs SPY, net -46.2, weekly NW t -1.46;
+halves +20.4 / -119.6; by year 2016 +44, 2017 -22, 2018 +43, 2019 -132, 2020 -127, 2021 -75. Dose: >= 2 insiders or
+>= USD 1 M -28.7 (790) vs the rest -53.0. Mirror (short after officer / director sales >= USD 1 M): 12,118 events,
+gross -22.2 (the sold names outperformed). In the top 1,000 names insiders buy weakness that kept falling in
+2019-2021; the small-cap literature effect does not carry over. First falsification in family `share_insider`.
