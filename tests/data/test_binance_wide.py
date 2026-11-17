@@ -154,3 +154,39 @@ def test_failed_download_preserves_existing_file(tmp_path):
     with pytest.raises(OSError, match="download failed"):
         data.update(tmp_path, "2024-02", fetch=fetch)
     assert path.read_bytes() == original
+
+
+def test_update_spot_appends_complete_months_for_given_symbols(tmp_path, monkeypatch):
+    class Dec2026(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 12, 3, tzinfo=UTC)
+
+    monkeypatch.setattr(data, "datetime", Dec2026)
+    calls = []
+
+    def fetch(url, params=None):
+        calls.append((url, params))
+        if params is not None:
+            prefix = params["prefix"]
+            assert prefix.startswith("data/spot/monthly/klines/")
+            months = ["2026-09", "2026-10", "2026-11", "2026-12"] if "BTCUSDT" in prefix else []
+            contents = "".join(f"<Contents><Key>{prefix}X-{m}.zip</Key></Contents>" for m in months)
+            return f"<ListBucketResult><IsTruncated>false</IsTruncated>{contents}</ListBucketResult>".encode()
+        month = urlparse(url).path[-11:-4]
+        ts = {"2026-10": "1790812800000", "2026-11": "1793491200000"}[month]
+        return zipped(KLINE.replace("1704067200000", ts))
+
+    data.update_spot(
+        tmp_path, ["BTCUSDT", "NOSPOTUSDT"], "2099-12", start_after="2026-09", fetch=fetch
+    )
+    downloads = [urlparse(url).path for url, params in calls if params is None]
+    assert [d[-11:-4] for d in downloads] == [
+        "2026-10",
+        "2026-11",
+    ]  # after start_after, complete months only
+    assert len(data.read_klines("BTCUSDT", (tmp_path,))) == 2
+    assert not (tmp_path / "klines_1d" / "NOSPOTUSDT.csv").exists()
+    calls.clear()
+    data.update_spot(tmp_path, ["BTCUSDT"], "2099-12", start_after="2026-09", fetch=fetch)
+    assert not [url for url, params in calls if params is None]  # resume: nothing new

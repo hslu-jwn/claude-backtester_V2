@@ -107,6 +107,44 @@ def _listing(prefix: str, fetch: Callable, delimiter: str | None = None):
         marker = next_marker
 
 
+def _complete(end_month: str) -> str:
+    requested = datetime.strptime(end_month, "%Y-%m").strftime("%Y-%m")
+    complete = (datetime.now(UTC).date().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    return min(requested, complete)
+
+
+def _append_months(
+    path: Path, prefix: str, names, time_col: str, after: str, end_month: str, fetch
+) -> None:
+    """Append the archive months after the file's last month (or `after`) up to `end_month`; atomic replace."""
+    old = _csv(path.read_text(encoding="utf-8"), names) if path.exists() else None
+    last = (
+        pd.to_datetime(old[time_col], unit="ms", utc=True).max().strftime("%Y-%m")
+        if old is not None and len(old)
+        else after
+    )
+    keys, _ = _listing(prefix, fetch)
+    keys = sorted(
+        key
+        for key in keys
+        if (match := re.search(r"(\d{4}-\d{2})\.zip$", key)) and last < match[1] <= end_month
+    )
+    if not keys:
+        return
+    parts = [old] if old is not None else []
+    for key in keys:
+        with zipfile.ZipFile(io.BytesIO(fetch(CDN + key))) as archive:
+            parts.append(_csv(archive.read(archive.namelist()[0]).decode(), names))
+    data = pd.concat(parts, ignore_index=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".tmp")
+    try:
+        data.to_csv(temporary, index=False)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def update(root: Path, end_month: str, *, fetch: Callable = _fetch) -> None:
     """Append missing complete months, independently for prices and funding.
 
@@ -114,9 +152,7 @@ def update(root: Path, end_month: str, *, fetch: Callable = _fetch) -> None:
     is replaced atomically only after all its requested downloads succeeded.
     Spec: strategy-crypto_flow.md › Build (monthly archives only).
     """
-    requested = datetime.strptime(end_month, "%Y-%m").strftime("%Y-%m")
-    complete = (datetime.now(UTC).date().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
-    end_month = min(requested, complete)
+    end_month = _complete(end_month)
     base = "data/futures/um/monthly/"
     _, prefixes = _listing(base + "klines/", fetch, "/")
     universe = sorted({p.rstrip("/").rsplit("/", 1)[-1] for p in prefixes})
@@ -127,31 +163,30 @@ def update(root: Path, end_month: str, *, fetch: Callable = _fetch) -> None:
             ("klines_1d", f"{base}klines/{symbol}/1d/", KCOLS, "open_time"),
             ("funding", f"{base}fundingRate/{symbol}/", FCOLS, "calc_time"),
         ):
-            path = root / kind / f"{symbol}.csv"
-            old = _csv(path.read_text(encoding="utf-8"), names) if path.exists() else None
-            last = (
-                pd.to_datetime(old[time_col], unit="ms", utc=True).max().strftime("%Y-%m")
-                if old is not None and len(old)
-                else "2023-12"
+            _append_months(
+                root / kind / f"{symbol}.csv", prefix, names, time_col, "2023-12", end_month, fetch
             )
-            keys, _ = _listing(prefix, fetch)
-            keys = sorted(
-                key
-                for key in keys
-                if (match := re.search(r"(\d{4}-\d{2})\.zip$", key))
-                and last < match[1] <= end_month
-            )
-            if not keys:
-                continue
-            parts = [old] if old is not None else []
-            for key in keys:
-                with zipfile.ZipFile(io.BytesIO(fetch(CDN + key))) as archive:
-                    parts.append(_csv(archive.read(archive.namelist()[0]).decode(), names))
-            data = pd.concat(parts, ignore_index=True)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = path.with_suffix(".tmp")
-            try:
-                data.to_csv(temporary, index=False)
-                temporary.replace(path)
-            finally:
-                temporary.unlink(missing_ok=True)
+
+
+def update_spot(
+    root: Path,
+    symbols: Sequence[str],
+    end_month: str,
+    *,
+    start_after: str,
+    fetch: Callable = _fetch,
+) -> None:
+    """Spot daily klines of the given (perp) symbols: complete months after `start_after` (or the file's last month).
+    Forward logs of the shelf rows I-84 / I-98 (research-runner.md › Verdicts and shelf)."""
+    end_month = _complete(end_month)
+    for symbol in symbols:
+        prefix = f"data/spot/monthly/klines/{symbol}/1d/"
+        _append_months(
+            root / "klines_1d" / f"{symbol}.csv",
+            prefix,
+            KCOLS,
+            "open_time",
+            start_after,
+            end_month,
+            fetch,
+        )
