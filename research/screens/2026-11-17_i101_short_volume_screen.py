@@ -7,6 +7,7 @@ run (both cells, kills, reported diagnostics).
 Run: .venv/Scripts/python.exe research/screens/2026-11-17_i101_short_volume_screen.py finra | power | run
 """
 
+import itertools
 import subprocess
 import sys
 from pathlib import Path
@@ -104,7 +105,7 @@ def weeks():
     )  # first trading day of each week
     entries = list(wk.to_numpy())
     out = []
-    for e, x in zip(entries[:-1], entries[1:], strict=True):
+    for e, x in itertools.pairwise(entries):
         i = days.get_loc(e)
         if i < WIN + BASE:
             continue
