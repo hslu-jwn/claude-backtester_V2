@@ -1758,3 +1758,6 @@ results, and TLT over 2016-04 .. 2021-08 (+38.6 bp raw, t 3.04, I-109's integrit
   (2) t >= 1.5; (3) doubled cost > 0; (4) TLT (Alpaca closes) raw window mean > 0. All four = PASSED; net > 0 with
   t < 1.5 = not confirmed; net <= 0 = FALSIFIED. Not blind (the 2026 study covers the period).
 - **Power:** signal-free sd from windows 5-14 trade dates before month-end, recorded before the run.
+**I-110 power (2026-11-17, before the run, signal-free):** DGS20 1993-10-04 .. 2021-08-31, 335 months; excess sd
+136.0 bp, se 7.4: t 3 needs 22.3 bp net (25.3 gross). Expected ~2x I-109's size (~35-40 bp; TLT +38.6 in the check
+months), halved ~20: pass chance ~50-60 %, mostly carried by I-109's evidence (same months).
