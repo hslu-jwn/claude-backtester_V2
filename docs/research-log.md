@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: M13 accepted (the user: "Yes, accept M13")
+
+- Real US shares are a research venue under goal 2 (AGENTS.md › Venues, rule set by the user 2026-11-17). Unlocks
+  cards 2-4, 7, 9. M1-M12 still open. Next: card 2 (universe rule, downloader extension, download).
+
 ## 2026-11-17: card 2 questions 1-2 (Alpaca coverage, signal-free)
 
 - 20 of 20 names delisted 2016-2021 have full daily SIP history to their last day (prices match deal terms); the

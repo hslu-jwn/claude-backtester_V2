@@ -49,6 +49,9 @@ test bot on the FTMO demo (`live/`). **Venues (rule set by the user, 2026-11-12)
 target exchange futures as well as FTMO CFDs. Method (Opus, same day): a futures idea is judged on
 futures prices and a futures cost model (commission, tick spread, roll; no CFD swap), never on CFD prices
 with the swap simply removed (the CFD swap is mostly the futures carry, which futures prices contain).
+**Real US shares (M13, rule set by the user, 2026-11-17):** real US shares (long-short, own account or a
+share prop firm) are a research venue under goal 2, with their own family labels and a real-share cost
+model (Alpaca SIP data, `data/alpaca.py`); FTMO share CFDs keep their CFD costs.
 Goal of V2: a library of research-based strategies and a
 portfolio of them that balances itself across market regimes.
 

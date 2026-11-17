@@ -65,7 +65,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    M1 is accepted); family `crypto_carry_xs` closed. Card 5 pre-registered 2026-11-17 (`strategy-crypto_flow.md` › Crypto book;
    book confirmed by week 104 with 29 %). Card 6 A done (`card6a_hyperliquid_audit.md`): 235 perps incl. 56 delisted with history; step B closed
    on data (4 weeks with 40 names); step C would have ~105 weeks (t 2 needs ~93-128 bp/week). Card 2 questions 1-2 (`card2_alpaca_audit.md`): Alpaca serves delisted names (20 of 20) and the
-   official auction prints on the free plan; the inactive-assets list misses pre-2018 delistings. Waiting on the user: M1-M13 (M13 unlocks cards 2-4, 7, 9), AWS (card 6 C).
+   official auction prints on the free plan; the inactive-assets list misses pre-2018 delistings. M13 accepted by the user 2026-11-17 (AGENTS.md › Venues). Waiting on the user: M1-M12, AWS (card 6 C).
 
 ## Next step
 
