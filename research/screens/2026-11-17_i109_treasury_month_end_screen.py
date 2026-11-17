@@ -31,11 +31,11 @@ def download():  # curl's own user agent: FRED hangs on unknown ones (2026-11-17
         print(s, len(body))
 
 
-def returns(series):
+def returns(series, start=START, end=END):
     """Daily price return (bp) of a par bond: -D(prev yield) * dy; trade dates = dates with a value."""
     d = pd.read_csv(io.StringIO((FRED / f"{series}.csv").read_text()), na_values=".")
     d.columns = ["day", "y"]
-    y = d.assign(day=pd.to_datetime(d.day)).dropna().set_index("day").y.loc[START:END] / 100
+    y = d.assign(day=pd.to_datetime(d.day)).dropna().set_index("day").y.loc[start:end] / 100
     n = SERIES[series]
     dur = (1 - (1 + y / 2) ** (-2 * n)) / y  # modified duration of a par bond, semiannual coupons
     return (-dur.shift(1) * y.diff() * 1e4).dropna()
@@ -101,5 +101,31 @@ def run():
     print("reported: net by decade", dec.to_dict("index"))
 
 
+def etf(symbol, start, end):
+    """Daily log return (bp) of Alpaca split-adjusted closes (ex-dividend days fall outside the window)."""
+    d = pd.read_csv(f"data/cache/alpaca_1d/{symbol}.csv", usecols=["ts", "close"])
+    day = pd.to_datetime(d.ts, utc=True).dt.tz_convert("America/New_York").dt.tz_localize(None).dt.normalize()
+    c = pd.Series(d.close.to_numpy(float), index=day).loc[start:end]
+    return (np.log(c).diff() * 1e4).dropna()
+
+
+def test():
+    """One-time test (rule in knowledge/ideas.md, 29e5f32): months 2021-10 .. 2026-10."""
+    start, end = "2021-09-14", "2026-10-31"
+    e = months(returns("DGS10", start, end)).loc["2021-10":"2026-10"]
+    net = e.excess - COST
+    t = tstat(net)
+    n2 = (e.excess - 2 * COST).mean()
+    ief = months(etf("IEF", start, end)).loc["2021-10":"2026-10"]
+    gates = {"net > 0": net.mean() > 0, "t >= 1.5": t >= 1.5, "doubled > 0": n2 > 0, "IEF raw > 0": ief.raw.mean() > 0}
+    verdict = "PASSED" if all(gates.values()) else ("FALSIFIED" if net.mean() <= 0 else "NOT CONFIRMED")
+    print(
+        f"test months {len(e)} ({e.index[0]} .. {e.index[-1]}): excess gross {e.excess.mean():+.1f}, net {net.mean():+.1f}, "
+        f"t {t:.2f}; doubled {n2:+.1f}; IEF raw {ief.raw.mean():+.1f} (t {tstat(ief.raw):.2f}, {len(ief)} months)"
+    )
+    print("gates:", gates, "->", verdict)
+    print(f"reported: raw {e.raw.mean():+.1f}; by year {net.groupby(net.index.year).mean().round(1).to_dict()}")
+
+
 if __name__ == "__main__":
-    {"download": download, "power": power, "run": run}[sys.argv[1]]()
+    {"download": download, "power": power, "run": run, "test": test}[sys.argv[1]]()
