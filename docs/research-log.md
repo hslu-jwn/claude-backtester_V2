@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-107 fails-to-deliver KILLED; short interest not testable on development
+
+- SEC fails files 2016-01 .. 2021-08 (136; three folders on sec.gov, links read from the page); power before the run
+  (se 6.8). Result: cell A net -44 (FALSIFIED), cell B net +18, t 0.92, gain only in 2020-21 -> KILLED. Ledger I107.
+- Short interest card dropped before any look: FINRA's free exchange-listed short interest starts 2021-06 (no
+  development data); a note in I-107's card, no ledger row (nothing was looked at).
+
 ## 2026-11-17: I-106 insider purchases FALSIFIED (the user: "Continue with the new share cards")
 
 - SEC insider datasets 2016Q1-2021Q3 (user's contact string); 2,812 officer / director purchase events >= USD 25 k in

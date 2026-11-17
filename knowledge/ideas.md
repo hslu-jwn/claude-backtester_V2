@@ -1653,3 +1653,7 @@ Short interest (the companion card) is not testable on development: FINRA's free
 **I-107 power (2026-11-17, before the run, signal-free):** 136 SEC files (three folders on sec.gov); 130 half-month
 periods (2016-04-01 .. 2021-09-01); high group median 97 names, zero-fails group median 27 (most large caps fail
 something every half-month); random-split sd 77 bp, se 6.8: |t| 3.3 needs 22 bp net per half-month (35 gross).
+**I-107 result 2026-11-17 (one look, `research/screens/2026-11-17_i107_fails_screen.py run`): KILLED, both cells.**
+130 half-months: gross (long no-fails, short high-fails) -31.0 bp, gross t -1.59. Cell A net -44.0, t -2.26 (M1
+FALSIFIED). Cell B (long high-fails) net +18.0, t 0.92, halves -12.9 / +49.8: the gain is 2020 +92 and 2021 +88
+(the squeeze era), 2017-2019 negative; t < 1.5, so not UNPROVEN-POSITIVE. First falsification in family `share_fails`.
