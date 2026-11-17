@@ -8,6 +8,7 @@ Run: .venv/Scripts/python.exe research/screens/2026-11-17_i104_attention_screen.
 """
 
 import importlib.util
+import itertools
 import json
 import subprocess
 import sys
@@ -126,7 +127,7 @@ def weeks():
         return cache[a]
 
     out, mapped_share = [], []
-    for e, x in zip(entries[:-1], entries[1:], strict=True):
+    for e, x in itertools.pairwise(entries):
         if x > END:
             break
         members = u[u.month == e.strftime("%Y-%m")].symbol
