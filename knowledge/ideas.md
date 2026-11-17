@@ -1526,3 +1526,5 @@ dropped whole underlyings; first count was 5).
 **Step 2 assumptions (before any return):** A3 halves of development = the event dates split at their median date
 (326 of 338 events are in 2024, so calendar halves would leave 12 events in the first); A4 entry prices for the 175
 dates fetched as 15:29-15:31 minute bars (the step 1 files kept only the last price before 15:30 and the volume).
+**I-103 step 2 power (2026-11-17, before the run, signal-free):** 329 events with an entry price on 175 dates;
+per-date sd of the 15:30 -> close return 62 bp, se 4.7: t 3 needs 14.1 bp net (16.6 gross). As the card guessed.
