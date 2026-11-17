@@ -1548,3 +1548,21 @@ close) gross +12.9 bp a day, gross t 3.94, positive every year (2021 +20.9)**: t
 the same 7 bp it would be ~+5.9 net, t ~1.8: below the development bar, and it is a new hypothesis whose development
 period is now seen; per the stop rules it is not tested. Parked for the user (HANDOFF › Open): a shelf / forward
 candidate only if M1 / M3 are accepted. First falsification in family `share_reversal_real`.
+
+### I-104 Wikipedia page-view attention sort on the wide US share universe (Fable card 9, 2026-11-16 sweep; new family `share_attention`, venue M13; rule fixed before any data)
+Mechanism: abnormal attention brings uninformed buying that later reverses (Da, Engelberg, Gao 2011 on search volume,
+UNVERIFIED here: up for ~2 weeks, then reversal), or attention marks news that keeps drifting. The sign is not fixed:
+two cells, |t| >= 3.3. Label PUBLISHED finding (attention), ADAPTATION (Wikipedia page views, top 1,000, weekly).
+- **Universe, trade, cost, periods, kills:** exactly as I-101 (weekly, entry at the close of the first trading day of
+  the week, exit at the next week's first close; deciles; cell A long the lowest attention / short the highest, cell
+  B the mirror; 13 bp a week; development 2016-04 .. 2021-09-13; kills |t| < 3.3, net <= 0, halves 2016-18 / 2019-21
+  not both > 0, doubled cost <= 0, without the 2 best weeks <= 0).
+- **Signal:** attention = page views of the company's English Wikipedia article over the 7 calendar days before the
+  entry day / the mean weekly views of the 8 weeks before that (Wikimedia REST pageviews, daily, `user` agent,
+  all-access; from 2015-07). A name needs >= 100 views in the baseline weeks on average.
+- **Mapping (frozen before any page view is read, A1):** ticker -> article from Wikidata (items with a ticker symbol
+  P249 qualifier on an NYSE / NASDAQ / NYSE American listing P414, plus their English sitelink); a ticker used by
+  several items -> the item whose listing period covers the week, else dropped; unmapped names are out of the sort
+  (reported: share of the universe mapped per year).
+- **Power:** as I-101 (sd 72, se 4.4, |t| 3.3 needs 14 bp net); the signal-free line on the mapped names is recorded
+  before the run. Pass chance ~5 % (card).
