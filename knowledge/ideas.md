@@ -1476,3 +1476,6 @@ shares their own family labels; the fade is the main reason for the low prior. L
 **I-101 / I-102 period note (2026-11-17, before any return):** the universe starts 2016-04 (docs/share-universe.md
 A5: Alpaca history starts 2016-01), so both development periods start with April 2016; halves stay 2016-2018 /
 2019-2021.
+**I-101 power (2026-11-17, before the run, signal-free, `power`):** 271 weeks (2016-04-04 .. 2021-09-07; weeks whose
+window or baseline spans 2018-08-01 skipped), 977-~990 names a week; random-decile weekly sd 72 bp, se 4.4 bp:
+|t| 3.3 needs 14 bp a week net (27 bp gross at 13 bp cost). Better powered than the card's guess (sd 100-150).
