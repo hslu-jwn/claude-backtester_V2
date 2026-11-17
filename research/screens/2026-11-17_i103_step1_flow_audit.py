@@ -235,7 +235,8 @@ def late():
             print(f"late {d.date()}: {len(out)} underlyings", flush=True)
 
 
-def audit():
+def flows():
+    """name-days with fund flow: day, underlying, r (09:30 open -> 15:30, signed), F, dv_late, ratio."""
     f = pd.read_csv(NPORT / "funds.csv")
     late_t = {
         pd.Timestamp(p.stem): pd.read_csv(p, index_col="symbol") for p in sorted(LATE.glob("*.csv"))
@@ -273,7 +274,7 @@ def audit():
                 or t.loc[u, "dv_late"] <= 0
             ):
                 continue
-            r = abs(t.loc[u, "p1530"] / px.loc[d, "open"] - 1)
+            r = t.loc[u, "p1530"] / px.loc[d, "open"] - 1
             flow = np.nansum(  # a fund without net assets that day (not launched / no report yet) adds 0
                 [
                     (L * L - L) * aum[x].get(d, np.nan)
@@ -282,13 +283,18 @@ def audit():
                 ]
             )
             if np.isfinite(flow) and flow > 0:
-                rows.append((d, u, flow * r, t.loc[u, "dv_late"]))
-    a = pd.DataFrame(rows, columns=["day", "underlying", "F", "dv_late"])
+                rows.append((d, u, r, flow * abs(r), t.loc[u, "dv_late"]))
+    a = pd.DataFrame(rows, columns=["day", "underlying", "r", "F", "dv_late"])
     a["ratio"] = a.F / a.dv_late
+    return a, len(aum), len(f)
+
+
+def audit():
+    a, n_aum, n_f = flows()
     n5, n10 = int((a.ratio >= 0.05).sum()), int((a.ratio >= 0.10).sum())
     print(
         f"name-days with a fund flow: {len(a)} ({a.day.min().date()} .. {a.day.max().date()}), "
-        f"{a.underlying.nunique()} underlyings, funds with net assets {len(aum)} of {len(f)}"
+        f"{a.underlying.nunique()} underlyings, funds with net assets {n_aum} of {n_f}"
     )
     print(
         f"ratio >= 5 %: {n5} name-days on {a[a.ratio >= 0.05].day.nunique()} dates; >= 10 %: {n10}"
