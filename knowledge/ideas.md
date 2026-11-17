@@ -1566,3 +1566,8 @@ two cells, |t| >= 3.3. Label PUBLISHED finding (attention), ADAPTATION (Wikipedi
   (reported: share of the universe mapped per year).
 - **Power:** as I-101 (sd 72, se 4.4, |t| 3.3 needs 14 bp net); the signal-free line on the mapped names is recorded
   before the run. Pass chance ~5 % (card).
+**I-104 mapping (2026-11-17, before any page view):** Wikidata ticker qualifiers on US listings (NYSE, Nasdaq, NYSE
+American; Nordic Nasdaq rows dropped) map 89 % of development member-months (2016 87 % .. 2021 90 %); the unmapped
+names (PYPL, XLNX, FITB, ...) lack a ticker statement in Wikidata (A2: unrelated to returns). A3: a renamed article
+splits its views across titles (e.g. a company rename); the current title only is read, so a rename can make one
+spurious week.
