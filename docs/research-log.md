@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 2 questions 1-2 (Alpaca coverage, signal-free)
+
+- 20 of 20 names delisted 2016-2021 have full daily SIP history to their last day (prices match deal terms); the
+  free plan serves `/v2/stocks/auctions` (official open / close prints) from 2016; `/v2/assets?status=inactive`
+  (19,149 symbols) misses pre-2018 delistings (LNKD, YHOO). Question 3 (universe counts) waits on M13.
+  `knowledge/reviews/2026-11-16-idea-sweep/card2_alpaca_audit.md`. Opus inline.
+- Auto decision 31: run card 2's signal-free questions 1-2 before the user's M13 answer. Alternative: wait. Why: no
+  venue commitment and no return look; the answers inform the M13 decision (survivorship was its main risk).
+
 ## 2026-11-17: card 6 step A (Hyperliquid audit) and the card 0 (f) fix
 
 - Card 6 A, signal-free (`research/screens/2026-11-17_card6a_hyperliquid_audit.py`, public API, no key): 235 perps,
