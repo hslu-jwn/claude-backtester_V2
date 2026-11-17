@@ -1450,3 +1450,24 @@ stricter bar).
 - **Power (card, before data):** decile long-short weekly sd 100-150 bp (guess) on ~290 weeks: MDE at t 3.3 =
   19-29 bp a week; halved published ~16 bp: expected t 1.8-2.8, pass chance ~8 %. The signal-free line (random
   deciles on the same names and weeks) is recorded below before the run.
+
+### I-102 Overnight -> 10:00 reversal on the wide US share universe, real-share cost (Fable card 4, 2026-11-16 sweep; family `share_reversal_real`, venue M13; rule fixed before any data)
+I-96's mechanism (attention buying at the open, supplied by intermediaries paid by the intraday reversal; Berkman et
+al. 2012, Lou / Polk / Skouras 2019, UNVERIFIED sizes) in a new cost cell: real shares at ~3.5 bp per name and day
+instead of FTMO CFD spreads (I-96: gross +10.1 bp, t 4.44, killed by 16 bp cost; gross faded 2019-21). M13 gives real
+shares their own family labels; the fade is the main reason for the low prior. Label ADAPTATION.
+- **Universe:** `docs/share-universe.md`, month of the trade day; a day needs >= 500 names with all three prices.
+- **Prices (A1):** previous close = Alpaca daily close of the previous session; signal price = close of the 30-min bar
+  opening 09:30 (the 10:00 price); entry = open of the 30-min bar opening 10:00; exit = the day's Alpaca daily close
+  (a market-on-close fill). SPY's previous close and 10:00 price from the same sources.
+- **Signal:** s = (10:00 price / previous close - 1) - SPY's same. Ties by symbol.
+- **Trade:** n = floor(names / 10); short the top n, long the bottom n, equal weight, entry 10:00, exit at the close;
+  flat overnight. Day gross per unit side = mean(long entry -> close) - mean(short entry -> close).
+- **Cost (A2):** 1.5 bp half-spread + 1 bp slippage at 10:00, 1 bp at the close = 3.5 bp per name; 7 bp a day on the
+  long-short unit; doubled 14. Short borrow intraday: none.
+- **Period:** development trading days 2016-01-04 .. 2021-09-13; test after a pass only, frozen, once.
+- **Kills (|t| 3.0):** net <= 0; t < 3.0; halves 2016-2018 / 2019-2021 not both > 0; net <= 0 at doubled cost; net
+  <= 0 without the 2 best days. Reported, not gates: smallest half / mean (M7 proposal), years, deciles of s (mean
+  entry -> close per decile), the same sort with the open as entry (09:30 open -> close, I-96's original timing).
+- **Power (card, before data):** long-short daily sd guessed 40-60 bp, ~1,430 days: MDE at t 3 = 3-5 bp net, i.e.
+  10-12 bp gross needed; pass chance ~8 %. Signal-free line recorded below before the run.
