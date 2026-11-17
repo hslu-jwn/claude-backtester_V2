@@ -201,6 +201,8 @@ def i71_events(y0, y1):
 
 def rows_i71(sources, start, end):
     """Short UK100 at the close of the 15:29 London M1 bar, cover at the close of the 16:35 bar (I-71, frozen)."""
+    if end < start:  # MT5 cache not yet past the forward start
+        return []
     d = load_m1("UK100", sources, start, end)
     bars = {}
     for open_s, c in zip(d.open_s.tolist(), d.close.tolist(), strict=True):
@@ -323,6 +325,10 @@ def share_table():
         k: a.pivot_table(index="day", columns="symbol", values=k, aggfunc="first").sort_index()
         for k in ("open", "close")
     }
+    days = t["open"].index.union(
+        t["close"].index
+    )  # open and close prints can come in separate day entries
+    t = {k: v.reindex(days) for k, v in t.items()}
     t["prev_close"] = t["close"].shift(1)
     return t
 
