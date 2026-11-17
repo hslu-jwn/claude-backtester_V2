@@ -1473,3 +1473,6 @@ shares their own family labels; the fade is the main reason for the low prior. L
   10-12 bp gross needed; pass chance ~8 %. Signal-free line recorded below before the run.
 **I-101 data check (2026-11-17, before any signal):** FINRA development files complete: 716 trading days before
 2018-08-01 with both `FNSQ` and `FNYX` (no day with only one), `CNMS` from 2018-08-01 to 2021-09-13; 499 MB.
+**I-101 / I-102 period note (2026-11-17, before any return):** the universe starts 2016-04 (docs/share-universe.md
+A5: Alpaca history starts 2016-01), so both development periods start with April 2016; halves stay 2016-2018 /
+2019-2021.

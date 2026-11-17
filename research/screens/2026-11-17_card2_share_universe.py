@@ -33,6 +33,25 @@ FUNDS = re.compile(
     re.IGNORECASE,
 )
 LISTED = {"NYSE", "NASDAQ", "AMEX", "ARCA", "BATS"}
+# A4 (2026-11-17, before any return): delisted products / non-common symbols with no Alpaca asset, found by reading
+# all 532 no-asset universe members of the first build
+EXCLUDE = set(
+    [
+        "XIV",
+        "TVIX",
+        "UWTI",
+        "DWTI",
+        "UGAZ",
+        "DGAZ",
+        "RSX",
+        "SPLG",
+        "AMJ",
+        "CSJ",
+        "CIU",
+        "VALE.P",
+        "XXXX",
+    ]
+)
 TOP, MIN_BARS, MIN_PRICE, WINDOW = 1000, 60, 5.0, 60
 
 
@@ -130,7 +149,7 @@ def universe():
         s
         for s, x in meta.items()
         if x["exchange"] in ("ARCA", "BATS") or FUNDS.search(x.get("name") or "")
-    }
+    } | EXCLUDE
     d = load_daily()
     d = d[~d.symbol.isin(funds)]
     # de-duplicate: same close and volume on a day = one security; prefer the symbol in that month's FINRA list

@@ -11,3 +11,14 @@ Probed by Opus inline with the user's Alpaca keys (free Basic plan); no return w
 
 Reading: survivorship can be controlled on Alpaca (delisted prices are served), and the auction prints remove the
 open-print bias noted in I-96. The open point is the symbol list for 2016-2017.
+
+## Question 3 and the universe build (2026-11-17, `research/screens/2026-11-17_card2_share_universe.py`)
+
+- Candidates: 23,756 symbols (FINRA files of 137 months: 23,542; plus Alpaca listed assets). Daily bars 1.8 GB.
+- 18.8 M security-days; 1.01 M duplicate rows dropped (renamed tickers served twice); 8,921 fund symbols excluded
+  (ARCA / BATS listing, fund names, A4 list).
+- Universe 2016-04 .. 2026-12 (A5: Alpaca history starts 2016-01), 1,000 names every month, 2,418 distinct symbols.
+  Rank-1,000 median dollar volume USD 28 M (2016) .. 83 M (2026): **all 1,000 names clear USD 20 M every month.**
+- Members without an Alpaca asset (delisted before the list, caught through FINRA): ~220 a month in 2016, ~120 in
+  2021: survivorship is controlled. A4: reading all 532 such names found 11 delisted ETPs (XIV, TVIX, ...) and two
+  non-common symbols; excluded before any return.

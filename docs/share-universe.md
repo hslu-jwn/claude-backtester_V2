@@ -44,3 +44,9 @@ their own split and need the user's go.
 - A2: FINRA lists only symbols with off-exchange volume that day; an NMS stock with none on the first trading day of
   a month is still caught on another month or through the Alpaca asset list.
 - A3: dividends are not in the prices (as everywhere in the repo); a card that holds over ex-dates reports it.
+- A4 (2026-11-17, after the first build, before any return): an audit of all 532 universe members without an Alpaca
+  asset found 11 delisted exchange-traded products and 2 non-common symbols; they are excluded by name: XIV, TVIX,
+  UWTI, DWTI, UGAZ, DGAZ, RSX, SPLG, AMJ, CSJ, CIU, VALE.P, XXXX. The other no-asset members are operating companies
+  (delisted, acquired, renamed: YHOO, TWX, AET, LNKD, ...).
+- A5: Alpaca's daily history starts 2016-01, so the first month with 60 bars is **2016-04**; the universe and every
+  card's development period start there.
