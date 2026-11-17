@@ -1717,3 +1717,19 @@ different market and a different forced buyer (auto decision 44).
 **I-109 power (2026-11-17, before the run, signal-free):** FRED DGS10 1990-01-03 .. 2021-09-13, 381 months; excess sd
 87.4 bp for 3-day windows 5-14 trade dates before month-end; se 4.5: t 3 needs 13.4 bp net (15.4 gross). The blog's
 ZN size scaled to 10-year duration is ~20 bp, halved ~10: pass chance ~25-35 %. FRED needs curl's own user agent.
+**I-109 development result 2026-11-17 (one look): PASSED every development gate.** 381 months: excess gross +20.4 bp
+per month-end, net +18.4, t 4.42; halves +14.4 / +22.6; doubled cost +16.4; without the 2 best +17.0. By decade net
++12.1 / +18.2 / +25.3 / +16.9 (2020-21). Reported: raw +19.2 (t 4.85); last 2 days +16.2; placebo 10 trade dates
+earlier +10.2 (t 2.14; near the mid-month 10- / 30-year auctions); DGS5 +14.1 (t 5.78), DGS2 +5.9 (t 6.41).
+Integrity check after the run (CMT curves switch to new on-the-run notes, and 2/5/7-year notes are issued at
+month-end): real Alpaca ETF closes over the same 69 months (2016-04 .. 2021-08; ex-dividend dates fall on the 1st
+business day, outside the window): IEF +22.1 bp raw (t 3.59), correlation 0.99 with the DGS10 window; TLT +38.6
+(t 3.04); SHY +6.9 (t 5.38). Not a curve artefact.
+**I-109 one-time test, rule fixed before any test data (2026-11-17, auto decision 45):** frozen variant as above
+(DGS10, last 3 trade dates, excess statistic, cost 2 bp), months 2021-10 .. 2026-10 (first month with a whole month
+after 2021-09-14; last complete month), ~61 months. Power: se ~11.2, t 3 alone would need ~34 bp, so the gates are:
+(1) test net > 0; (2) test t >= 1.5; (3) test doubled cost > 0; (4) tradable check: IEF (Alpaca closes) raw window
+mean > 0 over the same months. All four = PASSED (M1); net > 0 with t < 1.5 = not confirmed; net <= 0 = FALSIFIED.
+Expected at the development size: t ~1.6 (pass ~55 %). Not blind: the ohlcv.io study (2010-2026 futures) covers this
+period and reported the month-end rally; recorded so the result is read as a confirmation on our data, not an
+independent discovery. A pass goes to the shelf as a forward log on IEF (M3) and to HANDOFF for the user.
