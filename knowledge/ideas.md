@@ -1650,3 +1650,6 @@ Short interest (the companion card) is not testable on development: FINRA's free
 - **Kills (each cell):** |t| < 3.3; net <= 0; halves 2016-2018 / 2019-2021 not both > 0; doubled cost <= 0; without
   the 2 best periods <= 0. Reported: the top decile's mean intensity, by year.
 - **Power:** signal-free line (random top-decile vs zero-fails split) recorded before the run.
+**I-107 power (2026-11-17, before the run, signal-free):** 136 SEC files (three folders on sec.gov); 130 half-month
+periods (2016-04-01 .. 2021-09-01); high group median 97 names, zero-fails group median 27 (most large caps fail
+something every half-month); random-split sd 77 bp, se 6.8: |t| 3.3 needs 22 bp net per half-month (35 gross).
