@@ -4,6 +4,26 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: I-113 VIX futures basis KILLED; I-114 short leg FALSIFIED at its one-time check (the user: "Continue.Research Mode = auto")
+
+- Source read in full by Opus (EFMA 2013 PDF, text pulled with a zlib script: no PDF tools installed): Simon &
+  Campasano, VIX futures basis. New free data (curl): Cboe CFE VX settlements 2005-2027 (archive + per-contract files;
+  archives for 2018 stop on 2018-02-23, so settlement dates come from Cboe's file names), Cboe VIX history, Yahoo
+  ^GSPC -> data/cache/vix (development) and data/cache/vix_test (fetched only after the I-114 card was committed).
+- I-113: card before data (1c9a4cd), power before the run (83d82c7; sd $2,673, t 3 needs ~$430). 359 trades
+  2007-2021: net +$383 per contract, t 2.19 -> KILLED (t only); post-publication half +$148; paper window reproduced.
+- I-114 (short leg, card 9428854 before test data): 95 trades 2021-09 .. 2026-11, net -$30 (t -0.22) -> FALSIFIED.
+  Calendar fix during the test (Cboe VIX file has holiday rows from 2022): -$23 before, -$30 after. Telegram sent.
+- Auto decision 47: test the short leg once on unseen data (I-114). Alternative: close with I-113. Why: it is the
+  leg the mechanism (ETP roll in contango) predicts and post-publication it still had t 2.42; the lead rule allows
+  one independent check, recorded as selected after the fact.
+- Auto decision 48: close family `vix_basis`. Alternative: keep it open for a hedged or VIX-level-conditioned rule.
+  Why: gross ~+$30 per trade in 2021-26, one kill and one falsification; any variant would be shaped on spent data.
+- Auto decision 49 (start of run): pick the VIX basis (Fable row 16, scout 2 #8) as the next goal-2 look.
+  Alternative: futures continuous data for an I-109 diagnostic (HANDOFF next step 2). Why: the only futures idea with
+  free per-contract data, a forced counterparty and a published per-trade size far above costs; I-109's test is spent.
+- Model: Opus inline; two web-fetch subagents (SSRN 403; PDF bytes unreadable to them). Ledger I113, I114.
+
 ## 2026-11-18: End. of the Mode=auto session 2026-11-16/17 (the user: "End.")
 
 - Full suite 6,016 passed, 14 skipped, 4 xfailed (pytest -n 8, 7 min 52 s); ruff clean. No ROADMAP step closed;
