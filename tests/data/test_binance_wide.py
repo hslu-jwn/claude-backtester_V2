@@ -190,3 +190,27 @@ def test_update_spot_appends_complete_months_for_given_symbols(tmp_path, monkeyp
     calls.clear()
     data.update_spot(tmp_path, ["BTCUSDT"], "2099-12", start_after="2026-09", fetch=fetch)
     assert not [url for url, params in calls if params is None]  # resume: nothing new
+
+
+def test_fetch_percent_encodes_non_ascii_symbols(monkeypatch):
+    seen = []
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def urlopen(url, timeout, context):
+        seen.append(url)
+        return Response(b"ok")
+
+    monkeypatch.setattr(data.urllib.request, "urlopen", urlopen)
+    assert data._fetch(data.CDN + "data/spot/monthly/klines/币安USDT/1d/x.zip") == b"ok"
+    data._fetch(data.S3, params={"prefix": "data/spot/币/", "marker": ""})
+    assert (
+        all(u.isascii() for u in seen)
+        and "%E5%B8%81" in seen[0]
+        and "prefix=data%2Fspot%2F%E5%B8%81" in seen[1]
+    )

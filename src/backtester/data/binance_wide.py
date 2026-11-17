@@ -84,6 +84,7 @@ def symbols(roots: Sequence[Path] = ROOTS) -> list[str]:
 def _fetch(url: str, params: dict | None = None) -> bytes:
     # standard-library TLS with the system certificate store (verification on): the venv's certifi bundle
     # 2026.10.19 fails Binance's S3 / CDN chain while the Windows store verifies it (2026-11-17)
+    url = urllib.parse.quote(url, safe=":/%")  # non-ASCII symbol names (requests did this itself)
     if params:
         url = f"{url}?{urllib.parse.urlencode(params)}"
     with urllib.request.urlopen(url, timeout=60, context=ssl.create_default_context()) as response:
