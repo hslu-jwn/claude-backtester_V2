@@ -1824,3 +1824,7 @@ ADAPTATION of I-109. Seen before: I-109 / I-110 only; none of these series.
 - **One-time test (fixed now):** months 2021-10 .. latest complete month in all three files: pooled net > 0, pooled
   t >= 1.5, doubled > 0, at least 2 of 3 markets net > 0. All = PASSED; else as I-109.
 - **Power:** signal-free sd of the pooled excess (windows 5-14 trade dates before month-end), before the run.
+**I-112 power (2026-11-17, before the run, signal-free):** files EU 2004-09-06 .., UK 1979-01-02 .., JP 1986-07-05 ..
+(levels checked on five dates, no returns); development months: EU 204, UK 380, JP 380; pooled 380 months, sd 53.5
+bp, se 2.7: t 3 needs 8.2 bp net. I-109's US size ~20 bp (halved ~10): pass chance ~50 % if the mechanism is global.
+Fix before the run: JGB 10-year days at exactly 0 % use the duration limit (10) instead of dropping the day.
