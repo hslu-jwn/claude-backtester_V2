@@ -1378,3 +1378,33 @@ Reopened data question: FB-121 waited for M1 before 2019; Alpaca SIP minute bars
 negative. Reported: the mirror (short after +3 sigma) gross -3.2 (t -2.72 net), dose 2.5 / 4 sigma gross -2.5 / -7.8,
 gap days -18.2: after an idiosyncratic 30-min shock large caps drift slightly further, not back (a few bp, far below
 cost). Second falsification in the SHARES family (after I-96): the family is closed (stop rules).
+
+### I-100 Wide funding-carry sort on unseen Binance perps (Fable card 1, 2026-11-16 sweep; family `crypto_carry_xs`, third and last look; rule fixed before any data)
+Mechanism and source as I-73 (BIS WP 1087: crowded leveraged longs pay high funding and are the marginal sellers).
+Label ADAPTATION. Question: does the carry spread (price + funding) hold on the wide, unseen part of the perp universe,
+where I-73R found the funding but only a third of the price part?
+- **Universe:** every perp in `data/cache/binance_wide` (incl. delisted) **minus the 37 symbols of I-73 / I-73R**
+  (BTC ETH BCH XRP EOS LTC TRX ETC LINK XLM ADA BNB XTZ XMR NEO DASH ATOM; BAT IOST IOTA ONT QTUM VET ZEC THETA ALGO
+  COMP KNC ZIL ZRX BAND DOGE KAVA OMG RLC SXP DOT, all USDT). Eligible each Monday by Strategy 20's development rule
+  (I-78 `week_rows`: >= 60 daily bars before the Monday, 30-day median quote volume >= 5 M USDT, the Monday bar, 7 bars
+  in the prior week) and a funding history that starts at least 7 days before the Monday. Weeks with fewer than 40
+  eligible names are skipped.
+- **Signal (A1):** funding accrued over the 7 days before the Monday = sum of the rates settled in (Monday - 7 d,
+  Monday] (I-73 test assumption: ranks like the mean of 21 rates for 8 h symbols and stays "7 days" for 4 h / 1 h ones).
+- **Trade:** n = floor(eligible / 5); short the top n, long the bottom n (ascending sort, ties by name), equal weight;
+  entry at the Monday open, exit at the close of the next Sunday bar (I-78 convention). Weekly gross per unit side =
+  mean bottom return - mean top return + top funding (received) - bottom funding (paid), settlements strictly inside the
+  hold. Cost 20 bp a week; doubled 40.
+- **Period:** development only, Mondays 2020-05-04 .. the last week ending by 2023-12-31 (crypto split). The test
+  period 2024-01..2026-10 only after a development pass, frozen, once (its 4th use: t 3.3 if the user accepts M8, else
+  3.0; decided at that time, not now).
+- **Kills (development):** net <= 0; t < 3.0; a half (by weeks) <= 0; net <= 0 at 40 bp; net <= 0 without the 2 best
+  weeks; price part < -20 bp a week (I-73's own kill). **Reported, not gates** (proposals M6 / M7 not accepted yet):
+  member returns capped at +-50 % (sign kept, share of the mean); smallest half as a share of the mean; years; price /
+  funding parts; weekly correlation with Strategy 20's flow spread on the same weeks (above 0.5 = same stream).
+- **Verdict wording:** KILLED on any kill. If only t fails with 1.5 <= t < 3.0, the record also says "UNPROVEN-POSITIVE
+  under the proposed M1" (shelf only if the user accepts M1). Either way the family `crypto_carry_xs` is closed after
+  this look.
+- **Power (card, before data):** long-short weekly sd 475-620 bp (Strategy 20's) on ~186 weeks: MDE at t 3 = 105-136
+  bp; evidence +112 / +138 (17 perps), +63 (20 perps); expected t 1.4-3.0, pass chance ~20 %. The signal-free line
+  (random-quintile weekly sd on this universe) is recorded below before the run.
