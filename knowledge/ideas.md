@@ -1489,3 +1489,29 @@ First falsification in family `share_flow`.
 1-min bar before 10:00 ET and the entry = open of the first 1-min bar from 10:00 (window 09:57-10:03, one request per
 day and 500 names): the same trades the 30-min bars would give; a name with no trade in 09:57-09:59 or 10:00-10:02 is
 out that day. The diagnostic's 09:30 open = Alpaca's daily open.
+
+### I-103 Leveraged single-stock ETF rebalance into the close (Fable card 7, 2026-11-16 sweep; new family `letf_single`, venue M13; split set by the user 2026-11-17; rule fixed before any data)
+Mechanism (who is forced): a daily-reset fund with leverage L must trade (L^2 - L) x net assets x the underlying's day
+return near the close, in the direction of the day's move (2x and -2x funds alike buy on up days); the amount is
+known by 15:30. The index version is tiny (H02 / H06: index funds are small against futures volume); single names can
+have a far higher flow-to-volume ratio. Label ADAPTATION (Cheng & Madhavan 2009 on index LETFs, UNVERIFIED here).
+Prediction: on days when the required flow is large against the underlying's 15:30-16:00 dollar volume, the
+underlying continues in the day's direction from 15:30 to the close.
+- **Step 1 (signal-free audit; go / no-go fixed now):** funds = US-listed daily-reset single-stock funds (leverage
+  +-1.5, +-2, +-3; long and inverse; incl. delisted), found by name in Alpaca's asset lists and checked against
+  SEC fund filings; per fund: leverage, underlying, net assets from SEC N-PORT filings (as public; between filings
+  carried forward by the fund's own daily return, as the card says; flows between filings are missed, A1), daily.
+  Per underlying and day: F = sum over its funds of (L^2 - L) x net assets x |underlying return 09:30 open -> 15:30|;
+  ratio = F / dollar volume of the underlying's 15:30-16:00 minute bars. **Go only if >= 300 name-days in development
+  have ratio >= 5 %; otherwise closed on size, no return looked at.**
+- **Trade (step 2, only after a go):** at 15:30 on name-days with ratio >= 5 %: follow sign(return 09:30 open ->
+  15:30), entry = open of the first 1-min bar from 15:30, exit = Alpaca daily close (market-on-close). Control
+  (reported): the same days' 15:30 -> close move of the 1,000-name universe's other names with a same-sized move.
+- **Cost:** real shares 2.5 bp per trade round trip (1 bp half-spread + 0.5 slippage at 15:30, 1 bp at the close).
+  Doubled 5.
+- **Periods (the user, 2026-11-17):** development from the first single-stock leveraged fund launch to 2024-12-31;
+  test 2025-01-01 .., once.
+- **Kills (step 2):** net <= 0; t < 3.0 (per-date means); halves of development not both > 0; doubled cost <= 0;
+  without the 2 best dates <= 0; dose check: the mean at ratio >= 10 % not above the mean at 5-10 %.
+- **Power (card):** last-30-minute sd on such days ~90 bp (guess), ~300 date clusters: MDE ~16 bp; pass chance ~10 %.
+  Step 2's power line from the step 1 counts, before any return.
