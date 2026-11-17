@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-112 international month-end bonds KILLED (the user: "Keep researching")
+
+- New free data (public, curl): ECB AAA euro curve 10-year (2004+), Bank of England nominal spot curve (1979+, xlsx
+  read with the standard library, no new dependency), MOF JGB yields (1974+) -> data/cache/intl_yields. FRED's ICE
+  corporate indices are only 3 years long (no corporate card).
+- Card before data (e79b3ca), power before the run (8fa7a32; se 2.7). Pooled 380 months: net +2.5 bp, t 1.00 ->
+  KILLED (t, halves, breadth); euro +8.0 (t 2.08), UK +8.6 (t 2.34), Japan -4.8 (t -1.98). No rescue. Ledger I112.
+  Opus inline.
+
 ## 2026-11-17: I-111 threshold rebalancing on US500 KILLED (the user: "Reopen rebalancing")
 
 - Decision by the user: threshold rebalancing is its own family `rebalancing_threshold`; the calendar month-end

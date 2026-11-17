@@ -1828,3 +1828,10 @@ ADAPTATION of I-109. Seen before: I-109 / I-110 only; none of these series.
 (levels checked on five dates, no returns); development months: EU 204, UK 380, JP 380; pooled 380 months, sd 53.5
 bp, se 2.7: t 3 needs 8.2 bp net. I-109's US size ~20 bp (halved ~10): pass chance ~50 % if the mechanism is global.
 Fix before the run: JGB 10-year days at exactly 0 % use the duration limit (10) instead of dropping the day.
+**I-112 result 2026-11-17 (one look, `research/screens/2026-11-17_i112_intl_month_end_screen.py run`): KILLED
+(t < 3.0, halves, breadth); M1: pooled net > 0 with t 1.00, neither FALSIFIED nor UNPROVEN-POSITIVE.** 380 pooled
+months: net +2.5 bp per month-end, t 1.00; halves -2.0 / +7.1; doubled +0.5; without the 2 best +1.4. By market: euro
++8.0 (t 2.08, 204 months), UK +8.6 (t 2.34), Japan -4.8 (t -1.98); correlation of the month-end excess with the US
+0.48 / 0.56 / 0.16. Euro and UK lean the US way at less than half its size; Japan does not. No rescue (dropping Japan
+would be a new, counted hypothesis on seen data). I-109's month-end effect looks mostly US-specific (the US Treasury
+index rebalancing and its trackers), which is consistent with the mechanism but gives no second market.
