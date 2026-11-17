@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-111 threshold rebalancing on US500 KILLED (the user: "Reopen rebalancing")
+
+- Decision by the user: threshold rebalancing is its own family `rebalancing_threshold`; the calendar month-end
+  signal stays closed (HANDOFF Accepted, known_families). Opus read NBER w33554 for the signal (eq. 2, bands 0-2.5 %).
+- Card before data (496b4eb), power before the run (fbf861f; se 0.58 bp a day). US500 cash closes + FRED DGS10,
+  2010-11 .. 2021-09 (inside the paper's sample): gross +1.88 bp a day, net +1.44, t 1.37 -> KILLED (t < 3.0); net
+  without the 2020 crash -0.08. Ledger I111. No Telegram (a screen, not a one-time test). Opus inline.
+
 ## 2026-11-17: harvest batch 17 (forced flows: rates, Nikkei dividends, gold / oil expiry, vol targeting): nothing kept (the user: "Another idea search")
 
 - 8 Codex `gpt-6.1-terra` `--search` calls (6 content cells, high effort; canaries ok: carry found, nonsense

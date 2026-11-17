@@ -1799,3 +1799,10 @@ the screen is a replication with FTMO costs, not a discovery.
 pre-sample starts 2010-11-16); S sd 0.43 %, mean |p| 0.29; permuted gross sd 38 bp a day, se of the mean 0.58 bp:
 t 3 needs 1.74 bp a day net. The paper's size at this scale ~4.5 bp a day gross (halved ~2.3); FTMO swap and fills
 ~1 bp a day: pass chance ~25-35 %.
+**I-111 result 2026-11-17 (one look, `research/screens/2026-11-17_i111_threshold_rebalancing_screen.py run`): KILLED
+(t < 3.0); M1: net > 0 with t 1.37 < 1.5, neither FALSIFIED nor UNPROVEN-POSITIVE.** 2,699 days: gross +1.88 bp a day
+(t 1.79), net +1.44, t 1.37; halves +0.33 / +2.44; doubled +0.99; without the 2 best days +0.65. Reported: the paper's
+paired leg (US500 - 10-year) gross +2.13 (t 1.73); net without 2020-02-20 .. 04-30 -0.08 (t -0.12); by year 2020
++15.5, seven of twelve years negative. Inside the paper's own sample the equity leg on a CFD is one crash; the
+published t > 4 leans on 2008-09 and 2020, which the paper also notes (Sharpe 0.90 without them, for the paired
+futures strategy). First kill in family `rebalancing_threshold`; no rescue (no paired leg on FTMO).
