@@ -1904,3 +1904,10 @@ pre-registered pass; it would go to the shelf as a forward log and to HANDOFF (v
 - **Gates:** (1) net > 0; (2) t >= 1.5; (3) doubled cost > 0; (4) without the 2 best trades > 0. All four = CONFIRMED
   lead; net > 0 with any other gate failing = NOT CONFIRMED (closed); net <= 0 = FALSIFIED (closed). No retest.
   Reported: by year, worst trades (2024-08-05, 2025-04 sell-offs), lag 1 day, H hedged.
+**I-114 one-time check result 2026-11-18 (`research/screens/2026-11-18_i113_vix_basis_screen.py test`): FALSIFIED.**
+95 short trades 2021-09-14 .. 2026-11-16: gross +$30 per contract, net -$30 (t -0.22); doubled -$90; without the 2 best
+-$98; lag 1 day -$164; H hedged -$66. By year U: 2021 -2.1k, 2022 -2.8k, 2023 +4.0k, 2024 -6.4k (7 trades), 2025
++3.9k, 2026 +0.6k. Data fix found in the test run: Cboe's VIX file lists US holidays from 2022 on (no VX settlement);
+they were counted as trade dates; the fix (trade dates = VX settlement dates, as the card says) changed 96 trades
+-$23 (t -0.17) to 95 trades -$30; development unchanged. Read: the VX roll premium in this rule shrank from +$632
+(2007-13) to +$276 (2014-21) to ~0 gross (2021-26). Family `vix_basis` closed (auto decision 48). Telegram sent.

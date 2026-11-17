@@ -129,6 +129,9 @@ def load(roots=(ROOT,)):
         s = pd.read_csv(path, parse_dates=["day"]).set_index("day")["settle"]
         s = s.where(s.index >= REQUOTE, s / 10.0)
         contracts[pd.Timestamp(path.stem[3:])] = s
+    # Cboe's VIX file lists US holidays from 2022 on; trade dates are VX settlement dates (card: business days)
+    vx_days = set().union(*(s.index for s in contracts.values()))
+    vix = vix[(vix.index < pd.Timestamp("2005-01-01")) | vix.index.isin(vx_days)]
     return vix, spx, contracts
 
 
