@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-103 (card 7, leveraged single-stock ETF rebalance) KILLED
+
+- Step 1 (signal-free size audit, SEC N-PORT with the user's contact string): 352 funds, 280 with reports; GO with
+  338 name-days where the required flow is >= 5 % of the 15:30-16:00 dollar volume (326 in 2024; COIN, TSLA, NVDA,
+  MSTR). A NaN in the fund sum was fixed before any return (first count 5).
+- Step 2: gross +6.4 bp, t 0.80, halves -1.2 / +8.6 -> KILLED; same-size movers without funds +3.2 bp (control).
+  Ledger I103. Opus inline.
+- Auto decision 36: halves split at the median event date (A3), not calendar halves. Alternative: calendar halves
+  (12 events in the first). Why: chosen from event counts before any return.
+
 ## 2026-11-17: contact string accepted (the user: "Use my e-mail")
 
 - EDGAR and Wikimedia get the user's e-mail in the User-Agent; stored only in the Credential Manager

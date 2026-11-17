@@ -1528,3 +1528,11 @@ dropped whole underlyings; first count was 5).
 dates fetched as 15:29-15:31 minute bars (the step 1 files kept only the last price before 15:30 and the volume).
 **I-103 step 2 power (2026-11-17, before the run, signal-free):** 329 events with an entry price on 175 dates;
 per-date sd of the 15:30 -> close return 62 bp, se 4.7: t 3 needs 14.1 bp net (16.6 gross). As the card guessed.
+**I-103 step 2 result (2026-11-17, one look, `research/screens/2026-11-17_i103_step2_screen.py run`): KILLED (t,
+halves).** 329 events on 175 dates (2022-09 .. 2024-12): gross +6.4 bp from 15:30 to the close in the day's
+direction, net per date +3.7, t 0.80, sd 62; halves (split 2024-08-14) -1.2 / +8.6; doubled cost +1.2; without the 2
+best dates +1.9; dose >= 10 % +8.8 vs 5-10 % +0.4 (the right order, small). Control: universe names without
+leveraged funds and a same-sized 09:30 -> 15:30 move continue +3.2 bp on the same days, so the forced flow adds about
+3 bp: real perhaps, far below a tradable size. By underlying: COIN +6.7 (133), TSLA +9.5 (87), NVDA +1.2 (65), MSTR
++9.1 (30). First falsification in family `letf_single`; Fable's long-range item 8 (repeat the size audit yearly as
+the funds grow) stays a note.
