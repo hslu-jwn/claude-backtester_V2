@@ -1410,3 +1410,6 @@ where I-73R found the funding but only a third of the price part?
   (random-quintile weekly sd on this universe) is recorded below before the run.
 - **A2 (before the run):** index contracts (BTCDOM, DEFI, FOOTBALL, BLUEBIRD) and 1000x contracts stay in, as in
   Strategy 20's universe (I-73R excluded index contracts only because its rule took the first 20 listings).
+**I-100 power (2026-11-17, before the run, signal-free, `--power`):** 153 weeks with >= 40 eligible unseen names
+(2021-01-25 .. 2023-12-25; before 2021 fewer than 40), median 98 a week, 194 names; random-quintile weekly sd 522 bp,
+se 42 bp: t 3 needs 127 bp a week net. At the I-73 test effect (+112) the expected t is ~2.7, at I-73R's (+63) ~1.5.
