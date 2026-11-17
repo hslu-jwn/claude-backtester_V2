@@ -4,6 +4,22 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: handoff taken over; I-100 (Fable card 1) wide funding carry KILLED on t; carry family closed
+
+- The side session (idea sweep + card 0) handed its work to this loop; committed as 1e132ec. Loop resumed in
+  `Mode=auto` on the sweep's first-week plan.
+- I-100 (card 1): pre-registered in 502f6ee / A2 before the run, power line before the run (153 weeks, sd 522, t 3
+  needs 127 bp). Result: net +107.1 bp/week, t 2.45 -> KILLED on t only (halves +152 / +63, 40 bp +87, without 2 best
+  +86, price +67.6); capped +-50 % keeps 0.75; 2022 -11; corr with Strategy 20 +0.27. UNPROVEN-POSITIVE under the
+  proposed M1. Family `crypto_carry_xs` closed (third look). Ledger I100. Opus inline, ~1 h, no Codex call.
+- Auto decision 26: take over the side session's cards in this loop (one-loop rule) and start with card 1 (owned data,
+  ~1 h) over card 2 (Alpaca wide download; needs M13, the user's decision) and card 5 (a spec, no data). Alternative:
+  wait for the user's M1-M13 answers. Why: card 1 and card 5 do not depend on any M decision.
+- Auto decision 27: development gate t 3.0 (current rules); M8's 3.3 applies only to a later test look and is decided
+  then. Alternative: 3.3 now. Why: M8 is about test-period reuse; development was never spent on funding-price sorts.
+- Auto decision 28 (A2): universe exactly as Strategy 20 (index and 1000x contracts kept). Alternative: I-73R's
+  index-contract exclusion. Why: the card says "eligible by Strategy 20's rule".
+
 ## 2026-11-17: card 0 (Strategy 20 regime / tail audit; the user: "Yes, card 0")
 
 - Fable 5.2 wrote and ran `research/screens/2026-11-16_card0_s20_audit.py`, then hit its usage limit; the Fable window

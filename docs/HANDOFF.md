@@ -61,6 +61,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    Hyperliquid fills (card 6 step C); source for the positioning collector (card 8); contact string for EDGAR.
    Ten cards (0-9) and a first-week plan (§4) are ready for `Continue.Research`. Card 0 done 2026-11-17
    (`card0_s20_audit.md`): S19 and S20 near-independent, S20 planning range ~+90-110 bp/week; feeds Open 1.
+   Card 1 = I-100 done 2026-11-17: KILLED on t 2.45 (net +107 bp/week, all other kills passed; UNPROVEN-POSITIVE if
+   M1 is accepted); family `crypto_carry_xs` closed.
 
 ## Next step
 

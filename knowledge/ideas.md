@@ -1413,3 +1413,11 @@ where I-73R found the funding but only a third of the price part?
 **I-100 power (2026-11-17, before the run, signal-free, `--power`):** 153 weeks with >= 40 eligible unseen names
 (2021-01-25 .. 2023-12-25; before 2021 fewer than 40), median 98 a week, 194 names; random-quintile weekly sd 522 bp,
 se 42 bp: t 3 needs 127 bp a week net. At the I-73 test effect (+112) the expected t is ~2.7, at I-73R's (+63) ~1.5.
+**Result 2026-11-17 (one look, `research/screens/2026-11-17_i100_wide_carry_screen.py`): KILLED on t (2.45 < 3.0);
+UNPROVEN-POSITIVE under the proposed M1.** 153 weeks: net +107.1 bp a week (price +67.6, funding +59.6, cost 20),
+sd 541, 60 % positive weeks, worst -1,767; halves +152 / +63; at 40 bp +87; without the 2 best weeks +86; every other
+kill passes. Reported: capped +-50 % +81 (0.75 of the mean, t 2.14); median week +106; years 2021 +228, 2022 -11,
+2023 +111; weekly correlation with Strategy 20's flow spread +0.27 (a different stream). Reading: the carry spread
+holds on 194 unseen names with about twice I-73R's price part, close to the I-73 test effect, but 153 weeks cannot
+reach t 3 and 2022 is flat. Family `crypto_carry_xs` closed after this third look (as pre-registered). Not a
+candidate for card 5's book unless the user accepts M1 (then it is a shelf row with a forward log, M3).
