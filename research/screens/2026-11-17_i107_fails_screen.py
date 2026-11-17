@@ -41,7 +41,7 @@ def download():
     ).stdout
     links = {  # some files carry a suffix (cnsfails201910a_0.zip)
         f"cnsfails{h}.zip": m
-        for m, h in re.findall(r'href="(/files/data/[^"]*cnsfails(\d{6}[ab])(?:_\d+)?\.zip)"', page.decode())
+        for m, h in re.findall(r'href="(/files/[^"]*cnsfails(\d{6}[ab])(?:_\d+)?\.zip)"', page.decode())
     }
     for h in HALVES:
         path = FTD / f"cnsfails{h}.zip"
