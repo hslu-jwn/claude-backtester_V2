@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 6 step A (Hyperliquid audit) and the card 0 (f) fix
+
+- Card 6 A, signal-free (`research/screens/2026-11-17_card6a_hyperliquid_audit.py`, public API, no key): 235 perps,
+  56 delisted (all still with candles), funding from 2023-05; Strategy 20's liquidity rule gives >= 20 names on 105
+  Mondays (2024-03..), >= 40 on 4. Step B closed on data; step C power: t 2 needs ~93-128 bp/week over ~105 weeks.
+  Notes `knowledge/reviews/2026-11-16-idea-sweep/card6a_hyperliquid_audit.md`. Opus inline.
+- Card 0 (f): the script subtracted unfinished attempts twice (`ftmo_by_risk` `attempts` is finished-only); rerun:
+  simulator pass 80-84 % (full size) / 97-99 % (half) vs closed form 83 / 98 %: the closed form holds.
+
 ## 2026-11-17: card 5 pre-registered (crypto book S20 top-100 + S19, forward only)
 
 - Spec section `docs/strategy-crypto_flow.md` › Crypto book; script `research/screens/2026-11-17_card5_crypto_book.py`

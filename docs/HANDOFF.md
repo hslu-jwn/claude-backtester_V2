@@ -63,7 +63,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    (`card0_s20_audit.md`): S19 and S20 near-independent, S20 planning range ~+90-110 bp/week; feeds Open 1.
    Card 1 = I-100 done 2026-11-17: KILLED on t 2.45 (net +107 bp/week, all other kills passed; UNPROVEN-POSITIVE if
    M1 is accepted); family `crypto_carry_xs` closed. Card 5 pre-registered 2026-11-17 (`strategy-crypto_flow.md` › Crypto book;
-   book confirmed by week 104 with 29 %). Waiting on the user: M1-M13 (M13 unlocks cards 2-4, 7, 9), AWS (card 6 C).
+   book confirmed by week 104 with 29 %). Card 6 A done (`card6a_hyperliquid_audit.md`): 235 perps incl. 56 delisted with history; step B closed
+   on data (4 weeks with 40 names); step C would have ~105 weeks (t 2 needs ~93-128 bp/week). Waiting on the user: M1-M13 (M13 unlocks cards 2-4, 7, 9), AWS (card 6 C).
 
 ## Next step
 
