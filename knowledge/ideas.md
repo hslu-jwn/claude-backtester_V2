@@ -1949,3 +1949,16 @@ NG 1994+; HO has ~8 % blank days since 2000, those commodity-months are skipped)
 the mapped delivery month moves like a normal day for CL / RB / NG (HO's curve is too flat to tell). sd of the same
 10-day spread trade started at R1 or later: 175 bp per energy-month; 260 months: se 10.9, t 3 needs ~33 bp net. Mou's
 ~37 bp halved (~18) gives t ~1.7: pass chance ~10-15 %. Run anyway: one cheap look, and it closes HV-T0007.
+**I-115 development result 2026-11-18 (one look, `research/screens/2026-11-18_i115_gsci_roll_screen.py run`):
+PASSED every development gate (mechanically).** 245 energy-months 2000-01 .. 2021-08: gross +29.1 bp, net +26.1
+(t 3.37); halves +51.9 (t 3.83) / +2.5 (t 0.33); doubled +23.1; without the 2 best +18.4; CL +15.2 (t 1.19), HO +0.4,
+RB +4.6, NG +28.2 (t 2.47). Reported: S2 +9.6 (t 1.96); Mou's window 2000-2010-03 +55.8 (Mou ~37); the same trade 10
+days later (after the roll) -44.6 (t -4.99); placebo 1986-1999 +20.1 (t 1.38), but CL -14.8 and NG +135.4 (t 3.79,
+before index money). By year: 2000-2006 large, 2007-2021 near zero. Missing commodity-months: CL 30, HO 85, RB 89
+(incl. before 2005-10), NG 51. Read (Opus): the gates pass, but the edge sits in 2000-2006 and the post-publication
+half is ~0; NG's pre-index placebo says part of it is NG's own expiry-cycle pattern, not index pressure.
+**I-115 one-time test, rule fixed before any test data (2026-11-18, auto decision 50):** frozen Strategy 1 as above,
+months 2021-10 .. 2024-03 (EIA's series end 2024-04), ~30 months. Development sd ~121 bp per month: se ~22, so the
+gates are power-sized as for I-109: (1) test net > 0; (2) test t >= 1.5; (3) test doubled cost > 0. All three =
+PASSED; net > 0 with t < 1.5 = NOT CONFIRMED; net <= 0 = FALSIFIED. No retest. Expected: t ~1.2 at the development
+size, ~0.1 at the post-publication size: pass chance ~10-25 %. A pass would still need a futures venue (the user).

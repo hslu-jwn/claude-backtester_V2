@@ -1,8 +1,8 @@
 """I-115 S&P GSCI roll front-running in energy calendar spreads (rule in knowledge/ideas.md, 522df40; Mou 2010).
 
 Data (public, curl): EIA daily futures settlements, contracts 1-3, CL / HO / RB / NG -> data/cache/eia_strips/
-(development rows only, to DEV_END). Steps: download, power (signal-free sd), run (development).
-Run: .venv/Scripts/python.exe research/screens/2026-11-18_i115_gsci_roll_screen.py download | power | run
+(development rows only, to DEV_END). Steps: download, power (signal-free sd), run (development), test_download, test (rule in the card, auto decision 50).
+Run: .venv/Scripts/python.exe research/screens/2026-11-18_i115_gsci_roll_screen.py download | power | run | test_download | test
 """
 
 import re
@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path("data/cache/eia_strips")
+TEST_ROOT = Path("data/cache/eia_strips_test")
 DEV_END = pd.Timestamp("2021-09-13")
 PET = "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s={s}&f=D"
 NG = "https://www.eia.gov/dnav/ng/hist/rngc{k}d.htm"
@@ -212,5 +213,30 @@ def run():
         print(f"  {year}  {g.mean():7.1f}  n {g.notna().sum():2d}")
 
 
+def test_download():
+    download(TEST_ROOT, pd.Timestamp("2030-01-01"))
+
+
+def test():
+    book = Book(load(TEST_ROOT))
+    s1 = table(book, (2021, 10), (2024, 3))
+    print("commodity-months without 5 tranches:", s1[list(SERIES)].isna().sum().to_dict())
+    net = s1["energy"] - COST
+    n, m, t = tstat(net)
+    gates = {"net > 0": m > 0, "t >= 1.5": t >= 1.5, "doubled cost > 0": (s1["energy"] - 2 * COST).mean() > 0}
+    print(line("I-115 test S1 energy (gated)", net))
+    print(line("  gross", s1["energy"]))
+    print(line("  doubled cost", s1["energy"] - 2 * COST))
+    for com in SERIES:
+        print(line(f"  {com}", s1[com] - COST))
+    for name, ok in gates.items():
+        print(f"  gate {name:<20} {'pass' if ok else 'FAIL'}")
+    print("VERDICT:", "PASSED" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED"))
+    after = table(book, (2021, 10), (2024, 3), entry_off=0)
+    print(line("reported: window 10 days later", after["energy"] - COST))
+    for year, g in net.groupby(net.index.year):
+        print(f"  {year}  {g.mean():7.1f}  n {g.notna().sum():2d}")
+
+
 if __name__ == "__main__":
-    {"download": download, "power": power, "run": run}[sys.argv[1]]()
+    {"download": download, "power": power, "run": run, "test_download": test_download, "test": test}[sys.argv[1]]()
