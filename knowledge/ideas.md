@@ -1771,3 +1771,27 @@ months) +136, 2022 +66, 2023 -1, 2024 +35, 2025 +16, 2026 -39. Same sign as deve
 more than the 10-year (I-109 test net +24.9) at ~1.6x the risk in the 2022-26 bond volatility. M1: net > 0 with
 t < 1.5 is neither PASSED nor UNPROVEN-POSITIVE; no retest. The sizing case for long bonds is not confirmed; I-109
 (10-year) stays the family's row.
+
+### I-111 Threshold rebalancing on US500 (harvest batches 4 / 17: HV-T0037-1, HV-T0124-1; family `rebalancing_threshold`, reopened by the user 2026-11-17; rule fixed before any data)
+**Decision by the user (2026-11-17, "Reopen rebalancing"):** threshold rebalancing is its own family
+`rebalancing_threshold`, separate from the closed `turn_of_month`; the calendar month-end signal stays closed (I-67).
+Mechanism (Harvey, Mazzoleni & Melone, NBER w33554, 2025; read by Opus): balanced funds rebalance a 60/40 mix when the
+equity weight drifts beyond a band; the trade is computable from public prices, so stocks fall the day after they
+become overweight (one sd of the Threshold signal: S&P futures -15.6 bp next day, 10-year +4.4; trough at day 4,
+reverting within two weeks; t > 4 over 1997-2023; strategy Sharpe ~1 with the bond leg). Label PUBLISHED,
+ADAPTATION (equity leg only on an FTMO CFD; no bonds on FTMO). Our development data lie inside the paper's sample:
+the screen is a replication with FTMO costs, not a discovery.
+- **Data:** US500 cash closes (last M1 close <= 16:00 New York; histdata 2010-2014, MT5 2015+), FRED DGS10 daily
+  par-bond returns (I-109's function) as the bond leg (A1: the paper uses futures). Days with both values.
+- **Signal (paper eq. 2):** for each band d in 0, 0.1, ..., 2.5 % a simulated 60/40 portfolio drifts with the day's
+  returns; its equity weight minus 0.60 after the day is Threshold_d; when |Threshold_d| > d the portfolio resets to
+  60/40 for the next day (A2: the signal on a reset day is the pre-reset deviation). Signal S = mean over the 26 bands.
+- **Position:** p = clip(-S / 1.5 %, -1, 1) (the paper's scale; clip A3), held from the cash close of day t to the
+  next cash close. Gross = p x next-day US500 return.
+- **Cost (FTMO table, today's defaults):** |change in p| x (half spread + slippage) per side, swap per night on |p| by
+  direction (triple Friday). Doubled = both doubled.
+- **Period:** 2010-01 .. 2021-08 (pre-sample + development), halves 2010-2015 / 2016-2021-08.
+- **Kills:** net <= 0; t < 3.0 (daily, iid); halves not both > 0; doubled cost <= 0; without the 2 best days <= 0.
+  Reported: gross, the paper's paired leg (p x (US500 - bond)), without 2020-02-20 .. 2020-04-30, mean |p|.
+- **Power:** permutation of S across days (signal-free), recorded before the run. One-time test rule fixed after a
+  development pass, before any test data.

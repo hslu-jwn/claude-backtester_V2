@@ -27,6 +27,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- Threshold rebalancing is its own family `rebalancing_threshold` (reopened by the user 2026-11-17); the calendar
+  month-end signal stays in the closed `turn_of_month`.
+
 - 2026-11-15: everything of this session accepted at `End.`; crypto split (develop 2020-2023, test once 2024+, wider
   universe incl. delisted; `docs/research-runner.md` › Periods); build Strategy 20 (research tool + forward log); its
   realism check; Fable idea-universe call; Waves 0, 1, 2, 4 and the ICT null model; Mode=auto for the session.

@@ -32,3 +32,4 @@ overnight_drift,overnight drift;overnight return;close to open,falsified,,cost-w
 execution,limit entry;passive execution;resting order,open,T20,cost side only
 index_review_auction,index review closing auction;rebalancing auction short;ftse review auction;msci rebalance close,falsified
 rates_month_end,treasury month end;index extension;duration extension;month-end treasury rally,open,I109,"harvest batch 16; distinct from turn_of_month (equity indices)"
+rebalancing_threshold,threshold rebalancing;60/40 rebalancing signal;rebalancing front-running;balanced fund drift,open,I111,"reopened by the user 2026-11-17; calendar month-end stays in turn_of_month (closed)"
