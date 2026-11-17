@@ -1944,3 +1944,8 @@ inside development; 2011-2021 is post-publication. Prior ~15 %.
   signal-free sd of the same spread trade over other windows, recorded before the run.
 - **One-time test:** rule fixed before test data, only after a development pass (test window ~30 months: power-sized
   gates or a combined estimate).
+**I-115 power (2026-11-18, before the run, signal-free):** EIA strips to 2021-09-13 (CL 1983+, HO 1980+, RB 2005-10+,
+NG 1994+; HO has ~8 % blank days since 2000, those commodity-months are skipped). Mapping check at 2000-2021 expiries:
+the mapped delivery month moves like a normal day for CL / RB / NG (HO's curve is too flat to tell). sd of the same
+10-day spread trade started at R1 or later: 175 bp per energy-month; 260 months: se 10.9, t 3 needs ~33 bp net. Mou's
+~37 bp halved (~18) gives t ~1.7: pass chance ~10-15 %. Run anyway: one cheap look, and it closes HV-T0007.
