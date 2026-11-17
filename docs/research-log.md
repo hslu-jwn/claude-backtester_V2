@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: End. of the Mode=auto session 2026-11-16/17 (the user: "End.")
+
+- Full suite 6,016 passed, 14 skipped, 4 xfailed (pytest -n 8, 7 min 52 s); ruff clean. No ROADMAP step closed;
+  research/trials.jsonl already equal to results/trials.jsonl; no briefs to archive. HANDOFF rewritten.
+- Session: one strategy passed its one-time test (I-109 Treasury month-end), I-110 not confirmed, I-100..I-108 and
+  I-111 / I-112 killed or not testable; shelf logger with seven rows; monthly forward task scheduled. Auto decisions
+  19-46 (this log) listed in the End report.
+
 ## 2026-11-17: I-112 international month-end bonds KILLED (the user: "Keep researching")
 
 - New free data (public, curl): ECB AAA euro curve 10-year (2004+), Bank of England nominal spot curve (1979+, xlsx
