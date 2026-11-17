@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 7 split accepted (the user: "Yes, card 7 split as proposed")
+
+- Card 7 (leveraged single-stock ETF rebalance into the close): development from the first fund launch to 2024-12-31,
+  test 2025-01-01 .., once (docs/share-universe.md › Splits). Step 1 still needs the EDGAR contact string (N-PORT).
+
 ## 2026-11-17: card 4 data path (share-universe A6 -> A7)
 
 - 30-min bars for 2,418 names would have taken ~14 h: Alpaca builds every timeframe from minute bars and pages by

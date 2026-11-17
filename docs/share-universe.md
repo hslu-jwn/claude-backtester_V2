@@ -34,8 +34,10 @@ volumes known at the formation date.
 
 ## Splits for the cards (unchanged project split)
 
-Development before 2021-09-14, test after, once per card. Cards needing a mechanism that starts later (card 7) state
-their own split and need the user's go.
+Development before 2021-09-14, test after, once per card. Cards needing a mechanism that starts later state their
+own split and need the user's go. **Card 7 (leveraged single-stock ETF rebalance; rule set by the user,
+2026-11-17):** development from the first single-stock leveraged fund launch to 2024-12-31, test 2025-01-01 ..,
+once.
 
 ## Assumptions (Opus)
 
