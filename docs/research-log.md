@@ -17,7 +17,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
 ## 2026-11-17: handoff taken over; I-100 (Fable card 1) wide funding carry KILLED on t; carry family closed
 
-- The side session (idea sweep + card 0) handed its work to this loop; committed as 1e132ec. Loop resumed in
+- The side session (idea sweep + card 0) handed its work to this loop; committed as 1e132ec. The user confirmed: "No, take it over" (2026-11-17). Loop resumed in
   `Mode=auto` on the sweep's first-week plan.
 - I-100 (card 1): pre-registered in 502f6ee / A2 before the run, power line before the run (153 weeks, sd 522, t 3
   needs 127 bp). Result: net +107.1 bp/week, t 2.45 -> KILLED on t only (halves +152 / +63, 40 bp +87, without 2 best
