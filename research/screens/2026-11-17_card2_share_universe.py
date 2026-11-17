@@ -35,8 +35,7 @@ FUNDS = re.compile(
 LISTED = {"NYSE", "NASDAQ", "AMEX", "ARCA", "BATS"}
 # A4 (2026-11-17, before any return): delisted products / non-common symbols with no Alpaca asset, found by reading
 # all 532 no-asset universe members of the first build
-EXCLUDE = set(
-    [
+EXCLUDE = {
         "XIV",
         "TVIX",
         "UWTI",
@@ -50,8 +49,7 @@ EXCLUDE = set(
         "CIU",
         "VALE.P",
         "XXXX",
-    ]
-)
+    }
 TOP, MIN_BARS, MIN_PRICE, WINDOW = 1000, 60, 5.0, 60
 
 
