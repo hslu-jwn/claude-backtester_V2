@@ -6,6 +6,8 @@ Run: .venv/Scripts/python.exe research/screens/2026-11-17_i107_fails_screen.py d
 """
 
 import io
+import itertools
+import re
 import subprocess
 import sys
 import zipfile
@@ -17,7 +19,7 @@ import pandas as pd
 FTD = Path("data/cache/sec_ftd")
 D1 = Path("data/cache/alpaca_1d")
 UNIVERSE = Path("data/cache/alpaca_meta/universe.csv")
-BASE = "https://www.sec.gov/files/data/frequently-requested-foia-document-fails-deliver-data/"
+PAGE = "https://www.sec.gov/data-research/sec-markets-data/fails-deliver-data"
 HALVES = [
     f"{y}{m:02d}{h}"
     for y in range(2016, 2022)
@@ -34,12 +36,27 @@ def download():
 
     ua = f"backtester-research {keyring.get_password('backtester-contact', 'email')}"
     FTD.mkdir(parents=True, exist_ok=True)
+    page = subprocess.run(
+        ["curl", "-s", "-L", "-A", ua, PAGE], check=True, capture_output=True, timeout=120
+    ).stdout
+    links = {
+        m.split("/")[-1]: m
+        for m in re.findall(r'href="(/files/data/[^"]*cnsfails\d{6}[ab]\.zip)"', page.decode())
+    }
     for h in HALVES:
         path = FTD / f"cnsfails{h}.zip"
         if path.exists():
             continue
         r = subprocess.run(
-            ["curl", "-s", "-A", ua, "-w", "\n%{http_code}", f"{BASE}cnsfails{h}.zip"],
+            [
+                "curl",
+                "-s",
+                "-A",
+                ua,
+                "-w",
+                "\n%{http_code}",
+                "https://www.sec.gov" + links[f"cnsfails{h}.zip"],
+            ],
             check=False,
             capture_output=True,
             timeout=300,
@@ -112,7 +129,7 @@ def periods():
 
     sched = [(h, *span(h)) for h in HALVES]
     out = []
-    for (h, first, last, av), (_, _, _, nxt) in zip(sched[:-1], sched[1:], strict=True):
+    for (h, first, last, av), (_, _, _, nxt) in itertools.pairwise(sched):
         if av is None or nxt is None or nxt > END or av < pd.Timestamp("2016-04-01"):
             continue
         m = [s for s in members.get(av.strftime("%Y-%m"), []) if s in c.columns]
