@@ -1591,3 +1591,8 @@ Forward from the first trading day after the logger exists; judged with the FB-2
 every 65 trading days, 8 looks = 520 days; c 2.071; early kill z <= -2). Power: at +5.9 bp a day (sd 91) 30 %
 confirmed by day 520, at +3 11 %; at 0 the early kill fires 8 %. Unverified: that Alpaca's daily open is the official
 opening auction price (checked against the auction endpoint before the first forward day).
+**I-105 open-price check (2026-11-17, before the first forward day):** Alpaca's daily open is not the official
+opening auction print: 330 symbol-days (15 names, October 2026) differ by a median 3.4 bp, p90 23 bp, max 88 bp (71
+exact). The development diagnostic (+12.9 bp) used the daily open, so part of it may be a first-print artefact (I-96
+noted the same risk). The frozen forward rule uses the official prints (auctions endpoint, condition Q / M, else O /
+6) for the open, the close and the previous close; the forward log decides.

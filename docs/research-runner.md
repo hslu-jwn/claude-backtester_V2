@@ -938,3 +938,13 @@ per idea or hypothesis (a parameter cell is not a row; a changed rule is a new r
 | I84 crypto factor | t 1.76, halves +150 / +8; weekly corr 0.58 with Strategy 20 | UNPROVEN-POSITIVE (mostly Strategy 20's stream) | Binance; log to build |
 | I98 spot-hedged carry | net +12 bp/week, t 1.84 | UNPROVEN-POSITIVE | Binance spot + perp; log to build |
 | I100 wide funding carry | net +107 bp/week, t 2.45 | UNPROVEN-POSITIVE | Binance; log to build |
+
+**Shelf logger (built 2026-11-17, the user's go "Yes, build them"):** `research/screens/2026-11-17_shelf_forward.py`
+`canary | update | log | status`. One function per shelf row runs its frozen screen rule; `canary` reruns it on the
+development period and must reproduce the registered result before `log` appends anything (all six pass: I-100,
+I-84, I-98 net and t; H11 and I-71 trades and gross, because their cost tables changed after registration and today's
+costs apply forward; I-105 I-102's diagnostic). Logs `research/forward/shelf_<row>.csv` are append-only
+(`backtester.tools.forward_log`: a recomputed logged period must be identical). Forward starts: crypto weeks from
+Monday 2026-11-23, H11 / I-71 / I-105 from 2026-11-18. Data: `update` appends complete Binance months (perps, spot of
+the perp symbols), rebuilds the forward share universe and fetches the official auction prints; H11 / I-71 read the
+MT5 cache, which the MT5 download keeps current. Strategy 19 keeps its own log (`crypto_carry --forward`).

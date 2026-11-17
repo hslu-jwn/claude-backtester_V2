@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: shelf logger built (the user: "Yes, build them")
+
+- `research/screens/2026-11-17_shelf_forward.py` (canary / update / log / status) for I-100, I-84, I-98, H11, I-71,
+  I-105; all six canaries reproduce the registered results. New shared code (tests first): `tools/forward_log.py`
+  (append-only, 4 tests), `binance_wide.update_spot` + shared month-append helper (1 test), `_fetch` on stdlib TLS
+  with the system store (the venv's certifi bundle failed Binance's chain; verification on).
+- Found: H11 net differs from its registered value by -1.27 R over 413 dev trades with identical gross: the swap and
+  spread tables changed after 2026-11-09; forward uses today's costs. Alpaca's daily open is not the official open
+  (median 3.4 bp off): I-105 forward uses the official auction prints.
+- Auto decision 40: I-105 forward on official auction prints. Alternative: the daily open as in the diagnostic.
+  Why: the frozen rule says official open; the daily open is not tradable as such.
+- Auto decision 41: H11 / I-71 canaries on trade counts and gross. Alternative: freeze the old cost tables. Why:
+  defaults are not changed without the user; forward rows use the project's current costs.
+
 ## 2026-11-17: M1 and M3 accepted (the user: "Yes, M1 and M3"); shelf set up
 
 - Rules in docs/research-runner.md › Verdicts and shelf. Ledger relabelled (verdict prefix "M1 (2026-11-17)"):
