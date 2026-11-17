@@ -1806,3 +1806,21 @@ paired leg (US500 - 10-year) gross +2.13 (t 1.73); net without 2020-02-20 .. 04-
 +15.5, seven of twelve years negative. Inside the paper's own sample the equity leg on a CFD is one crash; the
 published t > 4 leans on 2008-09 and 2020, which the paper also notes (Sharpe 0.90 without them, for the paired
 futures strategy). First kill in family `rebalancing_threshold`; no rescue (no paired leg on FTMO).
+
+### I-112 Month-end duration extension in euro, UK and Japanese government bonds (2026-11-17, after I-109; family `rates_month_end`, 3rd hypothesis; rule fixed before any of these data)
+Global bond indices (Bloomberg Global Aggregate, FTSE WGBI) and the domestic ones rebalance on the last business day of
+the month, so I-109's forced duration buying should show in every member market. An independent-market replication
+of I-109 (different bonds, investors and calendars) and a goal-2 diversifier (Bund / Gilt / JGB futures). Label
+ADAPTATION of I-109. Seen before: I-109 / I-110 only; none of these series.
+- **Data (A1-A3):** euro area: ECB AAA curve 10-year spot (YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y, daily from 2004-09);
+  UK: Bank of England nominal spot curve 10-year (glcnominalddata.zip, daily); Japan: MOF JGB 10-year par yields
+  (jgbcme_all.csv). Fitted / constant-maturity yields; return r = -D * dy with I-109's 10-year par-bond duration (A2:
+  applied to spot yields too). Each market's own trade dates (dates with a value). Cache data/cache/intl_yields.
+- **Event, trade, statistic:** I-109 unchanged per market (last 3 trade dates; excess over 3 x the month's other-day
+  mean; cost 2 bp per month-end; doubled 4). Pooled = equal-weight mean of the markets with data that month.
+- **Development:** months 1990-01 .. 2021-08 (euro from 2004-10). Kills (pooled, t 3.0): net <= 0; t < 3.0; halves
+  1990-2005 / 2006-2021-08 not both > 0; doubled <= 0; without the 2 best months <= 0; breadth: any market's own net
+  <= 0. Reported: each market's net and t, correlation of the markets' month-end excess with the US (DGS10).
+- **One-time test (fixed now):** months 2021-10 .. latest complete month in all three files: pooled net > 0, pooled
+  t >= 1.5, doubled > 0, at least 2 of 3 markets net > 0. All = PASSED; else as I-109.
+- **Power:** signal-free sd of the pooled excess (windows 5-14 trade dates before month-end), before the run.
