@@ -4,6 +4,19 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: harvest batch 17 (forced flows: rates, Nikkei dividends, gold / oil expiry, vol targeting): nothing kept (the user: "Another idea search")
+
+- 8 Codex `gpt-6.1-terra` `--search` calls (6 content cells, high effort; canaries ok: carry found, nonsense
+  empty), 7 ideas, 0 kept by the filters. Opus read them: MBS duration -> Treasury returns (monthly; needs MBS index
+  duration), dividend payment pressure abroad and gold delivery-month return (data), WTI penultimate-day pressure
+  (FTMO's USOIL CFD rolls before expiry; no futures data), all parked / rejected as filed. Threshold rebalancing
+  (NBER w33554, -17 bp next day on S&P futures; already ledger HV-T0037-1) is testable on US500 + FRED.
+- Auto decision 46: do not test threshold rebalancing. Alternative: card it as a new family. Why: same buyer
+  (fixed-weight funds) and same market (US500) as I-67 in the closed `turn_of_month` family; only the trigger differs.
+  The line drawn in auto decision 44 (new market and new buyer = new family) keeps it closed. A user decision could
+  reopen it.
+- Harvest yield since batch 12: one card (I-109, from batch 16) in six batches. Opus inline.
+
 ## 2026-11-17: I-110 long-bond month-end NOT CONFIRMED at its one-time test (the user: "Long-bond card")
 
 - Card before data (1bb20f0) incl. the test rule; power before the run (e77f128; se 7.4). Dev DGS20 1993-10 .. 2021-08:
