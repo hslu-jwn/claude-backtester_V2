@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-102 (card 4, overnight -> 10:00 reversal, real-share cost) KILLED
+
+- 10:00 prices from one narrow request a day (A7, 1,373 days); power before the run (random-decile sd 22, se 0.58).
+  Result: gross +2.55 bp/day (t 1.04), net -4.45, halves +1.3 / -10.3, fade to -10 by 2021 -> KILLED. Ledger I102.
+- Diagnostic: the 09:30-open timing earns +12.9 bp/day gross (t 3.94, every year positive); at 7 bp ~+5.9 net, t ~1.8.
+- Auto decision 37: do not test the open-timing variant. Alternative: register it as I-104 and spend the test period.
+  Why: it is a rescue of a killed cell found on seen development data, its development net t ~1.8 is below the bar,
+  and the stop rules forbid rescue variants; parked in HANDOFF › Open for the user (M1 / M3 shelf).
+
 ## 2026-11-17: I-103 (card 7, leveraged single-stock ETF rebalance) KILLED
 
 - Step 1 (signal-free size audit, SEC N-PORT with the user's contact string): 352 funds, 280 with reports; GO with

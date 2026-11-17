@@ -1539,3 +1539,12 @@ the funds grow) stays a note.
 **I-102 power (2026-11-17, before the run, signal-free):** 1,372 days (2016-04-01 .. 2021-09-13), 855-~1,000 names a
 day (median 983); random-decile daily sd 22 bp, se 0.58: t 3 needs 1.8 bp a day net (8.8 gross at 7 bp cost). Better
 powered than the card's guess (sd 40-60).
+**I-102 result 2026-11-17 (one look, `research/screens/2026-11-17_i102_open_reversal_screen.py run`): KILLED.** 1,372
+days: gross +2.55 bp a day (gross t 1.04), cost 7, net -4.45, t -1.82, sd 91 (the realised long-short sd is far
+above the random-decile 22: the extremes move together); halves +1.3 / -10.3; every kill hit. Gross by year 2016-18
++8 to +9, 2019 +3.5, 2020 -5.5, 2021 -10: the same fade as I-96. Deciles (10:00 -> close): +1.1 for the lowest s,
+-1.4 for the highest: small. **Diagnostic (not a gate, not a cell): sorting at the 09:30 open (I-96 timing, open ->
+close) gross +12.9 bp a day, gross t 3.94, positive every year (2021 +20.9)**: the reversal sits in 09:30-10:00. At
+the same 7 bp it would be ~+5.9 net, t ~1.8: below the development bar, and it is a new hypothesis whose development
+period is now seen; per the stop rules it is not tested. Parked for the user (HANDOFF › Open): a shelf / forward
+candidate only if M1 / M3 are accepted. First falsification in family `share_reversal_real`.
