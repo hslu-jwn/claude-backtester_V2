@@ -1678,3 +1678,9 @@ falsification closes the family (stop rules). Label PUBLISHED finding, ADAPTATIO
 - **Kills:** net <= 0; t < 3.0; halves 2016-2018 / 2019-2021 not both > 0; doubled cost <= 0; without the 2 best weeks
   <= 0. Reported, not gates: dose (>= 2 insiders or >= USD 1 M vs the rest), the sales mirror, by year.
 - **Power:** signal-free event count and weekly-mean NW se, recorded before the run. Prior ~10 %.
+**I-108 power (2026-11-17, before the run, signal-free):** universe ranks 1,001-2,000 built (129 months, 3,896 names;
+rank-2,000 median dollar volume USD 5-13 M by year). Cost check: Abdi-Ranaldo half-spread median 10.9 bp over 64,922
+name-months > 7, so by the card's rule the stock fill is 13.9 bp: 29.7 bp per event, doubled 59.4. 2,848 events
+(2016-04-04 .. 2021-08-13) on 1,060 names, 266 entry weeks; event sd 1,315 bp; weekly-mean NW se 54.9 bp: t 3 needs
+165 bp net per event (195 gross). The halved small-cap literature (~40 bp per 20 days) gives t ~0.2: pass chance
+< 5 %. Run as registered (one look; auto decision 43: an M1 verdict still settles the family).

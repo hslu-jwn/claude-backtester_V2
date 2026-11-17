@@ -139,7 +139,8 @@ def load_daily():
     return d.drop(columns="ts")
 
 
-def universe():
+def universe(first=1, top=TOP, name="universe.csv"):
+    """Ranks first..top (I-108 uses 1001..2000 -> universe_1001_2000.csv)."""
     fs = finra_symbols()
     meta = assets()
     funds = {
@@ -175,11 +176,11 @@ def universe():
         ok = (n >= MIN_BARS) & (wide_c.loc[last] > MIN_PRICE) & med.notna()
         r = med[ok].reset_index()
         r.columns = ["symbol", "dv"]
-        r = r.sort_values(["dv", "symbol"], ascending=[False, True]).head(TOP)
+        r = r.sort_values(["dv", "symbol"], ascending=[False, True]).head(top)
         r["month"], r["rank"] = nxt, np.arange(1, len(r) + 1)
-        out.append(r)
+        out.append(r[r["rank"] >= first])
     u = pd.concat(out)[["month", "symbol", "rank", "dv"]]
-    u.to_csv(META / "universe.csv", index=False)
+    u.to_csv(META / name, index=False)
     by = u.groupby("month")
     print(
         f"universe months {u.month.nunique()} ({u.month.min()} .. {u.month.max()}), union {u.symbol.nunique()} symbols"
