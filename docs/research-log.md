@@ -4,6 +4,26 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: harvest batch 16 (rates, US share flows); I-109 Treasury month-end PASSED its one-time test (the user: "New idea search")
+
+- Harvest tool: market codes RATES and SHARE-US (test first); batch 15 rows closed in tasks.csv. Batch 16: 8 Codex
+  `gpt-6.1-terra` `--search` calls (6 content cells, high for ACAD / AGG, low for BLOG; canaries ok: carry found,
+  nonsense empty), 9 ideas, 0 kept by the mechanical filters. Opus read the sources: Treasury auction cycle (Lou, Yan
+  & Zhang 2013) rejected on an out-of-sample study (ohlcv.io 2026-10-22: gone after 2010 once month-end days are
+  removed); pre-refunding drift (Wang & Zhao 2025) parked: its sample covers our development window, and 4 events a
+  year give no forward power; ETF-flow reversal and dividend pressure need data we lack. The same study's month-end
+  Treasury rally became card I-109.
+- I-109 (new family `rates_month_end`): card before data (585b997), power before the run (f3880db; se 4.5). Dev
+  1990-2021 on FRED DGS10: net +18.4 bp per month-end, t 4.42, every gate passed. Integrity check (CMT curve switch
+  risk): IEF real closes over 69 months +22.1 bp, corr 0.99. Test rule fixed before test data (29e5f32), test
+  2021-10 .. 2026-10: net +24.9, t 2.14, IEF +23.2 -> PASSED (M1). Telegram sent. HANDOFF Open 8. Opus inline.
+- Auto decision 44: Treasury month-end is a new family, not the closed `turn_of_month`. Alternative: count it as
+  `turn_of_month` (closed, no look). Why: different market and forced buyer (Treasury index duration extension, not
+  equity cash / rebalancing flows).
+- Auto decision 45: run the one-time test myself with gates sized to 61 months (net > 0, t >= 1.5, doubled > 0, IEF
+  > 0), not t 3.0 alone (~34 bp needed). Alternative: forward log only. Why: Mode=auto runs the test for a
+  candidate that passed every development gate; the skill asks for a power-sized test rule.
+
 ## 2026-11-17: I-108 mid-cap insider purchases FALSIFIED; family share_insider closed (the user: "Insider card on mid-caps")
 
 - Card pre-registered before data (0972ed9): I-106's rule on ranks 1,001-2,000 (universe builder now takes a rank

@@ -1733,3 +1733,9 @@ mean > 0 over the same months. All four = PASSED (M1); net > 0 with t < 1.5 = no
 Expected at the development size: t ~1.6 (pass ~55 %). Not blind: the ohlcv.io study (2010-2026 futures) covers this
 period and reported the month-end rally; recorded so the result is read as a confirmation on our data, not an
 independent discovery. A pass goes to the shelf as a forward log on IEF (M3) and to HANDOFF for the user.
+**I-109 one-time test result 2026-11-17 (`research/screens/2026-11-17_i109_treasury_month_end_screen.py test`):
+PASSED (M1), all four gates.** 61 months 2021-10 .. 2026-10: excess gross +26.9 bp per month-end, net +24.9, t 2.14;
+doubled cost +22.9; IEF real closes raw +23.2 bp (t 2.54). By year 2021 (3 months) +91.5, 2022 +63.2, 2023 +5.5,
+2024 +25.0, 2025 +16.3, 2026 -7.8. Development + test: the same sign in both, net ~+19-25 bp per month-end on
+10-year duration, about 3 days a month in the market. Not blind (see the test rule). Next: a frozen IEF forward log on
+the shelf (M3) and the user's decision on a venue (Treasury futures ZN / bond ETFs, goal 2; FTMO lists no bonds).

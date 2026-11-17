@@ -75,6 +75,13 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    shelf = H11, I71, I73, I84, I98, I100 + I-105 (forward only); forward loggers to build except Strategy 19.
    Waiting on the user: M2, M4-M12, AWS (card 6 C), source for card 8.
 
+8. **I-109 Treasury month-end PASSED its one-time test (2026-11-17, Mode=auto; Telegram sent):** long 10-year
+   duration over each month's last 3 trade dates (Treasury index duration extension). Dev 1990-2021 net +18.4 bp per
+   month-end (t 4.42); test 2021-10 .. 2026-10 net +24.9 (t 2.14), IEF real closes +23.2 (t 2.54); test not blind
+   (a 2026 blog covered the period). ~3 days a month in the market; FTMO lists no bonds, so the venue is Treasury
+   futures (ZN / UB) or bond ETFs (goal 2): **the user decides on a venue / account**. Opus next: a frozen IEF forward
+   log on the shelf; a duration-scaled sizing note (UB ~2x ZN). Card `knowledge/ideas.md` I-109, ledger I109.
+
 ## Next step
 
 1. From about **2026-12-02**: the forward logs (`python -m backtester.tools.crypto_flow --update --forward`, the same
