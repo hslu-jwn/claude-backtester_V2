@@ -1536,3 +1536,6 @@ leveraged funds and a same-sized 09:30 -> 15:30 move continue +3.2 bp on the sam
 3 bp: real perhaps, far below a tradable size. By underlying: COIN +6.7 (133), TSLA +9.5 (87), NVDA +1.2 (65), MSTR
 +9.1 (30). First falsification in family `letf_single`; Fable's long-range item 8 (repeat the size audit yearly as
 the funds grow) stays a note.
+**I-102 power (2026-11-17, before the run, signal-free):** 1,372 days (2016-04-01 .. 2021-09-13), 855-~1,000 names a
+day (median 983); random-decile daily sd 22 bp, se 0.58: t 3 needs 1.8 bp a day net (8.8 gross at 7 bp cost). Better
+powered than the card's guess (sd 40-60).
