@@ -1911,3 +1911,36 @@ pre-registered pass; it would go to the shelf as a forward log and to HANDOFF (v
 they were counted as trade dates; the fix (trade dates = VX settlement dates, as the card says) changed 96 trades
 -$23 (t -0.17) to 95 trades -$30; development unchanged. Read: the VX roll premium in this rule shrank from +$632
 (2007-13) to +$276 (2014-21) to ~0 gross (2021-26). Family `vix_basis` closed (auto decision 48). Telegram sent.
+
+### I-115 S&P GSCI roll front-running in energy calendar spreads (2026-11-18; ledger HV-T0007 data gap closed by EIA strips; new family `index_roll`, venue NYMEX calendar spreads (goal 2), not FTMO; rule fixed before any EIA data is read)
+Mechanism: commodity index funds (S&P GSCI, BCOM, USO and peers) must sell the held contract and buy the next on fixed
+business days 5-9 of each month (20 % a day); a forced, dated counterparty. Front-runners take the same spread
+earlier and unwind into the roll. Source read in full by Opus: Mou 2010, "Limits to Arbitrage and Commodity Index
+Investment: Front-Running the Goldman Roll" (CFTC study / SSRN 1716841): 2000-2010 energy portfolio, Strategy 1
+(build 20 % a day 10..6 business days before the first roll date, unwind 20 % a day over the roll days) ~4.4 % a year
+unlevered, Sharpe 2.2; 1980-1999 (no index money) ~0; control group of non-index commodities ~0. Counter-evidence
+(scout 2, not read): Marechal 2021 finds no systematic roll-day effect later. Label PUBLISHED, sample 2000-2010
+inside development; 2011-2021 is post-publication. Prior ~15 %.
+- **Data:** EIA daily futures settlements, contracts 1-3: WTI CL (RCLC1-3), NY Harbor No. 2 heating oil / ULSD HO
+  (EER_EPD2F_PE1-3), RBOB RB (EER_EPMRR_PE1-3, 2005-10+), Henry Hub NG (RNGC1-3, 1994+). Business days = dates with a
+  CL contract 1 price. Development months 2000-01 .. 2021-08 (Sept 2021 roll ends after 2021-09-13); EIA's series end
+  2024-03, so the test can only be 2021-10 .. 2024-03.
+- **Contract the index holds in month M:** delivery M+1; it rolls into M+2 (Mou's example: February, March -> April).
+  EIA position of delivery month D on date d = 1 + number of delivery months D' < D whose last trade date >= d. Last
+  trade date of D: CL 3 business days before the 25th of D-1 (25th not a business day: before the business day
+  preceding it); HO, RB the last business day of D-1; NG the 3rd last business day of D-1. Positions > 3: skipped.
+- **Trade (Strategy 1, gated):** roll days R1..R5 = business days 5..9 of month M. Tranche k (1..5): at the close
+  of business day R1-11+k (10..6 business days before R1) short delivery M+1, long delivery M+2, equal quantity;
+  close it at the close of Rk. Return = (short leg gain + long leg gain) / mean of the two entry prices. Commodity
+  month = mean of its 5 tranches; energy month = mean of the commodities with data.
+- **Cost:** 3 bp of the collateral per tranche round trip (spread instrument ~1 tick plus fees; Mou: CL bid-ask ~1 bp);
+  doubled 6 bp.
+- **Gated statistic:** energy portfolio net bp per month, t over months (no overlap: one roll per month).
+- **Kills (one-sided, t 3.0):** net <= 0; t < 3.0; halves 2000-2010 / 2011-2021 not both > 0; doubled cost <= 0;
+  without the 2 best months <= 0; breadth: CL net <= 0 or fewer than 3 of 4 commodities net > 0.
+  Reported, not gates: Strategy 2 (5..1 days before R1, 5-day hold), placebo 1986-1999 (pre-index), by commodity,
+  by year, a placebo window (the same trade 10 business days later, after the roll).
+- **Expected size:** Mou energy Strategy 1 ~37 bp per month; halved ~18 bp; post-2010 likely less. **Power:**
+  signal-free sd of the same spread trade over other windows, recorded before the run.
+- **One-time test:** rule fixed before test data, only after a development pass (test window ~30 months: power-sized
+  gates or a combined estimate).
