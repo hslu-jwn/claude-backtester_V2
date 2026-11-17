@@ -54,6 +54,13 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    scheduled collector of retail positioning (FB-284). Optional books (Telegram 2026-11-14).
 6. Older: B4 dividends question to FTMO; GBPUSD 2020-21 placeholder spreads (a default); stressed-cost p90 refresh;
    USDCHF early 2015.
+7. **Fable idea sweep 2026-11-16** (`knowledge/reviews/2026-11-16-idea-sweep/`, `fable_part2_directions.md`):
+   accept or reject the method proposals M1-M13 line by line (§3: third verdict UNPROVEN-POSITIVE, c-and-name-periods
+   power rule, tail / regime gates, alpha spending t 3.0 / 3.3 / 3.5 on a test period, ...); M13 = real US shares as a
+   research venue under goal 2 (without it only cards 0, 1, 5, 6, 8 remain); AWS account (requester-pays) for
+   Hyperliquid fills (card 6 step C); source for the positioning collector (card 8); contact string for EDGAR.
+   Ten cards (0-9) and a first-week plan (§4) are ready for `Continue.Research`. Card 0 done 2026-11-17
+   (`card0_s20_audit.md`): S19 and S20 near-independent, S20 planning range ~+90-110 bp/week; feeds Open 1.
 
 ## Next step
 

@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 0 (Strategy 20 regime / tail audit; the user: "Yes, card 0")
+
+- Fable 5.2 wrote and ran `research/screens/2026-11-16_card0_s20_audit.py`, then hit its usage limit; the Fable window
+  (CLAUDE.md › Advisor, until 2026-11-16) is now closed, so Opus wrote `knowledge/reviews/2026-11-16-idea-sweep/
+  card0_s20_audit.md` from the raw output. S20 without 2020: +100 bp/week, t 3.38; 2022 -32. S19 vs S20 corr
+  -0.05..+0.21, opposite years, joint worst weeks at chance; capped tails keep 53-67 % of the mean; DSR fails only
+  against the whole ledger on development. Section (f) pass % is buggy (>100 %); years-to-pass usable.
+
 ## 2026-11-16: idea sweep: 8 web scouts + Fable post-mortem and directions (the user: "run it here")
 
 - Last Fable day (CLAUDE.md › Advisor). Opus wrote a context pack; 8 Sonnet scouts (shares / ETFs, futures, crypto,
