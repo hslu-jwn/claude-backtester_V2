@@ -1742,3 +1742,19 @@ the shelf (M3) and the user's decision on a venue (Treasury futures ZN / bond ET
 Note 2026-11-17 (after the test): the development run counted the partial month 2021-09 (window 9-13 Sep, not a
 month-end); without it 380 months, net +18.4, t 4.39: no change. Forward logs `shelf_i109` (DGS10, registered
 statistic) and `shelf_i109_ief` (IEF raw) from the 2026-11 month-end; complete months only.
+
+### I-110 Treasury month-end duration extension on long bonds (20-year; the user's pick 2026-11-17 after I-109; family `rates_month_end`, 2nd hypothesis; rule fixed before any 20-year data)
+I-109's mechanism and rule on the long end, where index extension buys the most duration (ohlcv.io: UB +11.3 bp a
+day on the last 3 trade dates vs ZN +5.2). A new counted hypothesis in the same family, not independent of I-109
+(same months, same flow): its value is the size per event for a goal-2 sleeve. Seen before this card: I-109's
+results, and TLT over 2016-04 .. 2021-08 (+38.6 bp raw, t 3.04, I-109's integrity check). Label ADAPTATION. t 3.0.
+- **Data:** FRED DGS20 (20-year constant maturity; FRED's series resumes 1993-10-01), development months 1993-10 ..
+  2021-08 (whole months only; I-109's partial-month slip not repeated). Return r = -D * dy with D of a 20-year par bond.
+- **Event, trade, statistic:** I-109 unchanged (last 3 trade dates; excess over 3 x the month's other-day mean; t
+  over months). Cost 3 bp per event (UB about one tick of ~2.6 bp round trip, TLT about 1 bp a fill); doubled 6.
+- **Kills:** net <= 0; t < 3.0; halves 1993-10 .. 2007 / 2008 .. 2021-08 not both > 0; doubled cost <= 0; without the 2
+  best months <= 0. Reported: raw, last 2 days, placebo 10 trade dates earlier, excess per unit of event sd vs I-109.
+- **One-time test (fixed now, before any test data):** months 2021-10 .. 2026-10, frozen as above: (1) net > 0;
+  (2) t >= 1.5; (3) doubled cost > 0; (4) TLT (Alpaca closes) raw window mean > 0. All four = PASSED; net > 0 with
+  t < 1.5 = not confirmed; net <= 0 = FALSIFIED. Not blind (the 2026 study covers the period).
+- **Power:** signal-free sd from windows 5-14 trade dates before month-end, recorded before the run.
