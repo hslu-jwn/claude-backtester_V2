@@ -1684,3 +1684,9 @@ name-months > 7, so by the card's rule the stock fill is 13.9 bp: 29.7 bp per ev
 (2016-04-04 .. 2021-08-13) on 1,060 names, 266 entry weeks; event sd 1,315 bp; weekly-mean NW se 54.9 bp: t 3 needs
 165 bp net per event (195 gross). The halved small-cap literature (~40 bp per 20 days) gives t ~0.2: pass chance
 < 5 %. Run as registered (one look; auto decision 43: an M1 verdict still settles the family).
+**I-108 result 2026-11-17 (one look, `research/screens/2026-11-17_i108_midcap_insider_screen.py run`): KILLED, M1
+FALSIFIED (net <= 0).** 2,848 events: gross -8.9 bp per event over 20 days vs SPY, net -38.6, weekly NW t -0.24; every
+kill hit; halves +36.2 / -110.4; by year 2016 +164, 2017 -7, 2018 0, 2019 -59, 2020 -205, 2021 +44. Dose (>= 2
+insiders or >= USD 1 M) -70.0 (726) vs the rest -27.8: the bigger buys did worse. Mirror (sales >= USD 1 M, short):
+6,151 events, gross -13.6. Same pattern as I-106 one size class down. Second falsification in family
+`share_insider`: the family is closed (stop rules).

@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-108 mid-cap insider purchases FALSIFIED; family share_insider closed (the user: "Insider card on mid-caps")
+
+- Card pre-registered before data (0972ed9): I-106's rule on ranks 1,001-2,000 (universe builder now takes a rank
+  range; `universe_1001_2000.csv`). Cost by the card's signal-free rule: Abdi-Ranaldo half-spread median 10.9 bp ->
+  13.9 bp per stock fill, 29.7 bp per event. Power before the run (a5a8cbb): NW se 54.9 bp, t 3 needs 165 bp net.
+  Result: 2,848 events, gross -8.9 bp, net -38.6, NW t -0.24, halves +36 / -110 -> KILLED, M1 FALSIFIED. Bigger buys
+  worse (-70); sales mirror negative. Second falsification: family `share_insider` closed. Ledger I108. Opus inline.
+- Auto decision 43: run the one look although the power is low (pass chance < 5 %). Alternative: record as
+  underpowered without a look. Why: the look is cheap and an M1 verdict settles the family either way.
+
 ## 2026-11-17: I-107 fails-to-deliver KILLED; short interest not testable on development
 
 - SEC fails files 2016-01 .. 2021-08 (136; three folders on sec.gov, links read from the page); power before the run
