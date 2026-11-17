@@ -123,3 +123,9 @@ def test_batch_end_is_16_minutes_before_now(tmp_path):
     now = datetime(2026, 11, 17, 15, 0, tzinfo=UTC)
     alpaca.download_batch(["AAA"], "30Min", "2016-01-01", fetch, tmp_path, now=now)
     assert calls[0]["end"] == "2026-11-17T14:44:00Z" and calls[0]["timeframe"] == "30Min"
+
+
+def test_batch_end_date_caps_the_request(tmp_path):
+    fetch, calls = fake_fetch([{"bars": {}, "next_page_token": None}])
+    alpaca.download_batch(["AAA"], "1Hour", "2015-12-01", fetch, tmp_path, end="2021-09-14")
+    assert calls[0]["end"] == "2021-09-14T00:00:00Z" and calls[0]["timeframe"] == "1Hour"

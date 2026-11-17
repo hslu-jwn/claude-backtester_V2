@@ -3,7 +3,9 @@ knowledge/ideas.md, 4de0afc).
 
 Development only: trading days 2016-01-04 .. 2021-09-13. Universe docs/share-universe.md (universe.csv of card 2).
 Prices: previous close and exit = Alpaca daily close (data/cache/alpaca_1d); signal = close of the 30-min bar opening
-09:30 ET; entry = open of the 30-min bar opening 10:00 (data/cache/alpaca_30m). SPY from the same sources.
+09:30 ET = close of the 1-hour bar opening 09:00 (last trade before 10:00); entry = open of the 30-min bar
+opening 10:00 = open of the 1-hour bar opening 10:00 (first trade from 10:00) (data/cache/alpaca_1h, A3);
+the 09:30 open of the diagnostic = Alpaca's daily open. SPY from the same sources.
 Steps: spy (download SPY daily + 30-min), extract (one compact table, cached), power, run.
 Run: .venv/Scripts/python.exe research/screens/2026-11-17_i102_open_reversal_screen.py spy | extract | power | run
 """
@@ -17,7 +19,7 @@ import pandas as pd
 from backtester.data import alpaca
 
 D1 = Path("data/cache/alpaca_1d")
-M30 = Path("data/cache/alpaca_30m")
+H1 = Path("data/cache/alpaca_1h")
 UNIVERSE = Path("data/cache/alpaca_meta/universe.csv")
 TABLE = Path("data/cache/alpaca_meta/i102_prices.pkl")
 START, END = pd.Timestamp("2016-01-04"), pd.Timestamp("2021-09-13")
@@ -27,7 +29,7 @@ COST, MIN_NAMES = 7.0, 500
 def spy():
     fetch = alpaca.http_fetch(*alpaca.keys())
     alpaca.download_batch(["SPY"], "1Day", "2015-07-01", fetch, D1)
-    alpaca.download_batch(["SPY"], "30Min", "2015-12-01", fetch, M30)
+    alpaca.download_batch(["SPY"], "1Hour", "2015-12-01", fetch, H1, end="2021-09-14")
 
 
 def ny(ts):
@@ -39,18 +41,19 @@ def extract():
     syms = sorted(set(pd.read_csv(UNIVERSE).symbol) | {"SPY"})
     cols = {k: {} for k in ("close", "o0930", "c0930", "o1000")}
     for s in syms:
-        p1, p30 = D1 / f"{s}.csv", M30 / f"{s}.csv"
+        p1, p30 = D1 / f"{s}.csv", H1 / f"{s}.csv"
         if not (p1.exists() and p30.exists()) or p1.stat().st_size < 60 or p30.stat().st_size < 60:
             continue
-        d = pd.read_csv(p1, usecols=["ts", "close"])
+        d = pd.read_csv(p1, usecols=["ts", "open", "close"])
         d.index = ny(d.ts).dt.normalize()
         cols["close"][s] = d.close[~d.index.duplicated()]
+        cols["o0930"][s] = d.open[~d.index.duplicated()]
         m = pd.read_csv(p30, usecols=["ts", "open", "close"])
         t = ny(m.ts)
         m.index = t.dt.normalize()
         hm = t.dt.strftime("%H:%M").to_numpy()
-        a, b = m[hm == "09:30"], m[hm == "10:00"]
-        cols["o0930"][s], cols["c0930"][s], cols["o1000"][s] = a.open, a.close, b.open
+        a, b = m[hm == "09:00"], m[hm == "10:00"]
+        cols["c0930"][s], cols["o1000"][s] = a.close, b.open
     out = {k: pd.DataFrame(v).sort_index() for k, v in cols.items()}
     days = out["close"]["SPY"].dropna().index
     out = {k: v.reindex(days) for k, v in out.items()}

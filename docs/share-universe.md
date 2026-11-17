@@ -50,3 +50,7 @@ their own split and need the user's go.
   (delisted, acquired, renamed: YHOO, TWX, AET, LNKD, ...).
 - A5: Alpaca's daily history starts 2016-01, so the first month with 60 bars is **2016-04**; the universe and every
   card's development period start there.
+- A6 (2026-11-17, before any intraday data): step 5's 30-min bars with extended hours were ~14 h of download. Intraday
+  bars are fetched as `1Hour` for the development window only (2015-12-01 .. 2021-09-13, development universes); a
+  card's 10:00 price = close of the 1-hour bar opening 09:00 (last trade before 10:00), its 10:00 entry = open of the
+  1-hour bar opening 10:00: the same values the 30-min bars give. Test-period bars only after a development pass.

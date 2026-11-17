@@ -1485,3 +1485,6 @@ cells.** 271 weeks, ~987 names: gross spread (long low SVR, short high) +0.8 bp 
 32.0, 31.2, 36.7, 37.4, 32.8 bp the next week: flat. Well powered (se 4.4 bp): the weekly off-exchange short-volume
 ratio carries no cross-sectional information about next week's return in the top 1,000 names, in either reading.
 First falsification in family `share_flow`.
+**I-102 data note (2026-11-17, before any intraday data; share-universe A6):** the 10:00 price and the 10:00 entry come
+from 1-hour bars (close of the bar opening 09:00, open of the bar opening 10:00): the same trades as the 30-min bars
+named above. The diagnostic's 09:30 open = Alpaca's daily open.

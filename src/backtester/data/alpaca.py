@@ -142,11 +142,14 @@ def download_batch(
     root: Path,
     batch: int = 100,
     now: datetime | None = None,
+    end: str | None = None,
 ) -> None:
     """Whole history from `start` (YYYY-MM-DD) to now, many symbols per request, one file per symbol:
     `<root>/<SYM>.csv` (wide universe, docs/share-universe.md). Resumable: a symbol whose file exists is skipped;
-    a symbol without bars gets an empty file."""
-    end = (now or datetime.now(UTC)) - timedelta(minutes=16)  # free plan refuses the latest 15 min
+    a symbol without bars gets an empty file. `end` (YYYY-MM-DD, exclusive) caps the history."""
+    stop = (now or datetime.now(UTC)) - timedelta(minutes=16)  # free plan refuses the latest 15 min
+    if end is not None:
+        stop = min(stop, datetime.fromisoformat(end).replace(tzinfo=UTC))
     todo = [s for s in symbols if not (root / f"{s}.csv").exists()]
     root.mkdir(parents=True, exist_ok=True)
     for i in range(0, len(todo), batch):
@@ -155,7 +158,7 @@ def download_batch(
             "symbols": ",".join(part),
             "timeframe": timeframe,
             "start": f"{start}T00:00:00Z",
-            "end": f"{end:%Y-%m-%dT%H:%M:00Z}",
+            "end": f"{stop:%Y-%m-%dT%H:%M:00Z}",
             "limit": 10000,
             "adjustment": "split",
             "feed": "sip",
