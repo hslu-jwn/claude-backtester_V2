@@ -1872,3 +1872,7 @@ ledger was ever run (HV-T0067 / T0083 parked as unfetchable; the data gap is now
   contract of ~$15-25k notional (~2 % of notional per 5-day trade). **Power:** signal-free sd of the 5-day unhedged
   front-VX P&L over all start dates, recorded before the run.
 - **One-time test:** rule fixed before any test data, only after a development pass.
+**I-113 power (2026-11-18, before the run, signal-free):** 199 monthly VX contracts 2005-01 .. 2021-10 (archive +
+per-contract files; archive files for 2018 stop on 2018-02-23, so settlement dates come from Cboe's file names, all
+within 2 days of the exchange rule). 5-day front-VX P&L over all 3,695 start dates 2007-2021: sd $2,673 per contract;
+at ~350 trades se $143, t 3 needs ~$430 net. The halved paper size (~$400) gives t ~2.8: pass chance ~35-45 %.
