@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 5 pre-registered (crypto book S20 top-100 + S19, forward only)
+
+- Spec section `docs/strategy-crypto_flow.md` › Crypto book; script `research/screens/2026-11-17_card5_crypto_book.py`
+  (book = 0.5 / 0.5 of the two r_net, paired by Monday; FB-254 boundary; self-check). No data look. Power: book +0.093
+  R/week, sd 0.655, P(confirmed by 104 w) 29 % vs 20 / 17 % single. Sizing left to the user (Open 1). Opus inline.
+- Auto decision 29: the book uses the Monday top-100 log, not the mean of the seven weekday tranches. Alternative:
+  tranches (card 5's wording). Why: FB-254 is registered on the Monday book; tranches start on different days and
+  would need their own pairing rule.
+- Auto decision 30: equal risk through each stream's existing R (its development sd, rounded: 600 / 1,000 bp) instead
+  of new weights. Alternative: re-estimate the development sds. Why: no new number fitted; the R units are frozen.
+
 ## 2026-11-17: handoff taken over; I-100 (Fable card 1) wide funding carry KILLED on t; carry family closed
 
 - The side session (idea sweep + card 0) handed its work to this loop; committed as 1e132ec. Loop resumed in

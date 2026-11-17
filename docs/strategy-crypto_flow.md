@@ -168,6 +168,27 @@ Monday book (pre-registered); the tranches are reported beside it, not tested se
 look; the 52-week kill above stays. `research/screens/2026-11-15_fb254_forward_boundaries.py --check`. Power at the fair +74 bp (sd 474): 34 % confirmed by week 104 (top-100 variant, sd 658: 20 %); a
 confirmation needs ~+96 bp a week over 104 weeks.
 
+## Crypto book with Strategy 19 (card 5 of the 2026-11-16 sweep; pre-registered 2026-11-17, forward only)
+
+No data look: defined on quantities fixed before (each stream's R = its development weekly sd, rounded) and judged
+only on forward weeks. `research/screens/2026-11-17_card5_crypto_book.py [--check]`.
+- **Streams and weights:** Strategy 20 top-100, Monday book (`research/forward/crypto_flow_top100.csv`, 1 R = 600 bp)
+  and Strategy 19 (`crypto_carry.csv`, 1 R = 1,000 bp), equal risk: book week = 0.5 x r_net(S20 top-100) + 0.5 x
+  r_net(S19), paired by the Monday of entry; a week counts only when both logs have it. The weekday tranches are
+  reported beside it, not part of the book (the FB-254 boundary is registered on the Monday book).
+- **Judged once, on the forward log:** FB-254 boundary on the book's weekly R (8 looks every 13 weeks, O'Brien-Fleming
+  c 2.071, confirmed at z >= c / sqrt(k / 8), early kill at z <= -2). Each stream keeps its own kills; a killed stream
+  leaves the book at the next look, and the book continues on the other one (its own boundary from then on).
+- **Power (plan, before any forward week):** fair +74 / 658 (S20 top-100) and +63 / 624 (S19, replication), weekly
+  correlation 0.09: book +0.093 R a week, sd 0.655 R; P(confirmed by week 104) 29 % (single streams 20 % / 17 %),
+  P(early kill) 1 %; at mean 0 the early kill fires 8 %.
+- **Additions:** only on fixed dates every 26 weeks from 2026-11-16, and only a stream that ended PASSED (or
+  UNPROVEN-POSITIVE, if the user accepts M1) with weekly correlation to Strategy 20 below 0.5. I-100 (card 1) was
+  KILLED on t 2.45 and does not join unless M1 is accepted.
+- **Sizing is the user's decision** (risk default, HANDOFF › Open 1): card 0's planning range (S20 top-100 ~+90-110
+  bp/week capped) and the proposed shrink (M10: x 0.65 PASSED, x 0.4 UNPROVEN) are inputs, not settings. No
+  volatility overlay (a variant fitted on spent data).
+
 ## Assumptions (decided by Opus)
 
 - A1: weekly rebalancing (Fable row 9 said daily; at 20 bp a day the effect would need more than 20 bp a day).
