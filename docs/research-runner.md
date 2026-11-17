@@ -917,3 +917,24 @@ per idea or hypothesis (a parameter cell is not a row; a changed rule is a new r
   1-15, C1-C3, the two calendar screens, the lead-lag and pair specs, review D1-D5). Values marked
   n/a were not in the sources.
 
+## Verdicts and shelf (M1, M3 of the 2026-11-16 sweep; rule set by the user, 2026-11-17)
+
+- **Three verdicts (M1):** FALSIFIED = net <= 0 at the card's normal cost, or the predicted sign is wrong, or gross
+  below cost with the gross 95 % interval below cost. UNPROVEN-POSITIVE = net > 0 at normal cost, the same sign in
+  every independent sample (development, pre-sample, test, replication universe; halves are not independent samples),
+  and 1.5 <= t < 3.0. PASSED = every pre-registered gate. A kill at t < 3.0 that is not FALSIFIED and has t >= 1.5 is
+  UNPROVEN-POSITIVE. The `verdict` column keeps the original kill text and adds the M1 label.
+- **Shelf (M3):** every UNPROVEN-POSITIVE row with a tradable venue gets a frozen forward paper log (rule as
+  registered, no change) judged with the FB-254 boundary (8 looks every 13 periods, O'Brien-Fleming c 2.071, early
+  kill at z <= -2). No retest on old data; a shelf row never re-enters development.
+- **Relabelled 2026-11-17 (Opus applying the rule to the ledger):**
+
+| Row | Evidence | M1 label | Venue / forward log |
+|---|---|---|---|
+| H11 Gotobi G1 (USDJPY) | dev +16.5 R, pre-sample +30.9 R, test +0.021 R / trade (bootstrap 2.5 % -0.012) | UNPROVEN-POSITIVE | FTMO USDJPY; log to build |
+| I71 index review auction | net +9.0 bp, t 2.16; pre-sample +12.5, dev +6.5 | UNPROVEN-POSITIVE | index CFDs; log to build |
+| I73 Strategy 19 carry (17 perps) | test net +112 bp/week, t 2.93 (replication I73R +63, t 1.05) | UNPROVEN-POSITIVE | Binance; log exists (`crypto_carry --forward`) |
+| I76 liquidation reversal | net -4.7 bp at its 20 bp cost | FALSIFIED (Fable's list said UNPROVEN at 10 bp; the card's cost is 20) | - |
+| I84 crypto factor | t 1.76, halves +150 / +8; weekly corr 0.58 with Strategy 20 | UNPROVEN-POSITIVE (mostly Strategy 20's stream) | Binance; log to build |
+| I98 spot-hedged carry | net +12 bp/week, t 1.84 | UNPROVEN-POSITIVE | Binance spot + perp; log to build |
+| I100 wide funding carry | net +107 bp/week, t 2.45 | UNPROVEN-POSITIVE | Binance; log to build |

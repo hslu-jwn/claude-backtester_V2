@@ -69,7 +69,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    (gross t 0.16); card 4 = I-102 KILLED (gross
    t 1.04; diagnostic: the 09:30-open timing +12.9 bp/day gross, t 3.94, not tested: a shelf candidate if M1 / M3);
    card 7 = I-103 KILLED (t 0.80; flow adds ~3 bp). Card 9 = I-104 KILLED (gross t -0.27). Card 7 split accepted by the user 2026-11-17 (dev to 2024-12-31, test 2025+). Contact for EDGAR / Wikimedia: the
-   user's e-mail (accepted 2026-11-17, stored in the Credential Manager). Waiting on the user: M1-M12, AWS (card 6 C).
+   user's e-mail (accepted 2026-11-17, stored in the Credential Manager). M1 + M3 accepted 2026-11-17 (research-runner.md › Verdicts and shelf):
+   shelf = H11, I71, I73, I84, I98, I100 + I-105 (forward only); forward loggers to build except Strategy 19.
+   Waiting on the user: M2, M4-M12, AWS (card 6 C), source for card 8.
 
 ## Next step
 

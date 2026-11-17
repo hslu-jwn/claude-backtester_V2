@@ -1579,3 +1579,15 @@ I-101's labels, "SVR" = attention ratio): KILLED, both cells.** 284 weeks, ~739 
 short high) -2.5 bp a week, gross t -0.27; cell A net -15.5 (t -1.67), cell B net -10.5 (t -1.13); realised sd 156.
 Deciles 1..10 of attention: 31.4, 24.6, 28.5, 30.2, 29.4, 32.7, 34.8, 34.4, 33.5, 34.6 bp the next week: no usable
 order. First falsification in family `share_attention`.
+
+### I-105 Overnight -> close reversal at the official open, wide US shares (forward only; from I-102's diagnostic; family `share_reversal_real`, second row; registered 2026-11-17 under M3)
+Not a development pass: I-102's diagnostic (sort at the 09:30 open, open -> close) gave gross +12.9 bp a day, gross t
+3.94, positive every year 2016-2021; at 7 bp ~+5.9 net, t ~1.8. That period is now seen, so the only clean evidence
+is forward data. Frozen rule (no change after today): each trading day, universe of the month (docs/share-universe.md,
+formed from data known at the month end), s = official open / previous close - 1 minus SPY's same (Alpaca daily
+bars); short the top decile, long the bottom decile, equal weight; entry at the official open (market-on-open), exit
+at the official close (market-on-close); net = gross - 7 bp a day on the long-short unit. A day needs >= 500 names.
+Forward from the first trading day after the logger exists; judged with the FB-254 boundary on daily nets (a look
+every 65 trading days, 8 looks = 520 days; c 2.071; early kill z <= -2). Power: at +5.9 bp a day (sd 91) 30 %
+confirmed by day 520, at +3 11 %; at 0 the early kill fires 8 %. Unverified: that Alpaca's daily open is the official
+opening auction price (checked against the auction endpoint before the first forward day).

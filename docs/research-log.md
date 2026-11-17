@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: M1 and M3 accepted (the user: "Yes, M1 and M3"); shelf set up
+
+- Rules in docs/research-runner.md › Verdicts and shelf. Ledger relabelled (verdict prefix "M1 (2026-11-17)"):
+  UNPROVEN-POSITIVE H11 Gotobi G1, I71, I73 (Strategy 19), I84, I98, I100; FALSIFIED I76 (net -4.7 at its own 20 bp
+  cost; Fable's list had it UNPROVEN at 10 bp). Only the 7 verdict cells changed (checked).
+- I-105 registered forward only: I-102's 09:30-open diagnostic as a frozen daily rule (power 30 % by day 520).
+- Auto decision 38: register I-105 forward-only. Alternative: leave the diagnostic unused. Why: forward data spends
+  nothing and is the only clean evidence; it is a new row (no rescue of I-102's verdict).
+- Auto decision 39: apply M1's "normal cost" as each card's pre-registered cost (I76 -> FALSIFIED). Alternative:
+  Fable's 10 bp reading. Why: the card fixed 20 bp before data.
+- Next: one shelf logger for the forward logs to build (I-100, I-84, I-98, H11, I71, I-105); Strategy 19 has one.
+
 ## 2026-11-17: I-104 (card 9, Wikipedia attention) KILLED; the sweep's runnable cards are done
 
 - Mapping from Wikidata (89 % of member-months), 1,514 articles' daily views (user's contact string); power before
