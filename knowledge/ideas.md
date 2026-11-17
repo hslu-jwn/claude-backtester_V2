@@ -1619,3 +1619,7 @@ information leaks into the price over the following weeks (Lakonishok & Lee 2001
   <= 0. Reported, not gates: dose (events with >= 2 insiders or >= USD 1 M vs the rest), the mirror (officer /
   director sales code S >= USD 1 M: event return in the short direction), by year.
 - **Power:** from the signal-free event count and the 20-day abnormal-return dispersion, recorded before the run.
+**I-106 power (2026-11-17, before the run, signal-free):** 2,812 events (2016-04-04 .. 2021-08-13) on 867 names, 274
+entry weeks; event sd 1,075 bp over 20 days; weekly-mean Newey-West se 29.8 bp: t 3 needs 89 bp net per event (97
+gross). Above the halved large-cap literature (~30-60 bp a month): expected t ~1-2, pass chance ~10 %; run as
+registered (one look).
