@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-104 (card 9, Wikipedia attention) KILLED; the sweep's runnable cards are done
+
+- Mapping from Wikidata (89 % of member-months), 1,514 articles' daily views (user's contact string); power before
+  the run (sd 77, se 4.6). Result: gross -2.5 bp/week (t -0.27), both cells KILLED. Ledger I104. Opus inline.
+- Sweep status: card 0 done, 1 KILLED, 2 done (universe), 3 KILLED, 4 KILLED, 5 registered (forward), 6 A done
+  (B closed on data, C needs AWS), 7 KILLED, 8 needs the user's source pick, 9 KILLED. Five new looks on the wide
+  universe and crypto today, none near a pass; the 09:30-open reversal diagnostic is the only positive sign (parked).
+
 ## 2026-11-17: I-102 (card 4, overnight -> 10:00 reversal, real-share cost) KILLED
 
 - 10:00 prices from one narrow request a day (A7, 1,373 days); power before the run (random-decile sd 22, se 0.58).

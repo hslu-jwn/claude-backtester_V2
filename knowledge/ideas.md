@@ -1574,3 +1574,8 @@ spurious week.
 **I-104 power (2026-11-17, before the run, signal-free):** 1,514 articles read (106 without views); 284 weeks
 (2016-04-04 .. 2021-09-07), 674-~760 names a week with a signal (median 739, 74 % of the universe after the
 >= 100-view baseline); random-decile weekly sd 77 bp, se 4.6: |t| 3.3 needs 15 bp a week net (28 gross).
+**I-104 result 2026-11-17 (one look, `research/screens/2026-11-17_i104_attention_screen.py run`; the printout reuses
+I-101's labels, "SVR" = attention ratio): KILLED, both cells.** 284 weeks, ~739 names: gross (long low attention,
+short high) -2.5 bp a week, gross t -0.27; cell A net -15.5 (t -1.67), cell B net -10.5 (t -1.13); realised sd 156.
+Deciles 1..10 of attention: 31.4, 24.6, 28.5, 30.2, 29.4, 32.7, 34.8, 34.4, 33.5, 34.6 bp the next week: no usable
+order. First falsification in family `share_attention`.
