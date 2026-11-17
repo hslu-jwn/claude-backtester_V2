@@ -134,6 +134,48 @@ def download(
         print(f"{symbol} {m:%Y-%m}: {n} bars")
 
 
+def download_batch(
+    symbols: list[str],
+    timeframe: str,
+    start: str,
+    fetch: Fetch,
+    root: Path,
+    batch: int = 100,
+    now: datetime | None = None,
+) -> None:
+    """Whole history from `start` (YYYY-MM-DD) to now, many symbols per request, one file per symbol:
+    `<root>/<SYM>.csv` (wide universe, docs/share-universe.md). Resumable: a symbol whose file exists is skipped;
+    a symbol without bars gets an empty file."""
+    end = (now or datetime.now(UTC)) - timedelta(minutes=16)  # free plan refuses the latest 15 min
+    todo = [s for s in symbols if not (root / f"{s}.csv").exists()]
+    root.mkdir(parents=True, exist_ok=True)
+    for i in range(0, len(todo), batch):
+        part = todo[i : i + batch]
+        params = {
+            "symbols": ",".join(part),
+            "timeframe": timeframe,
+            "start": f"{start}T00:00:00Z",
+            "end": f"{end:%Y-%m-%dT%H:%M:00Z}",
+            "limit": 10000,
+            "adjustment": "split",
+            "feed": "sip",
+        }
+        rows: dict[str, list] = {s: [] for s in part}
+        while True:
+            page = fetch(params)
+            for s, bars in (page.get("bars") or {}).items():
+                rows.setdefault(s, []).extend([b.get(f) for f in FIELDS] for b in bars)
+            token = page.get("next_page_token")
+            if not token:
+                break
+            params = {**params, "page_token": token}
+        for s in part:
+            tmp = root / f"{s}.part"
+            pd.DataFrame(rows[s], columns=COLUMNS).to_csv(tmp, index=False)
+            tmp.replace(root / f"{s}.csv")
+        print(f"{timeframe}: {i + len(part)} / {len(todo)} symbols", flush=True)
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("symbols", nargs="+")

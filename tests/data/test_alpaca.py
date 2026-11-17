@@ -82,3 +82,44 @@ def test_current_month_ends_16_minutes_before_now(tmp_path):
     assert (
         calls[0]["end"] == "2026-11-16T22:14:00Z"
     )  # free plan: the latest 15 minutes are refused (HTTP 403)
+
+
+def test_batch_splits_symbols_and_pages_into_one_file_each(tmp_path):
+    fetch, calls = fake_fetch(
+        [
+            {"bars": {"AAA": [bar("2020-01-02T05:00:00Z", 10)]}, "next_page_token": "p2"},
+            {
+                "bars": {
+                    "AAA": [bar("2020-01-03T05:00:00Z", 11)],
+                    "BBB": [bar("2020-01-02T05:00:00Z", 20)],
+                },
+                "next_page_token": None,
+            },
+        ]
+    )
+    alpaca.download_batch(["AAA", "BBB", "CCC"], "1Day", "2020-01-01", fetch, tmp_path, batch=10)
+    assert calls[0]["symbols"] == "AAA,BBB,CCC" and calls[0]["timeframe"] == "1Day"
+    assert calls[0]["start"] == "2020-01-01T00:00:00Z" and calls[1]["page_token"] == "p2"
+    assert pd.read_csv(tmp_path / "AAA.csv").close.tolist() == [10, 11]
+    assert pd.read_csv(tmp_path / "BBB.csv").close.tolist() == [20]
+    assert pd.read_csv(
+        tmp_path / "CCC.csv"
+    ).empty  # no bars: empty file, so a resume does not ask again
+
+
+def test_batch_skips_done_symbols_and_respects_batch_size(tmp_path):
+    (tmp_path / "AAA.csv").write_text(",".join(alpaca.COLUMNS) + "\n")
+    fetch, calls = fake_fetch([{"bars": {}, "next_page_token": None}] * 2)
+    alpaca.download_batch(
+        ["AAA", "BBB", "CCC", "DDD"], "1Day", "2020-01-01", fetch, tmp_path, batch=2
+    )
+    assert [c["symbols"] for c in calls] == ["BBB,CCC", "DDD"]
+
+
+def test_batch_end_is_16_minutes_before_now(tmp_path):
+    from datetime import UTC, datetime
+
+    fetch, calls = fake_fetch([{"bars": {}, "next_page_token": None}])
+    now = datetime(2026, 11, 17, 15, 0, tzinfo=UTC)
+    alpaca.download_batch(["AAA"], "30Min", "2016-01-01", fetch, tmp_path, now=now)
+    assert calls[0]["end"] == "2026-11-17T14:44:00Z" and calls[0]["timeframe"] == "30Min"
