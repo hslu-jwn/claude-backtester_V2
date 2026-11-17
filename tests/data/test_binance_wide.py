@@ -247,3 +247,10 @@ def test_fetch_retries_a_dropped_connection_but_not_a_missing_file(monkeypatch):
     with pytest.raises(urllib.error.HTTPError):
         data._fetch(data.CDN + "x.zip")
     assert len(calls) == 1
+
+
+def test_microsecond_spot_times_are_read_as_milliseconds():
+    raw = HEADER + "1790812800000000,1,1,1,1,10,1790899199999999,10,1,5,5,0\n" + KLINE
+    d = data._csv(raw, data.KCOLS)
+    assert d.open_time.tolist() == [1790812800000, 1704067200000]
+    assert d.close_time.tolist()[0] == 1790899199999

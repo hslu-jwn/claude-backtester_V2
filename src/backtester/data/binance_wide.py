@@ -45,7 +45,11 @@ PRICE_COLUMNS = ("open", "close", "volume", "quote_volume", "taker_buy_volume")
 
 def _csv(raw: str, names: Sequence[str]) -> pd.DataFrame:
     header = 0 if not raw[:1].isdigit() else None
-    return pd.read_csv(io.StringIO(raw), header=header, names=None if header == 0 else names)
+    d = pd.read_csv(io.StringIO(raw), header=header, names=None if header == 0 else names)
+    for col in ("open_time", "close_time"):  # Binance spot archives use microseconds from 2025
+        if col in d:
+            d[col] = d[col].where(d[col] < 10**14, d[col] // 1000)
+    return d
 
 
 def _parts(symbol: str, roots: Sequence[Path], kind: str, names) -> list[pd.DataFrame]:
