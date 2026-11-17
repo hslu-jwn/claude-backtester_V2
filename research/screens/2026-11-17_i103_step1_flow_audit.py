@@ -28,6 +28,7 @@ D1 = Path("data/cache/alpaca_1d")
 NPORT = Path("data/cache/sec_nport")
 LATE = Path("data/cache/alpaca_late")
 DEV_END = pd.Timestamp("2024-12-31")
+FIRST_LAUNCH = pd.Timestamp("2022-07-01")  # first single-stock leveraged ETF (AXS TSLQ) listed 2022-07-13
 NY = ZoneInfo("America/New_York")
 # company-named funds (T-Rex and others): name fragment -> underlying ticker
 NAMES = {
@@ -192,7 +193,7 @@ def late():
     unders = sorted(f.underlying.unique())
     fetch = alpaca.http_fetch(*alpaca.keys())
     alpaca.download_batch(sorted(set(f.fund)), "1Day", "2015-07-01", fetch, D1)
-    first = min(daily(x).index.min() for x in f.fund if daily(x) is not None)
+    first = FIRST_LAUNCH  # fund tickers can carry an older security's history (reused symbols)
     days = daily("SPY").index
     LATE.mkdir(parents=True, exist_ok=True)
     for d in days[(days >= first) & (days <= DEV_END)]:
