@@ -2,8 +2,8 @@
 
 Data (public, curl): Cboe CFE monthly VX daily settlements (archive CFE_<code><yy>_VX.csv, per-contract VX_<date>.csv),
 Cboe VIX_History.csv, Yahoo ^GSPC daily closes (hedge cell only) -> data/cache/vix/ (development rows only, to DEV_END).
-Steps: download, power (signal-free), run (development).
-Run: .venv/Scripts/python.exe research/screens/2026-11-18_i113_vix_basis_screen.py download | power | run
+Steps: download, power (signal-free), run (development); I-114 (card 9428854): test_download, test (short leg only).
+Run: .venv/Scripts/python.exe research/screens/2026-11-18_i113_vix_basis_screen.py download | power | run | test_download | test
 """
 
 import datetime as dt
@@ -17,6 +17,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path("data/cache/vix")
+TEST_ROOT = Path("data/cache/vix_test")
+TEST_START = pd.Timestamp("2021-09-14")
 ARCHIVE = "https://cdn.cboe.com/resources/futures/archive/volume-and-price/CFE_{code}{yy}_VX.csv"
 PER_CONTRACT = "https://cdn.cboe.com/data/us/futures/market_statistics/historical_data/VX/VX_{day}.csv"
 VIX_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
@@ -56,12 +58,12 @@ def parse(raw):
     )
 
 
-def download():
-    ROOT.mkdir(parents=True, exist_ok=True)
+def download(root=ROOT, end=DEV_END, first=(2005, 1), last=(2021, 10), spx_from="2005-01-01"):
+    root.mkdir(parents=True, exist_ok=True)
     vix = pd.read_csv(io.BytesIO(get(VIX_URL)))
     vix["day"] = pd.to_datetime(vix["DATE"], format="%m/%d/%Y")
-    vix[vix["day"] <= DEV_END][["day", "CLOSE"]].rename(columns={"CLOSE": "vix"}).to_csv(ROOT / "VIX.csv", index=False)
-    a, b = int(pd.Timestamp("2005-01-01").timestamp()), int((DEV_END + pd.Timedelta(days=1)).timestamp())
+    vix[vix["day"] <= end][["day", "CLOSE"]].rename(columns={"CLOSE": "vix"}).to_csv(root / "VIX.csv", index=False)
+    a, b = int(pd.Timestamp(spx_from).timestamp()), int((end + pd.Timedelta(days=1)).timestamp())
     chart = json.loads(get(SPX_URL.format(a=a, b=b), agent="Mozilla/5.0"))["chart"]["result"][0]
     spx = pd.DataFrame(
         {
@@ -69,11 +71,13 @@ def download():
             "spx": chart["indicators"]["quote"][0]["close"],
         }
     )
-    spx[spx["day"] <= DEV_END].dropna().to_csv(ROOT / "SPX.csv", index=False)
+    spx[spx["day"] <= end].dropna().to_csv(root / "SPX.csv", index=False)
     report = []
-    for year in range(2005, 2022):
+    for year in range(first[0], last[0] + 1):
         for month in range(1, 13):
-            if (year, month) > (2021, 10):
+            if (year, month) < first:
+                continue
+            if (year, month) > last:
                 break
             parts, settle_day = [], None
             raw = get(ARCHIVE.format(code=CODES[month - 1], yy=f"{year % 100:02d}"))
@@ -103,22 +107,25 @@ def download():
                 bad = int((abs(m.settle_x - m.settle_y) > 0.001).sum())
                 if bad:
                     report.append(f"{year}-{month:02d}: {bad} of {len(m)} overlapping settlements differ")
-            both = both[(both["day"] <= DEV_END) & (both["settle"] > 0)].sort_values("day")
-            both.to_csv(ROOT / f"VX_{settle_day.date()}.csv", index=False)
+            both = both[(both["day"] <= end) & (both["settle"] > 0)].sort_values("day")
+            both.to_csv(root / f"VX_{settle_day.date()}.csv", index=False)
     print("\n".join(report) or "all months found, overlaps agree")
 
 
 def calendar(vix_days):
-    """VIX trade dates to DEV_END, then weekdays (no NYSE holiday from 2021-09-14 to 2021-10-20)."""
-    extra = pd.bdate_range(DEV_END + pd.Timedelta(days=1), "2021-12-31")
+    """VIX trade dates, then weekdays (no NYSE holiday from 2021-09-14 to 2021-10-20; test: last date to 2027-01)."""
+    extra = pd.bdate_range(vix_days[-1] + pd.Timedelta(days=1), vix_days[-1] + pd.Timedelta(days=120))
     return pd.DatetimeIndex(vix_days).append(extra)
 
 
-def load():
-    vix = pd.read_csv(ROOT / "VIX.csv", parse_dates=["day"]).set_index("day")["vix"]
-    spx = pd.read_csv(ROOT / "SPX.csv", parse_dates=["day"]).set_index("day")["spx"]
+def load(roots=(ROOT,)):
+    """Later roots win: test files carry the full history of contracts the development files cut at DEV_END."""
+    vix = pd.concat(pd.read_csv(r / "VIX.csv", parse_dates=["day"]) for r in roots).drop_duplicates("day", keep="last")
+    vix = vix.set_index("day").sort_index()["vix"]
+    spx = pd.concat(pd.read_csv(r / "SPX.csv", parse_dates=["day"]) for r in roots).drop_duplicates("day", keep="last")
+    spx = spx.set_index("day").sort_index()["spx"]
     contracts = {}
-    for path in sorted(ROOT.glob("VX_*.csv")):
+    for path in sorted(p for r in roots for p in r.glob("VX_*.csv")):
         s = pd.read_csv(path, parse_dates=["day"]).set_index("day")["settle"]
         s = s.where(s.index >= REQUOTE, s / 10.0)
         contracts[pd.Timestamp(path.stem[3:])] = s
@@ -144,9 +151,9 @@ def front_table(vix, contracts):
     return df
 
 
-def trades(vix, contracts, front, threshold=THRESHOLD, lag=0, end=DEV_END):
+def trades(vix, contracts, front, threshold=THRESHOLD, lag=0, end=DEV_END, start=TRADE_START, sides=(-1, 1)):
     days = vix.index
-    out, i = [], days.searchsorted(TRADE_START)
+    out, i = [], days.searchsorted(start)
     while i < len(days):
         t = days[i]
         roll = front["roll"].get(t)
@@ -154,6 +161,9 @@ def trades(vix, contracts, front, threshold=THRESHOLD, lag=0, end=DEV_END):
             i += 1
             continue
         side = -1 if roll > 0 else 1
+        if side not in sides:
+            i += 1
+            continue
         k_in, k_out = i + lag, i + lag + HOLD
         if k_out >= len(days) or days[k_out] > end:
             break
@@ -295,5 +305,40 @@ def run():
     print(tr.nlargest(4, "net")[["entry", "exit", "side", "vix", "net", "net_h"]].to_string(index=False))
 
 
+def test_download():
+    download(TEST_ROOT, pd.Timestamp("2027-12-31"), first=(2021, 10), last=(2027, 1), spx_from="2021-01-01")
+
+
+def test():
+    vix, spx, contracts = load((ROOT, TEST_ROOT))
+    front = front_table(vix, contracts)
+    end = vix.index[-1]
+    w = front[front.index >= TEST_START]
+    print(f"test data: VIX to {end.date()}, missing front settles {int(w['f'].isna().sum())} of {len(w)} dates")
+    tr = trades(vix, contracts, front, start=TEST_START, end=end, sides=(-1,))
+    tr["net"] = tr["gross"] - COST
+    tr["hedge"], _ = hedge(tr, front, spx, contracts)
+    tr["net_h"] = tr["net"] + tr["hedge"]
+    n, m, t = stats(tr["net"])
+    no2 = np.sort(tr["net"].to_numpy())[:-2]
+    gates = {"net > 0": m > 0, "t >= 1.5": t >= 1.5, "doubled cost > 0": (tr["gross"] - 2 * COST).mean() > 0,
+             "without 2 best > 0": no2.mean() > 0}
+    print(line("I-114 short U (gated)", tr["net"]))
+    print(line("  gross", tr["gross"]))
+    print(line("  doubled cost", tr["gross"] - 2 * COST))
+    print(line("  without 2 best", no2))
+    for name, ok in gates.items():
+        print(f"  gate {name:<20} {'pass' if ok else 'FAIL'}")
+    verdict = "CONFIRMED lead" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED")
+    print("VERDICT:", verdict)
+    print("reported, not gated:")
+    lag = trades(vix, contracts, front, lag=1, start=TEST_START, end=end, sides=(-1,))
+    print(line("lag 1 day", lag["gross"] - COST))
+    print(line("H hedged", tr["net_h"]))
+    for year, g in tr.groupby(tr["exit"].dt.year):
+        print(f"  {year}  U {g['net'].sum():9.0f}  H {g['net_h'].sum():9.0f}  n {len(g):3d}")
+    print(tr.nsmallest(6, "net")[["entry", "exit", "vix", "net", "net_h"]].to_string(index=False))
+
+
 if __name__ == "__main__":
-    {"download": download, "power": power, "run": run}[sys.argv[1]]()
+    {"download": download, "power": power, "run": run, "test_download": test_download, "test": test}[sys.argv[1]]()
