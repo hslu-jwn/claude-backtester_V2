@@ -1408,3 +1408,5 @@ where I-73R found the funding but only a third of the price part?
 - **Power (card, before data):** long-short weekly sd 475-620 bp (Strategy 20's) on ~186 weeks: MDE at t 3 = 105-136
   bp; evidence +112 / +138 (17 perps), +63 (20 perps); expected t 1.4-3.0, pass chance ~20 %. The signal-free line
   (random-quintile weekly sd on this universe) is recorded below before the run.
+- **A2 (before the run):** index contracts (BTCDOM, DEFI, FOOTBALL, BLUEBIRD) and 1000x contracts stay in, as in
+  Strategy 20's universe (I-73R excluded index contracts only because its rule took the first 20 listings).
