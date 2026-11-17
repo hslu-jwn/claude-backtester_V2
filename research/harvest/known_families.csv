@@ -31,3 +31,4 @@ oil_carry,oil term structure;backwardation;contango;roll yield,parked,I68,needs 
 overnight_drift,overnight drift;overnight return;close to open,falsified,,cost-wall: net Sharpe -0.5
 execution,limit entry;passive execution;resting order,open,T20,cost side only
 index_review_auction,index review closing auction;rebalancing auction short;ftse review auction;msci rebalance close,falsified
+rates_month_end,treasury month end;index extension;duration extension;month-end treasury rally,open,I109,"harvest batch 16; distinct from turn_of_month (equity indices)"

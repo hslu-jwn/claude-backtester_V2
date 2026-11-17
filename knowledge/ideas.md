@@ -1690,3 +1690,27 @@ kill hit; halves +36.2 / -110.4; by year 2016 +164, 2017 -7, 2018 0, 2019 -59, 2
 insiders or >= USD 1 M) -70.0 (726) vs the rest -27.8: the bigger buys did worse. Mirror (sales >= USD 1 M, short):
 6,151 events, gross -13.6. Same pattern as I-106 one size class down. Second falsification in family
 `share_insider`: the family is closed (stop rules).
+
+### I-109 Treasury month-end duration extension (harvest batch 16, 2026-11-17; new family `rates_month_end`, venue rates: Treasury futures (goal 2) or bond ETFs (M13), not FTMO; rule fixed before any data)
+Mechanism: Treasury indices (Bloomberg US Treasury) rebalance on the last business day of the month; new issues enter
+and the index duration extends, so index funds and benchmarked managers must buy duration into month-end. A
+counterparty that must trade, on a known date. Sources read by Opus: ohlcv.io "The Treasury auction cycle, out of
+sample" (2026-10-22; futures 2010-2026: on the last three trade dates of a month ZT +1.2 bp a day (t 3.9), ZF +3.8
+(t 4.7), ZN +5.2 (t 4.1), UB +11.3 (t 3.5); three days chosen after seeing the chart; the same study finds the
+auction cycle of Lou, Yan & Zhang 2013 gone once month-end days are removed). Label PRACTITIONER / PUBLISHED, ADAPTATION.
+Not family `turn_of_month` (closed): that family tested US equity indices on cash / rebalancing flows; this is a
+different market and a different forced buyer (auto decision 44).
+- **Data:** FRED H.15 constant-maturity yields DGS10 (gated), DGS5 and DGS2 (reported), daily, 1990-01-02 ..
+  2021-09-13 (development; the test period is later). Price return per day r = -D * dy, D = modified duration of a
+  10-year par bond at the previous day's yield (closed form); carry ignored.
+- **Event:** each calendar month's last 3 trade dates (dates with a DGS10 value).
+- **Trade:** long 10-year duration from the close of the 4th-last trade date to the close of the last trade date.
+  Cost 2 bp of price per event round trip (ZN about one tick round trip, IEF about 1 bp a fill); doubled 4.
+- **Gated statistic (A1):** the event's excess return = its 3-day return minus 3 x the mean daily return of that
+  month's other trade dates (removes the 1990-2021 rally in bonds, which flatters any long); net = excess - cost.
+  t over months (one event per month, no overlap).
+- **Kills (one-sided, t 3.0):** net <= 0; t < 3.0; halves 1990-2005 / 2006-2021 not both > 0; doubled cost <= 0;
+  without the 2 best months <= 0. Reported, not gates: raw (unhedged) return, the last 2 days, placebo (the same
+  window 10 trade dates earlier), DGS5 and DGS2, by decade.
+- **Expected size:** ZN +15.6 bp per month-end in the blog; halved ~8 bp. **Power:** signal-free sd of the excess
+  over all months, recorded before the run.
