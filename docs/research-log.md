@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: monthly forward-log task scheduled (the user: "Yes, schedule it")
+
+- Claude scheduled task `monthly-forward-logs`, 3rd of each month 09:00 local, first run 2026-12-03 (prompt in
+  C:/Users/justi/.claude/scheduled-tasks/monthly-forward-logs/SKILL.md): MT5 update, Strategy 19 / 20 forward logs,
+  shelf update / log / status, FB-254 and card 5 checks, commit + push of research/forward/*.csv, Telegram.
+
 ## 2026-11-17: shelf logger built (the user: "Yes, build them")
 
 - `research/screens/2026-11-17_shelf_forward.py` (canary / update / log / status) for I-100, I-84, I-98, H11, I-71,

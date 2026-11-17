@@ -43,9 +43,10 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    top-100 book at 15 % notional per side passes ~96 % on realistic marks (44 % on a strict wick bound) in ~1.6 years;
    10 % per side ~99 % even on the wick bound but ~2.9 years. Questions to ask the firm are listed there. CFT's reverse-trading rule needs a check before a long-short basket. Before any fee: confirm the low-cap 5 % cap,
    drawdown type and basket fills with the firm.
-2. **Forward logs:** a monthly scheduled task for `crypto_carry --update --forward` and `crypto_flow --update --forward`,
-   plus the shelf (`research/screens/2026-11-17_shelf_forward.py update` then `log`, `status`; MT5 data for USDJPY /
-   UK100 current first), or Opus runs them by hand from about 2026-12-02.
+2. **Forward logs:** scheduled task `monthly-forward-logs` (the user's go 2026-11-17; 3rd of each month 09:00 local,
+   first run 2026-12-03, runs while the Claude app is open, else on next launch; saved in Auto mode): MT5 USDJPY /
+   UK100 update (needs the MT5 terminal), `crypto_carry` / `crypto_flow` forward incl. top-100 tranches, shelf
+   `update` / `log` / `status`, boundary checks, commit `research/forward/*.csv` + log entry, push, Telegram.
 3. ~~Crypto momentum~~: done 2026-11-15 in Mode=auto (I-97 killed, t 0.68; FB-009 / 011 / 220 closed).
 4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum); signal-research stop rule (K = 10
    falsified screens -> pause goal-1 signals; **K = 10 reached 2026-11-15**, research log); count test-period uses (t >= 3.0 from the 5th one-time test on a period).
