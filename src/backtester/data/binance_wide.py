@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import io
 import re
+import ssl
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
 from collections.abc import Callable, Sequence
@@ -15,7 +18,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-import requests
 
 ROOTS = (Path("data/cache/binance_wide"), Path("data/cache/binance_wide_test"))
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
@@ -80,9 +82,12 @@ def symbols(roots: Sequence[Path] = ROOTS) -> list[str]:
 
 
 def _fetch(url: str, params: dict | None = None) -> bytes:
-    response = requests.get(url, params=params, timeout=60)
-    response.raise_for_status()
-    return response.content
+    # standard-library TLS with the system certificate store (verification on): the venv's certifi bundle
+    # 2026.10.19 fails Binance's S3 / CDN chain while the Windows store verifies it (2026-11-17)
+    if params:
+        url = f"{url}?{urllib.parse.urlencode(params)}"
+    with urllib.request.urlopen(url, timeout=60, context=ssl.create_default_context()) as response:
+        return response.read()
 
 
 def _listing(prefix: str, fetch: Callable, delimiter: str | None = None):
