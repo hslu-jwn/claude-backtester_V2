@@ -1571,3 +1571,6 @@ American; Nordic Nasdaq rows dropped) map 89 % of development member-months (201
 names (PYPL, XLNX, FITB, ...) lack a ticker statement in Wikidata (A2: unrelated to returns). A3: a renamed article
 splits its views across titles (e.g. a company rename); the current title only is read, so a rename can make one
 spurious week.
+**I-104 power (2026-11-17, before the run, signal-free):** 1,514 articles read (106 without views); 284 weeks
+(2016-04-04 .. 2021-09-07), 674-~760 names a week with a signal (median 739, 74 % of the universe after the
+>= 100-view baseline); random-decile weekly sd 77 bp, se 4.6: |t| 3.3 needs 15 bp a week net (28 gross).
