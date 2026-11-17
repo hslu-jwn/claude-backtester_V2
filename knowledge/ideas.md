@@ -1657,3 +1657,24 @@ something every half-month); random-split sd 77 bp, se 6.8: |t| 3.3 needs 22 bp 
 130 half-months: gross (long no-fails, short high-fails) -31.0 bp, gross t -1.59. Cell A net -44.0, t -2.26 (M1
 FALSIFIED). Cell B (long high-fails) net +18.0, t 0.92, halves -12.9 / +49.8: the gain is 2020 +92 and 2021 +88
 (the squeeze era), 2017-2019 negative; t < 1.5, so not UNPROVEN-POSITIVE. First falsification in family `share_fails`.
+
+### I-108 Insider open-market purchases on US mid-caps, ranks 1,001-2,000 (user pick 2026-11-17 after I-106; family `share_insider`, venue M13; rule fixed before any data)
+I-106's mechanism where the literature puts the effect: smaller firms (Lakonishok & Lee 2001; Cohen, Malloy &
+Pomorski 2012; UNVERIFIED sizes). A new counted hypothesis in family `share_insider`, not a rescue: the universe is
+disjoint from I-106's (no name-month overlap), every other rule is I-106's word for word. Seen before this card:
+I-106's large-cap result (gross -38 bp, the 2019-2021 halves strongly negative); that weighs on the prior. A second
+falsification closes the family (stop rules). Label PUBLISHED finding, ADAPTATION. One-sided: |t| 3.0.
+- **Universe:** `docs/share-universe.md` rule with ranks 1,001-2,000 instead of 1-1,000 (same 60-session median dollar
+  volume, close > 5, >= 60 bars, de-duplication, fund filter, A4 exclusions), month of the filing date ->
+  `data/cache/alpaca_meta/universe_1001_2000.csv`.
+- **Data, event, trade, period, statistic:** I-106 unchanged (SEC Insider Transactions Data Sets 2016Q1 .. 2021Q3;
+  Form 4, code P, officer or director, >= USD 25,000 per filing, merged per issuer and filing date; long at the close
+  of the first trading day after the filing date for 20 trading days vs SPY; overlapping events per name skipped;
+  weekly means, Newey-West 4 lags).
+- **Cost (A1):** 10 bp per stock fill (half-spread ~7 + slippage 3 for names of roughly USD 5-30 M daily volume) + 1 bp
+  per SPY fill = 22 bp per event; doubled 44. Signal-free check in the power step: the Abdi-Ranaldo (2017)
+  close-high-low spread estimate, median over the universe name-months; if its half-spread median exceeds 7 bp, the
+  stock fill cost becomes that median + 3 bp (rule fixed now).
+- **Kills:** net <= 0; t < 3.0; halves 2016-2018 / 2019-2021 not both > 0; doubled cost <= 0; without the 2 best weeks
+  <= 0. Reported, not gates: dose (>= 2 insiders or >= USD 1 M vs the rest), the sales mirror, by year.
+- **Power:** signal-free event count and weekly-mean NW se, recorded before the run. Prior ~10 %.
