@@ -66,8 +66,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    book confirmed by week 104 with 29 %). Card 6 A done (`card6a_hyperliquid_audit.md`): 235 perps incl. 56 delisted with history; step B closed
    on data (4 weeks with 40 names); step C would have ~105 weeks (t 2 needs ~93-128 bp/week). Card 2 questions 1-2 (`card2_alpaca_audit.md`): Alpaca serves delisted names (20 of 20) and the
    official auction prints on the free plan; the inactive-assets list misses pre-2018 delistings. M13 accepted by the user 2026-11-17 (AGENTS.md › Venues). Card 2 done (`docs/share-universe.md`, 1,000 names a month 2016-04+); card 3 = I-101 KILLED
-   (gross t 0.16); card 4 = I-102 pre-registered, 30-min bars downloading. Card 7 split accepted by the user 2026-11-17 (dev to 2024-12-31, test 2025+). Waiting on the user: M1-M12,
-   AWS (card 6 C), contact string for EDGAR (card 7) and Wikimedia (card 9).
+   (gross t 0.16); card 4 = I-102 pre-registered, 30-min bars downloading. Card 7 split accepted by the user 2026-11-17 (dev to 2024-12-31, test 2025+). Contact for EDGAR / Wikimedia: the
+   user's e-mail (accepted 2026-11-17, stored in the Credential Manager). Waiting on the user: M1-M12, AWS (card 6 C).
 
 ## Next step
 

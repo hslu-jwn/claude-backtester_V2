@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: contact string accepted (the user: "Use my e-mail")
+
+- EDGAR and Wikimedia get the user's e-mail in the User-Agent; stored only in the Credential Manager
+  (`backtester-contact` / `email`), never in the repo (docs/share-universe.md › Contact string). Unblocks cards 7, 9.
+
 ## 2026-11-17: card 7 split accepted (the user: "Yes, card 7 split as proposed")
 
 - Card 7 (leveraged single-stock ETF rebalance into the close): development from the first fund launch to 2024-12-31,

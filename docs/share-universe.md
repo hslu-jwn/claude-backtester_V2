@@ -32,6 +32,12 @@ volumes known at the formation date.
    monthly universe; auction prints (`/v2/stocks/auctions`) for the same symbols when a card needs official open /
    close prices.
 
+## Contact string for public data services (rule set by the user, 2026-11-17)
+
+SEC EDGAR (card 7) and Wikimedia (card 9) ask automated clients for a contact in the User-Agent. They get the user's
+e-mail ("Use my e-mail"), read at run time from the Windows Credential Manager (`keyring`, service
+`backtester-contact`, user `email`); it is never written into the repo, logs or results. Only these two services.
+
 ## Splits for the cards (unchanged project split)
 
 Development before 2021-09-14, test after, once per card. Cards needing a mechanism that starts later state their
