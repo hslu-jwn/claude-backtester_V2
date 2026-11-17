@@ -1596,3 +1596,26 @@ opening auction print: 330 symbol-days (15 names, October 2026) differ by a medi
 exact). The development diagnostic (+12.9 bp) used the daily open, so part of it may be a first-print artefact (I-96
 noted the same risk). The frozen forward rule uses the official prints (auctions endpoint, condition Q / M, else O /
 6) for the open, the close and the previous close; the forward log decides.
+
+### I-106 Insider open-market purchases on the wide US share universe (Fable long-range item 3, 2026-11-17; new family `share_insider`, venue M13; rule fixed before any data)
+Mechanism: officers and directors buy their own stock with their own money when they think it is cheap; the
+information leaks into the price over the following weeks (Lakonishok & Lee 2001; Cohen, Malloy & Pomorski 2012,
+"opportunistic" insiders ~+80 bp a month, mostly small caps; UNVERIFIED here). Label PUBLISHED finding, ADAPTATION
+(top-1,000 large caps, where the effect is smaller). One-sided (the sign is the literature's): |t| 3.0.
+- **Data:** SEC "Insider Transactions Data Sets" (quarterly, Forms 3 / 4 / 5 as filed; tables SUBMISSION,
+  REPORTINGOWNER, NONDERIV_TRANS), 2016Q1 .. 2021Q3, fetched with the user's contact string. Prices: Alpaca daily
+  closes (data/cache/alpaca_1d); universe docs/share-universe.md (month of the filing date).
+- **Event:** a Form 4 with at least one non-derivative transaction code P (open-market purchase, acquired) by a
+  reporting owner who is an officer or a director, value (shares x price) >= USD 25,000 summed per filing; events of
+  one issuer on one filing date merge. Point in time: FILING_DATE.
+- **Trade:** long the stock at the close of the first trading day after the filing date, hold 20 trading days, exit
+  at the close; short SPY over the same window. Event return = stock return - SPY return (bp). A new event for a name
+  already held is skipped until that hold ends.
+- **Cost:** 3 bp per stock fill (2) + 1 bp per SPY fill (2) = 8 bp per event; doubled 16.
+- **Period:** development filings 2016-04-01 .. holds that end by 2021-09-13.
+- **Statistic:** events grouped by entry week; t of the weekly means with Newey-West (4 lags, the 20-day holds
+  overlap).
+- **Kills:** net <= 0; t < 3.0; halves 2016-2018 / 2019-2021 not both > 0; doubled cost <= 0; without the 2 best weeks
+  <= 0. Reported, not gates: dose (events with >= 2 insiders or >= USD 1 M vs the rest), the mirror (officer /
+  director sales code S >= USD 1 M: event return in the short direction), by year.
+- **Power:** from the signal-free event count and the 20-day abnormal-return dispersion, recorded before the run.
