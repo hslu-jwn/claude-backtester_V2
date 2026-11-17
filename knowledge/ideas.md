@@ -1886,3 +1886,21 @@ days, not the paper's nearest contract) +0.40 points. By year U: 2014-2016, 2018
 longs in crashes (2020-03-19 -$20.5k, 2008-11-20 -$13.1k) and 2018-02-05 (-$8.2k). Short leg by half: +$632 (t 3.73)
 / +$276 (t 2.42); long leg +$782 / -$400. Read: the roll premium is real and the paper's numbers hold in its window,
 but it roughly halved after publication and the long leg is crash noise. No rescue on development data.
+
+### I-114 VIX futures roll, short leg only: one independent check (2026-11-18, after I-113; family `vix_basis`, 2nd hypothesis; rule fixed before any test data)
+Auto decision 47. The short leg is the economic core of I-113 (ETPs and hedgers roll long VX in contango; Chan's
+-50 % a year roll), the long leg is crash noise. It was picked after seeing I-113's development result (one of two
+legs), so development cannot judge it: it gets exactly one independent check on data not yet downloaded, and is
+closed if that fails (lead rule). A pass is a confirmed lead with selection on record, weaker than a
+pre-registered pass; it would go to the shelf as a forward log and to HANDOFF (venue VX / VXM, money: the user).
+- **Rule (frozen):** I-113 cell U, short side only: each trade date t, front monthly VX with >= 10 business days to
+  settlement; daily roll = (settle - VIX close) / business days; roll > +0.10: short 1 VX at t's settlement, cover at
+  the settlement 5 trade dates later; one position at a time, earliest re-entry the trade date after an exit; roll
+  < -0.10 does nothing. Cost $60 per round trip, doubled $120. Same script and readers as I-113.
+- **Test period:** signals from 2021-09-14 (day after development) to the last VIX close in the file (~2026-11-16);
+  contracts settling 2021-10 .. 2027-01 as needed. Test data are downloaded only after this card is committed.
+- **Power:** development post-publication half: +$276 per trade, sd ~$1,440; ~100 trades in 5 years: se ~$144,
+  expected t ~1.9 (pass chance ~60 % if the post-publication size holds).
+- **Gates:** (1) net > 0; (2) t >= 1.5; (3) doubled cost > 0; (4) without the 2 best trades > 0. All four = CONFIRMED
+  lead; net > 0 with any other gate failing = NOT CONFIRMED (closed); net <= 0 = FALSIFIED (closed). No retest.
+  Reported: by year, worst trades (2024-08-05, 2025-04 sell-offs), lag 1 day, H hedged.
