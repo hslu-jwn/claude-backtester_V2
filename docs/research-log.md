@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 4 data path (share-universe A6 -> A7)
+
+- 30-min bars for 2,418 names would have taken ~14 h: Alpaca builds every timeframe from minute bars and pages by
+  10,000 underlying minutes (~3 weeks a symbol), so 1-hour bars are no faster. Card 4 needs two prices a day; they come
+  from one multi-symbol 1-min request per day and 500 names (09:57-10:03 ET), ~3 requests a day, before any intraday
+  data was read. Downloader gained an `end` date (test first). Full suite 6006 passed, ruff clean.
+- Auto decision 35: narrow per-day minute requests instead of full intraday history. Alternative: 14 h of 30-min bars
+  (all intraday cards later). Why: same trades for card 4, ~1 h; full history only if a later card needs it.
+
 ## 2026-11-17: card 2 universe built; I-101 (card 3, FINRA short volume) KILLED
 
 - Card 2: `docs/share-universe.md` frozen before any return (5163736); downloader batch mode (tests first, 9 pass);
