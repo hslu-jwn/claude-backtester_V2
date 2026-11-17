@@ -28,7 +28,9 @@ D1 = Path("data/cache/alpaca_1d")
 NPORT = Path("data/cache/sec_nport")
 LATE = Path("data/cache/alpaca_late")
 DEV_END = pd.Timestamp("2024-12-31")
-FIRST_LAUNCH = pd.Timestamp("2022-07-01")  # first single-stock leveraged ETF (AXS TSLQ) listed 2022-07-13
+FIRST_LAUNCH = pd.Timestamp(
+    "2022-07-01"
+)  # first single-stock leveraged ETF (AXS TSLQ) listed 2022-07-13
 NY = ZoneInfo("America/New_York")
 # company-named funds (T-Rex and others): name fragment -> underlying ticker
 NAMES = {
@@ -272,10 +274,12 @@ def audit():
             ):
                 continue
             r = abs(t.loc[u, "p1530"] / px.loc[d, "open"] - 1)
-            flow = sum(
-                (L * L - L) * aum[x].get(d, np.nan)
-                for x, L in zip(g.fund, g.L, strict=True)
-                if x in aum
+            flow = np.nansum(  # a fund without net assets that day (not launched / no report yet) adds 0
+                [
+                    (L * L - L) * aum[x].get(d, np.nan)
+                    for x, L in zip(g.fund, g.L, strict=True)
+                    if x in aum
+                ]
             )
             if np.isfinite(flow) and flow > 0:
                 rows.append((d, u, flow * r, t.loc[u, "dv_late"]))

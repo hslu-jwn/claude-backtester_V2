@@ -1515,3 +1515,14 @@ underlying continues in the day's direction from 15:30 to the close.
   without the 2 best dates <= 0; dose check: the mean at ratio >= 10 % not above the mean at 5-10 %.
 - **Power (card):** last-30-minute sd on such days ~90 bp (guess), ~300 date clusters: MDE ~16 bp; pass chance ~10 %.
   Step 2's power line from the step 1 counts, before any return.
+**I-103 step 1 result (2026-11-17, `research/screens/2026-11-17_i103_step1_flow_audit.py`, signal-free): GO.** 352
+single-stock funds found (Alpaca names), 280 with SEC N-PORT reports (quarterly public), 267 usable; in development
+(2022-07 .. 2024-12) 20 underlyings carry fund net assets on 5,517 name-days. Ratio >= 5 %: **338 name-days on 175
+dates** (2022: 1, 2023: 11, 2024: 326; COIN 133, TSLA 87, NVDA 65, MSTR 30, others <= 4); >= 10 %: 147. Median
+ratio 0.08 %, p90 2.5 %, p99 18 %. Caveats: net assets before a fund's first public report count as 0 and flows
+between reports are missed (both shrink F: a conservative count); 72 funds are not in SEC's ticker map (mostly
+2025-26 launches). Fixed during the audit before any return: a fund without net assets that day adds 0 (a NaN had
+dropped whole underlyings; first count was 5).
+**Step 2 assumptions (before any return):** A3 halves of development = the event dates split at their median date
+(326 of 338 events are in 2024, so calendar halves would leave 12 events in the first); A4 entry prices for the 175
+dates fetched as 15:29-15:31 minute bars (the step 1 files kept only the last price before 15:30 and the volume).
