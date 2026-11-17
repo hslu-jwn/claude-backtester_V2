@@ -1876,3 +1876,13 @@ ledger was ever run (HV-T0067 / T0083 parked as unfetchable; the data gap is now
 per-contract files; archive files for 2018 stop on 2018-02-23, so settlement dates come from Cboe's file names, all
 within 2 days of the exchange rule). 5-day front-VX P&L over all 3,695 start dates 2007-2021: sd $2,673 per contract;
 at ~350 trades se $143, t 3 needs ~$430 net. The halved paper size (~$400) gives t ~2.8: pass chance ~35-45 %.
+**I-113 development result 2026-11-18 (one look, `research/screens/2026-11-18_i113_vix_basis_screen.py run`):
+KILLED on t.** 359 trades 2007-01 .. 2021-09 (no missing front settlement): cell U net +$383 per contract (gross
++$443), t 2.19 < 3.0; every other gate passes: halves +$666 (2007-13) / +$148 (2014-21, t 0.59), doubled cost +$323,
+without the 2 best +$258, short +$433 (285 trades, t 4.40), long +$191 (74, t 0.25), lag 1 day +$382. Reported: H hedged
++$328 (t 2.69); paper window 2007-2011 short U 84 trades +$716 (paper 82, ~$656), H short +$555 (paper $539), H long
+37 trades +$1,108 (paper 42, $908): the paper reproduces on Cboe settlements. Basis canary 2006-2011 (front >= 10
+days, not the paper's nearest contract) +0.40 points. By year U: 2014-2016, 2018, 2019 negative; worst trades are
+longs in crashes (2020-03-19 -$20.5k, 2008-11-20 -$13.1k) and 2018-02-05 (-$8.2k). Short leg by half: +$632 (t 3.73)
+/ +$276 (t 2.42); long leg +$782 / -$400. Read: the roll premium is real and the paper's numbers hold in its window,
+but it roughly halved after publication and the long leg is crash noise. No rescue on development data.
