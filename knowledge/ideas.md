@@ -1761,3 +1761,7 @@ results, and TLT over 2016-04 .. 2021-08 (+38.6 bp raw, t 3.04, I-109's integrit
 **I-110 power (2026-11-17, before the run, signal-free):** DGS20 1993-10-04 .. 2021-08-31, 335 months; excess sd
 136.0 bp, se 7.4: t 3 needs 22.3 bp net (25.3 gross). Expected ~2x I-109's size (~35-40 bp; TLT +38.6 in the check
 months), halved ~20: pass chance ~50-60 %, mostly carried by I-109's evidence (same months).
+**I-110 development result 2026-11-17 (one look): PASSED every development gate.** 335 months: excess gross +32.4 bp
+per month-end, net +29.4, t 4.32; halves +24.9 / +34.1; doubled +26.4; without the 2 best +27.2. Reported: raw +29.5
+(t 4.61); last 2 days +26.4; placebo +15.4 (t 1.97); excess per event sd 0.260 (20-year) vs 0.248 (10-year, same
+months): the long end scales the size (1.57x) at about the same risk-adjusted edge.
