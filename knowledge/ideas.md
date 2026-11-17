@@ -1629,3 +1629,24 @@ halves +20.4 / -119.6; by year 2016 +44, 2017 -22, 2018 +43, 2019 -132, 2020 -12
 >= USD 1 M -28.7 (790) vs the rest -53.0. Mirror (short after officer / director sales >= USD 1 M): 12,118 events,
 gross -22.2 (the sold names outperformed). In the top 1,000 names insiders buy weakness that kept falling in
 2019-2021; the small-cap literature effect does not carry over. First falsification in family `share_insider`.
+
+### I-107 Fails-to-deliver intensity, half-monthly sort on the wide US share universe (Fable long-range item 3, 2026-11-17; new family `share_fails`, venue M13; rule fixed before any data)
+Mechanism, two readings: (a) persistent settlement fails mark short sellers who cannot borrow (hard-to-borrow,
+crowded shorts): the stock underperforms (Stratmann & Welborn 2016, UNVERIFIED); (b) fails mark short squeezes in
+the making: the stock outperforms. The sign is the test: two cells, |t| >= 3.3. Label PUBLISHED / ADAPTATION.
+Short interest (the companion card) is not testable on development: FINRA's free exchange-listed files start 2021-06.
+- **Data:** SEC fails-to-deliver files `cnsfails<YYYYMM>a/b` (settlement date, CUSIP, symbol, quantity, price),
+  2016-01 .. 2021-08, fetched with the user's contact string; Alpaca daily closes and volumes; universe
+  docs/share-universe.md.
+- **Point in time (A1, conservative):** the a-file (settlement days 1-15 of month M) is used from the first trading
+  day of month M+1; the b-file (16-end of M) from the first trading day on or after the 16th of M+1.
+- **Signal:** intensity = sum over the half-month of fails quantity x price / sum of the name's dollar volume over the
+  same settlement days (0 if the name has no fails).
+- **Trade:** at each availability day, among universe members (month of that day): high = top decile by intensity
+  (names with fails only), low = all names with zero fails in the half-month; cell A long low / short high (reading
+  a), cell B the mirror; equal weight; enter at that day's close, exit at the close of the next availability day.
+- **Cost (as I-101 per rebalance):** 13 bp per rebalance on the long-short unit; doubled 26.
+- **Period:** development rebalances 2016-04 .. the last exit before 2021-09-14.
+- **Kills (each cell):** |t| < 3.3; net <= 0; halves 2016-2018 / 2019-2021 not both > 0; doubled cost <= 0; without
+  the 2 best periods <= 0. Reported: the top decile's mean intensity, by year.
+- **Power:** signal-free line (random top-decile vs zero-fails split) recorded before the run.
