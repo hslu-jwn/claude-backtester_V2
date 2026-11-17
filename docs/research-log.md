@@ -4,6 +4,33 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-16: idea sweep: 8 web scouts + Fable post-mortem and directions (the user: "run it here")
+
+- Last Fable day (CLAUDE.md › Advisor). Opus wrote a context pack; 8 Sonnet scouts (shares / ETFs, futures, crypto,
+  replication literature, FX, free alternative data, cross-asset + portfolio, 2024-26 papers) swept the web in
+  parallel (~2-3 min each, search snippets only, effect sizes UNVERIFIED). Fable 5.2 (subagent, model `fable`) wrote
+  part 1 (post-mortem, ~9 min) and part 2 (ranking + cards, ~15 min). All in `knowledge/reviews/2026-11-16-idea-sweep/`.
+- Fable's model: profit needs IC (0.03-0.07 for every real effect here) > c = round-trip cost / sd over the hold;
+  proof needs IC x sqrt(name-periods) >= 3. Crypto weekly sorts c ~0.006; FTMO CFD cells c 0.03-0.13. One independent
+  survivor (Strategy 20); I-83 / FB-017 are the same bet, I-73 passed only on a pooled t. Goal-1 FTMO edge in 3 more
+  months: 3-5 %. Suggested weight 10 % goal 1, 50 % crypto, 30 % wide US shares, 10 % method.
+- Scouts: no new price idea clears c on FTMO; ~60 items closed one line each (duplicates, c, power). What survives
+  are data sets: FINRA daily short volume (Fable verified free, no key, 2018-08+ consolidated, 2012+ per facility),
+  wide Alpaca shares (delisted coverage unconfirmed), Hyperliquid (S3 requester-pays), Wikipedia views.
+- Cards 0-9 (Strategy 20 regime / tail audit; wide funding carry on ~200 unseen perps; Alpaca wide-universe audit;
+  FINRA short-volume sort; I-96 rule on real shares; pre-registered crypto book forward; Hyperliquid replication;
+  leveraged single-stock ETF close flow; retail positioning collector; Wikipedia attention sort). Expected yield of
+  the week ~0.4 new passed streams. Method proposals M1-M13 and venue M13 -> HANDOFF › Open 7 (rules: the user's).
+- Note: Fable wrote before seeing I-99's result (killed today); cards 3, 4, 7, 9 are on real shares (M13), not CFDs.
+
+## 2026-11-17: Alpaca download complete; ledger hygiene
+
+- `data/cache/alpaca`: 61 symbols (15 ETFs, 46 FTMO shares) 2016-01..2026-11, 5.0 GB; empty months only before a
+  listing (ARM, PLTR, ZM, XLC, SPCX) and SNOW's reused-ticker gap 2017-08..2020-08. Alpaca history starts 2016-01.
+- `research/ledger.csv`: three rows (HV-T0020-3, HV-T0072-1, HV-T0094-1) had unquoted commas in the notes (24 / 21 /
+  23 fields); the notes are now one quoted field, no text changed; pandas reads all 190 rows again.
+- Loop stopped: waiting for the user's pick (real-broker shares, paid futures data, or End.).
+
 ## 2026-11-16: I-99 shock reversal killed; SHARES family closed (auto)
 
 - One look on Alpaca M1, 2,662 events: gross -2.0 bp, net -9.5, t -2.47, halves both negative, mirror negative too.
