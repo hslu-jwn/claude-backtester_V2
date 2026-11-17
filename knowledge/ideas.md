@@ -1714,3 +1714,6 @@ different market and a different forced buyer (auto decision 44).
   window 10 trade dates earlier), DGS5 and DGS2, by decade.
 - **Expected size:** ZN +15.6 bp per month-end in the blog; halved ~8 bp. **Power:** signal-free sd of the excess
   over all months, recorded before the run.
+**I-109 power (2026-11-17, before the run, signal-free):** FRED DGS10 1990-01-03 .. 2021-09-13, 381 months; excess sd
+87.4 bp for 3-day windows 5-14 trade dates before month-end; se 4.5: t 3 needs 13.4 bp net (15.4 gross). The blog's
+ZN size scaled to 10-year duration is ~20 bp, halved ~10: pass chance ~25-35 %. FRED needs curl's own user agent.
