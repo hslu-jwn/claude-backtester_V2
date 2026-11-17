@@ -1795,3 +1795,7 @@ the screen is a replication with FTMO costs, not a discovery.
   Reported: gross, the paper's paired leg (p x (US500 - bond)), without 2020-02-20 .. 2020-04-30, mean |p|.
 - **Power:** permutation of S across days (signal-free), recorded before the run. One-time test rule fixed after a
   development pass, before any test data.
+**I-111 power (2026-11-17, before the run, signal-free):** 2,700 days 2010-11-16 .. 2021-09-13 (the histdata US500
+pre-sample starts 2010-11-16); S sd 0.43 %, mean |p| 0.29; permuted gross sd 38 bp a day, se of the mean 0.58 bp:
+t 3 needs 1.74 bp a day net. The paper's size at this scale ~4.5 bp a day gross (halved ~2.3); FTMO swap and fills
+~1 bp a day: pass chance ~25-35 %.
