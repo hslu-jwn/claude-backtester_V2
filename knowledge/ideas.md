@@ -1835,3 +1835,40 @@ months: net +2.5 bp per month-end, t 1.00; halves -2.0 / +7.1; doubled +0.5; wit
 0.48 / 0.56 / 0.16. Euro and UK lean the US way at less than half its size; Japan does not. No rescue (dropping Japan
 would be a new, counted hypothesis on seen data). I-109's month-end effect looks mostly US-specific (the US Treasury
 index rebalancing and its trackers), which is consistent with the mechanism but gives no second market.
+
+### I-113 VIX futures basis: short in contango, long in backwardation (2026-11-18, Fable row 16 / scout 2 #8; new family `vix_basis`, venue Cboe VX / VXM futures (goal 2), not FTMO; rule fixed before any VX data)
+Mechanism: hedgers and VIX ETPs (VXX and peers roll front into second month every day) are structural buyers of VIX
+futures as crash insurance; the futures basis then prices a risk premium, not the expected VIX path, and futures
+converge to spot at settlement. Sources read by Opus: Simon & Campasano, "The VIX Futures Basis: Evidence and Trading
+Strategies" (EFMA 2013 paper, 2012-08-16 draft, full text): basis has no forecast power for VIX but forecasts VX
+returns ~one for one (Table 3); rule p. 14-16; 2007-2011 results Table 4: short 82 trades +$539 hedged / +$656
+unhedged per contract, long 42 trades +$908 hedged / ~+$1,040 unhedged, after ~$60 round-trip costs; "the roll
+accounts for the profits". Chan *Algorithmic Trading* ch. 5: VX roll about -50 % a year. Label PUBLISHED, sample
+2006-2011 inside our development window (only 2012+ is post-publication). Not a closed family: no VIX row in the
+ledger was ever run (HV-T0067 / T0083 parked as unfetchable; the data gap is now closed by Cboe's free files).
+- **Data:** Cboe CFE daily settlements of the monthly VX contracts (archive files `CFE_<month><yy>_VX.csv` to 2013,
+  per-contract files `VX/VX_<settlement date>.csv` after; weekly contracts excluded; settlements before 2007-03-26
+  divided by 10, the old 10x quote); VIX close (Cboe `VIX_History.csv`). Hedge cell only: S&P 500 index closes (Yahoo
+  `^GSPC`), as a stand-in for ES. Development: trades opened 2007-01-02 .. exited by 2021-09-13 (2006 data only to
+  estimate the first hedge ratio, as the paper). Test data (later dates) not downloaded before the test rule is fixed.
+- **Rule (paper's baseline, Table 4):** each trade date t, take the front monthly VX with >= 10 business days to its
+  settlement (business days = VX trade dates in (t, settlement]); daily roll = (settle_t - VIX_t) / business days.
+  Roll > +0.10: short 1 VX at t's settlement; roll < -0.10: long 1 VX. Exit at the settlement 5 trade dates later,
+  same contract. One position at a time; earliest re-entry the trade date after an exit (assumption: the paper's
+  "trades are entered at the end of the next day that entry conditions are triggered").
+- **Cells (2):** U = unhedged VX (gated; one leg, tradable as VX or 1/10-size VXM); H = hedged with the paper's
+  eq. 3-4 S&P hedge ratio, fitted on all prior calendar years (expanding), fixed at entry (reported, not gated:
+  index closes are 15 minutes earlier than VX settlements and not ES).
+- **Cost:** $60 per round trip per contract (the paper's average incl. a full bid-ask spread; VX tick 0.05 = $50);
+  doubled $120. Settlement prices stand in for the paper's first <= 0.10-wide quote after 15:00 CT (assumption).
+- **Gated statistic:** mean net $ per trade of cell U, t over trades (no overlap by construction).
+- **Kills (one-sided, t 3.0):** net <= 0; t < 3.0; halves 2007-2013 / 2014-2021 not both > 0 (the 2nd half is wholly
+  post-publication); doubled cost <= 0; without the 2 best trades <= 0; breadth: short trades or long trades net <= 0;
+  lag: entry and exit one trade date later (signal at t, fills at t+1 settlements) net <= 0.
+  Reported, not gates: cell H; the paper's window 2007-2011 (canary: about 82 short / 42 long trades, short ~+$650
+  unhedged); basis summary 2006-2011 against the paper's Table 1 (front basis mean +0.14 points, deciles +2.01 /
+  -1.40); by year; worst trades (2008, 2018-02, 2020-03); the 0.15 threshold the paper mentions (footnote 13).
+- **Expected size:** unhedged ~+$650 short / ~+$1,040 long per trade in 2007-2011; halved ~+$400 per trade, on a
+  contract of ~$15-25k notional (~2 % of notional per 5-day trade). **Power:** signal-free sd of the 5-day unhedged
+  front-VX P&L over all start dates, recorded before the run.
+- **One-time test:** rule fixed before any test data, only after a development pass.
