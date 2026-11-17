@@ -947,4 +947,6 @@ costs apply forward; I-105 I-102's diagnostic). Logs `research/forward/shelf_<ro
 (`backtester.tools.forward_log`: a recomputed logged period must be identical). Forward starts: crypto weeks from
 Monday 2026-11-23, H11 / I-71 / I-105 from 2026-11-18. Data: `update` appends complete Binance months (perps, spot of
 the perp symbols), rebuilds the forward share universe and fetches the official auction prints; H11 / I-71 read the
-MT5 cache, which the MT5 download keeps current. Strategy 19 keeps its own log (`crypto_carry --forward`).
+MT5 cache, which the MT5 download keeps current. I-109 (Treasury month-end, PASSED its one-time test 2026-11-17)
+logs two rows from the 2026-11 month-end: `shelf_i109` (the registered FRED DGS10 statistic) and `shelf_i109_ief`
+(the tradable IEF window); canaries reproduce the development and test headlines. Strategy 19 keeps its own log (`crypto_carry --forward`).

@@ -79,8 +79,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    duration over each month's last 3 trade dates (Treasury index duration extension). Dev 1990-2021 net +18.4 bp per
    month-end (t 4.42); test 2021-10 .. 2026-10 net +24.9 (t 2.14), IEF real closes +23.2 (t 2.54); test not blind
    (a 2026 blog covered the period). ~3 days a month in the market; FTMO lists no bonds, so the venue is Treasury
-   futures (ZN / UB) or bond ETFs (goal 2): **the user decides on a venue / account**. Opus next: a frozen IEF forward
-   log on the shelf; a duration-scaled sizing note (UB ~2x ZN). Card `knowledge/ideas.md` I-109, ledger I109.
+   futures (ZN / UB) or bond ETFs (goal 2): **the user decides on a venue / account**. Forward logs built 2026-11-17
+   (`shelf_i109` DGS10, `shelf_i109_ief` IEF; first month-end 2026-11-30, logged by the 2026-12-03 task). Card `knowledge/ideas.md` I-109, ledger I109.
 
 ## Next step
 

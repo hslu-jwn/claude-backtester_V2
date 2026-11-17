@@ -1739,3 +1739,6 @@ doubled cost +22.9; IEF real closes raw +23.2 bp (t 2.54). By year 2021 (3 month
 2024 +25.0, 2025 +16.3, 2026 -7.8. Development + test: the same sign in both, net ~+19-25 bp per month-end on
 10-year duration, about 3 days a month in the market. Not blind (see the test rule). Next: a frozen IEF forward log on
 the shelf (M3) and the user's decision on a venue (Treasury futures ZN / bond ETFs, goal 2; FTMO lists no bonds).
+Note 2026-11-17 (after the test): the development run counted the partial month 2021-09 (window 9-13 Sep, not a
+month-end); without it 380 months, net +18.4, t 4.39: no change. Forward logs `shelf_i109` (DGS10, registered
+statistic) and `shelf_i109_ief` (IEF raw) from the 2026-11 month-end; complete months only.

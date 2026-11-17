@@ -101,9 +101,9 @@ def run():
     print("reported: net by decade", dec.to_dict("index"))
 
 
-def etf(symbol, start, end):
+def etf(symbol, start, end, root=Path("data/cache/alpaca_1d")):
     """Daily log return (bp) of Alpaca split-adjusted closes (ex-dividend days fall outside the window)."""
-    d = pd.read_csv(f"data/cache/alpaca_1d/{symbol}.csv", usecols=["ts", "close"])
+    d = pd.read_csv(root / f"{symbol}.csv", usecols=["ts", "close"])
     day = pd.to_datetime(d.ts, utc=True).dt.tz_convert("America/New_York").dt.tz_localize(None).dt.normalize()
     c = pd.Series(d.close.to_numpy(float), index=day).loc[start:end]
     return (np.log(c).diff() * 1e4).dropna()

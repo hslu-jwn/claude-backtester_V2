@@ -13,6 +13,10 @@ closing auction prints (Alpaca auctions endpoint), universe formed monthly from 
 Canaries: crypto rows reproduce net and t; H11 and I-71 reproduce trade counts and gross (their cost tables changed
 after registration; today's costs apply forward); I-105 reproduces I-102's diagnostic on the development table
 (daily opens; forward uses the official prints, knowledge/ideas.md I-105).
+I-109 Treasury month-end (PASSED its one-time test; per month-end, bp): shelf_i109 = the registered DGS10 excess
+statistic (FRED, re-downloaded), shelf_i109_ief = the tradable raw IEF window (Alpaca daily, data/cache/
+alpaca_1d_rates_fwd); forward from the 2026-11 month-end; a month counts once the next month has data. Canaries:
+DGS10 dev (381, +18.4, t 4.42) and IEF test (61, +23.2).
 Run: .venv/Scripts/python.exe research/screens/2026-11-17_shelf_forward.py canary | update | log | status
 """
 
@@ -51,6 +55,7 @@ wave1 = _load("wave1", "research/screens/2026-11-15_wave1_xs_crypto_screen.py")
 i98 = _load("i98", "research/screens/2026-11-15_i98_basis_carry_screen.py")
 i102 = _load("i102", "research/screens/2026-11-17_i102_open_reversal_screen.py")
 card2 = _load("card2", "research/screens/2026-11-17_card2_share_universe.py")
+i109 = _load("i109", "research/screens/2026-11-17_i109_treasury_month_end_screen.py")
 
 FORWARD = Path("research/forward")
 SPOT_DEV = Path("data/cache/binance_wide_spot/klines_1d")
@@ -65,6 +70,8 @@ UNI_HIST = Path("data/cache/alpaca_meta/universe.csv")
 META_F, D1F = Path("data/cache/alpaca_meta_fwd"), Path("data/cache/alpaca_1d_fwd")
 AUCT = Path("data/cache/alpaca_auctions_fwd")
 LONDON = ZoneInfo("Europe/London")
+RATES_START = pd.Period("2026-11", "M")  # I-109: first month-end after the test (window 2026-11-24 .. 11-30)
+RATES_FWD = Path("data/cache/alpaca_1d_rates_fwd")
 
 
 def spot_frames(roots):
@@ -258,6 +265,23 @@ def rows_i105(t, members, start):
     return out
 
 
+def rows_i109(r, start, last, excess):
+    """I-109 per month-end (bp): months start .. before `last` (a month counts once the next one has data).
+    excess=True: the registered DGS10 statistic; False: the tradable raw window return (IEF)."""
+    e = i109.months(r)
+    e = e[(e.index >= start) & (e.index < last)]
+    col = e.excess if excess else e.raw
+    return [
+        {"period": str(p), "n": 1, "gross_bp": g, "net_bp": g - i109.COST} for p, g in col.items()
+    ]
+
+
+def rates_update():
+    i109.download()  # whole FRED series again
+    shutil.rmtree(RATES_FWD, ignore_errors=True)
+    alpaca.download_batch(["IEF"], "1Day", "2026-07-01", alpaca.http_fetch(*alpaca.keys()), RATES_FWD)
+
+
 def members_of(path):
     return pd.read_csv(path).groupby("month").symbol.apply(list).to_dict()
 
@@ -379,6 +403,13 @@ def canary():
         f"I-105 dev (daily opens): {len(gg)} days, gross {gg.mean():+.2f}, t {tg:.2f} (I-102 diagnostic +12.89, 3.94)"
     )
     assert abs(gg.mean() - 12.89) < 0.01 and abs(tg - 3.94) < 0.01
+    n, mu, t = summary(rows_i109(i109.returns("DGS10"), pd.Period("1990-01", "M"), pd.Period("2021-10", "M"), True))
+    print(f"I-109 dev (DGS10): {n} months, net {mu:+.1f}, t {t:.2f} (registered 381, +18.4, 4.42)")
+    assert n == 381 and abs(mu - 18.4) < 0.05 and abs(t - 4.42) < 0.005
+    r = i109.etf("IEF", "2021-09-14", "2026-10-31")
+    n, mu, _ = summary(rows_i109(r, pd.Period("2021-10", "M"), pd.Period("2026-11", "M"), False))
+    print(f"I-109 test (IEF raw): {n} months, gross {mu + i109.COST:+.1f} (registered 61, +23.2)")
+    assert n == 61 and abs(mu + i109.COST - 23.2) < 0.05
     print("CANARY OK")
     return d
 
@@ -390,6 +421,7 @@ def update():
     )
     binance_wide.update(binance_wide.ROOTS[-1], month)
     binance_wide.update_spot(SPOT_FWD, binance_wide.symbols(), month, start_after="2026-09")
+    rates_update()
     share_update()
 
 
@@ -413,6 +445,13 @@ def log():
     print(
         f"i71: {len(e)} forward events, {forward_log.append(FORWARD / 'shelf_i71.csv', e, COLS)} appended"
     )
+    dgs = i109.returns("DGS10", "2026-10-01", "2100-01-01")
+    for name, r, excess in (
+        ("i109", dgs, True),
+        ("i109_ief", i109.etf("IEF", "2026-10-01", "2100-01-01", RATES_FWD) if (RATES_FWD / "IEF.csv").exists() else dgs[:0], False),
+    ):
+        rows = rows_i109(r, RATES_START, r.index[-1].to_period("M"), excess) if len(r) else []
+        print(f"{name}: {len(rows)} forward month-ends, {forward_log.append(FORWARD / f'shelf_{name}.csv', rows, COLS)} appended")
     if (AUCT / "auctions.csv").exists():
         members = {**members_of(UNI_HIST), **members_of(META_F / "universe.csv")}
         r = rows_i105(share_table(), members, SHARE_START)

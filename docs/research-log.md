@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-109 forward logs built (the user: "Yes, build it")
+
+- Shelf logger: `rows_i109` + `rates_update` (FRED re-download, IEF daily into data/cache/alpaca_1d_rates_fwd);
+  logs `shelf_i109` (registered DGS10 statistic) and `shelf_i109_ief` (tradable IEF window) from the 2026-11
+  month-end, complete months only. Canaries reproduce dev (381, +18.4, t 4.42) and test (IEF 61, +23.2); all other
+  canaries still pass; `log` appends 0 rows today. Monthly task description updated (its prompt already runs the
+  shelf). Found on the way: the dev run counted the partial month 2021-09; without it t 4.39 (no change). Opus inline.
+
 ## 2026-11-17: harvest batch 16 (rates, US share flows); I-109 Treasury month-end PASSED its one-time test (the user: "New idea search")
 
 - Harvest tool: market codes RATES and SHARE-US (test first); batch 15 rows closed in tasks.csv. Batch 16: 8 Codex
