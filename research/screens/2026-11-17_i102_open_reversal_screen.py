@@ -137,7 +137,7 @@ def run(ws):
     dec = []
     for _, f in ws:
         f = f.reset_index(names="sym").sort_values(["s", "sym"], kind="mergesort")
-        dec.append([x.r.mean() for x in np.array_split(f, 10)])
+        dec.append([f.r.iloc[i].mean() for i in np.array_split(np.arange(len(f)), 10)])
     print(
         "deciles of s, mean 10:00 -> close (bp, 1 = lowest):",
         np.round(np.mean(dec, axis=0), 1).tolist(),

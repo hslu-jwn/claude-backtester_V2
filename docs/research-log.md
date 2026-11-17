@@ -4,6 +4,22 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: card 2 universe built; I-101 (card 3, FINRA short volume) KILLED
+
+- Card 2: `docs/share-universe.md` frozen before any return (5163736); downloader batch mode (tests first, 9 pass);
+  FINRA monthly symbol lists (curl: FINRA's CDN refuses Python's default client) + Alpaca daily bars of 23,756
+  candidates (1.8 GB); universe 2016-04 .. 2026-12, 1,000 names a month, 2,418 symbols, ~220 (2016) .. ~120 (2021)
+  delisted members a month caught through FINRA. 30-min bars for the union downloading (card 4).
+- I-101: pre-registered (5ebefb7), FINRA development files complete, power before the run (sd 72, se 4.4). Result:
+  gross +0.8 bp/week (t 0.16), deciles flat; both cells KILLED (A t -2.55, B t -2.88). Ledger I101. Opus inline.
+- Auto decision 32 (A4, A5 of the universe): exclude 13 delisted ETPs / non-common symbols found by reading all 532
+  no-asset members; start 2016-04 (Alpaca history). Alternative: keep them / a fund master file. Why: before any
+  return; hand review of 532 names is complete for this build.
+- Auto decision 33: I-101 cost 13 bp a week on the long-short unit (both legs: 2 fills x 3 bp + 0.6 borrow).
+  Alternative: the card's literal "7 ... doubled 14". Why: the card's own arithmetic gives ~7 per side; the
+  conservative reading. Moot: gross was +0.8.
+- Auto decision 34: two-sided cards at |t| 3.3 (M9 wording) without waiting for M9. Alternative: 3.0. Why: stricter.
+
 ## 2026-11-17: M13 accepted (the user: "Yes, accept M13")
 
 - Real US shares are a research venue under goal 2 (AGENTS.md › Venues, rule set by the user 2026-11-17). Unlocks

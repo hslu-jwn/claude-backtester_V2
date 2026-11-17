@@ -1479,3 +1479,9 @@ A5: Alpaca history starts 2016-01), so both development periods start with April
 **I-101 power (2026-11-17, before the run, signal-free, `power`):** 271 weeks (2016-04-04 .. 2021-09-07; weeks whose
 window or baseline spans 2018-08-01 skipped), 977-~990 names a week; random-decile weekly sd 72 bp, se 4.4 bp:
 |t| 3.3 needs 14 bp a week net (27 bp gross at 13 bp cost). Better powered than the card's guess (sd 100-150).
+**I-101 result 2026-11-17 (one look, `research/screens/2026-11-17_i101_short_volume_screen.py run`): KILLED, both
+cells.** 271 weeks, ~987 names: gross spread (long low SVR, short high) +0.8 bp a week, gross t 0.16. Cell A net -12.2
+(t -2.55), cell B net -13.8 (t -2.88); every kill hit in both. Deciles 1..10 of SVR earn 33.6, 34.6, 33.4, 33.9, 35.3,
+32.0, 31.2, 36.7, 37.4, 32.8 bp the next week: flat. Well powered (se 4.4 bp): the weekly off-exchange short-volume
+ratio carries no cross-sectional information about next week's return in the top 1,000 names, in either reading.
+First falsification in family `share_flow`.

@@ -199,7 +199,7 @@ def run(ws):
     dec = []
     for _, f in ws:
         f = f.reset_index(names="sym").sort_values(["sig", "sym"], kind="mergesort")
-        dec.append([x.ret.mean() for x in np.array_split(f, 10)])
+        dec.append([f.ret.iloc[i].mean() for i in np.array_split(np.arange(len(f)), 10)])
     print(
         "\ndecile mean next-week return (bp, 1 = lowest SVR):",
         np.round(np.mean(dec, axis=0), 1).tolist(),
