@@ -216,3 +216,12 @@ def test_plan_uses_search_words_not_codes(tmp_path):
     harvest.plan(["AGG.IDX-US.SWING.FLOW"], tasks)
     queries = next(csv.DictReader(tasks.open(encoding="utf-8")))["queries"]
     assert "US stock index rebalancing flows" in queries and "IDX-US" not in queries
+
+
+def test_plan_knows_rates_and_us_share_markets(tmp_path):
+    # M13 (real US shares and ETFs) and goal 2 (futures incl. rates) need their own market codes
+    tasks = tmp_path / "tasks.csv"
+    harvest.plan(["ACAD.RATES.SWING.FLOW", "BLOG.SHARE-US.SWING.EVENT"], tasks)
+    queries = [r["queries"] for r in csv.DictReader(tasks.open(encoding="utf-8"))]
+    assert "Treasury bond rebalancing flows" in queries[0]
+    assert "US stocks ETFs scheduled release" in queries[1] and "SHARE-US" not in queries[1]

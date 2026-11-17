@@ -38,7 +38,7 @@ SOURCES = {
     "BROKER": ("broker and prop-firm pages", 'FTMO dividend index CFD adjustment',
                'CFD rollover futures expiry schedule', 'prop firm prohibited strategies list'),
 }
-MARKETS = {"FX-MAJ", "FX-CROSS", "IDX-US", "IDX-INTL", "METAL", "ENERGY", "CRYPTO"}
+MARKETS = {"FX-MAJ", "FX-CROSS", "IDX-US", "IDX-INTL", "METAL", "ENERGY", "CRYPTO", "RATES", "SHARE-US"}
 HORIZONS = {"INTRA", "SWING", "POS"}
 MECHANISMS = {"FLOW", "EVENT", "CARRY", "TREND", "REVERSAL", "VOL", "CROSS", "MICRO"}
 FLAGS = {"sells_course", "no_test_period", "single_example", "tiny_sample", "needs_discretion",
@@ -50,7 +50,7 @@ UA = "backtester-harvest/0.1"
 WORDS = {  # search words for the key codes (raw codes are poor queries)
     "FX-MAJ": "major FX", "FX-CROSS": "FX crosses", "IDX-US": "US stock index",
     "IDX-INTL": "DAX FTSE Nikkei index", "METAL": "gold silver", "ENERGY": "crude oil",
-    "CRYPTO": "bitcoin", "FLOW": "rebalancing flows", "EVENT": "scheduled release",
+    "CRYPTO": "bitcoin", "RATES": "Treasury bond", "SHARE-US": "US stocks ETFs", "FLOW": "rebalancing flows", "EVENT": "scheduled release",
     "CARRY": "carry term structure", "TREND": "trend following", "REVERSAL": "reversal",
     "VOL": "volatility", "CROSS": "lead lag", "MICRO": "market microstructure",
 }
