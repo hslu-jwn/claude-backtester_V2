@@ -63,24 +63,24 @@ equal-risk mix: worst week -3.52 own-sd units vs -5.06 for the worse single stre
 | S20 top-100 | all | 333 | +168.9 | +144.3 | 4.76 | +109.9 | +88.2 | 3.84 | 0.65 |
 
 (e) deflated Sharpe (probability the true Sharpe is > 0 after the best-of-N selection)
-trial counts from the ledger (family_budget look stages, cells summed): {'family crypto_xs_factors': 7, 'all crypto families': 32, 'whole ledger': 1665}
-| series | weeks | yearly Sharpe | skew | kurtosis | N = 7 (family crypto_xs_factors): hurdle / DSR | N = 32 (all crypto families): hurdle / DSR | N = 1665 (whole ledger): hurdle / DSR |
+trial counts from the ledger (family_budget look stages, cells summed): {'family crypto_xs_factors': 7, 'all crypto families': 33, 'whole ledger': 1666}
+| series | weeks | yearly Sharpe | skew | kurtosis | N = 7 (family crypto_xs_factors): hurdle / DSR | N = 33 (all crypto families): hurdle / DSR | N = 1666 (whole ledger): hurdle / DSR |
 |---|---|---|---|---|---|---|---|
-| S20 full dev | 186 | 1.71 | +1.51 | 7.9 | 0.73 / 0.984 | 1.11 / 0.907 | 1.80 / 0.426 |
-| S20 full test | 147 | 2.24 | +0.54 | 3.5 | 0.82 / 0.994 | 1.25 / 0.960 | 2.02 / 0.650 |
+| S20 full dev | 186 | 1.71 | +1.51 | 7.9 | 0.73 / 0.984 | 1.12 / 0.904 | 1.80 / 0.426 |
+| S20 full test | 147 | 2.24 | +0.54 | 3.5 | 0.82 / 0.994 | 1.26 / 0.959 | 2.02 / 0.650 |
 | S20 full all | 333 | 1.90 | +1.27 | 7.3 | 0.55 / 1.000 | 0.83 / 0.999 | 1.34 / 0.946 |
-| S20 full all, capped | 333 | 1.40 | +0.85 | 5.1 | 0.55 / 0.989 | 0.83 / 0.937 | 1.34 / 0.558 |
+| S20 full all, capped | 333 | 1.40 | +0.85 | 5.1 | 0.55 / 0.989 | 0.83 / 0.936 | 1.34 / 0.558 |
 | S20 top-100 all | 333 | 1.88 | +0.82 | 5.3 | 0.55 / 1.000 | 0.83 / 0.998 | 1.34 / 0.929 |
-| S19 carry 2021-09.. | 266 | 1.29 | -0.09 | 7.7 | 0.61 / 0.932 | 0.93 / 0.788 | 1.50 / 0.326 |
+| S19 carry 2021-09.. | 266 | 1.29 | -0.09 | 7.7 | 0.61 / 0.932 | 0.93 / 0.784 | 1.50 / 0.325 |
 
 (f) closed form vs risk.monte_carlo.ftmo_by_risk (2-Step, 5 % daily, 10 % static, 4 days, no time limit)
 | yearly Sharpe | yearly volatility | closed form pass / years | simulator pass % (finished attempts) | simulator years to pass | daily-loss fails % | attempts |
 |---|---|---|---|---|---|---|
-| 0.7 | 6.4 % | 83 % / 3.36 | 89 | 2.65 | 0.0 | 472 |
-| 0.7 (half size) | 3.2 % | 98 % / 6.73 | 121 | 6.15 | 0.0 | 171 |
-| 1.0 | 9.1 % | 83 % / 1.65 | 87 | 1.29 | 0.0 | 888 |
-| 1.0 (half size) | 4.5 % | 98 % / 3.30 | 106 | 3.17 | 0.0 | 386 |
-| 1.3 | 11.8 % | 83 % / 0.98 | 84 | 0.76 | 0.0 | 1366 |
-| 1.3 (half size) | 5.9 % | 98 % / 1.95 | 103 | 1.85 | 0.0 | 624 |
-| 2.0 | 18.2 % | 83 % / 0.41 | 81 | 0.34 | 0.0 | 2403 |
-| 2.0 (half size) | 9.1 % | 98 % / 0.82 | 99 | 0.80 | 0.0 | 1211 |
+| 0.7 | 6.4 % | 83 % / 3.36 | 83 | 2.65 | 0.0 | 507 |
+| 0.7 (half size) | 3.2 % | 98 % / 6.73 | 99 | 6.15 | 0.0 | 209 |
+| 1.0 | 9.1 % | 83 % / 1.65 | 84 | 1.29 | 0.0 | 920 |
+| 1.0 (half size) | 4.5 % | 98 % / 3.30 | 98 | 3.17 | 0.0 | 419 |
+| 1.3 | 11.8 % | 83 % / 0.98 | 82 | 0.76 | 0.0 | 1391 |
+| 1.3 (half size) | 5.9 % | 98 % / 1.95 | 97 | 1.85 | 0.0 | 660 |
+| 2.0 | 18.2 % | 83 % / 0.41 | 80 | 0.34 | 0.0 | 2425 |
+| 2.0 (half size) | 9.1 % | 98 % / 0.82 | 97 | 0.80 | 0.0 | 1232 |

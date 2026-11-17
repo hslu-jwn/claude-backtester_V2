@@ -234,8 +234,7 @@ def closed_form(sharpes=(0.7, 1.0, 1.3, 2.0), runs=40, n_days=10000, seed=11):
                     Day(r=np.array([x]), events=((True, float(x)), (False, float(x)))) for x in r
                 ]
                 res = ftmo_by_risk(days, [np.arange(n_days)], config)[risk]
-                done = res["attempts"] - res["unfinished_attempts"]
-                tot["attempts"] += done
+                tot["attempts"] += res["attempts"]  # already finished attempts only (_ftmo_summary)
                 tot["passes"] += res["passes"]
                 tot["daily"] += res["fail_daily"]
                 if res["average_days_to_pass"] is not None:
