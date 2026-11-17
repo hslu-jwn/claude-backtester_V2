@@ -6,9 +6,8 @@ Steps (each resumable, data git-ignored under data/cache/):
   daily     Alpaca daily bars from 2015-07-01 for every candidate -> data/cache/alpaca_1d/<SYM>.csv
   universe  monthly top 1,000 by 60-session median dollar volume (close > 5, >= 60 bars, de-duplicated, no funds)
             -> data/cache/alpaca_meta/universe.csv (month, symbol, rank, dollar_volume) + audit counts
-  bars1h    Alpaca 1Hour bars 2015-12-01 .. 2021-09-13 for the union of the development universes
-            -> data/cache/alpaca_1h (A6: 30Min with extended hours was ~14 h of download)
-Run: .venv/Scripts/python.exe research/screens/2026-11-17_card2_share_universe.py finra symbols daily universe bars1h
+  (intraday prices: fetched per card, docs/share-universe.md A7)
+Run: .venv/Scripts/python.exe research/screens/2026-11-17_card2_share_universe.py finra symbols daily universe
 """
 
 import json
@@ -25,7 +24,6 @@ from backtester.data import alpaca
 FINRA = Path("data/cache/finra/daily")
 META = Path("data/cache/alpaca_meta")
 D1 = Path("data/cache/alpaca_1d")
-H1 = Path("data/cache/alpaca_1h")
 CNMS_FROM = "2018-08-01"
 SYMBOL = re.compile(r"^[A-Z]+(/[A-Z])?$")
 FUNDS = re.compile(
@@ -205,27 +203,12 @@ def universe():
     print(f"fund-like names left by the filter (A1 audit): {look.symbol.nunique()}")
 
 
-def bars1h():
-    u = pd.read_csv(META / "universe.csv")
-    syms = sorted(u[(u.month >= "2016-04") & (u.month <= "2021-09")].symbol.unique())
-    alpaca.download_batch(
-        syms,
-        "1Hour",
-        "2015-12-01",
-        alpaca.http_fetch(*alpaca.keys()),
-        H1,
-        batch=20,
-        end="2021-09-14",
-    )
-
-
 if __name__ == "__main__":
     steps = {
         "finra": finra,
         "symbols": symbols,
         "daily": daily,
         "universe": universe,
-        "bars1h": bars1h,
     }
     for a in sys.argv[1:]:
         steps[a]()

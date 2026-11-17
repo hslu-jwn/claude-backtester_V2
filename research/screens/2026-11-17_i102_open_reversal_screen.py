@@ -2,12 +2,12 @@
 knowledge/ideas.md, 4de0afc).
 
 Development only: trading days 2016-01-04 .. 2021-09-13. Universe docs/share-universe.md (universe.csv of card 2).
-Prices: previous close and exit = Alpaca daily close (data/cache/alpaca_1d); signal = close of the 30-min bar opening
-09:30 ET = close of the 1-hour bar opening 09:00 (last trade before 10:00); entry = open of the 30-min bar
-opening 10:00 = open of the 1-hour bar opening 10:00 (first trade from 10:00) (data/cache/alpaca_1h, A3);
-the 09:30 open of the diagnostic = Alpaca's daily open. SPY from the same sources.
-Steps: spy (download SPY daily + 30-min), extract (one compact table, cached), power, run.
-Run: .venv/Scripts/python.exe research/screens/2026-11-17_i102_open_reversal_screen.py spy | extract | power | run
+Prices: previous close and exit = Alpaca daily close (data/cache/alpaca_1d); the 10:00 price = close of the last
+1-min bar before 10:00 ET and the entry = open of the first 1-min bar from 10:00, both from one narrow multi-symbol
+request per trading day and 500 names (09:57-10:03 ET; data/cache/alpaca_ten/<day>.csv; share-universe A7); the
+09:30 open of the diagnostic = Alpaca's daily open. SPY from the same sources.
+Steps: ten (download the 10:00 prices), extract (one compact table, cached), power, run.
+Run: .venv/Scripts/python.exe research/screens/2026-11-17_i102_open_reversal_screen.py ten | extract | power | run
 """
 
 import sys
@@ -19,17 +19,60 @@ import pandas as pd
 from backtester.data import alpaca
 
 D1 = Path("data/cache/alpaca_1d")
-H1 = Path("data/cache/alpaca_1h")
+TEN = Path("data/cache/alpaca_ten")
 UNIVERSE = Path("data/cache/alpaca_meta/universe.csv")
 TABLE = Path("data/cache/alpaca_meta/i102_prices.pkl")
 START, END = pd.Timestamp("2016-01-04"), pd.Timestamp("2021-09-13")
 COST, MIN_NAMES = 7.0, 500
 
 
-def spy():
+def ten():
+    """Per trading day: c_before (close of the last 1-min bar before 10:00 ET), o_after (open of the first from 10:00)."""
+    from zoneinfo import ZoneInfo
+
     fetch = alpaca.http_fetch(*alpaca.keys())
     alpaca.download_batch(["SPY"], "1Day", "2015-07-01", fetch, D1)
-    alpaca.download_batch(["SPY"], "1Hour", "2015-12-01", fetch, H1, end="2021-09-14")
+    days = pd.read_csv(D1 / "SPY.csv", usecols=["ts"]).ts.pipe(ny).dt.normalize()
+    u = pd.read_csv(UNIVERSE)
+    members = u.groupby("month").symbol.apply(sorted).to_dict()
+    TEN.mkdir(parents=True, exist_ok=True)
+    for d in days[(days >= pd.Timestamp("2016-04-01")) & (days <= END)]:
+        path = TEN / f"{d:%Y-%m-%d}.csv"
+        if path.exists():
+            continue
+        t0 = (
+            d.replace(hour=9, minute=57).tz_localize(ZoneInfo("America/New_York")).tz_convert("UTC")
+        )
+        t1 = t0 + pd.Timedelta(minutes=6)
+        syms = members.get(f"{d:%Y-%m}", []) + ["SPY"]
+        rows = []
+        for k in range(0, len(syms), 500):
+            params = {
+                "symbols": ",".join(syms[k : k + 500]),
+                "timeframe": "1Min",
+                "limit": 10000,
+                "start": f"{t0:%Y-%m-%dT%H:%M:00Z}",
+                "end": f"{t1:%Y-%m-%dT%H:%M:00Z}",
+                "adjustment": "split",
+                "feed": "sip",
+            }
+            while True:
+                page = fetch(params)
+                for sym, bars in (page.get("bars") or {}).items():
+                    rows += [(sym, b["t"], b["o"], b["c"]) for b in bars]
+                if not page.get("next_page_token"):
+                    break
+                params = {**params, "page_token": page["next_page_token"]}
+        b = pd.DataFrame(rows, columns=["symbol", "ts", "open", "close"])
+        ten_utc = t0 + pd.Timedelta(minutes=3)
+        b["after"] = pd.to_datetime(b.ts, utc=True) >= ten_utc
+        before = b[~b.after].groupby("symbol").close.last()
+        after = b[b.after].groupby("symbol").open.first()
+        out = pd.DataFrame({"c_before": before, "o_after": after}).rename_axis("symbol")
+        out.to_csv(path.with_suffix(".part"))
+        path.with_suffix(".part").replace(path)
+        if d.day == 1 or d == END:
+            print(f"ten {d.date()}: {len(out)} symbols", flush=True)
 
 
 def ny(ts):
@@ -37,31 +80,34 @@ def ny(ts):
 
 
 def extract():
-    """day x symbol tables: prev_close, close, o0930 (09:30 open), c0930 (10:00 price), o1000 (entry)."""
+    """day x symbol tables: prev_close, close, o0930 (daily open), c0930 (10:00 price), o1000 (entry)."""
     syms = sorted(set(pd.read_csv(UNIVERSE).symbol) | {"SPY"})
-    cols = {k: {} for k in ("close", "o0930", "c0930", "o1000")}
+    cols = {"close": {}, "o0930": {}}
     for s in syms:
-        p1, p30 = D1 / f"{s}.csv", H1 / f"{s}.csv"
-        if not (p1.exists() and p30.exists()) or p1.stat().st_size < 60 or p30.stat().st_size < 60:
+        p1 = D1 / f"{s}.csv"
+        if not p1.exists() or p1.stat().st_size < 60:
             continue
         d = pd.read_csv(p1, usecols=["ts", "open", "close"])
         d.index = ny(d.ts).dt.normalize()
-        cols["close"][s] = d.close[~d.index.duplicated()]
-        cols["o0930"][s] = d.open[~d.index.duplicated()]
-        m = pd.read_csv(p30, usecols=["ts", "open", "close"])
-        t = ny(m.ts)
-        m.index = t.dt.normalize()
-        hm = t.dt.strftime("%H:%M").to_numpy()
-        a, b = m[hm == "09:00"], m[hm == "10:00"]
-        cols["c0930"][s], cols["o1000"][s] = a.close, b.open
+        d = d[~d.index.duplicated()]
+        cols["close"][s], cols["o0930"][s] = d.close, d.open
     out = {k: pd.DataFrame(v).sort_index() for k, v in cols.items()}
     days = out["close"]["SPY"].dropna().index
     out = {k: v.reindex(days) for k, v in out.items()}
     out["prev_close"] = out["close"].shift(
         1
     )  # previous market session's close (NaN if the name did not trade)
+    ten = {
+        pd.Timestamp(p.stem): pd.read_csv(p, index_col="symbol") for p in sorted(TEN.glob("*.csv"))
+    }
+    for k, col in (("c0930", "c_before"), ("o1000", "o_after")):
+        out[k] = pd.DataFrame({d: f[col] for d, f in ten.items()}).T.reindex(
+            index=days, columns=out["close"].columns
+        )
     pd.to_pickle(out, TABLE)
-    print(f"extracted {len(out['close'].columns)} symbols x {len(days)} days -> {TABLE}")
+    print(
+        f"extracted {len(out['close'].columns)} symbols x {len(days)} days ({len(ten)} days with 10:00 prices)"
+    )
 
 
 def day_frames(entry="o1000", signal="c0930"):
@@ -155,8 +201,8 @@ def run(ws):
 
 if __name__ == "__main__":
     step = sys.argv[1]
-    if step in ("spy", "extract"):
-        {"spy": spy, "extract": extract}[step]()
+    if step in ("ten", "extract"):
+        {"ten": ten, "extract": extract}[step]()
     else:
         ws = day_frames()
         power(ws) if step == "power" else run(ws)
