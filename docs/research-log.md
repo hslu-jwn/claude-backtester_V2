@@ -4,6 +4,22 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: I-115 GSCI roll front-running PASSED development, FALSIFIED at its one-time test (auto run continues)
+
+- Source read in full (Mou 2010, CFTC study; PDF text via the zlib script). Data: EIA daily futures strips, contracts
+  1-3, CL / HO / RB / NG (HTML tables, parsed with regex) -> data/cache/eia_strips (to 2021-09-13) and
+  data/cache/eia_strips_test (fetched after the test rule, 421f094). EIA stopped the series in 2024-04.
+- Card before data (522df40); contract mapping by delivery month (HO / RB / NG expire at month-end), checked at every
+  2000-2021 expiry; power before the run (sd 175 bp, t 3 needs ~33 bp net). Development 245 months: net +26.1 bp
+  (t 3.37), every gate passed; but halves +51.9 / +2.5 and the pre-index placebo NG +135 bp.
+- One-time test 2021-10 .. 2024-03 (30 months, power-sized gates): net -21.5 bp (t -1.13) -> FALSIFIED. Telegram sent.
+- Auto decision 50: run the one-time test although the post-publication half was ~0. Alternative: close without
+  spending the test. Why: Mode=auto runs the test for a candidate that passed every development gate; the gates are
+  read mechanically, and the EIA test window is unused.
+- Auto decision 51: no further `index_roll` look. Alternative: grains / metals roll windows. Why: EIA strips were
+  the only free curve data and end in 2024; other commodities need paid per-contract data; post-2010 edge ~0.
+- Model: Opus inline. Ledger I115; HV-T0007 is now answered by I115.
+
 ## 2026-11-18: I-113 VIX futures basis KILLED; I-114 short leg FALSIFIED at its one-time check (the user: "Continue.Research Mode = auto")
 
 - Source read in full by Opus (EFMA 2013 PDF, text pulled with a zlib script: no PDF tools installed): Simon &

@@ -91,7 +91,8 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
   H1 shock continuation or reversal (I-61); FX relative-strength / basket rules (highest turnover, 0.2 R per leg); pre-holiday, day-of-week, pre-FOMC
   drift post-2015, macro-day long, pre-ECB, gold session rules, Tokyo / London fix reversals, generic option-expiry
   (I-70 re-tested it anyway on 2026-11-12 despite this line: killed again); daily lead-lag across markets
-  (L14-L18); VIX futures basis / roll carry, either leg (I-113, I-114: ~0 gross 2021-26);
+  (L14-L18); VIX futures basis / roll carry, either leg (I-113, I-114: ~0 gross 2021-26); commodity index roll front-running
+  (I-115: ~0 after 2010, test 2021-24 negative);
   diversified or single-symbol trend at any speed (I-51, strategy 4); month-end / turn-of-month in
   any form (F4, F4M, I-67); daily reversal E8 / CAP / TS; multi-day holds on crypto CFDs (-30 %/yr swap,
   ~8 bp a night) and multi-week holds anywhere unless the published edge is several times the swap.

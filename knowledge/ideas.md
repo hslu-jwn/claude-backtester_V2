@@ -1962,3 +1962,7 @@ months 2021-10 .. 2024-03 (EIA's series end 2024-04), ~30 months. Development sd
 gates are power-sized as for I-109: (1) test net > 0; (2) test t >= 1.5; (3) test doubled cost > 0. All three =
 PASSED; net > 0 with t < 1.5 = NOT CONFIRMED; net <= 0 = FALSIFIED. No retest. Expected: t ~1.2 at the development
 size, ~0.1 at the post-publication size: pass chance ~10-25 %. A pass would still need a futures venue (the user).
+**I-115 one-time test result 2026-11-18 (`research/screens/2026-11-18_i115_gsci_roll_screen.py test`): FALSIFIED.**
+30 months 2021-10 .. 2024-03: gross -18.5 bp, net -21.5 (t -1.13), doubled -24.5; CL +1.7, HO -19.3, RB +8.8, NG -78.4.
+By year 2021 +1.0, 2022 -22.3, 2023 +1.7, 2024 (3 months) -133.6. The same trade after the roll -5.2. With the
+development second half (+2.5 bp), the front-running edge Mou found in 2000-2010 is gone. Telegram sent. No retest.
