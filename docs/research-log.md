@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-17: I-110 long-bond month-end NOT CONFIRMED at its one-time test (the user: "Long-bond card")
+
+- Card before data (1bb20f0) incl. the test rule; power before the run (e77f128; se 7.4). Dev DGS20 1993-10 .. 2021-08:
+  net +29.4 bp per month-end, t 4.32, every gate passed (1.57x the 10-year size, same edge per unit of risk).
+  One-time test 2021-10 .. 2026-10: net +23.0, t 1.33 < 1.5, TLT +21.6 (t 1.20) -> NOT CONFIRMED (not FALSIFIED);
+  no retest. The long end did not out-earn the 10-year in 2022-26 at ~1.6x the risk; I-109 stays the family's row.
+  Telegram sent. Ledger I110. Opus inline.
+
 ## 2026-11-17: I-109 forward logs built (the user: "Yes, build it")
 
 - Shelf logger: `rows_i109` + `rates_update` (FRED re-download, IEF daily into data/cache/alpaca_1d_rates_fwd);

@@ -80,7 +80,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    month-end (t 4.42); test 2021-10 .. 2026-10 net +24.9 (t 2.14), IEF real closes +23.2 (t 2.54); test not blind
    (a 2026 blog covered the period). ~3 days a month in the market; FTMO lists no bonds, so the venue is Treasury
    futures (ZN / UB) or bond ETFs (goal 2): **the user decides on a venue / account**. Forward logs built 2026-11-17
-   (`shelf_i109` DGS10, `shelf_i109_ief` IEF; first month-end 2026-11-30, logged by the 2026-12-03 task). Card `knowledge/ideas.md` I-109, ledger I109.
+   (`shelf_i109` DGS10, `shelf_i109_ief` IEF; first month-end 2026-11-30, logged by the 2026-12-03 task). Long-bond version I-110: dev passed,
+   one-time test NOT CONFIRMED (t 1.33): size the sleeve on 10-year duration. Card `knowledge/ideas.md` I-109, ledger I109.
 
 ## Next step
 

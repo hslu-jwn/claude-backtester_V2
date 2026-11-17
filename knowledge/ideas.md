@@ -1765,3 +1765,9 @@ months), halved ~20: pass chance ~50-60 %, mostly carried by I-109's evidence (s
 per month-end, net +29.4, t 4.32; halves +24.9 / +34.1; doubled +26.4; without the 2 best +27.2. Reported: raw +29.5
 (t 4.61); last 2 days +26.4; placebo +15.4 (t 1.97); excess per event sd 0.260 (20-year) vs 0.248 (10-year, same
 months): the long end scales the size (1.57x) at about the same risk-adjusted edge.
+**I-110 one-time test result 2026-11-17 (`... test`): NOT CONFIRMED (gate t >= 1.5 failed; not FALSIFIED).** 61 months
+2021-10 .. 2026-10: excess gross +26.0, net +23.0, t 1.33; doubled +20.0; TLT raw +21.6 (t 1.20). By year 2021 (3
+months) +136, 2022 +66, 2023 -1, 2024 +35, 2025 +16, 2026 -39. Same sign as development, but the long end earned no
+more than the 10-year (I-109 test net +24.9) at ~1.6x the risk in the 2022-26 bond volatility. M1: net > 0 with
+t < 1.5 is neither PASSED nor UNPROVEN-POSITIVE; no retest. The sizing case for long bonds is not confirmed; I-109
+(10-year) stays the family's row.
