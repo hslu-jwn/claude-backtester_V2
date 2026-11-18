@@ -24,7 +24,12 @@ SERIES = {
     "RB": [PET.format(s=f"EER_EPMRR_PE{k}_Y35NY_DPG") for k in (1, 2, 3)],
     "NG": [NG.format(k=k) for k in (1, 2, 3)],
 }
-MONTHS = {m: i for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(), 1)}
+MONTHS = {
+    m: i
+    for i, m in enumerate(
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1
+    )
+}
 COST = 3.0  # bp of collateral per tranche round trip
 FIRST, LAST = (2000, 1), (2021, 8)
 PLACEBO = ((1986, 1), (1999, 12))
@@ -33,7 +38,7 @@ PLACEBO = ((1986, 1), (1999, 12))
 def parse(html):
     """EIA weekly-row table: label 'YYYY Mon-DD to ...' then Mon..Fri cells."""
     out = {}
-    for row in re.findall(r"<tr>(.*?)</tr>", html, re.S):
+    for row in re.findall(r"<tr>(.*?)</tr>", html, re.DOTALL):
         lab = re.search(r"class='B6'>(?:&nbsp;)*(\d{4}) (\w{3})-\s?(\d+)", row)
         if not lab:
             continue
@@ -50,7 +55,9 @@ def download(root=ROOT, end=DEV_END):
     for com, urls in SERIES.items():
         cols = {}
         for k, url in enumerate(urls, 1):
-            html = subprocess.run(["curl", "-s", "-f", "-L", url], capture_output=True, check=True, timeout=300).stdout
+            html = subprocess.run(
+                ["curl", "-s", "-f", "-L", url], capture_output=True, check=True, timeout=300
+            ).stdout
             cols[f"c{k}"] = parse(html.decode("latin1"))
         df = pd.DataFrame(cols)
         df.index.name = "day"
@@ -59,7 +66,10 @@ def download(root=ROOT, end=DEV_END):
 
 
 def load(root=ROOT):
-    return {com: pd.read_csv(root / f"{com}.csv", parse_dates=["day"], index_col="day") for com in SERIES}
+    return {
+        com: pd.read_csv(root / f"{com}.csv", parse_dates=["day"], index_col="day")
+        for com in SERIES
+    }
 
 
 def add_months(ym, n):
@@ -122,8 +132,12 @@ class Book:
             if a < 0 or b >= len(self.bdays):
                 return None
             d0, d1 = self.bdays[a], self.bdays[b]
-            h0, h1, n0, n1 = (self.price(com, held, d0), self.price(com, held, d1),
-                              self.price(com, nxt, d0), self.price(com, nxt, d1))
+            h0, h1, n0, n1 = (
+                self.price(com, held, d0),
+                self.price(com, held, d1),
+                self.price(com, nxt, d0),
+                self.price(com, nxt, d1),
+            )
             if None in (h0, h1, n0, n1) or h0 + n0 <= 0:
                 return None
             rs.append(1e4 * ((h0 - h1) + (n1 - n0)) / ((h0 + n0) / 2))
@@ -160,13 +174,20 @@ def line(name, x):
 def power():
     book = Book(load())
     sds = []
-    for off in (0, 3, 6, 9):  # the same 10-day spread trade starting at R1 or later (after the build window)
+    for off in (
+        0,
+        3,
+        6,
+        9,
+    ):  # the same 10-day spread trade starting at R1 or later (after the build window)
         sds.append(table(book, FIRST, LAST, entry_off=off)["energy"].std(ddof=1))
     sd = float(np.mean(sds))
     n = len(list(months(FIRST, LAST)))
     se = sd / np.sqrt(n)
-    print(f"signal-free energy-month sd {sd:.1f} bp (offsets 0/3/6/9 after R1: {', '.join(f'{s:.1f}' for s in sds)}); "
-          f"{n} months: se {se:.1f}, t 3 needs {3 * se + COST:.1f} bp gross ({3 * se:.1f} net)")
+    print(
+        f"signal-free energy-month sd {sd:.1f} bp (offsets 0/3/6/9 after R1: {', '.join(f'{s:.1f}' for s in sds)}); "
+        f"{n} months: se {se:.1f}, t 3 needs {3 * se + COST:.1f} bp gross ({3 * se:.1f} net)"
+    )
 
 
 def run():
@@ -175,7 +196,7 @@ def run():
     missing = s1[list(SERIES)].isna().sum().to_dict()
     print("commodity-months without 5 tranches (incl. RB before 2005-10):", missing)
     net = s1["energy"] - COST
-    n, m, t = tstat(net)
+    _, m, t = tstat(net)
     half = s1.index <= pd.Timestamp("2010-12-01")
     com_net = {com: (s1[com] - COST).mean() for com in SERIES}
     gates = {
@@ -207,7 +228,12 @@ def run():
         print(line(f"  placebo {com}", pl[com] - COST))
     after = table(book, FIRST, LAST, entry_off=0)
     print(line("window 10 days later (after roll)", after["energy"] - COST))
-    print(line("2000-2010-03 (Mou's window) S1", (s1["energy"] - COST)[s1.index <= pd.Timestamp("2010-03-01")]))
+    print(
+        line(
+            "2000-2010-03 (Mou's window) S1",
+            (s1["energy"] - COST)[s1.index <= pd.Timestamp("2010-03-01")],
+        )
+    )
     print("by year (S1 energy net bp per month, mean):")
     for year, g in net.groupby(net.index.year):
         print(f"  {year}  {g.mean():7.1f}  n {g.notna().sum():2d}")
@@ -222,8 +248,12 @@ def test():
     s1 = table(book, (2021, 10), (2024, 3))
     print("commodity-months without 5 tranches:", s1[list(SERIES)].isna().sum().to_dict())
     net = s1["energy"] - COST
-    n, m, t = tstat(net)
-    gates = {"net > 0": m > 0, "t >= 1.5": t >= 1.5, "doubled cost > 0": (s1["energy"] - 2 * COST).mean() > 0}
+    _, m, t = tstat(net)
+    gates = {
+        "net > 0": m > 0,
+        "t >= 1.5": t >= 1.5,
+        "doubled cost > 0": (s1["energy"] - 2 * COST).mean() > 0,
+    }
     print(line("I-115 test S1 energy (gated)", net))
     print(line("  gross", s1["energy"]))
     print(line("  doubled cost", s1["energy"] - 2 * COST))
@@ -231,7 +261,10 @@ def test():
         print(line(f"  {com}", s1[com] - COST))
     for name, ok in gates.items():
         print(f"  gate {name:<20} {'pass' if ok else 'FAIL'}")
-    print("VERDICT:", "PASSED" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED"))
+    print(
+        "VERDICT:",
+        "PASSED" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED"),
+    )
     after = table(book, (2021, 10), (2024, 3), entry_off=0)
     print(line("reported: window 10 days later", after["energy"] - COST))
     for year, g in net.groupby(net.index.year):
@@ -239,4 +272,10 @@ def test():
 
 
 if __name__ == "__main__":
-    {"download": download, "power": power, "run": run, "test_download": test_download, "test": test}[sys.argv[1]]()
+    {
+        "download": download,
+        "power": power,
+        "run": run,
+        "test_download": test_download,
+        "test": test,
+    }[sys.argv[1]]()

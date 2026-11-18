@@ -8,6 +8,7 @@ Run: .venv/Scripts/python.exe research/screens/2026-11-18_i113_vix_basis_screen.
 
 import datetime as dt
 import io
+import itertools
 import json
 import subprocess
 import sys
@@ -20,9 +21,13 @@ ROOT = Path("data/cache/vix")
 TEST_ROOT = Path("data/cache/vix_test")
 TEST_START = pd.Timestamp("2021-09-14")
 ARCHIVE = "https://cdn.cboe.com/resources/futures/archive/volume-and-price/CFE_{code}{yy}_VX.csv"
-PER_CONTRACT = "https://cdn.cboe.com/data/us/futures/market_statistics/historical_data/VX/VX_{day}.csv"
+PER_CONTRACT = (
+    "https://cdn.cboe.com/data/us/futures/market_statistics/historical_data/VX/VX_{day}.csv"
+)
 VIX_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
-SPX_URL = "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1={a}&period2={b}&interval=1d"
+SPX_URL = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1={a}&period2={b}&interval=1d"
+)
 CODES = "FGHJKMNQUVXZ"
 DEV_END = pd.Timestamp("2021-09-13")
 TRADE_START = pd.Timestamp("2007-01-02")
@@ -36,7 +41,7 @@ THRESHOLD = 0.10
 
 def get(url, agent=None):
     cmd = ["curl", "-s", "-f", "-L", url] + (["-A", agent] if agent else [])
-    r = subprocess.run(cmd, capture_output=True, timeout=300)
+    r = subprocess.run(cmd, capture_output=True, timeout=300, check=False)
     return r.stdout if r.returncode == 0 else None
 
 
@@ -52,9 +57,14 @@ def parse(raw):
     text = raw.decode("latin1")
     lines = text[text.index("Trade Date") :].splitlines()
     assert lines[0].split(",")[6] == "Settle", lines[0]
-    rows = [ln.split(",") for ln in lines[1:] if ln.strip()]  # some archive rows carry a trailing comma
+    rows = [
+        ln.split(",") for ln in lines[1:] if ln.strip()
+    ]  # some archive rows carry a trailing comma
     return pd.DataFrame(
-        {"day": pd.to_datetime([r[0] for r in rows], format="mixed"), "settle": [float(r[6] or 0) for r in rows]}
+        {
+            "day": pd.to_datetime([r[0] for r in rows], format="mixed"),
+            "settle": [float(r[6] or 0) for r in rows],
+        }
     )
 
 
@@ -62,7 +72,9 @@ def download(root=ROOT, end=DEV_END, first=(2005, 1), last=(2021, 10), spx_from=
     root.mkdir(parents=True, exist_ok=True)
     vix = pd.read_csv(io.BytesIO(get(VIX_URL)))
     vix["day"] = pd.to_datetime(vix["DATE"], format="%m/%d/%Y")
-    vix[vix["day"] <= end][["day", "CLOSE"]].rename(columns={"CLOSE": "vix"}).to_csv(root / "VIX.csv", index=False)
+    vix[vix["day"] <= end][["day", "CLOSE"]].rename(columns={"CLOSE": "vix"}).to_csv(
+        root / "VIX.csv", index=False
+    )
     a, b = int(pd.Timestamp(spx_from).timestamp()), int((end + pd.Timedelta(days=1)).timestamp())
     chart = json.loads(get(SPX_URL.format(a=a, b=b), agent="Mozilla/5.0"))["chart"]["result"][0]
     spx = pd.DataFrame(
@@ -92,21 +104,29 @@ def download(root=ROOT, end=DEV_END, first=(2005, 1), last=(2021, 10), spx_from=
                 if raw:
                     new = parse(raw)
                     parts.append(new)
-                    settle_day = pd.Timestamp(day)  # the file name is Cboe's settlement date; archives can stop early
+                    settle_day = pd.Timestamp(
+                        day
+                    )  # the file name is Cboe's settlement date; archives can stop early
                     break
             if not parts:
                 report.append(f"{year}-{month:02d}: missing")
                 continue
             if abs((settle_day.date() - base).days) > 2:
-                report.append(f"{year}-{month:02d}: settlement {settle_day.date()} far from rule date {base}; skipped")
+                report.append(
+                    f"{year}-{month:02d}: settlement {settle_day.date()} far from rule date {base}; skipped"
+                )
                 continue
-            both = pd.concat(parts).drop_duplicates("day", keep="first")  # archive first: it wins on overlaps
+            both = pd.concat(parts).drop_duplicates(
+                "day", keep="first"
+            )  # archive first: it wins on overlaps
             if len(parts) == 2:
                 m = parts[0].merge(parts[1], on="day")
                 m = m[(m.settle_x > 0) & (m.settle_y > 0)]
                 bad = int((abs(m.settle_x - m.settle_y) > 0.001).sum())
                 if bad:
-                    report.append(f"{year}-{month:02d}: {bad} of {len(m)} overlapping settlements differ")
+                    report.append(
+                        f"{year}-{month:02d}: {bad} of {len(m)} overlapping settlements differ"
+                    )
             both = both[(both["day"] <= end) & (both["settle"] > 0)].sort_values("day")
             both.to_csv(root / f"VX_{settle_day.date()}.csv", index=False)
     print("\n".join(report) or "all months found, overlaps agree")
@@ -114,15 +134,21 @@ def download(root=ROOT, end=DEV_END, first=(2005, 1), last=(2021, 10), spx_from=
 
 def calendar(vix_days):
     """VIX trade dates, then weekdays (no NYSE holiday from 2021-09-14 to 2021-10-20; test: last date to 2027-01)."""
-    extra = pd.bdate_range(vix_days[-1] + pd.Timedelta(days=1), vix_days[-1] + pd.Timedelta(days=120))
+    extra = pd.bdate_range(
+        vix_days[-1] + pd.Timedelta(days=1), vix_days[-1] + pd.Timedelta(days=120)
+    )
     return pd.DatetimeIndex(vix_days).append(extra)
 
 
 def load(roots=(ROOT,)):
     """Later roots win: test files carry the full history of contracts the development files cut at DEV_END."""
-    vix = pd.concat(pd.read_csv(r / "VIX.csv", parse_dates=["day"]) for r in roots).drop_duplicates("day", keep="last")
+    vix = pd.concat(pd.read_csv(r / "VIX.csv", parse_dates=["day"]) for r in roots).drop_duplicates(
+        "day", keep="last"
+    )
     vix = vix.set_index("day").sort_index()["vix"]
-    spx = pd.concat(pd.read_csv(r / "SPX.csv", parse_dates=["day"]) for r in roots).drop_duplicates("day", keep="last")
+    spx = pd.concat(pd.read_csv(r / "SPX.csv", parse_dates=["day"]) for r in roots).drop_duplicates(
+        "day", keep="last"
+    )
     spx = spx.set_index("day").sort_index()["spx"]
     contracts = {}
     for path in sorted(p for r in roots for p in r.glob("VX_*.csv")):
@@ -154,7 +180,9 @@ def front_table(vix, contracts):
     return df
 
 
-def trades(vix, contracts, front, threshold=THRESHOLD, lag=0, end=DEV_END, start=TRADE_START, sides=(-1, 1)):
+def trades(
+    vix, contracts, front, threshold=THRESHOLD, lag=0, end=DEV_END, start=TRADE_START, sides=(-1, 1)
+):
     days = vix.index
     out, i = [], days.searchsorted(start)
     while i < len(days):
@@ -195,7 +223,7 @@ def hedge(tr, front, spx, contracts):
     """Paper eq. 3-4: daily front-VX change on S&P % return and return x days, fitted on all prior calendar years."""
     days = front.index
     rows = []
-    for a, b in zip(days[:-1], days[1:]):
+    for a, b in itertools.pairwise(days):
         c = front.loc[a, "contract"]
         f0, f1 = contracts[c].get(a), contracts[c].get(b)
         if f0 is None or f1 is None or a not in spx.index or b not in spx.index:
@@ -246,7 +274,9 @@ def power():
     sd = np.std(pnl, ddof=1)
     for n in (250, 350, 450):
         se = sd / np.sqrt(n)
-        print(f"signal-free 5-day front-VX sd ${sd:,.0f} (all {len(pnl)} start dates); n {n}: se ${se:,.0f}, t 3 needs ${3 * se:,.0f} net")
+        print(
+            f"signal-free 5-day front-VX sd ${sd:,.0f} (all {len(pnl)} start dates); n {n}: se ${se:,.0f}, t 3 needs ${3 * se:,.0f} net"
+        )
 
 
 def run():
@@ -255,13 +285,15 @@ def run():
     print("data: missing front settles", int(front["f"].isna().sum()), "of", len(front), "dates")
     early = front[(front.index.year >= 2006) & (front.index.year <= 2011)]
     basis = early["f"] - early["vix"]
-    print(f"canary basis 2006-2011 (front >= 10 days): mean {basis.mean():+.2f}, deciles {basis.quantile(0.9):+.2f} / {basis.quantile(0.1):+.2f} (paper +0.14, +2.01 / -1.40; paper's front is nearest contract)")
+    print(
+        f"canary basis 2006-2011 (front >= 10 days): mean {basis.mean():+.2f}, deciles {basis.quantile(0.9):+.2f} / {basis.quantile(0.1):+.2f} (paper +0.14, +2.01 / -1.40; paper's front is nearest contract)"
+    )
     tr = trades(vix, contracts, front)
     tr["net"] = tr["gross"] - COST
     tr["hedge"], _ = hedge(tr, front, spx, contracts)
     tr["net_h"] = tr["net"] + tr["hedge"]
     net = tr["net"].to_numpy()
-    n, m, t = stats(net)
+    _, m, t = stats(net)
     half = tr["exit"] <= pd.Timestamp("2013-12-31")
     no2 = np.sort(net)[:-2]
     lag = trades(vix, contracts, front, lag=1)
@@ -293,9 +325,17 @@ def run():
     print(line("  H short", tr.loc[tr.side < 0, "net_h"]))
     print(line("  H long", tr.loc[tr.side > 0, "net_h"]))
     paper = tr[tr["exit"] <= pd.Timestamp("2011-12-31")]
-    print(line("paper window 2007-2011 short U", paper.loc[paper.side < 0, "net"]), "(paper 82, ~$656)")
-    print(line("paper window 2007-2011 long U", paper.loc[paper.side > 0, "net"]), "(paper 42, ~$1,040)")
-    print(line("paper window 2007-2011 short H", paper.loc[paper.side < 0, "net_h"]), "(paper $539)")
+    print(
+        line("paper window 2007-2011 short U", paper.loc[paper.side < 0, "net"]),
+        "(paper 82, ~$656)",
+    )
+    print(
+        line("paper window 2007-2011 long U", paper.loc[paper.side > 0, "net"]),
+        "(paper 42, ~$1,040)",
+    )
+    print(
+        line("paper window 2007-2011 short H", paper.loc[paper.side < 0, "net_h"]), "(paper $539)"
+    )
     print(line("paper window 2007-2011 long H", paper.loc[paper.side > 0, "net_h"]), "(paper $908)")
     t15 = trades(vix, contracts, front, threshold=0.15)
     print(line("threshold 0.15 U", t15["gross"] - COST))
@@ -303,13 +343,27 @@ def run():
     for year, g in tr.groupby(tr["exit"].dt.year):
         print(f"  {year}  U {g['net'].sum():9.0f}  H {g['net_h'].sum():9.0f}  n {len(g):3d}")
     print("worst 6 trades U:")
-    print(tr.nsmallest(6, "net")[["entry", "exit", "side", "vix", "net", "net_h"]].to_string(index=False))
+    print(
+        tr.nsmallest(6, "net")[["entry", "exit", "side", "vix", "net", "net_h"]].to_string(
+            index=False
+        )
+    )
     print("best 4 trades U:")
-    print(tr.nlargest(4, "net")[["entry", "exit", "side", "vix", "net", "net_h"]].to_string(index=False))
+    print(
+        tr.nlargest(4, "net")[["entry", "exit", "side", "vix", "net", "net_h"]].to_string(
+            index=False
+        )
+    )
 
 
 def test_download():
-    download(TEST_ROOT, pd.Timestamp("2027-12-31"), first=(2021, 10), last=(2027, 1), spx_from="2021-01-01")
+    download(
+        TEST_ROOT,
+        pd.Timestamp("2027-12-31"),
+        first=(2021, 10),
+        last=(2027, 1),
+        spx_from="2021-01-01",
+    )
 
 
 def test():
@@ -317,22 +371,30 @@ def test():
     front = front_table(vix, contracts)
     end = vix.index[-1]
     w = front[front.index >= TEST_START]
-    print(f"test data: VIX to {end.date()}, missing front settles {int(w['f'].isna().sum())} of {len(w)} dates")
+    print(
+        f"test data: VIX to {end.date()}, missing front settles {int(w['f'].isna().sum())} of {len(w)} dates"
+    )
     tr = trades(vix, contracts, front, start=TEST_START, end=end, sides=(-1,))
     tr["net"] = tr["gross"] - COST
     tr["hedge"], _ = hedge(tr, front, spx, contracts)
     tr["net_h"] = tr["net"] + tr["hedge"]
-    n, m, t = stats(tr["net"])
+    _, m, t = stats(tr["net"])
     no2 = np.sort(tr["net"].to_numpy())[:-2]
-    gates = {"net > 0": m > 0, "t >= 1.5": t >= 1.5, "doubled cost > 0": (tr["gross"] - 2 * COST).mean() > 0,
-             "without 2 best > 0": no2.mean() > 0}
+    gates = {
+        "net > 0": m > 0,
+        "t >= 1.5": t >= 1.5,
+        "doubled cost > 0": (tr["gross"] - 2 * COST).mean() > 0,
+        "without 2 best > 0": no2.mean() > 0,
+    }
     print(line("I-114 short U (gated)", tr["net"]))
     print(line("  gross", tr["gross"]))
     print(line("  doubled cost", tr["gross"] - 2 * COST))
     print(line("  without 2 best", no2))
     for name, ok in gates.items():
         print(f"  gate {name:<20} {'pass' if ok else 'FAIL'}")
-    verdict = "CONFIRMED lead" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED")
+    verdict = (
+        "CONFIRMED lead" if all(gates.values()) else ("FALSIFIED" if m <= 0 else "NOT CONFIRMED")
+    )
     print("VERDICT:", verdict)
     print("reported, not gated:")
     lag = trades(vix, contracts, front, lag=1, start=TEST_START, end=end, sides=(-1,))
@@ -344,4 +406,10 @@ def test():
 
 
 if __name__ == "__main__":
-    {"download": download, "power": power, "run": run, "test_download": test_download, "test": test}[sys.argv[1]]()
+    {
+        "download": download,
+        "power": power,
+        "run": run,
+        "test_download": test_download,
+        "test": test,
+    }[sys.argv[1]]()

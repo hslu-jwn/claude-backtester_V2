@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: I-109 venue diagnostic on 10-year Treasury futures; lint of the new screens (auto)
+
+- Yahoo ZN=F continuous daily closes 2000-09 .. 2026-11 -> data/cache/yahoo_futures. ZN excess per month-end: dev
+  +19.2 bp (t 4.63), test months +20.6 (t 2.36); corr 0.96-0.97 with the registered DGS10 statistic; ~0.8x its size;
+  no roll-month artefact. ~$230 gross per contract per month-end. Recorded on the I-109 card; HANDOFF Open 1 has it.
+- Auto decision 53: run this diagnostic. Alternative: another harvest batch or a 4th `rates_month_end` look (AGG /
+  LQD). Why: HANDOFF next step 2 names it, it informs the user's open venue decision, and it spends no test.
+- Ruff on the three new screens (pairwise, explicit check, unused names); outputs unchanged. Opus inline.
+
 ## 2026-11-18: harvest batch 18 (Treasury futures roll / delivery, SOMA / buybacks / repo, Fed and BIS notes, sector-ETF capping, target-date funds, leveraged bond ETFs): nothing kept (auto)
 
 - 7 Codex `gpt-6.1-terra` `--search` calls (5 content cells, high effort; low for BLOG and the nonsense canary);

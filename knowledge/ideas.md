@@ -1966,3 +1966,12 @@ size, ~0.1 at the post-publication size: pass chance ~10-25 %. A pass would stil
 30 months 2021-10 .. 2024-03: gross -18.5 bp, net -21.5 (t -1.13), doubled -24.5; CL +1.7, HO -19.3, RB +8.8, NG -78.4.
 By year 2021 +1.0, 2022 -22.3, 2023 +1.7, 2024 (3 months) -133.6. The same trade after the roll -5.2. With the
 development second half (+2.5 bp), the front-running edge Mou found in 2000-2010 is gone. Telegram sent. No retest.
+**I-109 venue diagnostic on 10-year Treasury futures (2026-11-18, auto decision 53; not a new look, the test is
+spent; `research/screens/2026-11-18_i109_zn_futures_check.py`):** Yahoo continuous front contract ZN=F daily closes
+2000-09 .. 2026-11, same window and excess statistic. Development 251 months (2000-10 .. 2021-08): ZN excess +19.2 bp
+of price per month-end (t 4.63), raw +18.1; DGS10 over the same months +23.6; correlation 0.96; ZN earns ~0.8x the
+DGS10 figure (ZN's duration ~6-7 vs 8.5). Test months 2021-10 .. 2026-10 (61): ZN excess +20.6 (t 2.36), raw +13.1
+(t 1.83). Contract-roll days (> 150 bp) fall inside a window in 1 month per period; without them the result holds.
+Feb / May / Aug / Nov (futures roll and delivery months) +20.0 vs others +19.2: no roll artefact. Size: ~$230 gross per
+ZN contract per month-end (1 bp of price ~ $11.5), ~$210 after ~2 bp (1 tick + fees). The futures venue captures the
+effect; ZN or the 1/10-size micro 10-year (if listed by the broker) is the natural instrument (HANDOFF Open 1, money: the user).
