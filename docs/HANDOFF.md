@@ -38,6 +38,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 - 2026-11-18: Strategy 20 at a crypto prop firm: not worth it, not pursued (decided by the user 2026-11-18; at the
   M10 edge HyroTrader 15 % per side passes ~85 % in ~2.5 years, terms §10.2(i) may bar a long-short book; package
   `knowledge/research/reports/2026-11-15_s20_prop_decision.md`). Strategy 20 stays on its forward log.
+- 2026-11-18: T-21 causal check per card is a rule (graph, confounders, no collider controls, one implied absence;
+  PASSED needs type-A and type-B); `docs/research-runner.md` › Causal check per card.
 - 2026-11-18: Fable methods M2, M4-M12 accepted (M7 new cards only, M8 changed: +0.3 / +0.5 on the card's own test
   gate at the 4th / 5th+ use of a period); `docs/research-runner.md` › Method rules.
 - 2026-11-18: everything of the 2026-11-16/17 session accepted at `End.`.

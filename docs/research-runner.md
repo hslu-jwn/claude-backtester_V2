@@ -982,3 +982,20 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
   the user may still order a specific look.
 - **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
   strategies. Ideas from books stay allowed.
+
+## Causal check per card (T-21; rule set by the user, 2026-11-18)
+
+Source: López de Prado, *Causal Factor Investing* (`knowledge/books/lopezdeprado-causal-factor-investing.md`,
+`knowledge/topics/testing-and-robustness.md` › Causal checks). Applies to new cards from 2026-11-18.
+
+- **Before any data look** the card states its causal graph in a few lines: signal X, outcome Y, the mechanism M (the
+  counterparty that must trade, or the cause), the confounders with the proxies that check them, and any collider or
+  mediator that must NOT be controlled (nothing caused by the signal, or by both signal and outcome, e.g. same-period
+  volatility or volume).
+- **One implied absence** per card: where M does not trade (dates, assets, a placebo window), the effect must be gone.
+  It is a named, pre-registered check, reported next to the gates.
+- **Verdict PASSED needs both checks:** type-A (as now: ledger, t threshold, gates) and type-B (graph declared,
+  confounder proxies checked, no collider / mediator controls, the implied absence holds). A card that passes type-A but
+  fails type-B is at most UNPROVEN-POSITIVE (M1). Out-of-sample or other-market replication counts as type-A only.
+- Controls are chosen from the graph, never by fit (R-squared); persistent series (yields, VIX, COT levels, funding)
+  enter as changes, not levels; Granger tests are never evidence of a mechanism.

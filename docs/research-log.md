@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-21 causal check per card made a rule (the user: "Yes, make it a rule")
+
+- Written to `docs/research-runner.md` › Causal check per card, the continue-research skill, HANDOFF, card T-21.
+  New cards only; existing verdicts unchanged.
+
 ## 2026-11-18: book read: López de Prado, Causal Factor Investing (the user: "Yes, read it"; "use sonnet")
 
 - Three free books downloaded to `X:\Daten\03_Bibliothek\Trading\Tier 4` (Regression and Other Stories, Statistical

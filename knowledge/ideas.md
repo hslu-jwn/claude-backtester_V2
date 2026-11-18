@@ -1237,7 +1237,7 @@ Cost side only: rest a limit at the bid N minutes before the clock entry, market
 fill goes against the order by at least the half-spread saved, or fill rate < 60 %. Only for cells whose
 gross is already near cost.
 
-### T-21 Causal graph and type-B check on every card (CF, 2026-11-18; method proposal, needs the user)
+### T-21 Causal graph and type-B check on every card (CF, 2026-11-18; RULE: accepted by the user 2026-11-18, `docs/research-runner.md` › Causal check per card)
 Before any data look a card states its causal graph in a few lines: signal X, outcome Y, the forced counterparty M
 (mechanism), confounders with their proxies, and any collider or mediator that must NOT be controlled. Plus one
 implied absence (where M does not trade, the effect must be gone), tested as a named placebo. Verdict PASSED would

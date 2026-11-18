@@ -81,6 +81,9 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
 - **Method rules M2, M4-M12 (the user, 2026-11-18):** power rule c and pass chance on every card (M4), only
   registered statistics pass (M5), tail and regime gates (M6, M7), test-period reuse (M8), two-sided at t 3.3 (M9),
   shrunk reporting (M10), no new FTMO CFD signal screens (M11): `docs/research-runner.md` › Method rules.
+- **Causal check per card (T-21, the user 2026-11-18):** before any data look write the causal graph (signal,
+  outcome, mechanism, confounders with proxies, no collider / mediator controls) and one implied absence as a named
+  placebo; PASSED needs type-A and type-B: `docs/research-runner.md` › Causal check per card.
 - **Pipeline controls (review tip 2):** after any change to a gates tool, run a planted drift
   (positive control, must pass about as often as the power says) and shuffled days (negative
   control, at most 5 % passes) through it once (`tools/gates.py --controls N` does both on the control cells).
