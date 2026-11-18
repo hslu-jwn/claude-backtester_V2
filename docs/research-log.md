@@ -4,6 +4,30 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Donnelly, The Art of Currency Trading; I-120 parked (auto)
+
+- Model and effort: Codex gpt-6.1-terra medium, read-only, 3 parts (`book-ac1..3`, ~3 min each). `ac1` / `ac2` were
+  flagged "violation": the changed files were Opus's own doc edits made during the dispatch, not the reader's (the reader
+  wrote nothing); lesson: no repo edits while a read-only dispatch runs.
+- Filed: `knowledge/books/donnelly-art-of-currency-trading.md`, README row AC, time-of-day topic (FX clock). Every
+  flow idea in the book is already spent in the ledger (H12, S08, H11, L15, FB186, FB190, strategy 5).
+- Auto decision 57: card I-120 (FX COT positioning turn, M11 allows it as new non-price data) PARKED on power before
+  any data: published next-week prediction is nil (Klitgaard & Weir 2004); cross-asset speculative pressure ~0.55 gross
+  Sharpe, halved: pass chance ~1 %. Alternative: download COT and screen. Why: M4, a look would only spend a trial.
+
+## 2026-11-18: Tier 1 books in; book order is Opus's call (the user: "You can decide the order ... Mode = auto")
+
+- Rule (the user): Opus picks the reading order of library books, no go needed (HANDOFF, `knowledge/README.md`).
+- Library: Tier 1 8 of 12, Tier 2 13 of 25; all 8 Tier 1 PDFs extract to text (Harris is the 2002 draft copy, short
+  chapters).
+- Auto decision 55: order Donnelly *Art of Currency Trading* -> Carver *Advanced Futures Trading Strategies* ->
+  Ilmanen *Expected Returns* -> Pedersen -> Stigum (funding / month-end chapters) -> Harris (draft) -> Ilmanen 2022 ->
+  Kakushadze (idea list only, retracted). Alternative: Ilmanen first (the broadest map). Why: Donnelly's FX flows
+  (fixes, month-end hedging, positioning) are testable at once on our MT5 FX data, and goal 1 has no stream; Carver
+  gives tested futures rules after costs; Ilmanen is long and mostly overlaps the factor ideas we already screened.
+- Auto decision 56: readers are Codex `gpt-6.1-terra` medium, read-only (as for Taleb). Alternative: Sonnet agents.
+  Why: routing doc, Codex first; no Claude quota spent on reading.
+
 ## 2026-11-18: End. of the session 2026-11-18 (the user: "End.")
 
 - Full suite 6,027 passed, 14 skipped, 4 xfailed (-n 8, run after the last code change; only docs changed since);

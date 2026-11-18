@@ -21,6 +21,11 @@ it becomes a strategy.
   London/NY overlap was flat (K p.695-697). → I-17
 - Open-to-close is only about half the day's range, so a day trade can realistically capture about a
   quarter of the daily range (K p.740).
+- FX clock of a bank trader (AC ch.4 › Understand Time of Day): London open 7:00 London, NY open ~7:00 NY (often
+  extends then reverses the London move), 10:00 NY option expiry, 4:00 p.m. London WMR fix (window 3:57:30-4:02:30;
+  month-end the largest, hedge rebalancing), Tokyo fix 9:55 JST, 5-6 p.m. NY the thinnest hour. Activity spikes, not
+  returns: every fix / month-end form is spent in our ledger (S08, H11, H12). Donnelly's own P&L came 7-11 a.m. NY and
+  he gave back 20-40 % of it after 11 a.m. (one trader, AC ch.4, ch.12-16).
 
 ## Gaps
 - 24 h markets (index CFDs, FX) have small gaps; gap rules need a defined session open (cash open

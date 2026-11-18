@@ -28,6 +28,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-18 (later): Opus picks the order of the library books itself, no go needed (rule set by the user).
+
 - 2026-11-18: I-109 on CME Micro 10-Year Yield futures (10Y, $10 per bp), Interactive Brokers, 1 contract for the
   first 6 month-ends (2-3 only if the forward log and real fills hold); orders by hand, placed ahead as "good after
   time" orders just before 3 p.m. ET, held in the next-month contract; a broker connection only when needed, demo first.
@@ -43,7 +45,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 ## Open (needs the user)
 
 1. **IBKR account** for I-109 (futures permission); first fills check margin, the 3 p.m. spread and fees.
-2. **Books:** get the list (Tier 1 first) into the library folders and say "books are in".
+2. **Books:** Tier 1 8 of 12 and Tier 2 13 of 25 are in (2026-11-18); Tier 1 missing: Burghardt *Treasury Bond
+   Basis*, Bouchaud *Trades, Quotes and Prices*, Madhavan and Abner (ETFs). Tier 3 / 4 follow (the user notifies).
 3. **Fable sweep leftovers:** AWS requester-pays account for Hyperliquid fills (card 6 C); a source for the
    positioning collector (card 8).
 4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum).

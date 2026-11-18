@@ -2048,3 +2048,18 @@ t 3 needs ~45 bp vs ~11 halved: PARKED.
 Kumar & Venkataraman (snippet only): crude oil ETFs pay ~30 bp for their roll trades. USO rolled CL over 4 days about two
 weeks before expiry, inside I-115's window (business days 5-9) on the same CL calendar spread, which I-115 tested and
 its one-time test falsified. Not an independent hypothesis; recorded, not screened.
+
+### I-120 FX speculator positioning turn from CFTC COT (AC ch.9, 2026-11-18; new family `fx_cot_positioning`, venue FTMO FX CFDs (goal 1); PARKED on power (M4) before any data)
+Donnelly (AC ch.9 › Positioning): an extreme non-commercial net position in a currency's CME future that has started to
+turn marks a crowded trade that may unwind; he trades the turn, never the level alone (positions can stay extreme for
+months). M11 allows a look: COT is a new non-price data set for the FX CFDs (futures scout 2026-11-18).
+Causal graph (T-21): X = change of speculators' net position from an extreme, Y = next weeks' FX return, M = crowded
+speculators forced to cut (stop-outs, risk limits); confounders: trend (momentum in the same pair), rate news (carry);
+placebo: the same turn in a non-extreme position must show nothing.
+Power (M4), before any data: c = round trip (~1.5 bp + ~0.5 bp swap a week) / weekly sd of a major (~130 bp) ~0.015 <
+0.03. Published effect: Klitgaard & Weir 2004 (NY Fed EPR, 1993-2003): weekly position changes track 30-45 % of the SAME
+week's move but do not predict the next week. Cross-asset "speculative pressure" (net position vs its past-year average,
+84 futures incl. 11 currencies, 1992-2018; secondary summary, CXO Advisory, UNVERIFIED): gross Sharpe ~0.55 a year, works
+for currencies. Halved ~0.27; on ~15 development years expected t ~1.05, two-sided M9 threshold t 3.3: pass chance ~1 %
+< 15 %. PARKED, not closed: reopens only on a primary source with an FX-only Sharpe >= ~1.2 gross or a much longer
+sample. No data read.
