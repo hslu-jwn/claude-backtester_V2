@@ -2109,6 +2109,7 @@ Power sketch (M4, before any data): ~30-40 US spin-offs a year, ~200 in 2015-202
 halved 0.85 % vs ~12 % 14-day residual sd: expected t ~1.0 (PARK level). Long-run drift halved to 6.5 % a year
 vs ~40 % sd: t ~2.3 before cross-correlation, pass chance maybe 20 %. Next step (research): a peer-reviewed post-2010
 source and a spin-off date list (Alpaca corporate actions or SEC Form 10 filings); then the M4 check decides.
+Second search 2026-11-18 (extended): still no peer-reviewed post-2010 US size; only theses / conference papers (CBS 2000-2022 dip then +12.9 % at 12 months; Nordic and European samples; a US 'sponsored spin-off' paper on subsidiaries 1-3 years). Next: an ACAD harvest task (Codex terra high, after the reset) for SSRN / JFE / JCF spin-off studies with a 2005+ sample, and a check whether Alpaca corporate actions list spin-offs.
 
 ### T-26 I-109 month-end diagnostics: quarter-end, futures-expiry months, settlement supply (SM, 2026-11-18; diagnostic on spent data, no new test)
 Stigum names three things that share I-109's window: 2- / 5- / 7-year auction settlement on the month's last day,
