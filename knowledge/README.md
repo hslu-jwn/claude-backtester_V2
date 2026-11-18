@@ -69,6 +69,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | RH | Russell Rhoads, *Trading VIX Derivatives* (Wiley 2011) | [notes](books/rhoads-trading-vix-derivatives.md) | VIX futures, SOQ, ETN roll; all trade ideas in the spent `vix_basis` family; cite by chapter |
 | VT | Euan Sinclair, *Volatility Trading*, 2nd ed. (Wiley 2013) | [notes](books/sinclair-volatility-trading.md) | Variance premium, vol forecasting, sizing, Lo Sharpe error; needs option prices; short-vol = spent `vix_basis`; cite by page |
 | SC | Neil Schofield, *Commodity Derivatives*, 2nd ed. (Wiley 2021) | [notes](books/schofield-commodity-derivatives.md) | Selected chapters: gold, crude, natural gas, commodity investing; descriptive; ideas covered by I-68 / I-74 / I-115 / I-118 / I-121; cite by section |
+| QPM | Michael Isichenko, *Quantitative Portfolio Management* (Wiley 2021) | [notes](books/isichenko-quantitative-portfolio-management.md) | Stat-arb process survey; leads without size (ex-date flows, crowded liquidation, squeezes, merger arb, 13F); no card; cite by page |
+| STS | Larry Connors, *Short Term Trading Strategies That Work* | [notes](books/connors-short-term-trading-strategies.md) | SPY / share pullback, RSI(2), Double 7s, TRIN rules: daily reversal (spent); overnight premium = I-87; no card; cite by page |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`

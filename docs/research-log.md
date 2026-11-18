@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: third session, Continue.Research Mode=auto (continuous until Stop.): Tier 3 books
+
+- Start ~21:xx. Lever: Tier 3 / 4 books arrived. Tier 3 converted to text (`results/books/`, pdftotext, ignored).
+  The Williams *Long-Term Secrets* file is a 404 HTML page (548 bytes, broken download): HANDOFF › Open.
+- Reading by Codex `gpt-6.1-terra` medium, read-only, brief `briefs/book-read.md` (no Claude subagents this run).
+- Auto decision 75: Tier 3 order Isichenko, Connors, Ang, Narang, Chan (QT, MT), Clenow *Stocks on the Move*,
+  Carver (LT, SP), Grinold, Greyserman, Clenow *Following the Trend*, Almanac, Harvey; Tier 4 after. Alternative:
+  Almanac first (most rules per page). Why: stat-arb / factor / share books fit the open real-share venue (M13) and
+  flow mechanisms; trend following and calendar seasonals are spent families (cost-wall §4), so they go last.
+
 ## 2026-11-18: End. of the second session 2026-11-18 (the user: "End.")
 
 - Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, after the last code change, T-22; only docs and research data
