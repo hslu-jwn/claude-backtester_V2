@@ -2188,4 +2188,5 @@ confounders = size, illiquidity, short-term reversal, beta (controls); placebo: 
 quarter before formation would be the named placebo in a build (none: parked).
 M4: quarterly long-short, c ~0.3 % per rebalance + borrow; the spread is a beta bet (sd ~4 % a month). Halved
 ~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED.
+Same arithmetic parks 12-1 share momentum (Clenow SOTM: momentum crashes, sd ~5 % a month, t ~0.7).
 Same for illiquidity selection (AM pp. 428-430): premium sits in micro caps (untradable short leg, wide spreads): no card.
