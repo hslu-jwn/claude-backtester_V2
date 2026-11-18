@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: Continue.Research (Mode=auto from earlier in the session): I-125 closed on cost
+
+- Start: no runnable candidate (M15 drafts triaged out, M11 stops FTMO signal screens); no open card from the books.
+- Auto decision 71: I-125 (short front VX on FOMC days, J. Empirical Finance 2017 + Sinclair) CLOSED on M4 c before any
+  data (round trip ~0.3-0.5 % vs daily sd ~4-6 %). Alternative: screen it on the cached VX settlements. Why: c > 0.03
+  closes a card without a look by rule.
+- State of the idea supply: free data and the 2026-11-18 books are worked through; what is left needs the user (IBKR
+  for I-109's forward fills, a paid futures / intraday data decision, Tier 3 / 4 books).
+
 ## 2026-11-18: T-22 causal simulation tests built (the user: "Build T-22")
 
 - Opus, test-first (10 tests), `analytics/causal_sim.py`; spec research-runner.md › Causal simulation tests. Auto decision 70: build a small shared `ols` + generators instead of testing existing code. Alternative: test the screens' ad-hoc controls. Why: no shared estimator with controls exists; the screens are one-off scripts.

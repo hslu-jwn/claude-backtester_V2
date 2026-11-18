@@ -2132,3 +2132,15 @@ months, all month-ends on a weekend where settlement moves to the next 1st busin
 development shows no gap. Reading: settlement supply does not explain the effect away (prices rise while the new
 notes settle, consistent with the index buying exactly those notes); watch the "no settlement in window" months in
 the forward log. No change to I-109, its venue or sizing.
+
+### I-125 Short front VIX futures on FOMC days (VT, Fernandez-Perez et al. 2017, 2026-11-18; new family `vix_event`, venue Cboe VX (goal 2); CLOSED on cost (M4 c) before any data)
+Mechanism: hedges bought against a scheduled announcement are released once it passes; implied volatility falls
+(Fernandez-Perez, Frijns & Tourani-Rad, "When no news is good news", J. Empirical Finance 41, 2017: VIX about -3 % on
+FOMC days, VX futures fall too, the drop concentrated in ~45 minutes after the release; short VX open-to-close on
+FOMC days ~10 % a year; smaller when realised volatility jumps at the release). Sinclair (VT) describes the same
+event ramp. Not family `vix_basis` (roll yield); a scheduled-uncertainty mechanism.
+Causal graph (T-21): X = FOMC day, Y = front VX daily return, M = event hedgers unwinding; confounder = the VX roll
+(control: same-day-of-month non-event days); placebo: the day after FOMC.
+M4, before any data: ~8 events a year, published ~10 % a year -> ~1.2 % per event, halved ~0.6 %. Round trip 1-2 VX
+ticks (0.05-0.10 points at ~18) ~0.3-0.5 % vs a daily front-VX sd of ~4-6 %: c ~0.05-0.1 > 0.03: CLOSED without a
+look. T-24 not needed. Reopens only with intraday VX data and a cost under ~0.15 % per round trip.
