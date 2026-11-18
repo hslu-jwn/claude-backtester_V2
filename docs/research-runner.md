@@ -983,7 +983,7 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
 - **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
   strategies. Ideas from books stay allowed.
 
-## Fat-tail power check (T-24; tool, reported next to M4, not a gate)
+## Fat-tail power check (T-24; report only, no gate: rule set by the user, 2026-11-18)
 
 Source: Taleb, *Statistical Consequences of Fat Tails* (`knowledge/books/taleb-fat-tails.md`). Code:
 `analytics/fat_tail_power.py`; `python -m backtester.analytics.fat_tail_power --n <periods> --edge <halved edge> --sd
@@ -996,7 +996,8 @@ Defaults: 10,000 samples, seed 42, gate t 3.0 (3.3 two-sided).
 What it showed on the registered numbers (2026-11-18): symmetric fat tails (t(3), GARCH) leave power and false passes
 near the Gaussian values; a `rare_loss` stream at zero edge passes t 3.0 about 10x as often as a Gaussian one in short
 samples (n 40: ~2 % vs ~0.2 %), and a `rare_gain` stream (right skew, like Strategy 20 and I-109) has lower power.
-Making the flag or the minimum power part of the M4 gate is the user's decision (HANDOFF › Open).
+Every new card reports the T-24 table and flags next to its M4 numbers; neither the minimum power nor the flag is a
+gate (the user, 2026-11-18). M4 alone decides PARK / CLOSE.
 
 ## Causal check per card (T-21; rule set by the user, 2026-11-18)
 

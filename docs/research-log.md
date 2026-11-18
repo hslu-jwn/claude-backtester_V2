@@ -4,6 +4,10 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-24 report only, no gate (the user: "Report only, no gate")
+
+- Written to research-runner.md › Fat-tail power check and HANDOFF › Accepted; HANDOFF › Open item removed.
+
 ## 2026-11-18: T-24 fat-tail power check built (the user: "Build T-24 power check")
 
 - Opus, test-first (14 tests), `analytics/fat_tail_power.py` + CLI; spec research-runner.md › Fat-tail power check.
