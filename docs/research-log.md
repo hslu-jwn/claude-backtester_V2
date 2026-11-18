@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: End. of the second session 2026-11-18 (the user: "End.")
+
+- Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, after the last code change, T-22; only docs and research data
+  since); ruff clean. HANDOFF rewritten; `results/trials.jsonl` unchanged vs `research/trials.jsonl`; no briefs to
+  archive; no ROADMAP step finished. Auto decisions of this session: 55-74 (Mode=auto).
+
 ## 2026-11-18: harvest batch 20 result: canaries pass; I-128 parked; nothing screenable (auto)
 
 - Codex terra `--search`, 5 tasks ok, no violations; known canary found LRV, nonsense canary empty. 7 ideas.
