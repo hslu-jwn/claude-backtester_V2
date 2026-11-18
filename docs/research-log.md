@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Carver, Advanced Futures Trading Strategies; I-121 parked (auto)
+
+- Model and effort: Codex gpt-6.1-terra medium, read-only, 4 parts (`book-afts1..4`, 3-4 min each, status ok, no
+  violations). Codex then hit its 5-hour limit (`book-er5`, status limit).
+- Filed: `knowledge/books/carver-advanced-futures-trading.md`, README row AFTS, `topics/combining-edges.md` (breadth is
+  the edge: portfolio 1.27, median instrument 0.2-0.3).
+- Auto decision 58: card I-121 (crack-spread carry / trend on CL / RB / HO) PARKED on power before any data (RB strips
+  only from 2005-10, halved Sharpe 0.31, pass chance ~4 %). Alternative: screen it on the EIA strips. Why: M4.
+  No card for calendar spreads / butterflies (weaker in the book), trend / momentum on CFDs (M11 stop, failed families),
+  fast mean reversion (rests on optimistic limit fills).
+- Auto decision 59: with Codex at its limit, Ilmanen *Expected Returns* goes to 5 Sonnet readers in parallel (routing
+  doc: Sonnet when Codex is at its limit). Alternative: wait ~4.5 h for the Codex reset. Why: never idle; reading is
+  a bounded, cheap task.
+
 ## 2026-11-18: book read: Donnelly, The Art of Currency Trading; I-120 parked (auto)
 
 - Model and effort: Codex gpt-6.1-terra medium, read-only, 3 parts (`book-ac1..3`, ~3 min each). `ac1` / `ac2` were

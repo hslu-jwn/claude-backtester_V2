@@ -44,6 +44,12 @@ if their pre-cost Sharpe is positive).
   gives extreme unstable weights (68/32/0 in the example; in-sample SR 0.84 turned 0.30 out of sample).
 - Do not fit rules per instrument (narrative fallacy); pool instruments; compare rules only within the same
   skew (steady wins and a high hit rate usually hide negative skew).
+- **Breadth is the edge (AFTS S9-S20).** On ~100 futures after costs: six-speed trend Sharpe 1.14, four-span carry
+  0.94, 60/40 blend 1.27 (50/50 the same), trend-carry correlation 0.36; but the median single instrument earns 0.23
+  (trend) and 0.28 (carry), cross-sectional momentum 0.34 and cross-sectional carry 0.31 for the whole portfolio.
+  Most refinements (adjusted trend, accurate carry, normalised or asset-class trend, allocation timing) move the
+  portfolio by 0.01-0.06. A volatility-regime scaling of trend (2x in the lowest, 0.5x in the highest relative-vol
+  rank) gave 1.27 -> 1.39 but missed 2008. For us with a handful of symbols: expect the median-instrument number.
 
 ## Hierarchical risk parity (LP 16)
 - Problem: mean-variance optimisation inverts a noisy covariance matrix (Markowitz's curse) and loses to

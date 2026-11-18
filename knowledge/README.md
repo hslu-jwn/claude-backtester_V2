@@ -59,6 +59,7 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | CF | Marcos López de Prado, *Causal Factor Investing* (Cambridge Elements 2023, open access) | [notes](books/lopezdeprado-causal-factor-investing.md) | Methods essay: association vs causation, type-A (noise / multiple testing) vs type-B (confounder, collider, mediator) false discoveries, evidence hierarchy, Monte Carlo demos; no trading rule; cite by page |
 | FT | Nassim Taleb, *Statistical Consequences of Fat Tails* (STEM Academic Press; arXiv 3rd ed. 2025) | [notes](books/taleb-fat-tails.md) | Finite-sample statistics under fat tails: max-to-sum moment checks, kappa and how much data a mean needs, hidden tail beyond the sample max, p-value distribution and p-hacking, ruin barriers, expected loss beyond a threshold, option hedging; ch.13-21 not read; cite by page |
 | AC | Brent Donnelly, *The Art of Currency Trading* (Wiley 2019) | [notes](books/donnelly-art-of-currency-trading.md) | Bank FX trader: who must trade when (fixes, option expiry, month-end hedges), positioning (COT), news vs expectations, free-capital risk; selected examples, no costed tests; its flow ideas are spent in our ledger, new: I-120 (parked); cite by chapter |
+| AFTS | Robert Carver, *Advanced Futures Trading Strategies* (Harriman House 2023) | [notes](books/carver-advanced-futures-trading.md) | 30 daily futures strategies after costs on ~100 futures: trend, carry, cross-sectional, value, skew, fast mean reversion, spreads, rolling and execution tactics; portfolio Sharpe ~1.3 from breadth, median instrument 0.2-0.3; new: I-121 (parked); cite by strategy number |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
@@ -66,7 +67,7 @@ Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H
 `LP 3.6` (López de Prado chapter.section, ebook has no pages), `RC p.71` (Carver), `EC p.156` (Chan),
 `KD p.109` (Davey), `WK ch.16` (Kurt, by chapter), `JK p.105` (Kaeppel), `RP ch.11` (Pardo, by
 chapter), `TM 5.3` (Masters, chapter.section), `DA p.270` (Aronson), `CF p.45` (López de Prado, Causal Factor
-Investing), `FT p.160` (Taleb, Fat Tails), `AC ch.4` (Donnelly, by chapter).
+Investing), `FT p.160` (Taleb, Fat Tails), `AC ch.4` (Donnelly, by chapter), `AFTS S10` (Carver, Advanced Futures, by strategy number).
 
 ## What the books say about our results so far
 - **Strategy 4 (trend following) failing on indices is expected:** equity indices are the noisiest

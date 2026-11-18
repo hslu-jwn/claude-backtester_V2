@@ -2063,3 +2063,14 @@ week's move but do not predict the next week. Cross-asset "speculative pressure"
 for currencies. Halved ~0.27; on ~15 development years expected t ~1.05, two-sided M9 threshold t 3.3: pass chance ~1 %
 < 15 %. PARKED, not closed: reopens only on a primary source with an FX-only Sharpe >= ~1.2 gross or a much longer
 sample. No data read.
+
+### I-121 Refinery crack-spread carry and trend on energy futures (AFTS S29, 2026-11-18; new family `energy_crack`, venue NYMEX CL / RB / HO futures (goal 2), not FTMO; PARKED on power (M4) before any data)
+Carver (AFTS S29): an industry-weighted gasoline / crude / heating-oil triplet traded as one synthetic instrument with
+carry (60-day smoothed curve slope) or EWMAC16,64 trend; Jumbo-portfolio net Sharpe carry 0.62, trend 0.46, but
+correlation with the outright crude rule 0.75 / 0.92 (largely an oil bet). The exact legs and unit conversion did not
+survive the extraction. Causal graph (T-21): M = refiners hedging margins and storage carry (convenience yield),
+confounder = the crude level / crude carry itself (control: outright CL carry); placebo: a time-shifted curve slope.
+Power (M4), before any data: EIA strips 1-4 hold RB only from 2005-10 (16 development years; no RB in the test strips).
+c = round trip of three legs (~3 ticks each) / monthly sd of the crack well under 0.03. Halved published Sharpe 0.31
+(carry) -> expected t ~1.24 over 16 years vs t 3.0: pass chance ~4 % < 15 %. PARKED, not closed. Calendar spread and
+butterfly variants (AFTS S30: WTI spread carry 0.27, butterfly -0.02 / -0.37) are weaker: no card. No data read.
