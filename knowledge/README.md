@@ -81,6 +81,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | AAPM | Richard Grinold, *Advances in Active Portfolio Management* | [notes](books/grinold-advances-active-portfolio-management.md) | Signal decay, cost-aware partial trading toward a target, shared exposures; method for V2.7; no card |
 | TFMF | Alex Greyserman, *Trend Following with Managed Futures* | [notes](books/greyserman-trend-following-managed-futures.md) | Trend following history and drawdown allocation (spent family I-51); no card |
 | STA | Jeffrey Hirsch, *Stock Trader's Almanac 2026* | [notes](books/hirsch-stock-traders-almanac-2026.md) | Calendar seasonals (spent); year-end tax-loss losers and small-cap December (I-130, parked: one event a year); no other card |
+| FTT | Andreas Clenow, *Following the Trend*, 2nd ed. | [notes](books/clenow-following-the-trend.md) | Diversified futures trend (spent I-51); term-structure carry (judged, ideas.md storage card: no power per commodity); no card |
+| DEFI | Campbell Harvey et al., *DeFi and the Future of Finance* | [notes](books/harvey-defi-future-of-finance.md) | DeFi mechanics; collateral liquidations, AMM arbitrage, stablecoin redemption: on-chain execution, no size; no card |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
