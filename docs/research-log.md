@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: End. of the session 2026-11-18 (the user: "End.")
+
+- Full suite 6,027 passed, 14 skipped, 4 xfailed (-n 8, run after the last code change; only docs changed since);
+  ruff clean. HANDOFF rewritten; `results/trials.jsonl` copied to `research/trials.jsonl` (unchanged); no briefs to
+  archive; no ROADMAP step finished. Auto decisions of this session: 47-54 (Mode=auto part, below).
+
 ## 2026-11-18: T-25 stress scenarios built (the user: "Build T-25 stress test")
 
 - `risk/stress.py` (Opus, test-first, 10 tests): shock day = the worst historical day x a multiple, placed at a random
