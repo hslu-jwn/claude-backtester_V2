@@ -4,6 +4,22 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: Tier 3 and Tier 4 books read (auto)
+
+- Codex `gpt-6.1-terra` medium, read-only, ~1 min each, 25 calls, guard ok (two early calls flagged only Opus's
+  log edit). Filed 25 book notes + README rows: Tier 3 QPM, STS, AM, IBB, QT, MT, SOTM, LT, SP, AAPM, TFMF, STA, FTT,
+  DEFI; Tier 4 CLM, AHFT, MLAM, MMM, MLAT, KCG, QRM, FPP, ROS (LdP CFI, Taleb read earlier). Vince *Leverage Space*
+  is a scanned image (no text layer): HANDOFF › Open.
+- Cards: I-129 low idiosyncratic vol (also covers share momentum, illiquidity) and I-130 year-end tax-loss losers,
+  both PARKED on power before any data (ledger I129, I130). Checked and already judged: Treasury auction cycle
+  (I-109 card), commodity term-structure carry (storage card), PEAD (FB123), overnight premium (I-87). No screenable
+  candidate. Caveat: ~1-minute reads skim; they rely on the TOC and grep, not cover-to-cover.
+- Auto decision 76: Tier 4 with a methods-weighted prompt. Alternative: skip Tier 4 (no trade rules expected). Why:
+  one cheap call per book, and method notes feed V2.7 / risk; an unread book is a gap in the record.
+- Auto decision 77: next, the unread Tier 1 / 2 books (Kakushadze, Evans, Foucault, Johnson, Alpha Trader, Hull,
+  Natenberg, Fabozzi, Mehrling), then a harvest batch. Alternative: harvest first. Why: the books are local and cost
+  one terra minute each; Kakushadze's 151 strategies and Evans's FX order flow may hold mapped-but-unjudged items.
+
 ## 2026-11-18: third session, Continue.Research Mode=auto (continuous until Stop.): Tier 3 books
 
 - Start ~21:xx. Lever: Tier 3 / 4 books arrived. Tier 3 converted to text (`results/books/`, pdftotext, ignored).
