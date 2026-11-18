@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 19 result: canaries pass, nothing screenable; I-126 / I-127 parked (auto)
+
+- Codex terra high (ACAD) / low (BLOG) `--search`, 5 tasks, all ok, no violations. Known canary T0137 found KMPV and LRV;
+  nonsense canary T0138 empty. 6 ideas: 4 crypto leads rejected by the filter as untestable, 2 canary rows parked.
+- Auto decision 72: Opus overrides 'untestable' for token unlocks (DefiLlama schedules are free), reads the EPFL thesis
+  (-2.5 % over [-7, +7], 650 events 2020-2023) and parks I-126 on power (pass chance 4-12 %); I-127 (USDT issuance
+  +0.63 % / 24 h) parked (~12 %). Alternative: download unlock schedules and screen. Why: M4; a look spends a trial.
+- Result: crypto non-price data with free history exists (unlocks, stablecoin supply), but the published effects are
+  too small for our samples. Spot ETF flows start 2024 (test period only); exchange netflows need paid on-chain data.
+
 ## 2026-11-18: harvest batch 19 planned: crypto non-price data sets (the user: "Crypto data harvest")
 
 - Tasks T0134-T0138 (`research/harvest/tasks.csv`): token unlock schedules (ACAD, BLOG), stablecoin issuance / spot ETF

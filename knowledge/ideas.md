@@ -2144,3 +2144,24 @@ Causal graph (T-21): X = FOMC day, Y = front VX daily return, M = event hedgers 
 M4, before any data: ~8 events a year, published ~10 % a year -> ~1.2 % per event, halved ~0.6 %. Round trip 1-2 VX
 ticks (0.05-0.10 points at ~18) ~0.3-0.5 % vs a daily front-VX sd of ~4-6 %: c ~0.05-0.1 > 0.03: CLOSED without a
 look. T-24 not needed. Reopens only with intraday VX data and a cost under ~0.15 % per round trip.
+
+### I-126 Token unlock supply shock on Binance perpetuals (harvest batch 19 T0134 / T0135, 2026-11-18; new family `crypto_unlock`, venue Binance USDT perps (goal 2); PARKED on power (M4) before any data)
+Source read by Opus (EPFL doctoral thesis, infoscience.epfl.ch, chapter on token unlocks): unlocks of >= 5 % of the
+supply, 2014-01 .. 2024-08 (per year 53 in 2020, 186 in 2021, 193 in 2022, 216 in 2023, 155 to Aug 2024; sources
+Messari, Cryptorank, Tokeninsight, whitepapers); synthetic diff-in-diff, window [-7, +7] days: "token unlocks lead
+to an average price drop of 2.5%", stronger at the first unlock (insiders reveal how fast they sell). Practitioner
+pages (unlockpulse, pattern.plus 2024-26) report -5.8 % to -7.3 % around large unlocks without a clear edge vs
+ordinary days. Unlock schedules are free (DefiLlama emissions API), so "untestable" (filter) is overridden.
+Causal graph (T-21): X = scheduled unlock date, Y = token return minus BTC over [-7, +7], M = insiders / early
+investors selling newly liquid tokens; confounders = young-token drift after listing (control: days since TGE),
+market beta; placebo: unlocks under 1 % of supply.
+M4, before any data: short perp round trip ~0.1 % + funding vs a 15-day altcoin residual sd ~15-20 %: c ~0.01. Effect
+halved -1.25 %; development 2020-2023 ~650 events of which perhaps 300-600 have a Binance perp: expected t ~1.3-1.8 vs
+3.0, pass chance ~4-12 % < 15 %: PARKED. T-24: right-skewed squeezes (rare_gain for a short) lower it further.
+Reopens on a study with a larger per-event size in liquid perps, or if the first-unlock subset shows >= ~5 %.
+
+### I-127 USDT issuance predicts next-day Bitcoin return (harvest batch 19 T0136, 2026-11-18; family `crypto_stablecoin_flow`, venue Binance BTC perp; PARKED on power before any data)
+Blockchain Research Lab working paper (2020): "For USDT, we find a significant CAAR only for the period 0 to 24 hours
+(0.63%)" after an issuance. Mechanism weak: issuance follows demand (cash waiting to buy), not a forced buyer.
+Daily supply is free (DefiLlama stablecoins). M4: halved 0.32 % vs BTC daily sd ~3.5 %, ~400 issuance days 2020-2023:
+expected t ~1.8, pass chance ~12 % < 15 %: PARKED.
