@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: data-set scout started; optional book request (auto)
+
+- Auto decision 54: one web subagent (Sonnet) scouts free non-price data sets (flows / positioning, 3+ years, 20+
+  instruments or one liquid market), excluding everything owned. Alternative: harvest batch 19 for strategies.
+  Why: batch 18 kept nothing and seven batches gave one card; Fable's M12 (search for data, not strategies) is a
+  search choice, not a rule change (the rule M12 itself still waits for the user).
+- Telegram "Optional: New books needed": Ilmanen *Expected Returns*, Pedersen *Efficient Inefficiency*, Burghardt
+  *The Treasury Bond Basis* (the library has no book on forced flows or futures premia).
+
 ## 2026-11-18: I-109 venue diagnostic on 10-year Treasury futures; lint of the new screens (auto)
 
 - Yahoo ZN=F continuous daily closes 2000-09 .. 2026-11 -> data/cache/yahoo_futures. ZN excess per month-end: dev
