@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-26 I-109 month-end diagnostics (auto)
+
+- Opus, local script `research/screens/2026-11-18_t26_i109_month_end_diagnostics.py` (reuses the I-109 screen; flags
+  fixed in its docstring before the run); TreasuryDirect note history 1990-2026 downloaded (free, ignored cache).
+- Result (card T-26): no quarter-end dependence (difference t -0.08 dev / 0.58 test). 2- / 5- / 7-year settlement in
+  the window: development no gap (+19.3 vs +16.1); test flag fires (+34.2 vs +2.5 on 18 weekend month-ends, where
+  settlement moves to the 1st), difference t 1.48. No change to I-109; the forward log should watch weekend
+  month-ends (the new notes then miss the month-end index).
+- Auto decision 65: run T-26 now, before more books. Alternative: keep reading (Codex at its limit). Why: cheap,
+  local, and it bears on the one candidate heading to real money.
+
 ## 2026-11-18: books read: Pedersen, Efficiently Inefficient; Stigum, Money Market (selected chapters) (auto)
 
 - Model and effort: Claude Sonnet agents (Codex at its limit): Pedersen 4 parts, Stigum 3 parts (ch.8, 10, 12-14,

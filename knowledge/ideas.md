@@ -2119,3 +2119,12 @@ registered development and test numbers split by (a) quarter-end vs other month-
 in expiry months. Sensitivity only; the registered result stands. Flags: a split where one side carries the whole
 effect changes how the forward log is read (and the 6-month Micro 10Y sizing step), not the verdict. Local script,
 FRED + TreasuryDirect auction dates (free).
+**T-26 result 2026-11-18 (`research/screens/2026-11-18_t26_i109_month_end_diagnostics.py`, registered numbers
+reproduced: development 380 months +18.4 bp t 4.39, test 61 months +24.9 t 2.14):** (a) quarter-end vs other months:
+development +17.9 (t 2.48) / +18.6 (t 3.61), test +35.2 / +19.8, difference t -0.08 / 0.58: no quarter-end (repo,
+ZN expiry) dependence. (b) a 2- / 5- / 7-year settlement inside the window vs not: development +19.3 (t 3.93, 266) /
++16.1 (t 2.03, 114), test +34.2 (t 2.27, 43) / +2.5 (t 0.17, 18): the pre-set flag fires on the test (the 18 "out"
+months, all month-ends on a weekend where settlement moves to the next 1st business day, are weak), but the difference t is 1.48 and
+development shows no gap. Reading: settlement supply does not explain the effect away (prices rise while the new
+notes settle, consistent with the index buying exactly those notes); watch the "no settlement in window" months in
+the forward log. No change to I-109, its venue or sizing.
