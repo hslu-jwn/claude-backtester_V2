@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: no paid futures data; book list for the user (the user: "too risky ... make a small text file ... with books")
+
+- Databento dropped for now (real card needed, could exceed the free credit; the user may revisit). HANDOFF updated.
+- Book list `knowledge/books-wanted.md` (72 books in 4 tiers, plus free primary sources), copied to the user's Desktop
+  as "Trading books to get.txt" (the user's permission). Titles and years checked by one Sonnet web subagent (partly
+  from memory; unconfirmed items marked). Books go to `X:\Daten_Bibliothek\Trading`; read per `knowledge/README.md`
+  › Adding a new book when the user says they are in.
+
 ## 2026-11-18: futures data-set scout started (the user: "Futures data hunt"; M12)
 
 - One Sonnet web subagent (read-only): free non-price futures data (COT variants, CIT / index investment, volume and
