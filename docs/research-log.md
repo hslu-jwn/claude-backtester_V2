@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-23 tail concentration audit, Strategy 20 and I-109 (the user: "Yes, run T-23")
+
+- Opus, local script, no model call. Flags fixed in the script docstring before the run.
+- largest observation's share of sum r^4 / mean without the 5 largest gains / without the 5 largest losses:
+  Strategy 20 development (186 weeks) 0.45 (one week +3,254 bp: CONCENTRATED) / +84 bp (t 2.32) / +179 (t 4.14);
+  Strategy 20 test (147 weeks) 0.24 / +103 (t 2.95) / +179 (t 4.75); I-109 development (380 months) 0.16 / +15.1 (t 3.80)
+  / +21.3 (t 5.27); I-109 test (61 months) 0.20 / +7.8 (t 0.80) / +37.3 (t 3.33). No stream FRAGILE (all stay > 0 without
+  their 5 best periods); every largest observation is a gain (right-skewed, not short tail risk). Weak spot: I-109's test
+  mean leans on a few months (2021-22); its forward log carries the weight. Strategy 20's development leans on one week,
+  its test does not.
+
 ## 2026-11-18: book read: Taleb, Statistical Consequences of Fat Tails (the user: "Read fat-tails, you can use codex again")
 
 - Model and effort: Codex gpt-6.1-terra medium, read-only, 4 parts in 2 parallel pairs (`ai_dispatch --label

@@ -1257,6 +1257,14 @@ the largest observation's share of sum |r|^p for p = 1, 2, 4, gains and losses a
 gains and, separately, the k largest losses (k = 1, 2, 5) as sensitivity only (the full sample stays the result).
 Flag a stream whose sign or t depends on a handful of periods. Source FT p.16-17, 54-55, 148-150, 194-201. Strategy 20
 already has the M6 cap (+-50 %); this adds the period view. Diagnostic on spent data, no new look.
+**T-23 result 2026-11-18 (`research/screens/2026-11-18_t23_tail_concentration.py`, registered numbers reproduced):**
+largest observation's share of sum r^4 / mean without the 5 largest gains / without the 5 largest losses:
+Strategy 20 development (186 weeks) 0.45 (one week +3,254 bp: CONCENTRATED) / +84 bp (t 2.32) / +179 (t 4.14);
+Strategy 20 test (147 weeks) 0.24 / +103 (t 2.95) / +179 (t 4.75); I-109 development (380 months) 0.16 / +15.1 (t 3.80)
+/ +21.3 (t 5.27); I-109 test (61 months) 0.20 / +7.8 (t 0.80) / +37.3 (t 3.33). No stream FRAGILE (all stay > 0 without
+their 5 best periods); every largest observation is a gain (right-skewed, not short tail risk). Weak spot: I-109's test
+mean leans on a few months (2021-22); its forward log carries the weight. Strategy 20's development leans on one week,
+its test does not.
 
 ### T-24 Fat-tail power check (FT, 2026-11-18; method, extends M4)
 Before a data look, simulate the planned sample under Gaussian, Student-t(3) and volatility-clustered P/L at the card's

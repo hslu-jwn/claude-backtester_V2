@@ -63,7 +63,9 @@ and +56.3 (t 1.90). Test legs 34-63 symbols, eligible median 240.
 Method rules of 2026-11-18 (`docs/research-runner.md` › Method rules): M6 tail gate passes (capped net keeps its sign
 and over half its mean). M7 regime gate fails on development (halves +327 / +2, the second half below 25 % of the
 mean); the strategy stays alive on its passed test and is sized on the shrunk mean. M10: plan on ~+60 to +90 bp a week
-(fair ~+92 x 0.65 up to the fair value) until the forward log has 52 weeks. Screen:
+(fair ~+92 x 0.65 up to the fair value) until the forward log has 52 weeks. T-23 (2026-11-18): development leans on one
+week (+3,254 bp holds 45 % of sum r^4; without the 5 best weeks +84, t 2.32), the test does not (24 %; +103, t 2.95).
+Screen:
 `research/screens/2026-11-14_i78_crypto_wide_factors_screen.py` (`--test`).
 
 ## Build (research tool, like Strategy 19)
