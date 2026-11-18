@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 21 planned: rates / energy non-price data sets (auto)
+
+- Tasks T0144-T0148: Treasury cash / Fed balance-sheet flows (TGA, RRP, buybacks; ACAD), auction results (BLOG),
+  EIA / USDA report surprises (ACAD); canaries T0147 (known carry) and T0148 (nonsense).
+- Auto decision 78: library done (Hull, Natenberg skipped as pricing texts), so a harvest batch on M12 data sets for
+  goal 2 futures. Alternative: wait for the 2026-12-03 forward rows. Why: never idle; rates fit the open I-109 path
+  and TreasuryDirect history is already cached.
+
 ## 2026-11-18: Tier 3 and Tier 4 books read (auto)
 
 - Codex `gpt-6.1-terra` medium, read-only, ~1 min each, 25 calls, guard ok (two early calls flagged only Opus's
