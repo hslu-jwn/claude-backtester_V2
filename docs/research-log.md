@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: Fable methods M2, M4-M12 accepted (the user: "Yes, as recommended")
+
+- Written to `docs/research-runner.md` › Method rules; pointers in the continue-research and idea-harvest skills.
+  M7 applies to new cards only; M8 changed by Opus (each card keeps its own test gate, +0.3 at the 4th and +0.5 from
+  the 5th use of a test period) because the wording "t 3.0 for every one-time test" would fail I-109-sized tests.
+- Ledger: I73 and I83 verdicts get the M5 note. M4's relabel of rows closed on power is not done blind (the ledger has
+  8 such rows from 2026-11-15, Fable said 9 crypto rows); each gets c and a pass chance when its family comes up.
+- HANDOFF Open 3 / 4 shortened (K = 10 pause is M11, test-period counting is M8).
+
 ## 2026-11-18: I-109 venue decided: CME Micro 10-Year Yield futures, small (the user: "Micro futures, small")
 
 - Options shown: ZN, micro 10-year yield futures, IEF (or a UCITS twin), paper only. The user picked micro futures

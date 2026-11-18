@@ -32,6 +32,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
   Brokers (10Y listed, ~$0.10-0.25 a contract plus exchange fees), orders placed ahead as "good after time" orders
   for just before 3 p.m. ET; 1 contract for the first 6 month-ends, 2-3 only if the forward log and real fills hold
   (decided by the user 2026-11-18).
+- 2026-11-18: Fable methods M2, M4-M12 accepted (M7 new cards only, M8 changed: +0.3 / +0.5 on the card's own test
+  gate at the 4th / 5th+ use of a period); `docs/research-runner.md` › Method rules.
 - 2026-11-18: everything of the 2026-11-16/17 session accepted at `End.`.
 - 2026-11-17: M1 (three verdicts) and M3 (shelf); M13 (real US shares); card 7 split; the user's e-mail as the
   EDGAR / Wikimedia contact (Credential Manager only); shelf loggers and the monthly task; threshold rebalancing is its
@@ -45,10 +47,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    worst -$140 (test) / -$280 (dev), a losing year ~22-27 %. Liquidity and the exact tick not checked yet.
 2. **Crypto prop firm for Strategy 20 (money):** decision package `knowledge/research/reports/2026-11-15_s20_prop_decision.md`
    (15 % notional per side tranched: pass ~96 % in ~1.6 years on realistic marks); confirm the firm's rules first.
-3. **Fable sweep methods still open:** M2, M4-M12 (`knowledge/reviews/2026-11-16-idea-sweep/fable_part2_directions.md`
-   §3); AWS requester-pays account for Hyperliquid fills (card 6 C); a source for the positioning collector (card 8).
-4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum); goal-1 signal pause at K = 10 (reached
-   2026-11-15); count test-period uses (t >= 3.0 from the 5th one-time test on a period).
+3. **Fable sweep leftovers:** AWS requester-pays account for Hyperliquid fills (card 6 C); a source for the positioning
+   collector (card 8).
+4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum).
 5. Older: B4 dividends question to FTMO; GBPUSD 2020-21 placeholder spreads; stressed-cost p90 refresh; USDCHF 2015.
 
 ## Next step

@@ -950,3 +950,35 @@ the perp symbols), rebuilds the forward share universe and fetches the official 
 MT5 cache, which the MT5 download keeps current. I-109 (Treasury month-end, PASSED its one-time test 2026-11-17)
 logs two rows from the 2026-11 month-end: `shelf_i109` (the registered FRED DGS10 statistic) and `shelf_i109_ief`
 (the tradable IEF window); canaries reproduce the development and test headlines. Strategy 19 keeps its own log (`crypto_carry --forward`).
+
+## Method rules M2, M4-M12 (2026-11-16 sweep; rule set by the user, 2026-11-18)
+
+Wording from `knowledge/reviews/2026-11-16-idea-sweep/fable_part2_directions.md` §3; M7 and M8 as changed by Opus and
+accepted with it. They apply to new cards; rows already closed keep their verdicts unless a line says otherwise.
+
+- **M2 family closure:** only FALSIFIED rows (M1) count toward "two falsifications close a family". An
+  UNPROVEN-POSITIVE or a kill at t < 3.0 that is not FALSIFIED does not. No closed family reopens.
+- **M4 power rule:** every card states c = round-trip cost / instrument sd over the hold, and the effective
+  name-periods. c > 0.03: closed without a look. Otherwise it states the pass chance at the family's realised median
+  effect (or the halved published one); below 15 %: PARKED, not closed. Rows closed on power before 2026-11-18 (the
+  ledger has 8 "CLOSED 2026-11-15 on power", Fable counted 9 crypto rows) get their c and pass chance when their family
+  comes up again, and become PARKED if c <= 0.03; not relabelled blind.
+- **M5 no unregistered pass statistic:** a statistic passes a gate only if the card named it before the data. I-73 and
+  I-83 read "test t < 3.0: not confirmed alone; pooled evidence only".
+- **M6 tail gate (cross-sectional books):** with member returns capped at +-50 % per period the net keeps its sign and
+  at least half its mean; reported next to it: the median period and t on the capped series.
+- **M7 regime gate (new cards only):** no calendar half below 25 % of the full-period mean. Strategy 20 (development
+  halves +327 / +2) fails it, stays alive on its passed test, is sized on the shrunk mean (M10) and the fail is
+  written in its spec.
+- **M8 test-period reuse (changed):** each card keeps its own pre-registered test gate; the 4th one-time test on the
+  same test period adds +0.3 to its t threshold, the 5th and later +0.5. Diagnostics on a spent period are never
+  evidence for a new variant. Crypto 2024+ has 3 uses.
+- **M9 two-sided cards:** when no published mechanism fixes the sign, both signs are cells and the threshold is t 3.3.
+- **M10 shrunk reporting:** every PASSED row is reported with a forward estimate = measured mean x 0.65 (x 0.4 for
+  UNPROVEN-POSITIVE) until its forward log has 52 weeks (Strategy 20: ~+60 to +90 bp a week). Reporting only; no
+  default changes.
+- **M11 signal stop on FTMO CFDs:** K = 10 reached (2026-11-15): no new signal screens on the 34 FTMO CFDs until a new
+  venue fact or a new non-price data set for them exists. Goal-1 work is the shelf logs and the positioning collector;
+  the user may still order a specific look.
+- **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
+  strategies. Ideas from books stay allowed.

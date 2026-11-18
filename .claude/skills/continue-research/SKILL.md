@@ -76,8 +76,11 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   combined estimate (pre-sample + development + test) or a forward demo instead of a pass / fail gate.
 - **Stop rules (review tip 5, the user 2026-11-11):** one Codex window per hypothesis; stop at the
   first failed gate; no rescue variants (a changed rule is a new, counted hypothesis); a family is
-  closed after two falsifications; a lead expires after one failed independent check (closed, not
+  closed after two FALSIFIED rows (M2); a lead expires after one failed independent check (closed, not
   parked).
+- **Method rules M2, M4-M12 (the user, 2026-11-18):** power rule c and pass chance on every card (M4), only
+  registered statistics pass (M5), tail and regime gates (M6, M7), test-period reuse (M8), two-sided at t 3.3 (M9),
+  shrunk reporting (M10), no new FTMO CFD signal screens (M11): `docs/research-runner.md` › Method rules.
 - **Pipeline controls (review tip 2):** after any change to a gates tool, run a planted drift
   (positive control, must pass about as often as the power says) and shuffled days (negative
   control, at most 5 % passes) through it once (`tools/gates.py --controls N` does both on the control cells).

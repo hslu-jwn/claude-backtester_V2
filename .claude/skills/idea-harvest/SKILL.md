@@ -15,6 +15,9 @@ terms-of-use risk, reviving a parked idea. Never run a harvest batch on your own
 `Mode=manual`. In `Mode=auto` (CLAUDE.md) Opus decides all of these itself and logs each as an auto
 decision; purchases still need the user (money).
 
+**Target (M12, the user 2026-11-18):** search for data sets (free, 100+ names, non-price, 3+ years), not
+strategies (`docs/research-runner.md` › Method rules).
+
 ## Steps
 
 1. **Plan:** `python -m backtester.tools.harvest plan <KEY> ...` (key `SOURCE.MARKET.HORIZON.MECHANISM`,
