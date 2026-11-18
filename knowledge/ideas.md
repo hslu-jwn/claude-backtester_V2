@@ -1237,6 +1237,20 @@ Cost side only: rest a limit at the bid N minutes before the clock entry, market
 fill goes against the order by at least the half-spread saved, or fill rate < 60 %. Only for cells whose
 gross is already near cost.
 
+### T-21 Causal graph and type-B check on every card (CF, 2026-11-18; method proposal, needs the user)
+Before any data look a card states its causal graph in a few lines: signal X, outcome Y, the forced counterparty M
+(mechanism), confounders with their proxies, and any collider or mediator that must NOT be controlled. Plus one
+implied absence (where M does not trade, the effect must be gone), tested as a named placebo. Verdict PASSED would
+need both checks: type-A (ledger, t threshold, as now) and type-B (graph declared, confounders checked, no collider
+controls, placebo absent). Source `books/lopezdeprado-causal-factor-investing.md` C1, C2, C4, C10. I-109 already has a
+placebo window (10 trade dates earlier, +10.2 bp, t 2.14: not absent; near the mid-month auctions) and a diff-in-diff
+check would be a diagnostic only (its test is spent).
+
+### T-22 Simulation tests for our estimators (CF, 2026-11-18; tooling)
+The three seeded 5,000-draw structures of CF ch.7 (fork, collider, confounded mediator) plus one true effect as unit
+tests of the scorecard / gates code: the correct specification must report no effect (or recover the true one); a
+wrong control must not create significance unnoticed. Cheap, deterministic. Source CF pp.52-60, appendix B.
+
 
 ### I-95 Strategy 20's flow sort on FTMO crypto CFDs (ORIGINAL, goal-1 bridge, 2026-11-15; closed by arithmetic, no data look)
 Idea: trade the weekly taker-flow sort (Strategy 20 signal from Binance) on FTMO's 30 crypto CFDs, so goal 1 could use

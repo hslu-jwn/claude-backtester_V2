@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: López de Prado, Causal Factor Investing (the user: "Yes, read it"; "use sonnet")
+
+- Three free books downloaded to `X:\Daten\03_Bibliothek\Trading\Tier 4` (Regression and Other Stories, Statistical
+  Consequences of Fat Tails, Causal Factor Investing); CASI's free PDF is gone, 151 Trading Strategies is retracted by
+  Springer and SSRN blocks scripts.
+- A Codex dispatch (terra medium, read-only) was started and stopped at once on the user's word ("use sonnet"); nothing
+  ran on, repo unchanged. One Sonnet agent read the book with the updated reading brief (3,455 words of notes).
+- Filed: `knowledge/books/lopezdeprado-causal-factor-investing.md`, README row CF, `topics/testing-and-robustness.md` ›
+  Causal checks, ideas T-21 (causal graph and type-B check per card; method proposal for the user) and T-22
+  (simulation tests for our estimators). No trading rule in the book.
+
 ## 2026-11-18: no paid futures data; book list for the user (the user: "too risky ... make a small text file ... with books")
 
 - Databento dropped for now (real card needed, could exceed the free credit; the user may revisit). HANDOFF updated.

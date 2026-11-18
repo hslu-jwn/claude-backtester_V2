@@ -99,7 +99,7 @@ TIER 3 - systematic strategy books with tested numbers
 TIER 4 - testing, statistics, risk and sizing (makes every test more honest)
 -----------------------------------------------------------------------------
 56. Marcos Lopez de Prado - Machine Learning for Asset Managers (Cambridge 2020)
-57. Marcos Lopez de Prado - Causal Factor Investing (Cambridge 2023)   [DONE: downloaded, Tier 4]
+57. Marcos Lopez de Prado - Causal Factor Investing (Cambridge 2023)   [DONE: downloaded and read 2026-11-18]
 58. Bradley Efron & Trevor Hastie - Computer Age Statistical Inference (Cambridge 2016)   (the authors' free PDF is gone)
 59. Andrew Gelman, Jennifer Hill, Aki Vehtari - Regression and Other Stories (Cambridge 2020)   [DONE: downloaded, Tier 4]
 60. Rob Hyndman & George Athanasopoulos - Forecasting: Principles and Practice (OTexts, 3rd ed. 2021)   [FREE: website otexts.com/fpp3, Claude reads it online]

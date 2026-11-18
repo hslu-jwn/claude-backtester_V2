@@ -225,6 +225,23 @@ Source: KD ch.5-14, 17-19 (futures, one 4-year example; the gates are the useful
 - Time-frame lift: an intraday rule that fails on 1-5 min bars should be rerun on 15m / 60m / 4h / daily before it is
   scrapped, because costs per move and noise fall with larger bars (KD p.88). → T-13
 
+## Causal checks: type-A vs type-B false discoveries (CF, 2026-11-18)
+- Two kinds of false finding (CF p.41-49). **Type-A**: noise taken for signal (multiple testing, p-hacking);
+  shrinks with more data; fixed by trial counts, deflated Sharpe, FDR (our ledger and t thresholds). **Type-B**: a real
+  association that is not causal (missing confounder, controlling for a collider or a mediator, choosing the model by
+  fit); can happen with one trial, grows with more data, and no t threshold fixes it: only a causal graph does.
+- A backtest is observational evidence (rank 4 of 6, CF p.50); out-of-sample and replication on other markets guard
+  against type-A only (CF p.43, 51). A natural experiment (threshold, random timing) ranks above it.
+- Falsify a mechanism by an implied absence (CF p.9, 51): where the forced counterparty does not trade, the effect
+  must be gone. This is what our placebo windows do; make it a named check per card.
+- Controls: never add a control caused by the signal or by both signal and outcome (collider / mediator, e.g. same-
+  period volatility or volume); choose the adjustment set from the graph, not by R-squared (CF p.46-48, 60: the wrong
+  model had adjusted R-squared 0.78 vs 0.14 for the right one).
+- "Time-varying premium" or decay can be a missing confounder whose covariance with the signal drifts (CF p.45).
+- Persistent or non-stationary series (yields, VIX, COT levels, funding) give spurious regressions at any sample
+  size: use changes, and know the spurious t level for our own series (CF p.49). Granger tests are not causal (CF p.28).
+- Small edges need decades: Sharpe 0.29 needs 31+ years of daily data for 95 % (CF p.41). → T-21, T-22
+
 ## Costs in tests
 - Costs on from the start. Run **three levels**: 0, realistic (spread + commission + swap), stressed
   (+50 %). Show how the profitable parameter range shrinks (K p.949: Nasdaq MA zone shrank from
