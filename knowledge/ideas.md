@@ -2165,3 +2165,16 @@ Blockchain Research Lab working paper (2020): "For USDT, we find a significant C
 (0.63%)" after an issuance. Mechanism weak: issuance follows demand (cash waiting to buy), not a forced buyer.
 Daily supply is free (DefiLlama stablecoins). M4: halved 0.32 % vs BTC daily sd ~3.5 %, ~400 issuance days 2020-2023:
 expected t ~1.8, pass chance ~12 % < 15 %: PARKED.
+
+### I-128 Days-to-cover (short interest / volume) long-short on real US shares (harvest batch 20 T0139 / T0140, 2026-11-18; new family `share_short_interest`, venue M13; PARKED on power before any data)
+Mechanism: short sellers are informed and crowded shorts face squeeze / recall risk; days-to-cover (short interest
+over daily volume) measures how costly the shorts are to exit. Hong, Li, Ni, Scheinkman & Yan (CICF paper): DTC decile
+spread "1.19% per month" equal-weighted, 1988-2012, stronger than the short-interest ratio. Post-publication evidence
+(practitioner, finzdata.com, broad universe, gross): -4.5 % a year 2018-2026: decayed or reversed. Data: FINRA equity
+short interest (twice a month, free) with Alpaca daily volume, 2015+.
+Causal graph (T-21): X = DTC decile, Y = next-month return, M = informed / crowded shorts; confounders = size,
+illiquidity, momentum (controls); placebo: short-volume ratio (I-101, daily flow, already screened).
+M4: monthly long-short, c small (~0.3 % round trip + borrow on the short leg vs ~3.5 % monthly spread sd). Halved
+0.6 % a month over ~80 development months (2015-2021): expected t ~1.5, pass chance ~8 % < 15 %; the post-2018 sign is
+negative. PARKED. Other batch-20 rows: dividend payment-day flows (1.8 bp per sd: far below cost), a short-squeeze
+screen (2024+ only, test period), preferred dividend capture (unfetchable): no card.

@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 20 result: canaries pass; I-128 parked; nothing screenable (auto)
+
+- Codex terra `--search`, 5 tasks ok, no violations; known canary found LRV, nonsense canary empty. 7 ideas.
+- Auto decision 74: I-128 (days-to-cover, Hong et al. 1.19 %/month to 2012; practitioner -4.5 %/yr 2018-2026) PARKED on
+  power (~8 %); dividend-flow (1.8 bp) and squeeze screen (2024+ only) not carded. Alternative: download FINRA short
+  interest and screen. Why: M4, and the only post-2018 number has the wrong sign.
+- Also: batch 19 tasks were left 'open' in tasks.csv; marked done before planning batch 20 (the first plan call failed
+  on the open canary key; no task ran twice).
+
 ## 2026-11-18: harvest batch 20 planned: US-share non-price data sets (the user: "One more harvest")
 
 - Tasks T0139-T0143: short interest / days-to-cover (ACAD, BLOG; FINRA data), ex-dividend / split / dividend-reinvestment
