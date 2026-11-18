@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 21 result: canaries pass, nothing kept (auto)
+
+- 4 raw ideas, 0 kept: reserve shocks vs Treasury yields (T0144), Treasury auction price cycle (T0145; judged in the
+  I-109 card), natural-gas storage report days (T0146; also below power: ~280 weekly events, NG daily sd ~3 %) all
+  `untestable` (no rule); T0147 carry canary found Lustig-Roussanov-Verdelhan (parked, as before); T0148 nonsense
+  empty. Codex terra (high for ACAD, low for BLOG), `--search`, guard ok.
+
 ## 2026-11-18: harvest batch 21 planned: rates / energy non-price data sets (auto)
 
 - Tasks T0144-T0148: Treasury cash / Fed balance-sheet flows (TGA, RRP, buybacks; ACAD), auction results (BLOG),
