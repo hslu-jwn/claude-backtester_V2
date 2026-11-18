@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: I-124 source hunt: long-run drift closed, short-run rebound parked (the user: "I-124 source hunt")
+
+- Opus, web search (Codex at its limit). Peer-reviewed out-of-sample test (McConnell, Ozbilgin & Wahal, J. Business
+  2001, 1989-95 holdout): break-even vs matched firm / Fama-French. No peer-reviewed post-2005 US study found.
+- Auto decision 66: long-run drift CLOSED, short-run rebound PARKED (halved t ~1.0); the Alpaca event-list check
+  skipped as moot. Alternative: build the event list and screen. Why: M4, the look would only spend a trial.
+
 ## 2026-11-18: book read: Harris, Trading and Exchanges (2002 draft) (auto)
 
 - One Claude Sonnet agent (Codex at its limit), ~3,900 words of notes. Filed `knowledge/books/harris-trading-and-exchanges.md`,

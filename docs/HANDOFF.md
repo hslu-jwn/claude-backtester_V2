@@ -59,7 +59,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 2. Books (order is Opus's call): read 2026-11-18 Donnelly (AC), Carver AFTS, Ilmanen ER, Pedersen (EI), Stigum (SM,
    rates chapters), Harris (TE, draft). Left in Tier 1: Ilmanen 2022, Kakushadze (idea list only); then Tier 2
    (Tuckman, Schofield, Sinclair, Rhoads first). New cards: I-120 / I-121 / I-123 parked, I-122 closed, I-124 spin-off
-   OPEN (primary source + event list next), T-26 done (I-109: no quarter-end effect; watch weekend month-ends).
+   closed / parked after the source hunt, T-26 done (I-109: no quarter-end effect; watch weekend month-ends).
 3. Optional tooling from the books: T-22 (simulation tests for our estimators), T-24 (fat-tail power check).
 
 ## First prompt for the next chat

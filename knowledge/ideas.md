@@ -2094,7 +2094,7 @@ Carver's median FX carry instrument 0.30 net (AFTS S10). Halved ~0.3; developmen
 t ~1.1 vs 3.0, pass chance ~3 %. FTMO's swap markup cuts the carry further. PARKED. Ledger HV-T0049-1 / HV-T0103-1
 (same family, needs_data) are covered by this card.
 
-### I-124 Spin-off forced selling and rebound on real US shares (EI pp.308-309, 2026-11-18; new family `share_spinoff`, venue M13 real US shares; OPEN: primary-source size and an event list first, no data read)
+### I-124 Spin-off forced selling and rebound on real US shares (EI pp.308-309, 2026-11-18; new family `share_spinoff`, venue M13 real US shares; long-run drift CLOSED, short-run rebound PARKED on power, both before any data)
 Pedersen (EI pp.308-309, event-driven chapter): a spun-off subsidiary lands in portfolios of holders who do not want
 it (index funds of the parent's index, mandates that cannot hold a small cap, income funds without a dividend), so it
 is sold in its first weeks regardless of value; event-driven funds buy after the dump. Forced counterparty, the
@@ -2110,6 +2110,7 @@ halved 0.85 % vs ~12 % 14-day residual sd: expected t ~1.0 (PARK level). Long-ru
 vs ~40 % sd: t ~2.3 before cross-correlation, pass chance maybe 20 %. Next step (research): a peer-reviewed post-2010
 source and a spin-off date list (Alpaca corporate actions or SEC Form 10 filings); then the M4 check decides.
 Second search 2026-11-18 (extended): still no peer-reviewed post-2010 US size; only theses / conference papers (CBS 2000-2022 dip then +12.9 % at 12 months; Nordic and European samples; a US 'sponsored spin-off' paper on subsidiaries 1-3 years). Next: an ACAD harvest task (Codex terra high, after the reset) for SSRN / JFE / JCF spin-off studies with a 2005+ sample, and a check whether Alpaca corporate actions list spin-offs.
+**Source hunt 2026-11-18 (the user: "I-124 source hunt"), verdict before any data:** the only peer-reviewed out-of-sample test, McConnell, Ozbilgin & Wahal, "Spin-Offs, Ex Ante" (J. Business 74(2) 2001), applied the Cusatis et al. (1993) rule to the 1989-95 holdout: break-even against a size-and-industry matched firm and Fama-French, positive only against size / book-to-market portfolios (benchmark-dependent). Later evidence is theses, conference papers or tiny samples (a 2000-2016 study of ~26 spin-offs). Long-run drift: CLOSED (published out-of-sample effect ~0 with a proper benchmark; M4). Short-run forced-selling rebound: only the unreviewed -1.7 % / 14 days; halved, expected t ~1.0 on ~200 US events 2015-2021: PARKED. Event-list check skipped (moot). Reopens on a peer-reviewed post-2005 study of the first-weeks dip and rebound.
 
 ### T-26 I-109 month-end diagnostics: quarter-end, futures-expiry months, settlement supply (SM, 2026-11-18; diagnostic on spent data, no new test)
 Stigum names three things that share I-109's window: 2- / 5- / 7-year auction settlement on the month's last day,
