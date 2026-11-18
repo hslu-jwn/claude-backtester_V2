@@ -60,7 +60,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 1. **2026-12-03 (scheduled task `monthly-forward-logs`, needs the Claude app and the MT5 terminal open):** first forward
    rows for Strategies 19 / 20 and the shelf incl. I-109 (look at weekend month-ends, T-26); check the commit and the
    Telegram summary.
-2. I-109 live path once the IBKR account exists (demo first, 1 Micro 10Y contract).
+2. I-109 live path once the IBKR account exists (demo first, 1 Micro 10Y contract); dates and contract per month:
+   `python research/screens/2026-11-19_i109_order_calendar.py` (SELL the yield contract = long duration).
 3. New idea supply needs a user lever (account, data, Tier 3 / 4 books); without one, the forward logs are the work.
 
 ## First prompt for the next chat

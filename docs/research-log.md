@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: I-109 hand-order calendar (auto)
+
+- Auto decision 83: write `research/screens/2026-11-19_i109_order_calendar.py` (Opus, ~40 lines, prints only; no
+  order code, `live/` untouched). Alternative: leave the dates to the user each month. Why: the user chose hand orders
+  on Micro 10Y Yield futures; a wrong date or the wrong side (long duration = SELL the yield contract) is the likeliest
+  hand-order error. Assumption A1: trade dates = weekdays minus US federal holidays and Good Friday (SIFMA early closes
+  not modelled; the printout says to verify). Self-checks: Nov 2026 (Veterans Day, Thanksgiving) and Dec 2026.
+  First rows: 2026-11 SELL 11-24 / BUY 11-30 10YZ6; 2026-12 SELL 12-28 / BUY 12-31 10YF7.
+
 ## 2026-11-19: harvest batch 22 result: canaries pass, nothing kept (auto)
 
 - 4 raw ideas, 0 kept: ZH and KO blogs both returned funding cash-and-carry (Strategy 19's family; parked
