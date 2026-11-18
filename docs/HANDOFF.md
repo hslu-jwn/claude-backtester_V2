@@ -57,8 +57,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 1. **2026-12-03 (scheduled task `monthly-forward-logs`, needs the Claude app and the MT5 terminal open):** first forward
    rows for Strategies 19 / 20 and the shelf incl. I-109; check the commit and the Telegram summary.
-2. Research: futures history (e.g. daily continuous contracts) would check I-109 on ZN prices (diagnostic; its test is
-   spent) and open futures-only ideas for goal 2; otherwise the harvest is close to exhausted for our data.
+2. Research: free data is close to exhausted. Futures scout 2026-11-18: only CFTC COT is new (ideas I-118, I-74 parked
+   on power); per-contract futures history is paid (optional: Norgate, only for a carded idea that needs it).
 
 ## First prompt for the next chat
 

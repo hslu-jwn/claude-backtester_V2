@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: futures data-set scout started (the user: "Futures data hunt"; M12)
+
+- One Sonnet web subagent (read-only): free non-price futures data (COT variants, CIT / index investment, volume and
+  open interest, inventories, report calendars, index roll schedules, ETF futures holdings) and free per-contract
+  daily futures prices; plus published effect sizes. Opus then applies M4 (c and pass chance) before any download.
+- Result (`knowledge/reviews/2026-11-18-futures-data-scout.md`): the one new usable set is CFTC COT (free, 1986+,
+  weekly). No free per-contract futures prices (Yahoo serves no expired contracts, tested by Opus; CME history paid).
+  M4 before any data: I-118 hedging-pressure premium PARKED (t ~1.4-1.7 at the halved size), I-74 hedger reversal
+  re-checked on futures PARKED (needs ~45 bp per 20 days vs ~11), I-119 USO roll not a new look (inside I-115's
+  window, falsified). Nothing downloaded. Free futures research is limited to continuous fronts and the energy strips.
+
 ## 2026-11-18: Strategy 20 prop firm not pursued (the user: "Not worth it")
 
 - Rerun of `research/screens/2026-11-15_s20_prop_intraday_tranches.py` at the M10 edge (+60 bp a week; daily_hl and

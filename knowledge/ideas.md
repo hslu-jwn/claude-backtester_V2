@@ -1994,3 +1994,18 @@ search, not the full text): Cohen, Polk & Silli, "Best Ideas": best ideas beat t
 (1991-2005, strongest in illiquid stocks). Halved ~1.5-2 % a year. Development 2013-Q2 .. 2021 is ~100 months after the
 45-day filing lag; a best-ideas book's monthly tracking error ~2-3 %: se ~0.25 % a month, t 3 needs ~9-11 % a year.
 CLOSED on power without a look (needs ~5x the halved published size).
+
+### I-118 COT hedging-pressure level premium in US commodity futures (2026-11-18, futures data scout; family `futures_hedging_pressure`; PARKED on power (M4) before any data)
+Mechanism (PUBLISHED): hedgers who are net short pay speculators a premium to carry the risk (Keynes; Bessembinder 1992;
+De Roon, Nijman & Veld 2000; Kang, Rouwenhorst & Tang 2020). Data: CFTC COT free from 1986 (weekly, released Friday);
+prices only as Yahoo continuous front series (roll gaps) or the EIA energy strips; per-contract history is not free.
+Size: an energy study (secondary snippet, not opened) ~7.6 % a year; halved ~3.8 %. A long-short sort over ~25
+markets has an sd of ~10-12 % a year (estimate): t ~1.4-1.7 over 2000-2021. c ~0.02 (M4 passes), pass chance < 10 %:
+PARKED, not closed. Also known as a commodity factor next to carry and momentum (crowded).
+I-74 (hedger position-change reversal) re-checked under M4 the same day on a futures venue: se ~15 bp per 20 days,
+t 3 needs ~45 bp vs ~11 halved: PARKED.
+
+### I-119 USO roll front-running (2026-11-18, futures data scout; family `index_roll`; no look: covered by I-115)
+Kumar & Venkataraman (snippet only): crude oil ETFs pay ~30 bp for their roll trades. USO rolled CL over 4 days about two
+weeks before expiry, inside I-115's window (business days 5-9) on the same CL calendar spread, which I-115 tested and
+its one-time test falsified. Not an independent hypothesis; recorded, not screened.
