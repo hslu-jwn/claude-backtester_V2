@@ -9,7 +9,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - 4 raw ideas, 0 kept: ZH and KO blogs both returned funding cash-and-carry (Strategy 19's family; parked
   unfetchable / needs_data), ZH-ACAD a crypto liquidity premium (untestable); carry canary found, nonsense empty.
 - Pipeline fix found: `harvest prompt` fails on CJK text in a cp1252 console; the first two calls got the error text
-  as their prompt (wasted, re-run). Run it with `PYTHONIOENCODING=utf-8` for language tasks.
+  as their prompt (wasted, re-run). Fixed: `harvest main` now calls `cli.utf8_output()` (harvest tests 23 passed, ruff clean).
 - Reading: the non-English route repeats the English one (carry); no further language batch.
 
 ## 2026-11-19: harvest batch 22 planned: Chinese / Korean crypto-flow sources (auto)

@@ -14,6 +14,8 @@ from urllib.robotparser import RobotFileParser
 
 import requests
 
+from backtester.cli import utf8_output
+
 ROOT = Path("research/harvest")
 TASK_COLUMNS = ["task_id", "key", "queries", "status", "worker", "run_date", "n_raw", "n_verified", "n_kept"]
 SOURCES = {
@@ -415,6 +417,7 @@ def report(rows, tasks, ledger, write_ledger=False):
 
 
 def main(argv=None):
+    utf8_output()  # language tasks print CJK prompts (batch 22: cp1252 console failed)
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("plan")
