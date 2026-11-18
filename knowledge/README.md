@@ -94,6 +94,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | ROS | Gelman, Hill & Vehtari, *Regression and Other Stories* | [notes](books/gelman-regression-other-stories.md) | Methods: small-sample estimates, shrinkage (M10), causal inference checks (T-21); no card |
 | K151 | Zura Kakushadze & Juan Serur, *151 Trading Strategies* | [notes](books/kakushadze-151-trading-strategies.md) | Formula catalogue, no sizes; LETF rebalance = I-103, PEAD = FB123, merger arb / ETF arb / LETF pair decay need event or borrow data; no card |
 | ERD | Martin D. D. Evans, *Exchange-Rate Dynamics* | [notes](books/evans-exchange-rate-dynamics.md) | FX order-flow microstructure; customer flow needs bank data; post-decision drift = one event; no card |
+| ML | Foucault, Pagano & Roell, *Market Liquidity* | [notes](books/foucault-market-liquidity.md) | Microstructure theory; mutual-fund fire sales (I-131, parked: data), block-sale pressure, dealer inventory; cite by page |
+| AT | Brent Donnelly, *Alpha Trader* | [notes](books/donnelly-alpha-trader.md) | Discretionary process; crude settlement (TAS) imbalance without size; FX month-end (spent); no card |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`

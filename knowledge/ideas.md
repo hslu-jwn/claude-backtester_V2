@@ -2200,3 +2200,14 @@ Causal graph (T-21): X = December window, Y = loser-basket (or IWM-IWB) excess r
 confounders = short-term reversal, small-cap beta, window dressing; placebo: the same window in June (no tax deadline).
 M4: one event a year. Alpaca development 2016-2020 = 5 Decembers; yearly excess sd ~8-10 %: no gate reachable
 (expected t < 1 even at the full published size). PARKED until a long point-in-time share history exists.
+
+### I-131 Mutual-fund redemption fire sales on real US shares (book ML p.343, 2026-11-18; new family `share_fund_flow`, venue M13; PARKED on data before any data look)
+Mechanism (PUBLISHED, Coval & Stafford 2007, via ML): funds with large outflows must sell their holdings; stocks
+held in common by distressed funds fall, then revert over the following months. A forced seller, the mechanism we want.
+Caveats read before any data: Wardlaw (2020) shows the common flow-pressure measure mechanically embeds the stocks'
+own returns, which shrinks the effect; ETF creation / redemption pressure is ledger HV-T0115 (parked).
+Causal graph (T-21): X = flow-induced selling pressure (holdings x outflow, own return excluded), Y = next 1-6 month
+return, M = forced sales; confounders = momentum, size, value, liquidity; placebo: pressure from fund inflows of
+the same funds measured with the stock's weight set to zero (no own-stock trade implied).
+Data: monthly fund flows and holdings: SEC N-PORT (public quarterly, 2019+) gives holdings, not monthly flows;
+CRSP-style flows are paid. Development 2019-2021 would be ~10 quarters. PARKED on data (paid flows) and power.
