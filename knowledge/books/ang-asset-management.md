@@ -1,0 +1,31 @@
+# Andrew Ang, *Asset Management: A Systematic Approach to Factor Investing* (Oxford University Press, 2014)
+
+Short: **AM**. Cite by printed page (`AM p.N`). Read 2026-11-18 by Codex; PDF in the library folder Tier 3.
+
+Ang presents asset management through factor exposures rather than asset-class labels. He examines equity, volatility and liquidity premiums, emphasizing the losses investors must tolerate to earn them. He also discusses rebalancing, risk-adjusted benchmarks and the limitations of reported returns for illiquid assets. The book is primarily a portfolio-management synthesis, so several effects lack the event-level rules and sizes needed for this project. (AM pp. 220, 334, 426–430, 433)
+
+## Testable ideas
+
+- **Low idiosyncratic volatility in US stocks** (AM pp. 334, 341–344): Each quarter, estimate each US stock’s idiosyncratic volatility from daily returns and the Fama–French factors over the preceding quarter. Form five portfolios, market-weight stocks within each, and hold until the next quarterly rebalance. The book reports returns for the portfolios, not a specified long-short trade: the first three quintiles each averaged above **10%**, while the highest-volatility quintile averaged **0.1%**, over September 1963–December 2011. Mechanisms proposed include leverage constraints and benchmark or short-sale constraints, but Ang says no comprehensive explanation is established. Data: point-in-time US equity prices, market capitalizations and factor returns. Venue: real US shares. **NEW.** The book does not specify a forced-trading event or an event-level return.
+
+- **Equity illiquidity selection** (AM pp. 428–430): Hold relatively illiquid stocks long and liquid stocks short; rebalance as their liquidity changes. Possible measures include the ratio of absolute return to dollar volume, turnover and bid-ask spread. The book reports literature estimates of **1% to 8%** for equity illiquidity premiums, depending on the measure, while noting that some had diminished to zero; it does not give a common sample, precise sorting thresholds, holding period or per-event size for that range. The claimed compensation is for bearing illiquidity and exposure to liquidity withdrawal. Data: point-in-time share prices and volume, ideally quotes and realistic shorting costs. Venue: real US shares. **NEW.**
+
+- **Broad-portfolio rebalancing** (AM pp. 122–123, 139, 146): Restore a stock–bond portfolio to fixed weights each quarter; the example uses **60% stocks / 40% bonds**. The investor buys the asset that has fallen relative to target and sells the one that has risen, supplying liquidity when others sell or buy. Ang gives a stylized US-stock rebalancing-premium estimate of approximately **1%**, but it is a long-run theoretical approximation, not a measured profit per quarterly event or a clean estimate for that 60/40 rule. He cautions that rebalancing is short volatility and can underperform in persistent trends or permanent capital destruction. Data: broad equity and bond total-return series and transaction costs. Venue: portfolio allocation using available instruments. **NEW.**
+
+- **Selling equity volatility protection** (AM pp. 220–221): Sell volatility protection, particularly out-of-the-money puts, to investors seeking protection against market declines. The book states that VIX implied volatility averages **2% to 3%** above realized volatility, but this is a volatility-point difference, not a return in basis points; it gives no complete strike, expiry or execution rule. Its volatility-swap index lost close to **70%** between September and November 2008. Data: historical option prices, implied and realized volatility, and execution costs. Venue: exchange-listed options or volatility swaps, outside the listed price-data venues. **NEW.**
+
+- **Liquidity around index reconstitution** (AM p. 434): Supply liquidity to investors required to follow constituent changes. The book reports inclusion and exclusion price effects of **3% to 5%**, but does not specify an entry, exit or event sample in this passage. Data: dated index announcements and changes, constituent prices and costs. Venue: real US shares. **MAPS TO: index additions / deletions.**
+
+## Method notes
+
+- Judge a strategy against a **tradeable, replicable and risk-adjusted benchmark**. Ang’s example reports different alpha estimates when the low-volatility strategy’s market beta is accounted for; that beta was estimated after the fact, so it should not be treated as known at the start. (AM pp. 309–310)
+- Separate **lagged, tradeable sorts** from sorts formed using volatility realized over the same return period: Ang explicitly says the latter portfolios are not tradeable. (AM pp. 334–335)
+- Test sensitivity to portfolio weighting and liquidity: Ang notes both as concerns for the idiosyncratic-volatility result. (AM p. 341)
+- Assess rebalancing across adverse regimes as well as normal periods. Its counter-cyclical payoff can suffer when prices keep moving in one direction or an asset permanently disappears. (AM pp. 139–141, 146)
+- Account for trading costs when choosing rebalance thresholds; Ang discusses bands as a way to balance deviations from target against trading costs. (AM pp. 129–130)
+- Treat reported illiquid-asset returns cautiously: infrequent observations, survivorship and selection can distort them, and an illiquid index may not be investable. (AM pp. 427–428)
+
+## Verdict
+
+The **US low-idiosyncratic-volatility sort** is the strongest new research candidate: it has a reproducible quarterly rule, a stated historical return contrast and plausible institutional constraints, though the book does not establish a compulsory counterparty or event-level size. **Equity illiquidity selection** merits a provisional card because a premium range is stated, but the source leaves the exact portfolio and sample unresolved and stresses that some estimates disappeared. Broad rebalancing is more useful as a portfolio method than an event strategy: its quoted size is a theoretical long-run approximation. Selling volatility has a stated implied-versus-realized difference and an insurance mechanism, but no complete rule or return size and requires option data.
+

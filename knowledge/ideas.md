@@ -2178,3 +2178,14 @@ M4: monthly long-short, c small (~0.3 % round trip + borrow on the short leg vs 
 0.6 % a month over ~80 development months (2015-2021): expected t ~1.5, pass chance ~8 % < 15 %; the post-2018 sign is
 negative. PARKED. Other batch-20 rows: dividend payment-day flows (1.8 bp per sd: far below cost), a short-squeeze
 screen (2024+ only, test period), preferred dividend capture (unfetchable): no card.
+
+### I-129 Low idiosyncratic volatility long-short on real US shares (book AM pp. 334, 341-344, 2026-11-18; new family `share_low_idio_vol`, venue M13; PARKED on power before any data)
+Mechanism (PUBLISHED, Ang, Hodrick, Xing & Zhang 2006, via AM): leverage-constrained and lottery-seeking investors
+overpay for high-idiosyncratic-volatility stocks; quarterly quintile sort on last quarter's FF3 residual vol, market
+weights. No forced counterparty; AM p.341 notes the result is sensitive to weighting and illiquid names.
+Causal graph (T-21): X = idio-vol quintile, Y = next-quarter return, M = mispricing by constrained buyers;
+confounders = size, illiquidity, short-term reversal, beta (controls); placebo: the sort on total vol of the
+following quarter (look-ahead, must not predict out of sample... placebo kept for a build only).
+M4: quarterly long-short, c ~0.3 % per rebalance + borrow; the spread is a beta bet (sd ~4 % a month). Halved
+~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED.
+Same for illiquidity selection (AM pp. 428-430): premium sits in micro caps (untradable short leg, wide spreads): no card.
