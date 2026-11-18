@@ -32,6 +32,10 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
   Brokers (10Y listed, ~$0.10-0.25 a contract plus exchange fees), orders placed ahead as "good after time" orders
   for just before 3 p.m. ET; 1 contract for the first 6 month-ends, 2-3 only if the forward log and real fills hold
   (decided by the user 2026-11-18).
+- 2026-11-18: Databento for per-contract CME futures history (GLBX.MDP3, 2010+, pay per use, $125 free credit); the
+  user makes the account, the key lives only in the Credential Manager (service `backtester-databento`, name
+  `api_key`); a free cost check before any download; download only when a card needs it (decided by the user
+  2026-11-18; vendor table `knowledge/reviews/2026-11-18-futures-data-scout.md`).
 - 2026-11-18: Strategy 20 at a crypto prop firm: not worth it, not pursued (decided by the user 2026-11-18; at the
   M10 edge HyroTrader 15 % per side passes ~85 % in ~2.5 years, terms §10.2(i) may bar a long-short book; package
   `knowledge/research/reports/2026-11-15_s20_prop_decision.md`). Strategy 20 stays on its forward log.
@@ -48,6 +52,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 1. **I-109 on micro yield futures (money; venue, broker, size decided):** the user opens the IBKR account (futures
    permission); check the margin, the 3 p.m. spread and the real fees on the first fills. Per micro on DGS10 windows: ~+$16-21 net a month-end (cost ~$3 assumed), sd ~$90-96,
    worst -$140 (test) / -$280 (dev), a losing year ~22-27 %. Liquidity and the exact tick not checked yet.
+2. **Databento account (the user):** sign up at databento.com, create an API key, then in the repo run
+   `.venv\Scripts\python -m keyring set backtester-databento api_key` and paste the key at the hidden prompt.
 3. **Fable sweep leftovers:** AWS requester-pays account for Hyperliquid fills (card 6 C); a source for the positioning
    collector (card 8).
 4. **Rules:** strike the two spent MT5 tests (strategy 4 GBPJPY, gap momentum).
