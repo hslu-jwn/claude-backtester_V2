@@ -11,6 +11,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   supply is exhausted (books, harvests 19-21, data scout); sizing the three live goal-2 streams together is the next
   research use, and it changes no default or live code. Codex `gpt-6.1-terra` medium, brief
   `briefs/v27-goal2-portfolio.md`.
+- Result (`research/screens/2026-11-19_v27_goal2_portfolio.py`, Codex terra medium ~write, guard ok; Opus re-ran it,
+  ruff clean, self-check OK; streams reproduce the registered rows: flow test +147 bp t 3.76, I-109 dev 380 months
+  +18.4 t 4.39, IEF test net +21.2): monthly correlations between the three streams -0.23 to +0.26 in every overlap.
+  Equal-risk combination, crypto test x Treasury test (2024-01 .. 2026-10, 34 months): Sharpe 2.97 raw, max drawdown
+  1.0 monthly sd; leave-one-out 1.8-3.0. Raw, not shrunk (M10 halves the crypto edges: plan on about half), and the
+  overlaps are short (16-34 months). Reading: the streams diversify each other; nothing to decide now. Cosmetic: the
+  last overlap label prints "2100-12" as its open end.
 
 ## 2026-11-19: free long US share history hunt; forward-task dry run (auto)
 
