@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Ilmanen, Investing Amid Low Expected Returns (the user: "Keep reading books")
+
+- 4 Claude Sonnet agents (Codex at its limit; one stopped on the Claude 5-hour limit at 19:3x and was resumed after
+  the reset). Filed `knowledge/books/ilmanen-investing-amid-low-expected-returns.md`, README row IL. No new card
+  (price-only share / crypto factors already judged, or management layers for later).
+- Auto decision 68: Tier 2 order Tuckman (rates chapters) -> Rhoads -> Sinclair -> Schofield (gold, oil, gas,
+  commodity investing chapters). Alternative: Hull or Natenberg first. Why: rates and VIX bear on I-109 and the spent
+  VIX tests; the general derivatives texts teach pricing, not flows. Kakushadze (retracted idea list) last.
+
 ## 2026-11-18: T-24 report only, no gate (the user: "Report only, no gate")
 
 - Written to research-runner.md › Fat-tail power check and HANDOFF › Accepted; HANDOFF › Open item removed.
