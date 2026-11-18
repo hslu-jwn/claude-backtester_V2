@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: harvest batch 22 planned: Chinese / Korean crypto-flow sources (auto)
+
+- Tasks T0149-T0153: ZH-BLOG, KO-BLOG, ZH-ACAD on CRYPTO flow (funding, taker flow, stablecoin issuance, Upbit volume,
+  kimchi premium); canaries T0152 (known carry), T0153 (nonsense).
+- Auto decision 82: first non-English harvest (no language source in 148 tasks so far). Alternative: stop research
+  until 2026-12-03. Why: never idle; Binance data is our richest free panel; Asian retail-flow work is little cited in
+  English. Workers must quote the original sentence; the check tool verifies it on the page.
+
 ## 2026-11-19: V2.7 groundwork: goal-2 portfolio screen (auto)
 
 - Auto decision 81: build an analysis-only screen combining Strategies 19, 20 and I-109 (correlation, equal-risk
