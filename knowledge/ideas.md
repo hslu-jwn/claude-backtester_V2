@@ -1251,6 +1251,23 @@ The three seeded 5,000-draw structures of CF ch.7 (fork, collider, confounded me
 tests of the scorecard / gates code: the correct specification must report no effect (or recover the true one); a
 wrong control must not create significance unnoticed. Cheap, deterministic. Source CF pp.52-60, appendix B.
 
+### T-23 Tail concentration audit of every stream (FT, 2026-11-18; tooling / diagnostic)
+For each passed or shelf stream (Strategy 20, Strategy 19, I-109, the shelf rows) report on its net period returns:
+the largest observation's share of sum |r|^p for p = 1, 2, 4, gains and losses apart; mean and t without the k largest
+gains and, separately, the k largest losses (k = 1, 2, 5) as sensitivity only (the full sample stays the result).
+Flag a stream whose sign or t depends on a handful of periods. Source FT p.16-17, 54-55, 148-150, 194-201. Strategy 20
+already has the M6 cap (+-50 %); this adds the period view. Diagnostic on spent data, no new look.
+
+### T-24 Fat-tail power check (FT, 2026-11-18; method, extends M4)
+Before a data look, simulate the planned sample under Gaussian, Student-t(3) and volatility-clustered P/L at the card's
+expected edge and at zero: report how often the t >= 3.0 gate passes (power) and falsely passes. A card whose power
+collapses under the fat-tailed scenario is parked like M4's < 15 %. Source FT p.153-160, 389-396.
+
+### T-25 Stress Monte Carlo beyond the worst seen day (FT, 2026-11-18; tooling for prop / sizing)
+The prop / FTMO pass and funded-phase simulations bootstrap past days, so no path can be worse than history. Add
+pre-registered shock scenarios (one day at 1.5x and 2x the worst seen, a clustered week of losses, all legs at once)
+and report breach rates per scenario next to the bootstrap. Source FT p.177-181, 232, 469-475.
+
 
 ### I-95 Strategy 20's flow sort on FTMO crypto CFDs (ORIGINAL, goal-1 bridge, 2026-11-15; closed by arithmetic, no data look)
 Idea: trade the weekly taker-flow sort (Strategy 20 signal from Binance) on FTMO's 30 crypto CFDs, so goal 1 could use

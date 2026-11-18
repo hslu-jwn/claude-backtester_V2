@@ -242,6 +242,24 @@ Source: KD ch.5-14, 17-19 (futures, one 4-year example; the gates are the useful
   size: use changes, and know the spurious t level for our own series (CF p.49). Granger tests are not causal (CF p.28).
 - Small edges need decades: Sharpe 0.29 needs 31+ years of daily data for 95 % (CF p.41). → T-21, T-22
 
+## Fat tails: what a sample can and cannot say (FT, 2026-11-18)
+- A finite sample always gives finite moments; the question is whether they have converged. Check the **max-to-sum
+  share**: the largest |x|^p over the sum of |x|^p, for p = 1, 2, 4, gains and losses apart. Gaussian n = 10,000:
+  ~0.008; S&P 500 1952-2008 fourth power: ~0.79 from one day (1987); silver 0.94, oil 0.79 (FT p.54-55, 209).
+- How much data a mean needs depends on the tail: to match 30 Gaussian observations Taleb's measure needs ~120
+  Student-t(3) or ~543 Pareto(3) observations; near an 80/20 tail it needs 10^9+ (FT p.160). Kappa > 0.15 is his warning
+  sign for the normal approximation (FT p.159). Model-specific, not our thresholds.
+- Kurtosis of S&P returns does not fall with aggregation as i.i.d. theory says (daily 38 vs 66-day 5 in one table, other
+  markets rise), and reshuffling restores convergence: volatility clustering is part of the fat tail (FT p.149, 195).
+- The sample maximum is not a loss bound; a bootstrap of past returns can never produce a worse day than the worst one
+  seen. Stress tests need explicit shocks beyond the sample (FT p.177-181).
+- Expected loss beyond a threshold K is not P(X > K) x K: for a Pareto tail the true tail loss is alpha / (alpha - 1)
+  times larger (FT p.225-229). A high hit rate says nothing about the payoff (FT p.219-224, 41-44).
+- p-values are themselves very noisy across repetitions (mean p 0.11: 53 % of runs below 0.05); the best of many trials
+  is biased; power from plug-in estimates is uncertain (FT p.389-396). Supports our ledger and t >= 3.0.
+- Survival first: an account that hits an absorbing barrier (FTMO daily / total loss) misses every later recovery;
+  stops do not bound a gap (FT p.60-67, 232, 475). → T-23, T-24, T-25
+
 ## Costs in tests
 - Costs on from the start. Run **three levels**: 0, realistic (spread + commission + swap), stressed
   (+50 %). Show how the profitable parameter range shrinks (K p.949: Nasdaq MA zone shrank from

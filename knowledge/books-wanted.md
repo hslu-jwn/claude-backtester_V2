@@ -107,7 +107,7 @@ TIER 4 - testing, statistics, risk and sizing (makes every test more honest)
 62. Ruey Tsay - Analysis of Financial Time Series (Wiley, 3rd ed. 2010)
 63. Stefan Jansen - Machine Learning for Algorithmic Trading (Packt, 2nd ed. 2020)
 64. Alexander McNeil, Ruediger Frey, Paul Embrechts - Quantitative Risk Management (Princeton, rev. ed. 2015)
-65. Nassim Taleb - Statistical Consequences of Fat Tails (STEM Academic Press 2020)   [DONE: downloaded, Tier 4]
+65. Nassim Taleb - Statistical Consequences of Fat Tails (STEM Academic Press 2020)   [DONE: downloaded and read 2026-11-18, ch.13-21 skipped]
 66. Ralph Vince - The Mathematics of Money Management (Wiley 1992)
 67. Ralph Vince - The Leverage Space Trading Model (Wiley 2009)
 68. Leonard MacLean, Edward Thorp, William Ziemba (eds.) - The Kelly Capital Growth Investment Criterion (World Scientific 2011)

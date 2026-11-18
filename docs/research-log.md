@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Taleb, Statistical Consequences of Fat Tails (the user: "Read fat-tails, you can use codex again")
+
+- Model and effort: Codex gpt-6.1-terra medium, read-only, 4 parts in 2 parallel pairs (`ai_dispatch --label
+  book-ft1..4`, about 3 minutes each, status ok, repo unchanged); 14,400 words of notes. Ch.13-21 skipped (off topic).
+- Filed: `knowledge/books/taleb-fat-tails.md`, README row FT, `topics/testing-and-robustness.md` › Fat tails, ideas
+  T-23 (tail concentration audit of every stream), T-24 (fat-tail power check), T-25 (stress Monte Carlo beyond the
+  worst seen day). No trading rule for our data.
+
 ## 2026-11-18: T-21 causal check per card made a rule (the user: "Yes, make it a rule")
 
 - Written to `docs/research-runner.md` › Causal check per card, the continue-research skill, HANDOFF, card T-21.
