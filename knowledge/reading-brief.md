@@ -8,27 +8,20 @@ Claude then copies it to `books/` and merges it into `topics/` and `ideas.md`.
 You are reading part of a trading book to build a knowledge base for a Python backtester project.
 Write ONLY your notes file (path given in your task). Do not touch any repo files. Do not run git.
 
-## Project context
-- Backtester replays historical M1 candles (histdata.com) for XAUUSD, GBPUSD, GBPJPY (FX/gold) and
-  NAS100, US500 (indices), years 2018/2020-2026. Can resample to any timeframe (1m..1d). No volume (histdata volume column is always 0; MT5 tick volume only later),
-  no open interest, no order book, no futures term structure, no options data. Spread + commission +
-  swap (overnight financing) costs are modeled. Trades are simulated in R multiples (risk units).
-- Target: pass / trade FTMO prop-firm accounts (max daily loss 5%, max total loss 10%, profit targets).
-- Strategies already tested and FAILED (net negative or not robust): (1) session-zone liquidity sweep
-  (SMC style: FVG, order block, BOS) on FX/gold; (2) NY-open index sweep on NAS100/US500; (3) no-wick
-  candle with the trend; (4) Kaufman trend following (N-day breakout, SMA + ATR band, momentum, KAMA,
-  Dunnigan) 15m-1d with 3xATR stop and stop-and-reverse: swap costs kill holding periods, edge not
-  stable across halves of the sample; (5) index cash-open gap fade (0.1-1 ATR gaps to previous close):
-  no edge in walk-forward, killed by random slippage on small stops. Opening-range breakout is being tested.
-- Already built for testing: robustness report (halves, share of profitable variants, stressed costs,
-  best trade removed), walk-forward splitter, Monte Carlo report (day reshuffle, random entries, random
-  fills, random price paths), t-stat, FTMO pass probability. Data split: develop before 2021-09-14,
-  test once on FTMO MT5 data after it.
-- Current focus: how to COMBINE several weak edges (forecast scaling, diversification, vol targeting),
-  meta-labelling / filtering a primary signal, deflated Sharpe and multiple-testing corrections,
-  Bayesian ways to judge a small sample of trades.
-- So we look for: fundamentals, robust testing methods, risk/position-sizing knowledge, and NEW
-  testable strategy ideas that fit our data (price only, intraday to daily, FX/gold/indices).
+## Project context (updated 2026-11-18)
+- Python backtester and research platform. Data: FTMO MT5 M1 candles for ~34 CFDs (FX, gold, indices, oil), daily
+  bars of ~23,700 US shares (Alpaca, 2015+), Binance crypto perpetuals (prices, funding, taker flow), FRED Treasury
+  yields, Cboe VIX futures, EIA energy futures contracts 1-4, Yahoo continuous 10-year Treasury futures, free CFTC
+  COT positions. No order book, no paid per-contract futures history. Costs (spread, commission, swap, fees) modeled.
+- Venues: FTMO prop CFDs (goal 1), exchange futures, real US shares, crypto perps (goal 2).
+- Results so far: almost every price-pattern, trend, breakout, gap and intraday idea on CFDs died on costs (the "cost
+  wall"). Two streams passed a one-time test: a weekly crypto taker-flow long-short sort (Strategy 20) and the
+  Treasury month-end duration extension (long 10-year bonds the last 3 days of a month, index funds must buy).
+- Method rules in use: pre-registered gates, a power check before any data look, one-time test per idea, t >= 3.0
+  on development, multiple-testing ledger, three verdicts (falsified / unproven-positive / passed), shrunk forecasts.
+- Focus now: edges from a counterparty that MUST trade (index rebalancing, rolls, hedging, ETF flows, funding,
+  dealer inventory), and honest testing (causality, multiple testing, power, small samples, fat tails).
+- So we look for: testable mechanism-based ideas on the data above, and methods that make tests more honest.
 
 ## How to read
 - Text was extracted with pdftotext into a .txt file. Read it with the Read tool in chunks
