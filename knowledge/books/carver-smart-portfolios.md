@@ -1,0 +1,29 @@
+# Robert Carver, *Smart Portfolios* (Harriman House, 2017)
+
+Short: **SP**. Read 2026-11-18 by Codex; PDF in the library folder Tier 3.
+
+The supplied text is an eBook extraction. Its “Note about this eBook edition” says it has no fixed pagination, and the chapter text does not contain printed page numbers. I therefore cannot reliably provide the requested `SP p.N` citations for most claims. References below identify the chapter and section; the one print-page reference used is explicitly stated in the book.
+
+Carver presents a framework for building and maintaining diversified investment portfolios when expected returns are difficult to estimate. He emphasizes risk, correlation, costs, restrained forecasts, and rules for rebalancing. His examples concern portfolio allocation more than short-horizon trading against identifiable forced flows. (SP, Chapters 3–6 and 14–16)
+
+## Testable ideas
+
+- **Price-to-book value within size groups** (SP, Chapter 15, “Is factor weighting worth paying for?”, Table 63): Within each market-cap group, compare the cheapest 20% of shares by price-to-book with the most expensive 20%. A long-cheap/short-expensive portfolio is a possible implementation; the table does **not** specify a rebalancing frequency or holding period. Carver reports annual geometric means of excess returns of **13.15% versus -1.27%** for small caps, **7.30% versus 2.53%** for mid caps, and **4.67% versus 2.26%** for large caps. These are leg returns, not a measured net long-short return. His table is derived from Fama and French’s developed-market research; the excerpt does not state the sample dates. The book offers value and subsequent repricing as a rationale, but no identifiable counterparty that must trade. Data: point-in-time book value, market capitalization and total returns, including delisted shares; realistic short and trading costs. Venue: real US shares. **NEW**, but weak against the requested mechanism criterion.
+
+- **Dividend-yield tilt across equity countries** (SP, Chapter 14, “The yield model” and “Adjusting equity country weights”): Start with handcrafted country weights; divide each country’s dividend yield by return volatility, subtract the median of those yield-to-volatility ratios, apply the book’s weight-adjustment table, and normalize weights to 100%. Reweighting frequency and an exit date are not specified in the reported result. Carver reports Sharpe ratios of **1.41** for the yield tilt and **1.37** for fixed weights across **22 developed equity markets**; **no return size in bp per day or event is given**, and the excerpt does not specify sample dates. He proposes mean reversion among similar assets, not forced trading. Data: point-in-time country equity yields, volatility and total-return indices or ETFs. Venue: equity ETFs or futures where suitable. **NEW**, but neither the stated size nor the mechanism meets the brief.
+
+- **Relative and absolute portfolio momentum** (SP, Chapter 14, “The momentum model” and “Using models to weight asset classes”): Adjust equity and bond weights using their trailing 12-month price returns divided by volatility. Relative momentum normalizes to full investment; absolute momentum can retain cash when adjusted weights total less than 100%. The book reports geometric returns of **7.68%** for relative momentum and **7.25%** for absolute momentum in its US equity/bond example; monthly rebalancing costs are excluded. This is a portfolio allocation rule with ongoing rebalancing, not an event trade. **MAPS TO: diversified or single-symbol trend following.**
+
+## Method notes
+
+- **Challenge optimized weights.** Historical Sharpe-ratio estimates are highly uncertain, and small input changes can produce large changes in optimized allocations. Carver favors more restrained assumptions about relative returns. (SP, Chapter 3, “Uncertain returns and unstable portfolios”)
+- **Distinguish risk weights from cash weights.** Risk weighting accounts for differences in asset volatility; correlation still matters when allocating among assets. (SP, Chapter 4, “Risk weighting” and “The handcrafting method”)
+- **Model turnover from changing targets.** In Carver’s 22-country example, yield-based weighting raises annual turnover from roughly **40% to 130%**, and momentum produces around **160%**. These are example-specific estimates, not universal cost assumptions. (SP, Chapter 16, “Is it worth reweighting and by how much?”)
+- **Use a no-trade zone.** Permit weights to drift within a band around target; when outside it, trade to the nearest edge. Pair this with a minimum trade size when fixed commissions make small orders expensive. (SP, Chapter 16, “Is it worth reweighting and by how much?”)
+- **Treat forecast calibration as uncertain.** Carver describes testing forecasts on historical observations, constraining extreme signals, and adjusting portfolio weights conservatively. The book explicitly locates its instructions for creating forecasting models at **SP p.538**. (SP, Chapter 14, “Creating your own forecasting models”)
+
+## Verdict
+
+Neither new idea is ready for a card under the requested standard. Price-to-book has stated return magnitudes, but the book does not identify a counterparty compelled to trade; its table also lacks a complete implementation rule. The country dividend-yield tilt has neither a forced-flow mechanism nor a stated bp return effect. The rebalancing and uncertainty material is more useful here as portfolio-construction guidance.
+
+Read-only report: inspected the contents and selected relevant sections; **no files changed**. Tests were not run because this was a reading task. Open question: a paginated print-edition source would be needed to supply reliable printed-page citations for the remaining claims.

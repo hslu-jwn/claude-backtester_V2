@@ -77,6 +77,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | MT | Ernest Chan, *Machine Trading* | [notes](books/chan-machine-trading.md) | Option-implied share sorts (no option data), turnover sort (sign unstable), BTC cross-exchange, ES order flow; no card; cite by page |
 | SOTM | Andreas Clenow, *Stocks on the Move* | [notes](books/clenow-stocks-on-the-move.md) | S&P 500 momentum portfolio with index filter; same power arithmetic as I-129 (parked); method: point-in-time members; no card |
 | LT | Robert Carver, *Leveraged Trading* | [notes](books/carver-leveraged-trading.md) | Retail trend / carry on FX and CFDs (spent families); costs, sizing; no card |
+| SP | Robert Carver, *Smart Portfolios* | [notes](books/carver-smart-portfolios.md) | Handcrafted weights, rebalancing, uncertainty; value / yield tilts without flow or size; method for V2.7; no card |
+| AAPM | Richard Grinold, *Advances in Active Portfolio Management* | [notes](books/grinold-advances-active-portfolio-management.md) | Signal decay, cost-aware partial trading toward a target, shared exposures; method for V2.7; no card |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
