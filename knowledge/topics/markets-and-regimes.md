@@ -30,6 +30,10 @@ RC = Carver, JK = Kaeppel.
   good as each other's out-of-sample check.
 
 ## Regime change and decay
+- **Published flow effects decay (ER 7.2, I-122).** The S&P 500 addition effect fell from ~7.5 % (1990s) to under 1 %
+  (2010-2020), deletions from ~-16 % to ~0 (Greenwood & Sammon, J. Finance 2025), once most additions became MidCap
+  migrations and liquidity got cheap. Ilmanen's premia (carry Sharpe 0.6, value, momentum 0.8) are mostly gross,
+  in-sample, to 2009; halve them before a power check (M4), and check a post-2010 source for any flow effect.
 - Chan adds: regime shifts (decimalization 2001, 2008 volume collapse, Reg NMS 2007) voided old backtests; momentum had a
   multi-year bear market after 2008 (momentum "crashes" of about −30 % a year in 2008-09); mean reversion thrives on constant volatility
   and suffered when volatility fell or turned spiky; regressions and cointegration must be run **inside one regime** (EC p.24-25,

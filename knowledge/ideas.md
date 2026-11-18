@@ -2074,3 +2074,22 @@ Power (M4), before any data: EIA strips 1-4 hold RB only from 2005-10 (16 develo
 c = round trip of three legs (~3 ticks each) / monthly sd of the crack well under 0.03. Halved published Sharpe 0.31
 (carry) -> expected t ~1.24 over 16 years vs t 3.0: pass chance ~4 % < 15 %. PARKED, not closed. Calendar spread and
 butterfly variants (AFTS S30: WTI spread carry 0.27, butterfly -0.02 / -0.37) are weaker: no card. No data read.
+
+### I-122 S&P 500 index additions and deletions, price pressure (ER 5.2.6, 2026-11-18; new family `share_index_change`, venue M13 real US shares; CLOSED on published decay before any data)
+Ilmanen (ER 5.2.6, Shleifer 1986, Wurgler-Zhuravskaya): index funds must buy additions and sell deletions, so prices
+jump and the jump is larger without close substitutes. Forced counterparty, clean causal story (T-21: M = index
+trackers; placebo = migrations from the S&P MidCap 400, where MidCap trackers sell what S&P 500 trackers buy).
+Closed before any data: Greenwood & Sammon, "The Disappearing Index Effect" (J. Finance 80(2) 2025, NBER w30748):
+addition abnormal return 7.4-7.6 % in the 1990s, under 1 % (0.8 %) in 2010-2020; deletions -16 % in the 1990s,
+-0.6 % / +0.1 % in 2010-2020; cause: >70 % of additions are MidCap migrations (offsetting flows), cheaper liquidity.
+Our share data starts 2015, inside the dead decade. Not reopened unless a non-migration subset with a published
+post-2010 effect turns up.
+
+### I-123 Cross-sectional FX carry on FTMO pairs with the real swap (ER 13.2-13.3, AFTS S10 / S20, 2026-11-18; family `fx_carry`, venue FTMO FX CFDs (goal 1); PARKED on power (M4) before any data)
+Rank the FTMO FX pairs by carry (the CFD long-minus-short swap is the carry after FTMO's markup), long the top 3,
+short the bottom 3, weekly or monthly, volatility-scaled. Mechanism: compensation for crash risk (carry unwinds),
+not a forced trade. M11 would need the rate history as the non-price data (FRED policy / 3-month rates).
+Power (M4), before any data: published G10 carry Sharpe 0.61 gross 1983-2009 (ER 13.2), much lower after 2008;
+Carver's median FX carry instrument 0.30 net (AFTS S10). Halved ~0.3; development ~2008-2021 (13 years): expected
+t ~1.1 vs 3.0, pass chance ~3 %. FTMO's swap markup cuts the carry further. PARKED. Ledger HV-T0049-1 / HV-T0103-1
+(same family, needs_data) are covered by this card.

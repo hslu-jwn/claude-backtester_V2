@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Ilmanen, Expected Returns; I-122 closed, I-123 parked (auto)
+
+- Model and effort: 5 Claude Sonnet agents in parallel (Codex at its limit), ~2 min each, ~24,800 words of notes.
+- Filed: `knowledge/books/ilmanen-expected-returns.md`, README row ER, `topics/markets-and-regimes.md` (published flow
+  effects decay).
+- Auto decision 60: I-122 (S&P 500 index changes, a forced-counterparty idea) CLOSED before any data on the published
+  decay (Greenwood & Sammon, J. Finance 2025: effect ~0 in 2010-2020; our shares start 2015). Alternative: build a
+  point-in-time membership list and screen deletions. Why: the primary source already answers it for our period.
+- Auto decision 61: I-123 (FX carry on FTMO with the real swap) PARKED on power (pass chance ~3 %). Price-only share
+  cross-sections (MAX, BAB, short-term reversal by VIX), curve-slope timing and correlation-spike timing: no card
+  (M4 fails on 2015+ shares or monthly samples). Alternative: card each. Why: keeps the ledger to real candidates.
+
 ## 2026-11-18: book read: Carver, Advanced Futures Trading Strategies; I-121 parked (auto)
 
 - Model and effort: Codex gpt-6.1-terra medium, read-only, 4 parts (`book-afts1..4`, 3-4 min each, status ok, no

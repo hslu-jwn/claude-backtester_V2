@@ -42,7 +42,7 @@ Write ONLY your notes file (path given in your task). Do not touch any repo file
 4. `## Testable ideas` - every idea that could become a backtest on OUR data. For each:
    **Name** - rule in 2-4 precise lines (entry, exit, stop, timeframe, parameters with the author's
    defaults) - source (chapter/page) - author's claimed evidence - fit for our data/costs (good/poor and
-   why; note swap if it holds overnight) - how it differs from the 4 failed strategies.
+   why; note swap if it holds overnight) - how it differs from our failed families (CFD trend following, breakouts, gap fade and gap momentum, SMC price patterns, intraday session rules; plus the spent GSCI roll, VIX basis, month-end index flow and FX fix tests).
    Mark the 3-5 most promising with ★.
 5. `## Warnings / pitfalls` - what the author says goes wrong (overfitting, costs, regime change, ...).
 Be thorough but dense. Aim for 1500-4000 words depending on the size of your part.
