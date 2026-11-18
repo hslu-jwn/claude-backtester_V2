@@ -1,12 +1,12 @@
 BOOKS FOR THE BACKTESTER RESEARCH (list by Opus, 2026-11-18)
 ================================================================
 
-Where to put them: X:\Daten\03_Bibliothek\Trading  (PDF or EPUB; file name "Title - Author")
+Where to put them: X:\Daten\03_Bibliothek\Trading\Tier 1 .. Tier 4  (PDF or EPUB; file name "Title - Author")
 Then tell Claude "books are in" (and which ones). Claude reads them over the next sessions and turns
 what they teach into testable idea cards.
 
 Order: Tier 1 first. Any edition is fine; the newest is best. [FREE] = the author or publisher gives it away
-legally, Claude can download it itself (no need to get it). Already read (skip): Kaufman, Lopez de Prado AFML,
+legally; DONE = already in the library. Already read (skip): Kaufman, Lopez de Prado AFML,
 Carver Systematic Trading, Chan Algorithmic Trading, Davey, Pardo, Masters, Aronson, Kurt, Kaeppel, Douglas,
 Hougaard, Volman, Aziz, Coulling.
 
@@ -35,8 +35,9 @@ TIER 1 - get these first (forced buyers and sellers, futures, rates: where our o
     FX from a bank trader: fixings, month-end flows, positioning. Fits our FTMO currency pairs.
 11. Antti Ilmanen - Investing Amid Low Expected Returns (Wiley 2022)
     Update of book 1 with newer evidence.
-12. Kakushadze & Serur - 151 Trading Strategies (Palgrave 2018)  [FREE preprint on SSRN]
-    A catalogue of strategies with formulas and references; good for finding new idea families.
+12. Kakushadze & Serur - 151 Trading Strategies (Palgrave 2018)  [free SSRN preprint; SSRN blocks scripts]
+    A catalogue of strategies with formulas and references. CAUTION: Springer marks the book RETRACTED (reason
+    not found); only as an idea list. Optional: download the SSRN preprint by hand (papers.ssrn.com, id 3247865).
 
 
 TIER 2 - market mechanics (futures, bonds, commodities, options, FX, microstructure)
@@ -98,15 +99,15 @@ TIER 3 - systematic strategy books with tested numbers
 TIER 4 - testing, statistics, risk and sizing (makes every test more honest)
 -----------------------------------------------------------------------------
 56. Marcos Lopez de Prado - Machine Learning for Asset Managers (Cambridge 2020)
-57. Marcos Lopez de Prado - Causal Factor Investing (Cambridge 2023)   [maybe FREE, open access]
-58. Bradley Efron & Trevor Hastie - Computer Age Statistical Inference (Cambridge 2016)   [FREE]
-59. Andrew Gelman, Jennifer Hill, Aki Vehtari - Regression and Other Stories (Cambridge 2020)   [FREE]
-60. Rob Hyndman & George Athanasopoulos - Forecasting: Principles and Practice (OTexts, 3rd ed. 2021)   [FREE online]
+57. Marcos Lopez de Prado - Causal Factor Investing (Cambridge 2023)   [DONE: downloaded, Tier 4]
+58. Bradley Efron & Trevor Hastie - Computer Age Statistical Inference (Cambridge 2016)   (the authors' free PDF is gone)
+59. Andrew Gelman, Jennifer Hill, Aki Vehtari - Regression and Other Stories (Cambridge 2020)   [DONE: downloaded, Tier 4]
+60. Rob Hyndman & George Athanasopoulos - Forecasting: Principles and Practice (OTexts, 3rd ed. 2021)   [FREE: website otexts.com/fpp3, Claude reads it online]
 61. John Campbell, Andrew Lo, Craig MacKinlay - The Econometrics of Financial Markets (Princeton 1997)
 62. Ruey Tsay - Analysis of Financial Time Series (Wiley, 3rd ed. 2010)
 63. Stefan Jansen - Machine Learning for Algorithmic Trading (Packt, 2nd ed. 2020)
 64. Alexander McNeil, Ruediger Frey, Paul Embrechts - Quantitative Risk Management (Princeton, rev. ed. 2015)
-65. Nassim Taleb - Statistical Consequences of Fat Tails (STEM Academic Press 2020)   [FREE on arXiv]
+65. Nassim Taleb - Statistical Consequences of Fat Tails (STEM Academic Press 2020)   [DONE: downloaded, Tier 4]
 66. Ralph Vince - The Mathematics of Money Management (Wiley 1992)
 67. Ralph Vince - The Leverage Space Trading Model (Wiley 2009)
 68. Leonard MacLean, Edward Thorp, William Ziemba (eds.) - The Kelly Capital Growth Investment Criterion (World Scientific 2011)
