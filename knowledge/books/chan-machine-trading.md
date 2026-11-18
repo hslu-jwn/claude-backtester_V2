@@ -1,0 +1,39 @@
+# Ernest P. Chan, *Machine Trading: Deploying Computer Algorithms to Conquer the Markets* (John Wiley & Sons, 2017)
+
+Short: **MT**. Cite by printed page (`MT p.N`). Read 2026-11-18 by Codex; PDF in the library folder Tier 3.
+
+The book surveys the data, modeling, execution, and risk considerations involved in algorithmic trading. Its examples span equity factors, time-series and machine-learning models, options, market microstructure, and bitcoin (MT p.27–28, 83, 119, 159, 201). For this project, the most relevant material is the equity-factor research and its warnings about executable prices and costs (MT p.41–49, 183–184, 188–195).
+
+## Testable ideas
+
+- **Option-implied volatility smirk** (MT p.46–47): Each Tuesday, rank optionable US stocks by the preceding Tuesday-to-Tuesday average of OTM put implied volatility minus ATM call implied volatility. Long the bottom quintile and short the top quintile for one week. The book attributes the effect to informed traders buying OTM puts ahead of declines; it reports **16 basis points per week** of top-versus-bottom underperformance for listed US stock options, 1996–2005. Data: historical option quotes and implied volatilities with the book’s strike and 10–60-day tenor filters, plus point-in-time share prices. Venue: real US shares. **NEW**; informed trading is a claimed mechanism, but the book does not establish a compelled counterparty.
+
+- **Call-minus-put implied volatility** (MT p.46): At the close, rank US stocks by the open-interest-weighted difference between call and put implied volatilities across strikes and expirations; buy the top quintile and short the bottom quintile, holding one week. The claimed mechanism is informed option demand. The book reports **12.4 percent** unlevered CAGR for roughly 1,500–2,300 US stocks in 1996–2005, falling to **3.7 percent** in the last three years; no bp-per-event size is given. Data: point-in-time matched option implied volatilities and open interest, plus share prices. Venue: real US shares. **NEW**; no compelled counterparty is identified.
+
+- **Monthly change in call implied volatility** (MT p.45): Rank optionable US stocks by the preceding month’s change in ATM call implied volatility; long the highest predicted-return decile and short the lowest, holding one month. The book attributes predictability to informed option traders and reports an average decile spread of **approximately 1 percent per month** for about 1,000–2,300 US stocks in 1996–2011. Data: historical 30-day, approximately 0.5-delta call implied volatilities and share prices. Venue: real US shares. **NEW**; no compelled counterparty is identified.
+
+- **Implied moments** (MT p.42, 45): Monthly, sequentially select the top 30% of optionable stocks by implied skewness, then kurtosis, then volatility for the long side; repeat with the bottom 30% at each step for the short side. Hold one month. The book cites risk compensation and informed option demand, and reports **9.68 percent per annum** unlevered for US optionable stocks in 1999–2012. Chan’s SPX implementation produced almost zero return; no bp-per-event size is given. Data: historical option volatility surfaces and share prices. Venue: real US shares. **NEW**; the mechanism is not compelled trading.
+
+- **Liquidity-sorted shares** (MT p.48–49): For the 3,500 largest US stocks, rank annual share turnover, long the least-liquid quartile and short the most-liquid quartile at equal dollar weights, rebalancing annually. The reported CAGR is **7.27 percent** for 1972–2013; no bp-per-event size is given. Chan’s daily-rebalanced SPX variant had the opposite sign. Data: point-in-time shares outstanding, volume, market capitalization and prices, including delisted stocks. Venue: real US shares. **NEW**; the book presents a liquidity effect but does not identify a counterparty required to trade.
+
+- **Bitcoin cross-exchange price difference** (MT p.211–212): Simultaneously sell BTC on the higher-bid exchange and buy on the lower-ask exchange; transfer inventory as needed. The book gives one February 2, 2015 observation: a **US$5.644** gross difference per coin, with illustrative commissions and transfer costs leaving about **$2.6** before exchange credit risk. It is a single observation, not a tested average effect. Data: synchronized executable quotes, depth, fees, transfer availability and inventory constraints. Venue: the book’s example uses bitcoin across spot exchanges; its applicability to Binance futures requires separate evidence. **NEW**; the book identifies credit and transfer frictions, not a compelled counterparty.
+
+- **ES signed order flow** (MT p.188–189, 194–195): Buy or sell the front E-mini S&P 500 futures contract when the past minute’s signed trade volume crosses a positive or negative threshold; exit when flow reaches zero or reverses. The claimed mechanism is price pressure from aggressive orders. For **October 1, 2012 only**, Chan reports **$300**, or **$4 per trade**, crossing the spread and excluding fees; the threshold was chosen using that day’s distribution. Data: timestamped trades with aggressor tags and executable bid/ask quotes. Venue: exchange futures. **NEW**, but the one-day illustration is not evidence of an out-of-sample effect or a compelled counterparty.
+
+- **Bitcoin signed order flow** (MT p.207–208): Enter in the direction of one-minute signed trade flow above a threshold and exit at zero or reversal. For Bitstamp in December 2014, the book reports **US$0.097 per one-sided trade**, using trade-price fills; it estimates a spread cost of about **US$0.06 per trade**, before commissions. Data: timestamped trades and executable quotes. Venue: the example is bitcoin spot; adaptation to Binance futures would need its own execution test. **MAPS TO: crypto taker-flow.**
+
+## Method notes
+
+- Use survivorship-bias-free share histories and account for splits and dividends; point-in-time historical index membership matters when testing an index universe (MT p.3, 110).
+- For futures, be wary of back-adjusted continuous series whose roll construction can embed lookahead; the book notes that original contracts are an alternative (MT p.2–3).
+- Auction orders execute at the primary exchange auction, so consolidated opens and closes can create fictitious backtest profits. The book illustrates an **8 bps** difference for AAPL on one day (MT p.183–184).
+- Normalize unlevered long-short returns by **gross** position value, and distinguish compounded CAGR from average annualized return (MT p.12–13).
+- Examine maximum drawdown and its duration alongside Sharpe; Chan cautions that full Kelly leverage can be unsafe under tail events (MT p.12–14).
+- Fit factor selections and sorting choices in the training set. Factor signs and performance can differ by universe, including large versus smaller stocks (MT p.39, 54–55).
+- For short-horizon flow strategies, model bid/ask execution and fees; the book’s ES example changes materially when assumed fills move from midprice to the spread (MT p.194–195).
+- When pooling stocks in a predictive model, normalize return-based inputs and targets using past volatility, and preserve historical constituents (MT p.109–110).
+
+## Verdict
+
+**None of the NEW ideas meets the full card criterion of both a stated size and a clearly identified counterparty compelled to trade.** The options-implied signals have reported sizes and a plausible information mechanism, with the volatility-smirk result stated directly in bp per week; they are candidates only if informed trading is considered sufficient. Liquidity sorting has a reported historical return but an unstable sign across the book’s universes. Bitcoin cross-exchange arbitrage has an illustrative price difference rather than a tested effect, while ES order flow rests on one selected day and execution-sensitive results (MT p.45–49, 194–195, 211–212).
+

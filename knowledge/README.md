@@ -73,6 +73,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | STS | Larry Connors, *Short Term Trading Strategies That Work* | [notes](books/connors-short-term-trading-strategies.md) | SPY / share pullback, RSI(2), Double 7s, TRIN rules: daily reversal (spent); overnight premium = I-87; no card; cite by page |
 | AM | Andrew Ang, *Asset Management* (Oxford 2014) | [notes](books/ang-asset-management.md) | Factor investing: low idiosyncratic vol (I-129, parked), illiquidity, rebalancing, vol selling (spent), index changes (I-122); cite by page |
 | IBB | Rishi Narang, *Inside the Black Box* | [notes](books/narang-inside-the-black-box.md) | Quant shop anatomy; leads without size: issuance / buybacks, bond auction supply (-> I-130); cite by section |
+| QT | Ernest Chan, *Quantitative Trading* | [notes](books/chan-quantitative-trading.md) | Gasoline / gas spring seasonals (1 trade a year: no power), PEAD (FB123 closed), pairs; no card; cite by page |
+| MT | Ernest Chan, *Machine Trading* | [notes](books/chan-machine-trading.md) | Option-implied share sorts (no option data), turnover sort (sign unstable), BTC cross-exchange, ES order flow; no card; cite by page |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
