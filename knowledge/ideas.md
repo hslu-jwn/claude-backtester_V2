@@ -2185,7 +2185,7 @@ overpay for high-idiosyncratic-volatility stocks; quarterly quintile sort on las
 weights. No forced counterparty; AM p.341 notes the result is sensitive to weighting and illiquid names.
 Causal graph (T-21): X = idio-vol quintile, Y = next-quarter return, M = mispricing by constrained buyers;
 confounders = size, illiquidity, short-term reversal, beta (controls); placebo: the sort on total vol of the
-following quarter (look-ahead, must not predict out of sample... placebo kept for a build only).
+quarter before formation would be the named placebo in a build (none: parked).
 M4: quarterly long-short, c ~0.3 % per rebalance + borrow; the spread is a beta bet (sd ~4 % a month). Halved
 ~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED.
 Same for illiquidity selection (AM pp. 428-430): premium sits in micro caps (untradable short leg, wide spreads): no card.
