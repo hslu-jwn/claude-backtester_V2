@@ -1975,3 +1975,20 @@ DGS10 figure (ZN's duration ~6-7 vs 8.5). Test months 2021-10 .. 2026-10 (61): Z
 Feb / May / Aug / Nov (futures roll and delivery months) +20.0 vs others +19.2: no roll artefact. Size: ~$230 gross per
 ZN contract per month-end (1 bp of price ~ $11.5), ~$210 after ~2 bp (1 tick + fees). The futures venue captures the
 effect; ZN or the 1/10-size micro 10-year (if listed by the broker) is the natural instrument (HANDOFF Open 1, money: the user).
+
+### I-116 Primary-dealer Treasury inventory price pressure (2026-11-18, data scout + harvest HV-T0129-1; family `rates_dealer`; PARKED before any data)
+Mechanism: dealers charge a concession to hold inventory; large net long inventory should lift yields temporarily.
+Source read by Opus: Mixon & Tuzun, FEDS 2018-065 (full text): a Nelson-Siegel model with weekly dealer DV01 finds a
+transitory, same-week price-pressure effect ("dealers ... typically short Treasury exposure during the 2001-2013
+period ... decreased 10-year Treasury yield by nearly 5 basis points, on average"); partly confidential CFTC data. No
+forward-looking (next-week) size is published. Free data: NY Fed primary dealer statistics, weekly from 1998, released
+about a week after the Wednesday they describe. Power: 10-year weekly price sd ~110 bp; ~1,000 development weeks: se
+~3.5 bp, t 3 needs ~10 bp a week net, against a published total level effect of ~5 bp (not per week). PARKED (no
+published predictive size; far below power). Revisit only with a source that reports a next-week effect.
+
+### I-117 13F "best ideas" of institutional managers (2026-11-18, data scout: SEC 13F data sets 2013-Q2+; family `share_13f`; CLOSED on power before any data)
+Mechanism: the stock a manager overweights most against the market is his highest-conviction pick. Source (abstract via
+search, not the full text): Cohen, Polk & Silli, "Best Ideas": best ideas beat the market by ~2.8-4.5 % a year
+(1991-2005, strongest in illiquid stocks). Halved ~1.5-2 % a year. Development 2013-Q2 .. 2021 is ~100 months after the
+45-day filing lag; a best-ideas book's monthly tracking error ~2-3 %: se ~0.25 % a month, t 3 needs ~9-11 % a year.
+CLOSED on power without a look (needs ~5x the halved published size).

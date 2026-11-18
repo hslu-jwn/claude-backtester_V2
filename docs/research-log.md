@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: data-set scout result; I-116 parked, I-117 closed on power (auto)
+
+- Scout (Sonnet subagent, ~3 min, 30 tool calls): 10 free data sets, catalogued in
+  `knowledge/reviews/2026-11-18-data-scout.md` (NY Fed dealer positions / SOMA / repo, Treasury auctions / buybacks /
+  DTS, SEC 13F, FINRA short interest and margin, DefiLlama stablecoins). Not found free: ETF shares-outstanding
+  history, index-rebalance announcement history.
+- I-116 dealer inventory (Mixon & Tuzun read in full): only a same-week effect, no next-week size -> PARKED.
+  I-117 13F best ideas: halved ~2 % a year vs ~9-11 % needed -> CLOSED on power. Neither data set was downloaded.
+- Opus inline; no Codex call.
+
 ## 2026-11-18: data-set scout started; optional book request (auto)
 
 - Auto decision 54: one web subagent (Sonnet) scouts free non-price data sets (flows / positioning, 3+ years, 20+
