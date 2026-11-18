@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 18 (Treasury futures roll / delivery, SOMA / buybacks / repo, Fed and BIS notes, sector-ETF capping, target-date funds, leveraged bond ETFs): nothing kept (auto)
+
+- 7 Codex `gpt-6.1-terra` `--search` calls (5 content cells, high effort; low for BLOG and the nonsense canary);
+  canaries ok (carry found, nonsense empty); 5 ideas, 0 kept by the filters. Opus read the two nearest to owned data:
+  target-date-fund rebalancing (Parker, Schoar & Sun; needs fund-of-fund ownership chains) and ETF rebalancing
+  pressure (needs daily ETF holdings, paid): both stay untestable.
+- Auto decision 52: run batch 18 (7 calls). Alternative: no batch, go straight to data work. Why: no carded idea was
+  left; the auto rule asks for new sources first. Yield since batch 12: one card (I-109) in seven batches; the
+  harvest is close to exhausted for our free data.
+
 ## 2026-11-18: I-115 GSCI roll front-running PASSED development, FALSIFIED at its one-time test (auto run continues)
 
 - Source read in full (Mou 2010, CFTC study; PDF text via the zlib script). Data: EIA daily futures strips, contracts
