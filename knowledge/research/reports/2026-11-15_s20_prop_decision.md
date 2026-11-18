@@ -47,3 +47,38 @@ weeks show intraday equity dips near the hourly-close model, never above 25 %.
 (market cap source?), are 40-60 simultaneous basket orders and weekly rebalancing by API fine, is max loss static;
 (2) confirm the fee (59-69 USD, refundable) and payout terms; (3) the funded money is simulated at most such firms:
 payout-denial risk is the main unmodelled loss. Strategy 19 stays out until its forward boundary confirms.
+
+## Update 2026-11-18 (the user picked this item; M10 and the official rules)
+
+**Pass chance at the M10 planning edge (+60 bp a week instead of +92; same screen, `FAIR = 60`, 7 weekday tranches,
+2,000 attempts per cell):**
+
+| notional per side | daily close marks | hourly close marks | hourly wick bound | median days to pass (hourly close) |
+|---|---|---|---|---|
+| 10 % | 92 % | 93 % | 88 % | ~1,500 (~4 years) |
+| 15 % | 88 % | 85 % | 15 % | ~930 (~2.5 years) |
+| 25 % | 72 % | 71 % | 1 % | ~460 (~1.3 years) |
+| 50 % | 38 % | 37 % | 0 % | ~150 |
+
+Funded income scales with the edge: at 15 % per side ~5.5 % of balance a year before the split (8.5 % x 60 / 92).
+
+**Official HyroTrader pages (read 2026-11-18 by a web-fetch subagent; terms "last updated November 9, 2026"):**
+- Two-Step: +10 % then +5 %, 5 % daily loss, 10 % max loss, 4 + 4 minimum trading days, unlimited time, 40 % best-day
+  rule, from $59, refundable deposit (returned with the first payout; kept on a failed challenge), split 80 % (up to
+  90 %), payouts on demand in USDT / USDC.
+- Daily loss: "measured from your equity at the start of the day" (00:00 UTC reset), static, and equity includes open
+  floating P/L: an intraday dip counts, so the hourly columns are the relevant ones (marks: Bybit's mark price).
+- Max loss 10 %: static or trailing **not stated** on the pages read.
+- Bots allowed "as long as the strategy is your own", via the Bybit demo API; no order-count limit found; no position
+  cap ("entirely up to you").
+- Low caps: at most 5 % of the initial balance (incl. leverage) in coins under $100M market cap.
+- **Possible conflict:** terms §10.2(i) prohibit opposing positions "in the same or a substantially correlated
+  instrument within a single Trading Account" (to meet thresholds). A long-short coin book may be read that way: ask
+  in writing before paying.
+- Countries: Switzerland and the EU are not in the hard-block list (§12.1); the platform's Restricted Jurisdictions
+  List was not read.
+
+**Questions to send HyroTrader before paying:** (1) is a market-neutral long-short book of ~40-60 USDT perps (long the
+top, short the bottom quintile of a weekly signal, rebalanced daily in tranches by our own bot) allowed under §10.2(i)?
+(2) is the 10 % max loss static from the initial balance? (3) any API rate or order-count limits on the Bybit demo?
+(4) is the user's country accepted?
