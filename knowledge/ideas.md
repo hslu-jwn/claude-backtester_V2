@@ -1271,7 +1271,7 @@ Before a data look, simulate the planned sample under Gaussian, Student-t(3) and
 expected edge and at zero: report how often the t >= 3.0 gate passes (power) and falsely passes. A card whose power
 collapses under the fat-tailed scenario is parked like M4's < 15 %. Source FT p.153-160, 389-396.
 
-### T-25 Stress Monte Carlo beyond the worst seen day (FT, 2026-11-18; tooling for prop / sizing)
+### T-25 Stress Monte Carlo beyond the worst seen day (FT, 2026-11-18; BUILT 2026-11-18: `risk/stress.py`, spec risk-management.md › Stress scenarios)
 The prop / FTMO pass and funded-phase simulations bootstrap past days, so no path can be worse than history. Add
 pre-registered shock scenarios (one day at 1.5x and 2x the worst seen, a clustered week of losses, all legs at once)
 and report breach rates per scenario next to the bootstrap. Source FT p.177-181, 232, 469-475.

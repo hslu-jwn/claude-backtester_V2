@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-25 stress scenarios built (the user: "Build T-25 stress test")
+
+- `risk/stress.py` (Opus, test-first, 10 tests): shock day = the worst historical day x a multiple, placed at a random
+  position (or k days in a row) in every sampled order; `stress_ftmo` reports the FTMO 2-Step summary for the baseline
+  and the defaults (1.5x, 2x worst day, worst day 5 in a row). `ftmo_by_risk` now takes the day-position count from the
+  order length (identical for every existing caller). Spec risk-management.md › Stress scenarios. Opt-in, no default
+  changes. Not wired into the prop card / UI and not run on a stream: no FTMO stream exists now (goal 1 paused, M11).
+- Full suite 6,027 passed, 14 skipped, 4 xfailed (-n 8, 7 min); ruff clean.
+
 ## 2026-11-18: T-23 tail concentration audit, Strategy 20 and I-109 (the user: "Yes, run T-23")
 
 - Opus, local script, no model call. Flags fixed in the script docstring before the run.

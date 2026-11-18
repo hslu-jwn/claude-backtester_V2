@@ -502,8 +502,9 @@ def _ftmo_summary(acc: dict) -> dict:
 
 def ftmo_by_risk(days: list[Day], orders, config: MonteCarloConfig) -> dict:
     """The FTMO 2-Step summary (`_ftmo_summary`) for each risk level over the reshuffled
-    `orders`; no account statistics (the pass-probability card needs only this)."""
-    n = len(days)
+    `orders`; no account statistics (the pass-probability card needs only this). The number of
+    day positions is the order length (= len(days) for plain reshuffles; stress orders add a day)."""
+    n = len(orders[0]) if len(orders) else len(days)
     accumulators = {
         risk: {"attempts": 0, "unfinished_attempts": 0, "passes": 0,
                "fail_daily": 0, "fail_max": 0, "days_to_pass": [],

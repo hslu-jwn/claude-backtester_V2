@@ -515,6 +515,19 @@ be reported as unavailable, never replaced by a different period's percentile.
   per hour of day, ⚙️ **2** years each, run through the same strategy and costs. Expected: net R per trade about
   minus the mean cost; clearly more is reported as a warning (bug or lookahead), not as an edge.
 
+### Stress scenarios (T-25; the user's go 2026-11-18: "Build T-25 stress test")
+
+Day sampling can never draw a day worse than the worst one in the sample (Taleb, Fat Tails p.177-181). `risk/stress.py`
+adds pre-registered shocks to the FTMO 2-Step simulation and reports them next to the unchanged baseline:
+- **Shock day:** the worst historical day (lowest summed net R of a day with trades), every trade's R (and its events)
+  multiplied by the scenario's multiple; trade order, ids and stop-risk weights unchanged.
+- **Placement:** in every sampled order, `days` consecutive positions starting at a uniform random position are
+  replaced by the shock day (order length unchanged; seeded with `seed + 1`). Default scenarios: 1.5x and 2x the worst
+  day once, and the worst day 5 days in a row (a clustered week).
+- **Output:** `stress_ftmo` returns `ftmo_by_risk` for the baseline and each scenario (same orders before the shock).
+  `ftmo_by_risk` takes the number of day positions from the order length (equal to the number of days for every
+  plain reshuffle, so baseline numbers do not change). Opt-in; no default, cost or rule changes.
+
 ### Trial log and deflated Sharpe (ROADMAP 12.10; rules set by the user, 2026-10-16)
 Why: picking the best of many variants finds a "winner" even on pure noise (López de Prado, *AFML* 11, 14.7;
 `knowledge/topics/statistics-and-bayes.md`). Every tried variant is logged, and the verdict deflates the chosen
@@ -789,5 +802,6 @@ a percentage of the day-start balance.
 2. **PositionSizer** (`sizer.py`): lots per trade and per TP part (› Account & sizing).
 3. **AccountSimulator**: not built (› Account simulator).
 4. **MonteCarlo** (`monte_carlo.py`): › Monte Carlo.
+   **Stress** (`stress.py`): shock days beyond the worst seen one for the FTMO simulation (› Stress scenarios).
 5. **RiskSweep** (`tools/risk_sweep.py`): › Risk sweep.
 6. **PropFirmRules** (`prop_rules.py`): FTMO presets and custom; used only by the prop-firm field (later).
