@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 20 planned: US-share non-price data sets (the user: "One more harvest")
+
+- Tasks T0139-T0143: short interest / days-to-cover (ACAD, BLOG; FINRA data), ex-dividend / split / dividend-reinvestment
+  flows (ACAD); canaries T0142 (known carry) and T0143 (nonsense). Auto decision 73: theme US shares (venue M13), the one
+  big free panel (Alpaca 2015+) whose non-price sets are not yet exhausted.
+
 ## 2026-11-18: harvest batch 19 result: canaries pass, nothing screenable; I-126 / I-127 parked (auto)
 
 - Codex terra high (ACAD) / low (BLOG) `--search`, 5 tasks, all ok, no violations. Known canary T0137 found KMPV and LRV;
