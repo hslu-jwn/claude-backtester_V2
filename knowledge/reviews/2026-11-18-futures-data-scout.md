@@ -38,3 +38,15 @@ and the EIA energy strips (contracts 1-4, 4 markets).
 Free futures prices limit goal-2 futures research to continuous front series and the energy strips; per-contract
 history (needed for roll, curve and spread ideas outside energy) is paid. Optional for the user: a paid per-contract
 history (e.g. Norgate) only if a carded idea needs it.
+
+## Paid per-contract history: prices (web search 2026-11-18; vendor pages not all opened, check before paying)
+
+| Vendor | Coverage | History | Price | Notes |
+|---|---|---|---|---|
+| Databento (GLBX.MDP3) | CME / CBOT / NYMEX / COMEX, every contract incl. expired | 2010+ | pay per use from $0.50 / GB; $125 free credit | daily bars are tiny (likely inside the free credit); exact cost from a free metadata call before download; Python API key |
+| Norgate Data futures | ~100 markets, 11 exchanges, individual + continuous | ~1980+ (third-party claim) | ~$270 a year (third-party, unverified) | Windows updater + Python package; access ends with the subscription |
+| FirstRate Data | 130 most active futures, individual + continuous, daily incl. open interest | 2007+ (individual contracts from ~2011 on some) | $299 one-time bundle (third-party) | perpetual licence; updates extra |
+| CSI Unfair Advantage | 49 North American + 69 world futures | long | from $37 a month | export only during the subscription month |
+
+Opus: Databento first (likely free for daily bars, clean API; but only 2010+, i.e. ~11.7 development years); Norgate only
+if a card needs pre-2010 per-contract history for power.
