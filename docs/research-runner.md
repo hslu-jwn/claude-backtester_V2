@@ -999,6 +999,16 @@ samples (n 40: ~2 % vs ~0.2 %), and a `rare_gain` stream (right skew, like Strat
 Every new card reports the T-24 table and flags next to its M4 numbers; neither the minimum power nor the flag is a
 gate (the user, 2026-11-18). M4 alone decides PARK / CLOSE.
 
+## Causal simulation tests (T-22; tool for the causal check)
+
+Code: `analytics/causal_sim.py` (`ols` with intercept, t per regressor; generators `fork`, `collider`,
+`confounded_mediator`, `true_effect`, n 5,000, seeded), tests `tests/analytics/test_causal_sim.py`. After López de
+Prado, *Causal Factor Investing* ch.7 / appendix B. The tests pin, at the development gate t 3.0: a fork shows a false
+effect until the confounder is controlled; controlling a collider creates a false effect; controlling a confounded
+mediator creates one; a true effect is recovered inside 2.5 standard errors. Use: when a card's causal graph (T-21)
+names a control, run the same regression on a generator with that graph shape first; a control that manufactures
+significance there must not be used on the data. No gate of its own.
+
 ## Causal check per card (T-21; rule set by the user, 2026-11-18)
 
 Source: López de Prado, *Causal Factor Investing* (`knowledge/books/lopezdeprado-causal-factor-investing.md`,

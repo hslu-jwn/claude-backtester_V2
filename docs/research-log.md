@@ -4,6 +4,10 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-22 causal simulation tests built (the user: "Build T-22")
+
+- Opus, test-first (10 tests), `analytics/causal_sim.py`; spec research-runner.md › Causal simulation tests. Auto decision 70: build a small shared `ols` + generators instead of testing existing code. Alternative: test the screens' ad-hoc controls. Why: no shared estimator with controls exists; the screens are one-off scripts.
+
 ## 2026-11-18: Tier 2 books read: Tuckman (selected), Rhoads, Sinclair, Schofield (selected) (auto)
 
 - 6 Claude Sonnet agents (Codex still at its limit at 20:31). Filed four book notes and README rows TK / RH / VT / SC.

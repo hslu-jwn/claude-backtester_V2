@@ -1246,10 +1246,11 @@ controls, placebo absent). Source `books/lopezdeprado-causal-factor-investing.md
 placebo window (10 trade dates earlier, +10.2 bp, t 2.14: not absent; near the mid-month auctions) and a diff-in-diff
 check would be a diagnostic only (its test is spent).
 
-### T-22 Simulation tests for our estimators (CF, 2026-11-18; tooling)
+### T-22 Simulation tests for our estimators (CF, 2026-11-18; tooling; BUILT 2026-11-18: `analytics/causal_sim.py`, spec research-runner.md › Causal simulation tests)
 The three seeded 5,000-draw structures of CF ch.7 (fork, collider, confounded mediator) plus one true effect as unit
 tests of the scorecard / gates code: the correct specification must report no effect (or recover the true one); a
 wrong control must not create significance unnoticed. Cheap, deterministic. Source CF pp.52-60, appendix B.
+**T-22 built 2026-11-18 (10 tests, first run green):** our gate code has no shared regression with controls (screens control ad hoc: excess over the month, hedges), so T-22 adds a plain `ols` plus the four generators; the tests pin fork / collider / confounded-mediator false discoveries at t 3.0 and the recovery of a true slope. Used before a card's control is applied to data (T-21).
 
 ### T-23 Tail concentration audit of every stream (FT, 2026-11-18; tooling / diagnostic)
 For each passed or shelf stream (Strategy 20, Strategy 19, I-109, the shelf rows) report on its net period returns:

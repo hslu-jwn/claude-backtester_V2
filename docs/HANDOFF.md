@@ -62,7 +62,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
    Kakushadze (idea list only), Tier 2 Hull, Natenberg, Fabozzi, Mehrling, Foucault, Evans, Johnson, Alpha Trader
    (lower yield: 12 books gave no screenable candidate). New cards: I-120 / I-121 / I-123 parked, I-122 closed, I-124 spin-off
    closed / parked after the source hunt, T-26 done (I-109: no quarter-end effect; watch weekend month-ends).
-3. Optional tooling from the books: T-22 (simulation tests for our estimators). T-24 built 2026-11-18
+3. Tooling from the books built 2026-11-18: T-22 (`analytics/causal_sim.py`, use before applying a card's control) and T-24
    (`analytics/fat_tail_power.py`): report only, next to M4 on every new card (the user).
 
 ## First prompt for the next chat
