@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: Strategy 20 prop firm not pursued (the user: "Not worth it")
+
+- Rerun of `research/screens/2026-11-15_s20_prop_intraday_tranches.py` at the M10 edge (+60 bp a week; daily_hl and
+  hourly_close marks, 7 tranches): 10 % per side 93 % pass in ~4 years, 15 % 85 % in ~2.5 years, 25 % 71 % in ~1.3
+  years (hourly close); wick bound 15 % at 15 %. HyroTrader official pages read by a web-fetch subagent (Opus 5.5):
+  daily loss on start-of-day equity incl. floating P/L, bots allowed for own strategies, terms §10.2(i) on opposing
+  correlated positions may bar the long-short book. Package updated (5ee1766). Strategy 20 stays forward-only.
+
 ## 2026-11-18: Fable methods M2, M4-M12 accepted (the user: "Yes, as recommended")
 
 - Written to `docs/research-runner.md` › Method rules; pointers in the continue-research and idea-harvest skills.
