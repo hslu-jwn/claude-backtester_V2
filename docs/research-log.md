@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: supply exhausted; hourly heartbeat (auto)
+
+- Auto decision 84: hourly heartbeat (git pull, new books in the library folder, Codex state) instead of more
+  harvest batches. Alternative: further harvest axes (FORUM / PODCAST, other languages). Why: batches 19-22 and 31
+  books gave no screenable candidate; another batch now costs Codex quota and Opus tokens for an expected zero.
+  Telegram "Action needed (optional)" sent: IBKR account, missing Tier 1 books, or paid data.
+
 ## 2026-11-19: I-109 hand-order calendar (auto)
 
 - Auto decision 83: write `research/screens/2026-11-19_i109_order_calendar.py` (Opus, ~40 lines, prints only; no
