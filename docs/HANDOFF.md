@@ -23,6 +23,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
   I-120 FX COT, I-121 crack carry, I-123 FX carry, I-126 token unlocks, I-127 USDT issuance, I-128 days-to-cover
   PARKED on power; I-122 index changes, I-124 spin-off drift (rebound parked), I-125 VIX on FOMC days CLOSED. No
   screenable candidate. Free data and the library's strategy-relevant books are worked through.
+- **Third session 2026-11-18 (Mode=auto, running):** 31 more books read by Codex terra (Tier 3, Tier 4, and Kakushadze,
+  Evans, Foucault, Alpha Trader, Mehrling, Fabozzi); cards I-129 low idio vol, I-130 tax-loss losers (power), I-131
+  fund fire sales (data) PARKED before any data. No screenable candidate. Checkpoint: 6,053 passed, ruff clean.
 - **Built:** T-24 `analytics/fat_tail_power.py` (report only), T-22 `analytics/causal_sim.py` (causal simulation
   tests), T-26 `research/screens/2026-11-18_t26_i109_month_end_diagnostics.py`; TreasuryDirect note history cached.
 
@@ -43,8 +46,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 1. **IBKR account** for I-109 (futures permission); first fills check margin, the 3 p.m. spread and fees.
 2. **Books:** Tier 1 missing: Burghardt *Treasury Bond Basis*, Bouchaud *Trades, Quotes and Prices*, Madhavan and
-   Abner (ETFs); Tier 3 / 4 follow (the user notifies). Unread in the library (lower yield): Kakushadze, Hull,
-   Natenberg, Fabozzi, Mehrling, Foucault, Evans, Johnson, *Alpha Trader*, Gelman.
+   Abner (ETFs). Broken files (third session): Williams *Long-Term Secrets* is a 404 web page (re-download); Vince
+   *Leverage Space* and Johnson *Algorithmic Trading and DMA* have no text layer (scans; a text PDF or OCR needed).
+   Unread on purpose (pricing texts): Hull, Natenberg.
 3. **Data:** the parked cards above reopen only with longer samples or paid / intraday data (e.g. intraday VX for
    I-125); the user declined paid data on 2026-11-18. Fable leftovers: Hyperliquid AWS account (card 6 C), a source
    for the positioning collector (card 8).
