@@ -1266,10 +1266,11 @@ their 5 best periods); every largest observation is a gain (right-skewed, not sh
 mean leans on a few months (2021-22); its forward log carries the weight. Strategy 20's development leans on one week,
 its test does not.
 
-### T-24 Fat-tail power check (FT, 2026-11-18; method, extends M4)
+### T-24 Fat-tail power check (FT, 2026-11-18; method, extends M4; BUILT 2026-11-18: `analytics/fat_tail_power.py`, spec research-runner.md › Fat-tail power check)
 Before a data look, simulate the planned sample under Gaussian, Student-t(3) and volatility-clustered P/L at the card's
 expected edge and at zero: report how often the t >= 3.0 gate passes (power) and falsely passes. A card whose power
 collapses under the fat-tailed scenario is parked like M4's < 15 %. Source FT p.153-160, 389-396.
+**T-24 built 2026-11-18 (14 tests).** Shapes: Gaussian, t(3), GARCH, rare_loss, rare_gain (the last two added after a first run showed symmetric fat tails do not move the t gate). Registered numbers (power / false pass): I-109 development card (n 381, halved 10 bp, sd 87.4): Gaussian 0.23 / 0.0012, rare_gain 0.17, rare_loss false pass 0.0040 (flagged); I-109 test gate t >= 1.5 (n 61, 18.4 bp): power 0.56-0.62 in every shape; Strategy 20 development (186 weeks, 73 bp, sd 611): 0.04-0.16, PARK level (it passed at a larger realised size); I-121 (16 years, Sharpe 0.31): 0.03-0.33, PARK. Reading: the risk is one-sided tails, not kurtosis: a rare-loss stream fakes a pass in short samples, a right-skewed one (our live streams) needs more periods.
 
 ### T-25 Stress Monte Carlo beyond the worst seen day (FT, 2026-11-18; BUILT 2026-11-18: `risk/stress.py`, spec risk-management.md › Stress scenarios)
 The prop / FTMO pass and funded-phase simulations bootstrap past days, so no path can be worse than history. Add

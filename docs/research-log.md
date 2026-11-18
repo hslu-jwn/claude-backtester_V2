@@ -4,6 +4,15 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: T-24 fat-tail power check built (the user: "Build T-24 power check")
+
+- Opus, test-first (14 tests), `analytics/fat_tail_power.py` + CLI; spec research-runner.md › Fat-tail power check.
+  Tool reported next to M4, not a gate (making it one is the user's call, HANDOFF › Open).
+- Finding: symmetric fat tails (t(3), GARCH) barely move power or false passes; one-sided rare jumps do (rare_loss
+  false pass ~10x Gaussian at n 40). Registered numbers on card T-24.
+- Auto decision 67: added rare_loss / rare_gain shapes after the first run. Alternative: keep the card's three shapes.
+  Why: the three showed nothing; Taleb's point is the one-sided tail.
+
 ## 2026-11-18: I-124 source hunt: long-run drift closed, short-run rebound parked (the user: "I-124 source hunt")
 
 - Opus, web search (Codex at its limit). Peer-reviewed out-of-sample test (McConnell, Ozbilgin & Wahal, J. Business

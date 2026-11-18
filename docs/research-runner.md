@@ -983,6 +983,21 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
 - **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
   strategies. Ideas from books stay allowed.
 
+## Fat-tail power check (T-24; tool, reported next to M4, not a gate)
+
+Source: Taleb, *Statistical Consequences of Fat Tails* (`knowledge/books/taleb-fat-tails.md`). Code:
+`analytics/fat_tail_power.py`; `python -m backtester.analytics.fat_tail_power --n <periods> --edge <halved edge> --sd
+<signal-free sd>` (`--two-sided` for M9 cards). Before any data look it simulates the card's planned sample under five
+zero-mean P/L shapes scaled to the card's sd: Gaussian, Student-t(3), GARCH(1,1) (alpha 0.10, beta 0.85),
+`rare_loss` (steady gains, a jump of -8 sd with 3 % chance) and `rare_gain` (the mirror). It reports per shape the
+power (share of samples with t >= the gate at the card's edge) and the false pass (the same at zero edge), the
+minimum power (PARK below 0.15, as M4) and a flag for shapes whose false pass is >= 3x the Gaussian one.
+Defaults: 10,000 samples, seed 42, gate t 3.0 (3.3 two-sided).
+What it showed on the registered numbers (2026-11-18): symmetric fat tails (t(3), GARCH) leave power and false passes
+near the Gaussian values; a `rare_loss` stream at zero edge passes t 3.0 about 10x as often as a Gaussian one in short
+samples (n 40: ~2 % vs ~0.2 %), and a `rare_gain` stream (right skew, like Strategy 20 and I-109) has lower power.
+Making the flag or the minimum power part of the M4 gate is the user's decision (HANDOFF › Open).
+
 ## Causal check per card (T-21; rule set by the user, 2026-11-18)
 
 Source: López de Prado, *Causal Factor Investing* (`knowledge/books/lopezdeprado-causal-factor-investing.md`,
