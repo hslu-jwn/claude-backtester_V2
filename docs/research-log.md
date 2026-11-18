@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: free long US share history hunt; forward-task dry run (auto)
+
+- Codex terra medium `--search` (read-only, guard ok): no free, script-licensed, survivorship-free US daily share panel
+  before 2016. Best: Nasdaq Data Link WIKI Prices 1996-2018 (free account needed; partial delisted coverage) plus a
+  reconstructed S&P 500 membership list (GitHub, no prices); Stooq is CAPTCHA-gated; Tiingo terms bar a stored cache;
+  Norgate trial 2 years only. IWM / IWB start May 2000.
+- Auto decision 79: do not ask the user for a Nasdaq Data Link account. Alternative: Telegram "Optional" for it. Why:
+  even 20 pre-sample years leave I-129 (t ~2 at the halved size) and I-130 (20 Decembers) below t 3.3, and WIKI's
+  missing delisted losers bias exactly the tax-loss and low-vol sorts.
+- Auto decision 80: dry-run the 2026-12-03 `monthly-forward-logs` read-only steps now (shelf `status`, boundary
+  `--check`s, shelf `canary`). Alternative: wait for 12-03. Why: a broken step found now costs nothing; found on
+  12-03 it costs a month. Result: status prints nothing (no shelf files yet, expected); both `--check`s answer
+  "no forward log yet" with their pre-registered boundaries; shelf `canary` reproduces every registered row (I-109 dev 381 months +18.4 t 4.42, test 61 months +23.2): CANARY OK.
+
 ## 2026-11-18: harvest batch 21 result: canaries pass, nothing kept (auto)
 
 - 4 raw ideas, 0 kept: reserve shocks vs Treasury yields (T0144), Treasury auction price cycle (T0145; judged in the
