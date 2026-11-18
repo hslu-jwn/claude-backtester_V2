@@ -85,6 +85,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | DEFI | Campbell Harvey et al., *DeFi and the Future of Finance* | [notes](books/harvey-defi-future-of-finance.md) | DeFi mechanics; collateral liquidations, AMM arbitrage, stablecoin redemption: on-chain execution, no size; no card |
 | CLM | Campbell, Lo & MacKinlay, *The Econometrics of Financial Markets* | [notes](books/campbell-lo-mackinlay-econometrics.md) | Methods: event-study power, microstructure bias, data snooping; no card |
 | AHFT | Cartea, Jaimungal & Penalva, *Algorithmic and High-Frequency Trading* | [notes](books/cartea-algorithmic-hft.md) | Methods: execution, market making, order-book imbalance (needs quote data); no card |
+| MLAM | Marcos Lopez de Prado, *Machine Learning for Asset Managers* | [notes](books/lopezdeprado-ml-asset-managers.md) | Methods: denoising, clustering, trial count and selection bias (our ledger / CSCV); no card |
+| MMM | Ralph Vince, *The Mathematics of Money Management* | [notes](books/vince-mathematics-money-management.md) | Methods: optimal f, dependency tests, drawdown sizing (risk/ layer); no card |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
