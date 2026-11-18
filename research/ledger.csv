@@ -258,3 +258,7 @@ HV-T0144-1,rejected,,Reserve Shocks and Treasury Yields,Flow: reductions in rese
 HV-T0145-1,rejected,,Treasury Auction Price Cycle,Auction-related Treasury supply and price pressure,https://stats.prorealalgos.com/treasury-auction-cycle-replication,,,,,,,,,untestable,,,,
 HV-T0146-1,rejected,,Natural Gas Storage Announcement Day,event,https://centaur.reading.ac.uk/90003/1/NG_paper_final_round.pdf,,,,,,,,,untestable,,,,
 HV-T0147-1,parked,,Monthly Currency Carry Portfolios,CARRY,https://static1.squarespace.com/static/5e6033a4ea02d801f37e15bb/t/5f5a997bee2cd920fa6c0e85/1599773052977/Lustig_Roussanov_Verdelhan_common_risk_currency.pdf,,,,,,,,,needs_data,,,,
+HV-T0149-1,parked,,Positive Funding Spot-Perpetual Hedge,Funding payments on a hedged spot and perpetual futures position,https://www.binance.com/zh-CN/blog/all/3611863022773164727,,,,,,,,,unfetchable,,,,
+HV-T0150-1,parked,,Funding sign cash and carry,Funding payments,https://note.com/kind_viola907/n/n6fe2572832cd?hl=ko,,,,,,,,,needs_data,,,,
+HV-T0151-1,rejected,,Crypto liquidity premium,Liquidity risk and trading activity,https://newetds.lib.tsinghua.edu.cn/qh/paper/summary?dbCode=ETDQH&sysId=293365,,,,,,,,,untestable,,,,
+HV-T0152-1,parked,,Monthly Currency Carry Portfolios,carry,https://static1.squarespace.com/static/5e6033a4ea02d801f37e15bb/t/5f5a997bee2cd920fa6c0e85/1599773052977/Lustig_Roussanov_Verdelhan_common_risk_currency.pdf,,,,,,,,,needs_data,,,,

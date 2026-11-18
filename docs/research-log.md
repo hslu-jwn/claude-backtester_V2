@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: harvest batch 22 result: canaries pass, nothing kept (auto)
+
+- 4 raw ideas, 0 kept: ZH and KO blogs both returned funding cash-and-carry (Strategy 19's family; parked
+  unfetchable / needs_data), ZH-ACAD a crypto liquidity premium (untestable); carry canary found, nonsense empty.
+- Pipeline fix found: `harvest prompt` fails on CJK text in a cp1252 console; the first two calls got the error text
+  as their prompt (wasted, re-run). Run it with `PYTHONIOENCODING=utf-8` for language tasks.
+- Reading: the non-English route repeats the English one (carry); no further language batch.
+
 ## 2026-11-19: harvest batch 22 planned: Chinese / Korean crypto-flow sources (auto)
 
 - Tasks T0149-T0153: ZH-BLOG, KO-BLOG, ZH-ACAD on CRYPTO flow (funding, taker flow, stablecoin issuance, Upbit volume,
