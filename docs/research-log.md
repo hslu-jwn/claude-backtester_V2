@@ -9,7 +9,7 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - Databento dropped for now (real card needed, could exceed the free credit; the user may revisit). HANDOFF updated.
 - Book list `knowledge/books-wanted.md` (72 books in 4 tiers, plus free primary sources), copied to the user's Desktop
   as "Trading books to get.txt" (the user's permission). Titles and years checked by one Sonnet web subagent (partly
-  from memory; unconfirmed items marked). Books go to `X:\Daten_Bibliothek\Trading`; read per `knowledge/README.md`
+  from memory; unconfirmed items marked). Books go to `X:\Daten\03_Bibliothek\Trading`; read per `knowledge/README.md`
   › Adding a new book when the user says they are in.
 
 ## 2026-11-18: futures data-set scout started (the user: "Futures data hunt"; M12)
