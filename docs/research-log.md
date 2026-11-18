@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: harvest batch 19 planned: crypto non-price data sets (the user: "Crypto data harvest")
+
+- Tasks T0134-T0138 (`research/harvest/tasks.csv`): token unlock schedules (ACAD, BLOG), stablecoin issuance / spot ETF
+  flows / exchange netflows (ACAD), canaries T0137 (known: KMPV / LRV carry) and T0138 (nonsense, must be empty).
+  Workers: Codex terra high for ACAD, terra low for BLOG, `--search`, read-only, max 2 parallel (M12: data sets).
+
 ## 2026-11-18: Continue.Research (Mode=auto from earlier in the session): I-125 closed on cost
 
 - Start: no runnable candidate (M15 drafts triaged out, M11 stops FTMO signal screens); no open card from the books.
