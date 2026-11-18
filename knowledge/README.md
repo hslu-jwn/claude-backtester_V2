@@ -87,6 +87,8 @@ of truth). An idea from here becomes a rule only when the user picks it and it i
 | AHFT | Cartea, Jaimungal & Penalva, *Algorithmic and High-Frequency Trading* | [notes](books/cartea-algorithmic-hft.md) | Methods: execution, market making, order-book imbalance (needs quote data); no card |
 | MLAM | Marcos Lopez de Prado, *Machine Learning for Asset Managers* | [notes](books/lopezdeprado-ml-asset-managers.md) | Methods: denoising, clustering, trial count and selection bias (our ledger / CSCV); no card |
 | MMM | Ralph Vince, *The Mathematics of Money Management* | [notes](books/vince-mathematics-money-management.md) | Methods: optimal f, dependency tests, drawdown sizing (risk/ layer); no card |
+| MLAT | Stefan Jansen, *Machine Learning for Algorithmic Trading*, 2nd ed. | [notes](books/jansen-ml-algorithmic-trading.md) | ML pipeline, factor features, CV with purging; Japanese-share RF example (no mechanism); no card |
+| KCG | MacLean, Thorp & Ziemba, *The Kelly Capital Growth Investment Criterion* | [notes](books/maclean-kelly-capital-growth.md) | Methods: Kelly / fractional Kelly under estimation error, path risk; no card |
 | DA | David Aronson, *Evidence-Based Technical Analysis* (Wiley 2007) | [notes](books/aronson-evidence-based-ta.md) | Scientific method for TA: detrended no-skill benchmark, data-mining bias and its five factors, White's Reality Check and Monte Carlo permutation; 6,402 S&P rules, none significant; gross of costs; cite by page |
 
 Citation style in topics and ideas: `K p.950` (Kaufman book page), `D ch.11`, `H "Pressing Winners"`
