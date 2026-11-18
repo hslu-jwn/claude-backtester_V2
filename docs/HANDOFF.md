@@ -25,6 +25,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-18: I-109 venue = CME Micro 10-Year Yield futures (10Y, $10 per bp of yield), small size (1-3 contracts)
+  (decided by the user 2026-11-18). Hold the next-month contract (the front stops trading at 3 p.m. ET on the month's
+  last business day, our exit day).
 - 2026-11-18: everything of the 2026-11-16/17 session accepted at `End.`.
 - 2026-11-17: M1 (three verdicts) and M3 (shelf); M13 (real US shares); card 7 split; the user's e-mail as the
   EDGAR / Wikimedia contact (Credential Manager only); shelf loggers and the monthly task; threshold rebalancing is its
@@ -33,8 +36,10 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Open (needs the user)
 
-1. **I-109 venue / account (money):** Treasury futures (ZN, ~1 tick round trip) or IEF; ~3 days a month in the
-   market, size on 10-year duration. FTMO lists no bonds.
+1. **I-109 on micro yield futures (money; venue decided):** still open: the broker (does it list 10Y, fees), the
+   loss the user accepts per month-end, and execution (manual orders from a date calendar, or a broker connection =
+   new order code, demo first). Per micro on DGS10 windows: ~+$16-21 net a month-end (cost ~$3 assumed), sd ~$90-96,
+   worst -$140 (test) / -$280 (dev), a losing year ~22-27 %. Liquidity and the exact tick not checked yet.
 2. **Crypto prop firm for Strategy 20 (money):** decision package `knowledge/research/reports/2026-11-15_s20_prop_decision.md`
    (15 % notional per side tranched: pass ~96 % in ~1.6 years on realistic marks); confirm the firm's rules first.
 3. **Fable sweep methods still open:** M2, M4-M12 (`knowledge/reviews/2026-11-16-idea-sweep/fable_part2_directions.md`

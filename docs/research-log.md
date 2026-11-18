@@ -4,6 +4,18 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: I-109 venue decided: CME Micro 10-Year Yield futures, small (the user: "Micro futures, small")
+
+- Options shown: ZN, micro 10-year yield futures, IEF (or a UCITS twin), paper only. The user picked micro futures
+  at small size (1-3 contracts). Contract (CME / CFTC filing via web search): $1,000 x yield index = $10 per bp,
+  cash-settled on the BrokerTec 3 p.m. ET fix, monthly, two months listed, last trade 3 p.m. ET on the month's last
+  business day, so the window is held in the next-month contract.
+- Risk per micro from DGS10 windows (yield change, close of the 4th-last to the last trade date; no excess
+  adjustment; $3 cost assumed): development 1990-2021 380 months gross $23.7, net $20.7, sd $96, win 59 %, worst
+  -$280, a losing year 22 % (bootstrap); test 2021-26 61 months gross $19.0, net $16.0, sd $90, win 54 %, worst
+  -$140, a losing year 27 %. Not checked: liquidity / spread, the exact tick, the broker's fees.
+- Open for the user (HANDOFF Open 1): broker, loss per month-end, manual orders or a broker connection.
+
 ## 2026-11-18: data-set scout result; I-116 parked, I-117 closed on power (auto)
 
 - Scout (Sonnet subagent, ~3 min, 30 tool calls): 10 free data sets, catalogued in

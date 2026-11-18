@@ -1742,6 +1742,8 @@ the shelf (M3) and the user's decision on a venue (Treasury futures ZN / bond ET
 Note 2026-11-17 (after the test): the development run counted the partial month 2021-09 (window 9-13 Sep, not a
 month-end); without it 380 months, net +18.4, t 4.39: no change. Forward logs `shelf_i109` (DGS10, registered
 statistic) and `shelf_i109_ief` (IEF raw) from the 2026-11 month-end; complete months only.
+**Venue (decided by the user 2026-11-18):** CME Micro 10-Year Yield futures (10Y, $10 per bp), 1-3 contracts, held in
+the next-month contract. Per micro on DGS10 windows: net ~$16-21 a month-end, sd ~$90-96 (research-log 2026-11-18).
 
 ### I-110 Treasury month-end duration extension on long bonds (20-year; the user's pick 2026-11-17 after I-109; family `rates_month_end`, 2nd hypothesis; rule fixed before any 20-year data)
 I-109's mechanism and rule on the long end, where index extension buys the most duration (ohlcv.io: UB +11.3 bp a
