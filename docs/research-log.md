@@ -4,6 +4,16 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: Tier 2 books read: Tuckman (selected), Rhoads, Sinclair, Schofield (selected) (auto)
+
+- 6 Claude Sonnet agents (Codex still at its limit at 20:31). Filed four book notes and README rows TK / RH / VT / SC.
+- No new card: every trade idea sits in a judged family (`vix_basis` I-113 / I-114, HV-T0067 / HV-T0083 parked,
+  I-68 / I-74 / I-115 / I-118 / I-121, T-26, HV-T0112). Noted without a card: a VIX-futures ramp into scheduled
+  events (no published VX size), natural-gas storage seasonality (priced in the curve).
+- Auto decision 69: stop reading Tier 2 after these four and report. Alternative: go on with Hull, Natenberg,
+  Fabozzi, Mehrling, Foucault, Evans, Johnson, Alpha Trader. Why: twelve books today gave one open card (I-124, since
+  closed) and no screenable candidate; the rest are pricing or market-structure texts with lower yield.
+
 ## 2026-11-18: book read: Ilmanen, Investing Amid Low Expected Returns (the user: "Keep reading books")
 
 - 4 Claude Sonnet agents (Codex at its limit; one stopped on the Claude 5-hour limit at 19:3x and was resumed after

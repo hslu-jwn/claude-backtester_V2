@@ -58,8 +58,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 1. **2026-12-03 (scheduled task `monthly-forward-logs`, needs the Claude app and the MT5 terminal open):** first forward
    rows for Strategies 19 / 20 and the shelf incl. I-109; check the commit and the Telegram summary.
 2. Books (order is Opus's call): read 2026-11-18 Donnelly (AC), Carver AFTS, Ilmanen ER, Pedersen (EI), Stigum (SM,
-   rates chapters), Harris (TE, draft). Left in Tier 1: Ilmanen 2022, Kakushadze (idea list only); then Tier 2
-   (Tuckman, Schofield, Sinclair, Rhoads first). New cards: I-120 / I-121 / I-123 parked, I-122 closed, I-124 spin-off
+   rates chapters), Harris (TE, draft), Ilmanen 2022 (IL), Tier 2 Tuckman / Rhoads / Sinclair / Schofield. Left:
+   Kakushadze (idea list only), Tier 2 Hull, Natenberg, Fabozzi, Mehrling, Foucault, Evans, Johnson, Alpha Trader
+   (lower yield: 12 books gave no screenable candidate). New cards: I-120 / I-121 / I-123 parked, I-122 closed, I-124 spin-off
    closed / parked after the source hunt, T-26 done (I-109: no quarter-end effect; watch weekend month-ends).
 3. Optional tooling from the books: T-22 (simulation tests for our estimators). T-24 built 2026-11-18
    (`analytics/fat_tail_power.py`): report only, next to M4 on every new card (the user).
