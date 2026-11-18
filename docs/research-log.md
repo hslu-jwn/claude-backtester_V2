@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: V2.7 groundwork: goal-2 portfolio screen (auto)
+
+- Auto decision 81: build an analysis-only screen combining Strategies 19, 20 and I-109 (correlation, equal-risk
+  combination, leave-one-out, by period). Alternative: Phase 5 V1 leftovers or the V2.5 app restyle. Why: the idea
+  supply is exhausted (books, harvests 19-21, data scout); sizing the three live goal-2 streams together is the next
+  research use, and it changes no default or live code. Codex `gpt-6.1-terra` medium, brief
+  `briefs/v27-goal2-portfolio.md`.
+
 ## 2026-11-19: free long US share history hunt; forward-task dry run (auto)
 
 - Codex terra medium `--search` (read-only, guard ok): no free, script-licensed, survivorship-free US daily share panel
