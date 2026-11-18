@@ -4,6 +4,11 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: book read: Harris, Trading and Exchanges (2002 draft) (auto)
+
+- One Claude Sonnet agent (Codex at its limit), ~3,900 words of notes. Filed `knowledge/books/harris-trading-and-exchanges.md`,
+  README row TE. No new card: its consequences are screened families (I-96 / I-99 / I-102, I-76, I-78 / Strategy 20).
+
 ## 2026-11-18: T-26 I-109 month-end diagnostics (auto)
 
 - Opus, local script `research/screens/2026-11-18_t26_i109_month_end_diagnostics.py` (reuses the I-109 screen; flags
