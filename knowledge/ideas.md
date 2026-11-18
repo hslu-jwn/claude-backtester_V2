@@ -2093,3 +2093,19 @@ Power (M4), before any data: published G10 carry Sharpe 0.61 gross 1983-2009 (ER
 Carver's median FX carry instrument 0.30 net (AFTS S10). Halved ~0.3; development ~2008-2021 (13 years): expected
 t ~1.1 vs 3.0, pass chance ~3 %. FTMO's swap markup cuts the carry further. PARKED. Ledger HV-T0049-1 / HV-T0103-1
 (same family, needs_data) are covered by this card.
+
+### I-124 Spin-off forced selling and rebound on real US shares (EI pp.308-309, 2026-11-18; new family `share_spinoff`, venue M13 real US shares; OPEN: primary-source size and an event list first, no data read)
+Pedersen (EI pp.308-309, event-driven chapter): a spun-off subsidiary lands in portfolios of holders who do not want
+it (index funds of the parent's index, mandates that cannot hold a small cap, income funds without a dividend), so it
+is sold in its first weeks regardless of value; event-driven funds buy after the dump. Forced counterparty, the
+same type as I-122 but without the MidCap-migration offset that killed the index effect.
+Causal graph (T-21): X = days since the spin-off's first regular-way trade, Y = return vs a size / sector match,
+M = mismatched holders' selling; confounders = small-cap and new-listing returns (control: matched non-spin-off IPOs
+and small caps); placebo: carve-out IPOs (no inherited holders) should show no early dip.
+Evidence so far (search 2026-11-18, all weak): a 2000-2022 thesis (Copenhagen Business School, not peer reviewed)
+reports -1.7 % abnormal over the first 14 trading days and +12.9 % over 12 months; the older literature (Cusatis
+et al. 1993, McConnell et al. 2004) found long-run excess returns. No peer-reviewed post-2010 size found.
+Power sketch (M4, before any data): ~30-40 US spin-offs a year, ~200 in 2015-2021 with data. Short-run rebound at a
+halved 0.85 % vs ~12 % 14-day residual sd: expected t ~1.0 (PARK level). Long-run drift halved to 6.5 % a year
+vs ~40 % sd: t ~2.3 before cross-correlation, pass chance maybe 20 %. Next step (research): a peer-reviewed post-2010
+source and a spin-off date list (Alpaca corporate actions or SEC Form 10 filings); then the M4 check decides.
