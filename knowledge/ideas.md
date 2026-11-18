@@ -2190,3 +2190,13 @@ M4: quarterly long-short, c ~0.3 % per rebalance + borrow; the spread is a beta 
 ~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED.
 Same arithmetic parks 12-1 share momentum (Clenow SOTM: momentum crashes, sd ~5 % a month, t ~0.7).
 Same for illiquidity selection (AM pp. 428-430): premium sits in micro caps (untradable short leg, wide spreads): no card.
+
+### I-130 Year-end tax-loss losers / small-cap December strength on real US shares (book STA pp. 112, 116, 2026-11-18; new family `share_tax_loss`, venue M13; PARKED on power before any data)
+Mechanism (PUBLISHED, Reinganum 1983, Roll 1983, via STA): taxable holders must sell losers before 31 December to
+realise the loss; the selling pressure lifts off in late December / January, so new-low stocks (and small caps vs
+large) rebound. A forced, dated flow. STA p.116: buy NYSE new lows on 15 Dec, hold to 15 Feb; p.112: Russell 2000 vs
+1000 from the 11th December trade day to month-end.
+Causal graph (T-21): X = December window, Y = loser-basket (or IWM-IWB) excess return, M = end of tax selling;
+confounders = short-term reversal, small-cap beta, window dressing; placebo: the same window in June (no tax deadline).
+M4: one event a year. Alpaca development 2016-2020 = 5 Decembers; yearly excess sd ~8-10 %: no gate reachable
+(expected t < 1 even at the full published size). PARKED until a long point-in-time share history exists.
