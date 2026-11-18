@@ -2109,3 +2109,13 @@ Power sketch (M4, before any data): ~30-40 US spin-offs a year, ~200 in 2015-202
 halved 0.85 % vs ~12 % 14-day residual sd: expected t ~1.0 (PARK level). Long-run drift halved to 6.5 % a year
 vs ~40 % sd: t ~2.3 before cross-correlation, pass chance maybe 20 %. Next step (research): a peer-reviewed post-2010
 source and a spin-off date list (Alpaca corporate actions or SEC Form 10 filings); then the M4 check decides.
+
+### T-26 I-109 month-end diagnostics: quarter-end, futures-expiry months, settlement supply (SM, 2026-11-18; diagnostic on spent data, no new test)
+Stigum names three things that share I-109's window: 2- / 5- / 7-year auction settlement on the month's last day,
+quarter-end repo and balance-sheet stress (SM p.542), and the quarterly futures expiry (Mar / Jun / Sep / Dec: the
+front contract stops trading 7 business days before the end, a futures long earns carry, SM p.768). Report I-109's
+registered development and test numbers split by (a) quarter-end vs other month-ends, (b) months where the 2- / 5-
+/ 7-year notes settled on the last trade date vs not, (c) the DGS10 cash version vs the continuous ZN futures version
+in expiry months. Sensitivity only; the registered result stands. Flags: a split where one side carries the whole
+effect changes how the forward log is read (and the 6-month Micro 10Y sizing step), not the verdict. Local script,
+FRED + TreasuryDirect auction dates (free).

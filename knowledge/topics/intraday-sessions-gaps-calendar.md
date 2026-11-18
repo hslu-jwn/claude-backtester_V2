@@ -101,3 +101,10 @@ and in-sample (his words).
 - Carver: intraday trading needs near-zero costs ([costs-and-execution.md](costs-and-execution.md)); seasonality appears only as forced-trader
   effects such as tax-year end (RC ch.2).
 - Kaeppel: a market-on-open order after a gap fills far from the plan (JK p.114-115).
+
+## Treasury calendar (Stigum, selected chapters)
+- Month-end in Treasuries is crowded: index extension (I-109), 2- / 5- / 7-year auction settlement on the last day,
+  quarter-end repo and balance-sheet stress, and quarterly futures expiry (front contract stops 7 business days
+  before month-end) all share the last days (SM p.542, 768; T-26). Mid-quarter refunding (Feb / May / Aug / Nov,
+  auctions around the 10th-15th) adds supply mid-month. Dealers short new issues into auctions; the auction cycle
+  is reported gone outside month-end days (I-109 sources).

@@ -4,6 +4,21 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-18: books read: Pedersen, Efficiently Inefficient; Stigum, Money Market (selected chapters) (auto)
+
+- Model and effort: Claude Sonnet agents (Codex at its limit): Pedersen 4 parts, Stigum 3 parts (ch.8, 10, 12-14,
+  16 only), ~1.5 min each.
+- Filed: `knowledge/books/pedersen-efficiently-inefficient.md`, `knowledge/books/stigum-money-market.md`, README rows
+  EI / SM, Treasury calendar section in `topics/intraday-sessions-gaps-calendar.md`.
+- Auto decision 62: card I-124 (spin-off forced selling on real US shares) OPEN: a peer-reviewed post-2010 size and
+  a spin-off date list come before the M4 check. Alternative: close it like I-122. Why: unlike index changes there is
+  no known offsetting flow, and the only post-2000 number (thesis) is not yet checked.
+- Auto decision 63: Stigum read in selected chapters only (rates flows). Alternative: the whole 1,100 pages. Why: the
+  rest (banks, Eurodollars, CP, CDs, munis, money funds) has no instrument in our data.
+- Auto decision 64: card T-26 (I-109 split by quarter-end, settlement supply, expiry months; diagnostic on spent
+  data). Alternative: no card. Why: three confounds share I-109's window; the split guides how the forward log is
+  read. No auction-cycle card: I-109's source already finds it gone outside month-end.
+
 ## 2026-11-18: book read: Ilmanen, Expected Returns; I-122 closed, I-123 parked (auto)
 
 - Model and effort: 5 Claude Sonnet agents in parallel (Codex at its limit), ~2 min each, ~24,800 words of notes.
