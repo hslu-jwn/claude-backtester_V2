@@ -46,6 +46,9 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Open (needs the user)
 
+0. **Scheduled task edit (2026-11-19, fusion run):** the auto-mode classifier blocked my edit of `monthly-forward-logs`.
+   Please add to its step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`
+   (I-134 report only, I-135 continue / CONFIRMED / KILLED early), or allow me to edit the task.
 1. **IBKR account** for I-109 (futures permission); first fills check margin, the 3 p.m. spread and fees.
 2. **Books:** Tier 1 missing: Burghardt *Treasury Bond Basis*, Bouchaud *Trades, Quotes and Prices*, Madhavan and
    Abner (ETFs). Broken files (third session): Williams *Long-Term Secrets* is a 404 web page (re-download); Vince

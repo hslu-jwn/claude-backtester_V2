@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: fusion round 1 done; I-134 / I-135 registered forward; data scout next (auto)
+
+- Round 1 result: I-132 SUPPORTED (I-109 mechanism), I-133 KILLED (M7), I-134 / I-135 registered forward only
+  (`research/screens/2026-11-19_i134_i135_forward_checks.py`, selfcheck OK; VIX history from Cboe), I-136 parked,
+  I-137 .. I-141 closed before data. No fusion reached a one-time test.
+- The scheduled task edit (add the I-134 / I-135 check) was blocked by the app's auto-mode classifier: HANDOFF › Open 0.
+- Checked a lead for round 2: Binance futures metrics (open interest, long / short ratios) start 2020-09 for BTCUSDT
+  only; the cross-section starts 2021-12 (ETH, ADA, LINK, ... 404 before), so the 2026-11-15 closures FB-006 / FB-008
+  stand; no flow x open-interest fusion on development.
+- Auto decision 88: next lever = data scout (report A pick 1: free non-price data, 100+ names, history covering
+  2020-2023 or longer, forced counterparties), Codex terra with web search, read-only. Alternative: CFTC TFF asset-
+  manager positions x I-109 (dose-response, but ~187 months: t 3 needs a ~38 bp difference, PARK by M4). Why: round 1
+  showed fusions need unseen data; the scout looks for it.
+
 ## 2026-11-19: I-133 crypto flow + carry composite: KILLED on M7 (auto)
 
 - Screen `research/screens/2026-11-19_i133_crypto_composite_screen.py`: Codex `gpt-6.1-terra` medium (brief
