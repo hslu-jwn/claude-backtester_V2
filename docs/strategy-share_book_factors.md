@@ -25,7 +25,8 @@ cards were PARKED on power (M4): the power line below stays, so a failure is rea
 - **H2 `share_momentum` (Clenow SOTM / Jegadeesh-Titman):** return from the close 12 months before the entry to the
   close 1 month before (skip the last month); >= 200 closes. Deciles; long the top, short the bottom.
 - **H3 `share_tax_loss` loser basket (I-130, STA p.116):** event per December: names in the universe whose close on
-  the first trade date on or after 15 Dec is within 2 % of their 252-day low close; buy that close, sell the close of
+  the trade date before the event date (the first trade date on or after 15 Dec) is within 2 % of their 252-day low
+  close up to that day (A5: selection strictly before the entry); buy the event date's close, sell the close of
   the first trade date on or after 15 Feb; excess = basket mean minus the universe equal-weight mean over the same
   dates. Cost 12 bp (no short leg; the benchmark is a measurement, not a trade). Development Decembers 2016-2020.
 - **H4 `share_tax_loss` small-cap December (I-130, STA p.112):** IWM minus IWB, close of the 11th December trade
@@ -53,3 +54,4 @@ cards were PARKED on power (M4): the power line below stays, so a failure is rea
 - A2 CAPM residual on SPY instead of FF3 (no free daily factors in the repo); equal weights (no market caps).
 - A3 monthly IV formation and holding (AHXZ's main table) instead of AM's quarterly wording.
 - A4 a name needs a close on the entry date; missing exit closes use the last close (I-101 A2).
+- A5 H3 selects on the previous trade date's close (Codex flagged the same-close conflict before any data look).
