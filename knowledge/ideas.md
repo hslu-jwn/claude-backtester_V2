@@ -2327,6 +2327,9 @@ Monthly book, equal risk, each stream's R = its development sd (S20 top-100 600 
 I-109 87 bp a month-end); crypto weeks summed into their exit month. Judged once on forward months with the FB-254
 shape (a look every 6 months, up to 48 months). Correlations so far -0.23 .. +0.26 (V2.7 screen, not evidence).
 Joins only on card 5's fixed dates. Sizing stays the user's.
+**I-134 / I-135 registered 2026-11-19 (no forward data exists yet):** `research/screens/2026-11-19_i134_i135_forward_checks.py
+download | check | selfcheck` (Opus; selfcheck OK; VIX history from Cboe into the ignored `data/cache/vix_fwd/`). Run
+`download` then `check` with the monthly forward task.
 
 ### I-136 .. I-141 (closed or parked before any data; table above)
 - I-136 pension rebalancing agreement (US500; I-111 t 1.37, I-67 t 0.95; the same flow measured twice, ~40 agreeing
