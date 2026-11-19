@@ -2296,6 +2296,12 @@ development in different sub-periods; the composite only nets, it fits nothing (
 - **M4 / power:** c ~ 20 bp / ~1,200 bp weekly name sd = 0.017. Expected (equal blend, corr 0.27): ~+120 bp a week,
   sd ~450, dev t ~3.7 raw, ~2.4 shrunk (M10): pass chance ~25 %; M7 is the likely kill (second half ~+33 of ~+136).
 - **Shuffled-label control:** 200 week-shuffled composites through the same gates: <= 5 % passes.
+- **Assumptions fixed before any data (2026-11-19, Opus, reading the code):** A1 quintiles, not deciles: Strategy 20
+  and I-100 both trade the top / bottom fifth (`CryptoFlowConfig.quantile` 5), so the composite does too. A2 carry
+  direction: carry is long the lowest funding sum and short the highest, so z_carry = -z(funding settled in
+  (Monday - 7 d, Monday]) (I-100's signal; Strategy 19's 17-name universe is too small for the wide sort). A3 universe:
+  Strategy 20's eligible names with >= 7 days of funding history (I-100's rule); weeks with < 40 such names skipped.
+  A4 z-scores per week over the eligible names, plain mean / sd (no winsorising).
 
 ### I-134 Share open reversal x VIX, forward split (fusion rank 3; forward only, registered 2026-11-19 before any forward day is read)
 Components: I-105 (forward only; dev diagnostic gross +12.9 bp a day, t 3.94, partly a first-print artefact) x the
