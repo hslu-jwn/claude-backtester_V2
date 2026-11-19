@@ -4,6 +4,20 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: fusion run started: inventory, ranked list, M11 decision (the user: "Continue.Research Mode=auto: combination research")
+
+- Inventory `knowledge/topics/fusion-inventory.md` (Codex `gpt-6.1-terra` medium, 228 s, guard ok; brief
+  `briefs/fusion-inventory.md`; Opus spot-checked rows against the ledger).
+- Ranked fusion list in `knowledge/ideas.md` › Fusion run (I-132 .. I-141), before any data; 10 ledger rows. Finding:
+  every positive component's development period is already seen, so only fusions with unseen data (I-132 pre-1990,
+  forward I-134 / I-135) are clean; I-133 is run non-blind and capped. Four closed on M4 / selection / prior look.
+- Auto decision 85: M11 lifted for fusions with a component of measured positive gross (research-runner.md › M11).
+  Alternative: keep M11 for every FTMO CFD fusion. Why: the user asked for the decision; the condition keeps it to
+  measured edges and closed leads stay closed.
+- Auto decision 86: order I-132 first (unseen 1962-1989 data, bears on I-109's live path), I-133 second.
+  Alternative: I-133 first (a tradable book). Why: I-132 is the only fusion with blind data and the cheapest.
+- Report A/B (idea sources, ICT): `knowledge/research/reports/2026-11-19_idea-sources-and-ict.md`.
+
 ## 2026-11-19: End. of the third session 2026-11-18/19 (the user: "End.")
 
 - Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8); ruff clean. HANDOFF rewritten; `results/trials.jsonl`

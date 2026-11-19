@@ -2213,3 +2213,100 @@ return, M = forced sales; confounders = momentum, size, value, liquidity; placeb
 the same funds measured with the stock's weight set to zero (no own-stock trade implied).
 Data: monthly fund flows and holdings: SEC N-PORT (public quarterly, 2019+) gives holdings, not monthly flows;
 CRSP-style flows are paid. Development 2019-2021 would be ~10 quarters. PARKED on data (paid flows) and power.
+
+## Fusion run 2026-11-19 (Continue.Research Mode=auto, the user: "combination research"; ranked before any data look)
+
+Inventory: `knowledge/topics/fusion-inventory.md`. Rules for this run (the user, 2026-11-19): a combination of two
+killed components is a new, counted hypothesis, not a rescue; every fusion and cell is a ledger row. **M11 for
+fusions (decided by Opus on the user's delegation, 2026-11-19): lifted** for a fusion with at least one component
+that has a measured positive gross edge in a registered development row; a lead closed after a failed independent
+check (F1a) does not qualify, and no ICT component qualifies (all measured at zero gross, report
+`knowledge/research/reports/2026-11-19_idea-sources-and-ict.md`).
+Finding of the ranking itself: every positive component's development period is already seen, so a fusion measured
+on that period is not blind. A fusion ranks high only if it gets unseen data (pre-sample, forward) or a
+mechanism-implied absence; non-blind fusions are capped at UNPROVEN-POSITIVE and go to the forward log.
+
+| Rank | ID | Fusion | Type | M4 c | Pass chance | Status (before data) |
+|---|---|---|---|---|---|---|
+| 1 | I-132 | I-109 Treasury month-end x indexation era (unseen 1962-1989) | a: edge x regime, implied absence | 0.023 | causal check, not a pass gate | BUILD first |
+| 2 | I-133 | Crypto taker-flow + funding-carry composite sort (one book, netted) | b: two weak signals | ~0.02 | ~25 % (non-blind, capped) | BUILD second |
+| 3 | I-134 | I-105 share open reversal x VIX (Nagel), forward split | a | 0.08 at 7 bp / 91 sd | forward only | REGISTER forward, no look |
+| 4 | I-135 | Cross-asset forward book: crypto book (card 5) + I-109 | c: portfolio | n/a | forward only | REGISTER forward, no look |
+| 5 | I-136 | Pension rebalancing agreement: I-111 threshold x I-67 month-end sign (US500) | b | 0.004 | < 15 % | PARKED (M4) |
+| 6 | I-137 | I-71 index-review auction pooled over UK100, US500, GER40, NAS100 | c: breadth | 0.07 | - | CLOSED (M4 c > 0.03) |
+| 7 | I-138 | I-76 liquidation-cascade long side x negative funding | a | ~0.13 | - | CLOSED (M4 c > 0.03) |
+| 8 | I-139 | I-109 x coupon issuance settling in the window | a | 0.023 | - | CLOSED: T-26 already looked (dev +19.3 vs +16.1, no gap) |
+| 9 | I-140 | Strategy 20 x activity / volatility regime | a | ~0.02 | - | CLOSED: the weak half is known (+327 / +2); any time-correlated condition "works"; no placebo separates it |
+| 10 | I-141 | Gotobi (H11) only on month-end Gotobi days | a | ~0.03 | ~0 (~50 dev trades, se 0.14 R) | CLOSED (power) |
+| - | - | F2 last-30-min momentum x dealer gamma | a | - | - | already run as I-86 (opposite sign); family `orb` closed |
+
+### I-132 Treasury month-end x indexation era (fusion rank 1; family `rates_month_end`, third row; rule fixed before any data)
+Components: I-109 (PASSED; dev 1990-2021 +18.4 bp net per month-end, t 4.42) x a regime: the size of benchmarked /
+indexed Treasury money. Mechanism claim of I-109: index duration extension at the month-end rebalance forces index
+funds and benchmarked managers to buy duration. The Lehman Treasury index starts 1973; bond indexing and benchmarked
+mandates grew mainly in the 1980s-1990s. Competing cause: Treasury coupon and principal payments on the 15th and at
+month-end, reinvested by holders (would exist in any era; I-109's placebo 10 trade dates earlier, near mid-month,
+gave +10.2 bp t 2.14, which fits it).
+- **Causal graph (T-21):** X = month-end window; Y = excess duration return; M1 = index extension demand (needs
+  indexed money), M2 = coupon / principal reinvestment (needs only coupon dates); confounders = the bond trend
+  (removed by the excess statistic), auction cycle (checked by the mid-month window). No controls.
+- **Implied absence (placebo, type B):** if M1 drives I-109, 1962-1972 (no Treasury index) shows no month-end
+  excess. Type A: the statistic rises across eras (1962-72, 1973-89, 1990-2021).
+- **Data:** FRED DGS10 1962-01-02 .. 1989-12-29 (unseen for this statistic; I-109 started 1990); the I-109 screen's
+  statistic unchanged (last 3 trade dates, excess vs the month's other dates, duration at the previous yield).
+- **Registered statistics and reading (no trading gate, no one-time test; it informs I-109's live path):**
+  E0 = 1962-1972 mean excess, E1 = 1973-1989, E2 = 1990-2021 (known, +20.4 gross). Index mechanism SUPPORTED if
+  E0 is within +-2 se of 0 and E2 - E0 has t >= 2.0; NOT SUPPORTED if E0 >= +10 bp with t >= 2.0 (then coupon
+  reinvestment is the likelier cause, which also points to the 15th: I-109 stays, its forward watch adds mid-month);
+  otherwise UNCLEAR. Reported: E1, the mid-month window (the 15th +- 1 trade date) in each era, by decade.
+- **Power (before data; I-109 sd 87 bp, pre-1980 yields less volatile, sd ~40-60):** 1962-72 = 132 months, se ~4-5:
+  E0 = 0 vs E2 = 20 gives t ~3; an E0 of +10 is detectable at t ~2. Fat-tail (T-24): report only.
+- **Shuffled-label control:** 200 draws of a random 3-trade-date window per month in 1962-1989: share with t >= 2.0.
+
+### I-133 Crypto taker-flow + funding-carry composite sort (fusion rank 2; new family `crypto_composite`; rule fixed before any data)
+Components: Strategy 20 / I-78 (taker-flow sort; PASSED test, dev halves +327 / +2) and the funding-carry sort
+(S19 / I-73, I-100: UNPROVEN-POSITIVE; I-100 dev halves +152 / +63); weekly correlation of the two books +0.27
+(I-100 card). Mechanism: carry pays the side that supplies leverage to crowded longs (funding); taker flow captures
+buying pressure that continues; different counterparties, so the forecasts should add (Carver: combine per
+instrument, net offsetting positions, cut turnover). Why not noise: both components are positive gross on
+development in different sub-periods; the composite only nets, it fits nothing (equal weights fixed before data).
+- **Rule:** each Monday (Strategy 20's universe and dates, `docs/strategy-crypto_flow.md`), z_flow = cross-sectional
+  z-score of Strategy 20's signal, z_carry = z-score of Strategy 19's funding signal (its own definition); composite =
+  mean of the two (a name missing one is out); long the top decile, short the bottom, equal weight, one week; costs as
+  Strategy 20, funding paid / earned.
+- **Causal graph (T-21):** X = composite rank; Y = next-week return; confounders = market beta (dollar-neutral book),
+  size / liquidity (Strategy 20's volume floor), short-term reversal (I-75, reported). Placebo: z_carry shuffled
+  across names within each week (must lose the carry part).
+- **Gates (development 2020-01 .. 2023-12, crypto split; NOT BLIND: both components were measured on it):** net > 0;
+  t >= 3.0; M7 halves both >= 25 % of the mean; doubled cost > 0; without the 2 best weeks > 0; M6 tail (+-50 % capped
+  keeps the sign and half the mean). Reported: correlation with each component, turnover vs Strategy 20, weeks where
+  the components disagree. **Test (2024+, 4th use: threshold t 1.5 + 0.3 = 1.8, net > 0, doubled cost > 0; NOT BLIND
+  either):** verdict capped at UNPROVEN-POSITIVE whatever the result; a pass only earns a forward log beside card 5.
+- **M4 / power:** c ~ 20 bp / ~1,200 bp weekly name sd = 0.017. Expected (equal blend, corr 0.27): ~+120 bp a week,
+  sd ~450, dev t ~3.7 raw, ~2.4 shrunk (M10): pass chance ~25 %; M7 is the likely kill (second half ~+33 of ~+136).
+- **Shuffled-label control:** 200 week-shuffled composites through the same gates: <= 5 % passes.
+
+### I-134 Share open reversal x VIX, forward split (fusion rank 3; forward only, registered 2026-11-19 before any forward day is read)
+Components: I-105 (forward only; dev diagnostic gross +12.9 bp a day, t 3.94, partly a first-print artefact) x the
+previous day's VIX close (Nagel 2012, reversal returns rise with VIX; PUBLISHED, UNVERIFIED here). Not run on
+development: the open-price artefact (p90 23 bp) also grows with volatility, so a development split cannot separate
+liquidity from artefact; the forward log uses official auction prints.
+- **Forward rule:** I-105's frozen log; a day is high-VIX when the previous VIX close is above its trailing 252-day
+  median. At I-105's looks: net(high) - net(low) per day, Welch t; SUPPORTED at t >= 2.0 with that sign; reported
+  only (I-105's FB-254 boundary stays its only gate). Placebo: the same split on the VIX 20 trading days later
+  (unknowable at entry; must not show it more strongly).
+
+### I-135 Cross-asset forward book: crypto book (card 5) + I-109 (fusion rank 4; forward only, no data look)
+Monthly book, equal risk, each stream's R = its development sd (S20 top-100 600 bp a week, S19 1,000 bp a week,
+I-109 87 bp a month-end); crypto weeks summed into their exit month. Judged once on forward months with the FB-254
+shape (a look every 6 months, up to 48 months). Correlations so far -0.23 .. +0.26 (V2.7 screen, not evidence).
+Joins only on card 5's fixed dates. Sizing stays the user's.
+
+### I-136 .. I-141 (closed or parked before any data; table above)
+- I-136 pension rebalancing agreement (US500; I-111 t 1.37, I-67 t 0.95; the same flow measured twice, ~40 agreeing
+  development months): PARKED on M4 (pass chance < 15 %).
+- I-137 index-review auction pooled: per-event sd ~38 bp vs cost ~2.7 bp, c 0.07 > 0.03: CLOSED without a look.
+- I-138 liquidation-cascade long x negative funding: 60-minute hold, cost 20 bp, c ~0.13: CLOSED without a look.
+- I-139 I-109 x settlement / issuance: T-26 already split development by settlement in the window (no gap): CLOSED.
+- I-140 Strategy 20 x regime: the weak half is known before the condition is chosen: CLOSED (selection).
+- I-141 Gotobi x month-end: ~50 development trades, se ~0.14 R vs an edge of ~0.04 R: CLOSED (power).

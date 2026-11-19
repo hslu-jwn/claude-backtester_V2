@@ -979,7 +979,9 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
   default changes.
 - **M11 signal stop on FTMO CFDs:** K = 10 reached (2026-11-15): no new signal screens on the 34 FTMO CFDs until a new
   venue fact or a new non-price data set for them exists. Goal-1 work is the shelf logs and the positioning collector;
-  the user may still order a specific look.
+  the user may still order a specific look. **Fusions (decided by Opus on the user's delegation, 2026-11-19):** M11
+  is lifted for a combination with at least one component that has a measured positive gross edge in a registered
+  development row; a lead closed after a failed independent check does not qualify; every fusion is a new counted row.
 - **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
   strategies. Ideas from books stay allowed.
 
