@@ -10,6 +10,18 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   through the full framework despite PARKED on power; I-131 cannot (no free fund-flow data). Spec
   `docs/strategy-share_book_factors.md` with gates and power written before any data look; 4 counted rows.
 - Build: Codex `gpt-6.1-sol` medium, brief `briefs/share_book_factors.md`.
+- Codex stopped once on a real spec conflict (H3 selected on its own entry close): fixed as A5 before any data look.
+  Opus checked the lookahead-critical code (H1 previous calendar month, H2 month-ends m-13 .. m-2, H3 selection before
+  entry) before the run. A6 (Dec 2020 no name near its low: no trade) added when the run hit it, before any return.
+- Power control (shuffled labels, 200 draws): H1 0.5 %, H2 0.0 % false passes: PASSED.
+- Development (`research/screens/2026-11-19_share_book_factors_screen.py run`), all KILLED, no one-time test:
+  H1 low idio vol net -65.1 bp/month (t -0.83, 65 months; quintiles rise with idio vol, 2020 -372; beta -0.59);
+  H2 12-1 momentum net +70.8 (t 0.71, 56 months; halves +41 / +92; only |t| < 3.3 hit; 2021 -151);
+  H3 tax-loss basket 4 events net +27.6 (t 0.26); H4 IWM-IWB December 5 events net -22.2 (t -0.80).
+- Reading: as the M4 power line said, nothing detectable on 2016-2021; H1's sign is opposite to the published one in
+  this window (the high-volatility rally of 2020). Families `share_low_idio_vol` and `share_tax_loss` FALSIFIED here
+  (one row each counts toward M2); `share_momentum` underpowered, not re-proposed without a longer panel.
+
 
 ## 2026-11-19: supply exhausted; hourly heartbeat (auto)
 

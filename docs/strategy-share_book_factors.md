@@ -54,4 +54,6 @@ cards were PARKED on power (M4): the power line below stays, so a failure is rea
 - A2 CAPM residual on SPY instead of FF3 (no free daily factors in the repo); equal weights (no market caps).
 - A3 monthly IV formation and holding (AHXZ's main table) instead of AM's quarterly wording.
 - A4 a name needs a close on the entry date; missing exit closes use the last close (I-101 A2).
+- A6 H3: a December with no name within 2 % of its low is no trade (skipped, reported); seen in the run before any
+  return was printed (Dec 2020 empty).
 - A5 H3 selects on the previous trade date's close (Codex flagged the same-close conflict before any data look).

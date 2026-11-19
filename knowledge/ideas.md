@@ -2187,7 +2187,8 @@ Causal graph (T-21): X = idio-vol quintile, Y = next-quarter return, M = mispric
 confounders = size, illiquidity, short-term reversal, beta (controls); placebo: the sort on total vol of the
 quarter before formation would be the named placebo in a build (none: parked).
 M4: quarterly long-short, c ~0.3 % per rebalance + borrow; the spread is a beta bet (sd ~4 % a month). Halved
-~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED.
+~0.5 % a month over ~68 development months (Alpaca 2016-01 .. 2021-09): expected t ~1.0, pass chance < 5 %. PARKED. **Built anyway on the user's word 2026-11-19 (H1, H2 in `docs/strategy-share_book_factors.md`): both KILLED
+in development (H1 net -65 bp/month t -0.83; H2 +71 t 0.71).**
 Same arithmetic parks 12-1 share momentum (Clenow SOTM: momentum crashes, sd ~5 % a month, t ~0.7).
 Same for illiquidity selection (AM pp. 428-430): premium sits in micro caps (untradable short leg, wide spreads): no card.
 
@@ -2199,7 +2200,8 @@ large) rebound. A forced, dated flow. STA p.116: buy NYSE new lows on 15 Dec, ho
 Causal graph (T-21): X = December window, Y = loser-basket (or IWM-IWB) excess return, M = end of tax selling;
 confounders = short-term reversal, small-cap beta, window dressing; placebo: the same window in June (no tax deadline).
 M4: one event a year. Alpaca development 2016-2020 = 5 Decembers; yearly excess sd ~8-10 %: no gate reachable
-(expected t < 1 even at the full published size). PARKED until a long point-in-time share history exists.
+(expected t < 1 even at the full published size). PARKED until a long point-in-time share history exists. **Built anyway on the user's word 2026-11-19 (H3, H4):
+both KILLED in development (H3 4 events net +28 bp t 0.26; H4 5 events net -22 bp t -0.80).**
 
 ### I-131 Mutual-fund redemption fire sales on real US shares (book ML p.343, 2026-11-18; new family `share_fund_flow`, venue M13; PARKED on data before any data look)
 Mechanism (PUBLISHED, Coval & Stafford 2007, via ML): funds with large outflows must sell their holdings; stocks
