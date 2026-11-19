@@ -2265,6 +2265,14 @@ gave +10.2 bp t 2.14, which fits it).
 **I-132 power (2026-11-19, before the run, signal-free, `research/screens/2026-11-19_i132_month_end_eras.py power`):**
 E0 1962-72 132 months, sd 51.0 bp, se 4.4 (t 2 = 8.8 bp); E1 1973-89 204 months, sd 110.0, se 7.7; E2 381 months, sd 87.4,
 se 4.5. E2 - E0 has se ~6.3: the known +20.4 against E0 = 0 gives t ~3.2.
+**I-132 result 2026-11-19 (one look, `... run`): SUPPORTED (index mechanism).** Month-end excess E0 1962-72 +1.1 bp
+(t 0.26, 132 months), E1 1973-89 +2.9 (t 0.40), E2 1990-2021 +20.4 (t 4.89); E2 - E0 +19.3, t 3.22. By decade 1960s
+-0.1, 1970s -2.7, 1980s +8.9, then 1990s+ +12 to +25 (I-109 card): the effect appears as bond indexing grows (type A)
+and is absent before the index existed (type B placebo holds). Mid-month window (coupon reinvestment): -0.6 / +18.9
+(t 2.45, 1973-89 only, the high-volatility auction era) / +4.6: not a stable month-end-like effect. Shuffled-label
+control: 6.0 % of 200 random windows in 1962-1989 reach t >= 2.0 (above the nominal ~2.3 %: the 1970s-80s yield
+trends widen it; E0's t 0.26 and the difference t 3.22 are far from it). Reading: I-109's forced-buyer mechanism
+passes its causal check; nothing changes in its rule or live path.
 
 ### I-133 Crypto taker-flow + funding-carry composite sort (fusion rank 2; new family `crypto_composite`; rule fixed before any data)
 Components: Strategy 20 / I-78 (taker-flow sort; PASSED test, dev halves +327 / +2) and the funding-carry sort

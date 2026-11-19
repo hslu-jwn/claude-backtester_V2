@@ -4,6 +4,14 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: I-132 Treasury month-end x indexation era: SUPPORTED (auto)
+
+- Opus, local script `research/screens/2026-11-19_i132_month_end_eras.py` (reuses the I-109 statistic; power line
+  committed before the run). 1962-72 +1.1 bp (t 0.26), 1973-89 +2.9 (t 0.40), 1990-2021 +20.4 (t 4.89); difference
+  E2 - E0 t 3.22; 1980s +8.9. The month-end effect appears with bond indexing and is absent before it: I-109's
+  mechanism passes its causal check (type A and B). Mid-month (coupon) window unstable. Shuffled control 6 % at t 2.
+  No change to I-109. Next: I-133 (Codex terra, screen).
+
 ## 2026-11-19: fusion run started: inventory, ranked list, M11 decision (the user: "Continue.Research Mode=auto: combination research")
 
 - Inventory `knowledge/topics/fusion-inventory.md` (Codex `gpt-6.1-terra` medium, 228 s, guard ok; brief
