@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: build and test the parked book cards (the user: "use the same framework to build the strategies and test them")
+
+- Read as: I-129 (low idiosyncratic vol), its momentum variant (Clenow SOTM) and I-130 (tax-loss, two cells) go
+  through the full framework despite PARKED on power; I-131 cannot (no free fund-flow data). Spec
+  `docs/strategy-share_book_factors.md` with gates and power written before any data look; 4 counted rows.
+- Build: Codex `gpt-6.1-sol` medium, brief `briefs/share_book_factors.md`.
+
 ## 2026-11-19: supply exhausted; hourly heartbeat (auto)
 
 - Auto decision 84: hourly heartbeat (git pull, new books in the library folder, Codex state) instead of more
