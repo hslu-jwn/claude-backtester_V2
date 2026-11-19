@@ -2302,6 +2302,8 @@ development in different sub-periods; the composite only nets, it fits nothing (
   (Monday - 7 d, Monday]) (I-100's signal; Strategy 19's 17-name universe is too small for the wide sort). A3 universe:
   Strategy 20's eligible names with >= 7 days of funding history (I-100's rule); weeks with < 40 such names skipped.
   A4 z-scores per week over the eligible names, plain mean / sd (no winsorising).
+**I-133 power (2026-11-19, before the run, signal-free; script by Codex terra, read by Opus):** 164 weeks, random-
+quintile weekly sd 451.9 bp, se 35.3: t 3 needs +105.9 bp a week net (expected ~+120 raw, ~+80 shrunk).
 
 ### I-134 Share open reversal x VIX, forward split (fusion rank 3; forward only, registered 2026-11-19 before any forward day is read)
 Components: I-105 (forward only; dev diagnostic gross +12.9 bp a day, t 3.94, partly a first-print artefact) x the
