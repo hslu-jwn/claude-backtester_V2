@@ -4,6 +4,12 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: End. of the third session 2026-11-18/19 (the user: "End.")
+
+- Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8); ruff clean. HANDOFF rewritten; `results/trials.jsonl`
+  unchanged vs `research/trials.jsonl`; briefs `share_book_factors.md`, `v27-goal2-portfolio.md` archived
+  (`book-read.md` kept as the reusable reading brief); no ROADMAP step finished. Auto decisions of this session: 75-84.
+
 ## 2026-11-19: build and test the parked book cards (the user: "use the same framework to build the strategies and test them")
 
 - Read as: I-129 (low idiosyncratic vol), its momentum variant (Clenow SOTM) and I-130 (tax-loss, two cells) go

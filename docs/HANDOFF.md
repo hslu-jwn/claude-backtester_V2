@@ -3,10 +3,10 @@
 Read first in every session; rewritten at every `End.` (about 60 lines, current state only; history in git, results in
 `research/ledger.csv`, plan in `docs/ROADMAP.md`).
 
-## Where things are (2026-11-18, `End.` of the second session 2026-11-18, Mode=auto)
+## Where things are (2026-11-19, `End.` of the third session 2026-11-18/19, Mode=auto)
 
 - **Repo:** branch `v2-6-research` (pushed); `main` is behind, merge only on the user's word. Full suite 6,053 passed,
-  14 skipped, 4 xfailed (after the last code change, T-22); ruff clean. `src/backtester/tools/notify.py` has the
+  14 skipped, 4 xfailed (End. 2026-11-19; last code change: harvest UTF-8 output); ruff clean. `src/backtester/tools/notify.py` has the
   user's uncommitted lines: untouched.
 - **Strategies alive (goal 2):**
   - **Strategy 20 crypto taker-flow sort** (`docs/strategy-crypto_flow.md`): test passed (+147 bp a week, t 3.76);
@@ -17,20 +17,22 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
     in development): watch them in the forward log.
 - **Shelf (M3 forward logs):** I-100, I-84, I-98, H11, I-71, I-105, I-109 (DGS10 and IEF); first rows 2026-12-03.
 - **Goal 1 (FTMO CFDs): no stream;** new signal screens paused (M11).
-- **This session:** 12 books read and filed in `knowledge/books/` (Donnelly AC, Carver AFTS, Ilmanen ER and IL, Pedersen
-  EI, Stigum SM, Harris TE, Tuckman TK, Rhoads RH, Sinclair VT, Schofield SC; selected chapters where noted); harvest
-  batches 19 (crypto data) and 20 (US-share data), canaries passed. New cards, all decided before any data look:
-  I-120 FX COT, I-121 crack carry, I-123 FX carry, I-126 token unlocks, I-127 USDT issuance, I-128 days-to-cover
-  PARKED on power; I-122 index changes, I-124 spin-off drift (rebound parked), I-125 VIX on FOMC days CLOSED. No
-  screenable candidate. Free data and the library's strategy-relevant books are worked through.
-- **Third session 2026-11-18 (Mode=auto, running):** 31 more books read by Codex terra (Tier 3, Tier 4, and Kakushadze,
-  Evans, Foucault, Alpha Trader, Mehrling, Fabozzi); cards I-129 low idio vol, I-130 tax-loss losers (power), I-131
-  fund fire sales (data) PARKED before any data. No screenable candidate. Checkpoint: 6,053 passed, ruff clean.
-- **Built:** T-24 `analytics/fat_tail_power.py` (report only), T-22 `analytics/causal_sim.py` (causal simulation
-  tests), T-26 `research/screens/2026-11-18_t26_i109_month_end_diagnostics.py`; TreasuryDirect note history cached.
+- **Second session 2026-11-18:** 12 books (Tier 1 / 2), harvest batches 19-20; cards I-120 .. I-128 parked or closed.
+- **Third session 2026-11-18/19:** 31 books read by Codex terra (all of Tier 3 and 4, plus Kakushadze, Evans,
+  Foucault, Alpha Trader, Mehrling, Fabozzi; notes in `knowledge/books/`, README rows); harvest batches 21 (rates /
+  energy data) and 22 (first Chinese / Korean batch): canaries pass, nothing kept. Cards I-129, I-130, I-131 parked
+  before any data; then, on the user's word, **I-129 / momentum / I-130 built and run** (`docs/strategy-share_book_factors.md`,
+  H1-H4): all KILLED in development (H1 low idio vol -65 bp/month t -0.83; H2 12-1 momentum +71 t 0.71; H3 / H4
+  tax-loss 4-5 events, |t| < 1). Free US share history before 2016: none usable (WIKI 1996-2018 survivor-biased).
+- **Built:** T-24 `analytics/fat_tail_power.py`, T-22 `analytics/causal_sim.py`, T-26 diagnostics; third session:
+  `research/screens/2026-11-19_v27_goal2_portfolio.py` (S19, S20, I-109: monthly correlations -0.23 .. +0.26, combined
+  2024+ Sharpe 3.0 raw, plan on about half), `2026-11-19_i109_order_calendar.py` (hand-order dates, side, contract),
+  `2026-11-19_share_book_factors_screen.py`; `harvest` prints UTF-8.
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-19: build and test the parked book cards with the same framework (done: H1-H4 killed).
+- 2026-11-19: everything of the third session accepted at `End.`.
 - 2026-11-18 (later): Opus picks the order of the library books itself, no go needed.
 - 2026-11-18 (later): T-24 fat-tail power check is report only, no gate; every new card shows it next to M4.
 - 2026-11-18 (later): everything of the second session 2026-11-18 accepted at `End.`.
@@ -59,10 +61,10 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 1. **2026-12-03 (scheduled task `monthly-forward-logs`, needs the Claude app and the MT5 terminal open):** first forward
    rows for Strategies 19 / 20 and the shelf incl. I-109 (look at weekend month-ends, T-26); check the commit and the
-   Telegram summary.
+   Telegram summary. Its read-only steps were dry-run on 2026-11-19 (shelf canary OK).
 2. I-109 live path once the IBKR account exists (demo first, 1 Micro 10Y contract); dates and contract per month:
    `python research/screens/2026-11-19_i109_order_calendar.py` (SELL the yield contract = long duration).
-3. New idea supply needs a user lever (account, data, Tier 3 / 4 books); without one, the forward logs are the work.
+3. New idea supply needs a user lever (IBKR account, missing Tier 1 books, paid data); the whole library is read.
 
 ## First prompt for the next chat
 
