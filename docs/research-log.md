@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: I-133 crypto flow + carry composite: KILLED on M7 (auto)
+
+- Screen `research/screens/2026-11-19_i133_crypto_composite_screen.py`: Codex `gpt-6.1-terra` medium (brief
+  `briefs/i133-crypto-composite.md`, guard ok); Opus read the code (signal windows end at Monday 00:00, funding sign as
+  I-100, flow leg as Strategy 20), recorded the power line, then one look.
+- 164 weeks: net +139.2 bp a week, t 3.52; halves +248.6 / +29.8: M7 fails (0.21 < 0.25), the first failed gate, so
+  no test. Turnover saving ~5 %; shuffled control 0 %. The composite does not fix Strategy 20's weak 2022-23 and adds
+  nothing over the card-5 two-book plan.
+- Auto decision 87: no rescue (no other weights or quantiles). Alternative: test the composite anyway as a sizing
+  variant. Why: stop rule at the first failed gate; the card predicted this kill before the data.
+
 ## 2026-11-19: I-132 Treasury month-end x indexation era: SUPPORTED (auto)
 
 - Opus, local script `research/screens/2026-11-19_i132_month_end_eras.py` (reuses the I-109 statistic; power line

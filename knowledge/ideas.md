@@ -2304,6 +2304,13 @@ development in different sub-periods; the composite only nets, it fits nothing (
   A4 z-scores per week over the eligible names, plain mean / sd (no winsorising).
 **I-133 power (2026-11-19, before the run, signal-free; script by Codex terra, read by Opus):** 164 weeks, random-
 quintile weekly sd 451.9 bp, se 35.3: t 3 needs +105.9 bp a week net (expected ~+120 raw, ~+80 shrunk).
+**I-133 result 2026-11-19 (one look, `... run`): KILLED on M7 (UNPROVEN-POSITIVE under M1; not blind).** 164 weeks,
+41-205 names: net +139.2 bp a week, t 3.52, 61 % positive, worst -946; halves +248.6 / +29.8 (second half 0.21 of
+the mean < 0.25); doubled +119.2; without the 2 best +112.8; M6 capped +110.9: every other gate passed. Correlation
+with flow-only +0.74, carry-only +0.67; turnover 0.51 vs flow-only 0.54 (the netting saves ~5 %); carry-shuffled
+placebo +43.8 (t 1.02); shuffled-label control 0 % of 200 pass. Reading: the 2022-23 weakness of Strategy 20 is not
+filled by carry inside one sort; the composite adds nothing the card-5 book (two books, equal risk) does not already
+hold. No test, no forward log; family `crypto_composite` one row, not FALSIFIED.
 
 ### I-134 Share open reversal x VIX, forward split (fusion rank 3; forward only, registered 2026-11-19 before any forward day is read)
 Components: I-105 (forward only; dev diagnostic gross +12.9 bp a day, t 3.94, partly a first-print artefact) x the
