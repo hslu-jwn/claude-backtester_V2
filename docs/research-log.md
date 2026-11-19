@@ -4,6 +4,17 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-19: data scout (non-price, forced traders): one lead, parked (auto)
+
+- Codex `gpt-6.1-terra` medium `--search`, read-only, brief `briefs/data-scout-nonprice.md`, guard ok. One VERIFIED
+  candidate: NY Fed SOMA securities-lending auction results (daily from 2005-11, CUSIP level, free). Its prediction
+  (scarce deliverables -> futures-vs-cash basis) needs Treasury futures prices (paid; declined 2026-11-18): card
+  I-142 PARKED on data. Rejected by the scout on the filters: primary dealer statistics (revised history), TIC
+  (revised, lagged), OKX archive (from 2021-09), Deribit / Blockmetric free tiers (short), index reconstructions (no
+  announcement timestamps).
+- Reading: free data with a forced counterparty, 2020-2023 crypto or pre-2015 rates coverage, is exhausted for our
+  venues. The next levers need the user (Telegram sent): paid futures data, the ICT rules, the IBKR account.
+
 ## 2026-11-19: fusion round 1 done; I-134 / I-135 registered forward; data scout next (auto)
 
 - Round 1 result: I-132 SUPPORTED (I-109 mechanism), I-133 KILLED (M7), I-134 / I-135 registered forward only

@@ -2339,3 +2339,8 @@ download | check | selfcheck` (Opus; selfcheck OK; VIX history from Cboe into th
 - I-139 I-109 x settlement / issuance: T-26 already split development by settlement in the window (no gap): CLOSED.
 - I-140 Strategy 20 x regime: the weak half is known before the condition is chosen: CLOSED (selection).
 - I-141 Gotobi x month-end: ~50 development trades, se ~0.14 R vs an edge of ~0.04 R: CLOSED (power).
+
+### I-142 Treasury deliverable scarcity from NY Fed securities lending (data scout 2026-11-19; family `rates_dealer`; PARKED on data before any look)
+Mechanism: primary dealers short a specific Treasury must borrow it (SOMA securities-lending auctions, daily since
+2005-11, free) to settle; high borrowing demand marks a squeezed deliverable. Prediction: high-demand days precede a
+wider futures-vs-cash basis. Needs Treasury futures prices (paid, declined 2026-11-18): PARKED on data.
