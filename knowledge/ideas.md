@@ -2262,6 +2262,9 @@ gave +10.2 bp t 2.14, which fits it).
 - **Power (before data; I-109 sd 87 bp, pre-1980 yields less volatile, sd ~40-60):** 1962-72 = 132 months, se ~4-5:
   E0 = 0 vs E2 = 20 gives t ~3; an E0 of +10 is detectable at t ~2. Fat-tail (T-24): report only.
 - **Shuffled-label control:** 200 draws of a random 3-trade-date window per month in 1962-1989: share with t >= 2.0.
+**I-132 power (2026-11-19, before the run, signal-free, `research/screens/2026-11-19_i132_month_end_eras.py power`):**
+E0 1962-72 132 months, sd 51.0 bp, se 4.4 (t 2 = 8.8 bp); E1 1973-89 204 months, sd 110.0, se 7.7; E2 381 months, sd 87.4,
+se 4.5. E2 - E0 has se ~6.3: the known +20.4 against E0 = 0 gives t ~3.2.
 
 ### I-133 Crypto taker-flow + funding-carry composite sort (fusion rank 2; new family `crypto_composite`; rule fixed before any data)
 Components: Strategy 20 / I-78 (taker-flow sort; PASSED test, dev halves +327 / +2) and the funding-carry sort
