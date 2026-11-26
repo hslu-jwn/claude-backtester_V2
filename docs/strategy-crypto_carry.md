@@ -133,6 +133,17 @@ can only catch a break.
 (O'Brien-Fleming, one-sided 2.5 %: 5.86, 4.14, 3.38, 2.93, 2.62, 2.39, 2.21, 2.07); killed early when z <= -2 at any
 look; the 52-week kill above stays. `research/screens/2026-11-15_fb254_forward_boundaries.py --check`. Power at the replication's +63 bp (sd 624): 17 % confirmed by week 104.
 
+## Carry decay check (R4, 2026-11-26; lead review A; signal only, no returns)
+
+Review A: BTC perp-spot carry Sharpe fell from 6.45 to negative in 2025 (Borri, Liu, Tsyvinski & Wu 2026, BTC only).
+`research/screens/2026-11-26_r4_funding_dispersion.py`, Mondays 2020-01 .. 2026-11-09 (forward weeks not read): the
+**signal spread** (top 4 minus bottom 4 of the 7-day funding sum, this universe) was 72-104 bp a week in 2020-2021H1,
+then 32-66 in every half-year since 2021H2 (2025H2 65.7, 2026H2 32.0): a step down after 2021, no further trend. The
+wide universe's top-minus-bottom quintile rose (61-110 in 2021H2-2024, 166-280 in 2025-2026, more small coins) while
+the mean level turned negative (-3 to -25 bp a week in 2025-2026). So the level shrank, the cross-section did not.
+The forward log already keeps the legs apart (`price_bp`, `funding_bp`); the review's second practitioner test puts
+only ~30 % of the gross in funding, so decay is judged on the net sum (the 52-week kill rule), never on funding levels.
+
 ## Assumptions (decided by Opus)
 
 - A1 (2026-11-14, before the test): signal = funding accrued over 7 days, not the mean of the last 21 rates, so

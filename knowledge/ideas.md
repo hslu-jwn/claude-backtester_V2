@@ -2378,3 +2378,32 @@ day, sd 91); the pre-market price carries less of the overnight move than the op
   `research/forward/shelf_i143.csv`, data `data/cache/alpaca_premarket_fwd/premarket.csv`; tests
   `tests/tools/test_shelf_i143.py`.
 
+### I-144 Strategy 20 on Binance spot 2018-01 .. 2019-12, pre-sample replication (lead review A file 17, R3; family `crypto_xs_factors`; registered 2026-11-26 before any 2018-2019 data is read)
+Why: every Strategy 20 period (2020-2026) is seen; the only independent evidence left is forward data or a period
+before the perps. Binance spot klines carry the same taker-buy column, so the signal is computed exactly as now.
+Label: replication of a passed rule on an unseen period (pool member if pooled verdicts are adopted, R11).
+- **Data:** every Binance spot `<BASE>USDT` pair in the data.binance.vision spot archive (`data/spot/monthly/klines/
+  <SYM>/1d/`), delisted pairs included, months 2017-10 .. 2019-12 (warm-up for the 60-bar rule). Excluded before any
+  data look: stablecoin and fiat bases (USDC, TUSD, PAX, USDP, BUSD, USDS, USDSB, DAI, EUR, GBP, AUD, TRY, RUB, BRL,
+  NGN, BIDR, IDRT, UAH, ZAR, BKRW) and leveraged tokens (bases ending UP, DOWN, BULL, BEAR). The spot files already on
+  disk (`data/cache/binance_wide_spot`, perp names only, 62 start before 2020) are **not** used: they hold only coins
+  that survived to get a perp (survivorship). A separate root `data/cache/binance_spot_presample/`.
+- **Rule:** Strategy 20's frozen rules 1-4 and 6 unchanged (eligibility with the 5 M USDT median quote volume, >= 20
+  eligible, 7-bar flow, quintile long-short, Monday open -> Sunday close, delisted members kept). No funding (spot);
+  net = price_bp - 20 bp a week (S20's cost, for comparability; a real spot short would need margin borrowing, so this
+  is evidence on the effect, not a tradable venue).
+- **Period:** Mondays 2018-01-01 .. 2019-12-30 (~104 weeks; fewer if weeks miss 20 eligible pairs).
+- **Statistic and verdict (one look, fixed now):** mean net and plain t over the weeks with a book. SUPPORTED: net > 0
+  and t >= 2.0 (one-sided, S20's sign); CONTRARY: net <= 0; else INCONCLUSIVE. Reported, not gates: gross, halves
+  2018 / 2019, member returns capped at +-50 % (M6), weeks and legs per week, without the 2 best weeks.
+- **Power (before data):** sd ~600-800 bp a week (S20 development 611), ~104 weeks: se ~60-80. At S20's development
+  +145 net, t ~2 (pass chance ~50 %); at the shrunk +60 .. +90, t ~0.8-1.5 (~10-30 %). A null result is weak evidence
+  against S20; a positive one is the first unseen-period support.
+- **Causal check (T-21):** signal = 7-day taker-flow imbalance; outcome = next week's return; mechanism = informed /
+  persistent order flow continuing (S20 spec); confounders = market beta (long-short, equal sides), size / listing age
+  (proxy: the 60-bar rule; reported by listing age halves); absence (placebo): the same sort does not predict the return of the week before its
+  signal window (week t-2; report only).
+- **Coverage audit first (signal-free):** list the archive's USDT spot pairs and count eligible pairs per Monday before
+  any return is computed; at under 52 weeks with a book, the card is parked on power with no return read.
+- **Status:** waits for the user's go on the download (HANDOFF › Open, question 3 of 2026-11-26).
+

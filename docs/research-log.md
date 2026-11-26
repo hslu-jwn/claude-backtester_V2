@@ -14,6 +14,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   by 09:27 ET); I-105 / I-134 report only. Signal-free coverage: 799-927 of 1,000 names a day (2026-11-18 .. 25).
   Logger `premarket` + `rows_i105(sig=)`, 3 tests; full suite 6,056 passed, 14 skipped, 4 xfailed; ruff clean.
   Opus inline, no worker.
+- R3 + R4 (the user: "yes"): I-144 carded (S20 on all Binance spot USDT pairs 2018-2019, delisted included; the
+  perp-name spot files on disk are survivorship-biased and not used); download waits for the user. R4 descriptive
+  (signal only): S19 top-4 minus bottom-4 funding signal 72-104 bp a week 2020-21H1, 32-66 since 2021H2, no further
+  trend; wide quintile spread up, mean level negative 2025-26 (`docs/strategy-crypto_carry.md` › Carry decay check).
+  S19's forward log already splits price and funding. Ledger rows I144, R4FUND. Opus inline.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

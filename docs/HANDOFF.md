@@ -47,6 +47,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Open (needs the user)
 
+- **Lead-review downloads (2026-11-26):** go for R3 (Binance spot archive 2017-10 .. 2019-12, all USDT pairs, card
+  I-144), R5 (IEF M1) and R6 (Binance aggTrades)? Plus R11 / R12 in the intake file.
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its
    step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, or allow the edit.
 1. **Next lever (Telegram sent 2026-11-19):** settle the ICT rules (report B, 9 quotes, chart examples), or allow
