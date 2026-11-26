@@ -49,6 +49,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Open (needs the user)
 
+- **Codex is down (2026-11-26):** every model refused ("not in the accessible catalog" of the ChatGPT account);
+  check the ChatGPT Plus plan / `codex login`. R6 (`briefs/r6-fill-model.md`) waits.
 - **Lead review:** R11 / R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
   SSRN PDF, FTMO CFD stop).
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its

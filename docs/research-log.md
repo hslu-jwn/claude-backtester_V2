@@ -23,6 +23,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   11 a.m. ET); regime dates and the DGS5 paper row (`shelf_i109_dgs5`) added; IEF 16:00 exit diagnostic pre-registered
   then run: FAIL (68 months, -0.69 bp, t -0.62), keep 15:00. R3: spot archive keeps delisted pairs (BCC, BCHSV, VEN);
   712 USDT pairs kept of 3,767; download running. Opus inline.
+- R6: card I-145 (maker-first on the whole S20 book, decision rule fixed) and `briefs/r6-fill-model.md`; Codex dispatch
+  failed: every model refused (terra, sol, the CLI default gpt-5.6-sol: "not in the accessible catalog" of the
+  ChatGPT account). Telegram sent (blocker). R9: HV-T0116-2 -> parked on power; RV01-RV20 closed from the reviews;
+  cost-wall §4 stop list extended. Opus inline.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

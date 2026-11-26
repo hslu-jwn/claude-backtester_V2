@@ -96,6 +96,12 @@ Since 2026-11-11 the per-idea record is `research/ledger.csv` (one row per idea 
   diversified or single-symbol trend at any speed (I-51, strategy 4); month-end / turn-of-month in
   any form (F4, F4M, I-67); daily reversal E8 / CAP / TS; multi-day holds on crypto CFDs (-30 %/yr swap,
   ~8 bp a night) and multi-week holds anywhere unless the published edge is several times the swap.
+- Also stop proposing (lead reviews 2026-11-21, ledger RV01-RV20): spot-Bitcoin-ETF flow timing, stablecoin issuance,
+  max-pain / CME-gap / listing-pump claims, Hyperliquid whale or liquidation tracking, cross-venue funding arbitrage,
+  crypto quarter-hour or taker reversal; large-cap PEAD, the earnings premium, standalone end-of-day reversal,
+  52-week-high momentum, equity pairs; the Treasury auction cycle, buyback / MBS / dividend-payment flows; prediction
+  markets (blocked for Swiss residents), index option selling, S&P overnight drift; Japanese and other non-US index
+  flows for FTMO CFDs. Merger arbitrage, 13D, closed-end funds, dividend month: parked on power or data, not closed.
 - Tuning stop, hold, signal frequency until the screen passes creates a new family and adds multiplicity (I52). Reversing a failed signal does not rescue it
   (strategy 3 and 1 reversed are no better).
 - Live leads (2026-11-12): none. F1a EURUSD European-hours short failed its 2008-2014 pre-sample check
