@@ -49,6 +49,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - R6 / I-145 one look (download done, 5,816 files): KEEP TAKER. 5,718 orders, 78 Mondays; 60-min maker-first saving
   +0.28 bp, t 0.57 (gate 1.5 bp, t 2); fill 97 % but the unfilled 3 % cost 108 bp vs 19.5 taker; 2-tick -2.93; least
   liquid third +0.95; 15 min -0.57; BNB -0.01. Cost default unchanged. Opus ran and recorded.
+- Fast-track IPO census (the user: "1") by a Sonnet worker, brief `briefs/fasttrack-census.md` (return-blind: only the
+  first-day close read; Opus checked files, ruff and the price reads): PARK on data. No public list of CRSP fast-track
+  additions found; 3,164 Nasdaq-calendar IPOs, 2,303 matched to SEC CIKs; predicted 166 events (148 vs the paper's 262
+  to 2022-12; 2021 44, 2022-25 3-9 a year); breakpoint proxy $2.4 bn UNVERIFIED; 0 of 166 in our top-1,000 by T+4.
+  Reopen with VTI N-PORT holdings as ground truth plus an IPO-day liquidity rule. Ledger FTC.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
