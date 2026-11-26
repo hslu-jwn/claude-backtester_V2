@@ -40,6 +40,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   GO to a return-blind census; CRSP fast-track ~45 events a year since 2017-03 (rule partly public): GO cautiously;
   follow-on offerings (no free pricing clock), HLP backstops (requester-pays archive), rights issues (Zenodo CSV has no
   dates / tickers): PARK on data.
+- Rule 201 census by a Sonnet worker (no return on or after a trigger read; Opus checked outputs and ruff): 780,368
+  triggers 2016-01..2026-10, ~224 independent top-1,000 trigger dates a year, MDE 44 / 23 bp (stress ~125 / 66):
+  GO to a frozen card (ledger R201C). Nasdaq served a bot-protection page for 350 files from 2025-06; the worker deleted
+  them and refetched slower (no bypass). R6: archive 11.1 GB, 8 files missing; download running.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
