@@ -1637,6 +1637,8 @@ opening auction print: 330 symbol-days (15 names, October 2026) differ by a medi
 exact). The development diagnostic (+12.9 bp) used the daily open, so part of it may be a first-print artefact (I-96
 noted the same risk). The frozen forward rule uses the official prints (auctions endpoint, condition Q / M, else O /
 6) for the open, the close and the previous close; the forward log decides.
+**Report only from 2026-11-26 (lead reviews R1):** not executable as frozen (the signal needs the opening print that its
+market-on-open entry must precede); the tradable twin is I-143. The log continues as a measurement only.
 
 ### I-106 Insider open-market purchases on the wide US share universe (Fable long-range item 3, 2026-11-17; new family `share_insider`, venue M13; rule fixed before any data)
 Mechanism: officers and directors buy their own stock with their own money when they think it is cheap; the
@@ -2313,6 +2315,7 @@ filled by carry inside one sort; the composite adds nothing the card-5 book (two
 hold. No test, no forward log; family `crypto_composite` one row, not FALSIFIED.
 
 ### I-134 Share open reversal x VIX, forward split (fusion rank 3; forward only, registered 2026-11-19 before any forward day is read)
+**Report only from 2026-11-26:** it splits I-105, which is not executable (I-143); kept as registered, no tradable verdict.
 Components: I-105 (forward only; dev diagnostic gross +12.9 bp a day, t 3.94, partly a first-print artefact) x the
 previous day's VIX close (Nagel 2012, reversal returns rise with VIX; PUBLISHED, UNVERIFIED here). Not run on
 development: the open-price artefact (p90 23 bp) also grows with volatility, so a development split cannot separate
@@ -2344,3 +2347,34 @@ download | check | selfcheck` (Opus; selfcheck OK; VIX history from Cboe into th
 Mechanism: primary dealers short a specific Treasury must borrow it (SOMA securities-lending auctions, daily since
 2005-11, free) to settle; high borrowing demand marks a squeezed deliverable. Prediction: high-demand days precede a
 wider futures-vs-cash basis. Needs Treasury futures prices (paid, declined 2026-11-18): PARKED on data.
+
+### I-143 Overnight -> close reversal ranked on the pre-market price, wide US shares (executable twin of I-105; family `share_reversal_real`, third row; registered 2026-11-26 forward only, before any forward day is read)
+Why: both lead reviews of 2026-11-21 (knowledge/reviews/2026-11-26-lead-review-intake.md R1) found I-105 not
+executable: it ranks on the official opening print and enters in that same opening auction, but a market-on-open order
+must be sent before the print exists (Alpaca rejects opening-auction orders after 09:28 ET, review A, Alpaca docs). From
+2026-11-26 I-105 (and I-134, which splits it) are **report only**; their logs continue as a measurement of the open
+print's information, never as a tradable verdict. Label ADAPTATION of I-105 (same mechanism, ranking price known in time).
+Frozen rule (no change after today): identical to I-105 (universe of the month, decile long-short, equal weight, entry
+at the official opening print = market-on-open, exit at the official closing print = market-on-close, net = gross - 7 bp
+a day, a day needs >= 500 names), except the ranking price: s = pre / official previous close - 1 minus SPY's same,
+where pre = the close of the last SIP 1-minute bar opening 04:00 .. 09:26 ET that day (closed by 09:27, before the 09:28
+cut-off); a name (or SPY) without such a bar has no signal that day. Judged with I-105's FB-254 boundary on daily nets
+(a look every 65 trading days, 8 looks; c 2.071; early kill z <= -2). Forward from 2026-11-18 (the shelf's share start;
+no forward share row had been read when this was registered). Power: as I-105 (30 % confirmed by day 520 at +5.9 bp a
+day, sd 91); the pre-market price carries less of the overnight move than the open, so the effect may be smaller
+(unknown, no development pre-market table).
+- **Coverage check (signal-free, no outcome read, 2026-11-26):** names of the 2026-11 universe with a pre-market price:
+  800, 836, 871, 927, 799, 855 of 1,000 on 2026-11-18 .. 11-25 (SPY every day); last bar median 4-10 minutes old, p90
+  60-127 minutes.
+- **Causal check (T-21):** signal = the overnight gap known by 09:27; outcome = open -> close return; mechanism =
+  attention buying at the open supplied by intermediaries paid by the intraday reversal (as I-105); confounders = news
+  (proxy: the same split on days with an earnings release, report only), market move (removed by SPY); absence
+  (placebo): the sort on the pre-market price of the day 20 trading days later predicts nothing (report only).
+- **Assumptions (Opus):** A1 all pre-market bars from 04:00 count, no freshness or volume floor (a stale print is still
+  the last known price; any floor would be a new tuning choice). A2 the forward log uses the SIP feed, which the free
+  Alpaca plan delivers 15 minutes late; live trading needs a real-time SIP subscription (IEX-only pre-market coverage is
+  far thinner). A3 7 bp a day as in I-105 (the auction fills are the same).
+- Logger: `research/screens/2026-11-17_shelf_forward.py` (`premarket`, `rows_i105(..., sig=)`), log
+  `research/forward/shelf_i143.csv`, data `data/cache/alpaca_premarket_fwd/premarket.csv`; tests
+  `tests/tools/test_shelf_i143.py`.
+

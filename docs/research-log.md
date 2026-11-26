@@ -10,6 +10,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   the task list R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`. Corrections: the top-100 S20
   measurement is done (FB017); I-127 was parked already. I-105 flaw confirmed from its own card (refreeze R1 before
   2026-12-03). Done: R2 (go-live constraints in `docs/strategy-crypto_flow.md`). Review B's folder committed.
+- R1 (the user: "Yes, do R1"): I-143 registered forward only (I-105's book ranked on the last pre-market SIP price
+  by 09:27 ET); I-105 / I-134 report only. Signal-free coverage: 799-927 of 1,000 names a day (2026-11-18 .. 25).
+  Logger `premarket` + `rows_i105(sig=)`, 3 tests; full suite 6,056 passed, 14 skipped, 4 xfailed; ruff clean.
+  Opus inline, no worker.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

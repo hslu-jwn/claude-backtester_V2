@@ -15,7 +15,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
     (t 4.42), test +24.9 (t 2.14, not blind). **New (I-132):** the effect is absent before bond indexing (1962-72 +1.1
     bp, t 0.26), appears in the 1980s (+8.9) and is +20.4 after 1990 (difference t 3.22): the index-extension
     mechanism passes its causal check. Watch weekend month-ends in the forward log (T-26).
-- **Shelf (M3 forward logs):** I-100, I-84, I-98, H11, I-71, I-105, I-109 (DGS10 and IEF); first rows 2026-12-03.
+- **Shelf (M3 forward logs):** I-100, I-84, I-98, H11, I-71, I-143, I-109 (DGS10 and IEF); first rows 2026-12-03.
+  I-105 and I-134 report only from 2026-11-26 (not executable; I-143 is the tradable twin, ranked pre-market).
   **Forward-only fusions:** I-134 (I-105 split by VIX, report only), I-135 (crypto book + I-109, monthly boundary);
   check: `research/screens/2026-11-19_i134_i135_forward_checks.py download | check`.
 - **Goal 1 (FTMO CFDs): no stream;** M11 holds, lifted only for fusions with a measured-gross component (2026-11-19).
@@ -58,8 +59,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Next step
 
-0. **Lead-review intake (2026-11-26):** tasks R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`; R1 (I-105
-   refreeze, its rule is not executable) must land before the 2026-12-03 rows; R11 / R12 wait for the user.
+0. **Lead-review intake (2026-11-26):** tasks R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`; R1 done (I-143
+   registered 2026-11-26); R11 / R12 wait for the user.
 1. The user's own step first (said at `End.` 2026-11-26).
 2. **2026-12-03 (task `monthly-forward-logs`, Claude app and MT5 terminal open):** first forward rows for Strategies
    19 / 20 and the shelf incl. I-109; plus the I-134 / I-135 check (Open 0).

@@ -22,7 +22,7 @@ Nothing in them is a rule; each item below goes through a card, the M-rules and 
 
 | # | Task | Source | Needs | Status |
 |---|---|---|---|---|
-| R1 | I-105 refreeze: register an executable variant (new card, counted) before 2026-12-03; I-105 (and I-134, which splits it) become report-only | A 03/00, B 01 | signal-free pre-market coverage count (small Alpaca download) | open |
+| R1 | I-105 refreeze: register an executable variant (new card, counted) before 2026-12-03; I-105 (and I-134, which splits it) become report-only | A 03/00, B 01 | signal-free pre-market coverage count (small Alpaca download) | done 2026-11-26: I-143 |
 | R2 | Strategy 20 go-live notes in its spec: Binance 50-symbol Reduce-Only rule (sub-accounts < 50 symbols, the top-100 variant holds ~40), BNB fee payment (-10 %), live signal from the exchange API, not the public-data files | A 12/17 | docs only | open |
 | R3 | Pre-register a Binance **spot** 2018-01..2019-12 replication of Strategy 20 (same rule, never looked at) as a pool member, before any download | A 17 | card; then the download | open |
 | R4 | Strategy 19: split the forward return into funding and price legs; descriptive cross-coin funding-dispersion check by half-year (no returns) | A 11/15 | data on disk | open |

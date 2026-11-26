@@ -10,6 +10,9 @@ H11 Gotobi G1 (USDJPY, frozen one-time-test grid, engine with today's default co
 review-auction short (per event, bp) read the MT5 cache (kept current by the MT5 download, not here). I-105
 overnight -> close reversal at the official open on the wide share universe (per day, bp): official opening and
 closing auction prints (Alpaca auctions endpoint), universe formed monthly from fresh daily bars (card 2 rule).
+I-105 is report only since 2026-11-26 (its signal needs the opening print its own entry order must precede); I-143 is
+its executable twin: the same book ranked on the last pre-market price by 09:27 ET (`premarket`), no canary (no
+development pre-market table).
 Canaries: crypto rows reproduce net and t; H11 and I-71 reproduce trade counts and gross (their cost tables changed
 after registration; today's costs apply forward); I-105 reproduces I-102's diagnostic on the development table
 (daily opens; forward uses the official prints, knowledge/ideas.md I-105).
@@ -69,6 +72,7 @@ SHARE_START = pd.Timestamp("2026-11-18")
 UNI_HIST = Path("data/cache/alpaca_meta/universe.csv")
 META_F, D1F = Path("data/cache/alpaca_meta_fwd"), Path("data/cache/alpaca_1d_fwd")
 AUCT = Path("data/cache/alpaca_auctions_fwd")
+PRE = Path("data/cache/alpaca_premarket_fwd")  # I-143 ranking prices
 LONDON = ZoneInfo("Europe/London")
 RATES_START = pd.Period("2026-11", "M")  # I-109: first month-end after the test (window 2026-11-24 .. 11-30)
 RATES_FWD = Path("data/cache/alpaca_1d_rates_fwd")
@@ -238,17 +242,19 @@ def rows_i71(sources, start, end):
     return out
 
 
-def rows_i105(t, members, start):
-    """t: day x symbol tables open / close / prev_close (SPY included); I-102's sort at the open, open -> close."""
+def rows_i105(t, members, start, sig=None):
+    """t: day x symbol tables open / close / prev_close (SPY included); I-102's sort at the open, open -> close.
+    sig: the ranking price table instead of the open (I-143: the last pre-market price, `premarket`)."""
+    sig = t["open"] if sig is None else sig.reindex(index=t["open"].index, columns=t["open"].columns)
     out = []
     for d in t["close"].index:
         if d < start:
             continue
         m = [s for s in members.get(d.strftime("%Y-%m"), []) if s in t["close"].columns]
-        spy = t["open"].loc[d, "SPY"] / t["prev_close"].loc[d, "SPY"] - 1
+        spy = sig.loc[d, "SPY"] / t["prev_close"].loc[d, "SPY"] - 1
         f = pd.DataFrame(
             {
-                "s": t["open"].loc[d, m] / t["prev_close"].loc[d, m] - 1 - spy,
+                "s": sig.loc[d, m] / t["prev_close"].loc[d, m] - 1 - spy,
                 "r": (t["close"].loc[d, m] / t["open"].loc[d, m] - 1) * 1e4,
             }
         ).dropna()
@@ -263,6 +269,40 @@ def rows_i105(t, members, start):
                 }
             )
     return out
+
+
+NY = ZoneInfo("America/New_York")
+PRE_FIRST, PRE_LAST = "04:00", "09:26"  # I-143: last bar opens 09:26 ET, closed 09:27, before the 09:28 MOO cut-off
+
+
+def premarket(symbols, days, fetch, batch=100):
+    """I-143: last pre-market SIP price per symbol and day = close of the last 1-min bar opening 04:00 .. 09:26 ET."""
+    rows = []
+    for day in days:
+        lo, hi = (pd.Timestamp(f"{day:%Y-%m-%d} {x}", tz=NY).tz_convert(UTC) for x in (PRE_FIRST, PRE_LAST))
+        for i in range(0, len(symbols), batch):
+            params = {
+                "symbols": ",".join(symbols[i : i + batch]),
+                "timeframe": "1Min",
+                "start": f"{lo:%Y-%m-%dT%H:%M:00Z}",
+                "end": f"{hi:%Y-%m-%dT%H:%M:00Z}",
+                "limit": 10000,
+                "adjustment": "split",
+                "feed": "sip",
+            }
+            while True:
+                page = fetch(params)
+                for sym, bars in (page.get("bars") or {}).items():
+                    ok = [b for b in bars if lo <= pd.Timestamp(b["t"]) <= hi]
+                    if ok:
+                        b = max(ok, key=lambda x: x["t"])
+                        rows.append((sym, pd.Timestamp(day), b["c"], b["t"]))
+                token = page.get("next_page_token")
+                if not token:
+                    break
+                params = {**params, "page_token": token}
+    p = pd.DataFrame(rows, columns=["symbol", "day", "pre", "pre_ts"])
+    return p.sort_values("pre_ts").groupby(["symbol", "day"], as_index=False).last()
 
 
 def rows_i109(r, start, last, excess):
@@ -340,7 +380,12 @@ def share_update():
     allm = {**members_of(UNI_HIST), **members_of(META_F / "universe.csv")}
     syms = sorted({s for mo, v in allm.items() if mo >= "2026-11" for s in v} | {"SPY"})
     AUCT.mkdir(parents=True, exist_ok=True)
-    auctions(syms, SHARE_START - pd.Timedelta(days=7)).to_csv(AUCT / "auctions.csv", index=False)
+    a = auctions(syms, SHARE_START - pd.Timedelta(days=7))
+    a.to_csv(AUCT / "auctions.csv", index=False)
+    PRE.mkdir(parents=True, exist_ok=True)
+    # shortcut: refetches every forward day each month (~10 requests a day), cache per day once it exceeds ~30 min
+    days = sorted(d for d in a.day.unique() if d >= SHARE_START)
+    premarket(syms, days, alpaca.http_fetch(*alpaca.keys())).to_csv(PRE / "premarket.csv", index=False)
 
 
 def share_table():
@@ -458,6 +503,13 @@ def log():
         print(
             f"i105: {len(r)} forward days, {forward_log.append(FORWARD / 'shelf_i105.csv', r, COLS)} appended"
         )
+        if (PRE / "premarket.csv").exists():
+            pre = pd.read_csv(PRE / "premarket.csv", parse_dates=["day"])
+            sig = pre.pivot_table(index="day", columns="symbol", values="pre", aggfunc="last")
+            r = rows_i105(share_table(), members, SHARE_START, sig=sig)
+            print(
+                f"i143: {len(r)} forward days, {forward_log.append(FORWARD / 'shelf_i143.csv', r, COLS)} appended"
+            )
 
 
 def status():
