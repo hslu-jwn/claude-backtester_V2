@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
+
+- Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, 7.6 min); ruff clean. HANDOFF rewritten; `results/trials.jsonl`
+  equals `research/trials.jsonl`; briefs `fusion-inventory.md`, `i133-crypto-composite.md`, `data-scout-nonprice.md`
+  archived; no ROADMAP step finished. Auto decisions of this session: 85-88. Untouched: `notify.py` (the user's lines),
+  untracked `knowledge/reviews/2026-11-21-lead-research/` (not from this session).
+
 ## 2026-11-19: data scout (non-price, forced traders): one lead, parked (auto)
 
 - Codex `gpt-6.1-terra` medium `--search`, read-only, brief `briefs/data-scout-nonprice.md`, guard ok. One VERIFIED
