@@ -2421,7 +2421,11 @@ Label: replication of a passed rule on an unseen period (pool member if pooled v
   signal window (week t-2; report only).
 - **Coverage audit first (signal-free):** list the archive's USDT spot pairs and count eligible pairs per Monday before
   any return is computed; at under 52 weeks with a book, the card is parked on power with no return read.
-- **Status:** waits for the user's go on the download (HANDOFF › Open, question 3 of 2026-11-26).
+- **Status:** download approved 2026-11-26 ("ok"). **PARKED on power 2026-11-26 by the coverage audit, no return read:**
+  the archive has 712 USDT spot pairs (delisted kept), only 86 with data before 2020; eligible pairs per Monday median
+  7 (2018) / 11 (2019), max 16 / 17; 0 of 105 weeks reach the 20 needed (`research/screens/2026-11-26_i144_spot_presample.py
+  coverage`). 2018-2019 USDT spot liquidity sat mostly in BTC-quoted pairs; changing the quote asset or the volume floor
+  would be a new hypothesis. The 2018-2019 USDT data stays unlooked.
 
 ### I-145 Strategy 20 rebalance: maker-first fill model on the whole book (lead review A file 12, R6; execution only, counted; rule fixed 2026-11-26 before any new aggTrades are read)
 Why: FB-273 (4 perps, 13 Mondays, saving -2.1 bp, t -0.44) was underpowered (se ~4.8 bp vs a ~3 bp expected saving).

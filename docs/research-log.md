@@ -27,6 +27,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   failed: every model refused (terra, sol, the CLI default gpt-5.6-sol: "not in the accessible catalog" of the
   ChatGPT account). Telegram sent (blocker). R9: HV-T0116-2 -> parked on power; RV01-RV20 closed from the reviews;
   cost-wall §4 stop list extended. Opus inline.
+- R3 result: spot download done (712 USDT pairs listed, 86 with data before 2020). Coverage audit: 0 of 105 Mondays reach
+  20 eligible pairs (median 7 / 11, max 16 / 17): I-144 PARKED on power, no return read. Opus inline.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
