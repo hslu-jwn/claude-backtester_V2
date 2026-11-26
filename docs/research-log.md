@@ -75,6 +75,18 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   pi is the share of looked-at rows with a right-sign GROSS effect, not of tradable edges; type e is under-filled and
   power closures are excluded (missing not at random). Descriptive only; replacing the 1:50 prior in M4 is a method-rule
   change and goes to the user with R11 (HANDOFF › Open). Next for it: backfill the old R-unit rows' dev t.
+- Auto decision 91: next = backfill est / se of the old R-unit rows (S01-S12, H01-H15, C1-C3, ...) from specs and the
+  log (Sonnet worker, bookkeeping only), then refit. Alternative: the VTI N-PORT fast-track check. Why: type e (price
+  patterns) has 3 usable rows, so the prior fit cannot separate it yet; the fast-track lead stays weak.
+- Backfill pass 2 (Sonnet worker; Opus checked: 0 non-effect cells changed, no filled row overwritten): +15 rows
+  (H01, H01b, H02, H03, H04, H09, H10, H11, H13, H13f, L14, C2, I72, I107, I51); se mostly from a recorded 2.5 % bootstrap
+  bound, (mean - lower) / 1.96. Opus blanked I51 (se from an assumed Sharpe annualisation); accepted I107 (card gross
+  t -1.59). 84 rows with est / se. Refit: n 38 gross, pooled pi 0.52; a 0.64 (11), b 0.53 (8), c 0.56 (4), d 0.39 (8),
+  e 0.55 (4), f 0.56 (3). Price-pattern rows are mostly net-only (24 net rows not fitted), so type e stays thin:
+  descriptive, not adopted (with R11 for the user).
+- Auto decision 92: next = the VTI N-PORT check (indirect ground truth for the fast-track census). Alternative: a
+  net-t fit for price patterns. Why: it settles whether the fast-track lead can be reproduced at all (2017-2021 had
+  ~30 predicted events a year); the net fit mixes cost drag into the prior (review A file 10 › C).
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
