@@ -46,6 +46,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   them and refetched slower (no bypass). R6: archive 11.1 GB, 8 files missing; download running.
 - I-146 Rule 201 pairs (review B Stage B) CLOSED on M4 by Opus before any post-trigger return: band counts from daily
   lows 2,044 / 1,687 on 677 dates; halved ~+20 bp gross vs ~20-40 bp two-leg cost, SE ~19 bp, pass chance ~3 %.
+- R6 / I-145 one look (download done, 5,816 files): KEEP TAKER. 5,718 orders, 78 Mondays; 60-min maker-first saving
+  +0.28 bp, t 0.57 (gate 1.5 bp, t 2); fill 97 % but the unfilled 3 % cost 108 bp vs 19.5 taker; 2-tick -2.93; least
+  liquid third +0.95; 15 min -0.57; BNB -0.01. Cost default unchanged. Opus ran and recorded.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

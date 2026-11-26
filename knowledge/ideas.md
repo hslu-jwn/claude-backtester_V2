@@ -2427,7 +2427,7 @@ Label: replication of a passed rule on an unseen period (pool member if pooled v
   coverage`). 2018-2019 USDT spot liquidity sat mostly in BTC-quoted pairs; changing the quote asset or the volume floor
   would be a new hypothesis. The 2018-2019 USDT data stays unlooked.
 
-### I-145 Strategy 20 rebalance: maker-first fill model on the whole book (lead review A file 12, R6; execution only, counted; rule fixed 2026-11-26 before any new aggTrades are read)
+### I-145 Strategy 20 rebalance: maker-first fill model on the whole book (lead review A file 12, R6; execution only, counted; rule fixed 2026-11-26 before any new aggTrades are read; KEEP TAKER 2026-11-26)
 Why: FB-273 (4 perps, 13 Mondays, saving -2.1 bp, t -0.44) was underpowered (se ~4.8 bp vs a ~3 bp expected saving).
 A changed fill rule on a bigger sample is a new, counted hypothesis, not a rescue: it is judged only on its own gates.
 - **Orders:** every order Strategy 20's frozen book needs at each Monday 00:00 UTC rebalance (`tools/crypto_flow.py`
@@ -2454,6 +2454,10 @@ A changed fill rule on a bigger sample is a new, counted hypothesis, not a rescu
   end, no extra latency; A5 an order with no file or no trade after the window is dropped (count printed); A6 fill
   comparisons use a 1e-6-tick tolerance; A7 least liquid third = orders at or below the 1/3 quantile of qvol30, saving > 0
   only; A8 the decision uses the 60-minute arm with the 1-tick rule as primary.
+- **Result (one look, 2026-11-26): KEEP TAKER.** 5,718 of 5,726 orders with data, 78 Mondays. 60 min, 1 tick: saving
+  +0.28 bp an order, t 0.57 (gate >= 1.5 bp and t >= 2: fail); fill rate 97 %, but the 3 % unfilled cost 107.9 bp vs
+  taker 19.5 bp (adverse selection: the limit misses exactly when price runs away). 2-tick -2.93 bp (fail), least liquid
+  third +0.95 bp; 15 min -0.57 (t -1.22); 2023 +0.97, 2026 -1.09; BNB fees -0.01. The 20 bp a week cost default stays.
 
 ### I-146 SEC Rule 201 threshold: just-triggered vs near-miss pairs, US top-1,000 (lead review B rank 2, R8; family `share_event`; CLOSED 2026-11-26 on M4 before any post-trigger return)
 Mechanism (Barardehi, Bird, Karolyi & Ruchti, Management Science, OFR WP 23-08; PUBLISHED, read via review B's register):
