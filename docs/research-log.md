@@ -29,6 +29,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   cost-wall §4 stop list extended. Opus inline.
 - R3 result: spot download done (712 USDT pairs listed, 86 with data before 2020). Coverage audit: 0 of 105 Mondays reach
   20 eligible pairs (median 7 / 11, max 16 / 17): I-144 PARKED on power, no return read. Opus inline.
+- Codex out: the user routes to Claude subagents (agent-routing.md). R6 screen by a Sonnet worker (13 tests; Opus read
+  the fill logic, accepted 8 worker assumptions on the card); orders 5,726 on 78 Mondays; archive size listing running.
+- R7 F-01 Stage A by a Sonnet worker (no event return read; Opus checked the -31..-11 window and the power arithmetic):
+  PARK, coverage 49 %, top-5 % events 466 (2016-20) / 698 (2021-26), SE 28 bp, pass chance 7 % at the halved effect.
+  Half the coverage loss is the current-only SEC ticker map (reopen with a point-in-time map, ~20 %). The worker briefly
+  ran two downloaders, so SEC's rate limit was probably exceeded for a few minutes. Ledger F01A.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
