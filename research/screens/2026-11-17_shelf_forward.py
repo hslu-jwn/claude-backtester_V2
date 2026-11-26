@@ -493,6 +493,7 @@ def log():
     dgs = i109.returns("DGS10", "2026-10-01", "2100-01-01")
     for name, r, excess in (
         ("i109", dgs, True),
+        ("i109_dgs5", i109.returns("DGS5", "2026-10-01", "2100-01-01"), True),  # R5 paper variant, report only
         ("i109_ief", i109.etf("IEF", "2026-10-01", "2100-01-01", RATES_FWD) if (RATES_FWD / "IEF.csv").exists() else dgs[:0], False),
     ):
         rows = rows_i109(r, RATES_START, r.index[-1].to_period("M"), excess) if len(r) else []

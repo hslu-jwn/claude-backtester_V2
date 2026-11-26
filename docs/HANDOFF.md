@@ -33,6 +33,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-26: lead-review intake: R1 (I-143), R3 + R4, and the downloads for R3 (Binance spot 2017-10 .. 2019-12),
+  R5 (IEF M1) and R6 (Binance aggTrades) ("ok").
 - 2026-11-26: everything of the fusion session 2026-11-19 accepted at `End.`.
 - 2026-11-19: fusion run rules: a combination of killed components is a new counted hypothesis; Codex-only workers
   (terra reading / screens, sol engine / strategy); M11 decision delegated to Opus (lifted for fusions with a
@@ -47,8 +49,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Open (needs the user)
 
-- **Lead-review downloads (2026-11-26):** go for R3 (Binance spot archive 2017-10 .. 2019-12, all USDT pairs, card
-  I-144), R5 (IEF M1) and R6 (Binance aggTrades)? Plus R11 / R12 in the intake file.
+- **Lead review:** R11 / R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
+  SSRN PDF, FTMO CFD stop).
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its
    step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, or allow the edit.
 1. **Next lever (Telegram sent 2026-11-19):** settle the ICT rules (report B, 9 quotes, chart examples), or allow

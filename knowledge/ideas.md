@@ -1788,6 +1788,22 @@ statistic) and `shelf_i109_ief` (IEF raw) from the 2026-11 month-end; complete m
 **Venue (decided by the user 2026-11-18):** CME Micro 10-Year Yield futures (10Y, $10 per bp), 1-3 contracts, held in
 the next-month contract. Per micro on DGS10 windows: net ~$16-21 a month-end, sd ~$90-96 (research-log 2026-11-18).
 
+**I-109 implementation notes (R5, lead review A file 09 / 15, 2026-11-26; the live plan is unchanged):**
+- Early closes: the order calendar (`research/screens/2026-11-19_i109_order_calendar.py`) flags SIFMA's usual 2 p.m.
+  early-close days; on them the order goes in before 11 a.m. ET (the micro settles on the 11 a.m. fix, per review A,
+  not re-checked). First: the 2026-12 exit on Thu 2026-12-31. Confirm on SIFMA's calendar each year.
+- Regime markers for the forward log (Chicago Fed Letter 516, via review A): central clearing of cash Treasury trades
+  from 2026-12-31, of repo from 2027-06-30. Report the forward mean before / after each date (no gate).
+- 5-year paper variant: the same window on FRED DGS5 (the 5-year micro trades ~0 contracts a day, so paper only),
+  logged as `shelf_i109_dgs5`, report only; no verdict.
+- **IEF 16:00 exit diagnostic (pre-registered 2026-11-26, before IEF minute bars are downloaded):** on each month's
+  last Treasury trade date, IEF return from the close of the 14:59 ET bar to the close of the 15:59 ET bar, months
+  2016-01 .. 2021-08 (development side; Alpaca SIP 1-minute). Placebo: the same slice on the 10th trade date before
+  each month's end. Gate: mean >= +3 bp and t >= 2.0 (one-sided) -> register a paper variant "exit at 16:00"; else
+  keep 15:00 and close the question. One look; reported: the placebo, halves 2016-2018 / 2019-2021.
+  **Result (2026-11-26, `research/screens/2026-11-26_i109_ief_4pm_diagnostic.py`): FAIL**, 68 months, -0.69 bp (t -0.62);
+  placebo -0.39 (t -0.40); halves -2.00 / +0.79. The 15:00 exit stays; question closed.
+
 ### I-110 Treasury month-end duration extension on long bonds (20-year; the user's pick 2026-11-17 after I-109; family `rates_month_end`, 2nd hypothesis; rule fixed before any 20-year data)
 I-109's mechanism and rule on the long end, where index extension buys the most duration (ohlcv.io: UB +11.3 bp a
 day on the last 3 trade dates vs ZN +5.2). A new counted hypothesis in the same family, not independent of I-109
