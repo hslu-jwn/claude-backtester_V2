@@ -2,6 +2,13 @@
 
 Model IDs live only in this file (CLAUDE.md, AGENTS.md and the skills point here).
 
+**Codex unavailable (rule set by the user, 2026-11-26):** "from now on use your local available models such as sonnet
+and haiku. Codex is not with us at the moment." Until the user says Codex is back, every row below that names Codex
+goes to a Claude subagent instead: `sonnet` for routine code, tools, screens, specs and web look-ups; `haiku` for
+mechanical edits and summaries; engine / no-lookahead / risk code also `sonnet`, reviewed by Opus running the tests.
+Subagents get the same brief files and the same hard limits (AGENTS.md › Team); Opus commits after checking. The
+2026-11-10 "Sonnet only for small work" limit is lifted while Codex is out.
+
 Goal: the cheapest method that reliably does the task. Escalate on a demonstrated failure, never
 by habit. One coordinator at a time; no review chains by default.
 
