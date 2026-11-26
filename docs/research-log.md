@@ -54,6 +54,27 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   additions found; 3,164 Nasdaq-calendar IPOs, 2,303 matched to SEC CIKs; predicted 166 events (148 vs the paper's 262
   to 2022-12; 2021 44, 2022-25 3-9 a year); breakpoint proxy $2.4 bn UNVERIFIED; 0 of 166 in our top-1,000 by T+4.
   Reopen with VTI N-PORT holdings as ground truth plus an IPO-day liquidity rule. Ledger FTC.
+- 2026-11-27: the user switched the session to `Mode=auto`.
+- Auto decision 89: next = R10 (ledger effect columns), not the VTI N-PORT fast-track check. Alternative: N-PORT
+  first. Why: R10 is needed by every pooled verdict and empirical prior (R11, review A change 8); the fast-track lead
+  is weak even with ground truth (3-9 events a year since 2022, 0 of 166 in our top-1,000 by T+4).
+- R10: columns `est, se, est_unit, est_basis, est_sample, type, dup_group` added to `research/ledger.csv` (no other cell
+  changed, checked against HEAD); checker `research/screens/ledger_effects.py` + 13 tests; spec in
+  `docs/research-runner.md` › Ledger. Backfill by a Sonnet worker (brief `briefs/r10-ledger-backfill.md`). Opus inline.
+- Auto decision 90: after the backfill, run review A change 8 (empirical-Bayes prior per family type on the backfilled
+  est / se; no data look) as the next step. Alternative: the N-PORT check. Why: low p-hacking risk, uses only recorded
+  rows, and its output (prior odds per type) feeds M4 triage of every future card.
+- R10 backfill by a Sonnet worker (bookkeeping only, no data look; Opus checked 0 changed cells outside the 7 columns
+  against HEAD, spot-checked I109 / I78 / I110 / I115): 181 non-harvest rows typed (a 49, b 33, c 27, d 25, e 35, f 12),
+  70 rows with est / se (41 dev gross, 17 dev net, 9 expected, 3 test, 1 presample), 26 dup groups; sources per row in
+  `research/ledger_effects_sources.csv`. Opus fixes: I132 = the registered contrast (+19.3, t 3.22), not the E0 era;
+  I107 blank (only a power-line se). Doubtful, kept: I108 se 160.8 (net t -0.24; card power line 54.9). Not filled: the
+  old R-unit rows (S01-S12, H01-H15, C1-C3), so type e has only 3 usable rows.
+- Empirical-Bayes prior (`research/screens/ledger_prior.py`, 5 tests; gross looked-at rows, one per dup group): n 31,
+  pooled pi 0.52 (sigma 2.85); pooled per type a 0.61, b 0.49, c 0.56, d 0.42, e 0.55 (n 3), f 0.57. Reading (Opus):
+  pi is the share of looked-at rows with a right-sign GROSS effect, not of tradable edges; type e is under-filled and
+  power closures are excluded (missing not at random). Descriptive only; replacing the 1:50 prior in M4 is a method-rule
+  change and goes to the user with R11 (HANDOFF › Open). Next for it: backfill the old R-unit rows' dev t.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

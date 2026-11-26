@@ -908,6 +908,15 @@ per idea or hypothesis (a parameter cell is not a row; a changed rule is a new r
   gross_r, cost_r, net_r` (R per trade, development unless the column says test), `test_spent`
   (no / yes + date / "not clean"), `verdict`, `spec`, `kill_criterion` (written before any data is
   looked at), `date`, `notes`.
+- **Effect columns (R10, lead review A file 10 › C; added 2026-11-27, Opus in Mode=auto):** `est, se, est_unit,
+  est_basis, est_sample, type, dup_group`, for pooling and empirical priors. `est` = one effect per row in the
+  predicted direction (positive = right sign), the first development look (or pre-sample when that came first),
+  `se` its standard error in the same `est_unit`; `est_basis` gross / net (gross preferred; cost is an offset);
+  `est_sample` dev / presample / test / forward / expected (expected = the pre-registered guess of a row closed before
+  any look); `type` a forced or dated flow, b published premium adapted, c crypto breadth sort, d share anomaly,
+  e practitioner / price pattern, f original / speculative; `dup_group` names near-duplicate rows that count as one
+  draw. Sources of each backfilled value: `research/ledger_effects_sources.csv`. Check:
+  `research/screens/ledger_effects.py check` (test `tests/tools/test_ledger_effects.py` runs it on the real file).
 - **Stages:** harvested, verified, parked, rejected, carded, proposed, screened, specced,
   dev_tested, tested, confirmed.
 - **Who writes it:** the session that moves an idea to a new stage, in the same commit as the

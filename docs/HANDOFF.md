@@ -53,6 +53,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
   tell Opus when Codex is back.
 - **Lead review:** R11 / R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
   SSRN PDF, FTMO CFD stop).
+  With R11: adopt empirical priors per family type for M4 instead of 1:50? First fit (2026-11-27,
+  `research/screens/ledger_prior.py`) is descriptive only: pooled pi 0.52 on gross looked-at rows, type e thin.
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its
    step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, or allow the edit.
 1. **Next lever (Telegram sent 2026-11-19):** settle the ICT rules (report B, 9 quotes, chart examples), or allow
