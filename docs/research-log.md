@@ -44,6 +44,8 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   triggers 2016-01..2026-10, ~224 independent top-1,000 trigger dates a year, MDE 44 / 23 bp (stress ~125 / 66):
   GO to a frozen card (ledger R201C). Nasdaq served a bot-protection page for 350 files from 2025-06; the worker deleted
   them and refetched slower (no bypass). R6: archive 11.1 GB, 8 files missing; download running.
+- I-146 Rule 201 pairs (review B Stage B) CLOSED on M4 by Opus before any post-trigger return: band counts from daily
+  lows 2,044 / 1,687 on 677 dates; halved ~+20 bp gross vs ~20-40 bp two-leg cost, SE ~19 bp, pass chance ~3 %.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

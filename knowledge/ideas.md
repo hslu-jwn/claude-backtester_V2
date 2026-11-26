@@ -2455,3 +2455,18 @@ A changed fill rule on a bigger sample is a new, counted hypothesis, not a rescu
   comparisons use a 1e-6-tick tolerance; A7 least liquid third = orders at or below the 1/3 quantile of qvol30, saving > 0
   only; A8 the decision uses the 60-minute arm with the 1-tick rule as primary.
 
+### I-146 SEC Rule 201 threshold: just-triggered vs near-miss pairs, US top-1,000 (lead review B rank 2, R8; family `share_event`; CLOSED 2026-11-26 on M4 before any post-trigger return)
+Mechanism (Barardehi, Bird, Karolyi & Ruchti, Management Science, OFR WP 23-08; PUBLISHED, read via review B's register):
+after a -10 % move, Rule 201 bars short sales at or below the national best bid for that day and the next; a threshold
+regression discontinuity (2011-2013) gives +5.79 bp per 65-minute bin (~+35 bp a day), short volume -8 %. Rule (review B
+Stage B): long the stocks whose first low crosses into [-10.5 %, -10.0 %], short the near misses in (-10.0 %, -9.5 %],
+same date / bin, next M1 open to 15:55 the next session.
+- **Census (return-blind, R8):** official trigger files complete 2016-2026; ~224 independent top-1,000 trigger dates a
+  year (`knowledge/research/reports/2026-11-26_rule201-census.md`). Band counts from daily lows (no return read), development
+  2016-04 .. 2021-09-13: 2,044 treated and 1,687 control name-days on 677 treated dates.
+- **M4 (Opus, before any data look):** halved effect ~+20 bp gross over the ~1.3-day hold; pair cost two legs on crash
+  names ~20-40 bp (review B asks 25 / 50 bp stress); expected net <= 0. Power: name sd ~4.8 % over the hold (calm-day
+  2.14 % a day doubled for crash names), clustered SE ~19 bp, so even the gross halved effect gives t ~1.1, pass chance
+  ~3 %. **CLOSED on M4** (cost ratio and power), no post-trigger return read. A null-free close: the causal effect may be
+  real; it is smaller than a two-leg retail round trip on crash names.
+
