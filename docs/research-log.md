@@ -35,6 +35,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   PARK, coverage 49 %, top-5 % events 466 (2016-20) / 698 (2021-26), SE 28 bp, pass chance 7 % at the halved effect.
   Half the coverage loss is the current-only SEC ticker map (reopen with a point-in-time map, ~20 %). The worker briefly
   ran two downloaders, so SEC's rate limit was probably exceeded for a few minutes. Ledger F01A.
+- R8 by a Sonnet worker (desk research, no return read; Opus spot-checked the Nasdaq sample, 1,861 triggers on
+  2024-08-05): Rule 201 archives all anonymous (Nasdaq daily txt, NYSE group xls 2016-2025 complete, Cboe yearly csv):
+  GO to a return-blind census; CRSP fast-track ~45 events a year since 2017-03 (rule partly public): GO cautiously;
+  follow-on offerings (no free pricing clock), HLP backstops (requester-pays archive), rights issues (Zenodo CSV has no
+  dates / tickers): PARK on data.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
