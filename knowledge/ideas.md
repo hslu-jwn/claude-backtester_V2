@@ -2423,3 +2423,24 @@ Label: replication of a passed rule on an unseen period (pool member if pooled v
   any return is computed; at under 52 weeks with a book, the card is parked on power with no return read.
 - **Status:** waits for the user's go on the download (HANDOFF › Open, question 3 of 2026-11-26).
 
+### I-145 Strategy 20 rebalance: maker-first fill model on the whole book (lead review A file 12, R6; execution only, counted; rule fixed 2026-11-26 before any new aggTrades are read)
+Why: FB-273 (4 perps, 13 Mondays, saving -2.1 bp, t -0.44) was underpowered (se ~4.8 bp vs a ~3 bp expected saving).
+A changed fill rule on a bigger sample is a new, counted hypothesis, not a rescue: it is judged only on its own gates.
+- **Orders:** every order Strategy 20's frozen book needs at each Monday 00:00 UTC rebalance (`tools/crypto_flow.py`
+  `compute_weeks` legs): a symbol leaving the long leg = sell, entering = buy, leaving the short leg = buy, entering =
+  sell, a flip = one order of the net side; size changes of members that stay are ignored. Mondays: the 52 of 2023
+  (development) and the 26 from 2026-04-27 to 2026-10-19 (spent test weeks; execution only, no signal read).
+- **Prices:** P0 = the Sunday daily close (last trade before 00:00) from the klines on disk; Binance USD-M daily
+  aggTrades of each Monday (data.binance.vision). Tick = the smallest positive price step among that day's trades.
+- **Arms:** taker = the first matching-aggressor trade at or after 00:00:01 (1 s latency) + 5 bp. Maker-first (primary
+  60-minute window; 15-minute reported): a limit at P0 fills when a trade at or after 00:00:01 inside the window prints
+  at least 1 tick through P0, + 2 bp; else taker at the first matching trade after the window + 5 bp. Cost = side x
+  (fill - P0) / P0 x 1e4 + fee; saving = taker - maker-first per order.
+- **Decision (one look):** ADOPT the 60-minute maker-first for the live book if all hold: mean saving >= 1.5 bp an
+  order with t >= 2.0 clustered by Monday; still > 0 with a 2-tick fill rule; still > 0 in the least liquid third
+  (by the 30-bar median quote volume before the Monday). Else keep taker. Reported: the 15-minute arm, fill rates, cost
+  of the unfilled orders, 2023 vs 2026, BNB fees (taker 4.5 / maker 1.8). The backtest cost default stays 20 bp a week.
+- **Feasibility note:** at most ~30 symbols with resting orders at a time (S20 spec › Go-live constraints): a live
+  maker-first rebalance runs in batches; not modelled here.
+- Build: Codex terra on `briefs/r6-fill-model.md`.
+
