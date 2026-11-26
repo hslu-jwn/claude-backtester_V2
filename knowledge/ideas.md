@@ -2446,5 +2446,12 @@ A changed fill rule on a bigger sample is a new, counted hypothesis, not a rescu
   of the unfilled orders, 2023 vs 2026, BNB fees (taker 4.5 / maker 1.8). The backtest cost default stays 20 bp a week.
 - **Feasibility note:** at most ~30 symbols with resting orders at a time (S20 spec › Go-live constraints): a live
   maker-first rebalance runs in batches; not modelled here.
-- Build: Codex terra on `briefs/r6-fill-model.md`.
+- Build: `briefs/r6-fill-model.md`, written by a Claude Sonnet worker (Codex out, 2026-11-26), checked by Opus (13 tests).
+  `research/screens/2026-11-26_i145_fill_model.py orders | size | download | run`; orders: 5,726 on 78 Mondays, 501 symbols.
+- **Assumptions (worker, accepted by Opus before any aggTrades were read):** A1 tick = smallest price step in the first
+  3 h of the Monday file; A2 P0 = the Sunday daily close (only Monday files needed); A3 qvol30 = median of the last 30
+  daily quote volumes before the Monday; A4 an unfilled order pays taker at the first matching trade from the window's
+  end, no extra latency; A5 an order with no file or no trade after the window is dropped (count printed); A6 fill
+  comparisons use a 1e-6-tick tolerance; A7 least liquid third = orders at or below the 1/3 quantile of qvol30, saving > 0
+  only; A8 the decision uses the 60-minute arm with the 1-tick rule as primary.
 
