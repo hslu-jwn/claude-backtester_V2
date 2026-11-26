@@ -153,6 +153,16 @@ From 2026-11-16, log the book every week without orders. Pre-registered forward 
 <= 0 or a drawdown worse than -2,200 bp (1.5 x the test's -1,455) closes the strategy. 52 weeks cannot confirm it
 (standard error ~66 bp a week at the test sd 474); they can only catch a break.
 
+**Go-live constraints (lead review A, 2026-11-21, `knowledge/reviews/2026-11-26-lead-review-intake.md` R2; read by
+review A from Binance's rule pages, not re-checked by Opus; confirm with Binance before any live order):**
+- Binance may set an account or sub-account holding positions or open orders in 50+ symbols to Reduce Only. The full
+  book holds 68-126 symbols (legs 34-63), so it needs sub-accounts with < 50 symbols each and at most ~30 symbols with
+  resting orders at a time. The top-100 variant (FB-017) holds 2 x 20 = 40 and fits one account.
+- Paying futures fees in BNB cuts them 10 % (taker 5.0 -> 4.5 bp, maker 2.0 -> 1.8): ~1 bp a week; the backtest cost
+  stays 20 bp (a default).
+- A live signal comes from the exchange API, not from the public-data files (their terms reportedly allow
+  backtesting only; unverified).
+
 
 **Bybit prices and funding (2026-11-16, diagnostic on the spent test period;
 `research/screens/2026-11-16_s20_bybit_prices.py`):** signal, eligibility and the top-100 cut on Binance volume and

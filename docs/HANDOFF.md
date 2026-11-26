@@ -58,6 +58,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Next step
 
+0. **Lead-review intake (2026-11-26):** tasks R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`; R1 (I-105
+   refreeze, its rule is not executable) must land before the 2026-12-03 rows; R11 / R12 wait for the user.
 1. The user's own step first (said at `End.` 2026-11-26).
 2. **2026-12-03 (task `monthly-forward-logs`, Claude app and MT5 terminal open):** first forward rows for Strategies
    19 / 20 and the shelf incl. I-109; plus the I-134 / I-135 check (Open 0).

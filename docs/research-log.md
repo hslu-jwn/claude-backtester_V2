@@ -4,6 +4,13 @@ Running log of the research loop (V2.6 / V2.7) and of the model / effort used pe
 run resumes after a restart or a usage limit. Newest first. Every AI call is also logged by
 the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 
+## 2026-11-26: intake of the two lead-research reviews of 2026-11-21 (the user: "go through their work and implement everything into the next tasks"; Continue.Knowledge is retired, run as Continue.Research Mode=manual)
+
+- Opus (inline, no worker): read both reviews' summaries and syntheses, checked their claims against the ledger, wrote
+  the task list R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`. Corrections: the top-100 S20
+  measurement is done (FB017); I-127 was parked already. I-105 flaw confirmed from its own card (refreeze R1 before
+  2026-12-03). Done: R2 (go-live constraints in `docs/strategy-crypto_flow.md`). Review B's folder committed.
+
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
 - Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, 7.6 min); ruff clean. HANDOFF rewritten; `results/trials.jsonl`
