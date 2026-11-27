@@ -2343,3 +2343,5 @@ strategies prefer opposite regimes, which is the kind of pair the portfolio look
   independent period for the one live strategy (S20); a changed quote asset is a new counted hypothesis, not a rescue.
 - I-149 coverage audit (2026-11-28, signal-free): 486 BTC pairs kept, 189 with data before 2020, 26 of 105 weeks with
   a book (all 2018). **PARKED on power, no return read.** The 2018-2019 spot route for Strategy 20 is closed with I-144.
+- **The user, 2026-11-28: "Wait for 12-03 rows"** (no ICT, paid data or books lever now). The auto run holds until the
+  2026-12-03 forward rows (task `monthly-forward-logs`); then the first `forward_book.py report`.

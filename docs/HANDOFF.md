@@ -28,6 +28,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 ## Accepted / decided by the user (do not ask again; older ones in git history)
 
+- 2026-11-28: "Wait for 12-03 rows": no new lever before the forward rows. I-149 (S20 on BTC-quoted spot 2018-19)
+  parked on power, no return read.
 - 2026-11-27: R11 / R12 picks 1-5 ("yes"): M13 rule P, I-147 forward composite, forward book, goal-1 freeze;
   empirical priors not yet (revisit after ~20 more looks). Mode=auto for that session.
 - 2026-11-26: Codex out; route its work to Claude sonnet / haiku subagents.
