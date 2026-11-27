@@ -87,6 +87,15 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - Auto decision 92: next = the VTI N-PORT check (indirect ground truth for the fast-track census). Alternative: a
   net-t fit for price patterns. Why: it settles whether the fast-track lead can be reproduced at all (2017-2021 had
   ~30 predicted events a year); the net fit mixes cost drag into the prior (review A file 10 › C).
+- Fast-track N-PORT check by a Sonnet worker (brief `briefs/fasttrack-nport.md`; return-blind: only names, CUSIPs and
+  share balances read; Opus checked script, ruff, cached columns): Vanguard Total Stock Market (CIK 36405, series
+  S000002848), 28 public quarter-end reports 2019-09 .. 2026-06; 461 IPOs name-matched; 19 diagnostic IPOs (listed
+  after the quarterly reconstitution, T+4 before quarter end): predicted eligible 5/5 held, predicted not 13/14 held;
+  recall 28 % against the 70 % gate. The fund holds almost every sizeable IPO within days.
+- Auto decision 93: fast-track lead CLOSED on reproduction (one failed independent check; continue-research › stop
+  rules), not re-predicted with a lower threshold. Alternative: refit the size / float rule on the 19 cases. Why: a rule
+  fitted to 19 cases is not a reproduction, and the quarter-end grid gives only 4-5 diagnostic cases a year. Reopen
+  only with a CUSIP-level CRSP change list. Ledger FTC.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

@@ -48,3 +48,28 @@ Total predicted 166 (2017-03..2025-12). "Usable" = US operating deals with a clo
 
 ## 6. Verdict: PARK on data
 No ground truth, the breakpoint history is unknown, coverage against the paper's total is only 56 %, and the existing top-1,000 universe is empty at T+4. A frozen card is not justified until (a) an event list or the N-PORT route gives a reproduction check, or (b) the breakpoint history is found. If the user wants to go on: N-PORT check first (anonymous SEC data), then a card with its own IPO-day liquidity rule.
+
+## 7. N-PORT check (2026-11-27)
+Script `research/screens/2026-11-27_fasttrack_nport.py` (`list | identify | download | names | check`); cache `data/cache/fasttrack/nport/`. Return-blind: only name, title, CUSIP / ISIN, share balance, country and asset class of holdings were extracted (value, price and percent tags never parsed; raw XML not stored).
+
+**Source.** SEC EDGAR, registrant Vanguard Index Funds (CIK 36405), series S000002848 = Vanguard Total Stock Market Index Fund (tracks CRSP US Total Market). Its NPORT-P filings list 28 reports, **quarter-end months only, 2019-09-30 .. 2026-06-30** (the other two months of a quarter are non-public). Filing lag about 60 days. So the data resolves "held at quarter end", not "held at T+4" or "added in week X".
+
+**What the quarter-end grid can and cannot separate.** CRSP also adds non-fast-tracked IPOs at the quarterly reconstitution (assumed implemented after the close of the 3rd Friday of Mar / Jun / Sep / Dec; UNVERIFIED). An IPO listed before that date and held at quarter end is held under either route (not diagnostic). Only IPOs listed **after** the 3rd Friday of the quarter-end month, with T+4 (4 business days, holidays ignored) on or before the quarter end, are diagnostic: held at that quarter end means fast-track (or another non-reconstitution add), not held means regular. That is a window of about 5-8 trading days a quarter, so only 19 of 461 IPOs qualify.
+
+**Sample and matching.** 461 IPOs from `census.csv` with a usable close and shares (why empty), 2019-03 .. 2025-12; 119 predicted eligible, 342 predicted not. The census has no CUSIP, so matching is by normalised company name (legal suffixes and share-class words dropped) against holding name or title, equity holdings only, plus the SEC former names of the CIK. Matches: 417 current name, 1 former name, 43 never found. No ticker or CUSIP step (holdings carry no ticker; the census no CUSIP), so false matches (same name, other company) and misses (renamed company, different spelling) are possible; sanity: 95.8 % of predicted-eligible and 88.9 % of predicted-not IPOs are found in some snapshot.
+
+**Confusion table (diagnostic window, n = 19; actual = held at the first quarter end).**
+
+| | held (fast-track-like) | not held (regular) | total |
+|---|---|---|---|
+| predicted eligible | 5 | 0 | 5 |
+| predicted not eligible | 13 | 1 | 14 |
+
+By year (n): 2020: 3 (all held, all predicted not), 2021: 14 (9 held predicted not, 4 held predicted eligible, 1 not held), 2022: 1 (held, predicted not), 2024: 1 (held, predicted eligible). Precision 5/5 = 100 %, **recall 5/18 = 28 %**. Sensitivity: widening the window to start 7 days before the assumed reconstitution gives n = 56 (predicted eligible 19 held / 1 not; predicted not eligible 27 held / 9 not; that window may include reconstitution adds); starting 7 days later leaves n = 0. Non-diagnostic IPOs (listed before the reconstitution): held at the next quarter end 103 of 114 predicted eligible (90 %), 211 of 328 predicted not (64 %).
+
+**Misses (13 of 18 held IPOs were predicted not eligible).** The held ones include small caps by our proxy: Brilliant Earth (market cap about $164 m), Laird Superfood ($347 m), Thorne ($397 m), AN2 ($299 m), plus larger ones our rule rejected only on the float proxy (Vizio $3.5 bn, ACV $5.3 bn, Remitly $8.0 bn, EngageSmart $5.5 bn). The single not-held case is Miromatrix ($306 m, held first at 2021-12-31). So either CRSP fast-tracks (nearly) every IPO of the total-market universe, micro caps included, or the size breakpoint is far below the proxy and the 10 % float test is wrong; with this data the two cannot be told apart. The fast-track set is wider than our predicted set, so the census count (166, about 18 a year) is a lower bound.
+
+**Verdict: PARK.** Recall 28 % (< 70 %) on 19 resolvable cases; precision is 100 % but on only 5. The public size-plus-float rule does not reproduce fast-track. A bigger observation: Vanguard Total Stock Market holds almost every sizeable US IPO within days. A card would need the real rule first (e.g. predict "all IPOs above a low size" and check on a larger window); the quarter-end grid is too coarse for more than about 4-5 diagnostic cases a year.
+
+**Assumptions.** (1) Reconstitution date = 3rd Friday of Mar / Jun / Sep / Dec, T+4 = 4 business days, no holiday calendar. (2) Held at a quarter end after such a listing is taken as fast-track (the fund could in principle also hold it for other reasons, e.g. buying in the IPO, which index funds rarely do). (3) "Actual" is the fund's holding, a proxy for the CRSP index membership (sampling, cash flows). (4) Name matching as above, no CUSIP. (5) Predicted not-eligible = all 342 usable not-predicted IPOs, not a sample. (6) The 19-case window is thin; the verdict rests mostly on the 13 of 14 held among predicted-not.
+**Incidents.** None: no bot-protection page, SEC rate at most 8 requests a second, one downloader, no process left running.
