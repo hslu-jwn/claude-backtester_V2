@@ -2551,3 +2551,26 @@ text itself is free on EDGAR, and the Lazy Prices rule is the better-documented 
   paper's own sample, not blind); only a much larger effect or a ~10x longer blind sample would. Data notes for a
   reopening: Loughran-McDonald Stage One 10-X parsed files (free, Google Drive, docs dated 1/2019) for history; live
   EDGAR needs a User-Agent with a contact (the user's decision, never filled in by Opus).
+
+### I-149 Strategy 20 on BTC-quoted Binance spot 2018-01 .. 2019-12, pre-sample replication (follows I-144's park note; family `crypto_xs_factors`; registered 2026-11-27 before any BTC-pair data is read; Mode=auto, Opus)
+Why: I-144 parked because 2018-2019 USDT spot books were thin (max 17 eligible); that liquidity sat in BTC-quoted
+pairs. A changed quote asset is a new, counted hypothesis (I-144 note), not a rescue: I-144's USDT returns stay unread.
+Label: replication of a passed rule on an unseen period.
+- **Data:** every `<BASE>BTC` spot pair in data.binance.vision (`data/spot/monthly/klines/<SYM>/1d/`), delisted kept,
+  months 2017-10 .. 2019-12; raw files in `data/cache/binance_spot_btc_presample/raw_1d/`. I-144's exclusions (stable /
+  fiat bases, leveraged tokens). Conversion to USDT before the rule (signal-free): open x BTCUSDT open, close x BTCUSDT
+  close, quote_volume x BTCUSDT close of the same day (BTCUSDT from I-144's root); base volume and taker-buy volume
+  unchanged (the flow signal is unit-free). A day without a BTCUSDT bar is dropped.
+- **Rule:** Strategy 20's frozen rules unchanged through I-78's `week_rows` / `spread` (>= 5 M USDT median quote volume
+  over 30 days, 60 bars, >= 20 eligible, 7-bar flow, quintile long-short, Monday open -> Sunday close in USDT terms,
+  delisted kept); no funding; net = price spread - 20 bp a week.
+- **Statistic and verdict (one look, fixed now):** as I-144: SUPPORTED net > 0 and t >= 2.0; CONTRARY net <= 0; else
+  INCONCLUSIVE. Reported only: gross, years 2018 / 2019, members capped at +-50 %, without the 2 best weeks, legs per side,
+  placebo week t-2.
+- **Coverage and power (signal-free, before any return):** at under 52 weeks with a book, PARK. Power at the shrunk
+  S20 edge +75 bp, sd ~700 bp: at ~100 weeks expected t ~1.1, pass chance ~18 % (M4 floor 15 %); at under 80 weeks
+  pass chance < 15 %, so the card also PARKS on M4 under 80 weeks with a book.
+- **Causal check (T-21):** as I-144 (flow -> next week return; mechanism persistent informed flow; confounders market
+  beta (equal-sided), listing age (60-bar rule)); BTC-quote confounder: BTC's own move scales both legs equally after
+  the USDT conversion. Placebo: week t-2 return, report only.
+- **Status:** registered, nothing downloaded.
