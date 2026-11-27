@@ -78,7 +78,7 @@ envelope and no feedback file any more: decisions go into the spec and `docs/res
   first failed gate; no rescue variants (a changed rule is a new, counted hypothesis); a family is
   closed after two FALSIFIED rows (M2); a lead expires after one failed independent check (closed, not
   parked).
-- **Method rules M2, M4-M12 (the user, 2026-11-18):** power rule c and pass chance on every card (M4), only
+- **Method rules M2, M4-M13 (the user, 2026-11-18; M13 rule P 2026-11-27):** power rule c and pass chance on every card (M4), only
   registered statistics pass (M5), tail and regime gates (M6, M7), test-period reuse (M8), two-sided at t 3.3 (M9),
   shrunk reporting (M10), no new FTMO CFD signal screens (M11): `docs/research-runner.md` › Method rules.
 - **Causal check per card (T-21, the user 2026-11-18):** before any data look write the causal graph (signal,

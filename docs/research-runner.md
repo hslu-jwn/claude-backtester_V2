@@ -961,7 +961,7 @@ MT5 cache, which the MT5 download keeps current. I-109 (Treasury month-end, PASS
 logs two rows from the 2026-11 month-end: `shelf_i109` (the registered FRED DGS10 statistic) and `shelf_i109_ief`
 (the tradable IEF window); canaries reproduce the development and test headlines. Strategy 19 keeps its own log (`crypto_carry --forward`).
 
-## Method rules M2, M4-M12 (2026-11-16 sweep; rule set by the user, 2026-11-18)
+## Method rules M2, M4-M13 (2026-11-16 sweep; rule set by the user, 2026-11-18; M13 2026-11-27)
 
 Wording from `knowledge/reviews/2026-11-16-idea-sweep/fable_part2_directions.md` §3; M7 and M8 as changed by Opus and
 accepted with it. They apply to new cards; rows already closed keep their verdicts unless a line says otherwise.
@@ -994,6 +994,33 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
   development row; a lead closed after a failed independent check does not qualify; every fusion is a new counted row.
 - **M12 harvest target:** scouts and harvest batches search for data sets (free, 100+ names, non-price, 3+ years), not
   strategies. Ideas from books stay allowed.
+- **M13 rule P, pooled-evidence verdicts (new cards only; rule set by the user, 2026-11-27).** Source: lead review A
+  file 10 › B2 (`../lead-research-2026-11-21/10-wave2-stacking-and-pooling.md`). Rows closed before 2026-11-27 keep
+  their verdicts; rule P on them is an illustration only.
+  - *Registration:* the card lists every sample the frozen rule will run on (pre-sample, development, test,
+    replication universe, forward) with period, expected n and discount d. No member is dropped later; every sample
+    run is a member, losers included; an unrunnable member is reported missing, never substituted. The same units on
+    another venue are an execution check, not a member.
+  - *Unit:* net mean per event at today's cost table, se = est / t or sd / sqrt(n).
+  - *Discounts (on the estimate, not the se; the smaller one wins):* 0.65 when the member's result was the
+    precondition for a later member; 0.4 when it is not blind (its period selected the rule or members, or a sibling
+    row already saw those months); 1.0 blind.
+  - *Estimator:* GLS with correlations registered before the pooled number (0 for disjoint periods; the measured
+    correlation over an overlap, else 0.3 x sqrt(overlap share)); Cochran's Q, I², DerSimonian-Laird random-effects z
+    as the statistic; k >= 3 also the modified HKSJ t (one-sided p <= 0.05); k = 2 needs Q p >= 0.10 and the same sign.
+  - *Verdicts:* **POOLED-PASS** pooled z >= the family threshold (3.0; 3.3 under M9), Q p >= 0.10 or I² < 50 %, no
+    member t <= -2.0, pooled net > 0 at doubled cost, and (k >= 3) mHKSJ p <= 0.05. **POOLED-POSITIVE** 2.0 <= z <
+    threshold with the same conditions: enters the forward book (below) at M10 x 0.4, not a standalone deployment.
+    **HETEROGENEOUS** Q p < 0.10, I² >= 50 % or a member t <= -2.0: no subset is promoted (a subset may become a new
+    card judged only on members not yet run). **FALSIFIED** (counts under M2) pooled estimate <= 0 or its upper 97.5 %
+    bound below 0. **PENDING** a registered member is unrun.
+  - *Report (no gate):* P(null) from Harvey's minimum Bayes factor at prior odds 50:1 and 9:1. A pool belongs to one
+    ledger row and adds no look.
+- **Forward book (rule set by the user, 2026-11-27; ledger row FBK):** one reporting layer over the existing forward
+  logs: every shelf row plus every POOLED-POSITIVE row, each sized on its M10-shrunk mean (x 0.4 for POOLED-POSITIVE),
+  reported as one weekly book next to its members. Reporting only: no orders, no default changes.
+- **Goal 1 frozen (rule set by the user, 2026-11-27):** FTMO CFD signal research is formally stopped; goal 1 is "shelf
+  logs plus a prop route for an existing edge". M11's fusion exception and a look the user orders by name stay.
 
 ## Fat-tail power check (T-24; report only, no gate: rule set by the user, 2026-11-18)
 

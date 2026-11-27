@@ -2474,3 +2474,35 @@ same date / bin, next M1 open to 15:55 the next session.
   ~3 %. **CLOSED on M4** (cost ratio and power), no post-trigger return read. A null-free close: the causal effect may be
   real; it is smaller than a two-leg retail round trip on crash names.
 
+
+### I-147 Frozen flow + carry composite on Binance USDT perps, top-100, forward only (lead review A file 10 › A4, R11; family `crypto_composite`, 2nd hypothesis; registered 2026-11-27 before any composite number exists)
+Why: I-133 (the same two counterparties in one book) was UNPROVEN-POSITIVE on seen data and killed on M7; only a
+forward judgement is clean (the user adopted it 2026-11-27, memo `knowledge/reviews/2026-11-27-r11-r12-decisions.md`).
+Label ADAPTATION (Carver handcrafting of registered members). Frozen rule, verbatim from file 10 › A4:
+- Universe each Monday 00:00 UTC: Strategy 20's eligibility (>= 60 daily bars, 30-day median quote volume >= 5 M USDT,
+  the Monday bar, 7 bars in the prior week), >= 7 days of funding history, then the top 100 by 30-day median quote
+  volume; a week with < 40 names is skipped.
+- Signals from the 7 daily bars before the Monday: f1 taker imbalance (I-78); f2 f1's cross-sectional OLS residual on
+  the 7-day return (I-83); f3 perp minus spot 7-day flow (I-84; no spot bars = missing); c = -(funding settled in
+  (Monday - 7 d, Monday]) (I-100). Each per week to a rank-normal score Phi^-1((rank - 0.5) / N).
+- S = 0.5 F + 0.5 C, F = mean of the available z(f1..f3) re-standardised to unit sd, C = z(c). Target w = clip(S, -2, 2)
+  minus the mean, scaled to long sum 1 and short sum 1; keep the current weight if |target - current| < 0.005.
+- Monday open to next Monday open, funding at every settlement paid or received; cost 10 bp per unit of traded notional
+  (taker, FB-273), doubled 20 bp; 5 bp reported only.
+- Canary before the first logged week (no evidence value): f2 = f3 = c = 0 with quintile bins reproduces I-78's
+  development headline +145.0 bp, t 3.24.
+- **Rule P members (M13):** P1 retro dev 2021-01..2023-12 (d 0.4, not blind); P2 retro test 2024-01..2026-10 (d 0.4,
+  4th+ use); P3 Binance forward from Monday 2026-11-30 (d 1.0, the only blind member). Bybit forward = execution check,
+  not a member. Correlations: P1 / P2 / P3 disjoint (rho 0).
+- **Gates (FB-254: a look every 13 weeks, up to 104):** early kill forward z <= -2 at any look. POOLED-PASS: pooled z
+  >= 3.0, forward z >= 1.0, forward net > 0 at doubled cost. Incremental: paired weekly difference composite minus the
+  card-5 book (equal-risk S20 top-100 + S19) has mean >= 0 over forward weeks, else keep the two-book combination. Week
+  104 with forward z < 1: not confirmed, the row ends, no variant on the spent weeks.
+- **Power (file 10 › A6):** +60 bp a week at M10 shrink, sd ~455; expected forward z 1.34 at week 104, P(crossing
+  2.071) ~23 %. Mainly a cheaper-execution version of the card-5 book; its decisive use is as a forward-book member.
+- **Causal check (T-21):** signal = last week's taker imbalance and funding; outcome = next week's return; mechanisms =
+  informed flow continuation (flow) and leveraged longs paying carry (carry); confounders = market beta (dollar-neutral),
+  size / liquidity (top-100 universe); absence (placebo): the same S lagged by 4 weeks predicts nothing (report only).
+- **Assumptions (Opus, 2026-11-27):** A1 M7' (state gate) was not adopted, so the dispersion state split is reported,
+  not a gate; M7's calendar halves do not apply to a forward-only row. A2 P1 / P2 are computed once, at the first look,
+  with today's cost table, and never re-run. A3 one counted look in the ledger (row I147); the canary is not a look.

@@ -102,6 +102,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   Alternative: a new web idea harvest now. Why: the binding constraint is the verdict rule (single-stream power), not
   idea supply (review A file 06 › 1.8).
 
+## 2026-11-27: R11 / R12 picks accepted (the user: "yes")
+
+- Rule P written as M13 in `docs/research-runner.md` › Method rules (new cards only), plus the forward book (ledger FBK,
+  reporting only) and the goal-1 freeze (FTMO CFD signal research stopped; M11 fusion exception kept).
+- I-147 frozen flow + carry composite registered forward only (ideas card, ledger I147; first week Monday 2026-11-30;
+  canary I-78 +145.0 t 3.24 first). Assumption A1: M7' not adopted, so its state split is reported, not a gate.
+- Empirical priors not adopted (revisit after ~20 more looks). R12 items 6-8 wait for the user.
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
 - Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, 7.6 min); ruff clean. HANDOFF rewritten; `results/trials.jsonl`

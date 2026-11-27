@@ -51,10 +51,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 - **Codex out (2026-11-26):** the user routes its work to Claude sonnet / haiku subagents (`docs/agent-routing.md`);
   tell Opus when Codex is back.
-- **Lead review:** R11 / R12, memo with Opus picks `knowledge/reviews/2026-11-27-r11-r12-decisions.md`; list in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
-  SSRN PDF, FTMO CFD stop).
-  With R11: adopt empirical priors per family type for M4 instead of 1:50? First fit (2026-11-27,
-  `research/screens/ledger_prior.py`) is descriptive only: pooled pi 0.52 on gross looked-at rows, type e thin.
+- **Lead review R12 (the user only):** Swiss tax check (ESTV KS 36), SSRN 7601879 PDF by hand (I-109 legs), reopen
+  Databento / HyroTrader only if wanted. R11 picks 1-5 accepted 2026-11-27; empirical priors revisit after ~20 looks.
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its
    step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, or allow the edit.
 1. **Next lever (Telegram sent 2026-11-19):** settle the ICT rules (report B, 9 quotes, chart examples), or allow
@@ -68,7 +66,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 ## Next step
 
 0. **Lead-review intake (2026-11-26):** tasks R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`; R1 done (I-143
-   registered 2026-11-26); R11 / R12 wait for the user.
+   registered 2026-11-26); R11 accepted 2026-11-27 (M13, I-147, FBK); R12 items 6-8 wait.
+   **I-147 composite logger + canary before Monday 2026-11-30** (first forward week).
 1. The user's own step first (said at `End.` 2026-11-26).
 2. **2026-12-03 (task `monthly-forward-logs`, Claude app and MT5 terminal open):** first forward rows for Strategies
    19 / 20 and the shelf incl. I-109; plus the I-134 / I-135 check (Open 0).
