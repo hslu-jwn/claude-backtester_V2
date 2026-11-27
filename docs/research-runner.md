@@ -1018,7 +1018,10 @@ accepted with it. They apply to new cards; rows already closed keep their verdic
     ledger row and adds no look.
 - **Forward book (rule set by the user, 2026-11-27; ledger row FBK):** one reporting layer over the existing forward
   logs: every shelf row plus every POOLED-POSITIVE row, each sized on its M10-shrunk mean (x 0.4 for POOLED-POSITIVE),
-  reported as one weekly book next to its members. Reporting only: no orders, no default changes.
+  reported as one weekly book next to its members. Reporting only: no orders, no default changes. Code:
+  `research/screens/2026-11-27_forward_book.py report` (Opus design, 2026-11-27): members = tradable shelf rows (not
+  I-105, not the I-109 statistic, not I-143 until POOLED-POSITIVE) + Strategies 19 / 20; each member's weekly sum in
+  registered weekly sd units; weights by shrunk weekly Sharpe from registered numbers only, zero correlation assumed.
 - **Goal 1 frozen (rule set by the user, 2026-11-27):** FTMO CFD signal research is formally stopped; goal 1 is "shelf
   logs plus a prop route for an existing edge". M11's fusion exception and a look the user orders by name stay.
 

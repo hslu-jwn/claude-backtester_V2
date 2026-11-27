@@ -115,6 +115,14 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - I-147 logger by the Sonnet worker; Opus checked: 14 tests, ruff clean, canary reproduces I-78 (186 weeks, +145.0,
   t 3.24), `forward` writes nothing today (cache ends 2026-10-31). 12 worker assumptions accepted and written on the
   card (A4); f3 sign as the card (perp minus spot). No composite return computed on history.
+- Auto decision 96: build the forward-book report now (Sonnet worker, brief `briefs/forward-book.md`): members = the
+  tradable shelf rows + Strategies 19 / 20; weekly risk units (registered sd); weights by shrunk Sharpe (M10), zero
+  correlation; never sized on forward data. Alternative: wait for the first rows (2026-12-03). Why: the design must be
+  fixed before forward rows exist, or sizing could follow them.
+- Forward book by the Sonnet worker; Opus checked: 9 tests, ruff clean, `report` prints "no rows yet" and the weights
+  (Strategy 20 0.27 ... I-71 0.06; expected book z 0.23 x sqrt(weeks)). Opus removed I-143 (no verdict, borrowed I-105
+  numbers). Inputs: registered dev net and sd = se x sqrt(n); Strategy 19 uses its test net +112 (no dev net row),
+  factor 0.4; I-109 IEF borrows the DGS10 sd until an IEF sd is registered.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
