@@ -51,7 +51,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 - **Codex out (2026-11-26):** the user routes its work to Claude sonnet / haiku subagents (`docs/agent-routing.md`);
   tell Opus when Codex is back.
-- **Lead review:** R11 / R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
+- **Lead review:** R11 / R12, memo with Opus picks `knowledge/reviews/2026-11-27-r11-r12-decisions.md`; list in `knowledge/reviews/2026-11-26-lead-review-intake.md` (pooled verdicts, composite; tax,
   SSRN PDF, FTMO CFD stop).
   With R11: adopt empirical priors per family type for M4 instead of 1:50? First fit (2026-11-27,
   `research/screens/ledger_prior.py`) is descriptive only: pooled pi 0.52 on gross looked-at rows, type e thin.

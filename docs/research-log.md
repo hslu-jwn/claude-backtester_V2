@@ -96,6 +96,11 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   rules), not re-predicted with a lower threshold. Alternative: refit the size / float rule on the 19 cases. Why: a rule
   fitted to 19 cases is not a reproduction, and the quarter-end grid gives only 4-5 diagnostic cases a year. Reopen
   only with a CUSIP-level CRSP change list. Ledger FTC.
+- Auto decision 94: both reviews' lead lists are used up (B ranks 8-11 closed or parked 2026-11-26: RV11, RV13, ...);
+  wrote the R11 / R12 decision memo `knowledge/reviews/2026-11-27-r11-r12-decisions.md` (Opus picks: rule P for new
+  cards, forward composite, forward book, FTMO CFD stop yes; empirical priors not yet) and sent a Telegram.
+  Alternative: a new web idea harvest now. Why: the binding constraint is the verdict rule (single-stream power), not
+  idea supply (review A file 06 › 1.8).
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
