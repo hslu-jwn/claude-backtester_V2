@@ -2323,3 +2323,13 @@ strategies prefer opposite regimes, which is the kind of pair the portfolio look
 ## Research runs
 
 (none yet; V2.6 starts after the regime classifier spec is accepted)
+
+## 2026-11-27 (evening): Continue.Research Mode=auto, no limit
+
+- Start: the user ran `Continue.Knowledge mode=auto` (retired); Opus offered `Continue.Research Mode=auto`, and the user
+  said yes, no limit, and yes to committing the uncommitted `tools/notify.py` hook trace (done, logs only argv[0]
+  to the temp dir).
+- **Auto decision 1:** next step = new idea source, a web scout (Claude Sonnet subagent, read-only) for forced-flow
+  effects in the crypto cross-section (Binance free data, most power per HANDOFF), stop list from cost-wall §4 in
+  the brief. Alternative: wait for the 2026-12-03 forward rows (nothing to do before then) or Open 3 levers (need
+  the user). Why: crypto is the only venue with long, wide, free data, and the shares / futures data is mined.
