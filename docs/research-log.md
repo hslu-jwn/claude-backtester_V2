@@ -146,6 +146,19 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   (arXiv 2506.03287) reports its own null (HML -0.14 % a week, insignificant, 2023-2024); the Binance / Bybit
   funding-forecast spread is BTC only over about four months (an arbitrage, not a 100-name data set). No card;
   the batch closes empty. Crypto derivatives and on-chain data sets now look as mined as the free share sets.
+- Auto decision 99 (the user picked "2", new source type): batch T0166-T0171 on source types not yet asked for data
+  sets: Japanese academic (JA-ACAD, investor-type flows / margin balances / BoJ ETF buying on index futures), GitHub
+  signal libraries, curated lists (Quantpedia / Alpha Architect / Quantocracy) and r/algotrading crypto data;
+  canaries T0170 / T0171. Two Sonnet web workers. Alternative: a book request to the user only. Why: a search is
+  free and fast; a book request follows if this batch is also empty.
+- Harvest result T0166-T0171: 6 raw ideas, 0 % unverified (claude-sonnet), canaries pass (T0170 KMPV, T0171 empty);
+  GitHub (T0167) and r/algotrading crypto (T0169) found nothing. check: 2 rejected untestable, 1 unfetchable, 3 parked
+  needs_data; no score >= 6. Opus read the parked ones (Quantpedia alt-data page and its lexical-density page):
+  BoJ ETF buying = HV-T0048 (rejected; Japan, no venue); Google-search attention = I-104's family (killed
+  2026-11-17); technology momentum gives no rule (strategy page 404, premium only). Lexical density of 10-K / 10-Q
+  (Hanicova, Kalus, Vojtko, SSRN 3921091; top 500 US, monthly decile long-short 2010-2021, Sharpe 0.69 with
+  spreads) uses a paid vendor set (BRAIN), but the text is free on EDGAR: a new family (filing text), 100+ names,
+  forward path. No card yet: building an EDGAR text data set is a larger tooling step, proposed to the user.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
