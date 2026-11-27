@@ -322,3 +322,7 @@ HV-T0157-2,parked,,Treasury auction price pressure reversal,FLOW,https://www.new
 HV-T0157-3,rejected,,Dealer fixed-income positioning tracks expected returns,FLOW,https://libertystreeteconomics.newyorkfed.org/2015/12/dealer-positioning-and-expected-returns/,,,,,,,,,untestable,,,,,,,,,,,
 HV-T0158-1,rejected,,Multi-asset carry incl. currency forwards,CARRY,https://www.nber.org/papers/w19325,,,,,,,,,untestable,,,,,,,,,,,
 HV-T0158-2,parked,,Currency carry: sort on forward discounts,CARRY,https://www.nber.org/papers/w14082.pdf,,,,,,,,,needs_data,,,,,,,,,,,
+HV-T0160-1,rejected,,TVL-to-market-cap weekly long-short DeFi tokens,CROSS,https://arxiv.org/html/2506.03287v3,,,,,,,,,untestable,,,,,,,,,,,
+HV-T0162-1,rejected,,Cross-exchange funding-rate forecast spread (Binance/Bybit),FLOW,https://www.securities.io/bitcoin-funding-rates-forecasting-trading-costs/,,,,,,,,,untestable,,,,,,,,,,,
+HV-T0164-1,rejected,,"Cross-asset carry: long high, short low",CARRY,https://www.nber.org/papers/w19325,,,,,,,,,untestable,,,,,,,,,,,
+HV-T0164-2,rejected,,FX forward-discount slope: long high-rate currencies,CARRY,https://nber.org/papers/w14082,,,,,,,,,untestable,,,,,,,,,,,

@@ -135,6 +135,17 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - I-71 test-member check (the user picked "1"; no data read): as a new card under M13 the seen members take d 0.4, so
   POOLED-POSITIVE needs a test mean >= +13.6 bp (not the review's +2.5 at d 1); pass chance ~8-12 % < 15 %, and
   c 0.07-0.10 > 0.03 (M4). No card, no look; written on the I-71 card.
+- Auto decision 98 (the user picked "1", crypto data-set harvest): batch T0160-T0165 on crypto data sets not yet
+  mined (DeFi fees / TVL / developer activity, Hyperliquid and DEX positioning, cross-venue funding and Coinbase
+  premium, options skew and attention; canaries T0164 known carry, T0165 nonsense), two Sonnet web workers, three
+  tasks each. Binance OI, long-short ratio, liquidations, unlocks and listings were left out: already looked at
+  (FB006, FB008, I76, I126, I81). Alternative: `End.` now. Why: never idle, and data sets are the binding input (M12).
+- Harvest result T0160-T0165: 4 raw ideas, 0 % unverified (claude-sonnet), canaries pass (T0164 found KMPV / LRV,
+  T0165 empty); T0161 (Hyperliquid / DEX positioning) and T0163 (options skew, attention) found nothing. harvest
+  check: 4 rejected untestable, no idea scores >= 6. Opus read both crypto rows: the TVL / market-cap sort
+  (arXiv 2506.03287) reports its own null (HML -0.14 % a week, insignificant, 2023-2024); the Binance / Bybit
+  funding-forecast spread is BTC only over about four months (an arbitrage, not a 100-name data set). No card;
+  the batch closes empty. Crypto derivatives and on-chain data sets now look as mined as the free share sets.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
