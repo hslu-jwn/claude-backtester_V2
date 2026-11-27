@@ -109,6 +109,13 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
 - I-147 frozen flow + carry composite registered forward only (ideas card, ledger I147; first week Monday 2026-11-30;
   canary I-78 +145.0 t 3.24 first). Assumption A1: M7' not adopted, so its state split is reported, not a gate.
 - Empirical priors not adopted (revisit after ~20 more looks). R12 items 6-8 wait for the user.
+- Auto decision 95: build the I-147 forward logger + canary now (Sonnet worker, brief `briefs/i147-composite-forward.md`),
+  so week 1 (2026-11-30) is logged. Alternative: a new idea harvest first. Why: a missed forward week cannot be
+  recovered, a harvest can wait.
+- I-147 logger by the Sonnet worker; Opus checked: 14 tests, ruff clean, canary reproduces I-78 (186 weeks, +145.0,
+  t 3.24), `forward` writes nothing today (cache ends 2026-10-31). 12 worker assumptions accepted and written on the
+  card (A4); f3 sign as the card (perp minus spot). No composite return computed on history.
+
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
 - Full suite 6,053 passed, 14 skipped, 4 xfailed (-n 8, 7.6 min); ruff clean. HANDOFF rewritten; `results/trials.jsonl`

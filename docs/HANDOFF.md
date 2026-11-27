@@ -54,7 +54,8 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 - **Lead review R12 (the user only):** Swiss tax check (ESTV KS 36), SSRN 7601879 PDF by hand (I-109 legs), reopen
   Databento / HyroTrader only if wanted. R11 picks 1-5 accepted 2026-11-27; empirical priors revisit after ~20 looks.
 0. **Scheduled task edit:** the app's auto-mode classifier blocked Opus's edit of `monthly-forward-logs`. Add to its
-   step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, or allow the edit.
+   step 5: `research/screens/2026-11-19_i134_i135_forward_checks.py download`, then `... check`, and after the Binance
+   update `research/screens/2026-11-27_i147_composite_forward.py forward` (I-147), or allow the edit.
 1. **Next lever (Telegram sent 2026-11-19):** settle the ICT rules (report B, 9 quotes, chart examples), or allow
    paid futures data (reopens goal 1 off the CFD wall and I-142), or the IBKR account.
 2. **IBKR account** for I-109 (futures permission); first fills check margin, the 3 p.m. spread and fees.
@@ -67,7 +68,7 @@ Read first in every session; rewritten at every `End.` (about 60 lines, current 
 
 0. **Lead-review intake (2026-11-26):** tasks R1-R12 in `knowledge/reviews/2026-11-26-lead-review-intake.md`; R1 done (I-143
    registered 2026-11-26); R11 accepted 2026-11-27 (M13, I-147, FBK); R12 items 6-8 wait.
-   **I-147 composite logger + canary before Monday 2026-11-30** (first forward week).
+   I-147 logger built (canary OK); first rows once the December Binance archive is loaded (task step, Open 0).
 1. The user's own step first (said at `End.` 2026-11-26).
 2. **2026-12-03 (task `monthly-forward-logs`, Claude app and MT5 terminal open):** first forward rows for Strategies
    19 / 20 and the shelf incl. I-109; plus the I-134 / I-135 check (Open 0).

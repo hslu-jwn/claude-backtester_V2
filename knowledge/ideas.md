@@ -2506,3 +2506,13 @@ Label ADAPTATION (Carver handcrafting of registered members). Frozen rule, verba
 - **Assumptions (Opus, 2026-11-27):** A1 M7' (state gate) was not adopted, so the dispersion state split is reported,
   not a gate; M7's calendar halves do not apply to a forward-only row. A2 P1 / P2 are computed once, at the first look,
   with today's cost table, and never re-run. A3 one counted look in the ledger (row I147); the canary is not a look.
+  A4 (worker build, accepted by Opus 2026-11-27): hold funding in (Monday, next Monday]; exit at the next Monday open,
+  a delisted name at its last close; F divided by its sd (ddof 0); ties get average ranks; top-100 cut first, then
+  names without f1 / 7-day return dropped (the < 40 rule counts after the drop); f2 = OLS residual of f1 on
+  close[-1] / close[-8] - 1; f3 = f1 minus the 7-day spot imbalance (spot needs 7 bars), sign as the card; the buffer
+  keeps only names still in the target, a name that leaves is closed, week 1 trades notional 2; a skipped week closes
+  the book and pays that cost; dispersion = cross-sectional sd of the 7-day return, state high / low against the
+  median of earlier forward weeks (report only).
+- Logger: `research/screens/2026-11-27_i147_composite_forward.py` (`canary` reproduces I-78 186 weeks +145.0 t 3.24,
+  checked 2026-11-27; `forward`), logs `research/forward/i147.csv`, `i147_weights.csv`; tests
+  `tests/tools/test_i147_composite.py`. Data arrive with the monthly Binance archives, so rows appear monthly.
