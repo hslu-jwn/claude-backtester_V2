@@ -123,6 +123,15 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   (Strategy 20 0.27 ... I-71 0.06; expected book z 0.23 x sqrt(weeks)). Opus removed I-143 (no verdict, borrowed I-105
   numbers). Inputs: registered dev net and sd = se x sqrt(n); Strategy 19 uses its test net +112 (no dev net row),
   factor 0.4; I-109 IEF borrows the DGS10 sd until an IEF sd is registered.
+- Auto decision 97: harvest batch T0154-T0159 (M12 data sets: US share flows / filings, crypto on-chain, Treasury /
+  COT positioning; canaries T0158 known carry, T0159 nonsense) by two Sonnet web workers, three tasks each (Codex out;
+  the skill's "one task per call" relaxed to save quota). Alternative: wait for the 2026-12-03 rows. Why: never idle,
+  and M12 says data sets are the binding input.
+- Harvest result: 14 raw ideas, 0 % unverified sources (claude-sonnet), canaries pass (T0158 found KMPV / LRV, T0159
+  empty). harvest check: 8 parked needs_data, 6 rejected untestable (crypto on-chain rows use 3 coins; rates rows lack
+  rules). No new idea scores >= 6. Opus read the parked ones: FINRA short volume = I-101's family, Form 4 = I-106 / I-108,
+  13F = I-117 (all already looked at); 8-K EDGAR-log demand is new but the free logs end 2017 (no forward path): no
+  card. The batch closes empty; the free non-price share data sets are largely mined.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
