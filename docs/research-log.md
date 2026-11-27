@@ -2341,3 +2341,5 @@ strategies prefer opposite regimes, which is the kind of pair the portfolio look
   books were too thin; the 2018-2019 liquidity was BTC-quoted). Registered before any data (6826db1), coverage audit
   first, M4 park under 80 weeks. Alternative: no further crypto look until the forward rows. Why: the only
   independent period for the one live strategy (S20); a changed quote asset is a new counted hypothesis, not a rescue.
+- I-149 coverage audit (2026-11-28, signal-free): 486 BTC pairs kept, 189 with data before 2020, 26 of 105 weeks with
+  a book (all 2018). **PARKED on power, no return read.** The 2018-2019 spot route for Strategy 20 is closed with I-144.

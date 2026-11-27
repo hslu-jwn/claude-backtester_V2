@@ -2573,4 +2573,7 @@ Label: replication of a passed rule on an unseen period.
 - **Causal check (T-21):** as I-144 (flow -> next week return; mechanism persistent informed flow; confounders market
   beta (equal-sided), listing age (60-bar rule)); BTC-quote confounder: BTC's own move scales both legs equally after
   the USDT conversion. Placebo: week t-2 return, report only.
-- **Status:** registered, nothing downloaded.
+- **Status:** **PARKED on power 2026-11-28 by the coverage audit, no return read:** 486 BTC pairs kept from the archive, 189
+  with data before 2020; weeks with a book 26 of 105 (all 2018, eligible median 32, min 23, max 52); BTC-pair volume
+  fell under the 5 M USDT floor after the 2018 crash (`research/screens/2026-11-27_i149_btc_spot_presample.py coverage`).
+  With I-144 this closes the 2018-2019 spot route for S20; the returns stay unlooked.
