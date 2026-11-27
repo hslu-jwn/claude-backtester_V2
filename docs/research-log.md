@@ -165,6 +165,10 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   ~1 % (unhalved, dev + test 127 months: ~6 %). PARKED before any data look; nothing downloaded. Auto decision 100:
   park, not build the EDGAR text data set. Alternative: build it for forward logging. Why: no sample we can get
   reaches 15 % power; a slow behavioural effect at 17 bp a month is below what our samples can see.
+- End. (the user, 2026-11-27): full suite 6,110 passed, 14 skipped, 4 xfailed (-n 8, 9 min); ruff clean. Briefs
+  fasttrack-census, fasttrack-nport, r10-ledger-backfill, r6-fill-model archived (book-read kept, reusable);
+  results/trials.jsonl identical to research/trials.jsonl (no change). No ROADMAP step finished (research only).
+  HANDOFF rewritten. Auto decisions of this session: 89-100.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
