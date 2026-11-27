@@ -2333,3 +2333,11 @@ strategies prefer opposite regimes, which is the kind of pair the portfolio look
   effects in the crypto cross-section (Binance free data, most power per HANDOFF), stop list from cost-wall §4 in
   the brief. Alternative: wait for the 2026-12-03 forward rows (nothing to do before then) or Open 3 levers (need
   the user). Why: crypto is the only venue with long, wide, free data, and the shares / futures data is mined.
+- Scout (Claude Sonnet subagent, read-only, ~19 tool calls): three leads, all already closed in the ledger: token
+  unlocks (FB040 closed on power, I126 rejected), delisting shorts (HV-T0107 / T0108), airdrop selling (9 events,
+  on-chain data). One unopened SSRN lead (Kim, 52 Binance unlocks, 403) is the same family as I126: not reopened.
+  Reading: forced-flow crypto leads with free data look mined, like shares and futures. No card from the scout.
+- **Auto decision 2:** card I-149, Strategy 20 on BTC-quoted Binance spot 2018-2019 (I-144 parked because the USDT
+  books were too thin; the 2018-2019 liquidity was BTC-quoted). Registered before any data (6826db1), coverage audit
+  first, M4 park under 80 weeks. Alternative: no further crypto look until the forward rows. Why: the only
+  independent period for the one live strategy (S20); a changed quote asset is a new counted hypothesis, not a rescue.
