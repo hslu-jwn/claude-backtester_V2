@@ -727,6 +727,13 @@ without both bars): gross +11.7 bp, net +9.0 bp, t 2.16, 67 % positive; pre-samp
 +6.5 bp (n 49); third Fridays +6.7, MSCI month ends +11.4; other weekdays gross +0.0 bp (n 2,630). 2020 -21.9,
 2021 -9.9. The sign replicates out of the source's sample, but at ~8 events a year t 3 needs ~160 events
 (per-event sd ~38 bp), more than our data holds; and at a 0.5 daily-ATR stop +9 bp is ~0.2 R x 8 a year.
+- **Test-member check under rule P (2026-11-27, no data read; the user picked it):** the lead review's "+2.5 bp in
+  the test gives pooled z 2" treats pre-sample and development as blind (d 1). I-71 is closed (killed 2026-11-13), so
+  a test look needs a new card, where both seen members take d 0.4 (M13). With per-event sd 38 bp, ~40 test events
+  (se 6.0): POOLED-POSITIVE needs a test mean >= +13.6 bp (test alone t 2.3), POOLED-PASS >= +24.2 bp. Pass chance
+  at the shrunk development mean (+6.5) ~12 %, at the halved published effect (~5 bp) ~8 %: below M4's 15 %. Also M4
+  c = cost / sd = 2.7-3.8 / 38 = 0.07-0.10 > 0.03 (as I-137) and M11 / the goal-1 freeze. **Verdict: no card, no
+  look**; it reopens only if the user orders the look by name.
 
 ### I-72 Funding-settlement drift on Binance perpetuals (Continue.Research on Binance futures, 2026-11-13; rule fixed before any data; screened the same day: KILLED, ledger I72)
 Source: `knowledge/research/reports/2026-11-09_crypto_intraday.md` §2 (no published signed effect; S4 documents

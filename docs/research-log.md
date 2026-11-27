@@ -132,6 +132,9 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   rules). No new idea scores >= 6. Opus read the parked ones: FINRA short volume = I-101's family, Form 4 = I-106 / I-108,
   13F = I-117 (all already looked at); 8-K EDGAR-log demand is new but the free logs end 2017 (no forward path): no
   card. The batch closes empty; the free non-price share data sets are largely mined.
+- I-71 test-member check (the user picked "1"; no data read): as a new card under M13 the seen members take d 0.4, so
+  POOLED-POSITIVE needs a test mean >= +13.6 bp (not the review's +2.5 at d 1); pass chance ~8-12 % < 15 %, and
+  c 0.07-0.10 > 0.03 (M4). No card, no look; written on the I-71 card.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 
