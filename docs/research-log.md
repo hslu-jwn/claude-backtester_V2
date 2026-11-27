@@ -159,6 +159,12 @@ the dispatcher in `results/ai_calls.jsonl` (model, effort, seconds, status).
   (Hanicova, Kalus, Vojtko, SSRN 3921091; top 500 US, monthly decile long-short 2010-2021, Sharpe 0.69 with
   spreads) uses a paid vendor set (BRAIN), but the text is free on EDGAR: a new family (filing text), 100+ names,
   forward path. No card yet: building an EDGAR text data set is a larger tooling step, proposed to the user.
+- I-148 card (the user: "EDGAR text card"): Opus picked the Lazy Prices rule (Cohen, Malloy, Nguyen JF 2020, Table II
+  read from the NBER PDF) over lexical density (SSRN 403, unread; paid vendor set). Registered: VW cosine Q5-Q1 +34 bp a
+  month, t 2.53, sd ~208 bp. M4: c ~0.007 fine, but halved +17 bp on 66 development months gives t 0.66, pass chance
+  ~1 % (unhalved, dev + test 127 months: ~6 %). PARKED before any data look; nothing downloaded. Auto decision 100:
+  park, not build the EDGAR text data set. Alternative: build it for forward logging. Why: no sample we can get
+  reaches 15 % power; a slow behavioural effect at 17 bp a month is below what our samples can see.
 
 ## 2026-11-26: End. of the fusion session 2026-11-19 (the user: "End this session ... I have another step I want to do first")
 

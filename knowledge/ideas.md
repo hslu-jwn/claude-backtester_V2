@@ -2523,3 +2523,31 @@ Label ADAPTATION (Carver handcrafting of registered members). Frozen rule, verba
 - Logger: `research/screens/2026-11-27_i147_composite_forward.py` (`canary` reproduces I-78 186 weeks +145.0 t 3.24,
   checked 2026-11-27; `forward`), logs `research/forward/i147.csv`, `i147_weights.csv`; tests
   `tests/tools/test_i147_composite.py`. Data arrive with the monthly Binance archives, so rows appear monthly.
+
+### I-148 Lazy Prices: year-over-year 10-K / 10-Q text similarity, US top-1,000 (harvest T0168 lead, filing-text family `share_text`; PARKED 2026-11-27 on M4 before any data look)
+Mechanism (Cohen, Malloy & Nguyen, "Lazy Prices", NBER w25084 / Journal of Finance 75(3) 2020; PUBLISHED, Opus read the
+NBER PDF, Table II): investors overlook changes in a firm's routine filings; firms that change their 10-K / 10-Q text a
+lot ("changers") later earn less, as the news the changes carry comes out. Harvest lead: Quantpedia's lexical-density
+page (Hanicova, Kalus & Vojtko, SSRN 3921091; SSRN answered 403, unread), whose data set is paid (BRAIN); the filing
+text itself is free on EDGAR, and the Lazy Prices rule is the better-documented signal on that text.
+- **Frozen rule (the paper's, before any data):** cosine similarity of each 10-K / 10-Q to the same report a year
+  earlier (10-K vs prior 10-K, 10-Q vs the same quarter's 10-Q); quintiles on the prior year's distribution; a stock
+  enters in the month after its filing and is held 3 months; monthly rebalanced; value-weighted Q5 (non-changers) minus
+  Q1 (changers); universe `docs/share-universe.md` top-1,000.
+- **Registered numbers (Table II, panel B, Sim_Cosine, 1995-2014, 240 months):** excess Q5-Q1 +34 bp a month, t 2.53,
+  so sd ~208 bp a month; 5-factor alpha +34 bp (t 2.53). The abstract's "up to 188 bp" is the best document section in
+  Table VII (a maximum over variants), not used. Paper turnover ~7-9 % a month per quintile.
+- **M4 (Opus, before any data look):** c = round trip ~10 bp / large-cap name sd over 3 months ~1,400 bp ~0.007
+  (<= 0.03). Pass chance at the halved published edge (+17 bp a month) on development 2016-04 .. 2021-09 (66 months;
+  Alpaca daily history starts 2016): expected t 0.66, Gaussian power ~1 % at t 3.0. Even the unhalved +34 bp pooled
+  over development and test (127 months) gives ~6 %. T-24 (`fat_tail_power --n 66 --edge 0.17 --sd 2.08`): min power
+  0.001, flag rare_loss. **PARKED on M4** (pass chance < 15 %), no text or return read, nothing downloaded.
+- **Causal check (written for a later reopening):** X = similarity; Y = next-3-month return; M = slow digestion of
+  filing changes (no forced counterparty: a weak, behavioural mechanism); confounders: size, industry (boilerplate
+  differs by industry; proxy: industry-adjusted quintiles, as the paper's Table IX), firm events that force text changes
+  (M&A, restatements; proxy: 8-K item counts); no control for same-period news or volume (mediators). Implied absence:
+  changes limited to the cover page / exhibits only must carry no effect.
+- **What would reopen it:** a free survivorship-free US daily price history before 2016 does not help (1995-2014 is the
+  paper's own sample, not blind); only a much larger effect or a ~10x longer blind sample would. Data notes for a
+  reopening: Loughran-McDonald Stage One 10-X parsed files (free, Google Drive, docs dated 1/2019) for history; live
+  EDGAR needs a User-Agent with a contact (the user's decision, never filled in by Opus).
