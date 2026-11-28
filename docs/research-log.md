@@ -2345,3 +2345,7 @@ strategies prefer opposite regimes, which is the kind of pair the portfolio look
   a book (all 2018). **PARKED on power, no return read.** The 2018-2019 spot route for Strategy 20 is closed with I-144.
 - **The user, 2026-11-28: "Wait for 12-03 rows"** (no ICT, paid data or books lever now). The auto run holds until the
   2026-12-03 forward rows (task `monthly-forward-logs`); then the first `forward_book.py report`.
+- Pre-flight for 2026-12-03 (Opus, read-only, 2026-11-28): shelf canary OK (I-84, I-98, H11, I-71, I-105, I-109 DGS10 /
+  IEF reproduce their registered numbers), shelf status OK, I-134 / I-135 selfcheck OK, I-147 canary OK (I-78 186 w,
+  +145.0, t 3.24), FB-254 and card-5 boundaries print, forward book report runs (0 rows). No file changed. Still open:
+  the scheduled task has no I-134 / I-135 / I-147 step (HANDOFF Open 0).
